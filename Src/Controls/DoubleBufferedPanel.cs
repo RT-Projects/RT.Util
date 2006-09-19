@@ -24,6 +24,38 @@ namespace RT.Controls
                 ControlStyles.UserPaint | 
                 ControlStyles.DoubleBuffer, true
             );
+
+            DoPaint();
+            this.Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
+        }
+
+        void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
+        {
+            //e.Graphics.DrawImageUnscaledAndClipped(Buffer, e.ClipRectangle);    
+            e.Graphics.DrawImage(Buffer, 0, 0);
+        }
+
+        public Bitmap Buffer;
+
+        private void DoPaint()
+        {
+            Buffer = new Bitmap(Width, Height);
+
+            PaintEventArgs pea = new PaintEventArgs(
+                Graphics.FromImage(Buffer),
+                new Rectangle(0, 0, Width, Height));
+
+            if (PaintBuffer != null)
+                PaintBuffer(this, pea);
+        }
+
+        public event PaintEventHandler PaintBuffer;
+
+        public void ResizeAndRepaint()
+        {
+            DoPaint();
+            Invalidate();
+            //DoubleBufferedPanel_Paint(null, new PaintEventArgs(CreateGraphics(), new Rectangle()));
         }
     }
 }
