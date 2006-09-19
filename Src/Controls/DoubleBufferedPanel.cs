@@ -31,15 +31,19 @@ namespace RT.Controls
 
         void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
         {
-            //e.Graphics.DrawImageUnscaledAndClipped(Buffer, e.ClipRectangle);    
-            e.Graphics.DrawImage(Buffer, 0, 0);
+            e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);
         }
 
-        public Bitmap Buffer;
+        private Bitmap Buffer;
 
+        /// <summary>
+        /// Resizes the buffer bitmap if necessary, then invokes the PaintBuffer callback to
+        /// let the user paint the buffer.
+        /// </summary>
         private void DoPaint()
         {
-            Buffer = new Bitmap(Width, Height);
+            if ((Buffer != null) && ((Buffer.Width != Width) || (Buffer.Height != Height)))
+                Buffer = new Bitmap(Width, Height);
 
             PaintEventArgs pea = new PaintEventArgs(
                 Graphics.FromImage(Buffer),
@@ -55,7 +59,6 @@ namespace RT.Controls
         {
             DoPaint();
             Invalidate();
-            //DoubleBufferedPanel_Paint(null, new PaintEventArgs(CreateGraphics(), new Rectangle()));
         }
     }
 }
