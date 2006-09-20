@@ -42,7 +42,7 @@ namespace RT.Controls
         /// </summary>
         private void DoPaint()
         {
-            if ((Buffer != null) && ((Buffer.Width != Width) || (Buffer.Height != Height)))
+            if ((Buffer == null) || ((Buffer.Width != Width) || (Buffer.Height != Height)))
                 Buffer = new Bitmap(Width, Height);
 
             PaintEventArgs pea = new PaintEventArgs(
