@@ -17,6 +17,10 @@ namespace RT.Controls
 {
     public class DoubleBufferedPanel : Panel
     {
+        public event PaintEventHandler PaintBuffer;
+
+        private Bitmap Buffer;
+
         public DoubleBufferedPanel()
         {
             this.SetStyle(
@@ -25,40 +29,33 @@ namespace RT.Controls
                 ControlStyles.DoubleBuffer, true
             );
 
-            DoPaint();
+            Buffer = new Bitmap(Width, Height);
             this.Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
+            this.Resize += new EventHandler(DoubleBufferedPanel_Resize);
+        }
+
+        private void DoubleBufferedPanel_Resize(object sender, EventArgs e)
+        {
+            Refresh();
+        }
+
+        public override void Refresh()
+        {
+            if (Buffer.Width != Width || Buffer.Height != Height)
+                Buffer = new Bitmap(Width, Height);
+
+            if (PaintBuffer != null)
+                PaintBuffer(this, new PaintEventArgs(
+                    Graphics.FromImage(Buffer),
+                    new Rectangle(0, 0, Width, Height)
+                ));
+
+            base.Refresh();
         }
 
         void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);
-        }
-
-        private Bitmap Buffer;
-
-        /// <summary>
-        /// Resizes the buffer bitmap if necessary, then invokes the PaintBuffer callback to
-        /// let the user paint the buffer.
-        /// </summary>
-        private void DoPaint()
-        {
-            if ((Buffer == null) || ((Buffer.Width != Width) || (Buffer.Height != Height)))
-                Buffer = new Bitmap(Width, Height);
-
-            PaintEventArgs pea = new PaintEventArgs(
-                Graphics.FromImage(Buffer),
-                new Rectangle(0, 0, Width, Height));
-
-            if (PaintBuffer != null)
-                PaintBuffer(this, pea);
-        }
-
-        public event PaintEventHandler PaintBuffer;
-
-        public void ResizeAndRepaint()
-        {
-            DoPaint();
-            Invalidate();
         }
     }
 }
