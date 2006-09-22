@@ -90,12 +90,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\warning.png" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\XPTable\main\XPTable.csproj">
-      <Project>{1ADD2ECB-2B24-4162-8965-3EFAA9BB041E}</Project>
-      <Name>XPTable</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
