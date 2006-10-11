@@ -62,6 +62,12 @@
     <Compile Include="Separator.Designer.cs">
       <DependentUpon>Separator.cs</DependentUpon>
     </Compile>
+    <Compile Include="SplitContainerEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SplitContainerEx.Designer.cs">
+      <DependentUpon>SplitContainerEx.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DlgMessage.resx">
