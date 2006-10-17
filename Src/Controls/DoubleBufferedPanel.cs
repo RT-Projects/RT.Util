@@ -19,7 +19,7 @@ namespace RT.Controls
     {
         public event PaintEventHandler PaintBuffer;
 
-        private Bitmap Buffer;
+        protected Bitmap Buffer;
 
         public DoubleBufferedPanel()
         {
@@ -41,19 +41,21 @@ namespace RT.Controls
 
         public override void Refresh()
         {
-            if (Buffer.Width != Width || Buffer.Height != Height)
-                Buffer = new Bitmap(Width, Height);
+            if (Width > 0 && Height > 0)
+            {
+                if (Buffer.Width != Width || Buffer.Height != Height)
+                    Buffer = new Bitmap(Width, Height);
 
-            if (PaintBuffer != null)
-                PaintBuffer(this, new PaintEventArgs(
-                    Graphics.FromImage(Buffer),
-                    new Rectangle(0, 0, Width, Height)
-                ));
-
+                if (PaintBuffer != null)
+                    PaintBuffer(this, new PaintEventArgs(
+                        Graphics.FromImage(Buffer),
+                        new Rectangle(0, 0, Width, Height)
+                    ));
+            }
             base.Refresh();
         }
 
-        void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
+        private void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);
         }
