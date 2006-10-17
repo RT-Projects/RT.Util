@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="ArithmeticCoding.cs" />
     <Compile Include="CRC.cs" />
+    <Compile Include="EventDrivenSim.cs" />
     <Compile Include="Forms.cs">
       <SubType>Form</SubType>
     </Compile>
