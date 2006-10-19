@@ -40,10 +40,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArithmeticCoding.cs" />
+    <Compile Include="BitmapUtil.cs" />
     <Compile Include="CRC.cs" />
     <Compile Include="EventDrivenSim.cs" />
     <Compile Include="Forms.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InputBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InputBox.Designer.cs">
+      <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="PackedBooleans.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -52,6 +59,12 @@
     <Compile Include="StateMachine.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="WinAPI.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="InputBox.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>InputBox.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
