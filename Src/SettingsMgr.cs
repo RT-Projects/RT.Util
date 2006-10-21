@@ -147,8 +147,8 @@ namespace RT.Util
 
         public static string UnmakeSingleString(string val)
         {
-            val = Regex.Replace(val, @"(^|[^\])(\\\\)*\\R", "\r");
-            val = Regex.Replace(val, @"(^|[^\])(\\\\)*\\N", "\n");
+            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\R", "\r");
+            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\N", "\n");
             val = val.Replace(@"\\", @"\");
             return val;
         }
