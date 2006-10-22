@@ -196,5 +196,31 @@ namespace RT.Util
                 base.Show();
         }
 
+        /// <summary>
+        /// Load form settings from the specified store, section and value prefix. The
+        /// following settings are loaded: Width, Height, Left, Top, Maximized.
+        /// </summary>
+        public void LoadSettings(SettingsStore store, string section, string val_prefix)
+        {
+            Width = store.GetInt(section, val_prefix + "Width", Width);
+            Height = store.GetInt(section, val_prefix + "Height", Height);
+            Left = store.GetInt(section, val_prefix + "Left", Screen.PrimaryScreen.WorkingArea.Width/2 - Width/2);
+            Top = store.GetInt(section, val_prefix + "Top", Screen.PrimaryScreen.WorkingArea.Height/2 - Height/2);
+            if (store.GetBool(section, val_prefix + "Maximized", false))
+                Maximized = true;
+        }
+
+        /// <summary>
+        /// Save form settings to the specified store, section and value prefix. The
+        /// following settings are saved: Width, Height, Left, Top, Maximized.
+        /// </summary>
+        public void SaveSettings(SettingsStore store, string section, string val_prefix)
+        {
+            store.Set(section, val_prefix + "Width", NormalWidth);
+            store.Set(section, val_prefix + "Height", NormalHeight);
+            store.Set(section, val_prefix + "Left", NormalLeft);
+            store.Set(section, val_prefix + "Top", NormalTop);
+            store.Set(section, val_prefix + "Maximized", Maximized);
+        }
     }
 }
