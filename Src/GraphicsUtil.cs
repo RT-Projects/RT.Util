@@ -7,7 +7,7 @@ using System.Drawing.Drawing2D;
 
 namespace RT.Util
 {
-    public class BitmapUtil
+    public class GraphicsUtil
     {
         public static void DrawImageAlpha(Graphics g, Image Image, Rectangle DestRect, float Opacity)
         {

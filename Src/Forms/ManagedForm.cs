@@ -10,14 +10,20 @@ namespace RT.Util
     /// </summary>
     public class ManagedForm : Form
     {
+        private FormWindowState PrevWindowState;
+        private bool StateMaximized;
+        private bool StateMinimized;
+        private int FNormalWidth, FNormalHeight;
+        private int FNormalLeft, FNormalTop;
+
         public ManagedForm()
         {
             // Load event: registers with the FormManager
             Load += new EventHandler(ManagedForm_Load);
             // FormClose event: unregisters with the FormManager
-            FormClosed += new FormClosedEventHandler(RaForm_FormClosed);
+            FormClosed += new FormClosedEventHandler(ManagedForm_FormClosed);
             // SizeChanged event: keeps track of minimize/maximize
-            SizeChanged += new EventHandler(RaForm_SizeChanged);
+            SizeChanged += new EventHandler(ManagedForm_SizeChanged);
 
             PrevWindowState = WindowState;
 
@@ -38,21 +44,21 @@ namespace RT.Util
             }
         }
 
-        void ManagedForm_Load(object sender, EventArgs e)
+        private void ManagedForm_Load(object sender, EventArgs e)
         {
             // Register with the FormManager
             if (!DesignMode)
                 FormManager.FormCreated(this.GetType(), this);
         }
 
-        void RaForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void ManagedForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             // Notify the form manager that this form is gone
             if (!DesignMode)
                 FormManager.FormClosed(this.GetType());
         }
 
-        void RaForm_SizeChanged(object sender, EventArgs e)
+        private void ManagedForm_SizeChanged(object sender, EventArgs e)
         {
             // Update normal size
             if (WindowState == FormWindowState.Normal)
@@ -94,12 +100,6 @@ namespace RT.Util
                 PrevWindowState = WindowState;
             }
         }
-
-        private FormWindowState PrevWindowState;
-        private bool StateMaximized;
-        private bool StateMinimized;
-        private int FNormalWidth, FNormalHeight;
-        private int FNormalLeft, FNormalTop;
 
         public bool Minimized
         {
@@ -185,92 +185,4 @@ namespace RT.Util
         }
 
     }
-
-
-    public static class FormManager
-    {
-        private static Dictionary<Type, ManagedForm> Instances = new Dictionary<Type, ManagedForm>();
-
-        internal static void FormCreated(Type type, ManagedForm instance)
-        {
-            if (Instances.ContainsKey(type))
-                throw new Exception("Attempted to create an instance of the form '" + type.ToString() + "' when another one is opened.");
-            else
-                Instances.Add(type, instance);
-        }
-
-        internal static void FormClosed(Type type)
-        {
-            if (!Instances.ContainsKey(type))
-                throw new Exception("Attempted to close form '" + type.ToString() + "' when no instances are stored by FormManager.");
-            else
-                Instances.Remove(type);
-        }
-
-        public static T GetForm<T>() where T : ManagedForm
-        {
-            T form;
-            if (Instances.ContainsKey(typeof(T)))
-                form = (T)Instances[typeof(T)];
-            else
-            {
-                // Create from a private constructor. Since this form is derived from
-                // ManagedForm, creating an instance will automatically notify the FormManager
-                // which adds the form to Instances.
-                try
-                {
-                    form = typeof(T).InvokeMember(typeof(T).Name,
-                        System.Reflection.BindingFlags.CreateInstance,
-                        null, null, null) as T;
-                }
-                catch (Exception E)
-                {
-                    // It looks like the derived form constructor has thrown an exception.
-                    // Whatever the reason, ensure that there is no instance of this form
-                    // stored by the FormManager. Propagate the exception in any case.
-                    if (Instances.ContainsKey(typeof(T)))
-                        Instances.Remove(typeof(T));
-                    throw E;
-                }
-            }
-            return form;
-        }
-
-        public static void ShowForm<T>() where T : ManagedForm
-        {
-            GetForm<T>().Show();
-        }
-
-        public static void HideForm<T>() where T : ManagedForm
-        {
-            GetForm<T>().Hide();
-        }
-    }
-
-
-    //public class SingleForm<T> : RaForm where T : Form,new()
-    //{
-    //    private SingleForm()
-    //    {
-    //        SingleInstance.CreatedInstance(this);
-    //    }
-
-    //    protected override void Dispose(bool disposing)
-    //    {
-    //        SingleInstance.DisposedInstance(this);
-    //        base.Dispose(disposing);
-    //    }
-
-    //    public T Instance
-    //    {
-            
-    //        get { return SingleInstance.GetInstance<T>(false); }
-    //    }
-
-    //    public virtual void ShowForm()
-    //    {
-    //        T form = SingleInstance.GetInstance<T>(true);
-    //        form.Show();
-    //    }
-    //}
 }
