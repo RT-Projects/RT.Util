@@ -22,8 +22,10 @@ namespace RT.Util
             Load += new EventHandler(ManagedForm_Load);
             // FormClose event: unregisters with the FormManager
             FormClosed += new FormClosedEventHandler(ManagedForm_FormClosed);
-            // SizeChanged event: keeps track of minimize/maximize
+            // SizeChanged event: keeps track of minimize/maximize and normal size
             SizeChanged += new EventHandler(ManagedForm_SizeChanged);
+            // Move event: keeps track of normal position
+            Move += new EventHandler(ManagedForm_Move);
 
             PrevWindowState = WindowState;
 
@@ -98,6 +100,16 @@ namespace RT.Util
                 }
 
                 PrevWindowState = WindowState;
+            }
+        }
+
+        void ManagedForm_Move(object sender, EventArgs e)
+        {
+            // Update normal size
+            if (WindowState == FormWindowState.Normal)
+            {
+                FNormalLeft = Left;
+                FNormalTop = Top;
             }
         }
 
