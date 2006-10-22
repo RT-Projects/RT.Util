@@ -54,6 +54,15 @@ namespace RT.Util
 
         void RaForm_SizeChanged(object sender, EventArgs e)
         {
+            // Update normal size
+            if (WindowState == FormWindowState.Normal)
+            {
+                FNormalWidth = Width;
+                FNormalHeight = Height;
+                FNormalLeft = Left;
+                FNormalTop = Top;
+            }
+
             if (WindowState != PrevWindowState)
             {
                 // Set new state
@@ -89,6 +98,8 @@ namespace RT.Util
         private FormWindowState PrevWindowState;
         private bool StateMaximized;
         private bool StateMinimized;
+        private int FNormalWidth, FNormalHeight;
+        private int FNormalLeft, FNormalTop;
 
         public bool Minimized
         {
@@ -137,6 +148,26 @@ namespace RT.Util
                 StateMaximized = value;
             }
         }
+
+        /// <summary>
+        /// Gets the width of the form when in normal state (i.e. not minimized or maximized)
+        /// </summary>
+        public int NormalWidth { get { return FNormalWidth; } }
+
+        /// <summary>
+        /// Gets the height of the form when in normal state (i.e. not minimized or maximized)
+        /// </summary>
+        public int NormalHeight { get { return FNormalHeight; } }
+
+        /// <summary>
+        /// Gets the X-coordinate of the form when in normal state (i.e. not minimized or maximized)
+        /// </summary>
+        public int NormalLeft { get { return FNormalLeft; } }
+
+        /// <summary>
+        /// Gets the Y-coordinate of the form when in normal state (i.e. not minimized or maximized)
+        /// </summary>
+        public int NormalTop { get { return FNormalTop; } }
 
         /// <summary>
         /// Shows the form properly: if it is visible but minimized it will be restored

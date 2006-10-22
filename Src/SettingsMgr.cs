@@ -79,6 +79,24 @@ namespace RT.Util
         }
 
         #endregion
+
+        #region Bool
+
+        public abstract bool GetBool(string section, string name);
+        public abstract void SetBool(string section, string name, bool val);
+
+        public void Set(string section, string name, bool val)
+        {
+            SetBool(section, name, val);
+        }
+
+        public bool GetBool(string section, string name, bool def)
+        {
+            try { return GetBool(section, name); }
+            catch { return def; }
+        }
+
+        #endregion
     }
 
     public class ConfigFile : SettingsStore
@@ -147,8 +165,8 @@ namespace RT.Util
 
         public static string UnmakeSingleString(string val)
         {
-            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\R", "\r");
-            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\N", "\n");
+            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\R", "$1\r");
+            val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\N", "$1\n");
             val = val.Replace(@"\\", @"\");
             return val;
         }
@@ -193,6 +211,16 @@ namespace RT.Util
         public override int GetInt(string section, string name)
         {
             return int.Parse(GetString(section, name));
+        }
+
+        public override void SetBool(string section, string name, bool val)
+        {
+            SetString(section, name, val.ToString());
+        }
+
+        public override bool GetBool(string section, string name)
+        {
+            return bool.Parse(GetString(section, name));
         }
 
     }
