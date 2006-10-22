@@ -180,38 +180,9 @@ namespace RT.Util.FSM
         //}
     }
 
-    //public abstract class State
-    //{
-    //    public abstract void BeforeExit(State NewState);
-    //    public abstract void AfterExit(State NewState);
-    //    public abstract void BeforeEnter(State OldState);
-    //    public abstract void AfterEnter(State OldState);
-    //    public abstract State ProcessInput(object Input);
-
-    //    /// <summary>
-    //    /// A general use piece of information (not used by the basic implementation
-    //    /// of the FSM class).
-    //    /// </summary>
-    //    public object Tag;
-    //}
-
     public class FsmEvent_Entered
     {
     }
-
-    //public class FsmEvent_Timer
-    //{
-    //    public object Tag;
-    //    public TimeSpan Timeout;
-
-    //    private FsmEvent_Timer() { }
-
-    //    public FsmEvent_Timer(TimeSpan Timeout, object Tag)
-    //    {
-    //        this.Timeout = Timeout;
-    //        this.Tag = Tag;
-    //    }
-    //}
 
     public class FsmEvent_User
     {

@@ -189,14 +189,4 @@ namespace RT.Util
 
         #endregion
     }
-
-
-    [Serializable]
-    public class SortedSet<T> : Set<T>
-    {
-        public void Sort(Comparison<T> comparison)
-        {
-            L.Sort(comparison);
-        }
-    }
 }
