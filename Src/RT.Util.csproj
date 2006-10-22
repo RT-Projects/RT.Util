@@ -59,6 +59,7 @@
     <Compile Include="SingleInstance.cs" />
     <Compile Include="StateMachine.cs" />
     <Compile Include="Util.cs" />
+    <Compile Include="Virtual2DArray.cs" />
     <Compile Include="WinAPI.cs" />
   </ItemGroup>
   <ItemGroup>
