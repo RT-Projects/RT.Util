@@ -29,7 +29,7 @@ namespace RT.Util
         {
             List<List<Point>> ActiveSegments = new List<List<Point>>();
             List<Point[]> CompletedPaths = new List<Point[]>();
-            for (int y = 0; y < Input.Height-1; y++)
+            for (int y = 0; y <= Input.Height; y++)
             {
                 List<RTUtilPathEvent> Events = FindEvents(ActiveSegments, Input, y);
                 for (int i = 0; i < Events.Count; i += 2)
@@ -129,9 +129,12 @@ namespace RT.Util
             List<RTUtilPathEvent> Results = new List<RTUtilPathEvent>();
 
             // First add all the validity change events in the correct order
-            for (int x = 1; x < Input.Width; x++)
-                if (Input.Get(x, y) != Input.Get(x - 1, y))
-                    Results.Add(new RTUtilPathEventChange(x));
+            if (y < Input.Height)
+            {
+                for (int x = 0; x <= Input.Width; x++)  // "<=" is intentional
+                    if (Input.Get(x, y) != Input.Get(x - 1, y))
+                        Results.Add(new RTUtilPathEventChange(x));
+            }
 
             // Now insert the segment events in the right places
             for (int i = 0; i < ActiveSegments.Count; i++)
