@@ -205,7 +205,7 @@ namespace RT.Controls
             // imgInfo
             // 
             this.imgInfo.BackColor = System.Drawing.Color.Transparent;
-            this.imgInfo.Image = global::RT.Controls.Properties.Resources.info;
+            this.imgInfo.Image = global::RT.Util.Resources.Resources.info;
             this.imgInfo.Location = new System.Drawing.Point(0, 0);
             this.imgInfo.Margin = new System.Windows.Forms.Padding(0);
             this.imgInfo.Name = "imgInfo";
@@ -217,7 +217,7 @@ namespace RT.Controls
             // imgQuestion
             // 
             this.imgQuestion.BackColor = System.Drawing.Color.Transparent;
-            this.imgQuestion.Image = global::RT.Controls.Properties.Resources.question;
+            this.imgQuestion.Image = global::RT.Util.Resources.Resources.question;
             this.imgQuestion.Location = new System.Drawing.Point(0, 0);
             this.imgQuestion.Margin = new System.Windows.Forms.Padding(0);
             this.imgQuestion.Name = "imgQuestion";
@@ -229,7 +229,7 @@ namespace RT.Controls
             // imgError
             // 
             this.imgError.BackColor = System.Drawing.Color.Transparent;
-            this.imgError.Image = global::RT.Controls.Properties.Resources.error;
+            this.imgError.Image = global::RT.Util.Resources.Resources.error;
             this.imgError.Location = new System.Drawing.Point(0, 0);
             this.imgError.Margin = new System.Windows.Forms.Padding(0);
             this.imgError.Name = "imgError";
@@ -241,7 +241,7 @@ namespace RT.Controls
             // imgWarning
             // 
             this.imgWarning.BackColor = System.Drawing.Color.Transparent;
-            this.imgWarning.Image = global::RT.Controls.Properties.Resources.warning;
+            this.imgWarning.Image = global::RT.Util.Resources.Resources.warning;
             this.imgWarning.Location = new System.Drawing.Point(0, 0);
             this.imgWarning.Margin = new System.Windows.Forms.Padding(0);
             this.imgWarning.Name = "imgWarning";
