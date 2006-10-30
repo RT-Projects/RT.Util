@@ -95,6 +95,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Set.cs" />
+    <Compile Include="Settings\EasySettings.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsFile.cs" />
     <Compile Include="Settings\SettingsStore.cs" />
