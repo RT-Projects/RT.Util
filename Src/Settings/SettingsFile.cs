@@ -3,22 +3,72 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+using System.IO.Compression;
+using System.Globalization;
 
-namespace RT.Util
+namespace RT.Util.Settings
 {
-    public class SettingsFile : SettingsStore
+    /// <summary>
+    /// Binary file settings store. The settings are serialized into a
+    /// gzipped binary stream.
+    /// TBD: To avoid the overhead of serializing the generic Dictionary,
+    ///      write the tree manually into a BinaryWriter stream.
+    /// </summary>
+    public class SettingsBinaryFile : SettingsStore
     {
-        private Dictionary<string, Dictionary<string, string>> Data = new Dictionary<string, Dictionary<string, string>>();
+        public void LoadFromFile(string filename)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream fs = null;
+            GZipStream gz = null;
+            try
+            {
+                fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                gz = new GZipStream(fs, CompressionMode.Decompress);
+                Data = (Dir)bf.Deserialize(gz);
+            }
+            finally
+            {
+                if (gz != null) gz.Close();
+                if (fs != null) fs.Close();
+            }
+        }
 
+        public void SaveToFile(string filename)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream fs = null;
+            GZipStream gz = null;
+            try
+            {
+                fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.Read);
+                gz = new GZipStream(fs, CompressionMode.Compress);
+                bf.Serialize(gz, Data);
+            }
+            finally
+            {
+                if (gz != null) gz.Close();
+                if (fs != null) fs.Close();
+            }
+        }
+    }
+
+    /// <summary>
+    /// A text file settings store.
+    /// TBD: This is quite incomplete.
+    /// </summary>
+    public class SettingsTextFile : SettingsStore
+    {
         public void LoadFromFile(string name)
         {
             string[] lines = File.ReadAllLines(name, Encoding.UTF8);
-            string cursec = "";
-            Data.Clear();
-            Data.Add("", new Dictionary<string, string>());
-            Regex rgSection = new Regex(@"^\s*\[\s*(.*?)\s*\]\s*$");
+            List<string> path = new List<string>();
+            Regex rgSection = new Regex(@"^\s*(\[+)\s*(.*?)\s*(\]+)\s*$");
             Regex rgValue = new Regex(@"^\s*([^=]*?)\s*=\s*(.*?)\s*$");
 
+            Data = new Dir();
             foreach (string ln in lines)
             {
                 if (ln.Trim().Length == 0)
@@ -27,45 +77,82 @@ namespace RT.Util
                 Match ms = rgSection.Match(ln);
                 Match mv = rgValue.Match(ln);
 
-                if (ms.Success)
-                {
-                    cursec = UnmakeSingleString(ms.Groups[1].Value);
-                    if (!Data.ContainsKey(cursec))
-                        Data.Add(cursec, new Dictionary<string, string>());
-                }
-                else if (mv.Success)
-                    Data[cursec][UnmakeSingleString(mv.Groups[1].Value)] =
-                        UnmakeSingleString(mv.Groups[2].Value);
-                else
-                    throw new Exception("Cannot parse line: " + ln);
+                //if (ms.Success)
+                //{
+                //    // Section matches
+                //    if (ms.Groups[1].Length != ms.Groups[3].Length)
+                //        throw new Exception("Cannot parse line: " + ln);
+                //    cursec = UnmakeSingleString(ms.Groups[2].Value);
+                //    if (!Data.ContainsKey(cursec))
+                //        Data.Add(cursec, new Dictionary<string, string>());
+                //}
+                //else if (mv.Success)
+                //{
+                //    // Data matches
+                //    Data[cursec][UnmakeSingleString(mv.Groups[1].Value)] =
+                //        UnmakeSingleString(mv.Groups[2].Value);
+                //}
+                //else
+                //    throw new Exception("Cannot parse line: " + ln);
             }
         }
 
         public void SaveToFile(string name)
         {
             List<string> lines = new List<string>();
-
-            foreach (KeyValuePair<string, Dictionary<string, string>> kvp in Data)
-            {
-                // Add section header
-                if (kvp.Key != "")
-                {
-                    lines.Add("");
-                    lines.Add("["+MakeSingleString(kvp.Key)+"]");
-                }
-                // Add items
-                foreach (KeyValuePair<string, string> kp in kvp.Value)
-                    lines.Add(MakeSingleString(kp.Key) + " = " + MakeSingleString(kp.Value));
-            }
+            SaveDir("", 0, Data, lines);
 
             // Save
             File.WriteAllLines(name, lines.ToArray(), Encoding.UTF8);
         }
 
+        private void SaveDir(string dirname, int dirdepth, Dir dir, List<string> lines)
+        {
+            // Section name
+            string sn = dirname;
+            string sp = "";
+            for (int i=0; i<dirdepth; i++)
+            {
+                sn = "[" + sn + "]";
+                sp = sp + " ";
+            }
+            if (dirdepth != 0)
+            {
+                if ((dirdepth == 1) && (lines.Count != 0))
+                    lines.Add("");
+                lines.Add(sn);
+            }
+            // Values
+            foreach (KeyValuePair<string, object> kvp in dir.Vals)
+                lines.Add(sp + MakeSingleString(kvp.Key) + " = " + Stringify(kvp.Value));
+            // Subdirs
+            foreach (KeyValuePair<string, Dir> kvp in dir.Dirs)
+                SaveDir(kvp.Key, dirdepth+1, kvp.Value, lines);
+        }
+
+        private string Stringify(object p)
+        {
+            IFormatProvider fmt = CultureInfo.InvariantCulture.NumberFormat;
+            if (p is int)
+                return "i:"+((int)p).ToString(fmt);
+            else if (p is long)
+                return "l:"+((long)p).ToString(fmt);
+            else if (p is double)
+                return "d:"+((double)p).ToString(fmt);
+            else if (p is decimal)
+                return "m:"+((decimal)p).ToString(fmt);
+            else if (p is bool)
+                return "b:"+((bool)p).ToString(fmt);
+            else if (p is string)
+                return "s:"+MakeSingleString(p as string);
+            else
+                return "<TYPE STRINGIFICATION HAS NOT BEEN IMPLEMENTED>";
+        }
+
         public static string MakeSingleString(string val)
         {
             val = val.Replace(@"\", @"\\");
-            val = val.Replace("\r",@"\R");
+            val = val.Replace("\r", @"\R");
             val = val.Replace("\n", @"\N");
             return val;
         }
@@ -76,58 +163,6 @@ namespace RT.Util
             val = Regex.Replace(val, @"(^|[^\\])(\\\\)*\\N", "$1\n");
             val = val.Replace(@"\\", @"\");
             return val;
-        }
-
-        public override void SetString(string section, string name, string val)
-        {
-            if (!Data.ContainsKey(section))
-                Data[section] = new Dictionary<string, string>();
-            Data[section][name] = val;
-        }
-
-        public override string GetString(string section, string name)
-        {
-            return Data[section][name];
-        }
-
-        public override void SetDouble(string section, string name, double val)
-        {
-            SetString(section, name, val.ToString());
-        }
-
-        public override double GetDouble(string section, string name)
-        {
-            return double.Parse(GetString(section, name));
-        }
-
-        public override void SetDecimal(string section, string name, decimal val)
-        {
-            SetString(section, name, val.ToString());
-        }
-
-        public override decimal GetDecimal(string section, string name)
-        {
-            return decimal.Parse(GetString(section, name));
-        }
-
-        public override void SetInt(string section, string name, int val)
-        {
-            SetString(section, name, val.ToString());
-        }
-
-        public override int GetInt(string section, string name)
-        {
-            return int.Parse(GetString(section, name));
-        }
-
-        public override void SetBool(string section, string name, bool val)
-        {
-            SetString(section, name, val.ToString());
-        }
-
-        public override bool GetBool(string section, string name)
-        {
-            return bool.Parse(GetString(section, name));
         }
 
     }

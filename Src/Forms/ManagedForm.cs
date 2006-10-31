@@ -6,32 +6,16 @@ using RT.Util.Settings;
 
 namespace RT.Util
 {
-    [Serializable]
-    public class ManagedFormSettings
-    {
-        public FormWindowState PrevWindowState = FormWindowState.Normal;
-        public bool StateMaximized = false;
-        public bool StateMinimized = false;
-        public int NormalWidth = 800, NormalHeight = 600;
-        public int NormalLeft = 0, NormalTop = 0;
-        public ManagedFormSettings() { }
-        public ManagedFormSettings(ManagedForm SettingsFrom)
-        {
-            NormalLeft = SettingsFrom.Left;
-            NormalTop = SettingsFrom.Top;
-            NormalWidth = SettingsFrom.Width;
-            NormalHeight = SettingsFrom.Height;
-            StateMaximized = SettingsFrom.Maximized;
-            StateMinimized = SettingsFrom.Minimized;
-        }
-    }
-
     /// <summary>
     /// A form which has all the proper minimize/restore methods
     /// </summary>
     public class ManagedForm : Form
     {
-        private ManagedFormSettings FManagedFormSettings = new ManagedFormSettings();
+        private FormWindowState PrevWindowState;
+        private bool StateMaximized;
+        private bool StateMinimized;
+        private int FNormalWidth, FNormalHeight;
+        private int FNormalLeft, FNormalTop;
 
         public ManagedForm()
         {
@@ -44,37 +28,58 @@ namespace RT.Util
             // Move event: keeps track of normal position
             Move += new EventHandler(ManagedForm_Move);
 
-            FManagedFormSettings.PrevWindowState = WindowState;
+            PrevWindowState = WindowState;
 
             switch (WindowState)
             {
                 case FormWindowState.Minimized:
-                    FManagedFormSettings.StateMinimized = true;
-                    FManagedFormSettings.StateMaximized = false; // (guessing?)
+                    StateMinimized = true;
+                    StateMaximized = false; // (guessing?)
                     break;
                 case FormWindowState.Maximized:
-                    FManagedFormSettings.StateMinimized = false;
-                    FManagedFormSettings.StateMaximized = true;
+                    StateMinimized = false;
+                    StateMaximized = true;
                     break;
                 case FormWindowState.Normal:
-                    FManagedFormSettings.StateMinimized = false;
-                    FManagedFormSettings.StateMaximized = false;
+                    StateMinimized = false;
+                    StateMaximized = false;
                     break;
             }
         }
 
         private void ManagedForm_Load(object sender, EventArgs e)
         {
-            // Register with the FormManager
             if (!DesignMode)
+            {
+                // Load settings
+                SettingsStore st = PrgSettings.Store;
+                string path = "Managed-Form-Settings." + this.GetType().ToString() + ".";
+                Width = st.Get(path + "Width", Width);
+                Height = st.Get(path + "Height", Height);
+                Left = st.Get(path + "Left", Screen.PrimaryScreen.WorkingArea.Width/2 - Width/2);
+                Top = st.Get(path + "Top", Screen.PrimaryScreen.WorkingArea.Height/2 - Height/2);
+                if (st.Get(path + "Maximized", false))
+                    Maximized = true;
+                // Register with the FormManager
                 FormManager.FormCreated(this.GetType(), this);
+            }
         }
 
         private void ManagedForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            // Notify the form manager that this form is gone
             if (!DesignMode)
+            {
+                // Save settings
+                SettingsStore st = PrgSettings.Store;
+                string path = "Managed-Form-Settings." + this.GetType().ToString() + ".";
+                st.Set(path + "Width", NormalWidth);
+                st.Set(path + "Height", NormalHeight);
+                st.Set(path + "Left", NormalLeft);
+                st.Set(path + "Top", NormalTop);
+                st.Set(path + "Maximized", Maximized);
+                // Notify the form manager that this form is gone
                 FormManager.FormClosed(this.GetType());
+            }
         }
 
         private void ManagedForm_SizeChanged(object sender, EventArgs e)
@@ -82,41 +87,41 @@ namespace RT.Util
             // Update normal size
             if (WindowState == FormWindowState.Normal)
             {
-                FManagedFormSettings.NormalWidth = Width;
-                FManagedFormSettings.NormalHeight = Height;
-                FManagedFormSettings.NormalLeft = Left;
-                FManagedFormSettings.NormalTop = Top;
+                FNormalWidth = Width;
+                FNormalHeight = Height;
+                FNormalLeft = Left;
+                FNormalTop = Top;
             }
 
-            if (WindowState != FManagedFormSettings.PrevWindowState)
+            if (WindowState != PrevWindowState)
             {
                 // Set new state
                 switch (WindowState)
                 {
                     case FormWindowState.Minimized:
-                        FManagedFormSettings.StateMinimized = true;
+                        StateMinimized = true;
                         break;
                     case FormWindowState.Maximized:
-                        FManagedFormSettings.StateMaximized = true;
+                        StateMaximized = true;
                         break;
                     case FormWindowState.Normal:
                         // Fix for maximize while minimized
-                        if (FManagedFormSettings.StateMaximized && FManagedFormSettings.PrevWindowState == FormWindowState.Minimized)
+                        if (StateMaximized && PrevWindowState == FormWindowState.Minimized)
                             WindowState = FormWindowState.Maximized;
                         else
-                            FManagedFormSettings.StateMaximized = false;
+                            StateMaximized = false;
                         break;
                 }
 
                 // Unset old state
-                switch (FManagedFormSettings.PrevWindowState)
+                switch (PrevWindowState)
                 {
                     case FormWindowState.Minimized:
-                        FManagedFormSettings.StateMinimized = false;
+                        StateMinimized = false;
                         break;
                 }
 
-                FManagedFormSettings.PrevWindowState = WindowState;
+                PrevWindowState = WindowState;
             }
         }
 
@@ -125,8 +130,8 @@ namespace RT.Util
             // Update normal size
             if (WindowState == FormWindowState.Normal)
             {
-                FManagedFormSettings.NormalLeft = Left;
-                FManagedFormSettings.NormalTop = Top;
+                FNormalLeft = Left;
+                FNormalTop = Top;
             }
         }
 
@@ -134,11 +139,11 @@ namespace RT.Util
         {
             get
             {
-                return FManagedFormSettings.StateMinimized;
+                return StateMinimized;
             }
             set
             {
-                if (FManagedFormSettings.StateMinimized == value)
+                if (StateMinimized == value)
                     return;
 
                 if (value)
@@ -146,9 +151,9 @@ namespace RT.Util
                     WindowState = FormWindowState.Minimized;
                 else
                     // Un-minimize
-                    WindowState = FManagedFormSettings.StateMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
+                    WindowState = StateMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
 
-                FManagedFormSettings.StateMinimized = value;
+                StateMinimized = value;
             }
         }
 
@@ -156,15 +161,15 @@ namespace RT.Util
         {
             get
             {
-                return FManagedFormSettings.StateMaximized;
+                return StateMaximized;
             }
             set
             {
-                if (FManagedFormSettings.StateMaximized == value)
+                if (StateMaximized == value)
                     return;
 
                 // Don't change the actual state if the window is minimized
-                if (!FManagedFormSettings.StateMinimized)
+                if (!StateMinimized)
                 {
                     if (value)
                         // Maximize
@@ -174,29 +179,29 @@ namespace RT.Util
                         WindowState = FormWindowState.Normal;
                 }
 
-                FManagedFormSettings.StateMaximized = value;
+                StateMaximized = value;
             }
         }
 
         /// <summary>
         /// Gets the width of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalWidth { get { return FManagedFormSettings.NormalWidth; } }
+        public int NormalWidth { get { return FNormalWidth; } }
 
         /// <summary>
         /// Gets the height of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalHeight { get { return FManagedFormSettings.NormalHeight; } }
+        public int NormalHeight { get { return FNormalHeight; } }
 
         /// <summary>
         /// Gets the X-coordinate of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalLeft { get { return FManagedFormSettings.NormalLeft; } }
+        public int NormalLeft { get { return FNormalLeft; } }
 
         /// <summary>
         /// Gets the Y-coordinate of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalTop { get { return FManagedFormSettings.NormalTop; } }
+        public int NormalTop { get { return FNormalTop; } }
 
         /// <summary>
         /// Shows the form properly: if it is visible but minimized it will be restored
@@ -211,36 +216,6 @@ namespace RT.Util
             }
             else
                 base.Show();
-        }
-
-        /// <summary>
-        /// Loads Width, Height, Left, Top, and Maximized from EasySettings.
-        /// </summary>
-        public void LoadSettings(string UniqueName)
-        {
-            object Output;
-            bool Success = EasySettings.Settings.TryGetValue("Managed form " + UniqueName, out Output);
-            if (Success && Output is ManagedFormSettings)
-            {
-                // Restore the window position and state from the settings
-                Width = (Output as ManagedFormSettings).NormalWidth;
-                Height = (Output as ManagedFormSettings).NormalHeight;
-                Left = (Output as ManagedFormSettings).NormalLeft;
-                Top = (Output as ManagedFormSettings).NormalTop;
-                Maximized = (Output as ManagedFormSettings).StateMaximized;
-
-                // Overwrite FSettings now - not earlier, because the above will have triggered events
-                FManagedFormSettings = Output as ManagedFormSettings;
-            }
-            else FManagedFormSettings = new ManagedFormSettings(this);
-        }
-
-        /// <summary>
-        /// Saves Width, Height, Left, Top, and Maximized to EasySettings.
-        /// </summary>
-        public void SaveSettings(string UniqueName)
-        {
-            EasySettings.Set("Managed form " + UniqueName, FManagedFormSettings);
         }
     }
 }
