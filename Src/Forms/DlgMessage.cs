@@ -8,7 +8,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
-namespace RT.Controls
+namespace RT.Util.Dialogs
 {
     public enum DlgType
     {

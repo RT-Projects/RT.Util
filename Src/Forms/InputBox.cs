@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
-namespace RT.Util
+namespace RT.Util.Dialogs
 {
     public partial class InputBox : Form
     {

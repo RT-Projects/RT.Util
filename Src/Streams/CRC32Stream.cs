@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
-namespace RT.Util
+namespace RT.Util.Streams
 {
     /// <summary>
     /// Calculates CRC32 checksum of all values that are read/written via this stream.

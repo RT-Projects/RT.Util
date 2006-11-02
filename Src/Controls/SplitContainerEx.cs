@@ -6,7 +6,7 @@ using System.Data;
 using System.Text;
 using System.Windows.Forms;
 
-namespace RT.Controls
+namespace RT.Util.Controls
 {
     /// <summary>
     /// SplitContainerEx provides such "advanced" features as painting the bloody splitter.

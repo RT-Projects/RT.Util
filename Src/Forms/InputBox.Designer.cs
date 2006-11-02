@@ -1,4 +1,4 @@
-namespace RT.Util
+namespace RT.Util.Dialogs
 {
     partial class InputBox
     {

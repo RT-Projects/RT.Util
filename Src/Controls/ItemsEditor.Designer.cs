@@ -1,4 +1,4 @@
-namespace RT.Controls
+namespace RT.Util.Controls
 {
     partial class ItemsEditor
     {

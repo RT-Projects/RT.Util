@@ -6,7 +6,7 @@ using System.Data;
 using System.Text;
 using System.Windows.Forms;
 
-namespace RT.Controls
+namespace RT.Util.Controls
 {
     public partial class Separator : UserControl
     {

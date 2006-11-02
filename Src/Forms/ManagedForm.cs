@@ -4,7 +4,7 @@ using System.Text;
 using System.Windows.Forms;
 using RT.Util.Settings;
 
-namespace RT.Util
+namespace RT.Util.Forms
 {
     /// <summary>
     /// A form which has all the proper minimize/restore methods

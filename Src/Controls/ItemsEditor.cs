@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Windows.Forms;
+using RT.Util.Dialogs;
 //using XPTable.Models;
 
-namespace RT.Controls
+namespace RT.Util.Controls
 {
     public partial class ItemsEditor : Component
     {

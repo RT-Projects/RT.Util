@@ -13,7 +13,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
 using System.Drawing.Drawing2D;
 
-namespace RT.Controls
+namespace RT.Util.Controls
 {
     public class DoubleBufferedPanel : Panel
     {
