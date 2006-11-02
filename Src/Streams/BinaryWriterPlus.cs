@@ -31,7 +31,7 @@ namespace RT.Util.Streams
         /// requiring a sign bit, however this way the positive values are directly
         /// compatible with unsigned Optim values.
         /// </summary>
-        public virtual void WriteOptim(int val)
+        public virtual void WriteInt32Optim(int val)
         {
             byte b = 0;
             while (true)
@@ -49,11 +49,11 @@ namespace RT.Util.Streams
         }
 
         /// <summary>
-        /// See the "int" version of this function for more info. Note that values
+        /// See WriteInt32Optim of this function for more info. Note that values
         /// written by this function cannot be safely read as signed ints, but the
         /// other way is fine.
         /// </summary>
-        public virtual void WriteOptim(uint val)
+        public virtual void WriteUInt32Optim(uint val)
         {
             byte b = 0;
             while (true)

@@ -15,7 +15,7 @@ namespace RT.Util.Streams
         public BinaryReaderPlus(Stream output, Encoding encoding) : base(output, encoding) { }
 
         /// <summary>
-        /// Reads an int written by WriteOptim(int) or WriteOptim(uint) of the
+        /// Reads an int written by WriteInt32Optim or WriteUInt32Optim of the
         /// BinaryWriterPlus class. See those methods for details.
         /// </summary>
         public int ReadInt32Optim()
@@ -39,7 +39,7 @@ namespace RT.Util.Streams
         }
 
         /// <summary>
-        /// Reads an int written by WriteOptim(uint) of the BinaryWriterPlus
+        /// Reads an int written by WriteUInt32Optim of the BinaryWriterPlus
         /// class. See that method for details.
         /// </summary>
         public int ReadUInt32Optim()
