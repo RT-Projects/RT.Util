@@ -15,7 +15,34 @@ namespace RT.Util.Settings
             public Dictionary<string, object> Vals = new Dictionary<string, object>();
         }
 
+        /// <summary>
+        /// This structure holds all the settings. The reason this object is protected is
+        /// that derived classes may choose to store settings elsewhere (or nowhere at all
+        /// other than the target non-volatile store, such as the registry), so Data may
+        /// not even contain anything.
+        /// </summary>
         protected Dir Data = new Dir();
+
+        /// <summary>
+        /// Derived classes implement this to load the settings from a permanent store.
+        /// It is possible that some derived classes will override GetObject in
+        /// such a way that LoadSettings is not necessary.
+        /// </summary>
+        public abstract void LoadSettings();
+
+        /// <summary>
+        /// Derived classes implement this to save the settings to a permanent store.
+        /// It is possible that some derived classes will override SetObject in
+        /// such a way that SaveSettings is not necessary.
+        /// </summary>
+        public abstract void SaveSettings();
+
+        /// <summary>
+        /// If true, all paths are treated as unique names storing everything
+        /// in a flat structure. E.g. "some.setting" and "one.more.setting"
+        /// will be both stored in the root dir.
+        /// </summary>
+        public bool UseFlatNames = false;
 
         /// <summary>
         /// Turns a string path into an array of string elements. For example,
@@ -23,15 +50,31 @@ namespace RT.Util.Settings
         /// </summary>
         public string[] MakePath(string path)
         {
-            // This is somewhat simplified; a perfect function would allow the
-            // dots to be escaped.
-            return path.Split('.');
+            if (UseFlatNames)
+            {
+                return new string[] { path };
+            }
+            else
+            {
+                // This is somewhat simplified; a perfect function would allow the
+                // dots to be escaped.
+                return path.Split('.');
+            }
         }
 
-        /// Here you go Timwi :)
+        // Here you go Timwi :)
         #region Object
 
-        public object GetObject(string[] path)
+        /// <summary>
+        /// Obtains the object at the specified path. Throws an Exception with a
+        /// descriptive message if the path or the object does not exist.
+        /// 
+        /// The implementation provided in this class will access settings in the
+        /// Data dictionary, which are loaded / saved by the derived classes. A derived
+        /// class can override this method to implement a different behaviour,
+        /// such as direct read/write to some backing store.
+        /// </summary>
+        public virtual object GetObject(string[] path)
         {
             Dir cur = Data;
             // Navigate to the dir
@@ -48,7 +91,16 @@ namespace RT.Util.Settings
                 throw new Exception("The Settings Store does not contain value \"" + path[i] + "\" under path \"" + string.Join(".", path, 0, i) + "\"");
         }
 
-        public void SetObject(string[] path, object obj)
+        /// <summary>
+        /// Stores an object at the specified path. Automatically creates entries
+        /// in the Data structure for non-existent dirs.
+        /// 
+        /// The implementation provided in this class will access settings in the
+        /// Data dictionary, which are loaded / saved by the derived classes. A derived
+        /// class can override this method to implement a different behaviour,
+        /// such as direct write-through to some backing store.
+        /// </summary>
+        public virtual void SetObject(string[] path, object obj)
         {
             Dir cur = Data;
             // Navigate to the dir
@@ -62,6 +114,12 @@ namespace RT.Util.Settings
             // Store the value
             cur.Vals[path[i]] = obj;
         }
+
+        /// <summary>
+        /// The following methods should also be virtual, and these implementations
+        /// should handle the UseFlatNames setting in such a way as to improve
+        /// efficiency of storage/retrieval. See B-5.
+        /// </summary>
 
         public object GetObject(string path)
         {
