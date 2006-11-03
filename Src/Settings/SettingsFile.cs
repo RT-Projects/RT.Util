@@ -26,16 +26,11 @@ namespace RT.Util.Settings
         private BinaryFormatter BinFmt = new BinaryFormatter();
 
         /// <summary>
-        /// Please forgive this pointless struct with the stupid name, but it is a known
-        /// design "feature" that BinaryWriter cannot serialize "null" unless it's
-        /// the value of a field in a non-null object.
+        /// It is a known design "feature" that BinaryWriter cannot serialize "null"
+        /// so instead we serialise a special object that represents null.
         /// </summary>
         [Serializable]
-        private struct DT
-        {
-            public string NM;
-            public object OB;
-        }
+        private struct NullObject { }
 
         /// <summary>
         /// Loads the settings from a file in the application directory
@@ -106,15 +101,16 @@ namespace RT.Util.Settings
         /// </summary>
         private Dir LoadDir(BinaryReaderPlus br)
         {
-            DT sillything = new DT();
             int nvals;
             Dir dir = new Dir();
             // Load values
             nvals = (int)br.ReadUInt32Optim();
             for (int i=0; i<nvals; i++)
             {
-                sillything = (DT)BinFmt.Deserialize(br.BaseStream);
-                dir.Vals.Add(sillything.NM, sillything.OB);
+                string name = br.ReadString();
+                object value = BinFmt.Deserialize(br.BaseStream);
+                if (value is NullObject) value = null;
+                dir.Vals.Add(name, value);
             }
             // Load dirs
             nvals = (int)br.ReadUInt32Optim();
@@ -131,15 +127,13 @@ namespace RT.Util.Settings
         /// </summary>
         private void SaveDir(Dir dir, BinaryWriterPlus bw)
         {
-            DT sillything = new DT();
             // Save values
             bw.WriteUInt32Optim((uint)dir.Vals.Count);
             foreach (KeyValuePair<string, object> kvp in dir.Vals)
             {
-                sillything.NM = kvp.Key;
-                sillything.OB = kvp.Value;
+                bw.Write(kvp.Key);
                 bw.Flush();
-                BinFmt.Serialize(bw.BaseStream, sillything);
+                BinFmt.Serialize(bw.BaseStream, kvp.Value == null ? new NullObject() : kvp.Value);
             }
             // Save dirs
             bw.WriteUInt32Optim((uint)dir.Dirs.Count);
