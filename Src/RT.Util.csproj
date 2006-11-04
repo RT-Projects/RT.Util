@@ -54,6 +54,12 @@
     <Compile Include="Controls\ItemsEditor.Designer.cs">
       <DependentUpon>ItemsEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\MenuRadioGroup.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\MenuRadioItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\Separator.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -98,7 +104,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Set.cs" />
-    <Compile Include="Settings\EasySettings.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsFile.cs" />
     <Compile Include="Settings\SettingsStore.cs" />
