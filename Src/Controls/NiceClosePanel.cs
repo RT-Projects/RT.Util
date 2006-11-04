@@ -31,8 +31,7 @@ namespace RT.Util.Controls
             for (int i = 2; i < ClientSize.Height-2; i++)
                 e.Graphics.DrawLine(
                     new Pen(Color.FromKnownColor(
-                        i % 3 == 0 ? KnownColor.Control :
-                        i % 3 == 1 ? KnownColor.ControlDark : KnownColor.ControlLightLight
+                        i % 2 == 1 ? KnownColor.ControlDark : KnownColor.ControlLightLight
                     )),
                     0, i, ClientSize.Width-FCloseButton.Width-3, i
                 );
@@ -42,6 +41,7 @@ namespace RT.Util.Controls
         {
             FCloseButton.Size = new Size(ClientSize.Height, ClientSize.Height);
             FCloseButton.Location = new Point(ClientSize.Width-FCloseButton.Width, 0);
+            Refresh();
         }
 
         private void InitializeComponent()
