@@ -81,6 +81,7 @@ namespace RT.Util.Settings
 
         private Dir LoadDir()
         {
+            throw new Exception("The method or operation is not implemented.");
         }
 
         private void SaveDir(string dirname, int dirdepth, Dir dir, List<string> lines)

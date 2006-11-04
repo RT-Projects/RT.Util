@@ -17,7 +17,14 @@ namespace RT.Util.Controls
         }
         public MenuRadioGroup<ValueType> ParentGroup {
             get { return FParentGroup; }
-            set { FParentGroup = value; }
+            set
+            {
+                if (FParentGroup != value)
+                {
+                    FParentGroup = value;
+                    FParentGroup.AddMember(this);
+                }
+            }
         }
 
         public MenuRadioItem() : base()
