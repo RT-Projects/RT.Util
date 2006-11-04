@@ -15,7 +15,6 @@ namespace RT.Util.Settings
 {
     /// <summary>
     /// A text file settings store.
-    /// TBD: This is quite incomplete.
     /// </summary>
     public class SettingsTextFile : SettingsStore
     {
@@ -24,7 +23,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void LoadSettings()
         {
-            string fname = Ut.AppDir + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt";
+            string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt";
             if (File.Exists(fname))
                 LoadFromFile(fname);
         }
@@ -34,7 +33,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void SaveSettings()
         {
-            SaveToFile(Ut.AppDir + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt");
+            SaveToFile(Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt");
         }
 
         public void LoadFromFile(string name)
@@ -77,9 +76,11 @@ namespace RT.Util.Settings
         {
             List<string> lines = new List<string>();
             SaveDir("", 0, Data, lines);
-
-            // Save
             File.WriteAllLines(name, lines.ToArray(), Encoding.UTF8);
+        }
+
+        private Dir LoadDir()
+        {
         }
 
         private void SaveDir(string dirname, int dirdepth, Dir dir, List<string> lines)

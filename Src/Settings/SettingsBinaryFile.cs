@@ -37,7 +37,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void LoadSettings()
         {
-            string fname = Ut.AppDir + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
+            string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
             if (File.Exists(fname))
                 LoadFromFile(fname);
         }
@@ -47,7 +47,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void SaveSettings()
         {
-            SaveToFile(Ut.AppDir + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat");
+            SaveToFile(Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat");
         }
 
         /// <summary>
