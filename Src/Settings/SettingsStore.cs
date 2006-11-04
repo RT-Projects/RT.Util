@@ -138,6 +138,17 @@ namespace RT.Util.Settings
             catch { return def; }
         }
 
+        public T Get<T>(string path)
+        {
+            return (T)GetObject(MakePath(path));
+        }
+
+        public T Get<T>(string path, T def)
+        {
+            try { return (T)GetObject(MakePath(path)); }
+            catch { return def; }
+        }
+
         public void SetObject(string path, object obj)
         {
             SetObject(MakePath(path), obj);
