@@ -105,6 +105,7 @@ namespace RT.Util.Dialogs
             this.Btn2.Text = "s";
             this.Btn2.UseVisualStyleBackColor = true;
             this.Btn2.Visible = false;
+            this.Btn2.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn3
             // 
@@ -121,6 +122,7 @@ namespace RT.Util.Dialogs
             this.Btn3.Text = "button3";
             this.Btn3.UseVisualStyleBackColor = true;
             this.Btn3.Visible = false;
+            this.Btn3.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn0
             // 
@@ -137,6 +139,7 @@ namespace RT.Util.Dialogs
             this.Btn0.Text = "Longish button text";
             this.Btn0.UseVisualStyleBackColor = true;
             this.Btn0.Visible = false;
+            this.Btn0.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn1
             // 
@@ -153,6 +156,7 @@ namespace RT.Util.Dialogs
             this.Btn1.Text = "Some more long text\r\nwow multi-line button!";
             this.Btn1.UseVisualStyleBackColor = true;
             this.Btn1.Visible = false;
+            this.Btn1.Click += new System.EventHandler(this.Btn_Click);
             // 
             // tableLayoutPanel2
             // 
@@ -258,7 +262,7 @@ namespace RT.Util.Dialogs
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(729, 138);
             this.Controls.Add(this.tableLayoutPanel3);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "DlgMessage";
@@ -266,6 +270,7 @@ namespace RT.Util.Dialogs
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DlgMessage";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DlgMessage_FormClosing);
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
             this.tableLayoutPanel1.ResumeLayout(false);

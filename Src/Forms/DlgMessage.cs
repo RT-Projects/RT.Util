@@ -20,6 +20,8 @@ namespace RT.Util.Dialogs
 
     public partial class DlgMessage : Form
     {
+        private bool ButtonPressed = false;
+
         public DlgMessage()
         {
             InitializeComponent();
@@ -27,15 +29,15 @@ namespace RT.Util.Dialogs
 
         public static void Show(string Message)
         {
-            DoShow(Message, " ", DlgType.Info, new string[] {"OK"});
+            DoShow(Message, null, DlgType.Info, new string[] { "OK" });
         }
 
         public static int Show(string Message, DlgType Type, params string[] Buttons)
         {
             if (Buttons.Length == 0)
-                return DoShow(Message, " ", Type, new string[] { "OK" });
+                return DoShow(Message, null, Type, new string[] { "OK" });
             else
-                return DoShow(Message, " ", Type, Buttons);
+                return DoShow(Message, null, Type, Buttons);
         }
 
         public static int Show(string Message, string Caption, DlgType Type, params string[] Buttons)
@@ -49,35 +51,34 @@ namespace RT.Util.Dialogs
         public static int ShowError(string Message, params string[] Buttons)
         {
             if (Buttons.Length == 0)
-                return DoShow(Message, " ", DlgType.Error, new string[] { "OK" });
+                return DoShow(Message, null, DlgType.Error, new string[] { "OK" });
             else
-                return DoShow(Message, " ", DlgType.Error, Buttons);
+                return DoShow(Message, null, DlgType.Error, Buttons);
         }
 
         public static int ShowWarning(string Message, params string[] Buttons)
         {
             if (Buttons.Length == 0)
-                return DoShow(Message, " ", DlgType.Warning, new string[] { "OK" });
+                return DoShow(Message, null, DlgType.Warning, new string[] { "OK" });
             else
-                return DoShow(Message, " ", DlgType.Warning, Buttons);
+                return DoShow(Message, null, DlgType.Warning, Buttons);
         }
 
         public static int ShowInfo(string Message, params string[] Buttons)
         {
             if (Buttons.Length == 0)
-                return DoShow(Message, " ", DlgType.Info, new string[] { "OK" });
+                return DoShow(Message, null, DlgType.Info, new string[] { "OK" });
             else
-                return DoShow(Message, " ", DlgType.Info, Buttons);
+                return DoShow(Message, null, DlgType.Info, Buttons);
         }
 
         public static int ShowQuestion(string Message, params string[] Buttons)
         {
             if (Buttons.Length == 0)
-                return DoShow(Message, " ", DlgType.Question, new string[] { "OK" });
+                return DoShow(Message, null, DlgType.Question, new string[] { "OK" });
             else
-                return DoShow(Message, " ", DlgType.Question, Buttons);
+                return DoShow(Message, null, DlgType.Question, Buttons);
         }
-
 
         private static int DoShow(string Message, string Caption, DlgType Type, string[] Buttons)
         {
@@ -85,22 +86,22 @@ namespace RT.Util.Dialogs
 
             switch (Type)
             {
-            case DlgType.Error:
-                M.imgError.Visible = true;
-                if (Caption == " ") Caption = "Error";
-                break;
-            case DlgType.Info:
-                M.imgInfo.Visible = true;
-                if (Caption == " ") Caption = "Information";
-                break;
-            case DlgType.Question:
-                M.imgQuestion.Visible = true;
-                if (Caption == " ") Caption = "Question";
-                break;
-            case DlgType.Warning:
-                M.imgWarning.Visible = true;
-                if (Caption == " ") Caption = "Warning";
-                break;
+                case DlgType.Error:
+                    M.imgError.Visible = true;
+                    if (Caption == null) Caption = "Error";
+                    break;
+                case DlgType.Info:
+                    M.imgInfo.Visible = true;
+                    if (Caption == null) Caption = "Information";
+                    break;
+                case DlgType.Question:
+                    M.imgQuestion.Visible = true;
+                    if (Caption == null) Caption = "Question";
+                    break;
+                case DlgType.Warning:
+                    M.imgWarning.Visible = true;
+                    if (Caption == null) Caption = "Warning";
+                    break;
             }
 
             M.Text = Caption;
@@ -144,18 +145,29 @@ namespace RT.Util.Dialogs
 
             switch (M.ShowDialog())
             {
-            case DialogResult.OK:
-                return 0;
-            case DialogResult.Cancel:
-                return 1;
-            case DialogResult.Yes:
-                return 2;
-            case DialogResult.No:
-                return 3;
+                case DialogResult.OK:
+                    return 0;
+                case DialogResult.Cancel:
+                    return 1;
+                case DialogResult.Yes:
+                    return 2;
+                case DialogResult.No:
+                    return 3;
             }
 
             // Can't get here
             return 0;
+        }
+
+        private void DlgMessage_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!ButtonPressed)
+                DialogResult = CancelButton.DialogResult;
+        }
+
+        private void Btn_Click(object sender, EventArgs e)
+        {
+            ButtonPressed = true;
         }
     }
 }
