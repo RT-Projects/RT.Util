@@ -36,19 +36,11 @@ namespace RT.Util.Dialogs
             this.Btn1 = new System.Windows.Forms.Button();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.Message = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.imgInfo = new System.Windows.Forms.PictureBox();
-            this.imgQuestion = new System.Windows.Forms.PictureBox();
-            this.imgError = new System.Windows.Forms.PictureBox();
-            this.imgWarning = new System.Windows.Forms.PictureBox();
+            this.img = new System.Windows.Forms.PictureBox();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.imgInfo)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgQuestion)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgError)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgWarning)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.img)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel3
@@ -169,7 +161,7 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel2.Controls.Add(this.Message, 0, 0);
-            this.tableLayoutPanel2.Controls.Add(this.panel1, 0, 0);
+            this.tableLayoutPanel2.Controls.Add(this.img, 0, 0);
             this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
@@ -182,7 +174,7 @@ namespace RT.Util.Dialogs
             // 
             this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.Message.AutoSize = true;
-            this.Message.Location = new System.Drawing.Point(60, 4);
+            this.Message.Location = new System.Drawing.Point(68, 4);
             this.Message.Margin = new System.Windows.Forms.Padding(4);
             this.Message.MinimumSize = new System.Drawing.Size(150, 0);
             this.Message.Name = "Message";
@@ -191,68 +183,18 @@ namespace RT.Util.Dialogs
             this.Message.Text = "This\r\nis\r\nsome\r\nlong\r\ntext\r\nBut the message is the longest thing ever. But the me" +
     "ssage is the longest thing ever. But the message is the longest thing ever.";
             // 
-            // panel1
+            // img
             // 
-            this.panel1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.panel1.AutoSize = true;
-            this.panel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.panel1.Controls.Add(this.imgInfo);
-            this.panel1.Controls.Add(this.imgQuestion);
-            this.panel1.Controls.Add(this.imgError);
-            this.panel1.Controls.Add(this.imgWarning);
-            this.panel1.Location = new System.Drawing.Point(4, 19);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(48, 48);
-            this.panel1.TabIndex = 0;
-            // 
-            // imgInfo
-            // 
-            this.imgInfo.BackColor = System.Drawing.Color.Transparent;
-            this.imgInfo.Image = global::RT.Util.Resources.Resources.info;
-            this.imgInfo.Location = new System.Drawing.Point(0, 0);
-            this.imgInfo.Margin = new System.Windows.Forms.Padding(0);
-            this.imgInfo.Name = "imgInfo";
-            this.imgInfo.Size = new System.Drawing.Size(48, 48);
-            this.imgInfo.TabIndex = 15;
-            this.imgInfo.TabStop = false;
-            this.imgInfo.Visible = false;
-            // 
-            // imgQuestion
-            // 
-            this.imgQuestion.BackColor = System.Drawing.Color.Transparent;
-            this.imgQuestion.Image = global::RT.Util.Resources.Resources.question;
-            this.imgQuestion.Location = new System.Drawing.Point(0, 0);
-            this.imgQuestion.Margin = new System.Windows.Forms.Padding(0);
-            this.imgQuestion.Name = "imgQuestion";
-            this.imgQuestion.Size = new System.Drawing.Size(48, 48);
-            this.imgQuestion.TabIndex = 12;
-            this.imgQuestion.TabStop = false;
-            this.imgQuestion.Visible = false;
-            // 
-            // imgError
-            // 
-            this.imgError.BackColor = System.Drawing.Color.Transparent;
-            this.imgError.Image = global::RT.Util.Resources.Resources.error;
-            this.imgError.Location = new System.Drawing.Point(0, 0);
-            this.imgError.Margin = new System.Windows.Forms.Padding(0);
-            this.imgError.Name = "imgError";
-            this.imgError.Size = new System.Drawing.Size(48, 48);
-            this.imgError.TabIndex = 14;
-            this.imgError.TabStop = false;
-            this.imgError.Visible = false;
-            // 
-            // imgWarning
-            // 
-            this.imgWarning.BackColor = System.Drawing.Color.Transparent;
-            this.imgWarning.Image = global::RT.Util.Resources.Resources.warning;
-            this.imgWarning.Location = new System.Drawing.Point(0, 0);
-            this.imgWarning.Margin = new System.Windows.Forms.Padding(0);
-            this.imgWarning.Name = "imgWarning";
-            this.imgWarning.Size = new System.Drawing.Size(48, 48);
-            this.imgWarning.TabIndex = 13;
-            this.imgWarning.TabStop = false;
-            this.imgWarning.Visible = false;
+            this.img.BackColor = System.Drawing.Color.Transparent;
+            this.img.Image = global::RT.Util.Resources.Resources.info;
+            this.img.Location = new System.Drawing.Point(8, 0);
+            this.img.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
+            this.img.Name = "img";
+            this.img.Size = new System.Drawing.Size(48, 48);
+            this.img.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.img.TabIndex = 17;
+            this.img.TabStop = false;
+            this.img.Visible = false;
             // 
             // DlgMessage
             // 
@@ -277,11 +219,7 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel1.PerformLayout();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.imgInfo)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgQuestion)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgError)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgWarning)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.img)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -296,12 +234,8 @@ namespace RT.Util.Dialogs
         private System.Windows.Forms.Button Btn0;
         private System.Windows.Forms.Button Btn1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.PictureBox imgError;
-        private System.Windows.Forms.PictureBox imgWarning;
-        private System.Windows.Forms.PictureBox imgQuestion;
         private System.Windows.Forms.Label Message;
-        private System.Windows.Forms.PictureBox imgInfo;
+        private System.Windows.Forms.PictureBox img;
 
     }
 }

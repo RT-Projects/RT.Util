@@ -7,6 +7,16 @@ using System.Runtime.InteropServices;
 
 namespace RT.Util
 {
+    public enum MessageBeepType
+    {
+        Default=-1,
+        Ok=0x00000000,
+        Error=0x00000010,
+        Question=0x00000020,
+        Warning=0x00000030,
+        Information=0x00000040,
+    }
+
     /// <summary>
     /// WinAPI function wrappers
     /// </summary>
@@ -26,6 +36,10 @@ namespace RT.Util
             out long lpFrequency);
 
         public static readonly long PerformanceFreq;
+
+        [DllImport("user32.dll", SetLastError=true)]
+        public static extern bool MessageBeep(
+            MessageBeepType type);
     }
 
 }
