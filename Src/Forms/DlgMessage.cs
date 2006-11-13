@@ -43,7 +43,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         public static string[] DefaultCaption = new string[] {
             "Information", "Question",
-            "Warning", "Error", Assembly.GetExecutingAssembly().FullName
+            "Warning", "Error", "" // TODO: See B-15
         };
         /// <summary>
         /// Change this variable to i18n'ize the default images
