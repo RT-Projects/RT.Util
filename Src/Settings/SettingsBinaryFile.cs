@@ -37,9 +37,13 @@ namespace RT.Util.Settings
         /// </summary>
         public override void LoadSettings()
         {
-            string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
-            if (File.Exists(fname))
-                LoadFromFile(fname);
+            try
+            {
+                string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
+                if (File.Exists(fname))
+                    LoadFromFile(fname);
+            }
+            catch { }
         }
 
         /// <summary>
@@ -66,11 +70,10 @@ namespace RT.Util.Settings
                 // So instead we use our custom tree writing function
                 Data = LoadDir(new BinaryReaderPlus(gz));
             }
-            finally
-            {
-                if (gz != null) gz.Close();
-                if (fs != null) fs.Close();
-            }
+            catch { }
+
+            if (gz != null) gz.Close();
+            if (fs != null) fs.Close();
         }
 
         /// <summary>
@@ -104,21 +107,37 @@ namespace RT.Util.Settings
             int nvals;
             Dir dir = new Dir();
             // Load values
-            nvals = (int)br.ReadUInt32Optim();
-            for (int i=0; i<nvals; i++)
+            try
             {
-                string name = br.ReadString();
-                object value = BinFmt.Deserialize(br.BaseStream);
-                if (value is NullObject) value = null;
-                dir.Vals.Add(name, value);
+                nvals = (int)br.ReadUInt32Optim();
+                for (int i=0; i<nvals; i++)
+                {
+                    try
+                    {
+                        string name = br.ReadString();
+                        object value = BinFmt.Deserialize(br.BaseStream);
+                        if (value is NullObject) value = null;
+                        dir.Vals.Add(name, value);
+                    }
+                    catch { }
+                }
             }
+            catch { }
             // Load dirs
-            nvals = (int)br.ReadUInt32Optim();
-            for (int i=0; i<nvals; i++)
+            try
             {
-                string name = br.ReadString();
-                dir.Dirs.Add(name, LoadDir(br));
+                nvals = (int)br.ReadUInt32Optim();
+                for (int i=0; i<nvals; i++)
+                {
+                    try
+                    {
+                        string name = br.ReadString();
+                        dir.Dirs.Add(name, LoadDir(br));
+                    }
+                    catch { }
+                }
             }
+            catch { }
             return dir;
         }
 

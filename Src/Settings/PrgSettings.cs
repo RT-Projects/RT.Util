@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using RT.Util.Dialogs;
 
 namespace RT.Util.Settings
 {
@@ -36,11 +37,19 @@ namespace RT.Util.Settings
 
         /// <summary>
         /// Saves all program settings. Call this in Program.cs after the Application.Run
-        /// method returns.
+        /// method returns. This method will not throw an exception - it will instead display
+        /// an error message in case there is a problem.
         /// </summary>
         public static void SaveSettings()
         {
-            Store.SaveSettings();
+            try
+            {
+                Store.SaveSettings();
+            }
+            catch (Exception E)
+            {
+                DlgMessage.Show("Failed to save settings:\n" + E.Message + "\n\nDisk full?");
+            }
         }
     }
 }

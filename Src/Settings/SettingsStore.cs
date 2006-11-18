@@ -26,7 +26,9 @@ namespace RT.Util.Settings
         /// <summary>
         /// Derived classes implement this to load the settings from a permanent store.
         /// It is possible that some derived classes will override GetObject in
-        /// such a way that LoadSettings is not necessary.
+        /// such a way that LoadSettings is not necessary. The settings store must not
+        /// throw any exceptions in this method - instead it should ensure that the
+        /// failing settings don't Exist in the store.
         /// </summary>
         public abstract void LoadSettings();
 
@@ -60,6 +62,24 @@ namespace RT.Util.Settings
                 // dots to be escaped.
                 return path.Split('.');
             }
+        }
+
+        /// <summary>
+        /// Returns true if the specified value exists.
+        /// </summary>
+        public bool Exists(string path)
+        {
+            string[] patharr = MakePath(path);
+            Dir cur = Data;
+            // Navigate to the dir
+            int i;
+            for (i=0; i<patharr.Length-1; i++)
+                if (cur.Dirs.ContainsKey(patharr[i]))
+                    cur = cur.Dirs[patharr[i]];
+                else
+                    return false;
+            // Return the value
+            return cur.Vals.ContainsKey(patharr[i]);
         }
 
         // Here you go Timwi :)
