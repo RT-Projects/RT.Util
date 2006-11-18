@@ -17,11 +17,16 @@ namespace RT.Util.Dialogs
 
         public static string GetLine(string Prompt)
         {
-            return GetLine(Prompt, "");
+            return GetLine(Prompt, "", "Please enter text");
         }
         public static string GetLine(string Prompt, string Default)
         {
+            return GetLine(Prompt, Default, "Please enter text");
+        }
+        public static string GetLine(string Prompt, string Default, string Caption)
+        {
             InputBox Dlg = new InputBox();
+            Dlg.Text = Caption;
             Dlg.PromptLabel.Text = Prompt;
             Dlg.EnterBox.Text = Default;
             if (Dlg.ShowDialog() == DialogResult.OK)
