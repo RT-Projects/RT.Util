@@ -185,9 +185,10 @@ namespace RT.Util.Dialogs
             // 
             // img
             // 
+            this.img.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.img.BackColor = System.Drawing.Color.Transparent;
             this.img.Image = global::RT.Util.Resources.Resources.info;
-            this.img.Location = new System.Drawing.Point(8, 0);
+            this.img.Location = new System.Drawing.Point(8, 19);
             this.img.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
             this.img.Name = "img";
             this.img.Size = new System.Drawing.Size(48, 48);
