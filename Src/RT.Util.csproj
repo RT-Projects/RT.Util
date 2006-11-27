@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="ArithmeticCoding\ArithmeticCodingReader.cs" />
     <Compile Include="ArithmeticCoding\ArithmeticCodingWriter.cs" />
+    <Compile Include="BytesBitmap.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
     </Compile>
