@@ -49,6 +49,9 @@
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\HotkeyEdit.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\ItemsEditor.cs">
       <SubType>Component</SubType>
     </Compile>
