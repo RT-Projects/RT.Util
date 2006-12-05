@@ -246,7 +246,7 @@ namespace RT.Util.Dialogs
             else if (space_cancel_btn != null)
                 M.CancelButton = space_cancel_btn;
             else
-                M.CancelButton = Btn[0];
+                M.CancelButton = Btn[Buttons.Length-1];
 
             M.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width*3/4, Screen.PrimaryScreen.WorkingArea.Height*3/4);
 
