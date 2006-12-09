@@ -255,7 +255,7 @@ namespace RT.Util.Controls
         {
             // Confirm
             if (FModified)
-                if (DlgMessage.ShowWarning("Are you sure you want to cancel editing and lose the changes you have made?", "&Forget the changes", "Continue &editing") == 1)
+                if (DlgMessage.ShowWarning("Are you sure you want to cancel editing and lose the changes you have made?", null, "&Forget the changes", "Continue &editing") == 1)
                     return;
 
             // Nothing's modified anymore
@@ -347,7 +347,7 @@ namespace RT.Util.Controls
             if ((FMode == ItemsEditorMode.Viewing) || !FModified)
                 return;
 
-            int ans = DlgMessage.ShowWarning("You are about to close the form while still editing an item. What would you like to do?", "&Save changes and close", "&Discard changes and close", "&Cancel");
+            int ans = DlgMessage.ShowWarning("You are about to close the form while still editing an item. What would you like to do?", null, "&Save changes and close", "&Discard changes and close", "&Cancel");
 
             //if (ans == 0)
             //{

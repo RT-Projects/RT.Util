@@ -23,7 +23,7 @@ namespace RT.Util.Dialogs
         Error,
         /// <summary>
         /// Custom means no sound, no default image, and default caption equal to
-        /// application name.
+        /// application name (all overridable of course). Doesn't fully work, bug 15.
         /// </summary>
         Custom
     }
@@ -43,7 +43,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         public static string[] DefaultCaption = new string[] {
             "Information", "Question",
-            "Warning", "Error", "" // TODO: See B-15
+            "Warning", "Error", "" // TODO: See bug 15
         };
         /// <summary>
         /// Change this variable to i18n'ize the default images
@@ -119,45 +119,13 @@ namespace RT.Util.Dialogs
         /// <summary>
         /// Shows an Info-type message. Caption and image for info dialogs are used.
         /// </summary>
-        public static int ShowInfo(string Message, params string[] Buttons)
-        {
-            return DoShow(Message, null, DlgType.Info, MakeImage(DlgType.Info), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Question-type message. Caption and image for question dialogs are used.
-        /// </summary>
-        public static int ShowQuestion(string Message, params string[] Buttons)
-        {
-            return DoShow(Message, null, DlgType.Question, MakeImage(DlgType.Question), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Warning-type message. Caption and image for warning dialogs are used.
-        /// </summary>
-        public static int ShowWarning(string Message, params string[] Buttons)
-        {
-            return DoShow(Message, null, DlgType.Warning, MakeImage(DlgType.Warning), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Error-type message. Caption and image for error dialogs are used.
-        /// </summary>
-        public static int ShowError(string Message, params string[] Buttons)
-        {
-            return DoShow(Message, null, DlgType.Error, MakeImage(DlgType.Error), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Info-type message. Image for info dialogs are used.
-        /// </summary>
         public static int ShowInfo(string Message, string Caption, params string[] Buttons)
         {
             return DoShow(Message, Caption, DlgType.Info, MakeImage(DlgType.Info), Buttons, -1, -1);
         }
 
         /// <summary>
-        /// Shows an Question-type message. Image for question dialogs are used.
+        /// Shows an Question-type message. Caption and image for question dialogs are used.
         /// </summary>
         public static int ShowQuestion(string Message, string Caption, params string[] Buttons)
         {
@@ -165,7 +133,7 @@ namespace RT.Util.Dialogs
         }
 
         /// <summary>
-        /// Shows an Warning-type message. Image for warning dialogs are used.
+        /// Shows an Warning-type message. Caption and image for warning dialogs are used.
         /// </summary>
         public static int ShowWarning(string Message, string Caption, params string[] Buttons)
         {
@@ -173,11 +141,43 @@ namespace RT.Util.Dialogs
         }
 
         /// <summary>
-        /// Shows an Error-type message. Image for error dialogs are used.
+        /// Shows an Error-type message. Caption and image for error dialogs are used.
         /// </summary>
         public static int ShowError(string Message, string Caption, params string[] Buttons)
         {
             return DoShow(Message, Caption, DlgType.Error, MakeImage(DlgType.Error), Buttons, -1, -1);
+        }
+
+        /// <summary>
+        /// Shows an Info-type message. Image for info dialogs are used.
+        /// </summary>
+        public static int ShowInfo(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
+        {
+            return DoShow(Message, Caption, DlgType.Info, MakeImage(DlgType.Info), Buttons, AcceptButton, CancelButton);
+        }
+
+        /// <summary>
+        /// Shows an Question-type message. Image for question dialogs are used.
+        /// </summary>
+        public static int ShowQuestion(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
+        {
+            return DoShow(Message, Caption, DlgType.Question, MakeImage(DlgType.Question), Buttons, AcceptButton, CancelButton);
+        }
+
+        /// <summary>
+        /// Shows an Warning-type message. Image for warning dialogs are used.
+        /// </summary>
+        public static int ShowWarning(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
+        {
+            return DoShow(Message, Caption, DlgType.Warning, MakeImage(DlgType.Warning), Buttons, AcceptButton, CancelButton);
+        }
+
+        /// <summary>
+        /// Shows an Error-type message. Image for error dialogs are used.
+        /// </summary>
+        public static int ShowError(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
+        {
+            return DoShow(Message, Caption, DlgType.Error, MakeImage(DlgType.Error), Buttons, AcceptButton, CancelButton);
         }
 
         /// <summary>
