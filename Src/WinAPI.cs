@@ -32,14 +32,34 @@ namespace RT.Util
             out long lpPerformanceCount);
 
         [DllImport("Kernel32.dll")]
-        public static extern bool QueryPerformanceFrequency(
+        private static extern bool QueryPerformanceFrequency(
             out long lpFrequency);
 
+        /// <summary>
+        /// This field is statically initialised by calling QueryPerformanceFrequency.
+        /// </summary>
         public static readonly long PerformanceFreq;
 
         [DllImport("user32.dll", SetLastError=true)]
         public static extern bool MessageBeep(
             MessageBeepType type);
+
+        public struct MemoryStatus
+        {
+
+            public uint Length; //Length of struct
+            public uint MemoryLoad; //Value from 0-100 represents memory usage
+            public uint TotalPhysical;
+            public uint AvailablePhysical;
+            public uint TotalPageFile;
+            public uint AvailablePageFile;
+            public uint TotalVirtual;
+            public uint AvailableVirtual;
+
+        }
+
+        [DllImport("kernel32.dll")]
+        public static extern void GlobalMemoryStatus(out MemoryStatus mem);
     }
 
 }

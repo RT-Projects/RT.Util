@@ -25,6 +25,25 @@ namespace RT.Util
         public static Random Rnd = new Random();
 
         /// <summary>
+        /// Compares two arrays with the elements of the specified type for equality.
+        /// Arrays are equal if both are null, or if all elements are equal.
+        /// </summary>
+        public static bool ArraysEqual<T>(T[] Arr1, T[] Arr2) where T: IEquatable<T>
+        {
+            if (Arr1 == null && Arr2 == null)
+                return true;
+            else if (Arr1 == null || Arr2 == null)
+                return false;
+            else if (Arr1.Length != Arr2.Length)
+                return false;
+
+            for (int i=0; i<Arr1.Length; i++)
+                if (Arr1[i].Equals(Arr2[i]))
+                    return false;
+            return true;
+        }
+
+        /// <summary>
         /// Counts the number of occurrences of string in another string
         /// </summary>
         /// <param name="in_string">Main string</param>
@@ -44,7 +63,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts file size in bytes to a string in bytes, kbytes, Mbytes
-        /// or Gbytes accordingly.
+        /// or Gbytes accordingly. The suffix appended is kB, MB or GB.
         /// </summary>
         /// <param name="size">Size in bytes</param>
         /// <returns>Converted string</returns>
@@ -60,15 +79,15 @@ namespace RT.Util
             }
             else if (size < 1024 * 1024)
             {
-                return (size / 1024d).ToString("#,###.## k");
+                return (size / 1024d).ToString("#,###.## kB");
             }
             else if (size < 1024 * 1024 * 1024)
             {
-                return (size / (1024d * 1024d)).ToString("#,###.## M");
+                return (size / (1024d * 1024d)).ToString("#,###.## MB");
             }
             else
             {
-                return (size / (1024d * 1024d * 1024d)).ToString("#,###.## G");
+                return (size / (1024d * 1024d * 1024d)).ToString("#,###.## GB");
             }
         }
 
@@ -126,6 +145,26 @@ namespace RT.Util
                 return path;
             else
                 return path + Path.DirectorySeparatorChar;
+        }
+
+        /// <summary>
+        /// Ensures that no path ends with a back slash except for the root path.
+        /// Surely this is a funny path, unlike the N(o)rm(al)Path above...
+        /// </summary>
+        public static string FunnyPath(string path)
+        {
+            if (path == null)
+                return "";
+            else if (path.Length==0)
+                return "";
+            else if (path.Length==2 && path[1] == ':')
+                return path + Path.DirectorySeparatorChar;
+            else if (path.Length==3)
+                return path;
+            else if (path[path.Length-1] == Path.DirectorySeparatorChar)
+                return path.Substring(0, path.Length-1);
+            else
+                return path;
         }
 
         /// <summary>

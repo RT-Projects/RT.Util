@@ -217,7 +217,7 @@ namespace RT.Util.Dialogs
             if (Buttons.Length == 0)
                 Buttons = new string[] { DefaultOKCaption };
             if (Buttons.Length >= Btn.Length)
-                throw new Exception("Internal exception in Util: too many buttons");
+                Ut.InternalError("Too many buttons");
 
             Button space_accept_btn = null;
             Button space_cancel_btn = null;
