@@ -13,9 +13,17 @@ namespace RT.Util
     public class PathManager
     {
         /// <summary>
+        /// Default constructor for PathManager - invokes Reset().
+        /// </summary>
+        public PathManager()
+        {
+            Reset();
+        }
+
+        /// <summary>
         /// The structure used to store path information
         /// </summary>
-        public struct PathInfo
+        public class PathInfo
         {
             public string Path;
             public bool Include;
@@ -29,7 +37,7 @@ namespace RT.Util
         /// <summary>
         /// Returns the index of the specified path or -1 if not found
         /// </summary>
-        private int FindPath(string path)
+        private int FindPathEntry(string path)
         {
             for (int i=0; i<Paths.Count; i++)
                 if (Paths[i].Path.ToUpper() == path.ToUpper())
@@ -38,16 +46,38 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Adds an include/exclude path.
+        /// Adds an include/exclude entry 
         /// </summary>
-        /// <param name="path">Path to be added</param>
-        /// <param name="include">True if it's an include path</param>
-        private void AddPath(string path, bool include)
+        /// <param name="path"></param>
+        /// <param name="include"></param>
+        private void AddPathEntry(string path, bool include)
         {
+            // Delete the entry for this path, if it exists
+            int i = FindPathEntry(path);
+            if (i!=-1)
+                Paths.RemoveAt(i);
+            // Delete any entries which are subpaths of this path
+            DeleteSubpathEntries(path);
+            // Check if the path is currently included/excluded; if so - done
+            if (!IsPathIncluded(path) ^ include)
+                return;
+            // Add an entry for this path
             PathInfo pi = new PathInfo();
-            pi.Path = path;
+            pi.Path = Ut.NrmPath(path);
             pi.Include = include;
-            Paths.Add(pi);
+            // Find where to insert it
+            // Paths can be naturally sorted lexicographically, so it's as simple as that
+            int fp = -1;
+            for (i = 0; i < Paths.Count; i++)
+                if (string.Compare(pi.Path, Paths[i].Path, true) < 0)
+                {
+                    fp = i;
+                    break;
+                }
+            if (fp == -1)
+                Paths.Add(pi);
+            else
+                Paths.Insert(fp, pi);
         }
 
         /// <summary>
@@ -58,6 +88,24 @@ namespace RT.Util
             for (int i=Paths.Count-1; i>=0; i--)
                 if (Ut.IsSubpath(path, Paths[i].Path))
                     Paths.RemoveAt(i);
+        }
+
+        /// <summary>
+        /// Includes the specified path to the paths tree. This operation
+        /// removes any entries which refer to subpaths of the specified path.
+        /// </summary>
+        public void AddIncludePath(string path)
+        {
+            AddPathEntry(path, true);
+        }
+
+        /// <summary>
+        /// Excludes the specified path from the paths tree. This operation
+        /// removes any entries which refer to subpaths of the specified path.
+        /// </summary>
+        public void AddExcludePath(string path)
+        {
+            AddPathEntry(path, false);
         }
 
         /// <summary>
@@ -74,7 +122,7 @@ namespace RT.Util
         /// <param name="path">The path to be checked</param>
         /// <param name="included">If false, the function becomes IsPathExcluded</param>
         /// <returns>Whether the path is included/excluded</returns>
-        public bool IsPathIncluded(string path, bool included)
+        public bool IsPathIncluded(string path)
         {
             int mindist = int.MaxValue;
             int mindistn = -1;
@@ -98,88 +146,105 @@ namespace RT.Util
                 }
             }
             if (mindistn==-1)
-                return !included;
+                return false;
             else
-                return !(Paths[mindistn].Include ^ included);
+                return Paths[mindistn].Include;
         }
 
         /// <summary>
-        /// Includes a path by doing the following:
-        /// 1. Check if the path is currently included
-        /// 2. Ignore if it is
-        /// 3. Delete any entries which are subpaths of this path
-        /// 4. Delete the entry for this path, if it exists
-        /// 5. Add an entry for this path
+        /// Returns the number of paths marked as "include". Mainly intended to verify
+        /// that there is at least one path included.
         /// </summary>
-        /// <param name="path"></param>
-        public void IncludePath(string path)
+        public int IncludedPathCount
         {
-            int i = FindPath(path);
-            if (i!=-1)
-                Paths.RemoveAt(i);
-            DeleteSubpathEntries(path);
-            if (IsPathIncluded(path, true))
-                return;
-            AddPath(path, true);
-        }
-
-        /// <summary>
-        /// Excludes a path by doing the following:
-        /// 1. Check if the path is currently excluded
-        /// 2. Ignore if it is, exclude otherwise
-        /// 3. Delete any entries which are subpaths of this path
-        /// </summary>
-        /// <param name="path"></param>
-        public void ExcludePath(string path)
-        {
-            int i = FindPath(path);
-            if (i!=-1)
-                Paths.RemoveAt(i);
-            DeleteSubpathEntries(path);
-            if (IsPathIncluded(path, false))
-                return;
-            AddPath(path, false);
-        }
-
-        /// <summary>
-        /// TODO: Not quite sure what this does. It's not referenced anywhere.
-        /// It appears to be able to find the first path in the list of all paths.
-        /// </summary>
-        public void SortPaths(string path)
-        {
-            int from = 0;
-
-            // Find smallest one
-            int minn = -1;
-            int mindepth = int.MaxValue;
-            for (int i=from; i<Paths.Count; i++)
+            get
             {
-                // Compare path depth
-                int depth = Ut.CountStrings(Paths[i].Path, Path.DirectorySeparatorChar+"");
-                if (depth < mindepth)
-                {
-                    minn = i;
-                    mindepth = depth;
-                }
+                int n = 0;
+                for (int i = 0; i < Paths.Count; i++)
+                    if (Paths[i].Include)
+                        n++;
+                return n;
+            }
+        }
+
+        #region Enumeration & failed files list
+
+        /// <summary>
+        /// Paths which could not be read while enumerating PathManager. This is automatically
+        /// cleared for each enumeration.
+        /// </summary>
+        public List<string> FailedFiles;
+
+        /// <summary>
+        /// Enumerates all files and folders visible to the PathManager, according to which
+        /// paths were added using AddIncludePath and AddExcludePath. If any paths cannot be
+        /// enumerated, they are added to FailedFiles list, which is cleared before
+        /// enumeration begins.
+        /// </summary>
+        /// <param name="includeDirs">If true, directories will be enumerated as DirectoryInfo's.</param>
+        /// <param name="includeFiles">If true, files will be enumerated as FileInfo's. Otherwise files
+        /// won't be listed, which is considerably faster (but also considerably less useful...)</param>
+        public IEnumerable<FileSystemInfo> GetFiles(bool includeDirs, bool includeFiles)
+        {
+            FailedFiles = new List<string>();
+            Stack<string> ToScan = new Stack<string>();
+            List<string> ToExclude = new List<string>();
+
+            List<string> l = new List<string>(); // so that we queue items in proper order
+            for (int i = 0; i < Paths.Count; i++)
+            {
+                if (Paths[i].Include)
+                    l.Add(Paths[i].Path);
                 else
+                    ToExclude.Add(Paths[i].Path.ToLowerInvariant());
+            }
+            for (int i = l.Count-1; i >= 0; i--)
+                ToScan.Push(l[i]);
+
+            // Scan all paths
+            while (ToScan.Count > 0)
+            {
+                string curPath = ToScan.Pop();
+                FileInfo[] files = null;
+                DirectoryInfo[] dirs;
+                try
                 {
-                    if (minn==-1)
+                    // TODO: Note that we're getting the directory info for most dirs
+                    // twice - once here and once below. However this is probably not
+                    // costing a noticeable amount of time since the info would be cached
+                    // by OS. Avoiding this is not too hard, but TBD later...
+                    DirectoryInfo di = new DirectoryInfo(curPath);
+                    if (includeFiles)
+                        files = di.GetFiles();
+                    dirs = di.GetDirectories();
+                }
+                catch
+                {
+                    FailedFiles.Add(curPath);
+                    continue;
+                }
+
+                // Files
+                if (includeFiles)
+                    foreach (FileInfo fi in files)
+                        yield return fi;
+
+                // Directories
+                foreach (DirectoryInfo di in dirs)
+                {
+                    if (ToExclude.Contains(Ut.NrmPath(di.FullName).ToLowerInvariant()))
                     {
-                        minn = i;
-                        mindepth = depth;
+                        // Remove this item to save searching time later?
+                        ToExclude.Remove(Ut.NrmPath(di.FullName).ToLowerInvariant());
+                        continue;
                     }
-                    else
-                    {
-                        // Compare actual strings
-                        if (string.Compare(Paths[i].Path, Paths[minn].Path, true) < 0)
-                        {
-                            minn = i;
-                            mindepth = depth;
-                        }
-                    }
+                    ToScan.Push(Ut.NrmPath(di.FullName));
+                    if (includeDirs)
+                        yield return di;
                 }
             }
         }
 
+        #endregion
     }
 }
