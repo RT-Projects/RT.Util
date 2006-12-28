@@ -187,7 +187,7 @@ namespace RT.Util
         public IEnumerable<FileSystemInfo> GetFiles(bool includeDirs, bool includeFiles)
         {
             FailedFiles = new List<string>();
-            Stack<string> ToScan = new Stack<string>();
+            Stack<DirectoryInfo> ToScan = new Stack<DirectoryInfo>();
             List<string> ToExclude = new List<string>();
 
             List<string> l = new List<string>(); // so that we queue items in proper order
@@ -199,28 +199,23 @@ namespace RT.Util
                     ToExclude.Add(Paths[i].Path.ToLowerInvariant());
             }
             for (int i = l.Count-1; i >= 0; i--)
-                ToScan.Push(l[i]);
+                ToScan.Push(new DirectoryInfo(l[i]));
 
             // Scan all paths
             while (ToScan.Count > 0)
             {
-                string curPath = ToScan.Pop();
+                DirectoryInfo curDI = ToScan.Pop();
                 FileInfo[] files = null;
                 DirectoryInfo[] dirs;
                 try
                 {
-                    // TODO: Note that we're getting the directory info for most dirs
-                    // twice - once here and once below. However this is probably not
-                    // costing a noticeable amount of time since the info would be cached
-                    // by OS. Avoiding this is not too hard, but TBD later...
-                    DirectoryInfo di = new DirectoryInfo(curPath);
                     if (includeFiles)
-                        files = di.GetFiles();
-                    dirs = di.GetDirectories();
+                        files = curDI.GetFiles();
+                    dirs = curDI.GetDirectories();
                 }
                 catch
                 {
-                    FailedFiles.Add(curPath);
+                    FailedFiles.Add(curDI.FullName);
                     continue;
                 }
 
@@ -238,7 +233,7 @@ namespace RT.Util
                         ToExclude.Remove(Ut.NrmPath(di.FullName).ToLowerInvariant());
                         continue;
                     }
-                    ToScan.Push(Ut.NrmPath(di.FullName));
+                    ToScan.Push(di);
                     if (includeDirs)
                         yield return di;
                 }
