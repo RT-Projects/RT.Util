@@ -9,6 +9,18 @@ namespace RT.Util
 {
     public class GraphicsUtil
     {
+        /// <summary>
+        /// Blends the specified colors together. Amount specifies how much
+        /// of the Color to keep, "on top of" the BackColor.
+        /// </summary>
+        public static Color ColorBlend(Color Color, Color BackColor, double Amount)
+        {
+            byte R = (byte)((Color.R * Amount) + BackColor.R * (1-Amount));
+            byte G = (byte)((Color.G * Amount) + BackColor.G * (1-Amount));
+            byte B = (byte)((Color.B * Amount) + BackColor.B * (1-Amount));
+            return Color.FromArgb(R, G, B);
+        }
+
         public static void DrawImageAlpha(Graphics g, Image Image, Rectangle DestRect, float Opacity)
         {
             ColorMatrix ColorMatrix = new ColorMatrix(new float[][] {
