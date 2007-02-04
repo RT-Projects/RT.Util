@@ -49,8 +49,8 @@ namespace RT.Util.Dialogs
         /// Change this variable to i18n'ize the default images
         /// </summary>
         public static Bitmap[] DefaultImage = new Bitmap[] {
-            Resources.Resources.info, Resources.Resources.question,
-            Resources.Resources.warning, Resources.Resources.error, null
+            Properties.ResxUtil.info, Properties.ResxUtil.question,
+            Properties.ResxUtil.warning, Properties.ResxUtil.error, null
         };
         /// <summary>
         /// Change this variable to i18n'ize the default OK button text
