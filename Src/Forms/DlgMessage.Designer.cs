@@ -28,6 +28,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DlgMessage));
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.Btn2 = new System.Windows.Forms.Button();
@@ -37,10 +38,18 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.Message = new System.Windows.Forms.Label();
             this.img = new System.Windows.Forms.PictureBox();
+            this.info = new System.Windows.Forms.PictureBox();
+            this.question = new System.Windows.Forms.PictureBox();
+            this.warning = new System.Windows.Forms.PictureBox();
+            this.error = new System.Windows.Forms.PictureBox();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.img)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.info)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.question)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.warning)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.error)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel3
@@ -187,7 +196,6 @@ namespace RT.Util.Dialogs
             // 
             this.img.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.img.BackColor = System.Drawing.Color.Transparent;
-            this.img.Image = global::RT.Util.Properties.ResxUtil.info;
             this.img.Location = new System.Drawing.Point(8, 0);
             this.img.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
             this.img.Name = "img";
@@ -197,6 +205,62 @@ namespace RT.Util.Dialogs
             this.img.TabStop = false;
             this.img.Visible = false;
             // 
+            // info
+            // 
+            this.info.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.info.BackColor = System.Drawing.Color.Transparent;
+            this.info.Image = ((System.Drawing.Image)(resources.GetObject("info.Image")));
+            this.info.Location = new System.Drawing.Point(280, 4);
+            this.info.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
+            this.info.Name = "info";
+            this.info.Size = new System.Drawing.Size(48, 48);
+            this.info.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.info.TabIndex = 18;
+            this.info.TabStop = false;
+            this.info.Visible = false;
+            // 
+            // question
+            // 
+            this.question.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.question.BackColor = System.Drawing.Color.Transparent;
+            this.question.Image = ((System.Drawing.Image)(resources.GetObject("question.Image")));
+            this.question.Location = new System.Drawing.Point(344, 4);
+            this.question.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
+            this.question.Name = "question";
+            this.question.Size = new System.Drawing.Size(48, 48);
+            this.question.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.question.TabIndex = 19;
+            this.question.TabStop = false;
+            this.question.Visible = false;
+            // 
+            // warning
+            // 
+            this.warning.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.warning.BackColor = System.Drawing.Color.Transparent;
+            this.warning.Image = ((System.Drawing.Image)(resources.GetObject("warning.Image")));
+            this.warning.Location = new System.Drawing.Point(408, 4);
+            this.warning.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
+            this.warning.Name = "warning";
+            this.warning.Size = new System.Drawing.Size(48, 48);
+            this.warning.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.warning.TabIndex = 20;
+            this.warning.TabStop = false;
+            this.warning.Visible = false;
+            // 
+            // error
+            // 
+            this.error.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.error.BackColor = System.Drawing.Color.Transparent;
+            this.error.Image = ((System.Drawing.Image)(resources.GetObject("error.Image")));
+            this.error.Location = new System.Drawing.Point(472, 4);
+            this.error.Margin = new System.Windows.Forms.Padding(8, 0, 8, 0);
+            this.error.Name = "error";
+            this.error.Size = new System.Drawing.Size(48, 48);
+            this.error.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.error.TabIndex = 21;
+            this.error.TabStop = false;
+            this.error.Visible = false;
+            // 
             // DlgMessage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -204,6 +268,10 @@ namespace RT.Util.Dialogs
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(729, 138);
+            this.Controls.Add(this.error);
+            this.Controls.Add(this.warning);
+            this.Controls.Add(this.question);
+            this.Controls.Add(this.info);
             this.Controls.Add(this.tableLayoutPanel3);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -221,6 +289,10 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.img)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.info)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.question)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.warning)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.error)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -237,6 +309,10 @@ namespace RT.Util.Dialogs
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
         private System.Windows.Forms.Label Message;
         private System.Windows.Forms.PictureBox img;
+        private System.Windows.Forms.PictureBox info;
+        private System.Windows.Forms.PictureBox question;
+        private System.Windows.Forms.PictureBox warning;
+        private System.Windows.Forms.PictureBox error;
 
     }
 }

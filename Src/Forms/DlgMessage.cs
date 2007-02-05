@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Reflection;
+using System.Resources;
 
 namespace RT.Util.Dialogs
 {
@@ -38,6 +39,42 @@ namespace RT.Util.Dialogs
     /// </summary>
     public partial class DlgMessage : Form
     {
+        #region Ugly hack, don't look (must come first so that static initialisers work well)
+
+        /// Embedding resources in VS is fucked up. The name of the resource is hard-coded to
+        /// be the default name of the assembly. There's no reason to generate a resource with
+        /// the specified name (that I found). At the same time, the ResourceManager requires
+        /// to be told the prefix for resource names as a string. These two factors make it
+        /// impossible to use the same resource manager in different projects.
+        /// 
+        /// Workaround: use form's resources, because these are not mangled up by VS. But it's
+        /// not that easy (of course not!) because the form's resources don't come with a
+        /// strongly typed resource manager...
+        private static ResourceManager RM;
+        private static ResourceManager ResourceMgr
+        {
+            get
+            {
+                if (RM == null)
+                    RM = new ResourceManager(typeof(DlgMessage));
+                // Instead of the above, which works perfectly, the autogenerator produces
+                // something more like the following (note the string!):
+                // RM = new ResourceManager("RT.Util.Dialogs.DlgMessage", typeof(DlgMessage).Assembly);
+                return RM;
+            }
+        }
+
+        /// These are necessary because a certain scenario in VS2005 is totally impossible.
+        /// ARGH without .NET Reflector there's no chance I could have figured out that VS
+        /// adds some stupid .Image suffix to these images!...
+        private static Bitmap bmpInfo = (Bitmap)ResourceMgr.GetObject("info.Image");
+        private static Bitmap bmpQuestion = (Bitmap)ResourceMgr.GetObject("question.Image");
+        private static Bitmap bmpWarning = (Bitmap)ResourceMgr.GetObject("warning.Image");
+        private static Bitmap bmpError = (Bitmap)ResourceMgr.GetObject("error.Image");
+
+        #endregion
+
+
         /// <summary>
         /// Change this variable to i18n'ize the default captions
         /// </summary>
@@ -49,8 +86,7 @@ namespace RT.Util.Dialogs
         /// Change this variable to i18n'ize the default images
         /// </summary>
         public static Bitmap[] DefaultImage = new Bitmap[] {
-            Properties.ResxUtil.info, Properties.ResxUtil.question,
-            Properties.ResxUtil.warning, Properties.ResxUtil.error, null
+            bmpInfo, bmpQuestion, bmpWarning, bmpError, null
         };
         /// <summary>
         /// Change this variable to i18n'ize the default OK button text
