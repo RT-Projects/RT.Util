@@ -104,7 +104,7 @@ namespace RT.Util.Dialogs
             this.BtnOK.MinimumSize = new System.Drawing.Size(100, 25);
             this.BtnOK.Name = "BtnOK";
             this.BtnOK.Size = new System.Drawing.Size(100, 26);
-            this.BtnOK.TabIndex = 3;
+            this.BtnOK.TabIndex = 2;
             this.BtnOK.Text = "OK";
             this.BtnOK.UseVisualStyleBackColor = true;
             // 
