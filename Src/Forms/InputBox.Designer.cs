@@ -40,10 +40,10 @@ namespace RT.Util.Dialogs
             // 
             this.PromptLabel.AutoSize = true;
             this.LayoutPanel.SetColumnSpan(this.PromptLabel, 3);
-            this.PromptLabel.Location = new System.Drawing.Point(13, 13);
-            this.PromptLabel.Margin = new System.Windows.Forms.Padding(5);
+            this.PromptLabel.Location = new System.Drawing.Point(15, 16);
+            this.PromptLabel.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.PromptLabel.Name = "PromptLabel";
-            this.PromptLabel.Size = new System.Drawing.Size(89, 13);
+            this.PromptLabel.Size = new System.Drawing.Size(109, 16);
             this.PromptLabel.TabIndex = 0;
             this.PromptLabel.Text = "Please enter text:";
             // 
@@ -52,10 +52,10 @@ namespace RT.Util.Dialogs
             this.EnterBox.AcceptsReturn = true;
             this.EnterBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.LayoutPanel.SetColumnSpan(this.EnterBox, 3);
-            this.EnterBox.Location = new System.Drawing.Point(13, 36);
-            this.EnterBox.Margin = new System.Windows.Forms.Padding(5);
+            this.EnterBox.Location = new System.Drawing.Point(15, 44);
+            this.EnterBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.EnterBox.Name = "EnterBox";
-            this.EnterBox.Size = new System.Drawing.Size(397, 20);
+            this.EnterBox.Size = new System.Drawing.Size(463, 23);
             this.EnterBox.TabIndex = 1;
             // 
             // BtnOK
@@ -63,10 +63,10 @@ namespace RT.Util.Dialogs
             this.BtnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnOK.AutoSize = true;
             this.BtnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.BtnOK.Location = new System.Drawing.Point(147, 66);
-            this.BtnOK.Margin = new System.Windows.Forms.Padding(5);
+            this.BtnOK.Location = new System.Drawing.Point(171, 79);
+            this.BtnOK.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.BtnOK.Name = "BtnOK";
-            this.BtnOK.Size = new System.Drawing.Size(124, 23);
+            this.BtnOK.Size = new System.Drawing.Size(144, 28);
             this.BtnOK.TabIndex = 2;
             this.BtnOK.Text = "OK";
             this.BtnOK.UseVisualStyleBackColor = true;
@@ -76,10 +76,10 @@ namespace RT.Util.Dialogs
             this.BtnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnCancel.AutoSize = true;
             this.BtnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.BtnCancel.Location = new System.Drawing.Point(281, 66);
-            this.BtnCancel.Margin = new System.Windows.Forms.Padding(5);
+            this.BtnCancel.Location = new System.Drawing.Point(327, 79);
+            this.BtnCancel.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.BtnCancel.Name = "BtnCancel";
-            this.BtnCancel.Size = new System.Drawing.Size(129, 23);
+            this.BtnCancel.Size = new System.Drawing.Size(151, 28);
             this.BtnCancel.TabIndex = 3;
             this.BtnCancel.Text = "Cancel";
             this.BtnCancel.UseVisualStyleBackColor = true;
@@ -100,24 +100,26 @@ namespace RT.Util.Dialogs
             this.LayoutPanel.Location = new System.Drawing.Point(0, 0);
             this.LayoutPanel.Margin = new System.Windows.Forms.Padding(0);
             this.LayoutPanel.Name = "LayoutPanel";
-            this.LayoutPanel.Padding = new System.Windows.Forms.Padding(8);
+            this.LayoutPanel.Padding = new System.Windows.Forms.Padding(9, 10, 9, 10);
             this.LayoutPanel.RowCount = 3;
             this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.LayoutPanel.Size = new System.Drawing.Size(423, 94);
+            this.LayoutPanel.Size = new System.Drawing.Size(493, 116);
             this.LayoutPanel.TabIndex = 4;
             // 
             // InputBox
             // 
             this.AcceptButton = this.BtnOK;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.CancelButton = this.BtnCancel;
-            this.ClientSize = new System.Drawing.Size(423, 94);
+            this.ClientSize = new System.Drawing.Size(493, 116);
             this.Controls.Add(this.LayoutPanel);
+            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "InputBox";
