@@ -30,18 +30,19 @@ namespace RT.Util.Dialogs
         {
             this.PromptLabel = new System.Windows.Forms.Label();
             this.EnterBox = new System.Windows.Forms.TextBox();
-            this.BtnOK = new System.Windows.Forms.Button();
             this.BtnCancel = new System.Windows.Forms.Button();
-            this.LayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.LayoutPanel.SuspendLayout();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.BtnOK = new System.Windows.Forms.Button();
+            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanel1.SuspendLayout();
+            this.tableLayoutPanel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // PromptLabel
             // 
             this.PromptLabel.AutoSize = true;
-            this.LayoutPanel.SetColumnSpan(this.PromptLabel, 3);
-            this.PromptLabel.Location = new System.Drawing.Point(15, 16);
-            this.PromptLabel.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.PromptLabel.Location = new System.Drawing.Point(0, 0);
+            this.PromptLabel.Margin = new System.Windows.Forms.Padding(0);
             this.PromptLabel.Name = "PromptLabel";
             this.PromptLabel.Size = new System.Drawing.Size(109, 16);
             this.PromptLabel.TabIndex = 0;
@@ -51,62 +52,80 @@ namespace RT.Util.Dialogs
             // 
             this.EnterBox.AcceptsReturn = true;
             this.EnterBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.LayoutPanel.SetColumnSpan(this.EnterBox, 3);
-            this.EnterBox.Location = new System.Drawing.Point(15, 44);
-            this.EnterBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.EnterBox.Location = new System.Drawing.Point(0, 22);
+            this.EnterBox.Margin = new System.Windows.Forms.Padding(0, 6, 0, 10);
             this.EnterBox.Name = "EnterBox";
-            this.EnterBox.Size = new System.Drawing.Size(463, 23);
+            this.EnterBox.Size = new System.Drawing.Size(467, 23);
             this.EnterBox.TabIndex = 1;
-            // 
-            // BtnOK
-            // 
-            this.BtnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnOK.AutoSize = true;
-            this.BtnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.BtnOK.Location = new System.Drawing.Point(171, 79);
-            this.BtnOK.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
-            this.BtnOK.Name = "BtnOK";
-            this.BtnOK.Size = new System.Drawing.Size(144, 28);
-            this.BtnOK.TabIndex = 2;
-            this.BtnOK.Text = "OK";
-            this.BtnOK.UseVisualStyleBackColor = true;
             // 
             // BtnCancel
             // 
-            this.BtnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.BtnCancel.AutoSize = true;
+            this.BtnCancel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.BtnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.BtnCancel.Location = new System.Drawing.Point(327, 79);
-            this.BtnCancel.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.BtnCancel.Location = new System.Drawing.Point(367, 0);
+            this.BtnCancel.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+            this.BtnCancel.MinimumSize = new System.Drawing.Size(100, 25);
             this.BtnCancel.Name = "BtnCancel";
-            this.BtnCancel.Size = new System.Drawing.Size(151, 28);
+            this.BtnCancel.Size = new System.Drawing.Size(100, 26);
             this.BtnCancel.TabIndex = 3;
             this.BtnCancel.Text = "Cancel";
             this.BtnCancel.UseVisualStyleBackColor = true;
             // 
-            // LayoutPanel
+            // tableLayoutPanel1
             // 
-            this.LayoutPanel.AutoSize = true;
-            this.LayoutPanel.ColumnCount = 3;
-            this.LayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
-            this.LayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
-            this.LayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
-            this.LayoutPanel.Controls.Add(this.PromptLabel, 0, 0);
-            this.LayoutPanel.Controls.Add(this.BtnCancel, 2, 2);
-            this.LayoutPanel.Controls.Add(this.EnterBox, 0, 1);
-            this.LayoutPanel.Controls.Add(this.BtnOK, 1, 2);
-            this.LayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.LayoutPanel.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
-            this.LayoutPanel.Location = new System.Drawing.Point(0, 0);
-            this.LayoutPanel.Margin = new System.Windows.Forms.Padding(0);
-            this.LayoutPanel.Name = "LayoutPanel";
-            this.LayoutPanel.Padding = new System.Windows.Forms.Padding(9, 10, 9, 10);
-            this.LayoutPanel.RowCount = 3;
-            this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.LayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.LayoutPanel.Size = new System.Drawing.Size(493, 116);
-            this.LayoutPanel.TabIndex = 4;
+            this.tableLayoutPanel1.AutoSize = true;
+            this.tableLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel1.BackColor = System.Drawing.SystemColors.Control;
+            this.tableLayoutPanel1.ColumnCount = 1;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.Controls.Add(this.PromptLabel, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.EnterBox, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 2);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(10, 10);
+            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 3;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(467, 81);
+            this.tableLayoutPanel1.TabIndex = 4;
+            // 
+            // BtnOK
+            // 
+            this.BtnOK.AutoSize = true;
+            this.BtnOK.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.BtnOK.Location = new System.Drawing.Point(261, 0);
+            this.BtnOK.Margin = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            this.BtnOK.MinimumSize = new System.Drawing.Size(100, 25);
+            this.BtnOK.Name = "BtnOK";
+            this.BtnOK.Size = new System.Drawing.Size(100, 26);
+            this.BtnOK.TabIndex = 3;
+            this.BtnOK.Text = "OK";
+            this.BtnOK.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel2
+            // 
+            this.tableLayoutPanel2.AutoSize = true;
+            this.tableLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel2.ColumnCount = 3;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel2.Controls.Add(this.BtnCancel, 2, 0);
+            this.tableLayoutPanel2.Controls.Add(this.BtnOK, 1, 0);
+            this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 55);
+            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
+            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
+            this.tableLayoutPanel2.RowCount = 1;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(467, 26);
+            this.tableLayoutPanel2.TabIndex = 4;
             // 
             // InputBox
             // 
@@ -114,18 +133,22 @@ namespace RT.Util.Dialogs
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.CancelButton = this.BtnCancel;
-            this.ClientSize = new System.Drawing.Size(493, 116);
-            this.Controls.Add(this.LayoutPanel);
+            this.ClientSize = new System.Drawing.Size(500, 117);
+            this.Controls.Add(this.tableLayoutPanel1);
             this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "InputBox";
+            this.Padding = new System.Windows.Forms.Padding(10);
             this.Text = "InputBox";
-            this.LayoutPanel.ResumeLayout(false);
-            this.LayoutPanel.PerformLayout();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
+            this.tableLayoutPanel2.ResumeLayout(false);
+            this.tableLayoutPanel2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -135,8 +158,9 @@ namespace RT.Util.Dialogs
 
         private System.Windows.Forms.Label PromptLabel;
         private System.Windows.Forms.TextBox EnterBox;
-        private System.Windows.Forms.Button BtnOK;
         private System.Windows.Forms.Button BtnCancel;
-        private System.Windows.Forms.TableLayoutPanel LayoutPanel;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Button BtnOK;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
     }
 }
