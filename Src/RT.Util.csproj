@@ -52,12 +52,6 @@
     <Compile Include="Controls\HotkeyEdit.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Controls\ItemsEditor.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\ItemsEditor.Designer.cs">
-      <DependentUpon>ItemsEditor.cs</DependentUpon>
-    </Compile>
     <Compile Include="Controls\MenuRadioGroup.cs">
       <SubType>Component</SubType>
     </Compile>
