@@ -13,6 +13,7 @@ namespace RT.Util.Controls
         public Separator()
         {
             InitializeComponent();
+            this.SetStyle(ControlStyles.Selectable, false);
             GB.Text = ""; // because the designer will only store a value for the Text
             // property if it is not "", i.e. the Text property must default to "".
         }
