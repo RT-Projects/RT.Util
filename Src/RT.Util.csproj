@@ -39,6 +39,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -128,6 +129,8 @@
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Virtual2DArray.cs" />
+    <Compile Include="Web\Http.cs" />
+    <Compile Include="Web\PmWiki.cs" />
     <Compile Include="WinAPI.cs" />
   </ItemGroup>
   <ItemGroup>
