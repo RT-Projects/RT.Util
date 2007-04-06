@@ -73,6 +73,7 @@
     <Compile Include="Controls\SplitContainerEx.Designer.cs">
       <DependentUpon>SplitContainerEx.cs</DependentUpon>
     </Compile>
+    <Compile Include="Delegates.cs" />
     <Compile Include="EnumPairs.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
@@ -120,7 +121,12 @@
     <Compile Include="Streams\CRC32Stream.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Tuple.cs" />
-    <Compile Include="Util.cs" />
+    <Compile Include="Ut\Clone.cs" />
+    <Compile Include="Ut\General.cs" />
+    <Compile Include="Ut\InternalError.cs" />
+    <Compile Include="Ut\Paths.cs" />
+    <Compile Include="Ut\Random.cs" />
+    <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Virtual2DArray.cs" />
     <Compile Include="WinAPI.cs" />
   </ItemGroup>
