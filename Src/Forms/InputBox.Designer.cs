@@ -32,8 +32,8 @@ namespace RT.Util.Dialogs
             this.EnterBox = new System.Windows.Forms.TextBox();
             this.BtnCancel = new System.Windows.Forms.Button();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.BtnOK = new System.Windows.Forms.Button();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.BtnOK = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.SuspendLayout();
@@ -94,20 +94,6 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel1.Size = new System.Drawing.Size(467, 81);
             this.tableLayoutPanel1.TabIndex = 4;
             // 
-            // BtnOK
-            // 
-            this.BtnOK.AutoSize = true;
-            this.BtnOK.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.BtnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.BtnOK.Location = new System.Drawing.Point(261, 0);
-            this.BtnOK.Margin = new System.Windows.Forms.Padding(0, 0, 3, 0);
-            this.BtnOK.MinimumSize = new System.Drawing.Size(100, 25);
-            this.BtnOK.Name = "BtnOK";
-            this.BtnOK.Size = new System.Drawing.Size(100, 26);
-            this.BtnOK.TabIndex = 2;
-            this.BtnOK.Text = "OK";
-            this.BtnOK.UseVisualStyleBackColor = true;
-            // 
             // tableLayoutPanel2
             // 
             this.tableLayoutPanel2.AutoSize = true;
@@ -127,6 +113,20 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel2.Size = new System.Drawing.Size(467, 26);
             this.tableLayoutPanel2.TabIndex = 4;
             // 
+            // BtnOK
+            // 
+            this.BtnOK.AutoSize = true;
+            this.BtnOK.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.BtnOK.Location = new System.Drawing.Point(261, 0);
+            this.BtnOK.Margin = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            this.BtnOK.MinimumSize = new System.Drawing.Size(100, 25);
+            this.BtnOK.Name = "BtnOK";
+            this.BtnOK.Size = new System.Drawing.Size(100, 26);
+            this.BtnOK.TabIndex = 2;
+            this.BtnOK.Text = "OK";
+            this.BtnOK.UseVisualStyleBackColor = true;
+            // 
             // InputBox
             // 
             this.AcceptButton = this.BtnOK;
@@ -144,6 +144,7 @@ namespace RT.Util.Dialogs
             this.MinimizeBox = false;
             this.Name = "InputBox";
             this.Padding = new System.Windows.Forms.Padding(10);
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "InputBox";
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
