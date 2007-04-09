@@ -10,7 +10,7 @@ namespace RT.Util
     /// ExcludePath, which include/exclude a path with all subdirectories.
     /// Redundant entries are automatically removed.
     /// </summary>
-    public class PathManager
+    public class PathManager : ICloneable
     {
         /// <summary>
         /// Default constructor for PathManager - invokes Reset().
@@ -33,6 +33,14 @@ namespace RT.Util
         /// The list of all paths
         /// </summary>
         public List<PathInfo> Paths;
+
+        public object Clone()
+        {
+            PathManager PM = new PathManager();
+            PM.Paths = new List<PathInfo>(Paths.Count);
+            PM.Paths.AddRange(Paths);
+            return PM;
+        }
 
         /// <summary>
         /// Returns the index of the specified path or -1 if not found
@@ -241,5 +249,6 @@ namespace RT.Util
         }
 
         #endregion
+
     }
 }
