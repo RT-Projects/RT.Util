@@ -4,5 +4,5 @@ using System.Text;
 
 namespace RT.Util.EventSim
 {
-    public delegate void EventCallback(Event Event);
+    public delegate void EventCallback(Event Event, EventEngine Engine);
 }
