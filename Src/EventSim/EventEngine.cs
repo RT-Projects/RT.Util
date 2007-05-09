@@ -77,8 +77,9 @@ namespace RT.Util.EventSim
             FTime = EL.Keys[0];
             NE.Callback(NE, this);
             // Remove the event. There is no way the Callback could have added another
-            // event before NE, so we can safely delete 0'th element.
-            EL.RemoveAt(0);
+            // event before NE, but it might have deleted the 0'th event.
+            if (EL.Values[0] == NE)
+                EL.RemoveAt(0);
 
             return true;
         }

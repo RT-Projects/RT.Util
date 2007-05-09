@@ -79,6 +79,7 @@
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
+    <Compile Include="EventSim\EventTask.cs" />
     <Compile Include="Fault.cs" />
     <Compile Include="Forms\DlgMessage.cs">
       <SubType>Form</SubType>
