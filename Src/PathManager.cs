@@ -10,6 +10,7 @@ namespace RT.Util
     /// ExcludePath, which include/exclude a path with all subdirectories.
     /// Redundant entries are automatically removed.
     /// </summary>
+    [Serializable]
     public class PathManager : ICloneable
     {
         /// <summary>
@@ -23,6 +24,7 @@ namespace RT.Util
         /// <summary>
         /// The structure used to store path information
         /// </summary>
+        [Serializable]
         public class PathInfo
         {
             public string Path;

@@ -128,5 +128,27 @@ namespace RT.Util
             }
         }
 
+        /// <summary>
+        /// Deletes the specified directory only if it is empty, and then
+        /// checks all parents to see if they have become empty too. If so,
+        /// deletes them too. Does not throw any exceptions.
+        /// </summary>
+        public static void DeleteEmptyDirs(string path)
+        {
+            try
+            {
+                while (path.Length > 3)
+                {
+                    if (Directory.GetFileSystemEntries(path).Length > 0)
+                        break;
+
+                    File.SetAttributes(path, FileAttributes.Normal);
+                    Directory.Delete(path);
+                    path = Path.GetDirectoryName(path);
+                }
+            }
+            catch { }
+        }
+
     }
 }
