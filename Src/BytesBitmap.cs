@@ -145,8 +145,8 @@ namespace RT.Util
             if (!FDestroyed)
             {
                 Handle.Free();
-                Bits=null;
-                FDestroyed=true;
+                Bits = null;
+                FDestroyed = true;
             }
         }
 
