@@ -27,6 +27,16 @@ namespace RT.Util
         }
 
         /// <summary>
+        /// Constructs an instance of the time-out class starting immediately and timing out
+        /// after the specified number of Seconds has elapsed.
+        /// </summary>
+        public TimeOut(double Seconds)
+        {
+            this.Interval = TimeSpan.FromSeconds(Seconds);
+            this.StartTime = DateTime.Now;
+        }
+
+        /// <summary>
         /// Returns whether the time-out has occurred.
         /// </summary>
         public bool TimedOut
