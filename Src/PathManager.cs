@@ -130,7 +130,6 @@ namespace RT.Util
         /// Checks whether a path is included or excluded.
         /// </summary>
         /// <param name="path">The path to be checked</param>
-        /// <param name="included">If false, the function becomes IsPathExcluded</param>
         /// <returns>Whether the path is included/excluded</returns>
         public bool IsPathIncluded(string path)
         {
@@ -138,17 +137,11 @@ namespace RT.Util
             int mindistn = -1;
             for (int i=0; i<Paths.Count; i++)
             {
-                int d;
-                try
-                {
-                    d = Ut.PathLevelDistance(Paths[i].Path, path);
-                }
-                catch (Exception)
-                {
+                int d = Ut.PathLevelDistance(Paths[i].Path, path);
+                
+                if (d == int.MaxValue || d < 0)
                     continue;
-                }
-                if (d<0)
-                    continue;
+
                 if (d<mindist)
                 {
                     mindist = d;

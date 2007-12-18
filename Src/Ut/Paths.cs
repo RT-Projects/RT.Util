@@ -100,7 +100,7 @@ namespace RT.Util
         /// Returns the number of sublevels 'path' is away from ref_path.
         /// Positive numbers indicate that path is deeper than ref_path;
         /// negative that it's above ref_path. If neither is a subpath of
-        /// the other an exception is thrown.
+        /// the other returns int.MaxValue.
         /// </summary>
         /// <param name="ref_path">Reference path</param>
         /// <param name="path">Path to be compared</param>
@@ -115,14 +115,14 @@ namespace RT.Util
             if (p1.Length<p2.Length)
             {
                 if (p2.Substring(0, p1.Length) != p1)
-                    throw new Exception();
+                    return int.MaxValue;
                 p1 = p2.Substring(p1.Length);
                 return Ut.CountStrings(p1, Path.DirectorySeparatorChar+"");
             }
             else
             {
                 if (p1.Substring(0, p2.Length) != p2)
-                    throw new Exception();
+                    return int.MaxValue;
                 p2 = p1.Substring(p2.Length);
                 return -Ut.CountStrings(p2, Path.DirectorySeparatorChar+"");
             }
