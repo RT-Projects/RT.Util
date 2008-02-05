@@ -18,7 +18,7 @@ namespace RT.Util
     public class ConfirmEventArgs : EventArgs
     {
         /// <summary>
-        /// Set this to true/false to confirm or cancel the action.ssss
+        /// Set this to true/false to confirm or cancel the action.
         /// </summary>
         public bool ConfirmOK;
     }

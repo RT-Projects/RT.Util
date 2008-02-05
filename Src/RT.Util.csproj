@@ -130,6 +130,7 @@
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Virtual2DArray.cs" />
+    <Compile Include="VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />
     <Compile Include="WinAPI.cs" />
