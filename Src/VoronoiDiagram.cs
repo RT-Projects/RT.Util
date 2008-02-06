@@ -5,42 +5,89 @@ using System.Drawing;
 
 namespace RT.Util
 {
+    /// <summary>
+    /// Static class providing methods for generating Voronoi diagrams from a set of input points.
+    /// </summary>
     public class VoronoiDiagram
     {
+        /// <summary>
+        /// Generates a Voronoi diagram from a set of input points.
+        /// </summary>
+        /// <param name="Sites">Input points (sites) to generate diagram from.</param>
+        /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
+        /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
+        /// If false, such duplicates cause an exception.</param>
+        /// <returns>A list of line segments describing the Voronoi diagram.</returns>
+        public static List<LineSegment> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, bool RemoveDuplicates)
+        {
+            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, RemoveDuplicates);
+            return d.AllSegments;
+        }
+
+        /// <summary>
+        /// Generates a Voronoi diagram from a set of input points.
+        /// </summary>
+        /// <param name="Sites">Input points (sites) to generate diagram from.
+        /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
+        /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
+        /// <returns>A list of line segments describing the Voronoi diagram.</returns>
         public static List<LineSegment> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size)
         {
-            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height);
+            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, false);
             return d.AllSegments;
         }
     }
 
+    /// <summary>
+    /// A class describing a line segment. Used by RT.Util.VoronoiDiagram to describe the resulting Voronoi diagram.
+    /// </summary>
     public class LineSegment
     {
-        public PointF Start, End;
-        public bool Done;
-        public LineSegment(List<LineSegment> AllSegments, PointF nStart) { Start = nStart; End = new PointF(0, 0); Done = false; AllSegments.Add(this); }
+        public PointF Start, End, SiteA, SiteB;
+        public LineSegment(List<LineSegment> AllSegments, PointF nStart, PointF nSiteA, PointF nSiteB) { 
+            Start = nStart; 
+            End = new PointF(0, 0);
+            SiteA = nSiteA;
+            SiteB = nSiteB;
+            Done = false; 
+            AllSegments.Add(this); 
+        }
+        private bool Done;
         public void Finish(PointF nEnd) { if (Done) return; End = nEnd; Done = true; }
-        public override string ToString() { return Start.ToString() + " ==> " + End.ToString(); }
+        public override string ToString() { return Start.ToString() + " ==> " + (Done ? End.ToString() : "?"); }
     }
 
+    /// <summary>
+    /// Internal class to generate Voronoi diagrams using Fortune's algorithm. Contains internal data structures and methods.
+    /// </summary>
     class VoronoiDiagramData
     {
-        public Arc ArcRoot = null;
+        public List<Arc> Arcs = new List<Arc>();
         public List<SiteEvent> SiteEvents = new List<SiteEvent>();
         public List<CircleEvent> CircleEvents = new List<CircleEvent>();
         public List<LineSegment> AllSegments = new List<LineSegment>();
 
-        public VoronoiDiagramData(PointF[] Sites, float Width, float Height)
+        public VoronoiDiagramData(PointF[] Sites, float Width, float Height, bool RemoveDuplicates)
         {
             foreach (PointF p in Sites)
             {
-                // Create a site event
                 SiteEvent SiteEvent = new SiteEvent(new PointF(p.X, p.Y));
-                // Add the event in the right place
-                int Index = 0;
-                while (Index < SiteEvents.Count && SiteEvents[Index].Position.X < p.X)
-                    Index++;
-                SiteEvents.Insert(Index, SiteEvent);
+                SiteEvents.Add(SiteEvent);
+            }
+            SiteEvents.Sort();
+
+            // Make sure there are no two equal points in the input
+            for (int i = 1; i < SiteEvents.Count; i++)
+            {
+                while (SiteEvents[i - 1].Position == SiteEvents[i].Position)
+                {
+                    if (RemoveDuplicates)
+                        SiteEvents.RemoveAt(i);
+                    else
+                        throw new Exception("The input contains two points at the same coordinates " + 
+                            SiteEvents[i].Position + ". Voronoi diagrams are undefined for such a situation. " +
+                            "Use the RemoveDuplicates parameter to automatically remove such duplicate input points.");
+                }
             }
 
             // Main loop
@@ -54,18 +101,18 @@ namespace RT.Util
             while (CircleEvents.Count > 0)
                 ProcessCircleEvent(CircleEvents);
 
-            FinishEdges(Width, Height); // Clean up dangling edges.
+            FinishEdges(Width, Height); // Clean up dangling edges
         }
 
         private void FinishEdges(float Width, float Height)
         {
-            // Advance the sweep line so no parabolas can cross the bounding box.
+            // Advance the sweep line so no parabolas can cross the bounding box
             float Var = 2 * Width + Height;
 
-            // Extend each remaining segment to the new parabola intersections.
-            for (Arc Arc = ArcRoot; Arc.Next != null; Arc = Arc.Next)
-                if (Arc.RightSegment != null)
-                    Arc.RightSegment.Finish(GetIntersection(Arc.Site, Arc.Next.Site, 2 * Var));
+            // Extend each remaining segment to the new parabola intersections
+            for (int i = 0; i < Arcs.Count - 1; i++)
+                if (Arcs[i].RightSegment != null)
+                    Arcs[i].RightSegment.Finish(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
         }
 
         private void ProcessSiteEvent(List<SiteEvent> SiteEvents, List<CircleEvent> CircleEvents)
@@ -73,68 +120,60 @@ namespace RT.Util
             SiteEvent Event = SiteEvents[0];
             SiteEvents.RemoveAt(0);
 
-            if (ArcRoot == null)
+            if (Arcs.Count == 0)
             {
-                ArcRoot = new Arc(Event.Position, null, null);
+                Arcs.Add(new Arc(Event.Position));
                 return;
             }
 
-            // Find the current arc(s) at height e.Position.y (if there are any).
-            for (Arc Arc = ArcRoot; Arc != null; Arc = Arc.Next)
+            // Find the current arc(s) at height e.Position.y (if there are any)
+            for (int i = 0; i < Arcs.Count; i++)
             {
                 PointF Intersect;
-                if (DoesIntersect(Event.Position, Arc, out Intersect))
+                if (DoesIntersect(Event.Position, i, out Intersect))
                 {
-                    PointF Dummy;
-                    // New parabola intersects Arc.  If necessary, duplicate Arc.
-                    if (Arc.Next != null && !DoesIntersect(Event.Position, Arc.Next, out Dummy))
-                    {
-                        Arc.Next.Prev = new Arc(Arc.Site, Arc, Arc.Next);
-                        Arc.Next = Arc.Next.Prev;
-                    }
-                    else Arc.Next = new Arc(Arc.Site, Arc, null);
-                    Arc.Next.RightSegment = Arc.RightSegment;
+                    // New parabola intersects Arc - duplicate Arc
+                    Arcs.Insert(i + 1, new Arc(Arcs[i].Site));
+                    Arcs[i + 1].RightSegment = Arcs[i].RightSegment;
 
-                    // Add e.Position between Arc and Arc.Next.
-                    Arc.Next.Prev = new Arc(Event.Position, Arc, Arc.Next);
-                    Arc.Next = Arc.Next.Prev;
+                    // Add a new Arc for Event.Position in the right place
+                    Arcs.Insert(i + 1, new Arc(Event.Position));
 
-                    Arc = Arc.Next; // Now Arc points to the new arc.
-
-                    // Add new half-edges connected to Arc's endpoints.
-                    Arc.Prev.RightSegment = Arc.LeftSegment = new LineSegment(AllSegments, Intersect);
-                    Arc.Next.LeftSegment = Arc.RightSegment = new LineSegment(AllSegments, Intersect);
+                    // Add new half-edges connected to Arc's endpoints
+                    Arcs[i].RightSegment = Arcs[i + 1].LeftSegment = new LineSegment(AllSegments, Intersect, Arcs[i].Site, Arcs[i+1].Site);
+                    Arcs[i + 1].RightSegment = Arcs[i + 2].LeftSegment = new LineSegment(AllSegments, Intersect, Arcs[i + 1].Site, Arcs[i + 2].Site);
 
                     // Check for new circle events around the new arc:
-                    CheckCircleEvent(CircleEvents, Arc, Event.Position.X);
-                    CheckCircleEvent(CircleEvents, Arc.Prev, Event.Position.X);
-                    CheckCircleEvent(CircleEvents, Arc.Next, Event.Position.X);
+                    CheckCircleEvent(CircleEvents, i, Event.Position.X);
+                    CheckCircleEvent(CircleEvents, i + 2, Event.Position.X);
 
                     return;
                 }
             }
 
             // Special case: If Event.Position never intersects an arc, append it to the list.
-            Arc LastArc = ArcRoot;
-            while (LastArc.Next != null) LastArc = LastArc.Next;  // Find the last node.
-            LastArc.Next = new Arc(Event.Position, LastArc, null);
-            // Insert segment between Event.Position and LastArc
-            LastArc.RightSegment = LastArc.Next.LeftSegment = new LineSegment(AllSegments, new PointF(0, (LastArc.Next.Site.Y + LastArc.Site.Y) / 2));
+            // This only happens if there is more than one site event with the lowest X co-ordinate.
+            Arc LastArc = Arcs[Arcs.Count - 1];
+            Arc NewArc = new Arc(Event.Position);
+            LastArc.RightSegment = NewArc.LeftSegment = new LineSegment(AllSegments, new PointF(0, (NewArc.Site.Y + LastArc.Site.Y) / 2), LastArc.Site, NewArc.Site);
+            Arcs.Add(NewArc);
         }
 
-        // Will a new parabola at Site intersect with Arc?
-        bool DoesIntersect(PointF Site, Arc Arc, out PointF Result)
+        // Will a new parabola at Site intersect with the arc at ArcIndex?
+        bool DoesIntersect(PointF Site, int ArcIndex, out PointF Result)
         {
+            Arc Arc = Arcs[ArcIndex];
+
             Result = new PointF(0, 0);
             if (Arc.Site.X == Site.X)
                 return false;
 
-            if ((Arc.Prev == null || GetIntersection(Arc.Prev.Site, Arc.Site, Site.X).Y <= Site.Y) &&
-                (Arc.Next == null || Site.Y <= GetIntersection(Arc.Site, Arc.Next.Site, Site.X).Y))
+            if ((ArcIndex == 0 || GetIntersection(Arcs[ArcIndex - 1].Site, Arc.Site, Site.X).Y <= Site.Y) &&
+                (ArcIndex == Arcs.Count - 1 || Site.Y <= GetIntersection(Arc.Site, Arcs[ArcIndex + 1].Site, Site.X).Y))
             {
                 Result.Y = Site.Y;
 
-                // Plug it back into the parabola equation.
+                // Plug it back into the parabola equation
                 Result.X = (Arc.Site.X * Arc.Site.X + (Arc.Site.Y - Result.Y) * (Arc.Site.Y - Result.Y) - Site.X * Site.X)
                           / (2 * Arc.Site.X - 2 * Site.X);
 
@@ -160,7 +199,7 @@ namespace RT.Util
             }
             else
             {
-                // Use the quadratic formula.
+                // Use the quadratic formula
                 float z0 = 2 * (SiteA.X - ScanX);
                 float z1 = 2 * (SiteB.X - ScanX);
 
@@ -172,7 +211,7 @@ namespace RT.Util
                 Result.Y = (float)(-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
             }
 
-            // Plug back into one of the parabola equations.
+            // Plug back into one of the parabola equations
             Result.X = (p.X * p.X + (p.Y - Result.Y) * (p.Y - Result.Y) - ScanX * ScanX) / (2 * p.X - 2 * ScanX);
             return Result;
         }
@@ -181,68 +220,67 @@ namespace RT.Util
         {
             CircleEvent Event = CircleEvents[0];
             CircleEvents.RemoveAt(0);
-            if (!Event.Valid) return;
+            int ArcIndex = Arcs.IndexOf(Event.Arc);
+            if (ArcIndex == -1) return;
 
-            // Start a new edge.
-            LineSegment LineSeg = new LineSegment(AllSegments, Event.Center);
+            // Start a new edge
+            LineSegment LineSeg = new LineSegment(AllSegments, Event.Center, Arcs[ArcIndex-1].Site, Arcs[ArcIndex+1].Site);
 
-            // Remove the associated arc from the front.
-            Arc Arc = Event.Arc;
-            if (Arc.Prev != null)
-            {
-                Arc.Prev.Next = Arc.Next;
-                Arc.Prev.RightSegment = LineSeg;
-            }
-            if (Arc.Next != null)
-            {
-                Arc.Next.Prev = Arc.Prev;
-                Arc.Next.LeftSegment = LineSeg;
-            }
+            // The arcs before and after the one that disappears are now responsible for the new edge
+            if (ArcIndex > 0)
+                Arcs[ArcIndex - 1].RightSegment = LineSeg;
+            if (ArcIndex < Arcs.Count - 1)
+                Arcs[ArcIndex + 1].LeftSegment = LineSeg;
 
-            // Finish the edges before and after Arc.
-            if (Arc.LeftSegment != null) Arc.LeftSegment.Finish(Event.Center);
-            if (Arc.RightSegment != null) Arc.RightSegment.Finish(Event.Center);
+            // Remove the arc from the beachline
+            Arcs.RemoveAt(ArcIndex);
 
-            // Recheck circle events on either side of Arc:
-            if (Arc.Prev != null) CheckCircleEvent(CircleEvents, Arc.Prev, Event.X);
-            if (Arc.Next != null) CheckCircleEvent(CircleEvents, Arc.Next, Event.X);
+            // The two edges corresponding to the disappearing arc end here
+            if (Event.Arc.LeftSegment != null) Event.Arc.LeftSegment.Finish(Event.Center);
+            if (Event.Arc.RightSegment != null) Event.Arc.RightSegment.Finish(Event.Center);
+
+            // Recheck circle events on either side of the disappearing arc
+            if (ArcIndex > 0)
+                CheckCircleEvent(CircleEvents, ArcIndex - 1, Event.X);
+            if (ArcIndex < Arcs.Count)  // remember that ArcIndex now points to the arc after the one that disappeared
+                CheckCircleEvent(CircleEvents, ArcIndex, Event.X);
         }
 
-
-        // Look for a new circle event for Arc.
-        private void CheckCircleEvent(List<CircleEvent> CircleEvents, Arc Arc, double ScanX)
+        // Look for a new circle event for the arc at ArcIndex
+        private void CheckCircleEvent(List<CircleEvent> CircleEvents, int ArcIndex, float ScanX)
         {
-            // Invalidate any old event.
-            if (Arc.Event != null && Arc.Event.X != ScanX)
-                Arc.Event.Valid = false;
-            Arc.Event = null;
-
-            if (Arc.Prev == null || Arc.Next == null)
+            if (ArcIndex == 0 || ArcIndex == Arcs.Count - 1)
                 return;
 
-            double MaxX;
+            Arc Arc = Arcs[ArcIndex];
+            float MaxX;
             PointF Center;
 
-            if (GetCircle(Arc.Prev.Site, Arc.Site, Arc.Next.Site, out MaxX, out Center) && MaxX > ScanX)
+            if (GetCircle(Arcs[ArcIndex - 1].Site, Arc.Site, Arcs[ArcIndex + 1].Site, out Center, out MaxX) && MaxX >= ScanX)
             {
-                // Create new event.
-                Arc.Event = new CircleEvent(MaxX, Center, Arc);
-
-                // Add the event in the right place
-                int Index = 0;
-                while (Index < CircleEvents.Count && CircleEvents[Index].X < Arc.Event.X)
-                    Index++;
-                CircleEvents.Insert(Index, Arc.Event);
+                // Add the new event in the right place using binary search
+                int Low = 0;
+                int High = CircleEvents.Count;
+                while (Low < High)
+                {
+                    int Middle = (Low + High) / 2;
+                    CircleEvent Event = CircleEvents[Middle];
+                    if (Event.X < MaxX || (Event.X == MaxX && Event.Center.Y < Center.Y))
+                        Low = Middle + 1;
+                    else
+                        High = Middle;
+                }
+                CircleEvents.Insert(Low, new CircleEvent(MaxX, Center, Arc));
             }
         }
 
-        // Find the rightmost point on the circle through a, b, c.
-        private bool GetCircle(PointF A, PointF B, PointF C, out double MaxX, out PointF Center)
+        // Find the circle through points A, B, C
+        private bool GetCircle(PointF A, PointF B, PointF C, out PointF Center, out float MaxX)
         {
             MaxX = 0;
             Center = new PointF(0, 0);
 
-            // Check that BC is a "right turn" from AB.
+            // Check that BC is a "right turn" from AB
             if ((B.X - A.X) * (C.Y - A.Y) - (C.X - A.X) * (B.Y - A.Y) > 0)
                 return false;
 
@@ -255,38 +293,80 @@ namespace RT.Util
 
             if (g == 0) return false;  // Points are co-linear.
 
-            // Point o is the center of the circle.
             Center.X = (d * e - b * f) / g;
             Center.Y = (a * f - c * e) / g;
 
-            // o.X plus radius equals max X coordinate.
-            MaxX = Center.X + Math.Sqrt(Math.Pow(A.X - Center.X, 2) + Math.Pow(A.Y - Center.Y, 2));
+            // MaxX = Center.X + radius of the circle
+            MaxX = Center.X + (float)Math.Sqrt(Math.Pow(A.X - Center.X, 2) + Math.Pow(A.Y - Center.Y, 2));
             return true;
         }
     }
 
+    /// <summary>
+    /// Internal class to describe an arc on the beachline (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
+    /// </summary>
     class Arc
     {
         public PointF Site;
-        public Arc Prev;
-        public Arc Next;
-        public CircleEvent Event;
         public LineSegment LeftSegment, RightSegment;
-        public Arc(PointF nSite, Arc nPrev, Arc nNext) { Site = nSite; Prev = nPrev; Next = nNext; Event = null; LeftSegment = null; RightSegment = null; }
+        public Arc(PointF nSite) { Site = nSite; LeftSegment = null; RightSegment = null; }
+        public override string ToString()
+        {
+            return "Site = " + Site.ToString();
+        }
     }
 
-    class SiteEvent
+    /// <summary>
+    /// Internal class to describe a site event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
+    /// </summary>
+    class SiteEvent : IComparable<SiteEvent>
     {
         public PointF Position;
         public SiteEvent(PointF nPosition) { Position = nPosition; }
+        public override string ToString()
+        {
+            return Position.ToString();
+        }
+
+        public int CompareTo(SiteEvent other)
+        {
+            if (Position.X < other.Position.X)
+                return -1;
+            if (Position.X > other.Position.X)
+                return 1;
+            if (Position.Y < other.Position.Y)
+                return -1;
+            if (Position.Y > other.Position.Y)
+                return 1;
+            return 0;
+        }
     }
 
-    class CircleEvent
+    /// <summary>
+    /// Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
+    /// </summary>
+    class CircleEvent : IComparable<CircleEvent>
     {
         public PointF Center;
-        public double X;
+        public float X;
         public Arc Arc;
-        public bool Valid;
-        public CircleEvent(double nX, PointF nCenter, Arc nArc) { X = nX; Center = nCenter; Arc = nArc; Valid = true; }
+        public CircleEvent(float nX, PointF nCenter, Arc nArc) { X = nX; Center = nCenter; Arc = nArc; }
+        public override string ToString()
+        {
+            return "(" + X + ", " + Center.Y + ") [" + Center.X + "]";
+        }
+
+        public int CompareTo(CircleEvent other)
+        {
+            if (X < other.X)
+                return -1;
+            if (X > other.X)
+                return 1;
+            if (Center.Y < other.Center.Y)
+                return -1;
+            if (Center.Y > other.Center.Y)
+                return 1;
+            return 0;
+        }
     }
 }
