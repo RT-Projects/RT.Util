@@ -3,6 +3,54 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 
+namespace RT.Util.Voronoi
+{
+    /// <summary>
+    /// A class describing a line segment. Used by RT.Util.VoronoiDiagram to describe the resulting Voronoi diagram.
+    /// </summary>
+    public class Edge
+    {
+        public PointF? Start, End;
+        public PointF SiteA, SiteB;
+        public int Pos;
+        public Edge(List<Edge> Edges, Dictionary<PointF, List<Edge>> EdgesPerPoint, PointF nSiteA, PointF nSiteB)
+        {
+            Start = null;
+            End = null;
+            SiteA = nSiteA;
+            SiteB = nSiteB;
+            Edges.Add(this);
+            if (!EdgesPerPoint.ContainsKey(nSiteA))
+                EdgesPerPoint.Add(nSiteA, new List<Edge>());
+            EdgesPerPoint[nSiteA].Add(this);
+            if (!EdgesPerPoint.ContainsKey(nSiteB))
+                EdgesPerPoint.Add(nSiteB, new List<Edge>());
+            EdgesPerPoint[nSiteB].Add(this);
+        }
+        public void SetEndPoint(PointF nEnd)
+        {
+            if (Start == null)
+                Start = nEnd;
+            else if (End == null)
+                End = nEnd;
+        }
+        public override string ToString() { return (Start == null ? "?" : Start.Value.ToString()) + " ==> " + (End == null ? "?" : End.ToString()); }
+    }
+
+    public class Polygon
+    {
+        public bool Complete;
+        public List<Edge> Edges;
+        private List<List<Edge>> IncompleteSegments;
+        public Polygon()
+        {
+            Complete = false;
+            Edges = new List<Edge>();
+            IncompleteSegments = new List<List<Edge>>();
+        }
+    }
+}
+
 namespace RT.Util
 {
     public enum VoronoiDiagramFlags
@@ -24,10 +72,10 @@ namespace RT.Util
         /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
         /// If false, such duplicates cause an exception.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<LineSegment>, Dictionary<PointF, List<LineSegment>>> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
+        public static Tuple<List<Voronoi.Edge>, Dictionary<PointF, List<Voronoi.Edge>>> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
         {
             VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, Flags);
-            return new Tuple<List<LineSegment>, Dictionary<PointF, List<LineSegment>>>(d.LineSegments, d.LineSegmentsPerPoint);
+            return new Tuple<List<Voronoi.Edge>, Dictionary<PointF, List<Voronoi.Edge>>>(d.Edges, d.EdgesPerPoint);
         }
 
         /// <summary>
@@ -37,43 +85,11 @@ namespace RT.Util
         /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
         /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static List<LineSegment> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size)
+        public static List<Voronoi.Edge> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size)
         {
             VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, 0);
-            return d.LineSegments;
+            return d.Edges;
         }
-    }
-
-    /// <summary>
-    /// A class describing a line segment. Used by RT.Util.VoronoiDiagram to describe the resulting Voronoi diagram.
-    /// </summary>
-    public class LineSegment
-    {
-        public PointF? Start, End;
-        public PointF SiteA, SiteB;
-        public int Pos;
-        public LineSegment(List<LineSegment> LineSegments, Dictionary<PointF, List<LineSegment>> LineSegmentsPerPoint, PointF nSiteA, PointF nSiteB)
-        {
-            Start = null;
-            End = null;
-            SiteA = nSiteA;
-            SiteB = nSiteB;
-            LineSegments.Add(this);
-            if (!LineSegmentsPerPoint.ContainsKey(nSiteA))
-                LineSegmentsPerPoint.Add(nSiteA, new List<LineSegment>());
-            LineSegmentsPerPoint[nSiteA].Add(this);
-            if (!LineSegmentsPerPoint.ContainsKey(nSiteB))
-                LineSegmentsPerPoint.Add(nSiteB, new List<LineSegment>());
-            LineSegmentsPerPoint[nSiteB].Add(this);
-        }
-        public void SetEndPoint(PointF nEnd)
-        {
-            if (Start == null)
-                Start = nEnd;
-            else if (End == null)
-                End = nEnd;
-        }
-        public override string ToString() { return (Start == null ? "?" : Start.Value.ToString()) + " ==> " + (End == null ? "?" : End.ToString()); }
     }
 
     /// <summary>
@@ -84,8 +100,8 @@ namespace RT.Util
         public List<Arc> Arcs = new List<Arc>();
         public List<SiteEvent> SiteEvents = new List<SiteEvent>();
         public List<CircleEvent> CircleEvents = new List<CircleEvent>();
-        public List<LineSegment> LineSegments = new List<LineSegment>();
-        public Dictionary<PointF, List<LineSegment>> LineSegmentsPerPoint = new Dictionary<PointF, List<LineSegment>>();
+        public List<Voronoi.Edge> Edges = new List<Voronoi.Edge>();
+        public Dictionary<PointF, List<Voronoi.Edge>> EdgesPerPoint = new Dictionary<PointF, List<Voronoi.Edge>>();
 
         public VoronoiDiagramData(PointF[] Sites, float Width, float Height, VoronoiDiagramFlags Flags)
         {
@@ -106,7 +122,7 @@ namespace RT.Util
             // Make sure there are no two equal points in the input
             for (int i = 1; i < SiteEvents.Count; i++)
             {
-                while (SiteEvents[i - 1].Position == SiteEvents[i].Position)
+                while (i < SiteEvents.Count && SiteEvents[i - 1].Position == SiteEvents[i].Position)
                 {
                     if ((Flags & VoronoiDiagramFlags.REMOVE_DUPLICATES) == VoronoiDiagramFlags.REMOVE_DUPLICATES)
                         SiteEvents.RemoveAt(i);
@@ -121,12 +137,12 @@ namespace RT.Util
             while (SiteEvents.Count > 0)
             {
                 if (CircleEvents.Count > 0 && CircleEvents[0].X <= SiteEvents[0].Position.X)
-                    ProcessCircleEvent(CircleEvents);
+                    ProcessCircleEvent();
                 else
-                    ProcessSiteEvent(SiteEvents, CircleEvents);
+                    ProcessSiteEvent();
             }
             while (CircleEvents.Count > 0)
-                ProcessCircleEvent(CircleEvents);
+                ProcessCircleEvent();
 
             FinishEdges(Width, Height); // Clean up dangling edges
         }
@@ -140,9 +156,31 @@ namespace RT.Util
             for (int i = 0; i < Arcs.Count - 1; i++)
                 if (Arcs[i].RightSegment != null)
                     Arcs[i].RightSegment.SetEndPoint(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
+
+            // Now clip all the edges with the bounding rectangle
+            foreach (Voronoi.Edge s in Edges)
+            {
+                if (s.Start.Value.X < 0)
+                    s.Start = new PointF(0, s.End.Value.X / (s.End.Value.X - s.Start.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
+                if (s.Start.Value.Y < 0)
+                    s.Start = new PointF(s.End.Value.Y / (s.End.Value.Y - s.Start.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, 0);
+                if (s.End.Value.X < 0)
+                    s.End = new PointF(0, s.Start.Value.X / (s.Start.Value.X - s.End.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
+                if (s.End.Value.Y < 0)
+                    s.End = new PointF(s.Start.Value.Y / (s.Start.Value.Y - s.End.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, 0);
+
+                if (s.Start.Value.X > Width)
+                    s.Start = new PointF(Width, (Width - s.Start.Value.X) / (s.End.Value.X - s.Start.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
+                if (s.Start.Value.Y > Height)
+                    s.Start = new PointF((Height - s.Start.Value.Y) / (s.End.Value.Y - s.Start.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, Height);
+                if (s.End.Value.X > Width)
+                    s.End = new PointF(Width, (Width - s.End.Value.X) / (s.Start.Value.X - s.End.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
+                if (s.End.Value.Y > Height)
+                    s.End = new PointF((Height - s.End.Value.Y) / (s.Start.Value.Y - s.End.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, Height);
+            }
         }
 
-        private void ProcessSiteEvent(List<SiteEvent> SiteEvents, List<CircleEvent> CircleEvents)
+        private void ProcessSiteEvent()
         {
             SiteEvent Event = SiteEvents[0];
             SiteEvents.RemoveAt(0);
@@ -169,7 +207,7 @@ namespace RT.Util
                     // Add new half-edges connected to Arc's endpoints
                     Arcs[i].RightSegment = Arcs[i + 1].LeftSegment =
                         Arcs[i + 1].RightSegment = Arcs[i + 2].LeftSegment =
-                        new LineSegment(LineSegments, LineSegmentsPerPoint, Arcs[i + 1].Site, Arcs[i + 2].Site);
+                        new Voronoi.Edge(Edges, EdgesPerPoint, Arcs[i + 1].Site, Arcs[i + 2].Site);
 
                     // Check for new circle events around the new arc:
                     CheckCircleEvent(CircleEvents, i, Event.Position.X);
@@ -183,7 +221,7 @@ namespace RT.Util
             // This only happens if there is more than one site event with the lowest X co-ordinate.
             Arc LastArc = Arcs[Arcs.Count - 1];
             Arc NewArc = new Arc(Event.Position);
-            LastArc.RightSegment = NewArc.LeftSegment = new LineSegment(LineSegments, LineSegmentsPerPoint, LastArc.Site, NewArc.Site);
+            LastArc.RightSegment = NewArc.LeftSegment = new Voronoi.Edge(Edges, EdgesPerPoint, LastArc.Site, NewArc.Site);
             NewArc.LeftSegment.SetEndPoint(new PointF(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
             Arcs.Add(NewArc);
         }
@@ -245,7 +283,7 @@ namespace RT.Util
             return Result;
         }
 
-        private void ProcessCircleEvent(List<CircleEvent> CircleEvents)
+        private void ProcessCircleEvent()
         {
             CircleEvent Event = CircleEvents[0];
             CircleEvents.RemoveAt(0);
@@ -253,7 +291,7 @@ namespace RT.Util
             if (ArcIndex == -1) return;
 
             // Start a new edge
-            LineSegment LineSeg = new LineSegment(LineSegments, LineSegmentsPerPoint, Arcs[ArcIndex - 1].Site, Arcs[ArcIndex + 1].Site);
+            Voronoi.Edge LineSeg = new Voronoi.Edge(Edges, EdgesPerPoint, Arcs[ArcIndex - 1].Site, Arcs[ArcIndex + 1].Site);
             LineSeg.SetEndPoint(Event.Center);
 
             // The arcs before and after the one that disappears are now responsible for the new edge
@@ -286,7 +324,7 @@ namespace RT.Util
             float MaxX;
             PointF Center;
 
-            if (GetCircle(Arcs[ArcIndex - 1].Site, Arc.Site, Arcs[ArcIndex + 1].Site, out Center, out MaxX) && MaxX >= ScanX)
+            if (GetCircle(Arcs[ArcIndex - 1].Site, Arc.Site, Arcs[ArcIndex + 1].Site, out Center, out MaxX)/* && MaxX >= ScanX*/)
             {
                 // Add the new event in the right place using binary search
                 int Low = 0;
@@ -338,7 +376,7 @@ namespace RT.Util
     class Arc
     {
         public PointF Site;
-        public LineSegment LeftSegment, RightSegment;
+        public Voronoi.Edge LeftSegment, RightSegment;
         public Arc(PointF nSite) { Site = nSite; LeftSegment = null; RightSegment = null; }
         public override string ToString()
         {
