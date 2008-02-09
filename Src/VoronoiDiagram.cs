@@ -5,6 +5,12 @@ using System.Drawing;
 
 namespace RT.Util
 {
+    public enum VoronoiDiagramFlags
+    {
+        REMOVE_DUPLICATES = 1,
+        REMOVE_OFFBOUNDS_SITES = 2
+    }
+
     /// <summary>
     /// Static class providing methods for generating Voronoi diagrams from a set of input points.
     /// </summary>
@@ -18,10 +24,10 @@ namespace RT.Util
         /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
         /// If false, such duplicates cause an exception.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static List<LineSegment> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, bool RemoveDuplicates)
+        public static Tuple<List<LineSegment>, Dictionary<PointF, List<LineSegment>>> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
         {
-            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, RemoveDuplicates);
-            return d.AllSegments;
+            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, Flags);
+            return new Tuple<List<LineSegment>, Dictionary<PointF, List<LineSegment>>>(d.LineSegments, d.LineSegmentsPerPoint);
         }
 
         /// <summary>
@@ -33,8 +39,8 @@ namespace RT.Util
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
         public static List<LineSegment> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size)
         {
-            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, false);
-            return d.AllSegments;
+            VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, 0);
+            return d.LineSegments;
         }
     }
 
@@ -43,18 +49,31 @@ namespace RT.Util
     /// </summary>
     public class LineSegment
     {
-        public PointF Start, End, SiteA, SiteB;
-        public LineSegment(List<LineSegment> AllSegments, PointF nStart, PointF nSiteA, PointF nSiteB) { 
-            Start = nStart; 
-            End = new PointF(0, 0);
+        public PointF? Start, End;
+        public PointF SiteA, SiteB;
+        public int Pos;
+        public LineSegment(List<LineSegment> LineSegments, Dictionary<PointF, List<LineSegment>> LineSegmentsPerPoint, PointF nSiteA, PointF nSiteB)
+        {
+            Start = null;
+            End = null;
             SiteA = nSiteA;
             SiteB = nSiteB;
-            Done = false; 
-            AllSegments.Add(this); 
+            LineSegments.Add(this);
+            if (!LineSegmentsPerPoint.ContainsKey(nSiteA))
+                LineSegmentsPerPoint.Add(nSiteA, new List<LineSegment>());
+            LineSegmentsPerPoint[nSiteA].Add(this);
+            if (!LineSegmentsPerPoint.ContainsKey(nSiteB))
+                LineSegmentsPerPoint.Add(nSiteB, new List<LineSegment>());
+            LineSegmentsPerPoint[nSiteB].Add(this);
         }
-        private bool Done;
-        public void Finish(PointF nEnd) { if (Done) return; End = nEnd; Done = true; }
-        public override string ToString() { return Start.ToString() + " ==> " + (Done ? End.ToString() : "?"); }
+        public void SetEndPoint(PointF nEnd)
+        {
+            if (Start == null)
+                Start = nEnd;
+            else if (End == null)
+                End = nEnd;
+        }
+        public override string ToString() { return (Start == null ? "?" : Start.Value.ToString()) + " ==> " + (End == null ? "?" : End.ToString()); }
     }
 
     /// <summary>
@@ -65,14 +84,22 @@ namespace RT.Util
         public List<Arc> Arcs = new List<Arc>();
         public List<SiteEvent> SiteEvents = new List<SiteEvent>();
         public List<CircleEvent> CircleEvents = new List<CircleEvent>();
-        public List<LineSegment> AllSegments = new List<LineSegment>();
+        public List<LineSegment> LineSegments = new List<LineSegment>();
+        public Dictionary<PointF, List<LineSegment>> LineSegmentsPerPoint = new Dictionary<PointF, List<LineSegment>>();
 
-        public VoronoiDiagramData(PointF[] Sites, float Width, float Height, bool RemoveDuplicates)
+        public VoronoiDiagramData(PointF[] Sites, float Width, float Height, VoronoiDiagramFlags Flags)
         {
             foreach (PointF p in Sites)
             {
-                SiteEvent SiteEvent = new SiteEvent(new PointF(p.X, p.Y));
-                SiteEvents.Add(SiteEvent);
+                if (p.X > 0 && p.Y > 0 && p.X < Width && p.Y < Height)
+                {
+                    SiteEvent SiteEvent = new SiteEvent(new PointF(p.X, p.Y));
+                    SiteEvents.Add(SiteEvent);
+                }
+                else if ((Flags & VoronoiDiagramFlags.REMOVE_OFFBOUNDS_SITES) == 0)
+                    throw new Exception("The input contains a point outside the bounds or on the perimeter (coordinates " +
+                        p + "). This case is not handled by this algorithm. Use the RT.Util.VoronoiDiagramFlags.REMOVE_OFFBOUNDS_SITES " +
+                        "flag to automatically remove such off-bounds input points.");
             }
             SiteEvents.Sort();
 
@@ -81,12 +108,12 @@ namespace RT.Util
             {
                 while (SiteEvents[i - 1].Position == SiteEvents[i].Position)
                 {
-                    if (RemoveDuplicates)
+                    if ((Flags & VoronoiDiagramFlags.REMOVE_DUPLICATES) == VoronoiDiagramFlags.REMOVE_DUPLICATES)
                         SiteEvents.RemoveAt(i);
                     else
-                        throw new Exception("The input contains two points at the same coordinates " + 
+                        throw new Exception("The input contains two points at the same coordinates " +
                             SiteEvents[i].Position + ". Voronoi diagrams are undefined for such a situation. " +
-                            "Use the RemoveDuplicates parameter to automatically remove such duplicate input points.");
+                            "Use the RT.Util.VoronoiDiagramFlags.REMOVE_DUPLICATES flag to automatically remove such duplicate input points.");
                 }
             }
 
@@ -112,7 +139,7 @@ namespace RT.Util
             // Extend each remaining segment to the new parabola intersections
             for (int i = 0; i < Arcs.Count - 1; i++)
                 if (Arcs[i].RightSegment != null)
-                    Arcs[i].RightSegment.Finish(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
+                    Arcs[i].RightSegment.SetEndPoint(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
         }
 
         private void ProcessSiteEvent(List<SiteEvent> SiteEvents, List<CircleEvent> CircleEvents)
@@ -140,8 +167,9 @@ namespace RT.Util
                     Arcs.Insert(i + 1, new Arc(Event.Position));
 
                     // Add new half-edges connected to Arc's endpoints
-                    Arcs[i].RightSegment = Arcs[i + 1].LeftSegment = new LineSegment(AllSegments, Intersect, Arcs[i].Site, Arcs[i+1].Site);
-                    Arcs[i + 1].RightSegment = Arcs[i + 2].LeftSegment = new LineSegment(AllSegments, Intersect, Arcs[i + 1].Site, Arcs[i + 2].Site);
+                    Arcs[i].RightSegment = Arcs[i + 1].LeftSegment =
+                        Arcs[i + 1].RightSegment = Arcs[i + 2].LeftSegment =
+                        new LineSegment(LineSegments, LineSegmentsPerPoint, Arcs[i + 1].Site, Arcs[i + 2].Site);
 
                     // Check for new circle events around the new arc:
                     CheckCircleEvent(CircleEvents, i, Event.Position.X);
@@ -155,7 +183,8 @@ namespace RT.Util
             // This only happens if there is more than one site event with the lowest X co-ordinate.
             Arc LastArc = Arcs[Arcs.Count - 1];
             Arc NewArc = new Arc(Event.Position);
-            LastArc.RightSegment = NewArc.LeftSegment = new LineSegment(AllSegments, new PointF(0, (NewArc.Site.Y + LastArc.Site.Y) / 2), LastArc.Site, NewArc.Site);
+            LastArc.RightSegment = NewArc.LeftSegment = new LineSegment(LineSegments, LineSegmentsPerPoint, LastArc.Site, NewArc.Site);
+            NewArc.LeftSegment.SetEndPoint(new PointF(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
             Arcs.Add(NewArc);
         }
 
@@ -224,7 +253,8 @@ namespace RT.Util
             if (ArcIndex == -1) return;
 
             // Start a new edge
-            LineSegment LineSeg = new LineSegment(AllSegments, Event.Center, Arcs[ArcIndex-1].Site, Arcs[ArcIndex+1].Site);
+            LineSegment LineSeg = new LineSegment(LineSegments, LineSegmentsPerPoint, Arcs[ArcIndex - 1].Site, Arcs[ArcIndex + 1].Site);
+            LineSeg.SetEndPoint(Event.Center);
 
             // The arcs before and after the one that disappears are now responsible for the new edge
             if (ArcIndex > 0)
@@ -236,8 +266,8 @@ namespace RT.Util
             Arcs.RemoveAt(ArcIndex);
 
             // The two edges corresponding to the disappearing arc end here
-            if (Event.Arc.LeftSegment != null) Event.Arc.LeftSegment.Finish(Event.Center);
-            if (Event.Arc.RightSegment != null) Event.Arc.RightSegment.Finish(Event.Center);
+            if (Event.Arc.LeftSegment != null) Event.Arc.LeftSegment.SetEndPoint(Event.Center);
+            if (Event.Arc.RightSegment != null) Event.Arc.RightSegment.SetEndPoint(Event.Center);
 
             // Recheck circle events on either side of the disappearing arc
             if (ArcIndex > 0)
