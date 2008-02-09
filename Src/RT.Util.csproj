@@ -90,6 +90,8 @@
     <Compile Include="Forms\ManagedForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Geometry\EdgeD.cs" />
+    <Compile Include="Geometry\PointD.cs" />
     <Compile Include="GlobalKeyboardListener.cs" />
     <Compile Include="GraphicsUtil.cs" />
     <Compile Include="Forms\FormManager.cs">
@@ -108,7 +110,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
-    <Compile Include="RectangleD.cs" />
+    <Compile Include="Geometry\RectangleD.cs" />
     <Compile Include="Set.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsBinaryFile.cs" />
@@ -130,7 +132,7 @@
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Virtual2DArray.cs" />
-    <Compile Include="VoronoiDiagram.cs" />
+    <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />
     <Compile Include="WinAPI.cs" />
