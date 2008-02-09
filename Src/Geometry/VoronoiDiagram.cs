@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 
-namespace RT.Util.Voronoi
+namespace RT.Util.Geometry.Voronoi
 {
     /// <summary>
     /// A class describing a line segment. Used by RT.Util.VoronoiDiagram to describe the resulting Voronoi diagram.
     /// </summary>
     public class Edge
     {
-        public PointF? Start, End;
-        public PointF SiteA, SiteB;
+        public PointD? Start, End;
+        public PointD SiteA, SiteB;
         public int Pos;
-        public Edge(List<Edge> Edges, Dictionary<PointF, List<Edge>> EdgesPerPoint, PointF nSiteA, PointF nSiteB)
+        public Edge(List<Edge> Edges, Dictionary<PointD, List<Edge>> EdgesPerPoint, PointD nSiteA, PointD nSiteB)
         {
             Start = null;
             End = null;
@@ -27,7 +27,7 @@ namespace RT.Util.Voronoi
                 EdgesPerPoint.Add(nSiteB, new List<Edge>());
             EdgesPerPoint[nSiteB].Add(this);
         }
-        public void SetEndPoint(PointF nEnd)
+        public void SetEndPoint(PointD nEnd)
         {
             if (Start == null)
                 Start = nEnd;
@@ -51,7 +51,7 @@ namespace RT.Util.Voronoi
     }
 }
 
-namespace RT.Util
+namespace RT.Util.Geometry
 {
     public enum VoronoiDiagramFlags
     {
@@ -72,10 +72,10 @@ namespace RT.Util
         /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
         /// If false, such duplicates cause an exception.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<Voronoi.Edge>, Dictionary<PointF, List<Voronoi.Edge>>> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
+        public static Tuple<List<Voronoi.Edge>, Dictionary<PointD, List<Voronoi.Edge>>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
         {
             VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, Flags);
-            return new Tuple<List<Voronoi.Edge>, Dictionary<PointF, List<Voronoi.Edge>>>(d.Edges, d.EdgesPerPoint);
+            return new Tuple<List<Voronoi.Edge>, Dictionary<PointD, List<Voronoi.Edge>>>(d.Edges, d.EdgesPerPoint);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace RT.Util
         /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
         /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static List<Voronoi.Edge> GenerateVoronoiDiagram(PointF[] Sites, SizeF Size)
+        public static List<Voronoi.Edge> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size)
         {
             VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, 0);
             return d.Edges;
@@ -101,15 +101,15 @@ namespace RT.Util
         public List<SiteEvent> SiteEvents = new List<SiteEvent>();
         public List<CircleEvent> CircleEvents = new List<CircleEvent>();
         public List<Voronoi.Edge> Edges = new List<Voronoi.Edge>();
-        public Dictionary<PointF, List<Voronoi.Edge>> EdgesPerPoint = new Dictionary<PointF, List<Voronoi.Edge>>();
+        public Dictionary<PointD, List<Voronoi.Edge>> EdgesPerPoint = new Dictionary<PointD, List<Voronoi.Edge>>();
 
-        public VoronoiDiagramData(PointF[] Sites, float Width, float Height, VoronoiDiagramFlags Flags)
+        public VoronoiDiagramData(PointD[] Sites, float Width, float Height, VoronoiDiagramFlags Flags)
         {
-            foreach (PointF p in Sites)
+            foreach (PointD p in Sites)
             {
                 if (p.X > 0 && p.Y > 0 && p.X < Width && p.Y < Height)
                 {
-                    SiteEvent SiteEvent = new SiteEvent(new PointF(p.X, p.Y));
+                    SiteEvent SiteEvent = new SiteEvent(new PointD(p.X, p.Y));
                     SiteEvents.Add(SiteEvent);
                 }
                 else if ((Flags & VoronoiDiagramFlags.REMOVE_OFFBOUNDS_SITES) == 0)
@@ -147,10 +147,10 @@ namespace RT.Util
             FinishEdges(Width, Height); // Clean up dangling edges
         }
 
-        private void FinishEdges(float Width, float Height)
+        private void FinishEdges(double Width, double Height)
         {
             // Advance the sweep line so no parabolas can cross the bounding box
-            float Var = 2 * Width + Height;
+            double Var = 2 * Width + Height;
 
             // Extend each remaining segment to the new parabola intersections
             for (int i = 0; i < Arcs.Count - 1; i++)
@@ -161,22 +161,22 @@ namespace RT.Util
             foreach (Voronoi.Edge s in Edges)
             {
                 if (s.Start.Value.X < 0)
-                    s.Start = new PointF(0, s.End.Value.X / (s.End.Value.X - s.Start.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
+                    s.Start = new PointD(0, s.End.Value.X / (s.End.Value.X - s.Start.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
                 if (s.Start.Value.Y < 0)
-                    s.Start = new PointF(s.End.Value.Y / (s.End.Value.Y - s.Start.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, 0);
+                    s.Start = new PointD(s.End.Value.Y / (s.End.Value.Y - s.Start.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, 0);
                 if (s.End.Value.X < 0)
-                    s.End = new PointF(0, s.Start.Value.X / (s.Start.Value.X - s.End.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
+                    s.End = new PointD(0, s.Start.Value.X / (s.Start.Value.X - s.End.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
                 if (s.End.Value.Y < 0)
-                    s.End = new PointF(s.Start.Value.Y / (s.Start.Value.Y - s.End.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, 0);
+                    s.End = new PointD(s.Start.Value.Y / (s.Start.Value.Y - s.End.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, 0);
 
                 if (s.Start.Value.X > Width)
-                    s.Start = new PointF(Width, (Width - s.Start.Value.X) / (s.End.Value.X - s.Start.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
+                    s.Start = new PointD(Width, (Width - s.Start.Value.X) / (s.End.Value.X - s.Start.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
                 if (s.Start.Value.Y > Height)
-                    s.Start = new PointF((Height - s.Start.Value.Y) / (s.End.Value.Y - s.Start.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, Height);
+                    s.Start = new PointD((Height - s.Start.Value.Y) / (s.End.Value.Y - s.Start.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, Height);
                 if (s.End.Value.X > Width)
-                    s.End = new PointF(Width, (Width - s.End.Value.X) / (s.Start.Value.X - s.End.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
+                    s.End = new PointD(Width, (Width - s.End.Value.X) / (s.Start.Value.X - s.End.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
                 if (s.End.Value.Y > Height)
-                    s.End = new PointF((Height - s.End.Value.Y) / (s.Start.Value.Y - s.End.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, Height);
+                    s.End = new PointD((Height - s.End.Value.Y) / (s.Start.Value.Y - s.End.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, Height);
             }
         }
 
@@ -194,7 +194,7 @@ namespace RT.Util
             // Find the current arc(s) at height e.Position.y (if there are any)
             for (int i = 0; i < Arcs.Count; i++)
             {
-                PointF Intersect;
+                PointD Intersect;
                 if (DoesIntersect(Event.Position, i, out Intersect))
                 {
                     // New parabola intersects Arc - duplicate Arc
@@ -222,16 +222,16 @@ namespace RT.Util
             Arc LastArc = Arcs[Arcs.Count - 1];
             Arc NewArc = new Arc(Event.Position);
             LastArc.RightSegment = NewArc.LeftSegment = new Voronoi.Edge(Edges, EdgesPerPoint, LastArc.Site, NewArc.Site);
-            NewArc.LeftSegment.SetEndPoint(new PointF(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
+            NewArc.LeftSegment.SetEndPoint(new PointD(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
             Arcs.Add(NewArc);
         }
 
         // Will a new parabola at Site intersect with the arc at ArcIndex?
-        bool DoesIntersect(PointF Site, int ArcIndex, out PointF Result)
+        bool DoesIntersect(PointD Site, int ArcIndex, out PointD Result)
         {
             Arc Arc = Arcs[ArcIndex];
 
-            Result = new PointF(0, 0);
+            Result = new PointD(0, 0);
             if (Arc.Site.X == Site.X)
                 return false;
 
@@ -250,10 +250,10 @@ namespace RT.Util
         }
 
         // Where do two parabolas intersect?
-        PointF GetIntersection(PointF SiteA, PointF SiteB, float ScanX)
+        PointD GetIntersection(PointD SiteA, PointD SiteB, double ScanX)
         {
-            PointF Result = new PointF();
-            PointF p = SiteA;
+            PointD Result = new PointD();
+            PointD p = SiteA;
 
             if (SiteA.X == SiteB.X)
                 Result.Y = (SiteA.Y + SiteB.Y) / 2;
@@ -267,15 +267,15 @@ namespace RT.Util
             else
             {
                 // Use the quadratic formula
-                float z0 = 2 * (SiteA.X - ScanX);
-                float z1 = 2 * (SiteB.X - ScanX);
+                double z0 = 2 * (SiteA.X - ScanX);
+                double z1 = 2 * (SiteB.X - ScanX);
 
-                float a = 1 / z0 - 1 / z1;
-                float b = -2 * (SiteA.Y / z0 - SiteB.Y / z1);
-                float c = (SiteA.Y * SiteA.Y + SiteA.X * SiteA.X - ScanX * ScanX) / z0
+                double a = 1 / z0 - 1 / z1;
+                double b = -2 * (SiteA.Y / z0 - SiteB.Y / z1);
+                double c = (SiteA.Y * SiteA.Y + SiteA.X * SiteA.X - ScanX * ScanX) / z0
                          - (SiteB.Y * SiteB.Y + SiteB.X * SiteB.X - ScanX * ScanX) / z1;
 
-                Result.Y = (float)(-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
+                Result.Y = (-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
             }
 
             // Plug back into one of the parabola equations
@@ -315,14 +315,14 @@ namespace RT.Util
         }
 
         // Look for a new circle event for the arc at ArcIndex
-        private void CheckCircleEvent(List<CircleEvent> CircleEvents, int ArcIndex, float ScanX)
+        private void CheckCircleEvent(List<CircleEvent> CircleEvents, int ArcIndex, double ScanX)
         {
             if (ArcIndex == 0 || ArcIndex == Arcs.Count - 1)
                 return;
 
             Arc Arc = Arcs[ArcIndex];
-            float MaxX;
-            PointF Center;
+            double MaxX;
+            PointD Center;
 
             if (GetCircle(Arcs[ArcIndex - 1].Site, Arc.Site, Arcs[ArcIndex + 1].Site, out Center, out MaxX)/* && MaxX >= ScanX*/)
             {
@@ -343,21 +343,21 @@ namespace RT.Util
         }
 
         // Find the circle through points A, B, C
-        private bool GetCircle(PointF A, PointF B, PointF C, out PointF Center, out float MaxX)
+        private bool GetCircle(PointD A, PointD B, PointD C, out PointD Center, out double MaxX)
         {
             MaxX = 0;
-            Center = new PointF(0, 0);
+            Center = new PointD(0, 0);
 
             // Check that BC is a "right turn" from AB
             if ((B.X - A.X) * (C.Y - A.Y) - (C.X - A.X) * (B.Y - A.Y) > 0)
                 return false;
 
             // Algorithm from O'Rourke 2ed p. 189.
-            float a = B.X - A.X, b = B.Y - A.Y,
-                  c = C.X - A.X, d = C.Y - A.Y,
-                  e = a * (A.X + B.X) + b * (A.Y + B.Y),
-                  f = c * (A.X + C.X) + d * (A.Y + C.Y),
-                  g = 2 * (a * (C.Y - B.Y) - b * (C.X - B.X));
+            double a = B.X - A.X, b = B.Y - A.Y,
+                   c = C.X - A.X, d = C.Y - A.Y,
+                   e = a * (A.X + B.X) + b * (A.Y + B.Y),
+                   f = c * (A.X + C.X) + d * (A.Y + C.Y),
+                   g = 2 * (a * (C.Y - B.Y) - b * (C.X - B.X));
 
             if (g == 0) return false;  // Points are co-linear.
 
@@ -365,7 +365,7 @@ namespace RT.Util
             Center.Y = (a * f - c * e) / g;
 
             // MaxX = Center.X + radius of the circle
-            MaxX = Center.X + (float)Math.Sqrt(Math.Pow(A.X - Center.X, 2) + Math.Pow(A.Y - Center.Y, 2));
+            MaxX = Center.X + Math.Sqrt(Math.Pow(A.X - Center.X, 2) + Math.Pow(A.Y - Center.Y, 2));
             return true;
         }
     }
@@ -375,9 +375,9 @@ namespace RT.Util
     /// </summary>
     class Arc
     {
-        public PointF Site;
+        public PointD Site;
         public Voronoi.Edge LeftSegment, RightSegment;
-        public Arc(PointF nSite) { Site = nSite; LeftSegment = null; RightSegment = null; }
+        public Arc(PointD nSite) { Site = nSite; LeftSegment = null; RightSegment = null; }
         public override string ToString()
         {
             return "Site = " + Site.ToString();
@@ -389,8 +389,8 @@ namespace RT.Util
     /// </summary>
     class SiteEvent : IComparable<SiteEvent>
     {
-        public PointF Position;
-        public SiteEvent(PointF nPosition) { Position = nPosition; }
+        public PointD Position;
+        public SiteEvent(PointD nPosition) { Position = nPosition; }
         public override string ToString()
         {
             return Position.ToString();
@@ -415,10 +415,10 @@ namespace RT.Util
     /// </summary>
     class CircleEvent : IComparable<CircleEvent>
     {
-        public PointF Center;
-        public float X;
+        public PointD Center;
+        public double X;
         public Arc Arc;
-        public CircleEvent(float nX, PointF nCenter, Arc nArc) { X = nX; Center = nCenter; Arc = nArc; }
+        public CircleEvent(double nX, PointD nCenter, Arc nArc) { X = nX; Center = nCenter; Arc = nArc; }
         public override string ToString()
         {
             return "(" + X + ", " + Center.Y + ") [" + Center.X + "]";
