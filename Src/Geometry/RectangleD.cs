@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace RT.Util
+namespace RT.Util.Geometry
 {
     /// <summary>
     /// A double-precision rectangle class which supports intersect tests.
