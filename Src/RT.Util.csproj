@@ -92,6 +92,7 @@
     </Compile>
     <Compile Include="Geometry\EdgeD.cs" />
     <Compile Include="Geometry\PointD.cs" />
+    <Compile Include="Geometry\PolygonD.cs" />
     <Compile Include="GlobalKeyboardListener.cs" />
     <Compile Include="GraphicsUtil.cs" />
     <Compile Include="Forms\FormManager.cs">

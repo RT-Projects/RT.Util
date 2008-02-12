@@ -100,28 +100,97 @@ namespace RT.Util.Geometry
             }
 
             // Main loop
-            while (SiteEvents.Count > 0)
+            while (SiteEvents.Count > 0 || CircleEvents.Count > 0)
             {
-                if (CircleEvents.Count > 0 && CircleEvents[0].X <= SiteEvents[0].Position.X)
-                    ProcessCircleEvent();
+                if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents[0].Position.X))
+                {
+                    // Process a circle event
+                    CircleEvent Event = CircleEvents[0];
+                    CircleEvents.RemoveAt(0);
+                    int ArcIndex = Arcs.IndexOf(Event.Arc);
+                    if (ArcIndex == -1) continue;
+
+                    // The two edges left and right of the disappearing arc end here
+                    if (Arcs[ArcIndex - 1].Edge != null)
+                        Arcs[ArcIndex - 1].Edge.SetEndPoint(Event.Center);
+                    if (Event.Arc.Edge != null)
+                        Event.Arc.Edge.SetEndPoint(Event.Center);
+
+                    // Remove the arc from the beachline
+                    Arcs.RemoveAt(ArcIndex);
+                    // ArcIndex now points to the arc after the one that disappeared
+
+                    // Start a new edge at the point where the other two edges ended
+                    Arcs[ArcIndex - 1].Edge = new Edge(Arcs[ArcIndex - 1].Site, Arcs[ArcIndex].Site);
+                    Arcs[ArcIndex - 1].Edge.SetEndPoint(Event.Center);
+                    AddEdge(Arcs[ArcIndex - 1].Edge);
+
+                    // Recheck circle events on either side of the disappearing arc
+                    if (ArcIndex > 0)
+                        CheckCircleEvent(CircleEvents, ArcIndex - 1, Event.X);
+                    if (ArcIndex < Arcs.Count)
+                        CheckCircleEvent(CircleEvents, ArcIndex, Event.X);
+                }
                 else
-                    ProcessSiteEvent();
+                {
+                    // Process a site event
+                    SiteEvent Event = SiteEvents[0];
+                    SiteEvents.RemoveAt(0);
+
+                    if (Arcs.Count == 0)
+                    {
+                        Arcs.Add(new Arc(Event.Position));
+                        continue;
+                    }
+
+                    // Find the current arc(s) at height e.Position.y (if there are any)
+                    bool ArcFound = false;
+                    for (int i = 0; i < Arcs.Count; i++)
+                    {
+                        PointD Intersect;
+                        if (DoesIntersect(Event.Position, i, out Intersect))
+                        {
+                            // New parabola intersects Arc - duplicate Arc
+                            Arcs.Insert(i + 1, new Arc(Arcs[i].Site));
+                            Arcs[i + 1].Edge = Arcs[i].Edge;
+
+                            // Add a new Arc for Event.Position in the right place
+                            Arcs.Insert(i + 1, new Arc(Event.Position));
+
+                            // Add new half-edges connected to Arc's endpoints
+                            Arcs[i].Edge = Arcs[i + 1].Edge = new Edge(Arcs[i + 1].Site, Arcs[i + 2].Site);
+                            AddEdge(Arcs[i].Edge);
+
+                            // Check for new circle events around the new arc:
+                            CheckCircleEvent(CircleEvents, i, Event.Position.X);
+                            CheckCircleEvent(CircleEvents, i + 2, Event.Position.X);
+
+                            ArcFound = true;
+                            break;
+                        }
+                    }
+
+                    if (ArcFound)
+                        continue;
+
+                    // Special case: If Event.Position never intersects an arc, append it to the list.
+                    // This only happens if there is more than one site event with the lowest X co-ordinate.
+                    Arc LastArc = Arcs[Arcs.Count - 1];
+                    Arc NewArc = new Arc(Event.Position);
+                    LastArc.Edge = new Edge(LastArc.Site, NewArc.Site);
+                    AddEdge(LastArc.Edge);
+                    LastArc.Edge.SetEndPoint(new PointD(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
+                    Arcs.Add(NewArc);
+                }
             }
-            while (CircleEvents.Count > 0)
-                ProcessCircleEvent();
 
-            FinishEdges(Width, Height); // Clean up dangling edges
-        }
-
-        private void FinishEdges(double Width, double Height)
-        {
             // Advance the sweep line so no parabolas can cross the bounding box
             double Var = 2 * Width + Height;
 
-            // Extend each remaining segment to the new parabola intersections
+            // Extend each remaining edge to the new parabola intersections
             for (int i = 0; i < Arcs.Count - 1; i++)
-                if (Arcs[i].RightSegment != null)
-                    Arcs[i].RightSegment.SetEndPoint(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
+                if (Arcs[i].Edge != null)
+                    Arcs[i].Edge.SetEndPoint(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
 
             // Now clip all the edges with the bounding rectangle
             foreach (Edge s in Edges)
@@ -146,50 +215,15 @@ namespace RT.Util.Geometry
             }
         }
 
-        private void ProcessSiteEvent()
+        private void AddEdge(Edge Edge)
         {
-            SiteEvent Event = SiteEvents[0];
-            SiteEvents.RemoveAt(0);
-
-            if (Arcs.Count == 0)
-            {
-                Arcs.Add(new Arc(Event.Position));
-                return;
-            }
-
-            // Find the current arc(s) at height e.Position.y (if there are any)
-            for (int i = 0; i < Arcs.Count; i++)
-            {
-                PointD Intersect;
-                if (DoesIntersect(Event.Position, i, out Intersect))
-                {
-                    // New parabola intersects Arc - duplicate Arc
-                    Arcs.Insert(i + 1, new Arc(Arcs[i].Site));
-                    Arcs[i + 1].RightSegment = Arcs[i].RightSegment;
-
-                    // Add a new Arc for Event.Position in the right place
-                    Arcs.Insert(i + 1, new Arc(Event.Position));
-
-                    // Add new half-edges connected to Arc's endpoints
-                    Arcs[i].RightSegment = Arcs[i + 1].LeftSegment =
-                        Arcs[i + 1].RightSegment = Arcs[i + 2].LeftSegment =
-                        new Edge(Edges, EdgesPerPoint, Arcs[i + 1].Site, Arcs[i + 2].Site);
-
-                    // Check for new circle events around the new arc:
-                    CheckCircleEvent(CircleEvents, i, Event.Position.X);
-                    CheckCircleEvent(CircleEvents, i + 2, Event.Position.X);
-
-                    return;
-                }
-            }
-
-            // Special case: If Event.Position never intersects an arc, append it to the list.
-            // This only happens if there is more than one site event with the lowest X co-ordinate.
-            Arc LastArc = Arcs[Arcs.Count - 1];
-            Arc NewArc = new Arc(Event.Position);
-            LastArc.RightSegment = NewArc.LeftSegment = new Edge(Edges, EdgesPerPoint, LastArc.Site, NewArc.Site);
-            NewArc.LeftSegment.SetEndPoint(new PointD(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
-            Arcs.Add(NewArc);
+            Edges.Add(Edge);
+            if (!EdgesPerPoint.ContainsKey(Edge.SiteA))
+                EdgesPerPoint.Add(Edge.SiteA, new List<Edge>());
+            EdgesPerPoint[Edge.SiteA].Add(Edge);
+            if (!EdgesPerPoint.ContainsKey(Edge.SiteB))
+                EdgesPerPoint.Add(Edge.SiteB, new List<Edge>());
+            EdgesPerPoint[Edge.SiteB].Add(Edge);
         }
 
         // Will a new parabola at Site intersect with the arc at ArcIndex?
@@ -249,37 +283,6 @@ namespace RT.Util.Geometry
             return Result;
         }
 
-        private void ProcessCircleEvent()
-        {
-            CircleEvent Event = CircleEvents[0];
-            CircleEvents.RemoveAt(0);
-            int ArcIndex = Arcs.IndexOf(Event.Arc);
-            if (ArcIndex == -1) return;
-
-            // Start a new edge
-            Edge LineSeg = new Edge(Edges, EdgesPerPoint, Arcs[ArcIndex - 1].Site, Arcs[ArcIndex + 1].Site);
-            LineSeg.SetEndPoint(Event.Center);
-
-            // The arcs before and after the one that disappears are now responsible for the new edge
-            if (ArcIndex > 0)
-                Arcs[ArcIndex - 1].RightSegment = LineSeg;
-            if (ArcIndex < Arcs.Count - 1)
-                Arcs[ArcIndex + 1].LeftSegment = LineSeg;
-
-            // Remove the arc from the beachline
-            Arcs.RemoveAt(ArcIndex);
-
-            // The two edges corresponding to the disappearing arc end here
-            if (Event.Arc.LeftSegment != null) Event.Arc.LeftSegment.SetEndPoint(Event.Center);
-            if (Event.Arc.RightSegment != null) Event.Arc.RightSegment.SetEndPoint(Event.Center);
-
-            // Recheck circle events on either side of the disappearing arc
-            if (ArcIndex > 0)
-                CheckCircleEvent(CircleEvents, ArcIndex - 1, Event.X);
-            if (ArcIndex < Arcs.Count)  // remember that ArcIndex now points to the arc after the one that disappeared
-                CheckCircleEvent(CircleEvents, ArcIndex, Event.X);
-        }
-
         // Look for a new circle event for the arc at ArcIndex
         private void CheckCircleEvent(List<CircleEvent> CircleEvents, int ArcIndex, double ScanX)
         {
@@ -337,25 +340,18 @@ namespace RT.Util.Geometry
     }
 
     /// <summary>
-    /// Internal class describing an edge in the Voronoi diagram (or some intermediate stage thereof).
+    /// Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.
     /// </summary>
     class Edge
     {
         public PointD? Start, End;
         public PointD SiteA, SiteB;
-        public Edge(List<Edge> Edges, Dictionary<PointD, List<Edge>> EdgesPerPoint, PointD nSiteA, PointD nSiteB)
+        public Edge(PointD nSiteA, PointD nSiteB)
         {
             Start = null;
             End = null;
             SiteA = nSiteA;
             SiteB = nSiteB;
-            Edges.Add(this);
-            if (!EdgesPerPoint.ContainsKey(nSiteA))
-                EdgesPerPoint.Add(nSiteA, new List<Edge>());
-            EdgesPerPoint[nSiteA].Add(this);
-            if (!EdgesPerPoint.ContainsKey(nSiteB))
-                EdgesPerPoint.Add(nSiteB, new List<Edge>());
-            EdgesPerPoint[nSiteB].Add(this);
         }
         public void SetEndPoint(PointD nEnd)
         {
@@ -368,7 +364,7 @@ namespace RT.Util.Geometry
     }
 
     /// <summary>
-    /// Internal class describing a polygon in the Voronoi diagram (or some incomplete intermediate stage thereof).
+    /// Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.
     /// </summary>
     class Polygon
     {
@@ -388,9 +384,14 @@ namespace RT.Util.Geometry
     /// </summary>
     class Arc
     {
+        // The site the arc is associated with. There may be more than one arc for the same site in the Arcs array.
         public PointD Site;
-        public Edge LeftSegment, RightSegment;
-        public Arc(PointD nSite) { Site = nSite; LeftSegment = null; RightSegment = null; }
+
+        // The edge that is formed from the breakpoint between this Arc and the next Arc in the Arcs array.
+        public Edge Edge;
+
+        public Arc(PointD nSite) { Site = nSite; Edge = null; }
+
         public override string ToString()
         {
             return "Site = " + Site.ToString();
