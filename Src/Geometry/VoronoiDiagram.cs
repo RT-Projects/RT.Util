@@ -25,23 +25,21 @@ namespace RT.Util.Geometry
         /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
         /// If false, such duplicates cause an exception.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, List<EdgeD>>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
+        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
         {
             VoronoiDiagramData d = new VoronoiDiagramData(Sites, Size.Width, Size.Height, Flags);
 
-            Tuple<List<EdgeD>, Dictionary<PointD, List<EdgeD>>> Ret = new Tuple<List<EdgeD>, Dictionary<PointD, List<EdgeD>>>();
+            Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> Ret = new Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>>();
             Ret.E1 = new List<EdgeD>();
             foreach (Edge e in d.Edges)
                 Ret.E1.Add(new EdgeD(e.Start.Value, e.End.Value));
-            Ret.E2 = new Dictionary<PointD, List<EdgeD>>();
-            foreach (KeyValuePair<PointD, List<Edge>> kvp in d.EdgesPerPoint)
+            Ret.E2 = new Dictionary<PointD, PolygonD>();
+            foreach (KeyValuePair<PointD, Polygon> kvp in d.Polygons)
             {
-                List<EdgeD> nl = new List<EdgeD>();
-                foreach (Edge e in kvp.Value)
-                    nl.Add(new EdgeD(e.Start.Value, e.End.Value));
-                Ret.E2.Add(kvp.Key, nl);
+                PolygonD Poly = kvp.Value.ToPolygonD();
+                if (Poly != null)
+                    Ret.E2.Add(kvp.Key, Poly);
             }
-
             return Ret;
         }
 
@@ -52,7 +50,7 @@ namespace RT.Util.Geometry
         /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
         /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, List<EdgeD>>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size)
+        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size)
         {
             return GenerateVoronoiDiagram(Sites, Size, 0);
         }
@@ -67,7 +65,7 @@ namespace RT.Util.Geometry
         public List<SiteEvent> SiteEvents = new List<SiteEvent>();
         public List<CircleEvent> CircleEvents = new List<CircleEvent>();
         public List<Edge> Edges = new List<Edge>();
-        public Dictionary<PointD, List<Edge>> EdgesPerPoint = new Dictionary<PointD, List<Edge>>();
+        public Dictionary<PointD, Polygon> Polygons = new Dictionary<PointD, Polygon>();
 
         public VoronoiDiagramData(PointD[] Sites, float Width, float Height, VoronoiDiagramFlags Flags)
         {
@@ -75,7 +73,7 @@ namespace RT.Util.Geometry
             {
                 if (p.X > 0 && p.Y > 0 && p.X < Width && p.Y < Height)
                 {
-                    SiteEvent SiteEvent = new SiteEvent(new PointD(p.X, p.Y));
+                    SiteEvent SiteEvent = new SiteEvent(p);
                     SiteEvents.Add(SiteEvent);
                 }
                 else if ((Flags & VoronoiDiagramFlags.REMOVE_OFFBOUNDS_SITES) == 0)
@@ -123,7 +121,7 @@ namespace RT.Util.Geometry
                     // Start a new edge at the point where the other two edges ended
                     Arcs[ArcIndex - 1].Edge = new Edge(Arcs[ArcIndex - 1].Site, Arcs[ArcIndex].Site);
                     Arcs[ArcIndex - 1].Edge.SetEndPoint(Event.Center);
-                    AddEdge(Arcs[ArcIndex - 1].Edge);
+                    Edges.Add(Arcs[ArcIndex - 1].Edge);
 
                     // Recheck circle events on either side of the disappearing arc
                     if (ArcIndex > 0)
@@ -159,7 +157,7 @@ namespace RT.Util.Geometry
 
                             // Add new half-edges connected to Arc's endpoints
                             Arcs[i].Edge = Arcs[i + 1].Edge = new Edge(Arcs[i + 1].Site, Arcs[i + 2].Site);
-                            AddEdge(Arcs[i].Edge);
+                            Edges.Add(Arcs[i].Edge);
 
                             // Check for new circle events around the new arc:
                             CheckCircleEvent(CircleEvents, i, Event.Position.X);
@@ -178,7 +176,7 @@ namespace RT.Util.Geometry
                     Arc LastArc = Arcs[Arcs.Count - 1];
                     Arc NewArc = new Arc(Event.Position);
                     LastArc.Edge = new Edge(LastArc.Site, NewArc.Site);
-                    AddEdge(LastArc.Edge);
+                    Edges.Add(LastArc.Edge);
                     LastArc.Edge.SetEndPoint(new PointD(0, (NewArc.Site.Y + LastArc.Site.Y) / 2));
                     Arcs.Add(NewArc);
                 }
@@ -192,7 +190,7 @@ namespace RT.Util.Geometry
                 if (Arcs[i].Edge != null)
                     Arcs[i].Edge.SetEndPoint(GetIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * Var));
 
-            // Now clip all the edges with the bounding rectangle
+            // Clip all the edges with the bounding rectangle
             foreach (Edge s in Edges)
             {
                 if (s.Start.Value.X < 0)
@@ -213,17 +211,17 @@ namespace RT.Util.Geometry
                 if (s.End.Value.Y > Height)
                     s.End = new PointD((Height - s.End.Value.Y) / (s.Start.Value.Y - s.End.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, Height);
             }
-        }
 
-        private void AddEdge(Edge Edge)
-        {
-            Edges.Add(Edge);
-            if (!EdgesPerPoint.ContainsKey(Edge.SiteA))
-                EdgesPerPoint.Add(Edge.SiteA, new List<Edge>());
-            EdgesPerPoint[Edge.SiteA].Add(Edge);
-            if (!EdgesPerPoint.ContainsKey(Edge.SiteB))
-                EdgesPerPoint.Add(Edge.SiteB, new List<Edge>());
-            EdgesPerPoint[Edge.SiteB].Add(Edge);
+            // Generate polygons from the edges
+            foreach (Edge e in Edges)
+            {
+                if (!Polygons.ContainsKey(e.SiteA))
+                    Polygons.Add(e.SiteA, new Polygon(e.SiteA));
+                Polygons[e.SiteA].AddEdge(e);
+                if (!Polygons.ContainsKey(e.SiteB))
+                    Polygons.Add(e.SiteB, new Polygon(e.SiteB));
+                Polygons[e.SiteB].AddEdge(e);
+            }
         }
 
         // Will a new parabola at Site intersect with the arc at ArcIndex?
@@ -369,13 +367,87 @@ namespace RT.Util.Geometry
     class Polygon
     {
         public bool Complete;
-        public List<Edge> Edges;
-        private List<List<Edge>> IncompleteSegments;
-        public Polygon()
+        public PointD Site;
+
+        private List<PointD> ProcessedPoints;
+        private List<Edge> UnprocessedEdges;
+
+        public Polygon(PointD nSite)
         {
+            Site = nSite;
             Complete = false;
-            Edges = new List<Edge>();
-            IncompleteSegments = new List<List<Edge>>();
+            ProcessedPoints = new List<PointD>();
+            UnprocessedEdges = new List<Edge>();
+        }
+
+        public PolygonD ToPolygonD()
+        {
+            if (!Complete)
+                return null;
+            return new PolygonD(ProcessedPoints);
+        }
+
+        public void AddEdge(Edge Edge)
+        {
+            if (Edge.Start == null || Edge.End == null)
+                throw new Exception("Assertion failed: Polygon.AddEdge() called with incomplete edge.");
+            
+            // Ignore zero-length edges
+            if (Edge.Start.Value == Edge.End.Value)
+                return;
+
+            if (Complete)
+                throw new Exception("Assertion failed: Polygon.AddEdge() called when polygon already complete.");
+
+            if (ProcessedPoints.Count == 0)
+            {
+                ProcessedPoints.Add(Edge.Start.Value);
+                ProcessedPoints.Add(Edge.End.Value);
+                return;
+            }
+
+            if (!EdgeAttach(Edge))
+            {
+                UnprocessedEdges.Add(Edge);
+                return;
+            }
+
+            bool Found = true;
+            while (Found)
+            {
+                Found = false;
+                foreach (Edge e in UnprocessedEdges)
+                {
+                    if (EdgeAttach(e))
+                    {
+                        UnprocessedEdges.Remove(e);
+                        Found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (UnprocessedEdges.Count == 0 && ProcessedPoints[0] == ProcessedPoints[ProcessedPoints.Count - 1])
+            {
+                ProcessedPoints.RemoveAt(ProcessedPoints.Count - 1);
+                Complete = true;
+            }
+        }
+
+        private bool EdgeAttach(Edge Edge)
+        {
+            if (Edge.Start.Value == ProcessedPoints[0])
+                ProcessedPoints.Insert(0, Edge.End.Value);
+            else if (Edge.End.Value == ProcessedPoints[0])
+                ProcessedPoints.Insert(0, Edge.Start.Value);
+            else if (Edge.Start.Value == ProcessedPoints[ProcessedPoints.Count - 1])
+                ProcessedPoints.Add(Edge.End.Value);
+            else if (Edge.End.Value == ProcessedPoints[ProcessedPoints.Count - 1])
+                ProcessedPoints.Add(Edge.Start.Value);
+            else
+                return false;
+
+            return true;
         }
     }
 
