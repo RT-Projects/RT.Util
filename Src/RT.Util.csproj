@@ -47,6 +47,7 @@
     <Compile Include="ArithmeticCoding\ArithmeticCodingReader.cs" />
     <Compile Include="ArithmeticCoding\ArithmeticCodingWriter.cs" />
     <Compile Include="BytesBitmap.cs" />
+    <Compile Include="CmdLine.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -103,6 +104,7 @@
     <Compile Include="Forms\InputBox.Designer.cs">
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Log.cs" />
     <Compile Include="PackedBooleans.cs" />
     <Compile Include="PathManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -124,6 +126,8 @@
     <Compile Include="Streams\BinaryReaderPlus.cs" />
     <Compile Include="Streams\BinaryWriterPlus.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
+    <Compile Include="Text\TextTable.cs" />
+    <Compile Include="Text\TextWordWrapped.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Tuple.cs" />
     <Compile Include="Ut\Clone.cs" />
