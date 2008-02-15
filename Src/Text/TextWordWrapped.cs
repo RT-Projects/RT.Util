@@ -34,7 +34,7 @@ namespace RT.Util.Text
         /// be indented by the same amount.
         /// 
         /// All multiple contiguous spaces will be replaced with a single
-        /// space (those that make up the indent are ignored).
+        /// space (except for the indentation).
         /// </summary>
         /// <param name="maxWidth">The maximum number of characters permitted
         /// on a single line, not counting the end-of-line terminator.</param>
@@ -128,7 +128,7 @@ namespace RT.Util.Text
         }
 
         /// <summary>
-        /// Accesses the Nth line of the resulting word-wrapped text.
+        /// Accesses the nth line of the resulting word-wrapped text.
         /// Returns "" if the line is out of range.
         /// </summary>
         public string this[int lineIndex]
