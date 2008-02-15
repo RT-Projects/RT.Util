@@ -28,10 +28,13 @@ namespace RT.Util.Geometry
         /// <param name="TargetRadius">Target radius for output circles.</param>
         /// <returns>The two output circles if they exist; null if they don't because the
         /// input circles are further apart than twice the target radius.</returns>
-        public Tuple<CircleD, CircleD>? TangentTo(CircleD Other, double TargetRadius)
+        public Tuple<CircleD, CircleD>? FindTangentCircles(CircleD Other, double TargetRadius)
         {
-            double A = ((Center.X - Other.Center.X) * (Center.X - Other.Center.X)) / ((Other.Center.Y - Center.Y) * (Other.Center.Y - Center.Y)) + 1;
-            double T = Center.Y - (Radius * Radius - Other.Radius * Other.Radius + Other.Center.X * Other.Center.X - Center.X * Center.X + Other.Center.Y * Other.Center.Y - Center.Y * Center.Y + 2 * TargetRadius * (Radius - Other.Radius)) / (Other.Center.Y - Center.Y) / 2;
+            double A = ((Center.X - Other.Center.X) * (Center.X - Other.Center.X)) /
+                       ((Other.Center.Y - Center.Y) * (Other.Center.Y - Center.Y)) + 1;
+            double T = Center.Y - (Radius * Radius - Other.Radius * Other.Radius + Other.Center.X * Other.Center.X
+                                   - Center.X * Center.X + Other.Center.Y * Other.Center.Y - Center.Y * Center.Y
+                                   + 2 * TargetRadius * (Radius - Other.Radius)) / (Other.Center.Y - Center.Y) / 2;
             double B = -2 * Center.X - 2 * T * (Center.X - Other.Center.X) / (Other.Center.Y - Center.Y);
             double C = Center.X * Center.X - (Radius + TargetRadius) * (Radius + TargetRadius) + T * T;
 
@@ -44,8 +47,21 @@ namespace RT.Util.Geometry
             double xb = (-B - S) / (2 * A);
 
             // These Sqrts should succeed, i.e. their parameter should never be < 0
-            double ya = Other.Center.Y - Math.Sqrt(-Other.Center.X * Other.Center.X - xa * xa + TargetRadius * TargetRadius + 2 * Other.Center.X * xa + Other.Radius * Other.Radius + 2 * Other.Radius * TargetRadius);
-            double yb = Center.Y + Math.Sqrt(-Center.X * Center.X - xb * xb + TargetRadius * TargetRadius + 2 * Center.X * xb + Radius * Radius + 2 * Radius * TargetRadius);
+            double ya = Math.Sqrt(-Other.Center.X * Other.Center.X - xa * xa + TargetRadius * TargetRadius
+                                  + 2 * Other.Center.X * xa + Other.Radius * Other.Radius + 2 * Other.Radius * TargetRadius);
+            double yb = Math.Sqrt(-Center.X * Center.X - xb * xb + TargetRadius * TargetRadius
+                                  + 2 * Center.X * xb + Radius * Radius + 2 * Radius * TargetRadius);
+
+            if (Math.Sign(Center.X - Other.Center.X) != Math.Sign(Center.Y - Other.Center.Y))
+            {
+                ya += Other.Center.Y;
+                yb = Center.Y - yb;
+            }
+            else
+            {
+                ya = Other.Center.Y - ya;
+                yb += Center.Y;
+            }
 
             return new Tuple<CircleD, CircleD>(
                 new CircleD(xa, ya, TargetRadius),
