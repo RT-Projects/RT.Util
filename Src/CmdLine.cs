@@ -366,7 +366,7 @@ namespace RT.Util
             }
 
             //
-            // Print the one line summary
+            // Print the one-line summary
             //
             Console.Write("    ");
             Console.Write(Assembly.GetEntryAssembly().ManifestModule.Name);
@@ -448,7 +448,7 @@ namespace RT.Util
             get
             {
                 if (!Parsed)
-                    throw new InvalidOperationException("This method can only be called after parsing the arguments.");
+                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
                 return unmatchedArgs;
             }
@@ -460,7 +460,7 @@ namespace RT.Util
         public bool OptSwitch(string name)
         {
             if (!Parsed)
-                throw new InvalidOperationException("This method can only be called after parsing the arguments.");
+                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
             return byPreferredName[name].Value != null;
         }
@@ -474,7 +474,7 @@ namespace RT.Util
         public string OptValue(string name)
         {
             if (!Parsed)
-                throw new InvalidOperationException("This method can only be called after parsing the arguments.");
+                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
             return OptValue(name, null);
         }
@@ -486,7 +486,7 @@ namespace RT.Util
         public string OptValue(string name, string defaultIfUnspecified)
         {
             if (!Parsed)
-                throw new InvalidOperationException("This method can only be called after parsing the arguments.");
+                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
             return byPreferredName[name].Value == null ? defaultIfUnspecified : byPreferredName[name].Value[0];
         }
@@ -499,7 +499,7 @@ namespace RT.Util
         public List<string> OptList(string name)
         {
             if (!Parsed)
-                throw new InvalidOperationException("This method can only be called after parsing the arguments.");
+                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
             if (byPreferredName[name].Value == null)
                 return new List<string>();

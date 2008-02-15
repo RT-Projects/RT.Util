@@ -46,7 +46,7 @@ namespace RT.Util
         /// Holds a format string for the log information message. This will receive the
         /// following arguments: {0}: timestamp, {1}: message type string, {2}: message
         /// verbosity level. The actual message will be printed immediately after the
-        /// info string.
+        /// log information message.
         /// </summary>
         public string MessageFormat = "{0} | {2}/{1,-5} | ";
 

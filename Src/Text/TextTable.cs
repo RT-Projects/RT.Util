@@ -133,12 +133,36 @@ namespace RT.Util.Text
             /// Used by the outer class to keep track of whether this column is
             /// automatically sized or not.
             /// </summary>
-            public bool AutoSize = false;
+            public bool AutoSize;
+
+            public TextColumn(bool DefaultAutoSize)
+            {
+                AutoSize = DefaultAutoSize;
+            }
         }
 
         /// <summary>
-        /// Holds a list of every column in the table.
+        /// Constructs a TextTable in which all columns initially have AutoSize set to false.
+        /// Use <see>SetAutoSize</see> to set AutoSize for individual columns to true.
         /// </summary>
+        public TextTable()
+        {
+            this.DefaultAutoSize = false;
+        }
+
+        /// <summary>
+        /// Constructs a TextTable in which all columns initially have the specified AutoSize setting.
+        /// Use <see>SetAutoSize</see> to change the AutoSize setting for individual columns.
+        /// </summary>
+        public TextTable(bool DefaultAutoSize)
+        {
+            this.DefaultAutoSize = DefaultAutoSize;
+        }
+
+        /// <summary>Remembers the default AutoSize setting for new columns.</summary>
+        private readonly bool DefaultAutoSize;
+
+        /// <summary>Holds a list of every column in the table.</summary>
         private readonly List<TextColumn> cols = new List<TextColumn>();
 
         /// <summary>
@@ -154,7 +178,7 @@ namespace RT.Util.Text
         private void growAsNecessary(int columnIndex)
         {
             while (columnIndex >= cols.Count)
-                cols.Add(new TextColumn());
+                cols.Add(new TextColumn(DefaultAutoSize));
         }
 
         /// <summary>
@@ -186,7 +210,7 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Configures the auto-sizing of the specified column. The
-        /// <see>sizeShare</see> parameter deremines how much of the
+        /// <see>sizeShare</see> parameter determines how much of the
         /// available space each of the columns is allocated. Setting
         /// this to double.PositiveInfinity will disable auto-sizing
         /// (which is the default state).
@@ -228,31 +252,28 @@ namespace RT.Util.Text
                 TextWordWrapped[] wwrap = new TextWordWrapped[cols.Count];
                 int maxSubrowCount = 0;
 
+                // Iterate over columns to determine number of sub-rows
+                for (int c = 0; c < cols.Count; c++)
+                {
+                    wwrap[c] = new TextWordWrapped(this[r, c], (int)cols[c].CalculatedWidth);
+                    if (maxSubrowCount < wwrap[c].Lines.Count)
+                        maxSubrowCount = wwrap[c].Lines.Count;
+                }
+
                 // Iterate over the sub-rows
-                for (int subRow = 0; true; subRow++)
+                for (int subRow = 0; subRow < maxSubrowCount; subRow++)
                 {
                     sb.Append(' ', leftIndent);
 
-                    // Iterate over columns
+                    // Render this sub-row in each column
                     for (int c = 0; c < cols.Count; c++)
                     {
-                        if (subRow == 0)
-                        {
-                            wwrap[c] = new TextWordWrapped(this[r, c], (int)cols[c].CalculatedWidth);
-                            if (maxSubrowCount < wwrap[c].Lines.Count)
-                                maxSubrowCount = wwrap[c].Lines.Count;
-                        }
-
                         sb.Append(wwrap[c][subRow]);
                         if (c < cols.Count - 1)
                             sb.Append(' ', (int)cols[c].CalculatedWidth - wwrap[c][subRow].Length + intraColumnIndent);
                     }
 
                     sb.AppendLine();
-
-                    // Are we done yet?
-                    if (subRow == maxSubrowCount - 1)
-                        break;
                 }
             }
 
