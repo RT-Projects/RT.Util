@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
 
 namespace RT.Util.Geometry
 {
@@ -18,18 +19,24 @@ namespace RT.Util.Geometry
             FVertices = Vertices;
         }
 
+        public bool ContainsPoint(Point Point)
+        {
+            return ContainsPoint(new PointD(Point.X, Point.Y));
+        }
+
         public bool ContainsPoint(PointD Point)
         {
-            int NumIntersect = 0;
-            for (int i = 0; i < FVertices.Count; i++)
+            bool c = false;
+            PointD p = FVertices[FVertices.Count - 1];
+            foreach (PointD q in FVertices)
             {
-                PointD p = FVertices[i];
-                EdgeD Edge1 = new EdgeD(Point, new PointD(0, 0));
-                EdgeD Edge2 = new EdgeD(p, FVertices[(i + 1) % FVertices.Count]);
-                if (Edge1.IntersectsWith(Edge2))
-                    NumIntersect++;
+                if ((((q.Y <= Point.Y) && (Point.Y < p.Y)) ||
+                     ((p.Y <= Point.Y) && (Point.Y < q.Y))) &&
+                    (Point.X < (p.X - q.X) * (Point.Y - q.Y) / (p.Y - q.Y) + q.X))
+                    c = !c;
+                p = q;
             }
-            return NumIntersect % 2 == 1;
+            return c;
         }
 
         public double Area()
@@ -42,6 +49,14 @@ namespace RT.Util.Geometry
                 p = q;
             }
             return Area / 2;
+        }
+
+        public PointF[] ToPointFArray()
+        {
+            PointF[] PointFArray = new PointF[FVertices.Count];
+            for (int i = 0; i < FVertices.Count; i++)
+                PointFArray[i] = FVertices[i].ToPointF();
+            return PointFArray;
         }
     }
 }

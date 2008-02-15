@@ -15,7 +15,7 @@ namespace RT.Util.Geometry
     /// <summary>
     /// Static class providing methods for generating Voronoi diagrams from a set of input points.
     /// </summary>
-    public class VoronoiDiagram
+    public static class VoronoiDiagram
     {
         /// <summary>
         /// Generates a Voronoi diagram from a set of input points.
@@ -446,6 +446,19 @@ namespace RT.Util.Geometry
                 ProcessedPoints.Add(Edge.Start.Value);
             else
                 return false;
+
+            if (ProcessedPoints.Count == 3)
+            {
+                // When we have three points, we can test whether they make a left-turn or a right-turn.
+                PointD A = ProcessedPoints[0], B = ProcessedPoints[1], C = ProcessedPoints[2];
+                if ((B.X - A.X) * (C.Y - A.Y) - (C.X - A.X) * (B.Y - A.Y) < 0)
+                {
+                    // If they make a left-turn, we want to swap them because
+                    // otherwise we end up with a counter-clockwise polygon.
+                    ProcessedPoints[0] = C;
+                    ProcessedPoints[2] = A;
+                }
+            }
 
             return true;
         }

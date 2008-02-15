@@ -28,39 +28,18 @@ namespace RT.Util.Geometry
 
         public bool IntersectsWith(EdgeD r)
         {
-            if (Start.X == End.X && r.Start.X == r.End.X)
-            {
-                if (Start.X != r.Start.X)
-                    return false;
-                return (Math.Min(Start.Y, End.Y) < Math.Max(r.Start.Y, r.End.Y)) &&
-                       (Math.Max(Start.Y, End.Y) > Math.Min(r.Start.Y, r.End.Y));
-            }
+            double mx = End.X - Start.X;
+            double my = End.Y - Start.Y;
+            double rmx = r.End.X - r.Start.X;
+            double rmy = r.End.Y - r.Start.Y;
+            double dx = r.Start.X - Start.X;
+            double dy = Start.Y - r.Start.Y;
 
-            if (Start.X == End.X)
-            {
-                double xx = Start.X;
-                if (!(((r.Start.X > xx) ^ (r.End.X > xx)) || r.Start.X == xx || r.End.X == xx))
-                    return false;
+            double d = (mx * rmy - my * rmx);
+            double n = (mx * dy + my * dx) / d;
+            double q = (rmx * dy + rmy * dx) / d;
 
-                double YIntersect = r.Start.Y + (r.End.Y - r.Start.Y) / (r.End.X - r.Start.X) * (Start.X - r.Start.X);
-                return YIntersect > Math.Min(Start.Y, End.Y) && YIntersect < Math.Max(Start.Y, End.Y);
-            }
-
-            if (r.Start.X == r.End.X)
-                return r.IntersectsWith(this);
-
-            // Find the point of intersection
-            double m = (End.Y - Start.Y) / (End.X - Start.X);
-            double c = Start.Y - m * Start.X;
-            double rm = (r.End.Y - r.Start.Y) / (r.End.X - r.Start.X);
-            double rc = r.Start.Y - rm * r.Start.X;
-            double x = (rc - c) / (m - rm);
-            double y = m * x + c;
-            return
-                (x >= Math.Min(Start.X, End.X) && x <= Math.Max(Start.X, End.X)) &&
-                (x >= Math.Min(r.Start.X, r.End.X) && x <= Math.Max(r.Start.X, r.End.X)) &&
-                (y >= Math.Min(Start.Y, End.Y) && y <= Math.Max(Start.Y, End.Y)) &&
-                (y >= Math.Min(r.Start.Y, r.End.Y) && y <= Math.Max(r.Start.Y, r.End.Y));
+            return (n >= 0 && n < 1 && q >= 0 && q < 1);
         }
 
         public bool Equals(EdgeD other)

@@ -91,6 +91,7 @@
     <Compile Include="Forms\ManagedForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Geometry\CircleD.cs" />
     <Compile Include="Geometry\EdgeD.cs" />
     <Compile Include="Geometry\PointD.cs" />
     <Compile Include="Geometry\PolygonD.cs" />
