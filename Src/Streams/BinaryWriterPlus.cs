@@ -50,10 +50,51 @@ namespace RT.Util.Streams
 
         /// <summary>
         /// See WriteInt32Optim of this function for more info. Note that values
-        /// written by this function cannot be safely read as signed ints, but the
+        /// written by this function cannot be safely read as signed int32s, but the
         /// other way is fine.
         /// </summary>
         public virtual void WriteUInt32Optim(uint val)
+        {
+            byte b = 0;
+            while (true)
+            {
+                b = (byte)(val & 127);
+                val >>= 7;
+                // terminate if there are no more bits
+                if (val == 0)
+                    break;
+                b |= 128;
+                Write(b);
+            }
+            Write(b);
+        }
+
+        /// <summary>
+        /// See WriteInt32Optim of this function for more info.
+        /// </summary>
+        public virtual void WriteInt64Optim(long val)
+        {
+            byte b = 0;
+            while (true)
+            {
+                b = (byte)(val & 127);
+                val >>= 7;
+                // terminate if val is all zeroes and top bit is zero (end of positive),
+                // or all ones (-1) and top bit is one (end of negative).
+                if (((val == 0)&&((b & 64) == 0)) || ((val == -1)&&((b & 64) != 0)))
+                    break;
+                b |= 128;
+                Write(b);
+            }
+            Write(b);
+        }
+
+        /// <summary>
+        /// See WriteInt32Optim of this function for more info. Note that values
+        /// written by this function cannot be safely read as signed int64s, but the
+        /// other way is fine.
+        /// </summary>
+        public virtual void WriteUInt64Optim(ulong val)
         {
             byte b = 0;
             while (true)
