@@ -86,6 +86,7 @@
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
+    <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
     <Compile Include="Fault.cs" />
     <Compile Include="Forms\DlgMessage.cs">
       <SubType>Form</SubType>
@@ -120,6 +121,7 @@
       <AutoGen>True</AutoGen>
     </Compile>
     <Compile Include="Geometry\RectangleD.cs" />
+    <Compile Include="RConvert.cs" />
     <Compile Include="Set.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsBinaryFile.cs" />
