@@ -136,8 +136,9 @@ namespace RT.Util.Web
         /// <param name="DoGet">If true, method is GET. Otherwise method is POST.</param>
         /// <param name="Params">A set of parameters to be sent. These are URL-encoded automatically and posted appropriately for the specified method. Can be null.</param>
         /// <param name="Referer">An optional Referer header. Can be null.</param>
+        /// <param name="MaxRedirectDepth">Maximum number of HTTP redirects to follow.</param>
         /// </summary>
-        private bool DoRequest(string Url, bool DoGet, Dictionary<string, string> Params, string Referer, int DepthLeft)
+        private bool DoRequest(string Url, bool DoGet, Dictionary<string, string> Params, string Referer, int MaxRedirectDepth)
         {
             // Initialise
             LastHTML = null;
@@ -222,15 +223,15 @@ namespace RT.Util.Web
             LastHTML = StreamToString(LastResponse.GetResponseStream(), new ASCIIEncoding());
             // Dump it to a debug location on the disk if necessary
             if (DebugDumpLocation != null)
-                DumpHtml(DepthLeft);
+                DumpHtml(MaxRedirectDepth);
 
             // Do redirect if necessary
             int respcode = (int)LastResponse.StatusCode;
             if (respcode >= 300 && respcode <= 399 && DoGet                                    // redirection necessary
-                && DepthLeft > 0 && LastResponse.Headers[HttpResponseHeader.Location] != null) // redirection possible
+                && MaxRedirectDepth > 0 && LastResponse.Headers[HttpResponseHeader.Location] != null) // redirection possible
             {
                 if (OnReportStatus!=null) OnReportStatus("Redirected to: " + Url);
-                return DoRequest(LastResponse.Headers[HttpResponseHeader.Location], true, null, Url, DepthLeft-1);
+                return DoRequest(LastResponse.Headers[HttpResponseHeader.Location], true, null, Url, MaxRedirectDepth-1);
                 // The last of the redirects will set all the global fields as necessary, so we've
                 // got nothing else to do here.
             }
