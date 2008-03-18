@@ -122,6 +122,7 @@
     </Compile>
     <Compile Include="Geometry\RectangleD.cs" />
     <Compile Include="RConvert.cs" />
+    <Compile Include="RTException.cs" />
     <Compile Include="Set.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsBinaryFile.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Ut\Paths.cs" />
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
+    <Compile Include="Ut\XmlUtil.cs" />
     <Compile Include="Virtual2DArray.cs" />
     <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
