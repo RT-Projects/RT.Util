@@ -137,7 +137,7 @@ namespace RT.Util
     {
         private static readonly bool[] IsIntegerType;
         private static readonly bool[] IsUnsignedType;
-        private static readonly bool[] IsUnsupportedType;
+        public static readonly bool[] IsUnsupportedType;
 
         /// <summary>
         /// Initialises the internally-used lookup tables for determining what kind
@@ -152,7 +152,7 @@ namespace RT.Util
 
             // Values will default to false unless set to true explicitly
 
-            IsIntegerType = new bool[max];
+            IsIntegerType = new bool[max+1];
             IsIntegerType[(int)TypeCode.Byte] = true;
             IsIntegerType[(int)TypeCode.SByte] = true;
             IsIntegerType[(int)TypeCode.Int16] = true;
@@ -165,7 +165,7 @@ namespace RT.Util
             IsIntegerType[(int)TypeCode.Char] = true;
             IsIntegerType[(int)TypeCode.DateTime] = true;
 
-            IsUnsignedType = new bool[max];
+            IsUnsignedType = new bool[max+1];
             IsUnsignedType[(int)TypeCode.Byte] = true;
             IsUnsignedType[(int)TypeCode.UInt16] = true;
             IsUnsignedType[(int)TypeCode.UInt32] = true;
@@ -173,7 +173,7 @@ namespace RT.Util
             IsUnsignedType[(int)TypeCode.Boolean] = true;
             IsUnsignedType[(int)TypeCode.Char] = true;
 
-            IsUnsupportedType = new bool[max];
+            IsUnsupportedType = new bool[max+1];
             IsUnsupportedType[(int)TypeCode.DBNull] = true;
             IsUnsupportedType[(int)TypeCode.Empty] = true;
             IsUnsupportedType[(int)TypeCode.Object] = true;
@@ -301,7 +301,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out byte result)
+        public static bool ExactTry(object value, out byte result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -345,7 +345,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out ushort result)
+        public static bool ExactTry(object value, out ushort result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -389,7 +389,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out uint result)
+        public static bool ExactTry(object value, out uint result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -433,7 +433,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out ulong result)
+        public static bool ExactTry(object value, out ulong result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -471,7 +471,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out sbyte result)
+        public static bool ExactTry(object value, out sbyte result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -515,7 +515,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out short result)
+        public static bool ExactTry(object value, out short result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -559,7 +559,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out int result)
+        public static bool ExactTry(object value, out int result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -603,7 +603,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out long result)
+        public static bool ExactTry(object value, out long result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -654,7 +654,7 @@ namespace RT.Util
         /// must be exactly (case-insensitive) equal to "True" or "False", or the conversion
         /// will fail.
         /// </summary>
-        public static bool Exact(object value, out bool result)
+        public static bool ExactTry(object value, out bool result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -712,7 +712,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out char result)
+        public static bool ExactTry(object value, out char result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -769,7 +769,7 @@ namespace RT.Util
         /// When converting from string, supports a subset of the ISO 8601 formats - for
         /// more details see <see>DateTimeExtensions</see>.<see>TryParseIso</see>.
         /// </summary>
-        public static bool Exact(object value, out DateTime result)
+        public static bool ExactTry(object value, out DateTime result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -819,7 +819,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out float result)
+        public static bool ExactTry(object value, out float result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -878,7 +878,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out double result)
+        public static bool ExactTry(object value, out double result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -937,7 +937,7 @@ namespace RT.Util
         /// the Exact conversion. The <see>result</see> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
-        public static bool Exact(object value, out decimal result)
+        public static bool ExactTry(object value, out decimal result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -1000,7 +1000,7 @@ namespace RT.Util
         /// (So can the unsupported ones but it's a different matter. Unsupported types
         /// are not supported by this method for consistency with the other overloads.)
         /// </summary>
-        public static bool Exact(object value, out string result)
+        public static bool ExactTry(object value, out string result)
         {
             TypeCode code = GetTypeCode(value);
 
@@ -1058,5 +1058,216 @@ namespace RT.Util
         #endregion
 
         #endregion
+
+        #region ExactToType
+
+        /// <summary>
+        /// Converts the specified object to a bool using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static bool ExactToBool(object value)
+        {
+            bool result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(bool));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a byte using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static byte ExactToByte(object value)
+        {
+            byte result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(byte));
+        }
+
+        /// <summary>
+        /// Converts the specified object to an sbyte using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static sbyte ExactToSByte(object value)
+        {
+            sbyte result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(sbyte));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a short using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static short ExactToShort(object value)
+        {
+            short result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(short));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a ushort using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static ushort ExactToUShort(object value)
+        {
+            ushort result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(ushort));
+        }
+
+        /// <summary>
+        /// Converts the specified object to an int using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static int ExactToInt(object value)
+        {
+            int result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(int));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a uint using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static uint ExactToUInt(object value)
+        {
+            uint result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(uint));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a long using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static long ExactToLong(object value)
+        {
+            long result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(long));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a ulong using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static ulong ExactToULong(object value)
+        {
+            ulong result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(ulong));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a float using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static float ExactToFloat(object value)
+        {
+            float result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(float));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a double using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static double ExactToDouble(object value)
+        {
+            double result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(double));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a decimal using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static decimal ExactToDecimal(object value)
+        {
+            decimal result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(decimal));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a DateTime using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static DateTime ExactToDateTime(object value)
+        {
+            DateTime result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(DateTime));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a char using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static char ExactToChar(object value)
+        {
+            char result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(char));
+        }
+
+        /// <summary>
+        /// Converts the specified object to a string using the Exact conversion.
+        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// </summary>
+        public static string ExactToString(object value)
+        {
+            string result;
+            if (ExactTry(value, out result))
+                return result;
+            else
+                throw new RConvertException(value, typeof(string));
+        }
+
+        #endregion
+
     }
+
+    public class RConvertException : RTException
+    {
+        public RConvertException(object value, Type targetType)
+        {
+            TypeCode from = RConvert.GetTypeCode(value);
+            TypeCode to = Type.GetTypeCode(targetType);
+            _message = string.Format("Cannot do an exact conversion from value \"{2}\" of type \"{0}\" to type \"{1}\").", from, to, value);
+        }
+    }
+
 }
