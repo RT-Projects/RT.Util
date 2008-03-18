@@ -112,6 +112,7 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Log.cs" />
+    <Compile Include="RVariant.cs" />
     <Compile Include="PackedBooleans.cs" />
     <Compile Include="PathManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
