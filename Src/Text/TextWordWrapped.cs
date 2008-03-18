@@ -21,6 +21,8 @@ namespace RT.Util.Text
         /// </summary>
         public readonly List<string> Lines = new List<string>();
 
+        private static Regex regexSplitOnWindowsNewline = new Regex(@"\r\n", RegexOptions.Compiled);
+        private static Regex regexSplitOnUnixMacNewline = new Regex(@"[\r\n]", RegexOptions.Compiled);
         private static Regex regexKillDoubleSpaces = new Regex(@"  +", RegexOptions.Compiled);
 
         /// <summary>
@@ -46,9 +48,10 @@ namespace RT.Util.Text
                 throw new ArgumentOutOfRangeException("maxWidth cannot be less than 1");
 
             // Split into "paragraphs"
-            string[] paragraphs = text.Split('\n');
+            string[] paragraphs = regexSplitOnWindowsNewline.Split(text);
             foreach (string paragraph in paragraphs)
-                AddParagraph(paragraph, maxWidth);
+                foreach (string para in regexSplitOnUnixMacNewline.Split(paragraph))
+                    AddParagraph(para, maxWidth);
         }
 
         /// <summary>

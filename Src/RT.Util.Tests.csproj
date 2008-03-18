@@ -56,6 +56,7 @@
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />
+    <Compile Include="Text\TextWordWrappedTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RT.Util.csproj">
