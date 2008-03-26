@@ -10,6 +10,19 @@ namespace RT.Util.ExtensionMethods
     [TestFixture]
     public class DateTimeExtensionsTests
     {
+        private void Assert_DateTimeContentIs(DateTime dt, int year, int month, int day, int hour, int minute, int second, int nanosecond, DateTimeKind kind)
+        {
+            Assert.AreEqual(year, dt.Year);
+            Assert.AreEqual(month, dt.Month);
+            Assert.AreEqual(day, dt.Day);
+            Assert.AreEqual(hour, dt.Hour);
+            Assert.AreEqual(minute, dt.Minute);
+            Assert.AreEqual(second, dt.Second);
+            Assert.AreEqual(nanosecond / 1000000, dt.Millisecond);
+            Assert.AreEqual(nanosecond, dt.Nanosecond());
+            Assert.AreEqual(kind, dt.Kind);
+        }
+
         #region TestGetNanoseconds
 
         [Test]
@@ -105,15 +118,7 @@ namespace RT.Util.ExtensionMethods
         {
             DateTime dt;
             Assert.IsTrue(DateTimeExtensions.TryParseIso(str, out dt));
-            Assert.AreEqual(year, dt.Year);
-            Assert.AreEqual(month, dt.Month);
-            Assert.AreEqual(day, dt.Day);
-            Assert.AreEqual(hour, dt.Hour);
-            Assert.AreEqual(minute, dt.Minute);
-            Assert.AreEqual(second, dt.Second);
-            Assert.AreEqual(nanosecond / 1000000, dt.Millisecond);
-            Assert.AreEqual(nanosecond, dt.Nanosecond());
-            Assert.AreEqual(kind, dt.Kind);
+            Assert_DateTimeContentIs(dt, year, month, day, hour, minute, second, nanosecond, kind);
         }
 
         public void TestTryParseIsoValidHelper2(DateTimeKind kind, string suffix)
@@ -167,5 +172,25 @@ namespace RT.Util.ExtensionMethods
 
         #endregion
 
+        [Test]
+        public void TestTruncated()
+        {
+            DateTime dt;
+
+            DateTimeExtensions.TryParseIso("2008-02-27 21:35:47.1415926", out dt);
+            Assert_DateTimeContentIs(dt, 2008, 02, 27, 21, 35, 47, 141592600, DateTimeKind.Unspecified);
+            Assert_DateTimeContentIs(dt.TruncatedToSeconds(), 2008, 02, 27, 21, 35, 47, 0, DateTimeKind.Unspecified);
+            Assert_DateTimeContentIs(dt.TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Unspecified);
+
+            DateTimeExtensions.TryParseIso("2008-02-27 21:35:47.1415926Z", out dt);
+            Assert_DateTimeContentIs(dt, 2008, 02, 27, 21, 35, 47, 141592600, DateTimeKind.Utc);
+            Assert_DateTimeContentIs(dt.TruncatedToSeconds(), 2008, 02, 27, 21, 35, 47, 0, DateTimeKind.Utc);
+            Assert_DateTimeContentIs(dt.TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Utc);
+
+            DateTimeExtensions.TryParseIso("2008-02-27 21:35:47.1415926+01:30", out dt);
+            Assert_DateTimeContentIs(dt, 2008, 02, 27, 20, 05, 47, 141592600, DateTimeKind.Local);
+            Assert_DateTimeContentIs(dt.TruncatedToSeconds(), 2008, 02, 27, 20, 05, 47, 0, DateTimeKind.Local);
+            Assert_DateTimeContentIs(dt.TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Local);
+        }
     }
 }

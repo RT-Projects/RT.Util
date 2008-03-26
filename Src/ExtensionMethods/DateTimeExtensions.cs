@@ -217,5 +217,23 @@ namespace RT.Util.ExtensionMethods
 
         #endregion
 
+        /// <summary>
+        /// Returns a copy of this DateTime, truncated to whole seconds. Useful with
+        /// <see>ToIsoStringOptimal</see>.
+        /// </summary>
+        public static DateTime TruncatedToSeconds(this DateTime datetime)
+        {
+            return new DateTime(datetime.Ticks - datetime.Ticks % 10000000, datetime.Kind);
+        }
+
+        /// <summary>
+        /// Returns a copy of this DateTime, truncated to whole days. Useful with
+        /// <see>ToIsoStringOptimal</see>.
+        /// </summary>
+        public static DateTime TruncatedToDays(this DateTime datetime)
+        {
+            return new DateTime(datetime.Ticks - datetime.Ticks % 864000000000, datetime.Kind);
+        }
+
     }
 }
