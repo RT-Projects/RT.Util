@@ -506,6 +506,37 @@ namespace RT.Util
             else
                 return byPreferredName[name].Value;
         }
+
+        /// <summary>
+        /// Gets the value of the specified option.
+        /// 
+        /// If the option is a value:
+        ///     returns the value or null for optional unspecified values.
+        /// If the option is a switch:
+        ///     returns the string "true" if specified or null if unspecified.
+        /// If the option is a list:
+        ///     throws an <see>InvalidOperationException</see>.
+        /// </summary>
+        public string this[string name]
+        {
+            get
+            {
+                if (!Parsed)
+                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+
+                switch (byPreferredName[name].Type)
+                {
+                    case CmdOptionType.Switch:
+                        return byPreferredName[name].Value == null ? null : "true";
+                    case CmdOptionType.Value:
+                        return byPreferredName[name].Value == null ? null : byPreferredName[name].Value[0];
+                    case CmdOptionType.List:
+                        throw new InvalidOperationException("Cannot access a List-type command line option using the indexer.");
+                    default:
+                        throw new Exception("Internal error");
+                }
+            }
+        }
     }
 
     public enum CmdOptionType
