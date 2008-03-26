@@ -8,7 +8,7 @@ namespace RT.Util
     [TestFixture]
     public class RConvertTests
     {
-        #region Exact
+        #region ExactTry
 
         public struct AnUnsupportedStruct
         {
