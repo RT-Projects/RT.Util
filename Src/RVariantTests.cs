@@ -809,10 +809,10 @@ namespace RT.Util
             xml.DocumentElement.AppendChild(elOneLevelList);
             xml.DocumentElement.AppendChild(elOneLevelDict);
             xml.DocumentElement.AppendChild(elComplex);
-            RVariant.ToXml(elStub, valStub);
-            RVariant.ToXml(elOneLevelList, valOneLevelList);
-            RVariant.ToXml(elOneLevelDict, valOneLevelDict);
-            RVariant.ToXml(elComplex, valComplex);
+            RVariant.ToXml(valStub, elStub);
+            RVariant.ToXml(valOneLevelList, elOneLevelList);
+            RVariant.ToXml(valOneLevelDict, elOneLevelDict);
+            RVariant.ToXml(valComplex, elComplex);
 
             StringBuilder sb = XmlUtil.ToStringBuilder(xml);
             Console.WriteLine(sb);
@@ -945,5 +945,21 @@ namespace RT.Util
 
         #endregion
 
+        [Test]
+        public void TestExists()
+        {
+            RVariant variant = new RVariant();
+
+            Assert.IsFalse(variant.Exists);
+            Assert.IsFalse(variant["stuff"].Exists);
+            Assert.IsFalse(variant["array"][3].Exists);
+
+            variant["stuff"][0] = 20;
+            variant["array"][3] = "a";
+
+            Assert.IsTrue(variant.Exists);
+            Assert.IsTrue(variant["stuff"].Exists);
+            Assert.IsTrue(variant["array"][3].Exists);
+        }
     }
 }

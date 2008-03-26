@@ -976,6 +976,19 @@ namespace RT.Util
 
         #endregion
 
+        /// <summary>
+        /// Returns true if and only if this value is not a stub. This enables code
+        /// like "settings["stuff"]["value"].Exists", which will return true only if
+        /// the variant /stuff/value is defined.
+        /// </summary>
+        public bool Exists
+        {
+            get
+            {
+                return _kind != RVariantKind.Stub;
+            }
+        }
+
         #region XML
 
         /// <summary>
@@ -995,7 +1008,7 @@ namespace RT.Util
         /// Converts the specified RVariant to XML, storing it in the specified
         /// XmlElement. The name of the destination XmlElement will not be altered.
         /// </summary>
-        public static void ToXml(XmlElement rootElement, RVariant value)
+        public static void ToXml(RVariant value, XmlElement rootElement)
         {
             doToXml(rootElement, value);
         }
