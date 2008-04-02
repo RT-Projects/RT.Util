@@ -85,7 +85,7 @@ namespace RT.Util
     ///   v.Value     - for Value variants, returns the value stored.
     /// </code>
     /// </summary>
-    public class RVariant : IEquatable<RVariant>, ICloneable
+    public class RVariant : IEquatable<RVariant>, ICloneable, ICollection<RVariant>
     {
         /// <summary>
         /// Defines which kind of node this RVariant represents: a List, a
@@ -1174,6 +1174,92 @@ namespace RT.Util
                         throw new Exception("Internal error");
                 }
             }
+        }
+
+        #endregion
+
+        #region ICollection<RVariant> members
+
+        /// <summary>
+        /// Verifies that the value is a List; throws an exception if not. To be used
+        /// by ICollection implementation only.
+        /// </summary>
+        private void ICollection_AssumeListKind()
+        {
+            if (_kind != RVariantKind.Stub && _kind != RVariantKind.List)
+                throw new RVariantException("Location \"{0}\": cannot access as a list because item is already a {1}", FullPathNoNull, _kind);
+            assumeKind(RVariantKind.List);
+        }
+
+        /// <summary>
+        /// Makes this RVariant a stub, with no values associated. This is the only legal
+        /// way to revert the <see>Kind</see> from non-Stub to Stub.
+        /// </summary>
+        public void Clear()
+        {
+            _kind = RVariantKind.Stub;
+            _value = null;
+            _list = null;
+            _dict = null;
+        }
+
+        /// <summary>
+        /// Adds an RVariant to this variant, assuming/making it a List.
+        /// </summary>
+        public void Add(RVariant item)
+        {
+            ICollection_AssumeListKind();
+            _list.Add(item);
+        }
+
+        /// <summary>
+        /// Not currently implemented.
+        /// </summary>
+        public bool Remove(RVariant item)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Not currently implemented.
+        /// </summary>
+        public bool Contains(RVariant item)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Iterates over the items in this variant, assuming/making it a List.
+        /// </summary>
+        public IEnumerator<RVariant> GetEnumerator()
+        {
+            ICollection_AssumeListKind();
+            return _list.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Iterates over the items in this variant, assuming/making it a List.
+        /// </summary>
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            ICollection_AssumeListKind();
+            return _list.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Always returns false since RVariants are never read-only.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get { return false; }
+        }
+
+        /// <summary>
+        /// Not currently implemented.
+        /// </summary>
+        public void CopyTo(RVariant[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
