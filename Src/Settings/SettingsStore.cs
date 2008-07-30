@@ -73,7 +73,7 @@ namespace RT.Util.Settings
             Dir cur = Data;
             // Navigate to the dir
             int i;
-            for (i=0; i<patharr.Length-1; i++)
+            for (i = 0; i < patharr.Length - 1; i++)
                 if (cur.Dirs.ContainsKey(patharr[i]))
                     cur = cur.Dirs[patharr[i]];
                 else
@@ -82,7 +82,30 @@ namespace RT.Util.Settings
             return cur.Vals.ContainsKey(patharr[i]);
         }
 
-        // Here you go Timwi :)
+        public void Remove(string path)
+        {
+            string[] patharr = MakePath(path);
+            List<Dir> Lst = new List<Dir>();
+            Lst.Add(Data);
+            int i;
+            for (i = 0; i < patharr.Length - 1; i++)
+            {
+                if (!Lst[i].Dirs.ContainsKey(patharr[i]))
+                    return;
+                Lst.Add(Lst[i].Dirs[patharr[i]]);
+            }
+            if (!Lst[i].Vals.ContainsKey(patharr[i]))
+                return;
+            Lst[i].Vals.Remove(patharr[i]);
+
+            while (i > 1)
+            {
+                if (Lst[i].Dirs.Count > 0 || Lst[i].Vals.Count > 0)
+                    return;
+                Lst[i - 1].Dirs.Remove(patharr[i - 1]);
+            }
+        }
+
         #region Object
 
         /// <summary>
@@ -99,11 +122,11 @@ namespace RT.Util.Settings
             Dir cur = Data;
             // Navigate to the dir
             int i;
-            for (i=0; i<path.Length-1; i++)
+            for (i = 0; i < path.Length - 1; i++)
                 if (cur.Dirs.ContainsKey(path[i]))
                     cur = cur.Dirs[path[i]];
                 else
-                    throw new Exception("The Settings Store does not contain path \"" + string.Join(".", path, 0, i+1) + "\"");
+                    throw new Exception("The Settings Store does not contain path \"" + string.Join(".", path, 0, i + 1) + "\"");
             // Return the value
             if (cur.Vals.ContainsKey(path[i]))
                 return cur.Vals[path[i]];
@@ -125,7 +148,7 @@ namespace RT.Util.Settings
             Dir cur = Data;
             // Navigate to the dir
             int i;
-            for (i=0; i<path.Length-1; i++)
+            for (i = 0; i < path.Length - 1; i++)
             {
                 if (!cur.Dirs.ContainsKey(path[i]))
                     cur.Dirs.Add(path[i], new Dir());
