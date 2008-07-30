@@ -51,5 +51,16 @@ namespace RT.Util.Geometry
         {
             return "X=" + X + ", Y=" + Y;
         }
+
+        /// <summary>
+        /// Returns a new PointD at the given offset of this one. Does NOT modify this PointD.
+        /// </summary>
+        /// <param name="ByX">Amount to move X co-ordinate by.</param>
+        /// <param name="ByY">Amount to move Y co-ordinate by.</param>
+        /// <returns>New PointD at the given offset of this one.</returns>
+        public PointD Move(double ByX, double ByY)
+        {
+            return new PointD(this.X + ByX, this.Y + ByY);
+        }
     }
 }
