@@ -121,15 +121,16 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// <para>Defines standard help options. These options are marked with the IsHelp
-        /// option flag, which means that:</para>
-        /// <list type="bullet">
-        ///     <item><description>The options won't be printed when printing help.</description></item>
-        ///     <item><description>Specifying one of these options causes the program to print help
-        ///         and terminate (at the time of the parsing).</description></item>
-        /// </list>
-        /// <para>The default help options are: -?, --help, --usage.</para>
-        /// <para>For more details see the <see cref="Parse"/> function.</para>
+        /// Defines standard help options. These options are marked with the IsHelp
+        /// option flag, which means that:
+        /// 
+        /// * The options won't be printed when printing help.
+        /// * Specifying one of these options causes the program to print help
+        ///   and terminate (at the time of the parsing).
+        /// 
+        /// The default help options are: -?, --help, --usage.
+        /// 
+        /// For more details see the <see cref="Parse"/> function.
         /// </summary>
         public void DefineDefaultHelpOptions()
         {
