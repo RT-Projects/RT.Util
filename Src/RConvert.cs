@@ -298,7 +298,7 @@ namespace RT.Util
         /// Converts the specified object to a byte using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out byte result)
@@ -342,7 +342,7 @@ namespace RT.Util
         /// Converts the specified object to a ushort using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out ushort result)
@@ -386,7 +386,7 @@ namespace RT.Util
         /// Converts the specified object to a uint using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out uint result)
@@ -430,7 +430,7 @@ namespace RT.Util
         /// Converts the specified object to a ulong using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out ulong result)
@@ -468,7 +468,7 @@ namespace RT.Util
         /// Converts the specified object to an sbyte using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out sbyte result)
@@ -512,7 +512,7 @@ namespace RT.Util
         /// Converts the specified object to a short using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out short result)
@@ -556,7 +556,7 @@ namespace RT.Util
         /// Converts the specified object to an int using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out int result)
@@ -600,7 +600,7 @@ namespace RT.Util
         /// Converts the specified object to a long using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out long result)
@@ -646,7 +646,7 @@ namespace RT.Util
         /// Converts the specified object to a bool using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// 
         /// If the value is one of the integer types, the exact conversion only succeeds
@@ -709,7 +709,7 @@ namespace RT.Util
         /// Converts the specified object to a char using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out char result)
@@ -763,11 +763,11 @@ namespace RT.Util
         /// Converts the specified object to a DateTime using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// 
         /// When converting from string, supports a subset of the ISO 8601 formats - for
-        /// more details see <see>DateTimeExtensions</see>.<see>TryParseIso</see>.
+        /// more details see <see cref="DateTimeExtensions"/>.<see cref="TryParseIso"/>.
         /// </summary>
         public static bool ExactTry(object value, out DateTime result)
         {
@@ -816,7 +816,7 @@ namespace RT.Util
         /// Converts the specified object to a float using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out float result)
@@ -875,7 +875,7 @@ namespace RT.Util
         /// Converts the specified object to a double using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out double result)
@@ -934,7 +934,7 @@ namespace RT.Util
         /// Converts the specified object to a decimal using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out decimal result)
@@ -992,7 +992,7 @@ namespace RT.Util
         /// Converts the specified object to a string using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see>result</see> is set to the type's default value
+        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
         /// if the conversion is unsuccessful, which in this case means null (!!!).
         /// 
         /// Note that the result will only ever be false if the value is one of the
@@ -1063,7 +1063,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a bool using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out bool result)
         {
@@ -1073,7 +1073,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a byte using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out byte result)
         {
@@ -1083,7 +1083,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to an sbyte using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out sbyte result)
         {
@@ -1093,7 +1093,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a short using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out short result)
         {
@@ -1103,7 +1103,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a ushort using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out ushort result)
         {
@@ -1113,7 +1113,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to an int using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out int result)
         {
@@ -1123,7 +1123,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a uint using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out uint result)
         {
@@ -1133,7 +1133,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a long using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out long result)
         {
@@ -1143,7 +1143,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a ulong using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out ulong result)
         {
@@ -1153,7 +1153,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a float using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out float result)
         {
@@ -1163,7 +1163,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a double using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out double result)
         {
@@ -1173,7 +1173,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a decimal using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out decimal result)
         {
@@ -1183,7 +1183,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a DateTime using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out DateTime result)
         {
@@ -1193,7 +1193,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a char using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out char result)
         {
@@ -1203,7 +1203,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a string using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static void Exact(object value, out string result)
         {
@@ -1217,7 +1217,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a bool using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static bool ExactToBool(object value)
         {
@@ -1228,7 +1228,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a byte using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static byte ExactToByte(object value)
         {
@@ -1239,7 +1239,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to an sbyte using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static sbyte ExactToSByte(object value)
         {
@@ -1250,7 +1250,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a short using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static short ExactToShort(object value)
         {
@@ -1261,7 +1261,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a ushort using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static ushort ExactToUShort(object value)
         {
@@ -1272,7 +1272,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to an int using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static int ExactToInt(object value)
         {
@@ -1283,7 +1283,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a uint using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static uint ExactToUInt(object value)
         {
@@ -1294,7 +1294,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a long using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static long ExactToLong(object value)
         {
@@ -1305,7 +1305,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a ulong using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static ulong ExactToULong(object value)
         {
@@ -1316,7 +1316,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a float using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static float ExactToFloat(object value)
         {
@@ -1327,7 +1327,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a double using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static double ExactToDouble(object value)
         {
@@ -1338,7 +1338,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a decimal using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static decimal ExactToDecimal(object value)
         {
@@ -1349,7 +1349,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a DateTime using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static DateTime ExactToDateTime(object value)
         {
@@ -1360,7 +1360,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a char using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static char ExactToChar(object value)
         {
@@ -1371,7 +1371,7 @@ namespace RT.Util
 
         /// <summary>
         /// Converts the specified object to a string using the Exact conversion.
-        /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+        /// Throws an <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static string ExactToString(object value)
         {

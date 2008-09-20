@@ -129,8 +129,8 @@ namespace RT.Util
         /// <summary>
         /// Helps prepare a log message to the derived classes. Takes the parameters
         /// supplied by a call to one of the Log methods and generates two strings:
-        /// the <see>fmtInfo</see> which is the message header and the
-        /// <see>fmtText</see> which is the actual message.
+        /// the <see cref="fmtInfo"/> which is the message header and the
+        /// <see cref="fmtText"/> which is the actual message.
         /// </summary>
         protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, uint verbosity, LogType type, string message, object[] args)
         {
@@ -145,10 +145,10 @@ namespace RT.Util
 
         /// <summary>
         /// Appends an entry to the log. Derived classes implement this to put the
-        /// log data where necessary. See also: <see>GetFormattedStrings</see> which
+        /// log data where necessary. See also: <see cref="GetFormattedStrings"/> which
         /// is a helper method.
         /// 
-        /// Note that the various specialised functions such as <see>Warn</see> simply
+        /// Note that the various specialised functions such as <see cref="Warn"/> simply
         /// call this method to do the work.
         /// </summary>
         /// <param name="verbosity">Verbosity level of this message</param>
@@ -257,7 +257,7 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which puts messages into any <see>Stream</see> by
+    /// Implements a logger which puts messages into any <see cref="Stream"/> by
     /// creating a TextWriter wrapper around it.
     /// </summary>
     public class StreamLogger : LoggerBase

@@ -52,7 +52,7 @@ namespace RT.Util
         /// This points to either byTinyName or byLongName. By default it points to
         /// byLongName, but the user of this class can call a method to change this to
         /// byTinyName.
-        /// 
+        ///
         /// The public methods used to access parse results will use this variable to
         /// look up option names. Hence this basically determines whether the user
         /// accesses options by their full names or their tiny names.
@@ -111,7 +111,7 @@ namespace RT.Util
         /// <summary>
         /// When printing help, the options are printed in the order in which they were
         /// defined. Calling this function adds a single blank line separator in the help
-        /// output between the option defined by the last call to <see>DefineOption</see>
+        /// output between the option defined by the last call to <see cref="DefineOption"/>
         /// and the one defined by the next one. Multiple calls will result in multiple
         /// blank lines.
         /// </summary>
@@ -121,16 +121,15 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Defines standard help options. These options are marked with the IsHelp
-        /// option flag, which means that:
-        /// 
-        /// * The options won't be printed when printing help.
-        /// * Specifying one of these options causes the program to print help
-        ///   and terminate (at the time of the parsing).
-        ///   
-        /// The default help options are: -?, --help, --usage.
-        /// 
-        /// For more details see the <see>Parse</see> function.
+        /// <para>Defines standard help options. These options are marked with the IsHelp
+        /// option flag, which means that:</para>
+        /// <list type="bullet">
+        ///     <item><description>The options won't be printed when printing help.</description></item>
+        ///     <item><description>Specifying one of these options causes the program to print help
+        ///         and terminate (at the time of the parsing).</description></item>
+        /// </list>
+        /// <para>The default help options are: -?, --help, --usage.</para>
+        /// <para>For more details see the <see cref="Parse"/> function.</para>
         /// </summary>
         public void DefineDefaultHelpOptions()
         {
@@ -141,15 +140,15 @@ namespace RT.Util
         /// <summary>
         /// Parses the specified command line arguments according to the options
         /// defined (using the Define* functions).
-        /// 
+        ///
         /// The parse options define what happens in case there is an error. This
         /// function can print help, list errors and terminate the program in such
-        /// case, but it doesn't have to. See individual <see>CmdParse</see> values
+        /// case, but it doesn't have to. See individual <see cref="CmdParse"/> values
         /// for more info.
-        /// 
+        ///
         /// After a successful call to this function the results can be accessed
         /// via the Opt* methods/properties.
-        /// 
+        ///
         /// Calling this method multiple times erases the results produced by the
         /// previous call and generates new results.
         /// </summary>
@@ -183,7 +182,7 @@ namespace RT.Util
                         errors.Add(string.Format("Option \"{0}\" doesn't match any of the allowed options.", arg));
                     continue;
                 }
-                
+
                 // Is this a help option
                 if ((opt.Flags & CmdOptionFlags.IsHelp) != 0)
                 {
@@ -262,15 +261,15 @@ namespace RT.Util
         /// Prints a short summary of program information. The information is deduced
         /// from the attributes of the Entry Assembly via reflection. The following
         /// text will be printed:
-        /// 
+        ///
         /// * [Assembly Title]
         /// * Version: [Assembly Version]
         /// * [Assembly Copyright]
         /// * newline
-        /// 
+        ///
         /// Any attributes that cannot be retrieved (e.g. they were not specified)
         /// will be skipped silently.
-        /// 
+        ///
         /// Calling this function multiple times won't have any effect - only the
         /// first call causes the info to be printed.
         /// </summary>
@@ -299,20 +298,20 @@ namespace RT.Util
 
         /// <summary>
         /// Prints automatically generated usage information. This consists of:
-        /// 
-        /// 1. Program Info (unless already printed, see <see>PrintProgramInfo</see>.
+        ///
+        /// 1. Program Info (unless already printed, see <see cref="PrintProgramInfo"/>.
         /// 2. Brief usage summary
         /// 3. Detailed description of every option.
-        /// 
+        ///
         /// Brief usage summary shows all options on one line following the exe name,
         /// either by tiny name or, if not available, by long name. Option flags and
         /// type affect the formatting. E.g.:
-        /// 
+        ///
         ///     testproj.exe -r <required-option> [--optional-switch]
-        ///     
+        ///
         /// Detailed summary is a table with one row per option. It shows the tiny
         /// and long option name as well as a description. The description is printed
-        /// using <see>TextWordWrapped</see>, which means long, multi-line and even
+        /// using <see cref="TextWordWrapped"/>, which means long, multi-line and even
         /// indented text will be printed properly. The console window width will
         /// be used for word wrapping.
         /// </summary>
@@ -418,8 +417,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Call this function to change the behaviour of <see>OptBool</see>,
-        /// <see>OptValue</see> and <see>OptList</see> functions so that they
+        /// Call this function to change the behaviour of <see cref="OptBool"/>,
+        /// <see cref="OptValue"/> and <see cref="OptList"/> functions so that they
         /// look up option values by the tiny name rather than by long name
         /// (which is the default).
         /// </summary>
@@ -429,10 +428,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Call this function to change the behaviour of <see>OptBool</see>,
-        /// <see>OptValue</see> and <see>OptList</see> functions so that they
+        /// Call this function to change the behaviour of <see cref="OptBool"/>,
+        /// <see cref="OptValue"/> and <see cref="OptList"/> functions so that they
         /// look up option values by the long name. Since this is the default
-        /// after calling <see>Parse</see> anyway it's not necessary to do this.
+        /// after calling <see cref="Parse"/> anyway it's not necessary to do this.
         /// </summary>
         public void GetOptionsByLongName()
         {
@@ -468,7 +467,7 @@ namespace RT.Util
         /// <summary>
         /// Returns the value specified for a Value-type option, or "null" if
         /// the option was not specified.
-        /// 
+        ///
         /// Identical to OptValue(name, null);
         /// </summary>
         public string OptValue(string name)
@@ -509,13 +508,13 @@ namespace RT.Util
 
         /// <summary>
         /// Gets the value of the specified option.
-        /// 
+        ///
         /// If the option is a value:
         ///     returns the value or null for optional unspecified values.
         /// If the option is a switch:
         ///     returns the string "true" if specified or null if unspecified.
         /// If the option is a list:
-        ///     throws an <see>InvalidOperationException</see>.
+        ///     throws an <see cref="InvalidOperationException"/>.
         /// </summary>
         public string this[string name]
         {

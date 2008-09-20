@@ -154,7 +154,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Converts the specified DateTime to a string representing the datetime in
         /// ISO format. The resulting string holds all the information necessary to
-        /// convert back to the original DateTime, but unlike <see>ToIsoStringFull</see>,
+        /// convert back to the original DateTime, but unlike <see cref="ToIsoStringFull"/>,
         /// some of the redundant zeros are omitted (as permitted by the ISO format).
         /// 
         /// Example 1: "2007-12-31 21:00:00Z" - the nanoseconds are all 0
@@ -219,7 +219,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Returns a copy of this DateTime, truncated to whole seconds. Useful with
-        /// <see>ToIsoStringOptimal</see>.
+        /// <see cref="ToIsoStringOptimal"/>.
         /// </summary>
         public static DateTime TruncatedToSeconds(this DateTime datetime)
         {
@@ -228,7 +228,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Returns a copy of this DateTime, truncated to whole days. Useful with
-        /// <see>ToIsoStringOptimal</see>.
+        /// <see cref="ToIsoStringOptimal"/>.
         /// </summary>
         public static DateTime TruncatedToDays(this DateTime datetime)
         {

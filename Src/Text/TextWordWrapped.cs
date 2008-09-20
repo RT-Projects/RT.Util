@@ -10,7 +10,7 @@ namespace RT.Util.Text
     /// specified width. Supports unix-style new lines and indented
     /// paragraphs.
     /// 
-    /// The results can either be accessed through the <see>Lines</see>
+    /// The results can either be accessed through the <see cref="Lines"/>
     /// list or via the [] operator. The latter will return blank lines
     /// if trying to access a line beyond the last one.
     /// </summary>
@@ -27,7 +27,7 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Creates an instance of the class, generating the word-wrapped
-        /// version of the supplied <see>text</see>.
+        /// version of the supplied <see cref="text"/>.
         /// 
         /// The supplied text will be split into "paragraphs" on the newline
         /// characters. Every paragraph will begin on a new line in the word-

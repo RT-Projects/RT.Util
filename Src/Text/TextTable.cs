@@ -7,7 +7,7 @@ namespace RT.Util.Text
     /// <summary>
     /// Holds a table of strings. Provides methods to print the table
     /// to text assuming a fixed-width font. Will wrap the cell contents
-    /// using <see>TextWordWrapped</see> as necessary. Supports automatic
+    /// using <see cref="TextWordWrapped"/> as necessary. Supports automatic
     /// resizing of columns to fit the required width.
     /// 
     /// Will not necessarily lay out the table optimally in cases where
@@ -143,7 +143,7 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Constructs a TextTable in which all columns initially have AutoSize set to false.
-        /// Use <see>SetAutoSize</see> to set AutoSize for individual columns to true.
+        /// Use <see cref="SetAutoSize"/> to set AutoSize for individual columns to true.
         /// </summary>
         public TextTable()
         {
@@ -152,7 +152,7 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Constructs a TextTable in which all columns initially have the specified AutoSize setting.
-        /// Use <see>SetAutoSize</see> to change the AutoSize setting for individual columns.
+        /// Use <see cref="SetAutoSize"/> to change the AutoSize setting for individual columns.
         /// </summary>
         public TextTable(bool DefaultAutoSize)
         {
@@ -172,7 +172,7 @@ namespace RT.Util.Text
         private int numRows = 0;
 
         /// <summary>
-        /// Makes the <see>cols</see> member long enough to be able to
+        /// Makes the <see cref="cols"/> member long enough to be able to
         /// access the specified column.
         /// </summary>
         private void growAsNecessary(int columnIndex)
@@ -210,7 +210,7 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Configures the auto-sizing of the specified column. The
-        /// <see>sizeShare</see> parameter determines how much of the
+        /// <see cref="sizeShare"/> parameter determines how much of the
         /// available space each of the columns is allocated. Setting
         /// this to double.PositiveInfinity will disable auto-sizing
         /// (which is the default state).
