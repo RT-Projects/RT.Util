@@ -87,6 +87,7 @@
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
+    <Compile Include="ExtensionMethods\StringExtensions.cs" />
     <Compile Include="Fault.cs" />
     <Compile Include="Forms\DlgMessage.cs">
       <SubType>Form</SubType>
@@ -136,6 +137,7 @@
     <Compile Include="Streams\BinaryReaderPlus.cs" />
     <Compile Include="Streams\BinaryWriterPlus.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
+    <Compile Include="Streams\DynamicContentStream.cs" />
     <Compile Include="Streams\SlowStream.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="Text\TextWordWrapped.cs" />
