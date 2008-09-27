@@ -11,7 +11,13 @@ namespace RT.Util.Streams
     /// </summary>
     public class BinaryWriterPlus : BinaryWriter
     {
+        /// <summary>Initialises a new BinaryWriterPlus instance.</summary>
+        /// <param name="output">The underlying stream.</param>
         public BinaryWriterPlus(Stream output) : base(output) { }
+        
+        /// <summary>Initialises a new BinaryWriterPlus instance.</summary>
+        /// <param name="output">The underlying stream.</param>
+        /// <param name="encoding">The text encoding to use when writing.</param>
         public BinaryWriterPlus(Stream output, Encoding encoding) : base(output, encoding) { }
 
         /// <summary>
@@ -70,7 +76,7 @@ namespace RT.Util.Streams
         }
 
         /// <summary>
-        /// See WriteInt32Optim of this function for more info.
+        /// See WriteInt32Optim for more info.
         /// </summary>
         public virtual void WriteInt64Optim(long val)
         {
@@ -90,7 +96,7 @@ namespace RT.Util.Streams
         }
 
         /// <summary>
-        /// See WriteInt32Optim of this function for more info. Note that values
+        /// See WriteInt32Optim for more info. Note that values
         /// written by this function cannot be safely read as signed int64s, but the
         /// other way is fine.
         /// </summary>
