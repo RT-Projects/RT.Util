@@ -49,8 +49,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArithmeticCoding\ArithmeticCodingReader.cs" />
-    <Compile Include="ArithmeticCoding\ArithmeticCodingWriter.cs" />
     <Compile Include="BytesBitmap.cs" />
     <Compile Include="CmdLine.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
@@ -135,11 +133,14 @@
     <Compile Include="SortedSet.cs" />
     <Compile Include="SoundPlayerAsync.cs" />
     <Compile Include="StateMachine.cs" />
+    <Compile Include="Streams\ArithmeticCodingReader.cs" />
+    <Compile Include="Streams\ArithmeticCodingWriter.cs" />
     <Compile Include="Streams\BinaryReaderPlus.cs" />
     <Compile Include="Streams\BinaryWriterPlus.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
     <Compile Include="Streams\DynamicContentStream.cs" />
     <Compile Include="Streams\SlowStream.cs" />
+    <Compile Include="Streams\StreamOnSocket.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="Text\TextWordWrapped.cs" />
     <Compile Include="TimeOut.cs" />
