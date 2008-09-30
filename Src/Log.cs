@@ -57,6 +57,11 @@ namespace RT.Util
         public bool TimestampInUTC = false;
 
         /// <summary>
+        /// Used internally to make the Log operation atomic.
+        /// </summary>
+        protected object _lock_log = new object();
+
+        /// <summary>
         /// Initialises some members to their default values.
         /// </summary>
         public LoggerBase()
@@ -221,36 +226,39 @@ namespace RT.Util
 
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
-            if (VerbosityLimit[type] < verbosity)
-                return;
-
-            string fmtInfo, fmtText;
-            GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
-
-            TextWriter consoleStream = Console.Out;
-            if (type == LogType.Error && ErrorsToStdErr)
-                consoleStream = Console.Error;
-
-            Console.ForegroundColor = MsgTypeColor[type];
-
-            if (!WordWrap)
+            lock (_lock_log)
             {
-                consoleStream.Write(fmtInfo);
-                consoleStream.WriteLine(fmtText);
-            }
-            else
-            {
-                string indent = new string(' ', fmtInfo.Length);
+                if (VerbosityLimit[type] < verbosity)
+                    return;
 
-                TextWordWrapped wordWrapped = new TextWordWrapped(fmtText, Console.WindowWidth - 1 - fmtInfo.Length);
-                for (int i = 0; i < wordWrapped.Lines.Count; i++)
+                string fmtInfo, fmtText;
+                GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
+
+                TextWriter consoleStream = Console.Out;
+                if (type == LogType.Error && ErrorsToStdErr)
+                    consoleStream = Console.Error;
+
+                Console.ForegroundColor = MsgTypeColor[type];
+
+                if (!WordWrap)
                 {
-                    if (i == 0)
-                        consoleStream.Write(fmtInfo);
-                    else
-                        consoleStream.Write(indent);
+                    consoleStream.Write(fmtInfo);
+                    consoleStream.WriteLine(fmtText);
+                }
+                else
+                {
+                    string indent = new string(' ', fmtInfo.Length);
 
-                    consoleStream.WriteLine(wordWrapped.Lines[i]);
+                    TextWordWrapped wordWrapped = new TextWordWrapped(fmtText, Console.WindowWidth - 1 - fmtInfo.Length);
+                    for (int i = 0; i < wordWrapped.Lines.Count; i++)
+                    {
+                        if (i == 0)
+                            consoleStream.Write(fmtInfo);
+                        else
+                            consoleStream.Write(indent);
+
+                        consoleStream.WriteLine(wordWrapped.Lines[i]);
+                    }
                 }
             }
         }
@@ -264,6 +272,15 @@ namespace RT.Util
     {
         private Stream underlyingStream = null;
         private StreamWriter textStream;
+
+        public StreamLogger()
+        {
+        }
+
+        public StreamLogger(Stream underlyingStream)
+        {
+            Stream = underlyingStream;
+        }
 
         /// <summary>
         /// Gets or sets the stream to which messages are logged.
@@ -281,14 +298,17 @@ namespace RT.Util
 
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
-            if (VerbosityLimit[type] < verbosity || textStream == null)
-                return;
+            lock (_lock_log)
+            {
+                if (VerbosityLimit[type] < verbosity || textStream == null)
+                    return;
 
-            string fmtInfo, fmtText;
-            GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
+                string fmtInfo, fmtText;
+                GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
 
-            textStream.Write(fmtInfo);
-            textStream.WriteLine(fmtText);
+                textStream.Write(fmtInfo);
+                textStream.WriteLine(fmtText);
+            }
         }
     }
 
@@ -307,8 +327,11 @@ namespace RT.Util
 
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
-            foreach (LoggerBase logger in Loggers.Values)
-                logger.Log(verbosity, type, message, args);
+            lock (_lock_log)
+            {
+                foreach (LoggerBase logger in Loggers.Values)
+                    logger.Log(verbosity, type, message, args);
+            }
         }
 
         /// <summary>
