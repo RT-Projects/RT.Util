@@ -159,6 +159,7 @@
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />
     <Compile Include="WinAPI.cs" />
+    <Compile Include="XMLClassify.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\NiceClosePanel.resx">
