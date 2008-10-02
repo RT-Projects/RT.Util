@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Globalization;
+using System.Reflection;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -105,6 +106,49 @@ namespace RT.Util.ExtensionMethods
         public static byte[] ToASCII(this string Input)
         {
             return Encoding.ASCII.GetBytes(Input);
+        }
+
+        /// <summary>Examines the type T for a static field with the specified name and returns the
+        /// value of that static field. If T is an enum, returns the enum value with the specified name.</summary>
+        /// <example>
+        ///     <code>
+        ///         public enum X { One, Two, Three }
+        ///         public class Y { public static string Constant = "C#"; }
+        ///         // ...
+        ///         Console.WriteLine("One".ToStaticValue&lt;X&gt;());         // outputs "One"
+        ///         Console.WriteLine("Constant".ToStaticValue&lt;Y&gt;());    // outputs "C#"
+        ///     </code>
+        /// </example>
+        /// <typeparam name="T">The type to examine. Can be a class, struct, or enum.</typeparam>
+        /// <param name="Input">A string specifying the field name to search for. In the case of enums, the name of the enum value.</param>
+        /// <returns>The value of the specified field. In the case of enums, this is the enum value.</returns>
+        public static object ToStaticValue<T>(this string Input)
+        {
+            return ToStaticValue(Input, typeof(T));
+        }
+
+        /// <summary>Examines the type InputType for a static field with the specified name and returns the
+        /// value of that static field. If InputType is an enum, returns the enum value with the specified name.</summary>
+        /// <example>
+        ///     <code>
+        ///         public enum X { One, Two, Three }
+        ///         public class Y { public static string Constant = "C#"; }
+        ///         // ...
+        ///         Console.WriteLine("One".ToStaticValue(typeof(X)));         // outputs "One"
+        ///         Console.WriteLine("Constant".ToStaticValue(typeof(Y)));    // outputs "C#"
+        ///     </code>
+        /// </example>
+        /// <param name="Input">A string specifying the field name to search for. In the case of enums, the name of the enum value.</param>
+        /// <param name="InputType">The type to examine. Can be a class, struct, or enum.</param>
+        /// <returns>The value of the specified field. In the case of enums, this is the enum value.</returns>
+        public static object ToStaticValue(this string Input, Type InputType)
+        {
+            foreach (var Field in InputType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (Field.Name == Input)
+                    return Field.GetValue(null);
+            }
+            throw new Exception(string.Format("The type {0} did not contain a field called {1}.", InputType, Input));
         }
     }
 }
