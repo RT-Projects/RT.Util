@@ -11,8 +11,17 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
+    /// <summary>
+    /// Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again.
+    /// The functionality is similar to XmlSerializer, but uses the newer C# XML API and is also more full-featured.
+    /// </summary>
     public static class XMLClassify
     {
+        public static T ReadObjectFromXMLFile<T>(string Filename) where T : class, new()
+        {
+            return ReadObjectFromXMLFile<T>(Filename, null);
+        }
+
         public static T ReadObjectFromXMLFile<T>(string Filename, object ParentNode) where T : class, new()
         {
             string BaseDir = Filename.Contains(Path.DirectorySeparatorChar) ? Filename.Remove(Filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
@@ -21,10 +30,17 @@ namespace RT.Util
 
         public static T ReadObjectFromXMLFile<T>(string Filename, string BaseDir, object ParentNode) where T : class, new()
         {
-            var sr = new StreamReader(Filename, Encoding.UTF8);
-            XElement xe = XElement.Load(sr);
-            sr.Close();
-            return ReadObjectFromXElement<T>(xe, BaseDir, ParentNode);
+            try
+            {
+                var sr = new StreamReader(Filename, Encoding.UTF8);
+                XElement xe = XElement.Load(sr);
+                sr.Close();
+                return ReadObjectFromXElement<T>(xe, BaseDir, ParentNode);
+            }
+            catch (IOException)
+            {
+                return null;
+            }
         }
 
         public static T ReadObjectFromXElement<T>(XElement XElem, string BaseDir, object ParentNode)
