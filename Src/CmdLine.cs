@@ -298,6 +298,10 @@ namespace RT.Util
         }
 
         /// <summary>
+        /// Prints automatically generated usage information, consisting of program information,
+        /// brief usage summary and detailed description of every option.
+        /// </summary>
+        /// <remarks>
         /// Prints automatically generated usage information. This consists of:
         ///
         /// 1. Program Info (unless already printed, see <see cref="PrintProgramInfo"/>.
@@ -308,14 +312,14 @@ namespace RT.Util
         /// either by tiny name or, if not available, by long name. Option flags and
         /// type affect the formatting. E.g.:
         ///
-        ///     testproj.exe -r <required-option> [--optional-switch]
+        /// <code>testproj.exe -r &lt;required-option&gt; [--optional-switch]</code>
         ///
         /// Detailed summary is a table with one row per option. It shows the tiny
         /// and long option name as well as a description. The description is printed
         /// using <see cref="TextWordWrapped"/>, which means long, multi-line and even
         /// indented text will be printed properly. The console window width will
         /// be used for word wrapping.
-        /// </summary>
+        /// </remarks>
         public void PrintHelp()
         {
             PrintProgramInfo();

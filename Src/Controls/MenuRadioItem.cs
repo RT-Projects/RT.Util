@@ -5,17 +5,27 @@ using System.Windows.Forms;
 
 namespace RT.Util.Controls
 {
-    public class MenuRadioItem<ValueType> : ToolStripMenuItem
-        where ValueType : struct
+    /// <summary>
+    /// Encapsulates a menu item that is associated with a value from a specified type, usually an enum.
+    /// These menu items are intended to be grouped using a <see cref="MenuRadioGroup&lt;ValueType&gt;"/>.
+    /// </summary>
+    /// <typeparam name="ValueType">The type of the value associated with this menu item.</typeparam>
+    public class MenuRadioItem<ValueType> : ToolStripMenuItem where ValueType : struct
     {
         private ValueType FValue;
         private MenuRadioGroup<ValueType> FParentGroup;
 
-        public ValueType Value {
+        /// <summary>Returns the value associated with this menu item.</summary>
+        public ValueType Value
+        {
             get { return FValue; }
             set { FValue = value; }
         }
-        public MenuRadioGroup<ValueType> ParentGroup {
+
+        /// <summary>Returns the group to which this menu item belongs,
+        /// or moves it to a different group.</summary>
+        public MenuRadioGroup<ValueType> ParentGroup
+        {
             get { return FParentGroup; }
             set
             {
@@ -27,7 +37,9 @@ namespace RT.Util.Controls
             }
         }
 
-        public MenuRadioItem() : base()
+        /// <summary>Initialises a <see cref="MenuRadioItem&lt;ValueType&gt;"/> instance.</summary>
+        public MenuRadioItem()
+            : base()
         {
             this.Click += new EventHandler(MenuRadioItem_Click);
         }

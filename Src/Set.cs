@@ -1,5 +1,3 @@
-/// Set.cs  -  defines a Set class and related classes
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -113,6 +111,9 @@ namespace RT.Util
 
         #region IEquatable<Set<T>> Members
 
+        /// <summary>Compares the current Set against the specified Set for equality.</summary>
+        /// <param name="other">The other Set to compare this set against.</param>
+        /// <returns>True if the Sets are equal.</returns>
         public bool Equals(Set<T> other)
         {
             throw new Exception("The method or operation is not implemented.");
@@ -122,37 +123,51 @@ namespace RT.Util
 
         #region ICollection<T> Members
 
+        /// <summary>Adds the specified item only if it is not already in this Set.</summary>
+        /// <param name="item">Item to add if it is unique.</param>
         public void Add(T item)
         {
             if (!L.Contains(item))
                 L.Add(item);
         }
 
+        /// <summary>Empties the Set.</summary>
         public void Clear()
         {
             L.Clear();
         }
 
+        /// <summary>Determined whether the specified item is in the current Set.</summary>
+        /// <param name="item">Item to determine membership in this Set for.</param>
+        /// <returns>True if the current Set contains the specified item.</returns>
         public bool Contains(T item)
         {
             return L.Contains(item);
         }
 
+        /// <summary>Copies the contents of the current Set to the specified Array.</summary>
+        /// <param name="array">Destination Array to copy to.</param>
+        /// <param name="arrayIndex">Index in array at which copying begins.</param>
         public void CopyTo(T[] array, int arrayIndex)
         {
             L.CopyTo(array, arrayIndex);
         }
 
+        /// <summary>Determines the number of elements in this set.</summary>
         public int Count
         {
             get { return L.Count; }
         }
 
+        /// <summary>Returns false.</summary>
         public bool IsReadOnly
         {
             get { return false; }
         }
 
+        /// <summary>Removes the specified item if it is contained in the current Set.</summary>
+        /// <param name="item">Item to remove.</param>
+        /// <returns>True if the item was contained in this Set.</returns>
         public bool Remove(T item)
         {
             return L.Remove(item);
@@ -162,6 +177,8 @@ namespace RT.Util
 
         #region IEnumerable<T> Members
 
+        /// <summary>Returns an enumerator to iterate over the elements in this Set.</summary>
+        /// <returns>An IEnumerator&lt;T&gt; to iterate over the elements in this Set.</returns>
         public IEnumerator<T> GetEnumerator()
         {
             return L.GetEnumerator();
@@ -171,6 +188,8 @@ namespace RT.Util
 
         #region IEnumerable Members
 
+        /// <summary>Returns an enumerator to iterate over the elements in this Set.</summary>
+        /// <returns>An IEnumerator to iterate over the elements in this Set.</returns>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return L.GetEnumerator();
@@ -180,6 +199,8 @@ namespace RT.Util
 
         #region ICloneable Members
 
+        /// <summary>Clones this Set (creates another copy).</summary>
+        /// <returns>A clone (copy) of the current Set.</returns>
         public object Clone()
         {
             Set<T> set = new Set<T>();
@@ -188,5 +209,12 @@ namespace RT.Util
         }
 
         #endregion
+
+        /// <summary>Sorts the current <see cref="Set&lt;T&gt;"/>.</summary>
+        /// <param name="comparison">Comparison to use when sorting.</param>
+        public void Sort(Comparison<T> comparison)
+        {
+            L.Sort(comparison);
+        }
     }
 }

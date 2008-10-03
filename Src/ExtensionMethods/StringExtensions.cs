@@ -7,6 +7,9 @@ using System.Reflection;
 
 namespace RT.Util.ExtensionMethods
 {
+    /// <summary>
+    /// Provides extension methods on the <see langword="string"/> type.
+    /// </summary>
     public static class StringExtensions
     {
         /// <summary>

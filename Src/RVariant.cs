@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 
-/// TODO: possible areas of improvement
-///
-/// - built-in conversion between Dictionary/List and RVariant
-/// - .OrNotFound property - to throw a more user friendly exception if the value is a stub
-/// - add a new Kind, Object, to store arbitrary objects. Serialize this to/from XML. Allow storing nulls.
-/// - enable "nice" automatic serialization by using special helper attributes?
-/// - allow xml loading method to be lenient and silently swallow all errors
-/// - possibly add .AsInt/.AsString/.AsLong and other such methods?
-/// - add various IList/IDictionary methods
-/// - track if element/subelement has been used; avoid saving unused ones (must be pretty smart about this and behave as if they're not there at all)
+// TODO: possible areas of improvement
+//
+// - built-in conversion between Dictionary/List and RVariant
+// - .OrNotFound property - to throw a more user friendly exception if the value is a stub
+// - add a new Kind, Object, to store arbitrary objects. Serialize this to/from XML. Allow storing nulls.
+// - enable "nice" automatic serialization by using special helper attributes?
+// - allow xml loading method to be lenient and silently swallow all errors
+// - possibly add .AsInt/.AsString/.AsLong and other such methods?
+// - add various IList/IDictionary methods
+// - track if element/subelement has been used; avoid saving unused ones (must be pretty smart about this and behave as if they're not there at all)
 
 namespace RT.Util
 {
@@ -766,7 +766,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a bool
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public bool OrDefaultTo(bool defaultValue)
@@ -780,7 +780,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a byte
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public byte OrDefaultTo(byte defaultValue)
@@ -794,7 +794,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to an sbyte
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public sbyte OrDefaultTo(sbyte defaultValue)
@@ -808,7 +808,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a short
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public short OrDefaultTo(short defaultValue)
@@ -822,7 +822,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a ushort
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public ushort OrDefaultTo(ushort defaultValue)
@@ -836,7 +836,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to an int
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public int OrDefaultTo(int defaultValue)
@@ -850,7 +850,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a uint
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public uint OrDefaultTo(uint defaultValue)
@@ -864,7 +864,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a long
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public long OrDefaultTo(long defaultValue)
@@ -878,7 +878,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a ulong
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public ulong OrDefaultTo(ulong defaultValue)
@@ -892,7 +892,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a float
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public float OrDefaultTo(float defaultValue)
@@ -906,7 +906,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a double
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public double OrDefaultTo(double defaultValue)
@@ -920,7 +920,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a decimal
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public decimal OrDefaultTo(decimal defaultValue)
@@ -934,7 +934,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a DateTime
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public DateTime OrDefaultTo(DateTime defaultValue)
@@ -948,7 +948,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a char
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public char OrDefaultTo(char defaultValue)
@@ -962,7 +962,7 @@ namespace RT.Util
 
         /// <summary>
         /// Treating this node as a Value, returns the value converted to a string
-        /// or the <see cref="defaultValue"/> if the conversion is not possible. Also
+        /// or the default value specified by defaultValue if the conversion is not possible. Also
         /// returns the default value if this node is not of a Value type.
         /// </summary>
         public string OrDefaultTo(string defaultValue)
@@ -1066,7 +1066,7 @@ namespace RT.Util
         /// Creates a RVariant from the specified XmlDocument. Does not tolerate
         /// errors - will throw an exception if the XML is not a valid representation
         /// of a RVariant. The name of the root element will be stored in the
-        /// <see cref="rootNodeName"/> parameter.
+        /// <paramref name="rootNodeName"/> parameter.
         /// </summary>
         public static RVariant FromXml(XmlDocument document, out string rootNodeName)
         {

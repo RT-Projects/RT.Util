@@ -1,5 +1,3 @@
-/// General.cs  -  utility functions and classes
-
 using System;
 
 namespace RT.Util

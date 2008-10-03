@@ -6,11 +6,16 @@ using RT.Util.Text;
 
 namespace RT.Util
 {
+    /// <summary>Specifies the type of a log message logged using a subclass of <see cref="LoggerBase"/>.</summary>
     public enum LogType
     {
+        /// <summary>Specifies an informational log message.</summary>
         Info,
+        /// <summary>Specifies a warning message.</summary>
         Warning,
+        /// <summary>Specifies an error message.</summary>
         Error,
+        /// <summary>Specifies a debug message.</summary>
         Debug
     }
 
@@ -112,9 +117,9 @@ namespace RT.Util
                     VerbosityLimit[LogType.Debug] = lvl;
                     pos++;
                 }
-                else if (char.IsLetter(settings[pos]) && pos+1 < settings.Length && char.IsDigit(settings[pos+1]))
+                else if (char.IsLetter(settings[pos]) && pos + 1 < settings.Length && char.IsDigit(settings[pos + 1]))
                 {
-                    uint lvl = uint.Parse(settings[pos+1].ToString());
+                    uint lvl = uint.Parse(settings[pos + 1].ToString());
                     switch (settings[pos])
                     {
                         case 'i': VerbosityLimit[LogType.Info] = lvl; break;
@@ -134,8 +139,8 @@ namespace RT.Util
         /// <summary>
         /// Helps prepare a log message to the derived classes. Takes the parameters
         /// supplied by a call to one of the Log methods and generates two strings:
-        /// the <see cref="fmtInfo"/> which is the message header and the
-        /// <see cref="fmtText"/> which is the actual message.
+        /// the <paramref name="fmtInfo"/> which is the message header and the
+        /// <paramref name="fmtText"/> which is the actual message.
         /// </summary>
         protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, uint verbosity, LogType type, string message, object[] args)
         {
@@ -152,10 +157,11 @@ namespace RT.Util
         /// Appends an entry to the log. Derived classes implement this to put the
         /// log data where necessary. See also: <see cref="GetFormattedStrings"/> which
         /// is a helper method.
-        /// 
-        /// Note that the various specialised functions such as <see cref="Warn"/> simply
-        /// call this method to do the work.
         /// </summary>
+        /// <remarks>
+        /// Note that the various specialised functions such as <see cref="Warn(string, object[])"/> simply
+        /// call this method to do the work.
+        /// </remarks>
         /// <param name="verbosity">Verbosity level of this message</param>
         /// <param name="type">Message type - info, warning, error or debug</param>
         /// <param name="message">The message itself</param>
@@ -172,22 +178,38 @@ namespace RT.Util
             return VerbosityLimit[type] >= verbosity;
         }
 
-        public void Info(string message, params object[] args)                  { Log(1,         LogType.Info, message, args); }
-        public void Info(uint verbosity, string message, params object[] args)  { Log(verbosity, LogType.Info, message, args); }
-        public void Warn(string message, params object[] args)                  { Log(1,         LogType.Warning, message, args); }
-        public void Warn(uint verbosity, string message, params object[] args)  { Log(verbosity, LogType.Warning, message, args); }
-        public void Error(string message, params object[] args)                 { Log(1,         LogType.Error, message, args); }
+        /// <summary>Appends an informational message to the log.</summary>
+        public void Info(string message, params object[] args) { Log(1, LogType.Info, message, args); }
+        /// <summary>Appends an informational message to the log.</summary>
+        public void Info(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Info, message, args); }
+        /// <summary>Appends a warning message to the log.</summary>
+        public void Warn(string message, params object[] args) { Log(1, LogType.Warning, message, args); }
+        /// <summary>Appends a warning message to the log.</summary>
+        public void Warn(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Warning, message, args); }
+        /// <summary>Appends an error message to the log.</summary>
+        public void Error(string message, params object[] args) { Log(1, LogType.Error, message, args); }
+        /// <summary>Appends an error message to the log.</summary>
         public void Error(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Error, message, args); }
-        public void Debug(string message, params object[] args)                 { Log(1,         LogType.Debug, message, args); }
+        /// <summary>Appends a debug message to the log.</summary>
+        public void Debug(string message, params object[] args) { Log(1, LogType.Debug, message, args); }
+        /// <summary>Appends a debug message to the log.</summary>
         public void Debug(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Debug, message, args); }
 
-        public bool InfoOn()                { return LogOn(1,         LogType.Info); }
-        public bool InfoOn(uint verbosity)  { return LogOn(verbosity, LogType.Info); }
-        public bool WarnOn()                { return LogOn(1,         LogType.Warning); }
-        public bool WarnOn(uint verbosity)  { return LogOn(verbosity, LogType.Warning); }
-        public bool ErrorOn()               { return LogOn(1,         LogType.Error); }
+        /// <summary>Enables informational messages at verbosity 1 or above.</summary>
+        public bool InfoOn() { return LogOn(1, LogType.Info); }
+        /// <summary>Enables informational messages at the specified verbosity or above.</summary>
+        public bool InfoOn(uint verbosity) { return LogOn(verbosity, LogType.Info); }
+        /// <summary>Enables warning messages at verbosity 1 or above.</summary>
+        public bool WarnOn() { return LogOn(1, LogType.Warning); }
+        /// <summary>Enables warning messages at the specified verbosity or above.</summary>
+        public bool WarnOn(uint verbosity) { return LogOn(verbosity, LogType.Warning); }
+        /// <summary>Enables error messages at verbosity 1 or above.</summary>
+        public bool ErrorOn() { return LogOn(1, LogType.Error); }
+        /// <summary>Enables error messages at the specified verbosity or above.</summary>
         public bool ErrorOn(uint verbosity) { return LogOn(verbosity, LogType.Error); }
-        public bool DebugOn()               { return LogOn(1,         LogType.Debug); }
+        /// <summary>Enables debug messages at verbosity 1 or above.</summary>
+        public bool DebugOn() { return LogOn(1, LogType.Debug); }
+        /// <summary>Enables debug messages at the specified verbosity or above.</summary>
         public bool DebugOn(uint verbosity) { return LogOn(verbosity, LogType.Debug); }
     }
 

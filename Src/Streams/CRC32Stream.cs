@@ -1,5 +1,3 @@
-/// CRC.cs  -  defines classes related to CRC computation
-
 using System;
 using System.Collections.Generic;
 using System.Text;

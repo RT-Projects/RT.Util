@@ -5,10 +5,15 @@ using System.Drawing;
 
 namespace RT.Util.Geometry
 {
+    /// <summary>
+    /// Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], SizeF, VoronoiDiagramFlags)"/> method.
+    /// </summary>
     [Flags]
     public enum VoronoiDiagramFlags
     {
+        /// <summary>Indicates that duplicate sites (points) should be removed from the input.</summary>
         REMOVE_DUPLICATES = 1,
+        /// <summary>Indicates that input sites (points) that lie outside the bounds of the viewport should be ignored.</summary>
         REMOVE_OFFBOUNDS_SITES = 2
     }
 
@@ -22,8 +27,7 @@ namespace RT.Util.Geometry
         /// </summary>
         /// <param name="Sites">Input points (sites) to generate diagram from.</param>
         /// <param name="Size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
-        /// <param name="RemoveDuplicates">If true, points (sites) with identical co-ordinates are merged into one.
-        /// If false, such duplicates cause an exception.</param>
+        /// <param name="Flags">Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
         public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] Sites, SizeF Size, VoronoiDiagramFlags Flags)
         {

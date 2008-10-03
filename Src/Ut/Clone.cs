@@ -1,5 +1,3 @@
-/// Clone.cs  -  clone an arbitrary object using reflection
-
 using System;
 using System.Reflection;
 

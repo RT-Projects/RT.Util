@@ -1,5 +1,3 @@
-/// Random.cs  -  random number generation functions
-
 using System;
 
 namespace RT.Util

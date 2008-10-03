@@ -90,7 +90,7 @@ namespace RT.Util
     ///     can easily be converted to an integer type's MaxValue.
     ///     
     ///     As a fairly special case, double.NegativeInfinity is not considered convertible to
-    ///     the MinValue of unsigned integer types (including bool & char).
+    ///     the MinValue of unsigned integer types (including bool and char).
     /// 
     /// Duck:
     ///     A very lenient and very lossy kind, this is basically the same as the Approximating
@@ -137,7 +137,7 @@ namespace RT.Util
     {
         private static readonly bool[] IsIntegerType;
         private static readonly bool[] IsUnsignedType;
-        public static readonly bool[] IsUnsupportedType;
+        internal static readonly bool[] IsUnsupportedType;
 
         /// <summary>
         /// Initialises the internally-used lookup tables for determining what kind
@@ -264,31 +264,31 @@ namespace RT.Util
 
         #region ExactTry - the main implementation of EXACT with all the business code
 
-        /// Some general overview on when and how the various exact conversions work:
-        /// 
-        /// from unsupported: never
-        /// to integer/standard:
-        ///     from string: only if type.TryParse works
-        ///     from integer: only if in range
-        ///     from fractional: never
-        /// to integer/bool:
-        ///     from string: "True"/"False" only, case-insensitive
-        ///     from integer: only if 0 or 1
-        ///     from fractional: never
-        /// to integer/datetime:
-        ///     from string: YYYY-MM-DD hh:mm:ss.ffff +ZZZZ, where various parts are optional
-        ///     from integer: only if in range, using binary representation
-        ///     from fractional: never
-        /// to fractional:
-        ///     from string: only if type.TryParse works
-        ///     from integer: always (because all integer types are in range)
-        ///     from fractional: always
-        /// to string:
-        ///     from string: no conversion
-        ///     from integer/standard: .ToString()
-        ///     from integer/bool: .ToString()
-        ///     from integer/datetime: .ToString() using ISO format with various optional parts
-        ///     from fractional: .ToString('R') ("roundtrip")
+        // Some general overview on when and how the various exact conversions work:
+        // 
+        // from unsupported: never
+        // to integer/standard:
+        //     from string: only if type.TryParse works
+        //     from integer: only if in range
+        //     from fractional: never
+        // to integer/bool:
+        //     from string: "True"/"False" only, case-insensitive
+        //     from integer: only if 0 or 1
+        //     from fractional: never
+        // to integer/datetime:
+        //     from string: YYYY-MM-DD hh:mm:ss.ffff +ZZZZ, where various parts are optional
+        //     from integer: only if in range, using binary representation
+        //     from fractional: never
+        // to fractional:
+        //     from string: only if type.TryParse works
+        //     from integer: always (because all integer types are in range)
+        //     from fractional: always
+        // to string:
+        //     from string: no conversion
+        //     from integer/standard: .ToString()
+        //     from integer/bool: .ToString()
+        //     from integer/datetime: .ToString() using ISO format with various optional parts
+        //     from fractional: .ToString('R') ("roundtrip")
 
         #region To integer/standard
 
@@ -298,7 +298,7 @@ namespace RT.Util
         /// Converts the specified object to a byte using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out byte result)
@@ -342,7 +342,7 @@ namespace RT.Util
         /// Converts the specified object to a ushort using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out ushort result)
@@ -386,7 +386,7 @@ namespace RT.Util
         /// Converts the specified object to a uint using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out uint result)
@@ -430,7 +430,7 @@ namespace RT.Util
         /// Converts the specified object to a ulong using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out ulong result)
@@ -468,7 +468,7 @@ namespace RT.Util
         /// Converts the specified object to an sbyte using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out sbyte result)
@@ -512,7 +512,7 @@ namespace RT.Util
         /// Converts the specified object to a short using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out short result)
@@ -556,7 +556,7 @@ namespace RT.Util
         /// Converts the specified object to an int using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out int result)
@@ -600,7 +600,7 @@ namespace RT.Util
         /// Converts the specified object to a long using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out long result)
@@ -646,7 +646,7 @@ namespace RT.Util
         /// Converts the specified object to a bool using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// 
         /// If the value is one of the integer types, the exact conversion only succeeds
@@ -709,7 +709,7 @@ namespace RT.Util
         /// Converts the specified object to a char using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out char result)
@@ -763,11 +763,11 @@ namespace RT.Util
         /// Converts the specified object to a DateTime using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// 
         /// When converting from string, supports a subset of the ISO 8601 formats - for
-        /// more details see <see cref="DateTimeExtensions"/>.<see cref="TryParseIso"/>.
+        /// more details see <see cref="DateTimeExtensions.TryParseIso"/>.
         /// </summary>
         public static bool ExactTry(object value, out DateTime result)
         {
@@ -816,7 +816,7 @@ namespace RT.Util
         /// Converts the specified object to a float using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out float result)
@@ -875,7 +875,7 @@ namespace RT.Util
         /// Converts the specified object to a double using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out double result)
@@ -934,7 +934,7 @@ namespace RT.Util
         /// Converts the specified object to a decimal using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful.
         /// </summary>
         public static bool ExactTry(object value, out decimal result)
@@ -992,7 +992,7 @@ namespace RT.Util
         /// Converts the specified object to a string using the Exact conversion.
         /// 
         /// Returns true if successful, or false if the object cannot be converted using
-        /// the Exact conversion. The <see cref="result"/> is set to the type's default value
+        /// the Exact conversion. <paramref name="result"/> is set to the type's default value
         /// if the conversion is unsuccessful, which in this case means null (!!!).
         /// 
         /// Note that the result will only ever be false if the value is one of the
@@ -1384,8 +1384,14 @@ namespace RT.Util
 
     }
 
+    /// <summary>
+    /// Represents an exception thrown in the case of conversion failure when using <see cref="RConvert"/>.
+    /// </summary>
     public class RConvertException : RTException
     {
+        /// <summary>
+        /// Initialises an exception to represent conversion failure when using <see cref="RConvert"/>.
+        /// </summary>
         public RConvertException(object value, Type targetType)
         {
             TypeCode from = RConvert.GetTypeCode(value);

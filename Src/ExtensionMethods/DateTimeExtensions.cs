@@ -6,6 +6,9 @@ using System.Globalization;
 
 namespace RT.Util.ExtensionMethods
 {
+    /// <summary>
+    /// Provides extension methods on the <see cref="DateTime"/> type.
+    /// </summary>
     public static class DateTimeExtensions
     {
         /// <summary>

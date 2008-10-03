@@ -32,7 +32,7 @@ namespace RT.Util.Streams
             Socket.Send(buffer, offset, count, SocketFlags.None);
         }
 
-#pragma warning disable 1591
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
         // Stuff you can't do
         public override bool CanRead { get { return false; } }
@@ -50,7 +50,7 @@ namespace RT.Util.Streams
         public override long Seek(long offset, SeekOrigin origin) { throw new System.NotSupportedException(); }
         public override void SetLength(long value) { throw new System.NotSupportedException(); }
 
-#pragma warning restore 1591
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     
     }
 

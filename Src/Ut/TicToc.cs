@@ -1,5 +1,3 @@
-/// TicToc.cs  -  simple timer functions
-
 using System;
 
 namespace RT.Util

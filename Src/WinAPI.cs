@@ -1,5 +1,3 @@
-/// WinAPI.cs  -  class defining some WinAPI function wrappers
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,14 +5,21 @@ using System.Runtime.InteropServices;
 
 namespace RT.Util
 {
+    /// <summary>Specifies a sound to be played back when displaying a message dialog.</summary>
     public enum MessageBeepType
     {
-        Default=-1,
-        Ok=0x00000000,
-        Error=0x00000010,
-        Question=0x00000020,
-        Warning=0x00000030,
-        Information=0x00000040,
+        /// <summary>Specifies the default sound.</summary>
+        Default = -1,
+        /// <summary>Specifies the OK sound.</summary>
+        Ok = 0x00000000,
+        /// <summary>Specifies the error sound.</summary>
+        Error = 0x00000010,
+        /// <summary>Specifies the question sound.</summary>
+        Question = 0x00000020,
+        /// <summary>Specifies the warning sound.</summary>
+        Warning = 0x00000030,
+        /// <summary>Specifies the information sound.</summary>
+        Information = 0x00000040,
     }
 
     /// <summary>
@@ -40,7 +45,7 @@ namespace RT.Util
         /// </summary>
         public static readonly long PerformanceFreq;
 
-        [DllImport("user32.dll", SetLastError=true)]
+        [DllImport("user32.dll", SetLastError = true)]
         public static extern bool MessageBeep(
             MessageBeepType type);
 

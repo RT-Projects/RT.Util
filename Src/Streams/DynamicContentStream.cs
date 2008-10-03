@@ -8,7 +8,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Streams
 {
     /// <summary>
-    /// Provides a read-only stream that can "read from" an <see cref="IEnumerable&lt;string&gt;"/>.
+    /// Provides a read-only stream that can "read from" an <see cref="IEnumerable"/>&lt;<see langword="string"/>&gt;.
     /// In particular, an intended application is to "read from" a method that uses "yield return" to return strings as execution proceeds.
     /// This enables generation of, for example, HTML for dynamic web pages.
     /// </summary>

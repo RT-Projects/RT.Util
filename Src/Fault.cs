@@ -55,7 +55,7 @@ namespace RT.Util
         /// <summary>
         /// Adds a message to the Fault list. The fault entry will contain the specified
         /// message as well as a timestamp and full information about the function
-        /// calling Add, including file & line number.
+        /// calling Add, including file &amp; line number.
         /// 
         /// Multi-threading: use AddMT instead.
         /// </summary>

@@ -9,6 +9,9 @@ using System.Diagnostics;
 
 namespace RT.Util
 {
+    /// <summary>
+    /// Wrapper around a Bitmap that allows access to its raw byte data.
+    /// </summary>
     public class BytesBitmap : IDisposable
     {
         private SharedPinnedByteArray FBytes;
@@ -72,6 +75,8 @@ namespace RT.Util
 
         #region Dispose stuff
 
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+
         private bool FDisposed;
 
         public bool Disposed
@@ -95,7 +100,7 @@ namespace RT.Util
 
             if (disposing)
             {
-                FBitmap=null;
+                FBitmap = null;
             }
         }
 
@@ -103,6 +108,8 @@ namespace RT.Util
         {
             Dispose(false);
         }
+
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         #endregion
     }
@@ -135,7 +142,7 @@ namespace RT.Util
         internal void ReleaseReference()
         {
             RefCount--;
-            if (RefCount<=0)
+            if (RefCount <= 0)
                 Destroy();
         }
 

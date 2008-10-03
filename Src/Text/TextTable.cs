@@ -209,11 +209,7 @@ namespace RT.Util.Text
         }
 
         /// <summary>
-        /// Configures the auto-sizing of the specified column. The
-        /// <see cref="sizeShare"/> parameter determines how much of the
-        /// available space each of the columns is allocated. Setting
-        /// this to double.PositiveInfinity will disable auto-sizing
-        /// (which is the default state).
+        /// Configures the auto-sizing of the specified column.
         /// </summary>
         public void SetAutoSize(int columnIndex, bool autoSize)
         {

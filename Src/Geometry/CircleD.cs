@@ -4,17 +4,26 @@ using System.Text;
 
 namespace RT.Util.Geometry
 {
+    /// <summary>Encapsulates a double-precision circle.</summary>
     public struct CircleD
     {
+        /// <summary>Center of the circle.</summary>
         public PointD Center;
+        /// <summary>Radius of the circle.</summary>
         public double Radius;
 
+        /// <summary>Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
+        /// <param name="X">Center X co-ordinate.</param>
+        /// <param name="Y">Center Y co-ordinate.</param>
+        /// <param name="rad">Radius.</param>
         public CircleD(double X, double Y, double rad)
         {
             Center = new PointD(X, Y);
             Radius = rad;
         }
-        
+
+        /// <summary>Provides a string representation of the current <see cref="CircleD"/>.</summary>
+        /// <returns>A string representation of the current <see cref="CircleD"/>.</returns>
         public override string ToString()
         {
             return Center.ToString() + " / " + Radius;
@@ -26,8 +35,8 @@ namespace RT.Util.Geometry
         /// </summary>
         /// <param name="Other">The other circle.</param>
         /// <param name="TargetRadius">Target radius for output circles.</param>
-        /// <returns>The two output circles if they exist; null if they don't because the
-        /// input circles are further apart than twice the target radius.</returns>
+        /// <returns>The two output circles if they exist. If the input circles are further
+        /// apart than twice the target radius, the desires circles do not exist and null is returned.</returns>
         public Tuple<CircleD, CircleD>? FindTangentCircles(CircleD Other, double TargetRadius)
         {
             double A = ((Center.X - Other.Center.X) * (Center.X - Other.Center.X)) /

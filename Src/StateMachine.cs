@@ -163,21 +163,6 @@ namespace RT.Util.FSM
             lock (SendInputLock)
                 return Inputs.Count > 0;
         }
-
-        /// <summary>
-        /// Performs a transition into the new state. Invokes corresponding methods on
-        /// the states.
-        /// </summary>
-        /// <param name="NewState">State being transitioned to.</param>
-        //private void Transition(Type NewState)
-        //{
-        //    State OldState = Cur;
-        //    OldState.BeforeExit(NewState);
-        //    NewState.BeforeEnter(OldState);
-        //    Cur = NewState;
-        //    NewState.AfterEnter(OldState);
-        //    OldState.AfterExit(NewState);
-        //}
     }
 
     public class FsmEvent_Entered
@@ -253,28 +238,28 @@ namespace RT.Util.FSM
     }
 
 
-    /// Start state
-    /// States
-    /// FSM is made of states, with transisions defined between them. Ideally all
-    /// transitions would be defined in terms of what inputs are seen, but in practice
-    /// some code needs to be run to determine precisely whether a transition is to take
-    /// place. Because of this, inputs are sent to the current state, which has a function
-    /// to determine what transition to take.
-    /// 
-    /// States have event handlers for the following events:
-    /// * input received (to determine transition)
-    /// * state entered (executed when a state becomes the current state)
-    /// * state exited (when a state stops being the current state)
-    /// 
-    /// Both Entered & Exited get the previous/next state information. A transition happens
-    /// as follows:
-    /// 
-    /// * Old.BeforeExit
-    /// * New.BeforeEnter
-    /// * State changed officially
-    /// * New.AfterEnter
-    /// * Old.AfterExit
-    /// 
-    /// Inputs
-    /// Transitions
+    // Start state
+    // States
+    // FSM is made of states, with transisions defined between them. Ideally all
+    // transitions would be defined in terms of what inputs are seen, but in practice
+    // some code needs to be run to determine precisely whether a transition is to take
+    // place. Because of this, inputs are sent to the current state, which has a function
+    // to determine what transition to take.
+    // 
+    // States have event handlers for the following events:
+    // * input received (to determine transition)
+    // * state entered (executed when a state becomes the current state)
+    // * state exited (when a state stops being the current state)
+    // 
+    // Both Entered & Exited get the previous/next state information. A transition happens
+    // as follows:
+    // 
+    // * Old.BeforeExit
+    // * New.BeforeEnter
+    // * State changed officially
+    // * New.AfterEnter
+    // * Old.AfterExit
+    // 
+    // Inputs
+    // Transitions
 }

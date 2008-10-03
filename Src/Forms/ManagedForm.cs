@@ -17,6 +17,7 @@ namespace RT.Util.Forms
         private int FNormalWidth, FNormalHeight;
         private int FNormalLeft, FNormalTop;
 
+        /// <summary>Initialises a new managed form.</summary>
         public ManagedForm()
         {
             // Load event: registers with the FormManager
@@ -135,6 +136,9 @@ namespace RT.Util.Forms
             }
         }
 
+        /// <summary>
+        /// Determines if the current managed form is minimised.
+        /// </summary>
         public bool Minimized
         {
             get
@@ -157,6 +161,9 @@ namespace RT.Util.Forms
             }
         }
 
+        /// <summary>
+        /// Determines whether the current managed form is maximised, or is minimised and would be maximised if restored.
+        /// </summary>
         public bool Maximized
         {
             get

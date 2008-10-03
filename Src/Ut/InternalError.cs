@@ -1,5 +1,3 @@
-/// InternalError.cs  -  classes to allow programs to easily report internal errors
-
 using System;
 using System.Diagnostics;
 using RT.Util.Dialogs;
@@ -34,7 +32,7 @@ namespace RT.Util
         /// actually terminate the program, so if the problem is not fatal the user
         /// could save their work etc.
         /// </summary>
-        /// <param name="ErrorCode">Some error message to help the developer pinpoint the problem.</param>
+        /// <param name="ErrorMsg">An error message to help the developer pinpoint the problem.</param>
         public static void InternalError(string ErrorMsg)
         {
             InternalErrorPrivate(ErrorMsg);

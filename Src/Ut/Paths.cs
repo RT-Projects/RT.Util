@@ -1,5 +1,3 @@
-/// Paths.cs  -  path-related utility functions
-
 using System;
 using System.Windows.Forms;
 using System.IO;

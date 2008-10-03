@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
+using System.Linq;
 
 namespace RT.Util.Geometry
 {
@@ -12,18 +13,31 @@ namespace RT.Util.Geometry
     {
         private List<PointD> FVertices;
 
+        /// <summary>Returns a list of vertices of the polygon.</summary>
         public List<PointD> Vertices { get { return FVertices; } }
 
-        public PolygonD(List<PointD> Vertices)
+        /// <summary>Initialises a polygon from a given list of vertices.</summary>
+        /// <param name="Vertices">Vertices (corner points) to initialise polygon from.</param>
+        public PolygonD(IEnumerable<PointD> Vertices)
         {
-            FVertices = Vertices;
+            FVertices = new List<PointD>(Vertices);
         }
 
+        /// <summary>
+        /// Determines whether the current <see cref="PolygonD"/> contains the specified point.
+        /// </summary>
+        /// <param name="Point">Point to check.</param>
+        /// <returns>True if the specified point lies inside the current <see cref="PolygonD"/>.</returns>
         public bool ContainsPoint(Point Point)
         {
             return ContainsPoint(new PointD(Point.X, Point.Y));
         }
 
+        /// <summary>
+        /// Determines whether the current <see cref="PolygonD"/> contains the specified point.
+        /// </summary>
+        /// <param name="Point">Point to check.</param>
+        /// <returns>True if the specified point lies inside the current <see cref="PolygonD"/>.</returns>
         public bool ContainsPoint(PointD Point)
         {
             bool c = false;
@@ -39,6 +53,8 @@ namespace RT.Util.Geometry
             return c;
         }
 
+        /// <summary>Determines the area of the current <see cref="PolygonD"/>.</summary>
+        /// <returns>The area of the current <see cref="PolygonD"/> in square units.</returns>
         public double Area()
         {
             double Area = 0;
@@ -51,12 +67,14 @@ namespace RT.Util.Geometry
             return Area / 2;
         }
 
+        /// <summary>
+        /// Converts the current <see cref="PolygonD"/> to an array of <see cref="PointF"/> structures.
+        /// Note that this conversion loses precision.
+        /// </summary>
+        /// <returns>Array of converted vertices with lower precision.</returns>
         public PointF[] ToPointFArray()
         {
-            PointF[] PointFArray = new PointF[FVertices.Count];
-            for (int i = 0; i < FVertices.Count; i++)
-                PointFArray[i] = FVertices[i].ToPointF();
-            return PointFArray;
+            return FVertices.Select(x => x.ToPointF()).ToArray();
         }
     }
 }

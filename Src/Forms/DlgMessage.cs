@@ -1,5 +1,3 @@
-/// DlgMessage.cs  -  defines classes to display advanced message boxes
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,13 +16,18 @@ namespace RT.Util.Dialogs
     /// </summary>
     public enum DlgType
     {
+        /// <summary>Displays an information dialog.</summary>
         Info,
+        /// <summary>Displays a questiondialog.</summary>
         Question,
+        /// <summary>Displays a warning dialog.</summary>
         Warning,
+        /// <summary>Displays an error dialog.</summary>
         Error,
         /// <summary>
-        /// Custom means no sound, no default image, and default caption equal to
-        /// application name (all overridable of course). Doesn't fully work, bug 15.
+        /// Displays a custom dialog. Custom defaults to no sound, no default image,
+        /// and the caption defaults to the application name (all are overridable).
+        /// Doesn't fully work, bug 15.
         /// </summary>
         Custom
     }
@@ -32,7 +35,7 @@ namespace RT.Util.Dialogs
     /// <summary>
     /// The following applies to all variants of Show functions:
     /// - If no buttons are specified, an "OK" button is displayed.
-    /// - Unless explicitly overridden, the accept & cancel buttons are the first and
+    /// - Unless explicitly overridden, the Accept and Cancel buttons are the first and
     ///   the last button, respectively. Prefixing a button title with a space will make
     ///   that button the Accept button; suffix does the same for cancel button.
     ///   Explicitly specifying a button overrides this.

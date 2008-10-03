@@ -15,7 +15,7 @@ namespace RT.Util.Web
         /// This event is invoked to report status messages - once at the start and once
         /// at the end of every request.
         /// </summary>
-        public VoidFunc<string> OnReportStatus = null;
+        public Action<string> OnReportStatus = null;
         /// <summary>
         /// This class is intended to use with a single website per instance. SiteUrl is the
         /// domain to be accessed, along with the protocol specifier, e.g. http://www.example.com/

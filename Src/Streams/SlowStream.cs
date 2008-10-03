@@ -17,7 +17,7 @@ namespace RT.Util.Streams
         /// <param name="MyStream">The underlying stream to read in chunks from.</param>
         public SlowStream(Stream MyStream) { this.MyStream = MyStream; }
 
-#pragma warning disable 1591
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
         public override bool CanRead
         {
@@ -76,7 +76,7 @@ namespace RT.Util.Streams
             MyStream.Close();
         }
 
-#pragma warning restore 1591
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>Reads at mose <see cref="ChunkSize"/> bytes from the underlying stream.</summary>
         /// <param name="buffer">Buffer to store results into.</param>
