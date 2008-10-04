@@ -90,6 +90,7 @@
     <Compile Include="ExtensionMethods\DictionaryExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
+    <Compile Include="ExtensionMethods\TypeExtensions.cs" />
     <Compile Include="Fault.cs" />
     <Compile Include="Forms\DlgMessage.cs">
       <SubType>Form</SubType>

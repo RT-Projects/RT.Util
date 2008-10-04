@@ -123,13 +123,13 @@ namespace RT.Util
         /// <summary>
         /// Defines standard help options. These options are marked with the IsHelp
         /// option flag, which means that:
-        /// 
+        ///
         /// * The options won't be printed when printing help.
         /// * Specifying one of these options causes the program to print help
         ///   and terminate (at the time of the parsing).
-        /// 
+        ///
         /// The default help options are: -?, --help, --usage.
-        /// 
+        ///
         /// For more details see the <see cref="Parse"/> function.
         /// </summary>
         public void DefineDefaultHelpOptions()
@@ -422,10 +422,9 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Call this function to change the behaviour of <see cref="OptBool"/>,
-        /// <see cref="OptValue"/> and <see cref="OptList"/> functions so that they
-        /// look up option values by the tiny name rather than by long name
-        /// (which is the default).
+        /// Call this function to change the behaviour of <see cref="OptValue(string)"/>
+        /// and <see cref="OptList"/> functions so that they look up option values
+        /// by the tiny name rather than by long name (which is the default).
         /// </summary>
         public void GetOptionsByTinyName()
         {
@@ -433,10 +432,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Call this function to change the behaviour of <see cref="OptBool"/>,
-        /// <see cref="OptValue"/> and <see cref="OptList"/> functions so that they
-        /// look up option values by the long name. Since this is the default
-        /// after calling <see cref="Parse"/> anyway it's not necessary to do this.
+        /// Call this function to change the behaviour of <see cref="OptValue(string)"/>
+        /// and <see cref="OptList"/> functions so that they look up option values
+        /// by the long name. Since this is the default after calling <see cref="Parse"/>
+        /// anyway it's not necessary to do this.
         /// </summary>
         public void GetOptionsByLongName()
         {

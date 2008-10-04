@@ -27,17 +27,17 @@ namespace RT.Util.Text
 
         /// <summary>
         /// Creates an instance of the class, generating the word-wrapped
-        /// version of the supplied <see cref="text"/>.
+        /// version of the supplied text.
         /// 
-        /// The supplied text will be split into "paragraphs" on the newline
-        /// characters. Every paragraph will begin on a new line in the word-
-        /// wrapped output, indented by the same number of spaces as in the
-        /// input. All subsequent lines belonging to that paragraph will also
-        /// be indented by the same amount.
+        /// The supplied text will be split into "paragraphs" on the newline characters.
+        /// Every paragraph will begin on a new line in the word-wrapped output, indented
+        /// by the same number of spaces as in the input. All subsequent lines belonging
+        /// to that paragraph will also be indented by the same amount.
         /// 
-        /// All multiple contiguous spaces will be replaced with a single
-        /// space (except for the indentation).
+        /// All multiple contiguous spaces will be replaced with a single space
+        /// (except for the indentation).
         /// </summary>
+        /// <param name="text">Text to be word-wrapped.</param>
         /// <param name="maxWidth">The maximum number of characters permitted
         /// on a single line, not counting the end-of-line terminator.</param>
         public TextWordWrapped(string text, int maxWidth)
