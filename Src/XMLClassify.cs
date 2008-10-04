@@ -11,6 +11,34 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
+    /*
+     *  ####     NOTES     ####
+     *
+     *  The current situation is that [XMLAttribute] or [XMLContents] MUST be specified in order to store a field
+     *  in the XML file or restore it from the XML file. All other fields will be ignored.
+     *
+     *  The plan for the future, however, is to store fields by default and use an [XMLIgnore] attribute on the fields
+     *  that should not be stored or restored. Strings, ints, DateTimes and enums would be stored on XML tag attributes
+     *  by default, everything else in the tag contents. This renders the [XMLAttribute] attribute completely useless,
+     *  so it will be removed. [XMLContents] would no longer serve any pragmatic use, and only make XML files larger,
+     *  so I'm considering abolishing that too.
+     *
+     *  Further, the tag names are currently sometimes derived from the class names, sometimes from the field names,
+     *  unless a custom tag name is specified. Using class names for tag names doesn't really make sense; the tag name
+     *  should just be the field name. The type of the field can be inferred from the class, so it need not be stored
+     *  in the XML file. This way the XML file will survive class renames, too (though unfortunately not field renames).
+     *
+     *  Lastly, for lists and dictionaries, I'm considering using only the tagname "item", and the attribute name "key"
+     *  for dictionaries. Dictionaries whose value type is also a type storable in an XML attribute would use the
+     *  attribute name "value", otherwise they would be stored in a subtag called "value". This makes it darn obvious
+     *  that the things listed are list items or key/value pairs, respectively.
+     *
+     *  It would be nice to also have an IXMLSerializable interface which would allow a class to define its own custom
+     *  XML storage format. However, at the moment I don't anticipate that I need it.
+     *
+     */
+
+
     /// <summary>
     /// Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again.
     /// The functionality is similar to XmlSerializer, but uses the newer C# XML API and is also more full-featured.
@@ -338,46 +366,115 @@ namespace RT.Util
         }
     }
 
+    /// <summary>
+    /// Use this attribute to specify that a field in a class should be stored as an XML attribute on the object's tag.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLAttributeAttribute : Attribute
     {
+        /// <summary>
+        /// If this is set to false, the value is stored literally. This is only allowed for int, string, DateTime and enums.
+        /// If this is set to true, the XML attribute will contain an ID that points to another, separate XML file which in
+        /// turn contains the actual object. This is only allowed on fields of type <see cref="IXMLAttributeValue&lt;T&gt;"/>
+        /// for some class type T. Use <see cref="IXMLAttributeValue&lt;T&gt;.Value"/> to retrieve the object. This retrieval
+        /// is deferred until first use. Use <see cref="IXMLAttributeValue&lt;T&gt;.ID"/> to retrieve the ID used to reference
+        /// the object. You can also capture the ID into the class T by using the [XMLID] attribute within that class.
+        /// </summary>
         public bool FollowID = false;
     }
 
+    /// <summary>
+    /// Use this attribute to specify that a field in a class should be stored in the contents of the object's XML tag
+    /// as one or more child nodes. If the field's type is a collection or dictionary, this will generate several child
+    /// nodes directly within the object's XML node. Otherwise, it will generate a single child node. If the field's
+    /// type is a dictionary, use the [XMLContentsDictionary] attribute instead.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLContentsAttribute : Attribute
     {
+        /// <summary>
+        /// The name of the tag to use. If the field is a list or dictionary, there will be several tags of this name.
+        /// </summary>
         public string TagName;
     }
 
+    /// <summary>
+    /// Use this attribute on a field of a dictionray type (a type that implements <see cref="IDictionary&lt;TKey, TValue&gt;"/>)
+    /// to specify that it should be stored in the contents of the object's XML tag as a series of child nodes. If the field's
+    /// type is not a dictionary, this will throw an exception at runtime.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLContentsDictionaryAttribute : XMLContentsAttribute
     {
+        /// <summary>
+        /// Constructor for the [XMLContentsDictionary] attribute.
+        /// </summary>
+        /// <param name="Key">
+        /// Specifies the name of the XML attribute to use for storing each dictionary key.
+        /// </param>
         public XMLContentsDictionaryAttribute(string Key) { this.Key = Key; }
+
+        /// <summary>
+        /// Specifies the name of the XML attribute to use for storing each dictionary key.
+        /// </summary>
         public string Key;
     }
 
+    /// <summary>
+    /// A field with this attribute set will receive a reference to the object which was its parent node
+    /// in the XML tree. If the field is of the wrong type, a runtime exception will occur. If there was
+    /// no parent node, the field will be set to null.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLParentAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// A field with this attribute set will receive the ID that was used to refer to the XML file
+    /// that stores this object. See <see cref="XMLAttributeAttribute.FollowID"/>. The field must
+    /// be of type <see langword="string"/>.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLIDAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// Provides methods to hold an object that has an ID and gets evaluated at first use.
+    /// </summary>
+    /// <typeparam name="T">The type of the contained object.</typeparam>
     public interface IXMLAttributeValue<T>
     {
+        /// <summary>Returns the ID used to refer to the object.</summary>
         string ID { get; }
+        /// <summary>Retrieves the object.</summary>
         T Value { get; set; }
+        /// <summary>Determines whether the object has been computed.</summary>
         bool Evaluated { get; }
     }
 
+    /// <summary>
+    /// Provides the mechanisms to hold an object that has an ID and gets evaluated at first use.
+    /// </summary>
+    /// <typeparam name="T">The type of the contained object.</typeparam>
     public class XMLAttributeValue<T> : IXMLAttributeValue<T>
     {
+        /// <summary>Initialises a deferred object using a delegate or lambda expression.</summary>
+        /// <param name="ID">ID that refers to the object to be generated.</param>
+        /// <param name="Generator">Function to generate the object.</param>
         public XMLAttributeValue(string ID, Func<T> Generator) { _ID = ID; this.Generator = Generator; }
+
+        /// <summary>Initialises a deferred object using an actual object. Evaluation is not deferred.</summary>
+        /// <param name="ID">ID that refers to the object.</param>
+        /// <param name="Value">The object to store.</param>
         public XMLAttributeValue(string ID, T Value) { _ID = ID; Cached = Value; HaveCache = true; }
+
+        /// <summary>Initialises a deferred object using a method reference and a set of parameters.</summary>
+        /// <param name="ID">ID that refers to the object to be generated.</param>
+        /// <paparam name="GeneratorMethod">Reference to the method that will return the computed object.</paparam>
+        /// <param name="GeneratorObject">Object on which the method should be invoked. Use null for static methods.</param>
+        /// <param name="GeneratorParams">Set of parameters for the method invocation.</param>
         public XMLAttributeValue(string ID, MethodInfo GeneratorMethod, object GeneratorObject, object[] GeneratorParams)
         {
             _ID = ID;
@@ -389,6 +486,11 @@ namespace RT.Util
         private bool HaveCache = false;
         private string _ID;
 
+        /// <summary>
+        /// Sets or gets the object stored in this <see cref="XMLAttributeValue"/>. The property getter will
+        /// cause the object to be evaluated when called. The setter will override the object with a pre-computed
+        /// object whose evaluation is not deferred.
+        /// </summary>
         public T Value
         {
             get
@@ -410,7 +512,9 @@ namespace RT.Util
             }
         }
 
+        /// <summary>Determines whether the object has been computed.</summary>
         public bool Evaluated { get { return HaveCache; } }
+        /// <summary>Returns the ID used to refer to the object.</summary>
         public string ID { get { return _ID; } }
     }
 }
