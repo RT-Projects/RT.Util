@@ -250,6 +250,8 @@ namespace RT.Util
         public static void SaveObjectAsXML<T>(T SaveObject, string Filename, string BaseDir)
         {
             var x = ObjectAsXML(SaveObject, BaseDir, "item");
+            if (!Directory.Exists(Path.GetDirectoryName(Filename)))
+                Directory.CreateDirectory(Path.GetDirectoryName(Filename));
             x.Save(Filename);
         }
 
