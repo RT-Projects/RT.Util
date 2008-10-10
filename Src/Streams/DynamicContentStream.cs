@@ -25,6 +25,7 @@ namespace RT.Util.Streams
         public DynamicContentStream(IEnumerable<string> Enumerable)
         {
             this.Enumerator = Enumerable.GetEnumerator();
+            this.Buffered = true;
         }
 
         /// <summary>
@@ -64,8 +65,8 @@ namespace RT.Util.Streams
         public override void Flush() { }
 
         /// <summary>
-        /// If true, each call to <see cref="Read()"/> will move the enumerator forward as far as necessary to fill the buffer.
-        /// If false, each call to <see cref="Read()"/> returns only the text produced by a single MoveNext() of the enumerator.
+        /// If true, each call to <see cref="Read"/> will move the enumerator forward as far as necessary to fill the buffer.
+        /// If false, each call to <see cref="Read"/> returns only the text produced by a single MoveNext() of the enumerator.
         /// </summary>
         public bool Buffered { get; set; }
 
