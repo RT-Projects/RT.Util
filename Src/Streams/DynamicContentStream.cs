@@ -38,6 +38,26 @@ namespace RT.Util.Streams
             this.Buffered = Buffered;
         }
 
+        /// <summary>
+        /// Instantiates a buffered <see cref="DynamicContentStream"/>.
+        /// </summary>
+        /// <param name="Enumerator">The object that provides the content for this stream to read from.</param>
+        public DynamicContentStream(IEnumerator<string> Enumerator)
+        {
+            this.Enumerator = Enumerator;
+        }
+
+        /// <summary>
+        /// Instantiates a <see cref="DynamicContentStream"/> and lets you configure whether it's buffered or not.
+        /// </summary>
+        /// <param name="Enumerator">The object that provides the content for this stream to read from.</param>
+        /// <param name="Buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
+        public DynamicContentStream(IEnumerator<string> Enumerator, bool Buffered)
+        {
+            this.Enumerator = Enumerator;
+            this.Buffered = Buffered;
+        }
+
         public override bool CanRead { get { return true; } }
         public override bool CanSeek { get { return false; } }
         public override bool CanWrite { get { return false; } }
