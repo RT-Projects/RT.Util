@@ -6,9 +6,11 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     /// <summary>
+    /// <para>
     /// Offers various types of conversion routines from an "object"-typed variable
     /// holding one of the supported types to another one of the supported types.
-    /// 
+    /// </para>
+    /// <code>
     /// SUPPORTED TYPES
     /// 
     /// Supported types are classified as follows. The categories are used in defining
@@ -132,6 +134,7 @@ namespace RT.Util
     ///   * False
     ///   * Inf
     ///   * NaN
+    /// </code>
     /// </summary>
     public static class RConvert
     {

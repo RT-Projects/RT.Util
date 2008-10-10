@@ -11,7 +11,7 @@ using RT.Util.ExtensionMethods;
 using System.Threading;
 using System.Diagnostics;
 
-namespace RT.Util
+namespace RT.Util.XMLClassify
 {
     /// <summary>
     /// Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again.

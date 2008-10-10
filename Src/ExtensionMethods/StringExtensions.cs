@@ -22,6 +22,8 @@ namespace RT.Util.ExtensionMethods
             return Input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("'", "&#39;").Replace("\"", "&quot;");
         }
 
+        public static string URLAllowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.+!*'(),/:;@";
+
         /// <summary>
         /// Escapes all necessary characters in the specified string so as to make it usable safely in a URL.
         /// </summary>
@@ -32,10 +34,10 @@ namespace RT.Util.ExtensionMethods
             byte[] UTF8 = Input.ToUTF8();
             StringBuilder sb = new StringBuilder();
             foreach (byte b in UTF8)
-                sb.Append((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
-                    || (b == '$') || (b == '-') || (b == '_') || (b == '.') || (b == '!') || (b == '/')
-                    || (b == '*') || (b == '\'') || (b == '(') || (b == ')') || (b == ',')
-                    ? ((char) b).ToString() : string.Format("%{0:X2}", b));
+                if (URLAllowedCharacters.IndexOf((char) b) >= 0)
+                    sb.Append((char) b);
+                else
+                    sb.Append(string.Format("%{0:X2}", b));
             return sb.ToString();
         }
 
