@@ -22,7 +22,10 @@ namespace RT.Util.ExtensionMethods
             return Input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("'", "&#39;").Replace("\"", "&quot;");
         }
 
-        public static string URLAllowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.+!*'(),/:;@";
+        /// <summary>
+        /// Returns the set of characters allowed in a URL.
+        /// </summary>
+        public static string URLAllowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@";
 
         /// <summary>
         /// Escapes all necessary characters in the specified string so as to make it usable safely in a URL.
@@ -34,7 +37,7 @@ namespace RT.Util.ExtensionMethods
             byte[] UTF8 = Input.ToUTF8();
             StringBuilder sb = new StringBuilder();
             foreach (byte b in UTF8)
-                if (URLAllowedCharacters.IndexOf((char) b) >= 0)
+                if (URLAllowedCharacters.Contains((char) b))
                     sb.Append((char) b);
                 else
                     sb.Append(string.Format("%{0:X2}", b));
@@ -42,7 +45,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Reverses the escaping performed by <see cref="URLEscape"/>() by decoding hexadecimal URL escape sequences into their original characters.
+        /// Reverses the escaping performed by <see cref="URLEscape"/> by decoding hexadecimal URL escape sequences into their original characters.
         /// </summary>
         /// <param name="Input">String containing URL escape sequences to be decoded.</param>
         /// <returns>The specified string with all URL escape sequences decoded.</returns>

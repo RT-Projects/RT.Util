@@ -5,6 +5,9 @@ using System.Text;
 
 namespace RT.Util.ExtensionMethods
 {
+    /// <summary>
+    /// Provides extension methods on the <see cref="IEnumerable&lt;T&gt;"/> type.
+    /// </summary>
     public static class IEnumerableExtensions
     {
         /// <summary>
