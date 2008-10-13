@@ -2,6 +2,12 @@ using System.Windows.Forms;
 
 namespace RT.Util.Controls
 {
+    /// <summary>
+    /// This control enables the user to specify a hotkey combination by pressing it on
+    /// the keyboard. For exmaple, if the user presses Ctrl + Alt + A while this control
+    /// is focussed, the control would display "Ctrl+Alt+A". The combination can be read
+    /// out by the program in a convenient format.
+    /// </summary>
     public class HotkeyEdit: TextBox
     {
         private bool LastNone;
@@ -11,12 +17,19 @@ namespace RT.Util.Controls
         private Keys LastKey;
         private bool FOneKeyOnly;
 
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
         public HotkeyEdit()
         {
             LastNone = true;
             FOneKeyOnly = false;
         }
 
+        /// <summary>
+        /// If true, the control does not accept key combinations, such as "Ctrl + A",
+        /// however it does accept special keys such as "Ctrl".
+        /// </summary>
         public bool OneKeyOnly
         {
             get { return FOneKeyOnly; }

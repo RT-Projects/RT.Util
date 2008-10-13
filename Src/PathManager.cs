@@ -27,7 +27,14 @@ namespace RT.Util
         [Serializable]
         public class PathInfo
         {
+            /// <summary>
+            /// An absolute path to a directory.
+            /// </summary>
             public string Path;
+
+            /// <summary>
+            /// Whether everything under the specified path is included or excluded from the set of files.
+            /// </summary>
             public bool Include;
         }
 

@@ -11,7 +11,14 @@ namespace RT.Util.Streams
     /// </summary>
     public class BinaryReaderPlus : BinaryReader
     {
+        /// <summary>
+        /// Constructs a new reader.
+        /// </summary>
         public BinaryReaderPlus(Stream output) : base(output) { }
+
+        /// <summary>
+        /// Constructs a new reader using the specified encoding for strings.
+        /// </summary>
         public BinaryReaderPlus(Stream output, Encoding encoding) : base(output, encoding) { }
 
         /// <summary>

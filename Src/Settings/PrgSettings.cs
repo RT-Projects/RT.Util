@@ -7,6 +7,9 @@ using RT.Util.Dialogs;
 
 namespace RT.Util.Settings
 {
+    /// <summary>
+    /// Maintains program settings. This class may not be the best thing for new projects.
+    /// </summary>
     public static class PrgSettings
     {
         /// <summary>
