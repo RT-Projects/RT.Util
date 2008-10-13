@@ -6,15 +6,15 @@ using System.IO;
 namespace RT.Util
 {
     /// <summary>
-    /// PathManager builds a list of paths via calls to IncludePath and
-    /// ExcludePath, which include/exclude a path with all subdirectories.
+    /// PathManager builds a list of paths via calls to <see cref="AddIncludePath"/> and
+    /// <see cref="AddExcludePath"/>, which include/exclude a path with all subdirectories.
     /// Redundant entries are automatically removed.
     /// </summary>
     [Serializable]
     public class PathManager : ICloneable
     {
         /// <summary>
-        /// Default constructor for PathManager - invokes Reset().
+        /// Default constructor for PathManager - invokes <see cref="Reset"/>.
         /// </summary>
         public PathManager()
         {
@@ -39,7 +39,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// The list of all paths
+        /// Contains the list of all included and excluded paths.
         /// </summary>
         public List<PathInfo> Paths;
 
@@ -187,12 +187,12 @@ namespace RT.Util
 
         /// <summary>
         /// Enumerates all files and folders visible to the PathManager, according to which
-        /// paths were added using AddIncludePath and AddExcludePath. If any paths cannot be
-        /// enumerated, they are added to FailedFiles list, which is cleared before
+        /// paths were added using <see cref="AddIncludePath"/> and <see cref="AddExcludePath"/>. If any paths cannot be
+        /// enumerated, they are added to <see cref="FailedFiles"/> list, which is cleared before
         /// enumeration begins.
         /// </summary>
-        /// <param name="includeDirs">If true, directories will be enumerated as DirectoryInfo's.</param>
-        /// <param name="includeFiles">If true, files will be enumerated as FileInfo's. Otherwise files
+        /// <param name="includeDirs">If true, directories will be enumerated as <see cref="DirectoryInfo"/> structures.</param>
+        /// <param name="includeFiles">If true, files will be enumerated as <see cref="FileInfo"/> structures. Otherwise files
         /// won't be listed, which is considerably faster (but also considerably less useful...)</param>
         public IEnumerable<FileSystemInfo> GetFiles(bool includeDirs, bool includeFiles)
         {
