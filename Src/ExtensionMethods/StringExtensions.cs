@@ -116,6 +116,16 @@ namespace RT.Util.ExtensionMethods
             return Encoding.ASCII.GetBytes(Input);
         }
 
+        /// <summary>
+        /// Returns a JavaScript-compatible representation of the string in double-quotes with the appropriate characters escaped.
+        /// </summary>
+        /// <param name="Input">String to escape.</param>
+        /// <returns>JavaScript-compatible representation of the input string.</returns>
+        public static string JSEscape(this string Input)
+        {
+            return "\"" + Input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n") + "\"";
+        }
+
         /// <summary>Examines the type T for a static field with the specified name and returns the
         /// value of that static field. If T is an enum, returns the enum value with the specified name.</summary>
         /// <example>
