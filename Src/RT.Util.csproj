@@ -108,8 +108,7 @@
     <Compile Include="Geometry\PolygonD.cs" />
     <Compile Include="GlobalKeyboardListener.cs" />
     <Compile Include="GraphicsUtil.cs" />
-    <Compile Include="Forms\FormManager.cs">
-    </Compile>
+    <Compile Include="Forms\FormManager.cs"></Compile>
     <Compile Include="Forms\InputBox.cs">
       <SubType>Form</SubType>
     </Compile>
