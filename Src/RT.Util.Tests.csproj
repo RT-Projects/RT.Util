@@ -54,6 +54,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
+    <Compile Include="ExtensionMethods\StringExtensionsTests.cs" />
+    <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
     <Compile Include="RVariantTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />

@@ -168,5 +168,55 @@ namespace RT.Util.ExtensionMethods
             }
             throw new Exception(string.Format("The type {0} did not contain a field called {1}.", InputType, Input));
         }
+
+        /// <summary>
+        /// Joins all strings in <see pref="values"/> using the string as the separator.
+        /// <example>
+        ///     <code>
+        ///         var a = ", ".Join(new[] { 'Paris', 'London', 'Tokyo' });
+        ///         // a contains "Paris, London, Tokyo"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string Join(this string separator, IEnumerable<string> values)
+        {
+            return separator.Join(values.GetEnumerator());
+        }
+
+        /// <summary>
+        /// Joins all strings in <see pref="values"/> using the string as the separator.
+        /// <example>
+        ///     <code>
+        ///         var a = ", ".Join(new[] { 'Paris', 'London', 'Tokyo' });
+        ///         // a contains "Paris, London, Tokyo"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string Join(this string separator, IEnumerator<string> values)
+        {
+            StringBuilder SB = new StringBuilder();
+            if (values.MoveNext())
+                SB.Append(values.Current);
+            while (values.MoveNext())
+            {
+                SB.Append(separator);
+                SB.Append(values.Current);
+            }
+            return SB.ToString();
+        }
+
+        /// <summary>
+        /// Joins all strings in the enumerable using the specified string as the separator.
+        /// <example>
+        ///     <code>
+        ///         var a = (new[] { 'Paris', 'London', 'Tokyo' }).Join(", ");
+        ///         // a contains "Paris, London, Tokyo"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string Join(this IEnumerable<string> values, string separator)
+        {
+            return separator.Join(values);
+        }
     }
 }
