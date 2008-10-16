@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace RT.Util
 {
@@ -75,5 +76,16 @@ namespace RT.Util
             }
         }
 
+        /// <summary>
+        /// Returns an IEnumerable containing all integers between the specified First and Last integers (all inclusive).
+        /// </summary>
+        /// <param name="First">First integer to return.</param>
+        /// <param name="Last">Last integer to return.</param>
+        /// <returns>An IEnumerable containing all integers between the specified First and Last integers (all inclusive).</returns>
+        public static IEnumerable<int> Range(int First, int Last)
+        {
+            for (int i = First; i <= Last; i++)
+                yield return i;
+        }
     }
 }

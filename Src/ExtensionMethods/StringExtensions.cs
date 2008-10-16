@@ -13,6 +13,23 @@ namespace RT.Util.ExtensionMethods
     public static class StringExtensions
     {
         /// <summary>
+        /// Concatenates the specified number of repetitions of the current string.
+        /// </summary>
+        /// <param name="Input">The string to be repeated.</param>
+        /// <param name="NumTimes">The number of times to repeat the string.</param>
+        /// <returns>A concatenated string containing the original string the specified number of times.</returns>
+        public static string Repeat(this string Input, int NumTimes)
+        {
+            if (NumTimes == 0) return "";
+            if (NumTimes == 1) return Input;
+            if (NumTimes == 2) return Input + Input;
+            var sb = new StringBuilder();
+            for (int i = 0; i < NumTimes; i++)
+                sb.Append(Input);
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Escapes all necessary characters in the specified string so as to make it usable safely in an HTML or XML context.
         /// </summary>
         /// <param name="Input">The string to apply HTML or XML escaping to.</param>
