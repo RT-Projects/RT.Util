@@ -452,7 +452,7 @@ namespace RT.Util.XMLClassify
 
         /// <summary>Initialises a deferred object using a method reference and an array of parameters.</summary>
         /// <param name="ID">ID that refers to the object to be generated.</param>
-        /// <param name="GeneratorMethod">Reference to the method that will return the computed object.</paparam>
+        /// <param name="GeneratorMethod">Reference to the method that will return the computed object.</param>
         /// <param name="GeneratorObject">Object on which the method should be invoked. Use null for static methods.</param>
         /// <param name="GeneratorParams">Set of parameters for the method invocation.</param>
         public XMLDeferredObject(string ID, MethodInfo GeneratorMethod, object GeneratorObject, object[] GeneratorParams)

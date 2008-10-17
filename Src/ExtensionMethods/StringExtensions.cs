@@ -70,34 +70,32 @@ namespace RT.Util.ExtensionMethods
         {
             if (Input.Length < 3)
                 return Input;
-            int BufferSize = 0;
-            int i = 0;
-            while (i < Input.Length)
-            {
-                BufferSize++;
-                if (Input[i] == '%') { i += 2; }
-                i++;
-            }
+
+            int BufferSize = Input.Length;
+            for (int i = 0; i < Input.Length; i++)
+                if (Input[i] == '%') { BufferSize -= 2; }
+
             byte[] Buffer = new byte[BufferSize];
+
             BufferSize = 0;
-            i = 0;
-            while (i < Input.Length)
+            int j = 0;
+            while (j < Input.Length)
             {
-                if (Input[i] == '%' && i < Input.Length - 2)
+                if (Input[j] == '%')
                 {
                     try
                     {
-                        Buffer[BufferSize] = byte.Parse("" + Input[i + 1] + Input[i + 2], NumberStyles.HexNumber);
+                        Buffer[BufferSize] = byte.Parse("" + Input[j + 1] + Input[j + 2], NumberStyles.HexNumber);
                         BufferSize++;
                     }
                     catch (Exception) { }
-                    i += 3;
+                    j += 3;
                 }
                 else
                 {
-                    Buffer[BufferSize] = Input[i] == '+' ? (byte) ' ' : (byte) Input[i];
+                    Buffer[BufferSize] = Input[j] == '+' ? (byte) ' ' : (byte) Input[j];
                     BufferSize++;
-                    i++;
+                    j++;
                 }
             }
             return Encoding.UTF8.GetString(Buffer, 0, BufferSize);

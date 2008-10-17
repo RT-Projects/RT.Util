@@ -44,11 +44,11 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// The list of all fault entries
+        /// <para>The list of all fault entries.</para>
         /// 
-        /// Multi-threading: if you access the Entries list directly, you should either
+        /// <para>Multi-threading: if you access the Entries list directly, you should either
         /// ensure that no other thread calls AddMT, or lock the Entries list for the
-        /// duration of the processing.
+        /// duration of the processing.</para>
         /// </summary>
         public static List<FaultEntry> Entries = new List<FaultEntry>();
 

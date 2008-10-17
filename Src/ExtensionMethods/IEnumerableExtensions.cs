@@ -16,9 +16,18 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<Tuple<T, T>> AllPairs<T>(this IEnumerable<T> Source)
         {
+            return Source.Join(Source);
+        }
+
+        /// <summary>
+        /// Returns an enumeration of Tuple&lt;T, U&gt;s containing all ordered pairs of elements from the two source IEnumerables.
+        /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
+        /// </summary>
+        public static IEnumerable<Tuple<T, U>> Join<T, U>(this IEnumerable<T> Source, IEnumerable<U> With)
+        {
             foreach (T item1 in Source)
-                foreach (T item2 in Source)
-                    yield return new Tuple<T, T>(item1, item2);
+                foreach (U item2 in With)
+                    yield return new Tuple<T, U>(item1, item2);
         }
 
         /// <summary>

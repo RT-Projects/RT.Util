@@ -13,6 +13,9 @@ namespace RT.Util.Controls
     /// </summary>
     public partial class SplitContainerEx : SplitContainer
     {
+        /// <summary>
+        /// Initialises a <see cref="SplitContainerEx"/> instance.
+        /// </summary>
         public SplitContainerEx()
         {
             InitializeComponent();
@@ -22,6 +25,9 @@ namespace RT.Util.Controls
 
         private bool FPaintSplitter = true;
 
+        /// <summary>
+        /// Specifies whether the splitter should be painted.
+        /// </summary>
         public bool PaintSplitter
         {
             get { return FPaintSplitter; }
@@ -39,21 +45,24 @@ namespace RT.Util.Controls
 
             int mid = SplitterDistance + SplitterWidth / 2;
 
+            var Highlight = new Pen(Color.FromKnownColor(KnownColor.ButtonHighlight), 1);
+            var Face = new Pen(Color.FromKnownColor(KnownColor.ButtonFace), 1);
+
             if (Orientation == Orientation.Horizontal)
             {
                 // Horizontal
-                e.Graphics.DrawLine(Pens.White, 0, mid-2, ClientRectangle.Width, mid-2);
-                e.Graphics.DrawLine(Pens.Gray,  0, mid-1, ClientRectangle.Width, mid-1);
-                e.Graphics.DrawLine(Pens.White, 0, mid,   ClientRectangle.Width, mid);
-                e.Graphics.DrawLine(Pens.Gray,  0, mid+1, ClientRectangle.Width, mid+1);
+                e.Graphics.DrawLine(Highlight, 0, mid - 2, ClientRectangle.Width, mid - 2);
+                e.Graphics.DrawLine(Face, 0, mid - 1, ClientRectangle.Width, mid - 1);
+                e.Graphics.DrawLine(Highlight, 0, mid, ClientRectangle.Width, mid);
+                e.Graphics.DrawLine(Face, 0, mid + 1, ClientRectangle.Width, mid + 1);
             }
             else
             {
                 // Vertical
-                e.Graphics.DrawLine(Pens.White, mid-2, 0, mid-2, ClientRectangle.Height);
-                e.Graphics.DrawLine(Pens.Gray,  mid-1, 0, mid-1, ClientRectangle.Height);
-                e.Graphics.DrawLine(Pens.White, mid,   0, mid,   ClientRectangle.Height);
-                e.Graphics.DrawLine(Pens.Gray,  mid+1, 0, mid+1, ClientRectangle.Height);
+                e.Graphics.DrawLine(Highlight, mid - 2, 0, mid - 2, ClientRectangle.Height);
+                e.Graphics.DrawLine(Face, mid - 1, 0, mid - 1, ClientRectangle.Height);
+                e.Graphics.DrawLine(Highlight, mid, 0, mid, ClientRectangle.Height);
+                e.Graphics.DrawLine(Face, mid + 1, 0, mid + 1, ClientRectangle.Height);
             }
         }
     }

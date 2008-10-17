@@ -10,7 +10,7 @@ namespace RT.Util
     /// Usage example: foreach (Tuple&lt;T,T&gt; p in new EnumPairs(TheList)) {...}
     /// </summary>
     /// <typeparam name="T">The type of an item in the IList</typeparam>
-    [Obsolete("For performance reasons, do not use this class in new code. " +
+    [Obsolete("Do not use this class in new code. " +
               "Consider using the extension method IEnumerable<T>.UniquePairs() " +
               "in RT.Util.ExtensionMethods.IEnumerableExtensions instead.")]
     public class EnumPairs<T>
