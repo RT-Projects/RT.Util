@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace RT.Util
+namespace RT.Util.Drawing
 {
     /// <summary>
     /// Wrapper around a Bitmap that allows access to its raw byte data.

@@ -51,7 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BytesBitmap.cs" />
     <Compile Include="CmdLine.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
@@ -81,6 +80,8 @@
       <DependentUpon>SplitContainerEx.cs</DependentUpon>
     </Compile>
     <Compile Include="Delegates.cs" />
+    <Compile Include="Drawing\BytesBitmap.cs" />
+    <Compile Include="Drawing\GraphicsUtil.cs" />
     <Compile Include="EnumPairs.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
@@ -107,8 +108,7 @@
     <Compile Include="Geometry\PointD.cs" />
     <Compile Include="Geometry\PolygonD.cs" />
     <Compile Include="GlobalKeyboardListener.cs" />
-    <Compile Include="GraphicsUtil.cs" />
-    <Compile Include="Forms\FormManager.cs"></Compile>
+    <Compile Include="Forms\FormManager.cs" />
     <Compile Include="Forms\InputBox.cs">
       <SubType>Form</SubType>
     </Compile>
