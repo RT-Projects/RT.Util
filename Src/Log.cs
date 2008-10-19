@@ -173,7 +173,7 @@ namespace RT.Util
         /// Returns true if a message of the specified verbosity and type will actually
         /// end up being logged.
         /// </summary>
-        public virtual bool LogOn(uint verbosity, LogType type)
+        public virtual bool IsLogOn(uint verbosity, LogType type)
         {
             return VerbosityLimit[type] >= verbosity;
         }
@@ -195,22 +195,43 @@ namespace RT.Util
         /// <summary>Appends a debug message to the log.</summary>
         public void Debug(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Debug, message, args); }
 
-        /// <summary>Enables informational messages at verbosity 1 or above.</summary>
-        public bool InfoOn() { return LogOn(1, LogType.Info); }
-        /// <summary>Enables informational messages at the specified verbosity or above.</summary>
-        public bool InfoOn(uint verbosity) { return LogOn(verbosity, LogType.Info); }
-        /// <summary>Enables warning messages at verbosity 1 or above.</summary>
-        public bool WarnOn() { return LogOn(1, LogType.Warning); }
-        /// <summary>Enables warning messages at the specified verbosity or above.</summary>
-        public bool WarnOn(uint verbosity) { return LogOn(verbosity, LogType.Warning); }
-        /// <summary>Enables error messages at verbosity 1 or above.</summary>
-        public bool ErrorOn() { return LogOn(1, LogType.Error); }
-        /// <summary>Enables error messages at the specified verbosity or above.</summary>
-        public bool ErrorOn(uint verbosity) { return LogOn(verbosity, LogType.Error); }
-        /// <summary>Enables debug messages at verbosity 1 or above.</summary>
-        public bool DebugOn() { return LogOn(1, LogType.Debug); }
-        /// <summary>Enables debug messages at the specified verbosity or above.</summary>
-        public bool DebugOn(uint verbosity) { return LogOn(verbosity, LogType.Debug); }
+        /// <summary>Determines whether an informational message would be visible (at default verbosity).</summary>
+        public bool IsInfoOn() { return IsLogOn(1, LogType.Info); }
+        /// <summary>Determines whether an informational message would be visible at specified verbosity.</summary>
+        public bool IsInfoOn(uint verbosity) { return IsLogOn(verbosity, LogType.Info); }
+        /// <summary>Determines whether a warning message would be visible (at default verbosity).</summary>
+        public bool IsWarnOn() { return IsLogOn(1, LogType.Warning); }
+        /// <summary>Determines whether a warning message would be visible at specified verbosity.</summary>
+        public bool IsWarnOn(uint verbosity) { return IsLogOn(verbosity, LogType.Warning); }
+        /// <summary>Determines whether an error message would be visible (at default verbosity).</summary>
+        public bool IsErrorOn() { return IsLogOn(1, LogType.Error); }
+        /// <summary>Determines whether an error message would be visible at specified verbosity.</summary>
+        public bool IsErrorOn(uint verbosity) { return IsLogOn(verbosity, LogType.Error); }
+        /// <summary>Determines whether a debug message would be visible (at default verbosity).</summary>
+        public bool IsDebugOn() { return IsLogOn(1, LogType.Debug); }
+        /// <summary>Determines whether a debug message would be visible at specified verbosity.</summary>
+        public bool IsDebugOn(uint verbosity) { return IsLogOn(verbosity, LogType.Debug); }
+
+        /// <summary>Logs an exception with a stack trace.</summary>
+        public void Exception(Exception exception) { Exception(exception, 1, LogType.Error); }
+        /// <summary>Logs an exception with a stack trace.</summary>
+        public void Exception(Exception exception, LogType type) { Exception(exception, 1, type); }
+
+        /// <summary>
+        /// Logs an exception with a stack trace at the specified verbosity and message type.
+        /// Any InnerExceptions are also logged as appropriate.
+        /// </summary>
+        public void Exception(Exception exception, uint verbosity, LogType type)
+        {
+            if (!IsLogOn(verbosity, type))
+                return;
+
+            if (exception.InnerException != null)
+                Exception(exception.InnerException, verbosity, type);
+
+            Log(verbosity, type, "<{0}>", exception.GetType().ToString());
+            Log(verbosity, type, exception.StackTrace);
+        }
     }
 
     /// <summary>
@@ -361,7 +382,7 @@ namespace RT.Util
         /// actually result in any logger producing any output. When this is false it
         /// is safe for a program to skip logging a message with these settings.
         /// </summary>
-        public override bool LogOn(uint verbosity, LogType type)
+        public override bool IsLogOn(uint verbosity, LogType type)
         {
             foreach (LoggerBase logger in Loggers.Values)
                 if (logger.VerbosityLimit[type] >= verbosity)
