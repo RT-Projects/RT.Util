@@ -35,7 +35,7 @@ namespace RT.Util.XMLClassify
         /// </summary>
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="Filename">Path and filename of the XML file to read from.</param>
-        /// <param name="ParentNode">If the type T contains a field with the [XMLParent] attribute,
+        /// <param name="ParentNode">If the type T contains a field with the <see cref="XMLParentAttribute"/> attribute,
         /// it will receive the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T ReadObjectFromXMLFile<T>(string Filename, object ParentNode) where T : new()
@@ -50,8 +50,8 @@ namespace RT.Util.XMLClassify
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="Filename">Path and filename of the XML file to read from.</param>
         /// <param name="BaseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an [XMLFollowID] attribute.</param>
-        /// <param name="ParentNode">If the type T contains a field with the [XMLParent] attribute,
+        /// whenever a field has an <see cref="XMLFollowIDAttribute"/> attribute.</param>
+        /// <param name="ParentNode">If the type T contains a field with the <see cref="XMLParentAttribute"/> attribute,
         /// it will receive the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T ReadObjectFromXMLFile<T>(string Filename, string BaseDir, object ParentNode) where T : new()
@@ -68,8 +68,8 @@ namespace RT.Util.XMLClassify
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="XElem">XML tree to reconstruct object from.</param>
         /// <param name="BaseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an [XMLFollowID] attribute.</param>
-        /// <param name="ParentNode">If the type T contains a field with the [XMLParent] attribute,
+        /// whenever a field has an <see cref="XMLFollowIDAttribute"/> attribute.</param>
+        /// <param name="ParentNode">If the type T contains a field with the <see cref="XMLParentAttribute"/> attribute,
         /// it will receive the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T ReadObjectFromXElement<T>(XElement XElem, string BaseDir, object ParentNode) where T : new()
@@ -257,7 +257,7 @@ namespace RT.Util.XMLClassify
         /// <param name="Filename">Path and filename of the XML file to be created.
         /// If the file already exists, it will be overwritten.</param>
         /// <param name="BaseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an [XMLFollowID] attribute.</param>
+        /// additional XML files whenever a field has an <see cref="XMLFollowIDAttribute"/> attribute.</param>
         public static void SaveObjectAsXML<T>(T SaveObject, string Filename, string BaseDir)
         {
             var x = ObjectAsXML(SaveObject, BaseDir, "item");
@@ -272,7 +272,7 @@ namespace RT.Util.XMLClassify
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="SaveObject">Object to convert to an XML tree.</param>
         /// <param name="BaseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an [XMLFollowID] attribute.</param>
+        /// additional XML files whenever a field has an <see cref="XMLFollowIDAttribute"/> attribute.</param>
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectAsXML<T>(T SaveObject, string BaseDir)
         {
@@ -285,7 +285,7 @@ namespace RT.Util.XMLClassify
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="SaveObject">Object to convert to an XML tree.</param>
         /// <param name="BaseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an [XMLFollowID] attribute.</param>
+        /// additional XML files whenever a field has an <see cref="XMLFollowIDAttribute"/> attribute.</param>
         /// <param name="TagName">Name of the top-level XML tag to use for this object.
         /// Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
@@ -406,8 +406,8 @@ namespace RT.Util.XMLClassify
     /// XML file which in turn contains the actual object for this field. This is only allowed on fields of type
     /// <see cref="XMLDeferredObject&lt;T&gt;"/> for some class type T. Use <see cref="XMLDeferredObject&lt;T&gt;.Value"/>
     /// to retrieve the object. This retrieval is deferred until first use. Use <see cref="XMLDeferredObject&lt;T&gt;.ID"/>
-    /// to retrieve the ID used to reference the object. You can also capture the ID into the class T by using the [XMLID]
-    /// attribute within that class.
+    /// to retrieve the ID used to reference the object. You can also capture the ID into the class T by using the
+    /// <see cref="XMLIDAttribute"/> attribute within that class.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XMLFollowIDAttribute : Attribute { }
@@ -467,7 +467,7 @@ namespace RT.Util.XMLClassify
         private string _ID;
 
         /// <summary>
-        /// Gets or sets the object stored in this <see cref="XMLDeferredObject"/>. The property getter will
+        /// Gets or sets the object stored in this <see cref="XMLDeferredObject&lt;T&gt;"/>. The property getter will
         /// cause the object to be evaluated when called. The setter will override the object with a pre-computed
         /// object whose evaluation is not deferred.
         /// </summary>

@@ -7,7 +7,10 @@ using System.Drawing.Drawing2D;
 
 namespace RT.Util.Drawing
 {
-    public class GraphicsUtil
+    /// <summary>
+    /// Contains static methods for various graphics-related operations.
+    /// </summary>
+    public static class GraphicsUtil
     {
         /// <summary>
         /// Blends the specified colors together. Amount specifies how much
@@ -15,12 +18,20 @@ namespace RT.Util.Drawing
         /// </summary>
         public static Color ColorBlend(Color Color, Color BackColor, double Amount)
         {
-            byte R = (byte)((Color.R * Amount) + BackColor.R * (1-Amount));
-            byte G = (byte)((Color.G * Amount) + BackColor.G * (1-Amount));
-            byte B = (byte)((Color.B * Amount) + BackColor.B * (1-Amount));
+            byte R = (byte) ((Color.R * Amount) + BackColor.R * (1 - Amount));
+            byte G = (byte) ((Color.G * Amount) + BackColor.G * (1 - Amount));
+            byte B = (byte) ((Color.B * Amount) + BackColor.B * (1 - Amount));
             return Color.FromArgb(R, G, B);
         }
 
+        /// <summary>
+        /// Draws the specified Image into the destination rectangle DestRect of the Graphics object g using the specified Opacity.
+        /// </summary>
+        /// <param name="g">Graphics object to alpha-blend the image onto.</param>
+        /// <param name="Image">Image to draw.</param>
+        /// <param name="DestRect">Destination rectangle within the target Graphics canvas.</param>
+        /// <param name="Opacity">Opacity level to use when drawing the image. 0 means nothing changes.
+        /// 1 means the image is drawn normally. 0.5 means a 50% blend between source and destination.</param>
         public static void DrawImageAlpha(Graphics g, Image Image, Rectangle DestRect, float Opacity)
         {
             ColorMatrix ColorMatrix = new ColorMatrix(new float[][] {
@@ -46,15 +57,15 @@ namespace RT.Util.Drawing
                 List<RTUtilPathEvent> Events = FindEvents(ActiveSegments, Input, y);
                 for (int i = 0; i < Events.Count; i += 2)
                 {
-                    if (Events[i] is RTUtilPathEventSegment && Events[i+1] is RTUtilPathEventSegment)
+                    if (Events[i] is RTUtilPathEventSegment && Events[i + 1] is RTUtilPathEventSegment)
                     {
                         int Index1 = ((RTUtilPathEventSegment) Events[i]).SegmentIndex;
-                        int Index2 = ((RTUtilPathEventSegment) Events[i+1]).SegmentIndex;
+                        int Index2 = ((RTUtilPathEventSegment) Events[i + 1]).SegmentIndex;
                         bool Start = ((RTUtilPathEventSegment) Events[i]).StartOfSegment;
                         if (Index1 == Index2 && Start)
                         {
                             // A segment becomes a closed path
-                            ActiveSegments[Index2].Add(new Point(Events[i+1].X, y));
+                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
                             ActiveSegments[Index2].Add(new Point(Events[i].X, y));
                             CompletedPaths.Add(ActiveSegments[Index2].ToArray());
                         }
@@ -62,13 +73,13 @@ namespace RT.Util.Drawing
                         {
                             // A segment becomes a closed path
                             ActiveSegments[Index2].Add(new Point(Events[i].X, y));
-                            ActiveSegments[Index2].Add(new Point(Events[i+1].X, y));
+                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
                             CompletedPaths.Add(ActiveSegments[Index2].ToArray());
                         }
                         else if (Start)
                         {
                             // Two segments join up
-                            ActiveSegments[Index2].Add(new Point(Events[i+1].X, y));
+                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
                             ActiveSegments[Index2].Add(new Point(Events[i].X, y));
                             ActiveSegments[Index1].InsertRange(0, ActiveSegments[Index2]);
                         }
@@ -76,11 +87,11 @@ namespace RT.Util.Drawing
                         {
                             // Two segments join up
                             ActiveSegments[Index1].Add(new Point(Events[i].X, y));
-                            ActiveSegments[Index1].Add(new Point(Events[i+1].X, y));
+                            ActiveSegments[Index1].Add(new Point(Events[i + 1].X, y));
                             ActiveSegments[Index1].AddRange(ActiveSegments[Index2]);
                         }
                         ActiveSegments.RemoveAt(Index2);
-                        for (int Correction = i+2; Correction < Events.Count; Correction++)
+                        for (int Correction = i + 2; Correction < Events.Count; Correction++)
                         {
                             if (Events[Correction] is RTUtilPathEventSegment &&
                                 (Events[Correction] as RTUtilPathEventSegment).SegmentIndex == Index2)
@@ -90,7 +101,7 @@ namespace RT.Util.Drawing
                                 (Events[Correction] as RTUtilPathEventSegment).SegmentIndex--;
                         }
                     }
-                    else if (Events[i] is RTUtilPathEventChange && Events[i+1] is RTUtilPathEventChange)
+                    else if (Events[i] is RTUtilPathEventChange && Events[i + 1] is RTUtilPathEventChange)
                     {
                         // Both events are changes - create a new segment
                         ActiveSegments.Add(new List<Point>(new Point[] { 
@@ -104,19 +115,19 @@ namespace RT.Util.Drawing
                         if (Ev.StartOfSegment)
                         {
                             ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Ev.X, y));
-                            if (Ev.X != Events[i+1].X)
-                                ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Events[i+1].X, y));
+                            if (Ev.X != Events[i + 1].X)
+                                ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Events[i + 1].X, y));
                         }
                         else
                         {
                             ActiveSegments[Ev.SegmentIndex].Add(new Point(Ev.X, y));
-                            if (Ev.X != Events[i+1].X)
-                                ActiveSegments[Ev.SegmentIndex].Add(new Point(Events[i+1].X, y));
+                            if (Ev.X != Events[i + 1].X)
+                                ActiveSegments[Ev.SegmentIndex].Add(new Point(Events[i + 1].X, y));
                         }
                     }
                     else  // ... Events[i] is RTUtilPathEventChange && Events[i+1] is RTUtilPathEventSegment
                     {
-                        RTUtilPathEventSegment Ev = Events[i+1] as RTUtilPathEventSegment;
+                        RTUtilPathEventSegment Ev = Events[i + 1] as RTUtilPathEventSegment;
                         if (Ev.StartOfSegment)
                         {
                             ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Ev.X, y));
@@ -156,9 +167,9 @@ namespace RT.Util.Drawing
                     Index++;
                 Results.Insert(Index, new RTUtilPathEventSegment(i, true, ActiveSegments[i][0].X));
                 Index = 0;
-                while (Index < Results.Count && Results[Index].X < ActiveSegments[i][ActiveSegments[i].Count-1].X)
+                while (Index < Results.Count && Results[Index].X < ActiveSegments[i][ActiveSegments[i].Count - 1].X)
                     Index++;
-                Results.Insert(Index, new RTUtilPathEventSegment(i, false, ActiveSegments[i][ActiveSegments[i].Count-1].X));
+                Results.Insert(Index, new RTUtilPathEventSegment(i, false, ActiveSegments[i][ActiveSegments[i].Count - 1].X));
             }
             return Results;
         }

@@ -82,7 +82,6 @@
     <Compile Include="Delegates.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\GraphicsUtil.cs" />
-    <Compile Include="EnumPairs.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
@@ -145,7 +144,6 @@
     <Compile Include="Streams\SlowStream.cs" />
     <Compile Include="Streams\StreamOnSocket.cs" />
     <Compile Include="Text\TextTable.cs" />
-    <Compile Include="Text\TextWordWrapped.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Tuple.cs" />
     <Compile Include="Ut\Clone.cs" />
@@ -154,7 +152,6 @@
     <Compile Include="Ut\Paths.cs" />
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
-    <Compile Include="Ut\XmlUtil.cs" />
     <Compile Include="Virtual2DArray.cs" />
     <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />

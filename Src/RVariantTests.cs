@@ -776,63 +776,6 @@ namespace RT.Util
             Assert.IsTrue(valInt == (RVariant)valInt.Clone());
         }
 
-        [Test]
-        public void TestXmlAndComplexEquality()
-        {
-            string rootName;
-            RVariant roundtripped;
-
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valStub, "valStub"), out rootName);
-            Assert.AreEqual("valStub", rootName);
-            Assert_RVariantsAreEqual(valStub, roundtripped);
-
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelList, "valOneLevelList"), out rootName);
-            Assert.AreEqual("valOneLevelList", rootName);
-            Assert_RVariantsAreEqual(valOneLevelList, roundtripped);
-
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelDict, "valOneLevelDict"), out rootName);
-            Assert.AreEqual("valOneLevelDict", rootName);
-            Assert_RVariantsAreEqual(valOneLevelDict, roundtripped);
-
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valComplex, "valComplex"), out rootName);
-            Assert.AreEqual("valComplex", rootName);
-            Assert_RVariantsAreEqual(valComplex, roundtripped);
-
-            // Complex XML test - add each of the above to a separate xml element
-            XmlDocument xml = new XmlDocument();
-            xml.AppendChild(xml.CreateElement("test"));
-            XmlElement elStub = xml.CreateElement("stub");
-            XmlElement elOneLevelList = xml.CreateElement("oneLevelList");
-            XmlElement elOneLevelDict = xml.CreateElement("oneLevelDict");
-            XmlElement elComplex = xml.CreateElement("complex");
-            xml.DocumentElement.AppendChild(elStub);
-            xml.DocumentElement.AppendChild(elOneLevelList);
-            xml.DocumentElement.AppendChild(elOneLevelDict);
-            xml.DocumentElement.AppendChild(elComplex);
-            RVariant.ToXml(valStub, elStub);
-            RVariant.ToXml(valOneLevelList, elOneLevelList);
-            RVariant.ToXml(valOneLevelDict, elOneLevelDict);
-            RVariant.ToXml(valComplex, elComplex);
-
-            StringBuilder sb = XmlUtil.ToStringBuilder(xml);
-            Console.WriteLine(sb);
-
-            xml = new XmlDocument();
-            xml.LoadXml(sb.ToString());
-            elStub = elOneLevelList = elOneLevelDict = elComplex = null;
-
-            // what a fugly long-winded way of accessing xml elements...
-            // good thing there's RVariant!...
-            elStub = (XmlElement)xml.DocumentElement.GetElementsByTagName("stub")[0];
-            elOneLevelList = (XmlElement)xml.DocumentElement.GetElementsByTagName("oneLevelList")[0];
-            elOneLevelDict = (XmlElement)xml.DocumentElement.GetElementsByTagName("oneLevelDict")[0];
-            elComplex = (XmlElement)xml.DocumentElement.GetElementsByTagName("complex")[0];
-            Assert_RVariantsAreEqual(valStub, RVariant.FromXml(elStub));
-            Assert_RVariantsAreEqual(valOneLevelList, RVariant.FromXml(elOneLevelList));
-            Assert_RVariantsAreEqual(valOneLevelDict, RVariant.FromXml(elOneLevelDict));
-            Assert_RVariantsAreEqual(valComplex, RVariant.FromXml(elComplex));
-        }
-
         private void Assert_RVariantsAreEqual(RVariant v1, RVariant v2)
         {
             Assert.IsTrue(v1.Equals(v2));
@@ -841,15 +784,6 @@ namespace RT.Util
             Assert.IsTrue(v2 == v1);
             Assert.IsFalse(v1 != v2);
             Assert.IsFalse(v2 != v1);
-        }
-
-        public XmlDocument GetRoundTrippedXml(RVariant variant, string rootName)
-        {
-            XmlDocument xml = RVariant.ToXml(variant, rootName);
-            StringBuilder sb = XmlUtil.ToStringBuilder(xml);
-            xml = new XmlDocument();
-            xml.LoadXml(sb.ToString());
-            return xml;
         }
 
         [Test]

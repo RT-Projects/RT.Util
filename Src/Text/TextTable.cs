@@ -1,23 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using RT.Util.ExtensionMethods;
+using System.Linq;
 
 namespace RT.Util.Text
 {
     /// <summary>
-    /// Holds a table of strings. Provides methods to print the table
-    /// to text assuming a fixed-width font. Will wrap the cell contents
-    /// using <see cref="TextWordWrapped"/> as necessary. Supports automatic
-    /// resizing of columns to fit the required width.
-    /// 
+    /// Holds a table of strings. Provides methods to print the table to text
+    /// assuming a fixed-width font. Will wrap the cell contents as necessary.
+    /// Supports automatic resizing of columns to fit the required width.
+    /// </summary>
+    /// <remarks>
+    /// <para>
     /// Will not necessarily lay out the table optimally in cases where
     /// there are multiple auto-size columns and one of the following
-    /// is true:
-    ///   - there are multiple paragraphs in some cells
-    ///   - length of the contents of the cells in the same column
+    /// is true:</para>
+    /// <list type="bullet">
+    /// <item>there are multiple paragraphs in some cells</item>
+    /// <item>length of the contents of the cells in the same column
     ///     vary a lot, e.g. most cells are tiny but one is really
-    ///     really long.
-    /// </summary>
+    ///     really long.</item>
+    /// </list>
+    /// </remarks>
     public class TextTable
     {
         private class TextColumn
@@ -217,7 +222,7 @@ namespace RT.Util.Text
 
             growAsNecessary(columnIndex);
             cols[columnIndex].AutoSize = autoSize;
-            
+
         }
 
         /// <summary>
@@ -245,15 +250,15 @@ namespace RT.Util.Text
 
             for (int r = 0; r < numRows; r++)
             {
-                TextWordWrapped[] wwrap = new TextWordWrapped[cols.Count];
+                string[][] wwrap = new string[cols.Count][];
                 int maxSubrowCount = 0;
 
                 // Iterate over columns to determine number of sub-rows
                 for (int c = 0; c < cols.Count; c++)
                 {
-                    wwrap[c] = new TextWordWrapped(this[r, c], (int)cols[c].CalculatedWidth);
-                    if (maxSubrowCount < wwrap[c].Lines.Count)
-                        maxSubrowCount = wwrap[c].Lines.Count;
+                    wwrap[c] = this[r, c].WordWrap((int) cols[c].CalculatedWidth).ToArray();
+                    if (maxSubrowCount < wwrap[c].Length)
+                        maxSubrowCount = wwrap[c].Length;
                 }
 
                 // Iterate over the sub-rows
@@ -264,9 +269,10 @@ namespace RT.Util.Text
                     // Render this sub-row in each column
                     for (int c = 0; c < cols.Count; c++)
                     {
-                        sb.Append(wwrap[c][subRow]);
+                        string s = wwrap[c].Length <= subRow ? "" : wwrap[c][subRow];
+                        sb.Append(s);
                         if (c < cols.Count - 1)
-                            sb.Append(' ', (int)cols[c].CalculatedWidth - wwrap[c][subRow].Length + intraColumnIndent);
+                            sb.Append(' ', (int) cols[c].CalculatedWidth - s.Length + intraColumnIndent);
                     }
 
                     sb.AppendLine();
@@ -316,7 +322,7 @@ namespace RT.Util.Text
             // again until either the table is narrow enough or all columns are "fixed".
             while (curtot_auto > mintot_auto && curtot_auto + curtot_fix > maxTableWidth)
             {
-                double ratio = (double)(maxTableWidth - curtot_fix) / curtot_auto;
+                double ratio = (double) (maxTableWidth - curtot_fix) / curtot_auto;
                 for (int i = 0; i < cols.Count; i++)
                 {
                     if (!auto[i])
@@ -324,7 +330,7 @@ namespace RT.Util.Text
 
                     curtot_auto -= cur[i];
 
-                    cur[i] = (int)(cols[i].MaxWidth * ratio);
+                    cur[i] = (int) (cols[i].MaxWidth * ratio);
                     if (cur[i] > cols[i].MaxWidth)
                         cur[i] = cols[i].MaxWidth;
 

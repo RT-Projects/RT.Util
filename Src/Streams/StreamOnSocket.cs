@@ -5,7 +5,7 @@ using System.Text;
 namespace RT.Util.Streams
 {
     /// <summary>
-    /// Use this if you need to write to a <see cref="Stream"/> but actually want the output sent to a <see cref="Socket"/>.
+    /// Use this if you need to write to a <see cref="Stream"/> but actually want the output sent to a <see cref="System.Net.Sockets.Socket"/>.
     /// </summary>
     public class StreamOnSocket : Stream
     {
@@ -13,7 +13,7 @@ namespace RT.Util.Streams
         protected Socket Socket;
 
         /// <summary>
-        /// Constructs a <see cref="StreamOnSocket"/> object that can send output to a <see cref="Socket"/>.
+        /// Constructs a <see cref="StreamOnSocket"/> object that can send output to a <see cref="System.Net.Sockets.Socket"/>.
         /// </summary>
         /// <param name="Socket">The socket to write all the output to.</param>
         public StreamOnSocket(Socket Socket)
@@ -55,7 +55,7 @@ namespace RT.Util.Streams
     }
 
     /// <summary>
-    /// Same as StreamOnSocket, but performs the HTTP Transfer-Encoding: chunked.
+    /// Same as <see cref="StreamOnSocket"/>, but performs the HTTP Transfer-Encoding: chunked.
     /// </summary>
     public class StreamOnSocketChunked : StreamOnSocket
     {

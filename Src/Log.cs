@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-using RT.Util.Text;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
@@ -291,16 +291,12 @@ namespace RT.Util
                 else
                 {
                     string indent = new string(' ', fmtInfo.Length);
-
-                    TextWordWrapped wordWrapped = new TextWordWrapped(fmtText, Console.WindowWidth - 1 - fmtInfo.Length);
-                    for (int i = 0; i < wordWrapped.Lines.Count; i++)
+                    bool first = true;
+                    foreach (var line in fmtText.WordWrap(Console.WindowWidth - 1 - fmtInfo.Length))
                     {
-                        if (i == 0)
-                            consoleStream.Write(fmtInfo);
-                        else
-                            consoleStream.Write(indent);
-
-                        consoleStream.WriteLine(wordWrapped.Lines[i]);
+                        consoleStream.Write(first ? fmtInfo : indent);
+                        first = false;
+                        consoleStream.WriteLine(line);
                     }
                 }
             }
