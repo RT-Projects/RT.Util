@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using System.Xml;
+using System.IO;
 
 namespace RT.Util
 {
@@ -157,10 +158,10 @@ namespace RT.Util
             Assert_ValueAndPathMatch(valComplex["sub2"][9], "47fs", "/sub2[9]");
 
             // Test both copying and equality in one go! (there's more coverage in other places too)
-            Assert.IsTrue(valComplex == (RVariant)valComplex.Clone());
-            Assert.IsTrue((RVariant)valComplex.Clone() == valComplex);
-            Assert.IsFalse(valComplex != (RVariant)valComplex.Clone());
-            Assert.IsFalse((RVariant)valComplex.Clone() != valComplex);
+            Assert.IsTrue(valComplex == (RVariant) valComplex.Clone());
+            Assert.IsTrue((RVariant) valComplex.Clone() == valComplex);
+            Assert.IsFalse(valComplex != (RVariant) valComplex.Clone());
+            Assert.IsFalse((RVariant) valComplex.Clone() != valComplex);
         }
 
         #region Helper methods
@@ -217,20 +218,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((bool)variant == val);
-            res.Add(val == (bool)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((bool) variant == val);
+            res.Add(val == (bool) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((bool)variant != val));
-            res.Add(!(val != (bool)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((bool) variant != val));
+            res.Add(!(val != (bool) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to bool, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing bool to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing bool to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -240,20 +241,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((byte)variant == val);
-            res.Add(val == (byte)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((byte) variant == val);
+            res.Add(val == (byte) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((byte)variant != val));
-            res.Add(!(val != (byte)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((byte) variant != val));
+            res.Add(!(val != (byte) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to byte, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing byte to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing byte to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -263,20 +264,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((sbyte)variant == val);
-            res.Add(val == (sbyte)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((sbyte) variant == val);
+            res.Add(val == (sbyte) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((sbyte)variant != val));
-            res.Add(!(val != (sbyte)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((sbyte) variant != val));
+            res.Add(!(val != (sbyte) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to sbyte, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing sbyte to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing sbyte to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -286,20 +287,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((short)variant == val);
-            res.Add(val == (short)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((short) variant == val);
+            res.Add(val == (short) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((short)variant != val));
-            res.Add(!(val != (short)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((short) variant != val));
+            res.Add(!(val != (short) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to short, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing short to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing short to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -309,20 +310,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((ushort)variant == val);
-            res.Add(val == (ushort)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((ushort) variant == val);
+            res.Add(val == (ushort) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((ushort)variant != val));
-            res.Add(!(val != (ushort)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((ushort) variant != val));
+            res.Add(!(val != (ushort) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to ushort, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing ushort to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing ushort to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -332,20 +333,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((int)variant == val);
-            res.Add(val == (int)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((int) variant == val);
+            res.Add(val == (int) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((int)variant != val));
-            res.Add(!(val != (int)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((int) variant != val));
+            res.Add(!(val != (int) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to int, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing int to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing int to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -355,20 +356,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((uint)variant == val);
-            res.Add(val == (uint)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((uint) variant == val);
+            res.Add(val == (uint) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((uint)variant != val));
-            res.Add(!(val != (uint)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((uint) variant != val));
+            res.Add(!(val != (uint) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to uint, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing uint to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing uint to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -378,20 +379,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((long)variant == val);
-            res.Add(val == (long)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((long) variant == val);
+            res.Add(val == (long) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((long)variant != val));
-            res.Add(!(val != (long)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((long) variant != val));
+            res.Add(!(val != (long) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to long, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing long to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing long to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -401,20 +402,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((ulong)variant == val);
-            res.Add(val == (ulong)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((ulong) variant == val);
+            res.Add(val == (ulong) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((ulong)variant != val));
-            res.Add(!(val != (ulong)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((ulong) variant != val));
+            res.Add(!(val != (ulong) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to ulong, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing ulong to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing ulong to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -424,20 +425,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((DateTime)variant == val);
-            res.Add(val == (DateTime)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((DateTime) variant == val);
+            res.Add(val == (DateTime) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((DateTime)variant != val));
-            res.Add(!(val != (DateTime)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((DateTime) variant != val));
+            res.Add(!(val != (DateTime) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to DateTime, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing DateTime to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing DateTime to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -447,20 +448,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((float)variant == val);
-            res.Add(val == (float)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((float) variant == val);
+            res.Add(val == (float) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((float)variant != val));
-            res.Add(!(val != (float)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((float) variant != val));
+            res.Add(!(val != (float) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to float, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing float to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing float to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -470,20 +471,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((double)variant == val);
-            res.Add(val == (double)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((double) variant == val);
+            res.Add(val == (double) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((double)variant != val));
-            res.Add(!(val != (double)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((double) variant != val));
+            res.Add(!(val != (double) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to double, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing double to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing double to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -493,20 +494,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((decimal)variant == val);
-            res.Add(val == (decimal)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((decimal) variant == val);
+            res.Add(val == (decimal) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((decimal)variant != val));
-            res.Add(!(val != (decimal)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((decimal) variant != val));
+            res.Add(!(val != (decimal) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to decimal, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing decimal to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing decimal to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -516,20 +517,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((char)variant == val);
-            res.Add(val == (char)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((char) variant == val);
+            res.Add(val == (char) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((char)variant != val));
-            res.Add(!(val != (char)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((char) variant != val));
+            res.Add(!(val != (char) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to char, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing char to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing char to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -539,20 +540,20 @@ namespace RT.Util
             Assert.AreEqual(RVariantKind.Value, variant.Kind);
             List<bool> res = new List<bool>();
             // Operator ==
-            res.Add(variant == (RVariant)val);
-            res.Add((RVariant)val == variant);
-            res.Add((string)variant == val);
-            res.Add(val == (string)variant);
+            res.Add(variant == (RVariant) val);
+            res.Add((RVariant) val == variant);
+            res.Add((string) variant == val);
+            res.Add(val == (string) variant);
             // Operator !=
-            res.Add(!(variant != (RVariant)val));
-            res.Add(!((RVariant)val != variant));
-            res.Add(!((string)variant != val));
-            res.Add(!(val != (string)variant));
+            res.Add(!(variant != (RVariant) val));
+            res.Add(!((RVariant) val != variant));
+            res.Add(!((string) variant != val));
+            res.Add(!(val != (string) variant));
             // Method Equals
-            res.Add(variant.Equals((RVariant)val));
-            res.Add(variant.Equals((object)val));
+            res.Add(variant.Equals((RVariant) val));
+            res.Add(variant.Equals((object) val));
             res.Add(val.Equals(variant)); // must be cast to string, not passed as an object
-            Assert.IsFalse(val.Equals((object)variant)); // comparing string to non-boxed object is always false
+            Assert.IsFalse(val.Equals((object) variant)); // comparing string to non-boxed object is always false
             // Done - see if all values were equal
             return BoolResultsIfConsistent(res);
         }
@@ -569,17 +570,17 @@ namespace RT.Util
             // Convert from value to RVariant
             RVariant boolTrueM = true;
             RVariant boolFalseM = false;
-            RVariant byteM = (byte)250;
-            RVariant sbyteM = (sbyte)-123;
-            RVariant shortM = (short)-26520;
-            RVariant ushortM = (ushort)64928;
-            RVariant intM = (int)-239749639;
-            RVariant uintM = (uint)982739723;
-            RVariant longM = (long)-2379847293864876;
-            RVariant ulongM = (ulong)3402938479823746;
-            RVariant floatM = (float)3.1415925f;
-            RVariant doubleM = (double)1208.1287987986866d;
-            RVariant decimalM = (decimal)198729384734.239472736876m;
+            RVariant byteM = (byte) 250;
+            RVariant sbyteM = (sbyte) -123;
+            RVariant shortM = (short) -26520;
+            RVariant ushortM = (ushort) 64928;
+            RVariant intM = (int) -239749639;
+            RVariant uintM = (uint) 982739723;
+            RVariant longM = (long) -2379847293864876;
+            RVariant ulongM = (ulong) 3402938479823746;
+            RVariant floatM = (float) 3.1415925f;
+            RVariant doubleM = (double) 1208.1287987986866d;
+            RVariant decimalM = (decimal) 198729384734.239472736876m;
             RVariant DateTimeM = new DateTime(2008, 12, 30, 21, 32, 56, 988, DateTimeKind.Utc);
             RVariant charM = '\u0065';
             RVariant stringM = "stuff";
@@ -587,14 +588,14 @@ namespace RT.Util
             // Check that all the values store the object as-is
             Assert_StoresCorrectValueOfCorrectType(boolTrueM, true, TypeCode.Boolean);
             Assert_StoresCorrectValueOfCorrectType(boolFalseM, false, TypeCode.Boolean);
-            Assert_StoresCorrectValueOfCorrectType(byteM, (byte)250, TypeCode.Byte);
-            Assert_StoresCorrectValueOfCorrectType(sbyteM, (sbyte)-123, TypeCode.SByte);
-            Assert_StoresCorrectValueOfCorrectType(shortM, (short)-26520, TypeCode.Int16);
-            Assert_StoresCorrectValueOfCorrectType(ushortM, (ushort)64928, TypeCode.UInt16);
-            Assert_StoresCorrectValueOfCorrectType(intM, (int)-239749639, TypeCode.Int32);
-            Assert_StoresCorrectValueOfCorrectType(uintM, (uint)982739723, TypeCode.UInt32);
-            Assert_StoresCorrectValueOfCorrectType(longM, (long)-2379847293864876, TypeCode.Int64);
-            Assert_StoresCorrectValueOfCorrectType(ulongM, (ulong)3402938479823746, TypeCode.UInt64);
+            Assert_StoresCorrectValueOfCorrectType(byteM, (byte) 250, TypeCode.Byte);
+            Assert_StoresCorrectValueOfCorrectType(sbyteM, (sbyte) -123, TypeCode.SByte);
+            Assert_StoresCorrectValueOfCorrectType(shortM, (short) -26520, TypeCode.Int16);
+            Assert_StoresCorrectValueOfCorrectType(ushortM, (ushort) 64928, TypeCode.UInt16);
+            Assert_StoresCorrectValueOfCorrectType(intM, (int) -239749639, TypeCode.Int32);
+            Assert_StoresCorrectValueOfCorrectType(uintM, (uint) 982739723, TypeCode.UInt32);
+            Assert_StoresCorrectValueOfCorrectType(longM, (long) -2379847293864876, TypeCode.Int64);
+            Assert_StoresCorrectValueOfCorrectType(ulongM, (ulong) 3402938479823746, TypeCode.UInt64);
             Assert_StoresCorrectValueOfCorrectType(floatM, 3.1415925f, TypeCode.Single);
             Assert_StoresCorrectValueOfCorrectType(doubleM, 1208.1287987986866d, TypeCode.Double);
             Assert_StoresCorrectValueOfCorrectType(decimalM, 198729384734.239472736876m, TypeCode.Decimal);
@@ -604,14 +605,14 @@ namespace RT.Util
             // And that equality checks work and produce consistent results
             Assert.IsTrue(CheckValueEquals(boolTrueM, true));
             Assert.IsTrue(CheckValueEquals(boolFalseM, false));
-            Assert.IsTrue(CheckValueEquals(byteM, (byte)250));
-            Assert.IsTrue(CheckValueEquals(sbyteM, (sbyte)-123));
-            Assert.IsTrue(CheckValueEquals(shortM, (short)-26520));
-            Assert.IsTrue(CheckValueEquals(ushortM, (ushort)64928));
-            Assert.IsTrue(CheckValueEquals(intM, (int)-239749639));
-            Assert.IsTrue(CheckValueEquals(uintM, (uint)982739723));
-            Assert.IsTrue(CheckValueEquals(longM, (long)-2379847293864876));
-            Assert.IsTrue(CheckValueEquals(ulongM, (ulong)3402938479823746));
+            Assert.IsTrue(CheckValueEquals(byteM, (byte) 250));
+            Assert.IsTrue(CheckValueEquals(sbyteM, (sbyte) -123));
+            Assert.IsTrue(CheckValueEquals(shortM, (short) -26520));
+            Assert.IsTrue(CheckValueEquals(ushortM, (ushort) 64928));
+            Assert.IsTrue(CheckValueEquals(intM, (int) -239749639));
+            Assert.IsTrue(CheckValueEquals(uintM, (uint) 982739723));
+            Assert.IsTrue(CheckValueEquals(longM, (long) -2379847293864876));
+            Assert.IsTrue(CheckValueEquals(ulongM, (ulong) 3402938479823746));
             Assert.IsTrue(CheckValueEquals(floatM, 3.1415925f));
             Assert.IsTrue(CheckValueEquals(doubleM, 1208.1287987986866d));
             Assert.IsTrue(CheckValueEquals(decimalM, 198729384734.239472736876m));
@@ -640,14 +641,14 @@ namespace RT.Util
             // Check that all the values are still correct
             Assert.AreEqual(boolTrueV, true);
             Assert.AreEqual(boolFalseV, false);
-            Assert.AreEqual(byteV, (byte)250);
-            Assert.AreEqual(sbyteV, (sbyte)-123);
-            Assert.AreEqual(shortV, (short)-26520);
-            Assert.AreEqual(ushortV, (ushort)64928);
-            Assert.AreEqual(intV, (int)-239749639);
-            Assert.AreEqual(uintV, (uint)982739723);
-            Assert.AreEqual(longV, (long)-2379847293864876);
-            Assert.AreEqual(ulongV, (ulong)3402938479823746);
+            Assert.AreEqual(byteV, (byte) 250);
+            Assert.AreEqual(sbyteV, (sbyte) -123);
+            Assert.AreEqual(shortV, (short) -26520);
+            Assert.AreEqual(ushortV, (ushort) 64928);
+            Assert.AreEqual(intV, (int) -239749639);
+            Assert.AreEqual(uintV, (uint) 982739723);
+            Assert.AreEqual(longV, (long) -2379847293864876);
+            Assert.AreEqual(ulongV, (ulong) 3402938479823746);
             Assert.AreEqual(floatV, 3.1415925f);
             Assert.AreEqual(doubleV, 1208.1287987986866d);
             Assert.AreEqual(decimalV, 198729384734.239472736876m);
@@ -657,22 +658,22 @@ namespace RT.Util
 
 
             // Convert to string
-            boolTrueM = (string)boolTrueM;
-            boolFalseM = (string)boolFalseM;
-            byteM = (string)byteM;
-            sbyteM = (string)sbyteM;
-            shortM = (string)shortM;
-            ushortM = (string)ushortM;
-            intM = (string)intM;
-            uintM = (string)uintM;
-            longM = (string)longM;
-            ulongM = (string)ulongM;
-            floatM = (string)floatM;
-            doubleM = (string)doubleM;
-            decimalM = (string)decimalM;
-            DateTimeM = (string)DateTimeM;
-            charM = (string)charM;
-            stringM = (string)stringM;
+            boolTrueM = (string) boolTrueM;
+            boolFalseM = (string) boolFalseM;
+            byteM = (string) byteM;
+            sbyteM = (string) sbyteM;
+            shortM = (string) shortM;
+            ushortM = (string) ushortM;
+            intM = (string) intM;
+            uintM = (string) uintM;
+            longM = (string) longM;
+            ulongM = (string) ulongM;
+            floatM = (string) floatM;
+            doubleM = (string) doubleM;
+            decimalM = (string) decimalM;
+            DateTimeM = (string) DateTimeM;
+            charM = (string) charM;
+            stringM = (string) stringM;
 
             // Check that they are now strings
             Assert_StoresCorrectValueOfCorrectType(boolTrueM, "True", TypeCode.String);
@@ -694,14 +695,14 @@ namespace RT.Util
             // And that equality checks still work and produce consistent results
             Assert.IsTrue(CheckValueEquals(boolTrueM, true));
             Assert.IsTrue(CheckValueEquals(boolFalseM, false));
-            Assert.IsTrue(CheckValueEquals(byteM, (byte)250));
-            Assert.IsTrue(CheckValueEquals(sbyteM, (sbyte)-123));
-            Assert.IsTrue(CheckValueEquals(shortM, (short)-26520));
-            Assert.IsTrue(CheckValueEquals(ushortM, (ushort)64928));
-            Assert.IsTrue(CheckValueEquals(intM, (int)-239749639));
-            Assert.IsTrue(CheckValueEquals(uintM, (uint)982739723));
-            Assert.IsTrue(CheckValueEquals(longM, (long)-2379847293864876));
-            Assert.IsTrue(CheckValueEquals(ulongM, (ulong)3402938479823746));
+            Assert.IsTrue(CheckValueEquals(byteM, (byte) 250));
+            Assert.IsTrue(CheckValueEquals(sbyteM, (sbyte) -123));
+            Assert.IsTrue(CheckValueEquals(shortM, (short) -26520));
+            Assert.IsTrue(CheckValueEquals(ushortM, (ushort) 64928));
+            Assert.IsTrue(CheckValueEquals(intM, (int) -239749639));
+            Assert.IsTrue(CheckValueEquals(uintM, (uint) 982739723));
+            Assert.IsTrue(CheckValueEquals(longM, (long) -2379847293864876));
+            Assert.IsTrue(CheckValueEquals(ulongM, (ulong) 3402938479823746));
             Assert.IsTrue(CheckValueEquals(floatM, 3.1415925f));
             Assert.IsTrue(CheckValueEquals(doubleM, 1208.1287987986866d));
             Assert.IsTrue(CheckValueEquals(decimalM, 198729384734.239472736876m));
@@ -730,14 +731,14 @@ namespace RT.Util
             // Check that all the values are still correct
             Assert.AreEqual(boolTrueV, true);
             Assert.AreEqual(boolFalseV, false);
-            Assert.AreEqual(byteV, (byte)250);
-            Assert.AreEqual(sbyteV, (sbyte)-123);
-            Assert.AreEqual(shortV, (short)-26520);
-            Assert.AreEqual(ushortV, (ushort)64928);
-            Assert.AreEqual(intV, (int)-239749639);
-            Assert.AreEqual(uintV, (uint)982739723);
-            Assert.AreEqual(longV, (long)-2379847293864876);
-            Assert.AreEqual(ulongV, (ulong)3402938479823746);
+            Assert.AreEqual(byteV, (byte) 250);
+            Assert.AreEqual(sbyteV, (sbyte) -123);
+            Assert.AreEqual(shortV, (short) -26520);
+            Assert.AreEqual(ushortV, (ushort) 64928);
+            Assert.AreEqual(intV, (int) -239749639);
+            Assert.AreEqual(uintV, (uint) 982739723);
+            Assert.AreEqual(longV, (long) -2379847293864876);
+            Assert.AreEqual(ulongV, (ulong) 3402938479823746);
             Assert.AreEqual(floatV, 3.1415925f);
             Assert.AreEqual(doubleV, 1208.1287987986866d);
             Assert.AreEqual(decimalV, 198729384734.239472736876m);
@@ -749,14 +750,14 @@ namespace RT.Util
             // Now check that inequality tests are also correct and consistent
             Assert.IsFalse(CheckValueEquals(boolTrueM, false));
             Assert.IsFalse(CheckValueEquals(boolFalseM, true));
-            Assert.IsFalse(CheckValueEquals(byteM, (byte)251));
-            Assert.IsFalse(CheckValueEquals(sbyteM, (sbyte)-124));
-            Assert.IsFalse(CheckValueEquals(shortM, (short)-26521));
-            Assert.IsFalse(CheckValueEquals(ushortM, (ushort)64923));
-            Assert.IsFalse(CheckValueEquals(intM, (int)-239749632));
-            Assert.IsFalse(CheckValueEquals(uintM, (uint)982739724));
-            Assert.IsFalse(CheckValueEquals(longM, (long)-2379847293864875));
-            Assert.IsFalse(CheckValueEquals(ulongM, (ulong)3402938479823745));
+            Assert.IsFalse(CheckValueEquals(byteM, (byte) 251));
+            Assert.IsFalse(CheckValueEquals(sbyteM, (sbyte) -124));
+            Assert.IsFalse(CheckValueEquals(shortM, (short) -26521));
+            Assert.IsFalse(CheckValueEquals(ushortM, (ushort) 64923));
+            Assert.IsFalse(CheckValueEquals(intM, (int) -239749632));
+            Assert.IsFalse(CheckValueEquals(uintM, (uint) 982739724));
+            Assert.IsFalse(CheckValueEquals(longM, (long) -2379847293864875));
+            Assert.IsFalse(CheckValueEquals(ulongM, (ulong) 3402938479823745));
             Assert.IsFalse(CheckValueEquals(floatM, 3.1415929f));
             Assert.IsFalse(CheckValueEquals(doubleM, 1208.1287987986869d));
             Assert.IsFalse(CheckValueEquals(decimalM, 198729384734.239472736879m));
@@ -772,8 +773,70 @@ namespace RT.Util
             Assert.IsFalse(valInt == valStub);
 
             Assert.IsFalse(valStub == null);
-            Assert.IsTrue(valStub == (RVariant)valStub.Clone());
-            Assert.IsTrue(valInt == (RVariant)valInt.Clone());
+            Assert.IsTrue(valStub == (RVariant) valStub.Clone());
+            Assert.IsTrue(valInt == (RVariant) valInt.Clone());
+        }
+
+        [Test]
+        public void TestXmlAndComplexEquality()
+        {
+            string rootName;
+            RVariant roundtripped;
+
+            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valStub, "valStub"), out rootName);
+            Assert.AreEqual("valStub", rootName);
+            Assert_RVariantsAreEqual(valStub, roundtripped);
+
+            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelList, "valOneLevelList"), out rootName);
+            Assert.AreEqual("valOneLevelList", rootName);
+            Assert_RVariantsAreEqual(valOneLevelList, roundtripped);
+
+            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelDict, "valOneLevelDict"), out rootName);
+            Assert.AreEqual("valOneLevelDict", rootName);
+            Assert_RVariantsAreEqual(valOneLevelDict, roundtripped);
+
+            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valComplex, "valComplex"), out rootName);
+            Assert.AreEqual("valComplex", rootName);
+            Assert_RVariantsAreEqual(valComplex, roundtripped);
+
+            // Complex XML test - add each of the above to a separate xml element
+            XmlDocument xml = new XmlDocument();
+            xml.AppendChild(xml.CreateElement("test"));
+            XmlElement elStub = xml.CreateElement("stub");
+            XmlElement elOneLevelList = xml.CreateElement("oneLevelList");
+            XmlElement elOneLevelDict = xml.CreateElement("oneLevelDict");
+            XmlElement elComplex = xml.CreateElement("complex");
+            xml.DocumentElement.AppendChild(elStub);
+            xml.DocumentElement.AppendChild(elOneLevelList);
+            xml.DocumentElement.AppendChild(elOneLevelDict);
+            xml.DocumentElement.AppendChild(elComplex);
+            RVariant.ToXml(valStub, elStub);
+            RVariant.ToXml(valOneLevelList, elOneLevelList);
+            RVariant.ToXml(valOneLevelDict, elOneLevelDict);
+            RVariant.ToXml(valComplex, elComplex);
+
+            byte[] xmlRaw;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (XmlWriter xw = new XmlTextWriter(ms, Encoding.UTF8))
+                    xml.WriteTo(xw);
+                xmlRaw = ms.ToArray();
+            }
+
+            xml = new XmlDocument();
+            xml.Load(new MemoryStream(xmlRaw));
+            elStub = elOneLevelList = elOneLevelDict = elComplex = null;
+
+            // what a fugly long-winded way of accessing xml elements...
+            // good thing there's RVariant!...
+            elStub = (XmlElement) xml.DocumentElement.GetElementsByTagName("stub")[0];
+            elOneLevelList = (XmlElement) xml.DocumentElement.GetElementsByTagName("oneLevelList")[0];
+            elOneLevelDict = (XmlElement) xml.DocumentElement.GetElementsByTagName("oneLevelDict")[0];
+            elComplex = (XmlElement) xml.DocumentElement.GetElementsByTagName("complex")[0];
+            Assert_RVariantsAreEqual(valStub, RVariant.FromXml(elStub));
+            Assert_RVariantsAreEqual(valOneLevelList, RVariant.FromXml(elOneLevelList));
+            Assert_RVariantsAreEqual(valOneLevelDict, RVariant.FromXml(elOneLevelDict));
+            Assert_RVariantsAreEqual(valComplex, RVariant.FromXml(elComplex));
         }
 
         private void Assert_RVariantsAreEqual(RVariant v1, RVariant v2)
@@ -784,6 +847,21 @@ namespace RT.Util
             Assert.IsTrue(v2 == v1);
             Assert.IsFalse(v1 != v2);
             Assert.IsFalse(v2 != v1);
+        }
+
+        private XmlDocument GetRoundTrippedXml(RVariant variant, string rootName)
+        {
+            XmlDocument xml = RVariant.ToXml(variant, rootName);
+            byte[] xmlRaw;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (XmlWriter xw = new XmlTextWriter(ms, Encoding.UTF8))
+                    xml.WriteTo(xw);
+                xmlRaw = ms.ToArray();
+            }
+            xml = new XmlDocument();
+            xml.Load(new MemoryStream(xmlRaw));
+            return xml;
         }
 
         [Test]

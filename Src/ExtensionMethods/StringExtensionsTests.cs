@@ -81,10 +81,11 @@ namespace RT.Util.ExtensionMethods
         {
             var tww = "\n\n\n".WordWrap(40).ToArray();
 
-            Assert.AreEqual(3, tww.Length);
+            Assert.AreEqual(4, tww.Length);
             Assert.AreEqual("", tww[0]);
             Assert.AreEqual("", tww[1]);
             Assert.AreEqual("", tww[2]);
+            Assert.AreEqual("", tww[3]);
         }
 
         [Test]
