@@ -315,10 +315,9 @@ namespace RT.Util
         /// <code>testproj.exe -r &lt;required-option&gt; [--optional-switch]</code>
         ///
         /// Detailed summary is a table with one row per option. It shows the tiny
-        /// and long option name as well as a description. The description is printed
-        /// using <see cref="TextWordWrapped"/>, which means long, multi-line and even
-        /// indented text will be printed properly. The console window width will
-        /// be used for word wrapping.
+        /// and long option name as well as a description. Long, multi-line descriptions
+        /// with indented paragraphs will be word-wrapped properly according to the
+        /// console window width.
         /// </remarks>
         public void PrintHelp()
         {

@@ -15,12 +15,12 @@ namespace RT.Util.ExtensionMethods
         /// Returns the path to this element. The path consists of the names of all parents
         /// of this element up to the root node, separated with forward slashes.
         /// </summary>
-        public static string Path(this XElement element)
+        public static string Path(this XContainer element)
         {
             List<string> list = new List<string>();
-            while (element != null)
+            while (element != null && element is XElement)
             {
-                list.Add(element.Name.ToString());
+                list.Add(((XElement) element).Name.ToString());
                 element = element.Parent;
             }
             list.Reverse();
@@ -39,9 +39,9 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns the first element matching "name", or if none, throws an exception to say
         /// which element was missing which sub-element. This is a counterpart to
-        /// <see fref="XElement.Element()"/>.
+        /// <see cref="XContainer.Element"/>.
         /// </summary>
-        public static XElement ChkElement(this XElement element, XName name)
+        public static XElement ChkElement(this XContainer element, XName name)
         {
             XElement result = element.Element(name);
             if (result == null)
@@ -54,7 +54,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns the first attribute matching "name", or if none, throws an exception to say
         /// which element was missing which attribute. This is a counterpart to
-        /// <see fref="XElement.Attribute()"/>.
+        /// <see cref="XElement.Attribute"/>.
         /// </summary>
         public static XAttribute ChkAttribute(this XElement element, XName name)
         {

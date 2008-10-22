@@ -84,8 +84,8 @@ namespace RT.Util.Geometry
             return ToString().GetHashCode();
         }
 
-        /// <summary>Provides a string representation of the current <see cref="PointD"/>.</summary>
-        /// <returns>A string representation of the current <see cref="PointD"/>.</returns>
+        /// <summary>Provides a string representation of the current <see cref="EdgeD"/>.</summary>
+        /// <returns>A string representation of the current <see cref="EdgeD"/>.</returns>
         public override string ToString()
         {
             return Start + " ==> " + End;

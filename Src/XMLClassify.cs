@@ -152,11 +152,17 @@ namespace RT.Util.XMLClassify
 
                         // Check if it's an array, collection or dictionary
                         Type KeyType = null, ValueType = null;
+                        Type[] TypeParameters = null;
 
                         if (Field.FieldType.IsArray)
                             ValueType = Field.FieldType.GetElementType();
-                        else if (!Field.FieldType.ImplementsInterface2(typeof(IDictionary<,>), out KeyType, out ValueType))
-                            Field.FieldType.ImplementsInterface1(typeof(ICollection<>), out ValueType);
+                        else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out TypeParameters))
+                        {
+                            KeyType = TypeParameters[0];
+                            ValueType = TypeParameters[1];
+                        }
+                        else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out TypeParameters))
+                            ValueType = TypeParameters[0];
 
                         if (ValueType == null)
                         {
@@ -347,11 +353,17 @@ namespace RT.Util.XMLClassify
                     var XMLMethod = typeof(XMLClassify).GetMethods().Where(mi => mi.Name == "ObjectAsXML" && mi.GetParameters().Count() == 3).First();
 
                     Type KeyType = null, ValueType = null;
+                    Type[] TypeParameters = null;
 
                     if (Field.FieldType.IsArray)
                         ValueType = Field.FieldType.GetElementType();
-                    else if (!Field.FieldType.ImplementsInterface2(typeof(IDictionary<,>), out KeyType, out ValueType))
-                        Field.FieldType.ImplementsInterface1(typeof(ICollection<>), out ValueType);
+                    else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out TypeParameters))
+                    {
+                        KeyType = TypeParameters[0];
+                        ValueType = TypeParameters[1];
+                    }
+                    else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out TypeParameters))
+                        ValueType = TypeParameters[0];
 
                     if (ValueType == null)
                     {

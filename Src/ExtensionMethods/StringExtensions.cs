@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Provides extension methods on the <see langword="string"/> type.
+    /// Provides extension methods on the <see cref="String"/> type.
     /// </summary>
     public static class StringExtensions
     {
@@ -210,9 +210,9 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string Join(this string separator, IEnumerator<string> values)
         {
+            if (!values.MoveNext()) return "";
             StringBuilder SB = new StringBuilder();
-            if (values.MoveNext())
-                SB.Append(values.Current);
+            SB.Append(values.Current);
             while (values.MoveNext())
             {
                 SB.Append(separator);
