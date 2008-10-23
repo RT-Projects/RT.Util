@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// SortedDictionaryDT is a special kind of SortedDictionary which is intended to keep

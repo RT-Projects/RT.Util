@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// A set of objects is a collection of objects where all objects are

@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
+using RT.Util.Collections;
 
 namespace RT.Util.Geometry
 {

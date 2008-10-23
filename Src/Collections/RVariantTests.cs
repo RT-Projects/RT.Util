@@ -5,7 +5,7 @@ using NUnit.Framework;
 using System.Xml;
 using System.IO;
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// Overview of RVariant testing: the idea is that we first bootstrap the

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// A tuple of two values of specified types.

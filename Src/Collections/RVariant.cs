@@ -13,7 +13,7 @@ using System.Xml;
 // - add various IList/IDictionary methods
 // - track if element/subelement has been used; avoid saving unused ones (must be pretty smart about this and behave as if they're not there at all)
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// Determines what kind of an RVariant we're dealing with. See documentation

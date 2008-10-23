@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace RT.Util
+namespace RT.Util.Collections
 {
     /// <summary>
     /// Uses an underlying byte[] array to store booleans as bits.
