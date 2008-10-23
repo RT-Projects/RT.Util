@@ -188,6 +188,37 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
+        /// Creates a RVariant from the specified XmlDocument. Does not tolerate
+        /// errors - will throw an exception if the XML is not a valid representation
+        /// of a RVariant.
+        /// </summary>
+        public RVariant(XmlDocument document)
+        {
+            doFromXml(document.DocumentElement, "");
+        }
+
+        /// <summary>
+        /// Creates a RVariant from the specified XmlDocument. Does not tolerate
+        /// errors - will throw an exception if the XML is not a valid representation
+        /// of a RVariant. The name of the root element will be stored in the
+        /// <see cref="rootNodeName"/> parameter.
+        /// </summary>
+        public RVariant(XmlDocument document, out string rootNodeName)
+        {
+            rootNodeName = document.DocumentElement.Name;
+            doFromXml(document.DocumentElement, "");
+        }
+
+        /// <summary>
+        /// Recreates a RVariant from the specified XmlElement. Can be used to store
+        /// several RVariants in a single XmlDocument.
+        /// </summary>
+        public RVariant(XmlElement element)
+        {
+            doFromXml(element, "");
+        }
+
+        /// <summary>
         /// Returns a string representation of this RVariant. If this RVariant is
         /// of the Value Kind returns the value RConvert'ed Exact'ly to a string.
         /// Otherwise returns a string showing the Path and the Kind of this value.
@@ -995,12 +1026,12 @@ namespace RT.Util.Collections
         /// Converts the specified RVariant to an XmlDocument. The name of the
         /// root element in the XmlDocument must be specified.
         /// </summary>
-        public static XmlDocument ToXml(RVariant value, string rootElementName)
+        public XmlDocument ToXml(string rootElementName)
         {
             XmlDocument document = new XmlDocument();
             XmlElement root = document.CreateElement(rootElementName);
             document.AppendChild(root);
-            doToXml(root, value);
+            doToXml(root, this);
             return document;
         }
 
@@ -1008,9 +1039,9 @@ namespace RT.Util.Collections
         /// Converts the specified RVariant to XML, storing it in the specified
         /// XmlElement. The name of the destination XmlElement will not be altered.
         /// </summary>
-        public static void ToXml(RVariant value, XmlElement rootElement)
+        public void ToXml(XmlElement rootElement)
         {
-            doToXml(rootElement, value);
+            doToXml(rootElement, this);
         }
 
         private static void doToXml(XmlElement element, RVariant value)
@@ -1051,88 +1082,64 @@ namespace RT.Util.Collections
             }
         }
 
-        /// <summary>
-        /// Creates a RVariant from the specified XmlDocument. Does not tolerate
-        /// errors - will throw an exception if the XML is not a valid representation
-        /// of a RVariant.
-        /// </summary>
-        public static RVariant FromXml(XmlDocument document)
+        private void doFromXml(XmlElement element, string path)
         {
-            string rootNodeName;
-            return FromXml(document, out rootNodeName);
-        }
-
-        /// <summary>
-        /// Creates a RVariant from the specified XmlDocument. Does not tolerate
-        /// errors - will throw an exception if the XML is not a valid representation
-        /// of a RVariant. The name of the root element will be stored in the
-        /// <paramref name="rootNodeName"/> parameter.
-        /// </summary>
-        public static RVariant FromXml(XmlDocument document, out string rootNodeName)
-        {
-            rootNodeName = document.DocumentElement.Name;
-            return doFromXml(document.DocumentElement, "");
-        }
-
-        /// <summary>
-        /// Recreates a RVariant from the specified XmlElement. Can be used to store
-        /// several RVariants in a single XmlDocument.
-        /// </summary>
-        public static RVariant FromXml(XmlElement element)
-        {
-            return doFromXml(element, "");
-        }
-
-        private static RVariant doFromXml(XmlElement element, string path)
-        {
-            RVariant value = new RVariant();
-            value._path = path;
+            Clear();
+            _path = path;
 
             if (!element.HasAttribute("kind"))
             {
                 // Value element
-                value._kind = RVariantKind.Value;
+                _kind = RVariantKind.Value;
                 if (element.HasAttribute("value"))
-                    value._value = element.GetAttribute("value");
+                    _value = element.GetAttribute("value");
                 else
-                    value._value = null;
+                    _value = null;
             }
             else
             {
                 string kind = element.GetAttribute("kind");
                 if (kind == "stub")
                 {
-                    value._kind = RVariantKind.Stub;
+                    _kind = RVariantKind.Stub;
                 }
                 else if (kind == "dict")
                 {
                     // Dict element
-                    value._kind = RVariantKind.Dict;
-                    value._dict = new Dictionary<string, RVariant>(element.ChildNodes.Count);
+                    _kind = RVariantKind.Dict;
+                    _dict = new Dictionary<string, RVariant>(element.ChildNodes.Count);
                     foreach (XmlNode subNode in element.ChildNodes)
                     {
                         if (subNode is XmlElement)
                         {
-                            if (value._dict.ContainsKey(subNode.Name))
+                            if (_dict.ContainsKey(subNode.Name))
                                 throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"dict\", has more than one element with name \"{2}\"",
                                     element.OwnerDocument.DocumentElement.Name, path, subNode.Name);
                             else
-                                value._dict.Add(subNode.Name, doFromXml((XmlElement)subNode, path + "/" + subNode.Name));
+                            {
+                                RVariant newEl = new RVariant();
+                                newEl.doFromXml((XmlElement)subNode, path + "/" + subNode.Name);
+                                _dict.Add(subNode.Name, newEl);
+                            }
                         }
                     }
                 }
                 else if (kind == "list")
                 {
                     // List element
-                    value._kind = RVariantKind.List;
+                    _kind = RVariantKind.List;
                     XmlNodeList children = element.ChildNodes;
-                    value._list = new List<RVariant>(children.Count);
+                    _list = new List<RVariant>(children.Count);
                     for (int i = 0; i < children.Count; i++)
                     {
                         if (children[i] is XmlElement)
                         {
                             if (children[i].Name == "item")
-                                value._list.Add(doFromXml((XmlElement)children[i], path + "[" + i + "]"));
+                            {
+                                RVariant newEl = new RVariant();
+                                newEl.doFromXml((XmlElement)children[i], path + "[" + i + "]");
+                                _list.Add(newEl);
+                            }
                             else
                                 throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"list\", has an element with an unexpected name: \"{1}\"",
                                     element.OwnerDocument.DocumentElement.Name, path, children[i].Name);
@@ -1144,8 +1151,19 @@ namespace RT.Util.Collections
                     throw new RVariantXmlException("XML node \"{0}{1}\" has an unrecognized \"kind\" attribute: \"{2}\"", element.OwnerDocument.DocumentElement.Name, path, kind);
                 }
             }
+        }
 
-            return value;
+        public string LoadFromXmlFile(string fileName)
+        {
+            System.Xml.XmlDocument xml = new System.Xml.XmlDocument();
+            xml.Load(fileName);
+            doFromXml(xml.DocumentElement, "");
+            return xml.DocumentElement.Name;
+        }
+
+        public void SaveToXmlFile(string fileName, string rootElementName)
+        {
+            ToXml(rootElementName).Save(fileName);
         }
 
         #endregion

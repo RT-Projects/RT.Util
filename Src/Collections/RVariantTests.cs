@@ -783,19 +783,19 @@ namespace RT.Util.Collections
             string rootName;
             RVariant roundtripped;
 
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valStub, "valStub"), out rootName);
+            roundtripped = new RVariant(GetRoundTrippedXml(valStub, "valStub"), out rootName);
             Assert.AreEqual("valStub", rootName);
             Assert_RVariantsAreEqual(valStub, roundtripped);
 
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelList, "valOneLevelList"), out rootName);
+            roundtripped = new RVariant(GetRoundTrippedXml(valOneLevelList, "valOneLevelList"), out rootName);
             Assert.AreEqual("valOneLevelList", rootName);
             Assert_RVariantsAreEqual(valOneLevelList, roundtripped);
 
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valOneLevelDict, "valOneLevelDict"), out rootName);
+            roundtripped = new RVariant(GetRoundTrippedXml(valOneLevelDict, "valOneLevelDict"), out rootName);
             Assert.AreEqual("valOneLevelDict", rootName);
             Assert_RVariantsAreEqual(valOneLevelDict, roundtripped);
 
-            roundtripped = RVariant.FromXml(GetRoundTrippedXml(valComplex, "valComplex"), out rootName);
+            roundtripped = new RVariant(GetRoundTrippedXml(valComplex, "valComplex"), out rootName);
             Assert.AreEqual("valComplex", rootName);
             Assert_RVariantsAreEqual(valComplex, roundtripped);
 
@@ -810,10 +810,10 @@ namespace RT.Util.Collections
             xml.DocumentElement.AppendChild(elOneLevelList);
             xml.DocumentElement.AppendChild(elOneLevelDict);
             xml.DocumentElement.AppendChild(elComplex);
-            RVariant.ToXml(valStub, elStub);
-            RVariant.ToXml(valOneLevelList, elOneLevelList);
-            RVariant.ToXml(valOneLevelDict, elOneLevelDict);
-            RVariant.ToXml(valComplex, elComplex);
+            valStub.ToXml(elStub);
+            valOneLevelList.ToXml(elOneLevelList);
+            valOneLevelDict.ToXml(elOneLevelDict);
+            valComplex.ToXml(elComplex);
 
             byte[] xmlRaw;
             using (MemoryStream ms = new MemoryStream())
@@ -833,10 +833,10 @@ namespace RT.Util.Collections
             elOneLevelList = (XmlElement) xml.DocumentElement.GetElementsByTagName("oneLevelList")[0];
             elOneLevelDict = (XmlElement) xml.DocumentElement.GetElementsByTagName("oneLevelDict")[0];
             elComplex = (XmlElement) xml.DocumentElement.GetElementsByTagName("complex")[0];
-            Assert_RVariantsAreEqual(valStub, RVariant.FromXml(elStub));
-            Assert_RVariantsAreEqual(valOneLevelList, RVariant.FromXml(elOneLevelList));
-            Assert_RVariantsAreEqual(valOneLevelDict, RVariant.FromXml(elOneLevelDict));
-            Assert_RVariantsAreEqual(valComplex, RVariant.FromXml(elComplex));
+            Assert_RVariantsAreEqual(valStub, new RVariant(elStub));
+            Assert_RVariantsAreEqual(valOneLevelList, new RVariant(elOneLevelList));
+            Assert_RVariantsAreEqual(valOneLevelDict, new RVariant(elOneLevelDict));
+            Assert_RVariantsAreEqual(valComplex, new RVariant(elComplex));
         }
 
         private void Assert_RVariantsAreEqual(RVariant v1, RVariant v2)
@@ -851,7 +851,7 @@ namespace RT.Util.Collections
 
         private XmlDocument GetRoundTrippedXml(RVariant variant, string rootName)
         {
-            XmlDocument xml = RVariant.ToXml(variant, rootName);
+            XmlDocument xml = variant.ToXml(rootName);
             byte[] xmlRaw;
             using (MemoryStream ms = new MemoryStream())
             {
@@ -918,7 +918,7 @@ namespace RT.Util.Collections
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml("<example kind='dict'><my kind='dict'><test kind='list'><item value='47'/></test></my></example>");
-            RVariant mv = RVariant.FromXml(doc);
+            RVariant mv = new RVariant(doc);
 
             int mytest0, myother;
 
