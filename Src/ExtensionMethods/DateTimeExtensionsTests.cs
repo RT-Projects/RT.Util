@@ -39,7 +39,7 @@ namespace RT.Util.ExtensionMethods
 
         public string GetLocalSuffixAndEnsureItsValid()
         {
-            string suffix = DateTime.Now.ToLocalTime().ToString("zzz");
+            string suffix = new DateTime(2008, 03, 25, 14, 35, 54, 456, DateTimeKind.Local).ToString("zzz");
             Assert.AreEqual(6, suffix.Length); // just so we know we're testing it properly...
             Assert.AreEqual('+', suffix[0]);
             Assert.IsTrue(char.IsDigit(suffix[1]));
