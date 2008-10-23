@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
+    <Compile Include="Collections\PackedBooleans.cs" />
+    <Compile Include="Collections\RVariant.cs" />
+    <Compile Include="Collections\Set.cs" />
+    <Compile Include="Collections\SortedDictionaryDT.cs" />
+    <Compile Include="Collections\Tuple.cs" />
+    <Compile Include="Collections\Virtual2DArray.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -118,8 +124,6 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Log.cs" />
-    <Compile Include="RVariant.cs" />
-    <Compile Include="PackedBooleans.cs" />
     <Compile Include="PathManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -130,12 +134,10 @@
     <Compile Include="Geometry\RectangleD.cs" />
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
-    <Compile Include="Set.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
     <Compile Include="Settings\SettingsBinaryFile.cs" />
     <Compile Include="Settings\SettingsStore.cs" />
     <Compile Include="Settings\SettingsTextFile.cs" />
-    <Compile Include="SortedDictionaryDT.cs" />
     <Compile Include="SoundPlayerAsync.cs" />
     <Compile Include="StateMachine.cs" />
     <Compile Include="Streams\ArithmeticCodingReader.cs" />
@@ -148,14 +150,12 @@
     <Compile Include="Streams\StreamOnSocket.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="TimeOut.cs" />
-    <Compile Include="Tuple.cs" />
     <Compile Include="Ut\Clone.cs" />
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
     <Compile Include="Ut\Paths.cs" />
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
-    <Compile Include="Virtual2DArray.cs" />
     <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />

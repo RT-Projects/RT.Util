@@ -53,14 +53,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\RVariantTests.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\StringExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
-    <Compile Include="RVariantTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />
-    <Compile Include="UtTests.cs" />
+    <Compile Include="Ut\UtTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RT.Util.csproj">
