@@ -1,15 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
-using System.IO;
-using System.Reflection;
-using System.Xml;
-using System.Collections;
 using RT.Util.ExtensionMethods;
-using System.Threading;
-using System.Diagnostics;
 
 namespace RT.Util.XMLClassify
 {

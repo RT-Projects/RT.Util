@@ -78,7 +78,7 @@ namespace RT.Util.Streams
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
-        /// <summary>Reads at mose <see cref="ChunkSize"/> bytes from the underlying stream.</summary>
+        /// <summary>Reads at most <see cref="ChunkSize"/> bytes from the underlying stream.</summary>
         /// <param name="buffer">Buffer to store results into.</param>
         /// <param name="offset">Offset in buffer to store results at.</param>
         /// <param name="count">Maximum number of bytes to read.</param>
