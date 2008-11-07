@@ -155,6 +155,11 @@ namespace RT.Util
             catch { }
         }
 
+        /// <summary>
+        /// Returns the "parent" path of the specified path by removing the last name
+        /// from the path, separated by either forward or backslash. If the original
+        /// path ends in slash, the returned path will also end with a slash.
+        /// </summary>
         public static string ExtractParent(string path)
         {
             if (path == null)
@@ -173,6 +178,11 @@ namespace RT.Util
             return path.Substring(0, pos);
         }
 
+        /// <summary>
+        /// Returns the "parent" path of the specified path by removing the last group
+        /// from the path, separated by the "separator" character. If the original
+        /// path ends in slash, the returned path will also end with a slash.
+        /// </summary>
         public static string ExtractParent(string path, char separator)
         {
             if (path == null)
@@ -191,6 +201,10 @@ namespace RT.Util
             return path.Substring(0, pos);
         }
 
+        /// <summary>
+        /// Returns the name and extension of the last group in the specified path,
+        /// separated by either of the two slashes.
+        /// </summary>
         public static string ExtractNameAndExt(string path)
         {
             if (path == null)
@@ -204,6 +218,10 @@ namespace RT.Util
                 return path.Substring(pos + 1);
         }
 
+        /// <summary>
+        /// Returns a path to "fullpath", relative to "root".
+        /// Throws an exception if "fullpath" is not a subpath of "root".
+        /// </summary>
         public static string ExtractRelativePath(string root, string fullpath)
         {
             root = PathUtil.NormPath(root);
@@ -214,29 +232,25 @@ namespace RT.Util
             return fullpath.Substring(root.Length);
         }
 
+        /// <summary>
+        /// Joins the two paths using the OS separator character. If the second path is absolute,
+        /// only the second path is returned. Identical to <see cref="Path.Combine"/>.
+        /// </summary>
         public static string Join(string path1, string path2)
         {
             return Path.Combine(path1, path2);
         }
 
+        /// <summary>
+        /// Joins multiple paths using the OS separator character. If any of the paths is absolute,
+        /// all preceding paths are discarded.
+        /// </summary>
         public static string Join(string path1, string path2, params string[] morepaths)
         {
             string result = Join(path1, path2);
             foreach (string p in morepaths)
                 result = Join(result, p);
             return result;
-        }
-
-        public static void CreateDir(string path, bool recursive)
-        {
-            if (recursive)
-            {
-                string parent = ExtractParent(path);
-                if (!Directory.Exists(parent))
-                    CreateDir(parent, true);
-            }
-
-            Directory.CreateDirectory(path);
         }
 
     }
