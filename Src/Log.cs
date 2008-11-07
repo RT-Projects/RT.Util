@@ -335,6 +335,16 @@ namespace RT.Util
             }
         }
 
+        /// <summary>
+        /// Gets the <see cref="StreamWriter"/> used by this StreamLogger for writing
+        /// text. Intended use is to enable the caller write arbitrary text to the
+        /// underlying stream.
+        /// </summary>
+        public StreamWriter StreamWriter
+        {
+            get { return textStream; }
+        }
+
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
             lock (_lock_log)
