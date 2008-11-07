@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
-using System.Text.RegularExpressions;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
 using System.IO.Compression;
-using System.Globalization;
-using RT.Util.Streams;
-using RT.Util.Controls;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
+using RT.Util.Streams;
 
 namespace RT.Util.Settings
 {
@@ -39,7 +34,7 @@ namespace RT.Util.Settings
         {
             try
             {
-                string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
+                string fname = PathUtil.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat";
                 if (File.Exists(fname))
                     LoadFromFile(fname);
             }
@@ -51,7 +46,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void SaveSettings()
         {
-            SaveToFile(Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat");
+            SaveToFile(PathUtil.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.dat");
         }
 
         /// <summary>

@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 
-namespace RT.Util
+namespace RT.Util.Paths
 {
     /// <summary>
     /// PathManager builds a list of paths via calls to <see cref="AddIncludePath"/> and
@@ -80,7 +79,7 @@ namespace RT.Util
                 return;
             // Add an entry for this path
             PathInfo pi = new PathInfo();
-            pi.Path = Ut.NrmPath(path);
+            pi.Path = PathUtil.NormPath(path);
             pi.Include = include;
             // Find where to insert it
             // Paths can be naturally sorted lexicographically, so it's as simple as that
@@ -103,7 +102,7 @@ namespace RT.Util
         private void DeleteSubpathEntries(string path)
         {
             for (int i=Paths.Count-1; i>=0; i--)
-                if (Ut.IsSubpath(path, Paths[i].Path))
+                if (PathUtil.IsSubpath(path, Paths[i].Path))
                     Paths.RemoveAt(i);
         }
 
@@ -144,7 +143,7 @@ namespace RT.Util
             int mindistn = -1;
             for (int i=0; i<Paths.Count; i++)
             {
-                int d = Ut.PathLevelDistance(Paths[i].Path, path);
+                int d = PathUtil.PathLevelDistance(Paths[i].Path, path);
                 
                 if (d == int.MaxValue || d < 0)
                     continue;
@@ -237,10 +236,10 @@ namespace RT.Util
                 // Directories
                 foreach (DirectoryInfo di in dirs)
                 {
-                    if (ToExclude.Contains(Ut.NrmPath(di.FullName).ToLowerInvariant()))
+                    if (ToExclude.Contains(PathUtil.NormPath(di.FullName).ToLowerInvariant()))
                     {
                         // Remove this item to save searching time later?
-                        ToExclude.Remove(Ut.NrmPath(di.FullName).ToLowerInvariant());
+                        ToExclude.Remove(PathUtil.NormPath(di.FullName).ToLowerInvariant());
                         continue;
                     }
                     ToScan.Push(di);

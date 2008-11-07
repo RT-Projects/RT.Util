@@ -115,6 +115,7 @@
     <Compile Include="Geometry\Intersect.cs" />
     <Compile Include="Geometry\PointD.cs" />
     <Compile Include="Geometry\PolygonD.cs" />
+    <Compile Include="Geometry\RectangleD.cs" />
     <Compile Include="GlobalKeyboardListener.cs" />
     <Compile Include="Forms\FormManager.cs" />
     <Compile Include="Forms\InputBox.cs">
@@ -124,14 +125,14 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Log.cs" />
-    <Compile Include="PathManager.cs" />
+    <Compile Include="Paths\PathManager.cs" />
+    <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
-    <Compile Include="Geometry\RectangleD.cs" />
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
     <Compile Include="Settings\PrgSettings.cs" />
@@ -153,7 +154,6 @@
     <Compile Include="Ut\Clone.cs" />
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
-    <Compile Include="Ut\Paths.cs" />
     <Compile Include="Ut\Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Geometry\VoronoiDiagram.cs" />

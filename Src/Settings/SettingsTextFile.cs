@@ -1,14 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.IO.Compression;
 using System.Globalization;
-using RT.Util.Streams;
-using RT.Util.Controls;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace RT.Util.Settings
@@ -23,7 +18,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void LoadSettings()
         {
-            string fname = Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt";
+            string fname = PathUtil.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt";
             if (File.Exists(fname))
                 LoadFromFile(fname);
         }
@@ -33,7 +28,7 @@ namespace RT.Util.Settings
         /// </summary>
         public override void SaveSettings()
         {
-            SaveToFile(Ut.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt");
+            SaveToFile(PathUtil.AppPath + Path.GetFileNameWithoutExtension(Application.ExecutablePath) + ".Settings.txt");
         }
 
         public void LoadFromFile(string name)
