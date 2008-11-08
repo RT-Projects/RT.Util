@@ -236,6 +236,38 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Formats a string using <see cref="string.Format(string, object[])"/>.
+        /// </summary>
+        public static string Fmt(this string formatString, params object[] args)
+        {
+            return string.Format(formatString, args);
+        }
+
+        /// <summary>
+        /// Formats a string using <see cref="string.Format(string, object)"/>.
+        /// </summary>
+        public static string Fmt(this string formatString, object arg0)
+        {
+            return string.Format(formatString, arg0);
+        }
+
+        /// <summary>
+        /// Formats a string using <see cref="string.Format(string, object, object)"/>.
+        /// </summary>
+        public static string Fmt(this string formatString, object arg0, object arg1)
+        {
+            return string.Format(formatString, arg0, arg1);
+        }
+
+        /// <summary>
+        /// Formats a string using <see cref="string.Format(string, object, object, object)"/>.
+        /// </summary>
+        public static string Fmt(this string formatString, object arg0, object arg1, object arg2)
+        {
+            return string.Format(formatString, arg0, arg1, arg2);
+        }
+
+        /// <summary>
         /// Word-wraps the current string to a specified width. Supports unix-style
         /// newlines and indented paragraphs.
         /// </summary>
