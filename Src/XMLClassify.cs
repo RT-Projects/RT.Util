@@ -90,7 +90,7 @@ namespace RT.Util.XMLClassify
                 else if (Attribs.Any(x => x is XMLFollowIDAttribute))
                 {
                     if (Field.FieldType.GetGenericTypeDefinition() != typeof(XMLDeferredObject<>))
-                        throw new Exception("A field that uses the [XMLFollowID] attribute must have the type XMLDeferredObject<T> for some T.");
+                        throw new Exception("The field {0}.{1} uses the [XMLFollowID] attribute, but does not have the type XMLDeferredObject<T> for some T.".Fmt(typeof(T).FullName, Field.Name));
 
                     Type InnerType = Field.FieldType.GetGenericArguments()[0];
                     var Attr = XElem.Attribute(RFieldName);
@@ -114,22 +114,20 @@ namespace RT.Util.XMLClassify
                 }
 
                 // Primitive types
-                else if (Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || Field.FieldType == typeof(int) ||
+                else if (Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType) ||
                          Field.FieldType == typeof(DateTime) || Field.FieldType.IsEnum)
                 {
                     var Attr = XElem.Attribute(RFieldName);
                     try
                     {
-                        if (Field.FieldType == typeof(string))
+                        Type t = Field.FieldType;
+                        if (t == typeof(string))
                             Field.SetValue(ReturnObject, Attr.Value);
-                        else if (Field.FieldType == typeof(bool))
-                            Field.SetValue(ReturnObject, bool.Parse(Attr.Value));
-                        else if (Field.FieldType == typeof(int))
-                            Field.SetValue(ReturnObject, int.Parse(Attr.Value));
-                        else if (Field.FieldType == typeof(DateTime))
-                            Field.SetValue(ReturnObject, DateTime.Parse(Attr.Value));
-                        else // enums
-                            Field.SetValue(ReturnObject, Attr.Value.ToStaticValue(Field.FieldType));
+                        else if (t.IsEnum)
+                            Field.SetValue(ReturnObject, Attr.Value.ToStaticValue(t));
+                        else    // bool, DateTime and integer types
+                            try { Field.SetValue(ReturnObject, ParseIntBoolOrDateTime(t, Attr.Value)); }
+                            catch { }
                     }
                     catch { }
                 }
@@ -168,7 +166,10 @@ namespace RT.Util.XMLClassify
                         }
                         else
                         {
-                            if (!ValueType.IsEnum && ValueType != typeof(string) && ValueType != typeof(int) &&
+                            if (KeyType != null && KeyType != typeof(string) && !IsIntegerType(KeyType) && !KeyType.IsEnum)
+                                throw new Exception("The field {0}.{1} is of a dictionary type, but its key type is {2}. Only string and integer types are supported.".Fmt(typeof(T).FullName, Field.Name, KeyType));
+
+                            if (!ValueType.IsEnum && ValueType != typeof(string) && !IsIntegerType(ValueType) && !IsDecimalType(ValueType) &&
                                 ValueType != typeof(bool) && ValueType != typeof(DateTime) && ValueType != typeof(XElement))
                                 XMLMethod = XMLMethod.MakeGenericMethod(ValueType);
 
@@ -200,23 +201,21 @@ namespace RT.Util.XMLClassify
                                 if (KeyType != null)
                                 {
                                     var KeyAttr = ItemTag.Attribute("key");
-                                    try { Key = KeyType == typeof(int) ? (object) int.Parse(KeyAttr.Value) : KeyAttr.Value; }
+                                    try { Key = IsIntegerType(KeyType) ? (object) ParseIntBoolOrDateTime(KeyType, KeyAttr.Value) : KeyAttr.Value; }
                                     catch { continue; }
                                 }
                                 var NullAttr = ItemTag.Attribute("null");
                                 if (NullAttr == null)
                                 {
-                                    if (ValueType.IsEnum || ValueType == typeof(string) || ValueType == typeof(int) ||
+                                    if (ValueType.IsEnum || ValueType == typeof(string) || IsIntegerType(ValueType) || IsDecimalType(ValueType) ||
                                         ValueType == typeof(bool) || ValueType == typeof(DateTime))
                                     {
                                         var ValueAttr = ItemTag.Attribute("value");
                                         try
                                         {
-                                            Value = Field.FieldType.IsEnum ? (object) ValueAttr.Value.ToStaticValue(Field.FieldType) :
-                                                    Field.FieldType == typeof(bool) ? (object) bool.Parse(ValueAttr.Value) :
-                                                    Field.FieldType == typeof(int) ? (object) int.Parse(ValueAttr.Value) :
-                                                    Field.FieldType == typeof(DateTime) ? (object) DateTime.Parse(ValueAttr.Value) :
-                                                    ValueAttr.Value;
+                                            Value = Field.FieldType == typeof(bool) || Field.FieldType == typeof(DateTime) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType)
+                                                ? (object) ParseIntBoolOrDateTime(Field.FieldType, ValueAttr.Value)
+                                                : Field.FieldType.IsEnum ? (object) ValueAttr.Value.ToStaticValue(Field.FieldType) : ValueAttr.Value;
                                         }
                                         catch { Value = ValueType.IsValueType ? ValueType.GetConstructor(new Type[] { }).Invoke(new object[] { }) : null; }
                                     }
@@ -337,11 +336,11 @@ namespace RT.Util.XMLClassify
                 }
 
                 // Primitive types
-                else if (Field.FieldType.IsEnum || Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || Field.FieldType == typeof(int) || Field.FieldType == typeof(DateTime))
+                else if (Field.FieldType.IsEnum || Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || Field.FieldType == typeof(DateTime) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType))
                 {
                     if (Field.GetValue(SaveObject) != null)
                         XElem.SetAttributeValue(RFieldName, Field.FieldType == typeof(DateTime)
-                            ? typeof(DateTime).GetMethod("ToString", new Type[] { typeof(string) }).Invoke(Field.GetValue(SaveObject), new object[] { "u" }).ToString()
+                            ? ((DateTime) Field.GetValue(SaveObject)).ToString("u")
                             : Field.GetValue(SaveObject).ToString());
                 }
 
@@ -371,10 +370,9 @@ namespace RT.Util.XMLClassify
                     else
                     {
                         XMLMethod = XMLMethod.MakeGenericMethod(ValueType);
-                        var DateTimeMethod = ValueType == typeof(DateTime) ? typeof(DateTime).GetMethod("ToString", new Type[] { typeof(string) }) : null;
-                        if (KeyType != null && KeyType != typeof(int) && KeyType != typeof(string))
-                            throw new Exception(string.Format("The field {0}.{1} is a dictionary whose key type is {2}, but only int and string are supported.",
-                                typeof(T).FullName, Field.Name, KeyType.FullName));
+                        if (KeyType != null && KeyType != typeof(string) && !IsIntegerType(KeyType))
+                            throw new Exception("The field {0}.{1} is a dictionary whose key type is {2}, but only string and integer types are supported."
+                                .Fmt(typeof(T).FullName, Field.Name, KeyType.FullName));
                         var Enumerator = Field.FieldType.GetMethod("GetEnumerator", new Type[] { }).Invoke(Field.GetValue(SaveObject), new object[] { }) as IEnumerator;
                         Type KvpType = KeyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(KeyType, ValueType);
                         var CollectionTag = new XElement(RFieldName);
@@ -390,10 +388,10 @@ namespace RT.Util.XMLClassify
                                 Subtag = new XElement("item");
                                 Subtag.SetAttributeValue("null", 1);
                             }
-                            else if (ValueType.IsEnum || ValueType == typeof(bool) || ValueType == typeof(int) || ValueType == typeof(string) || ValueType == typeof(DateTime))
+                            else if (ValueType.IsEnum || ValueType == typeof(bool) || IsIntegerType(ValueType) || IsDecimalType(ValueType) || ValueType == typeof(string) || ValueType == typeof(DateTime))
                             {
                                 Subtag = new XElement("item");
-                                Subtag.SetAttributeValue("value", ValueType == typeof(DateTime) ? DateTimeMethod.Invoke(Value, new object[] { "u" }).ToString() : Value);
+                                Subtag.SetAttributeValue("value", ValueType == typeof(DateTime) ? ((DateTime) Value).ToString("u") : Value.ToString());
                             }
                             else
                                 Subtag = (XElement) XMLMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
@@ -407,6 +405,22 @@ namespace RT.Util.XMLClassify
             }
 
             return XElem;
+        }
+
+        private static object ParseIntBoolOrDateTime(Type type, string StringToParse)
+        {
+            var met = type.GetMethods().Where(m => m.Name == "Parse" && m.IsStatic && m.GetParameters().Count() == 1 && m.GetParameters().First().ParameterType == typeof(string)).First();
+            return met.Invoke(null, new object[] { StringToParse });
+        }
+
+        private static bool IsIntegerType(Type t)
+        {
+            return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
+        }
+
+        private static bool IsDecimalType(Type t)
+        {
+            return t == typeof(float) || t == typeof(double) || t == typeof(decimal);
         }
     }
 

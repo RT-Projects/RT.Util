@@ -22,6 +22,7 @@ namespace RT.Util
     /// <summary>
     /// Abstract base class for all loggers. Implements some common functionality.
     /// </summary>
+    [Serializable]
     public abstract class LoggerBase
     {
         /// <summary>
@@ -238,6 +239,7 @@ namespace RT.Util
     /// Implements a logger which outputs messages to the console, word-wrapping
     /// long messages. Can use different colors for the different message types.
     /// </summary>
+    [Serializable]
     public class ConsoleLogger : LoggerBase
     {
         /// <summary>
@@ -307,6 +309,7 @@ namespace RT.Util
     /// Implements a logger which puts messages into any <see cref="Stream"/> by
     /// creating a TextWriter wrapper around it.
     /// </summary>
+    [Serializable]
     public class StreamLogger : LoggerBase
     {
         private Stream underlyingStream = null;
@@ -366,6 +369,7 @@ namespace RT.Util
     /// underlying loggers can be configured as necessary; their settings will be
     /// respected.
     /// </summary>
+    [Serializable]
     public class MulticastLogger : LoggerBase
     {
         /// <summary>

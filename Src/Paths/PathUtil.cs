@@ -236,7 +236,7 @@ namespace RT.Util
         /// Joins the two paths using the OS separator character. If the second path is absolute,
         /// only the second path is returned. Identical to <see cref="Path.Combine"/>.
         /// </summary>
-        public static string Join(string path1, string path2)
+        public static string Combine(string path1, string path2)
         {
             return Path.Combine(path1, path2);
         }
@@ -245,11 +245,11 @@ namespace RT.Util
         /// Joins multiple paths using the OS separator character. If any of the paths is absolute,
         /// all preceding paths are discarded.
         /// </summary>
-        public static string Join(string path1, string path2, params string[] morepaths)
+        public static string Combine(string path1, string path2, params string[] morepaths)
         {
-            string result = Join(path1, path2);
+            string result = Combine(path1, path2);
             foreach (string p in morepaths)
-                result = Join(result, p);
+                result = Combine(result, p);
             return result;
         }
 
