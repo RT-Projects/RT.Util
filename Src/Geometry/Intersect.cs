@@ -74,8 +74,8 @@ namespace RT.Util.Geometry
             // The following expressions come up a lot in the solution, so simplify using them.
             double dx = line.End.X - line.Start.X;
             double dy = line.End.Y - line.Start.Y;
-            double ax = line.Start.X - circle.Center.X;
-            double ay = line.Start.Y - circle.Center.Y;
+            double ax = -line.Start.X + circle.Center.X;
+            double ay = -line.Start.Y + circle.Center.Y;
 
             /// Solve simultaneously for l:
             /// Eq of a line:    x = sx + l * dx
@@ -102,6 +102,11 @@ namespace RT.Util.Geometry
             }
         }
 
+        /// <summary>
+        /// Finds the points of intersection between a line and a circle. The results
+        /// are two lambdas along the line, one for each point, or NaN if there is no
+        /// intersection.
+        /// </summary>
         public static void LineWithCircle(EdgeD line, CircleD circle,
                                           out double lambda1, out double lambda2)
         {
