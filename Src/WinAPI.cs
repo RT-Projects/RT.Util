@@ -21,7 +21,7 @@ namespace RT.Util
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-        #region Enums / flags
+        #region Enums / flags / consts
 
         /// <summary>Specifies a sound to be played back when displaying a message dialog.</summary>
         public enum MessageBeepType
@@ -51,6 +51,21 @@ namespace RT.Util
             Inherit=0x80000000,
             All=0x0000001F
         }
+
+        // Low-Level Keyboard Constants
+        public const int HC_ACTION       = 0;
+        public const int LLKHF_EXTENDED  = 0x1;
+        public const int LLKHF_INJECTED  = 0x10;
+        public const int LLKHF_ALTDOWN   = 0x20;
+        public const int LLKHF_UP        = 0x80;
+
+        // Virtual Keys
+        public const int VK_TAB     = 0x9;
+        public const int VK_CONTROL = 0x11;
+        public const int VK_ESCAPE  = 0x1B;
+        public const int VK_DELETE  = 0x2E;
+
+        public const int WH_KEYBOARD_LL = 13;
 
         #endregion
 
@@ -84,6 +99,21 @@ namespace RT.Util
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst=260)]
             public string szExeFile;
         }
+
+        public struct KBDLLHOOKSTRUCT
+        {
+            public int vkCode;
+            public int scanCode;
+            public int flags;
+            public int time;
+            public int dwExtraInfo;
+        }
+
+        #endregion
+
+        #region Delegates
+
+        public delegate int KeyboardHookDelegate(int Code, int wParam, WinAPI.KBDLLHOOKSTRUCT lParam);
 
         #endregion
 
@@ -120,6 +150,21 @@ namespace RT.Util
         [DllImport("kernel32.dll", SetLastError=true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("user32.dll")]
+        public static extern int UnhookWindowsHookEx(int hHook);
+
+        [DllImport("user32.dll", EntryPoint="SetWindowsHookExA")]
+        public static extern int SetWindowsHookEx(int idHook, KeyboardHookDelegate lpfn, int hmod, int dwThreadId);
+
+        [DllImport("user32.dll")]
+        public static extern int GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        public static extern int CallNextHookEx(int hHook, int nCode, int wParam, KBDLLHOOKSTRUCT lParam);
+
+        [DllImport("user32.dll")]
+        public static extern int GetLastError();
 
         #endregion
 

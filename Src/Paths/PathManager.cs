@@ -42,6 +42,9 @@ namespace RT.Util.Paths
         /// </summary>
         public List<PathInfo> Paths;
 
+        /// <summary>
+        /// Creates a new instance of this class, copying all the included/excluded paths to it.
+        /// </summary>
         public object Clone()
         {
             PathManager PM = new PathManager();

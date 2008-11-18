@@ -4,13 +4,19 @@ using System.Windows.Forms;
 
 namespace RT.Util
 {
+    /// <summary>Represents a path-related exception.</summary>
     public class PathException: RTException
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         public PathException() : base() { }
         public PathException(string message) : base(message) { }
         public PathException(string message, params object[] args) : base(message, args) { }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
+    /// <summary>
+    /// Provides path-related utilities.
+    /// </summary>
     public static class PathUtil
     {
         /// <summary>

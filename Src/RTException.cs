@@ -38,11 +38,17 @@ namespace RT.Util
         {
         }
 
+        /// <summary>
+        /// A non-formatting constructor: simply uses the specified message.
+        /// </summary>
         public RTException(string message)
         {
             _message = message;
         }
 
+        /// <summary>
+        /// A non-formatting constructor: simply uses the specified message.
+        /// </summary>
         public RTException(string message, Exception innerException)
             : base(null, innerException)
         {

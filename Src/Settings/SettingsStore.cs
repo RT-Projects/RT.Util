@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Text.RegularExpressions;
 
 namespace RT.Util.Settings
 {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+    /// <summary>
+    /// THIS STUFF IS NOT FINISHED OR FULLY THOUGHT THROUGH.
+    /// Think carefully before using it...
+    /// </summary>
     public abstract class SettingsStore
     {
         [Serializable]
@@ -264,4 +266,5 @@ namespace RT.Util.Settings
 
         #endregion
     }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 
 namespace RT.Util.Streams
@@ -51,9 +48,14 @@ namespace RT.Util.Streams
 
         private Stream stream = null;
 
+        /// <summary>
+        /// The underlying stream to/from which writing/reading is performed.
+        /// </summary>
         public virtual Stream BaseStream { get { return stream; } }
 
         private CRC32Stream() { }
+
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
         public CRC32Stream(Stream stream)
         {
@@ -98,6 +100,10 @@ namespace RT.Util.Streams
             }
         }
 
+        /// <summary>
+        /// Reads a chunk of bytes from the underlying stream. Updates the CRC with the
+        /// data read.
+        /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
             int numread = stream.Read(buffer, offset, count);
@@ -118,6 +124,10 @@ namespace RT.Util.Streams
             stream.SetLength(value);
         }
 
+        /// <summary>
+        /// Writes a chunk of bytes to the underlying stream. Updates the CRC with the
+        /// data written.
+        /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
             stream.Write(buffer, offset, count);
@@ -126,6 +136,11 @@ namespace RT.Util.Streams
                 crc = poly[(crc ^ (buffer[i])) & 0xFF] ^ (crc >> 8);
         }
 
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+
+        /// <summary>
+        /// Gets the current value of the CRC32 for all the bytes that passed through this stream.
+        /// </summary>
         public uint CRC
         {
             get

@@ -10,9 +10,12 @@ namespace RT.Util.Settings
 {
     /// <summary>
     /// A text file settings store.
+    /// THIS STUFF IS NOT FINISHED OR FULLY THOUGHT THROUGH.
+    /// Think carefully before using it...
     /// </summary>
     public class SettingsTextFile : SettingsStore
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         /// <summary>
         /// Loads the settings from a file in the application directory
         /// </summary>
@@ -138,5 +141,6 @@ namespace RT.Util.Settings
             return val;
         }
 
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }
