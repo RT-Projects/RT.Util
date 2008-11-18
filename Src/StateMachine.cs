@@ -5,6 +5,17 @@ using RT.Util.Collections;
 
 namespace RT.Util.FSM
 {
+    /// <summary>
+    /// Represents a finite state machine. Terse overview: each state is represented by a static class.
+    /// (marked with <see cref="FsmStateAttribute"/> and expected to implement certain methods).
+    /// The FSM receives inputs via "events", which occur at a specified point in time
+    /// (some time in the future or "ASAP"). Events, when their time comes, get sent to the
+    /// class representing the current state. The class determines which state to transition to,
+    /// if at all.
+    /// 
+    /// NOTE: the implementation looks a bit contrived, do not use for new stuff without
+    /// thoroughly reviewing this.
+    /// </summary>
     public class StateMachine
     {
         /// <summary>
@@ -164,10 +175,16 @@ namespace RT.Util.FSM
         }
     }
 
+    /// <summary>
+    /// Represents a "state entered" event.
+    /// </summary>
     public class FsmEvent_Entered
     {
     }
 
+    /// <summary>
+    /// Represents a user defined event.
+    /// </summary>
     public class FsmEvent_User
     {
         /// <summary>
@@ -235,30 +252,4 @@ namespace RT.Util.FSM
     public class FsmStateAttribute : Attribute
     {
     }
-
-
-    // Start state
-    // States
-    // FSM is made of states, with transisions defined between them. Ideally all
-    // transitions would be defined in terms of what inputs are seen, but in practice
-    // some code needs to be run to determine precisely whether a transition is to take
-    // place. Because of this, inputs are sent to the current state, which has a function
-    // to determine what transition to take.
-    // 
-    // States have event handlers for the following events:
-    // * input received (to determine transition)
-    // * state entered (executed when a state becomes the current state)
-    // * state exited (when a state stops being the current state)
-    // 
-    // Both Entered & Exited get the previous/next state information. A transition happens
-    // as follows:
-    // 
-    // * Old.BeforeExit
-    // * New.BeforeEnter
-    // * State changed officially
-    // * New.AfterEnter
-    // * Old.AfterExit
-    // 
-    // Inputs
-    // Transitions
 }

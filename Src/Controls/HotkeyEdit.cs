@@ -36,26 +36,42 @@ namespace RT.Util.Controls
             set { FOneKeyOnly = value; }
         }
 
+        /// <summary>
+        /// Returns true if the control does not hold a shortcut combination
+        /// (for example, because the user didn't press anything).
+        /// </summary>
         public bool ShortcutNone
         {
             get { return LastNone; }
         }
 
+        /// <summary>
+        /// Returns true if the shortcut combination includes Ctrl.
+        /// </summary>
         public bool ShortcutCtrl
         {
             get { return LastCtrl; }
         }
 
+        /// <summary>
+        /// Returns true if the shortcut combination includes Alt.
+        /// </summary>
         public bool ShortcutAlt
         {
             get { return LastAlt; }
         }
 
+        /// <summary>
+        /// Returns true if the shortcut combination includes Shift.
+        /// </summary>
         public bool ShortcutShift
         {
             get { return LastShift; }
         }
 
+        /// <summary>
+        /// Returns the main shortcut key.
+        /// </summary>
         public Keys ShortcutKey
         {
             get { return LastKey; }
@@ -99,6 +115,7 @@ namespace RT.Util.Controls
             SelectionStart = s.Length;
         }
 
+        /// <summary>Captures key presses and updates the control's state accordingly.</summary>
         protected override void OnKeyDown(KeyEventArgs e)
         {
             if (((e.KeyCode == Keys.ShiftKey) || (e.KeyCode == Keys.ControlKey) || (e.KeyCode == Keys.Menu)) && (!FOneKeyOnly)) {
@@ -124,6 +141,7 @@ namespace RT.Util.Controls
             e.Handled = true;
         }
 
+        /// <summary>Captures key presses and updates the control's state accordingly.</summary>
         protected override void OnKeyUp(KeyEventArgs e)
         {
             // Update current modifiers state
@@ -138,6 +156,7 @@ namespace RT.Util.Controls
             e.Handled = true;
         }
 
+        /// <summary>Captures key presses and updates the control's state accordingly.</summary>
         protected override void OnKeyPress(KeyPressEventArgs e)
         {
             e.Handled = true;

@@ -1,19 +1,22 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RT.Util.Geometry
 {
     /// <summary>
-    /// A double-precision rectangle class which supports intersect tests.
+    /// A double-precision rectangle struct, representing an axis-aligned rectangle.
     /// </summary>
     public struct RectangleD:IEquatable<RectangleD>
     {
+        /// <summary>X coordinate of the minimal-X boundary</summary>
         public double X;
+        /// <summary>Y coordinate of the minimal-Y boundary</summary>
         public double Y;
+        /// <summary>The width of the rectangle.</summary>
         public double Width;
+        /// <summary>The height of the rectangle.</summary>
         public double Height;
 
+        /// <summary>Constructs a new rectangle.</summary>
         public RectangleD(double X, double Y, double Width, double Height)
         {
             this.X = X;
@@ -22,9 +25,13 @@ namespace RT.Util.Geometry
             this.Height = Height;
         }
 
+        /// <summary>Gets the X coordinate of the minimal-X boundary.</summary>
         public double Left { get { return X; } }
+        /// <summary>Gets the X coordinate of the maximal-X boundary.</summary>
         public double Top { get { return Y; } }
+        /// <summary>Gets the X coordinate of the maximal-X boundary.</summary>
         public double Right { get { return X + Width; } }
+        /// <summary>Gets the Y coordinate of the maximal-Y boundary.</summary>
         public double Bottom { get { return Y + Height; } }
 
         /// <summary>
@@ -40,35 +47,58 @@ namespace RT.Util.Geometry
                 || (r.Left <= Left && r.Right >= Right && r.Top >= Top && r.Bottom <= Bottom);
         }
 
+        /// <summary>
+        /// Returns true if the specified point is contained within the rectangle
+        /// (or lies exactly on a boundary).
+        /// </summary>
         public bool ContainsPoint(double X, double Y)
         {
             return (X >= Left) && (X <= Right) && (Y >= Top) && (Y <= Bottom);
         }
 
+        /// <summary>
+        /// Returns true if the two rectangles have identical coordinates and sizes.
+        /// </summary>
         public bool Equals(RectangleD other)
         {
             return X == other.X && Y == other.Y && Width == other.Width && Height == other.Height;
         }
 
+        /// <summary>
+        /// Compares two rectangles for equality using <see cref="Equals(RectangleD)"/>.
+        /// </summary>
         public static bool operator ==(RectangleD one, RectangleD other)
         {
             return one.Equals(other);
         }
-        public static bool operator !=(RectangleD one, RectangleD other)
+
+        /// <summary>
+        /// Compares two rectangles for inequality using <see cref="Equals(RectangleD)"/>.
+        /// </summary>
+        public static bool operator!=(RectangleD one, RectangleD other)
         {
             return !one.Equals(other);
         }
 
+        /// <summary>
+        /// Returns a hash code for the rectangle.
+        /// </summary>
         public override int GetHashCode()
         {
             return ToString().GetHashCode();
         }
 
+        /// <summary>
+        /// Converts the rectangle to a string representation.
+        /// </summary>
         public override string ToString()
         {
             return "(" + Left + ", " + Top + "); W=" + Width + "; H=" + Height;
         }
 
+        /// <summary>
+        /// Compares a rectangle to any other object.
+        /// </summary>
         public override bool Equals(object obj)
         {
             if (obj is RectangleD)
