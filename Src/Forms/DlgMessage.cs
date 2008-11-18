@@ -1,12 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
-using System.Reflection;
 using System.Resources;
+using System.Windows.Forms;
 
 namespace RT.Util.Dialogs
 {
@@ -292,16 +287,16 @@ namespace RT.Util.Dialogs
             switch (Type)
             {
                 case DlgType.Info:
-                    WinAPI.MessageBeep(MessageBeepType.Information);
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
                     break;
                 case DlgType.Question:
-                    WinAPI.MessageBeep(MessageBeepType.Question);
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
                     break;
                 case DlgType.Warning:
-                    WinAPI.MessageBeep(MessageBeepType.Warning);
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
                     break;
                 case DlgType.Error:
-                    WinAPI.MessageBeep(MessageBeepType.Error);
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
                     break;
             }
 
