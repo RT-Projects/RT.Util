@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
-using RT.Util.Text;
 using System.Security.Permissions;
+using RT.Util.Text;
 
 namespace RT.Util
 {
@@ -541,6 +540,7 @@ namespace RT.Util
         }
     }
 
+    /// <summary>Enumerates the possible command line option types.</summary>
     public enum CmdOptionType
     {
         /// <summary>This option can either be set or not set, and does not allow a value to be specified.</summary>
@@ -551,6 +551,7 @@ namespace RT.Util
         List
     }
 
+    /// <summary>Lists flags that determine the behaviour of an option.</summary>
     [Flags]
     public enum CmdOptionFlags
     {
@@ -562,6 +563,7 @@ namespace RT.Util
         IsHelp = 2,
     }
 
+    /// <summary>Lists flags that determine the behaviour of the parser.</summary>
     [Flags]
     public enum CmdParse
     {

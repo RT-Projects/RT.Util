@@ -201,7 +201,7 @@ namespace RT.Util.Collections
         /// Creates a RVariant from the specified XmlDocument. Does not tolerate
         /// errors - will throw an exception if the XML is not a valid representation
         /// of a RVariant. The name of the root element will be stored in the
-        /// <see cref="rootNodeName"/> parameter.
+        /// "rootNodeName" parameter.
         /// </summary>
         public RVariant(XmlDocument document, out string rootNodeName)
         {
@@ -423,6 +423,10 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Compares RVariant to another object. If the RVariant and the object are not
+        /// null, uses <see cref="Equals(object)"/> to do the comparison.
+        /// </summary>
         public static bool operator==(RVariant a, object b)
         {
             if ((object)a == null && (object)b == null)
@@ -435,6 +439,9 @@ namespace RT.Util.Collections
                 return a.Equals(b);
         }
 
+        /// <summary>
+        /// The opposite of <see cref="operator=="/>.
+        /// </summary>
         public static bool operator!=(RVariant a, object b)
         {
             if ((object)a == null && (object)b == null)
@@ -545,6 +552,10 @@ namespace RT.Util.Collections
 
         #region From RVariant
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a bool. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator bool(RVariant value)
         {
             bool r;
@@ -556,6 +567,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Boolean);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a byte. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator byte(RVariant value)
         {
             byte r;
@@ -567,6 +582,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Byte);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to an sbyte. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator sbyte(RVariant value)
         {
             sbyte r;
@@ -578,6 +597,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.SByte);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a short. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator short(RVariant value)
         {
             short r;
@@ -589,6 +612,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Int16);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a ushort. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator ushort(RVariant value)
         {
             ushort r;
@@ -600,6 +627,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.UInt16);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to an int. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator int(RVariant value)
         {
             int r;
@@ -611,6 +642,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Int32);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a uint. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator uint(RVariant value)
         {
             uint r;
@@ -622,6 +657,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.UInt32);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a long. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator long(RVariant value)
         {
             long r;
@@ -633,6 +672,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Int64);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a ulong. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator ulong(RVariant value)
         {
             ulong r;
@@ -644,6 +687,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.UInt64);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a float. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator float(RVariant value)
         {
             float r;
@@ -655,6 +702,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Single);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a double. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator double(RVariant value)
         {
             double r;
@@ -666,6 +717,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Double);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a decimal. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator decimal(RVariant value)
         {
             decimal r;
@@ -677,6 +732,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Decimal);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a DateTime. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator DateTime(RVariant value)
         {
             DateTime r;
@@ -688,6 +747,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.DateTime);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a char. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator char(RVariant value)
         {
             char r;
@@ -699,6 +762,10 @@ namespace RT.Util.Collections
                 throw new RVariantConvertException(value, TypeCode.Char);
         }
 
+        /// <summary>
+        /// Provides an implicit conversion of the RVariant to a string. Throws an appropriate
+        /// exception if the conversion is not possible.
+        /// </summary>
         public static implicit operator string(RVariant value)
         {
             string r;
@@ -714,76 +781,91 @@ namespace RT.Util.Collections
 
         #region To RVariant
 
+        /// <summary>Provides an implicit conversion of a bool to RVariant.</summary>
         public static implicit operator RVariant(bool value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a byte to RVariant.</summary>
         public static implicit operator RVariant(byte value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a sbyte to RVariant.</summary>
         public static implicit operator RVariant(sbyte value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a short to RVariant.</summary>
         public static implicit operator RVariant(short value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a ushort to RVariant.</summary>
         public static implicit operator RVariant(ushort value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of an int to RVariant.</summary>
         public static implicit operator RVariant(int value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a uint to RVariant.</summary>
         public static implicit operator RVariant(uint value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a long to RVariant.</summary>
         public static implicit operator RVariant(long value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a ulong to RVariant.</summary>
         public static implicit operator RVariant(ulong value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a float to RVariant.</summary>
         public static implicit operator RVariant(float value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a double to RVariant.</summary>
         public static implicit operator RVariant(double value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a decimal to RVariant.</summary>
         public static implicit operator RVariant(decimal value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a DateTime to RVariant.</summary>
         public static implicit operator RVariant(DateTime value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a char to RVariant.</summary>
         public static implicit operator RVariant(char value)
         {
             return new RVariant((object)value);
         }
 
+        /// <summary>Provides an implicit conversion of a string to RVariant.</summary>
         public static implicit operator RVariant(string value)
         {
             return new RVariant((object)value);
@@ -1153,6 +1235,9 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Loads an XML file into this RVariant, deleting all existing values and addind new ones as appropriate.
+        /// </summary>
         public string LoadFromXmlFile(string fileName)
         {
             System.Xml.XmlDocument xml = new System.Xml.XmlDocument();
@@ -1161,6 +1246,11 @@ namespace RT.Util.Collections
             return xml.DocumentElement.Name;
         }
 
+        /// <summary>
+        /// Saves this RVariant to an XML file.
+        /// </summary>
+        /// <param name="fileName">File name</param>
+        /// <param name="rootElementName">The name of the root element</param>
         public void SaveToXmlFile(string fileName, string rootElementName)
         {
             ToXml(rootElementName).Save(fileName);
@@ -1288,15 +1378,18 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantException : RTException
     {
+        /// <summary></summary>
         public RVariantException()
         {
         }
 
+        /// <summary></summary>
         public RVariantException(string message) :
             base(message)
         {
         }
 
+        /// <summary></summary>
         public RVariantException(string message, params object[] args) :
             base(message, args)
         {
@@ -1309,6 +1402,7 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantConvertException : RVariantException
     {
+        /// <summary></summary>
         public RVariantConvertException(RVariant variant, TypeCode desiredType)
         {
             _message = string.Format("Location \"{0}\": value \"{1}\" cannot be converted to type \"{2}\"",
@@ -1322,6 +1416,7 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantNotFoundException : RVariantException
     {
+        /// <summary></summary>
         public RVariantNotFoundException(RVariant variant, TypeCode desiredType)
         {
             if (variant.Kind != RVariantKind.Value)
@@ -1331,6 +1426,7 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary></summary>
         public RVariantNotFoundException(RVariant variant, RVariantKind desiredKind)
         {
             _message = string.Format("Location \"{0}\": expected a variant of kind {1}",
@@ -1343,11 +1439,13 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantXmlException : RVariantException
     {
+        /// <summary></summary>
         public RVariantXmlException(string message) :
             base(message)
         {
         }
 
+        /// <summary></summary>
         public RVariantXmlException(string message, params object[] args) :
             base(message, args)
         {

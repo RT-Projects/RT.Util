@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Diagnostics;
+using System.Threading;
 
 namespace RT.Util
 {
@@ -17,18 +16,39 @@ namespace RT.Util
         /// </summary>
         public class FaultEntry
         {
+            /// <summary>The time at which the fault was recorded</summary>
             public DateTime Timestamp;
+            /// <summary>The message that was provided</summary>
             public string Message;
+            /// <summary>Name of the code file containing the line of code which reported the fault</summary>
             public string Filename;
+            /// <summary>Name of the method which reported the fault</summary>
             public string Method;
+            /// <summary>The number of the line which reported the fault</summary>
             public int LineNumber;
+            /// <summary>Identifies the thread reporting the fault</summary>
             public Thread Thread;
 
+            /// <summary>
+            /// Converts an entry to a human-readable string describing the fault.
+            /// </summary>
             public override string ToString()
             {
                 return ToString("{time}: {file}[{line}] - fault in {func}. {msg}{thread}");
             }
 
+            /// <summary>
+            /// Converts an entry to a human-readable string describing the fault, using the specified format string.
+            /// The following fields are substituted with values:
+            /// <list type="bullet">
+            /// <item>{time}</item>
+            /// <item>{file}</item>
+            /// <item>{line}</item>
+            /// <item>{func}</item>
+            /// <item>{msg}</item>
+            /// <item>{thread}</item>
+            /// </list>
+            /// </summary>
             public string ToString(string fmt)
             {
                 string s = fmt;

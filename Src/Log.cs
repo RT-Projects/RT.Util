@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using RT.Util.ExtensionMethods;
 
@@ -260,6 +259,9 @@ namespace RT.Util
         /// </summary>
         public bool ErrorsToStdErr = true;
 
+        /// <summary>
+        /// Constructs a new console logger. Initialises message colors to defaults.
+        /// </summary>
         public ConsoleLogger()
         {
             // Default colors
@@ -269,6 +271,7 @@ namespace RT.Util
             MsgTypeColor[LogType.Debug] = ConsoleColor.Green;
         }
 
+        /// <summary>Logs a message to the console.</summary>
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
             lock (_lock_log)
@@ -315,10 +318,12 @@ namespace RT.Util
         private Stream underlyingStream = null;
         private StreamWriter textStream;
 
+        /// <summary>Creates a new instance.</summary>
         public StreamLogger()
         {
         }
 
+        /// <summary>Creates a new instance.</summary>
         public StreamLogger(Stream underlyingStream)
         {
             Stream = underlyingStream;
@@ -348,6 +353,7 @@ namespace RT.Util
             get { return textStream; }
         }
 
+        /// <summary>Logs a message to the underlying stream.</summary>
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
             lock (_lock_log)
@@ -378,6 +384,7 @@ namespace RT.Util
         /// </summary>
         public readonly Dictionary<string, LoggerBase> Loggers = new Dictionary<string, LoggerBase>();
 
+        /// <summary>Logs a message to the underlying loggers.</summary>
         public override void Log(uint verbosity, LogType type, string message, params object[] args)
         {
             lock (_lock_log)
@@ -401,6 +408,7 @@ namespace RT.Util
             return false;
         }
 
+        /// <summary>This method is not supported on multicast loggers.</summary>
         public override void ConfigureVerbosity(string settings)
         {
             throw new InvalidOperationException("The verbosity of the MulticastLogger cannot be configured. You should configure the verbosity of the underlying loggers instead.");

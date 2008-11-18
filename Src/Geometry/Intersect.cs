@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util.Geometry
 {
@@ -77,13 +74,13 @@ namespace RT.Util.Geometry
             double ax = -line.Start.X + circle.Center.X;
             double ay = -line.Start.Y + circle.Center.Y;
 
-            /// Solve simultaneously for l:
-            /// Eq of a line:    x = sx + l * dx
-            ///                  y = sy + l * dy
-            /// Eq of a circle:  (x - cx)^2 + (y - cy)^2 = r^2
-            /// 
-            /// Eventually we get a standard quadratic equation in l with the
-            /// following coefficients:
+            // Solve simultaneously for l:
+            // Eq of a line:    x = sx + l * dx
+            //                  y = sy + l * dy
+            // Eq of a circle:  (x - cx)^2 + (y - cy)^2 = r^2
+            // 
+            // Eventually we get a standard quadratic equation in l with the
+            // following coefficients:
             double a = dx*dx + dy*dy;
             double b = -2 * (ax*dx + ay*dy);
             double c = ax*ax + ay*ay - circle.Radius*circle.Radius;

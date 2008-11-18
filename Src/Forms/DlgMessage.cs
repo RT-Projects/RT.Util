@@ -91,6 +91,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         public static string DefaultOKCaption = "&OK";
 
+        /// <summary>Creates an instance of the DlgMessage form.</summary>
         public DlgMessage()
         {
             InitializeComponent();
