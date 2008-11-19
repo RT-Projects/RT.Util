@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Net;
-using System.Web;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Threading;
+using System.Web;
 
 namespace RT.Util.Web
 {
+    /// <summary>
+    /// Helper class for interacting with a web site via HTTP.
+    /// </summary>
     public class Http
     {
         /// <summary>
@@ -68,6 +71,8 @@ namespace RT.Util.Web
 
         #region Constructors
 
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+
         public Http()
         {
         }
@@ -82,6 +87,8 @@ namespace RT.Util.Web
             this.SiteUrl = SiteUrl;
             this.UserAgent = UserAgent;
         }
+
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         #endregion
 
@@ -241,12 +248,20 @@ namespace RT.Util.Web
             return LastResult;
         }
 
+        /// <summary>
+        /// Performs a GET request for the specified Url.
+        /// Returns true on success.
+        /// </summary>
         public bool Get(string Url)
         {
             RequestCounter++;
             return DoRequest(Url, true, null, null, MaxRedirectCount);
         }
 
+        /// <summary>
+        /// Performs a POST request for the specified Url, passing the specified arguments.
+        /// Returns true on success.
+        /// </summary>
         public bool Post(string Url, Dictionary<string, string> Params)
         {
             RequestCounter++;
