@@ -46,6 +46,13 @@ namespace RT.Util.Drawing
             g.DrawImage(Image, DestRect, 0, 0, Image.Width, Image.Height, GraphicsUnit.Pixel, ImageAttributes);
         }
 
+        /// <summary>Given a two-dimensional array of booleans, generates the "outline" of the region described by the booleans set to true.
+        /// If there are several disjoint regions, several separate outlines are generated.</summary>
+        /// <param name="Input">The input array of booleans to generate the outline from.</param>
+        /// <returns>An array of paths, where each path is an array of points. The co-ordinates of the points are the indexes in the input array.</returns>
+        /// <example>An input array full of booleans set to false generates an empty output array.
+        /// 
+        /// An input array full of booleans set to true generates a single output path which describes the complete rectangle.</example>
         public static Point[][] BoolsToPaths(Virtual2DArray<bool> Input)
         {
             List<List<Point>> ActiveSegments = new List<List<Point>>();
