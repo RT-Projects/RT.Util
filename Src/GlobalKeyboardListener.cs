@@ -6,9 +6,13 @@ namespace RT.Util
 {
     /// <summary>
     /// Listens for a global keyboard shortcut and fires an event when the user presses it.
+    /// 
+    /// WARNING: This code is unfinished; review carefully before using in new stuff.
     /// </summary>
     public class GlobalKeyboardListener
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+
         private int KeyboardHandle;
 
         /*
@@ -94,5 +98,7 @@ namespace RT.Util
                 WinAPI.UnhookWindowsHookEx(KeyboardHandle);
             }
         }
+
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }

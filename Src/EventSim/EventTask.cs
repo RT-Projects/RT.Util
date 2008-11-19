@@ -1,9 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RT.Util.EventSim
 {
+    /// <summary>
+    /// Base class for implementing a Task (which is a piece of C# code) with
+    /// delays injected as appropriate. The descendant implements Process, and
+    /// yield returns a delay in simulation time units. The <see cref="EventTask"/>
+    /// will schedule an event with the <see cref="EventEngine"/> to signify that
+    /// the delay has elapsed, at which point the process will be resumed.
+    /// Thus several tasks can be simulated to be happening "in parallel" in the
+    /// simulated universe, with known and strictly defined delays. Moreover,
+    /// when all tasks are sleeping the simulation can simply "skip over" this
+    /// interval of no activity.
+    /// </summary>
     public abstract class EventTask
     {
         private IEnumerator<double> TheProc;
@@ -28,8 +38,14 @@ namespace RT.Util.EventSim
             Engine.AddEvent(CbkEvent, Engine.Time + TheProc.Current);
         }
 
+        /// <summary>
+        /// Override to implement the task that needs to be simulated.
+        /// </summary>
         public abstract IEnumerator<double> Process();
 
+        /// <summary>
+        /// Starts the task running in the specified <see cref="EventEngine"/>.
+        /// </summary>
         public void Start(EventEngine Engine)
         {
             if (TheProc != null)
@@ -53,6 +69,10 @@ namespace RT.Util.EventSim
             Engine.AddEvent(TheEvent, Engine.Time + TheProc.Current);
         }
 
+        /// <summary>
+        /// Stops/resets the task, ready to be started again if necessary. If the task
+        /// is already stopped throws an exception.
+        /// </summary>
         public void StopReset()
         {
             if (TheProc == null)

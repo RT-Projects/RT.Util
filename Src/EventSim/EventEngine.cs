@@ -1,9 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RT.Util.EventSim
 {
+    /// <summary>
+    /// Implements an event-driven time-based simulation.
+    /// The idea is to "skip over" chunks of time where nothing of interest happens.
+    /// This is done by maintaining a queue of known events, each with a simulation time
+    /// at which the event will occur. Whenever the Event "occurs", its callback is invoked.
+    /// This can insert new events in response, however these must occur in the future.
+    /// Thus, if the first queued event is in 3.5 seconds of simulated time, the simulation
+    /// can jump straight over the 3.5 seconds because there is no way any other events of
+    /// interest could have occurred in this time.
+    /// </summary>
     public class EventEngine
     {
         /// <summary>
