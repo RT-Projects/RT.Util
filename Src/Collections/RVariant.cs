@@ -1236,7 +1236,7 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
-        /// Loads an XML file into this RVariant, deleting all existing values and addind new ones as appropriate.
+        /// Loads an XML file into this RVariant, deleting all existing values and adding new ones as appropriate.
         /// </summary>
         public string LoadFromXmlFile(string fileName)
         {

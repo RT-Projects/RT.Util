@@ -20,19 +20,18 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// For each process in the system, enumerates a tuple of parent-process-id,process-id.
         /// </summary>
-        public static IEnumerable<Tuple<int,int>> ParentChildProcessIds()
+        public static IEnumerable<Tuple<int, int>> ParentChildProcessIds()
         {
             WinAPI.PROCESSENTRY32 procEntry = new WinAPI.PROCESSENTRY32();
-            procEntry.dwSize = (uint)Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32));
-            IntPtr handleToSnapshot = WinAPI.CreateToolhelp32Snapshot((uint)WinAPI.SnapshotFlags.Process, 0);
+            procEntry.dwSize = (uint) Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32));
+            IntPtr handleToSnapshot = WinAPI.CreateToolhelp32Snapshot((uint) WinAPI.SnapshotFlags.Process, 0);
             try
             {
                 if (WinAPI.Process32First(handleToSnapshot, ref procEntry))
                 {
                     do
-                    {
-                        yield return new Tuple<int, int>((int)procEntry.th32ParentProcessID, (int)procEntry.th32ProcessID);
-                    } while (WinAPI.Process32Next(handleToSnapshot, ref procEntry));
+                        yield return new Tuple<int, int>((int) procEntry.th32ParentProcessID, (int) procEntry.th32ProcessID);
+                    while (WinAPI.Process32Next(handleToSnapshot, ref procEntry));
                 }
                 else
                 {
@@ -45,9 +44,9 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>
-        /// Returns a list of all child processes of this process, enumerated recursively.
-        /// </summary>
+        /// <summary>Returns a list of child processes of this process.</summary>
+        /// <param name="process">The process to return the children of.</param>
+        /// <param name="recursive">If true, all the children's children are included recursively. If false, only direct children are included.</param>
         public static List<int> ChildProcessIds(this Process process, bool recursive)
         {
             Dictionary<int, List<int>> tree = new Dictionary<int, List<int>>();
@@ -81,8 +80,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Kills this process and all children. Returns a list of Process instances
-        /// containing this process as well as all children. Swallows all exceptions
+        /// Kills this process and all children. Swallows all exceptions
         /// and does not wait for processes to die or check that they died.
         /// </summary>
         public static void KillWithChildren(this Process process)

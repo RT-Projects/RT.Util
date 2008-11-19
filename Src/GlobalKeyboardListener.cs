@@ -4,10 +4,14 @@ using System.Runtime.InteropServices;
 
 namespace RT.Util
 {
+    /// <summary>
+    /// Listens for a global keyboard shortcut and fires an event when the user presses it.
+    /// </summary>
     public class GlobalKeyboardListener
     {
-        public int KeyboardHandle;
+        private int KeyboardHandle;
 
+        /*
         // Implement this function to block as many
         // key combinations as you'd like
         public bool IsHooked(WinAPI.KBDLLHOOKSTRUCT Hookstruct)
@@ -41,6 +45,7 @@ namespace RT.Util
         {
             Console.WriteLine(Text);
         }
+        */
 
         public int KeyboardCallback(int Code, int wParam, WinAPI.KBDLLHOOKSTRUCT lParam)
         {

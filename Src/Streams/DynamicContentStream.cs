@@ -59,11 +59,6 @@ namespace RT.Util.Streams
             this.Buffered = Buffered;
         }
 
-        public override bool CanRead { get { return true; } }
-        public override bool CanSeek { get { return false; } }
-        public override bool CanWrite { get { return false; } }
-        public override void Flush() { }
-
         /// <summary>
         /// If true, each call to <see cref="Read"/> will move the enumerator forward as far as necessary to fill the buffer.
         /// If false, each call to <see cref="Read"/> returns only the text produced by a single MoveNext() of the enumerator.
@@ -152,6 +147,12 @@ namespace RT.Util.Streams
             }
         }
 
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        public override bool CanRead { get { return true; } }
+        public override bool CanSeek { get { return false; } }
+        public override bool CanWrite { get { return false; } }
+        public override void Flush() { }
+
         // Things you can't do
         public override long Length { get { throw new NotSupportedException(); } }
         public override long Seek(long offset, SeekOrigin origin) { throw new NotSupportedException(); }
@@ -168,5 +169,7 @@ namespace RT.Util.Streams
                 throw new NotSupportedException();
             }
         }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+
     }
 }
