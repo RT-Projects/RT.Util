@@ -259,5 +259,16 @@ namespace RT.Util
             return result;
         }
 
+        /// <summary>
+        /// Creates all directories in the path to the specified file if they don't exist.
+        /// Accepts filenames relative to the current directory.
+        /// </summary>
+        public static void CreatePathToFile(string filename)
+        {
+            string dir = Path.GetDirectoryName(Path.Combine(".", filename));
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+        }
+
     }
 }
