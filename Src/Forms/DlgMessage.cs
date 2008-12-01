@@ -28,14 +28,10 @@ namespace RT.Util.Dialogs
     }
 
     /// <summary>
-    /// The following applies to all variants of Show functions:
-    /// - If no buttons are specified, an "OK" button is displayed.
-    /// - Unless explicitly overridden, the Accept and Cancel buttons are the first and
-    ///   the last button, respectively. Prefixing a button title with a space will make
-    ///   that button the Accept button; suffix does the same for cancel button.
-    ///   Explicitly specifying a button overrides this.
+    /// This class is used by the <see cref="DlgMessage"/> class. This is the form used
+    /// for displaying the message box.
     /// </summary>
-    public partial class DlgMessage : Form
+    internal partial class DlgMessageForm : Form
     {
         #region Ugly hack, don't look (must come first so that static initialisers work well)
 
@@ -54,7 +50,7 @@ namespace RT.Util.Dialogs
             get
             {
                 if (RM == null)
-                    RM = new ResourceManager(typeof(DlgMessage));
+                    RM = new ResourceManager(typeof(DlgMessageForm));
                 // Instead of the above, which works perfectly, the autogenerator produces
                 // something more like the following (note the string!):
                 // RM = new ResourceManager("RT.Util.Dialogs.DlgMessage", typeof(DlgMessage).Assembly);
@@ -65,6 +61,9 @@ namespace RT.Util.Dialogs
         /// These are necessary because a certain scenario in VS2005 is totally impossible.
         /// ARGH without .NET Reflector there's no chance I could have figured out that VS
         /// adds some stupid .Image suffix to these images!...
+        /// ARGH 2: and the bloody names are deduced based on which class is declared first
+        /// in this source file, which is just absolutely un-fucking-believable. So merely
+        /// declaring a new empty class at the start of this file breaks the fucking resources.
         private static Bitmap bmpInfo = (Bitmap)ResourceMgr.GetObject("info.Image");
         private static Bitmap bmpQuestion = (Bitmap)ResourceMgr.GetObject("question.Image");
         private static Bitmap bmpWarning = (Bitmap)ResourceMgr.GetObject("warning.Image");
@@ -72,249 +71,30 @@ namespace RT.Util.Dialogs
 
         #endregion
 
-
         /// <summary>
         /// Change this variable to i18n'ize the default captions
         /// </summary>
-        public static string[] DefaultCaption = new string[] {
+        internal static string[] DefaultCaption = new string[] {
             "Information", "Question",
             "Warning", "Error", "" // TODO: See bug 15
         };
+
         /// <summary>
         /// Change this variable to i18n'ize the default images
         /// </summary>
-        public static Bitmap[] DefaultImage = new Bitmap[] {
+        internal static Bitmap[] DefaultImage = new Bitmap[] {
             bmpInfo, bmpQuestion, bmpWarning, bmpError, null
         };
+
         /// <summary>
         /// Change this variable to i18n'ize the default OK button text
         /// </summary>
-        public static string DefaultOKCaption = "&OK";
+        internal static string DefaultOKCaption = "&OK";
 
         /// <summary>Creates an instance of the DlgMessage form.</summary>
-        public DlgMessage()
+        internal DlgMessageForm()
         {
             InitializeComponent();
-        }
-
-        /// <summary>
-        /// Shows a dialog with the specified message and buttons. Dialog type depends
-        /// on the number of buttons: 0 or 1 are info, 2 or more are questions. Caption
-        /// depends on dialog type.
-        /// </summary>
-        public static int Show(string Message, params string[] Buttons)
-        {
-            return DoShow(Message, null, MakeType(Buttons), MakeImage(Buttons), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows a dialog with the specified message and buttons. Caption is constructed
-        /// automatically depending on dialog type.
-        /// </summary>
-        public static int Show(string Message, DlgType Type, params string[] Buttons)
-        {
-            return DoShow(Message, null, Type, MakeImage(Type), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows a dialog with the specified message, buttons and image. Custom type
-        /// is assumed (i.e. no sound, assembly title as caption).
-        /// </summary>
-        public static int Show(string Message, Bitmap Image, params string[] Buttons)
-        {
-            return DoShow(Message, null, DlgType.Custom, Image, Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows a dialog with the specified message, caption, image and buttons.
-        /// No sound will be played.
-        /// </summary>
-        public static int Show(string Message, string Caption, Bitmap Image, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Custom, Image, Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows a dialog with the specified message, caption, type and buttons.
-        /// Image is selected depending on type.
-        /// </summary>
-        public static int Show(string Message, string Caption, DlgType Type, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, Type, MakeImage(Type), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows a dialog with all the specified parameters.
-        /// </summary>
-        public static int Show(string Message, string Caption, DlgType Type, int AcceptButton, int CancelButton, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, Type, MakeImage(Type), Buttons, AcceptButton, CancelButton);
-        }
-
-        /// <summary>
-        /// Shows an Info-type message. Caption and image for info dialogs are used.
-        /// </summary>
-        public static int ShowInfo(string Message, string Caption, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Info, MakeImage(DlgType.Info), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Question-type message. Caption and image for question dialogs are used.
-        /// </summary>
-        public static int ShowQuestion(string Message, string Caption, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Question, MakeImage(DlgType.Question), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Warning-type message. Caption and image for warning dialogs are used.
-        /// </summary>
-        public static int ShowWarning(string Message, string Caption, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Warning, MakeImage(DlgType.Warning), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Error-type message. Caption and image for error dialogs are used.
-        /// </summary>
-        public static int ShowError(string Message, string Caption, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Error, MakeImage(DlgType.Error), Buttons, -1, -1);
-        }
-
-        /// <summary>
-        /// Shows an Info-type message. Image for info dialogs are used.
-        /// </summary>
-        public static int ShowInfo(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Info, MakeImage(DlgType.Info), Buttons, AcceptButton, CancelButton);
-        }
-
-        /// <summary>
-        /// Shows an Question-type message. Image for question dialogs are used.
-        /// </summary>
-        public static int ShowQuestion(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Question, MakeImage(DlgType.Question), Buttons, AcceptButton, CancelButton);
-        }
-
-        /// <summary>
-        /// Shows an Warning-type message. Image for warning dialogs are used.
-        /// </summary>
-        public static int ShowWarning(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Warning, MakeImage(DlgType.Warning), Buttons, AcceptButton, CancelButton);
-        }
-
-        /// <summary>
-        /// Shows an Error-type message. Image for error dialogs are used.
-        /// </summary>
-        public static int ShowError(string Message, string Caption, int AcceptButton, int CancelButton, params string[] Buttons)
-        {
-            return DoShow(Message, Caption, DlgType.Error, MakeImage(DlgType.Error), Buttons, AcceptButton, CancelButton);
-        }
-
-        /// <summary>
-        /// Internal routine to show the dialog and return the index of the button pressed.
-        /// Has some conventions; please make sure you read the info about each parameter.
-        /// </summary>
-        /// <param name="Message">Message to be shown. Cannot be null.</param>
-        /// <param name="Caption">Caption to be set. If null, the caption will be selected depending on dialog type.</param>
-        /// <param name="Type">Determines the sound to be played (not the image!)</param>
-        /// <param name="image">Image to be displayed. Can be null, in which case there will be no image.</param>
-        /// <param name="Buttons">An array of buttons. If empty, an "OK" button will be assumed.</param>
-        /// <param name="AcceptButton">Index of the accept button. If not valid, the last button whose title begins with a space is used. If none, first button is used.</param>
-        /// <param name="CancelButton">Index of the cancel button. If not valid, the last button whose title ends with a space is used. If none, last button is used.</param>
-        private static int DoShow(string Message, string Caption, DlgType Type, Bitmap image, string[] Buttons, int AcceptButton, int CancelButton)
-        {
-            DlgMessage M = new DlgMessage();
-
-            if (Caption == null)
-                Caption = DefaultCaption[(int)Type];
-
-            if (image!=null)
-            {
-                M.img.Image = image;
-                M.img.Visible = true;
-            }
-            M.Text = Caption;
-            M.Message.Text = Message;
-            M.AcceptButton = null;
-            M.CancelButton = null;
-
-            Button[] Btn = new Button[4];
-            Btn[0] = M.Btn0;
-            Btn[1] = M.Btn1;
-            Btn[2] = M.Btn2;
-            Btn[3] = M.Btn3;
-
-            if (Buttons.Length == 0)
-                Buttons = new string[] { DefaultOKCaption };
-            if (Buttons.Length >= Btn.Length)
-                Ut.InternalError("Too many buttons");
-
-            Button space_accept_btn = null;
-            Button space_cancel_btn = null;
-
-            for (int i=Buttons.Length-1; i>=0; i--)
-            {
-                Btn[i].Visible = true;
-                Btn[i].Text = Buttons[i].Trim();
-                Btn[i].SendToBack(); // otherwise table layout ordering is messed up
-
-                if (Buttons[i].Length > 0 && Buttons[i][0] == ' ')
-                    space_accept_btn = Btn[i];
-                if (Buttons[i].Length > 0 && Buttons[i][Buttons[i].Length-1] == ' ')
-                    space_cancel_btn = Btn[i];
-            }
-
-            if (AcceptButton >= 0 && AcceptButton < Buttons.Length)
-                M.AcceptButton = Btn[AcceptButton];
-            else if (space_accept_btn != null)
-                M.AcceptButton = space_accept_btn;
-            else
-                M.AcceptButton = Btn[0];
-
-            if (CancelButton >= 0 && CancelButton < Buttons.Length)
-                M.CancelButton = Btn[CancelButton];
-            else if (space_cancel_btn != null)
-                M.CancelButton = space_cancel_btn;
-            else
-                M.CancelButton = Btn[Buttons.Length-1];
-
-            M.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width*3/4, Screen.PrimaryScreen.WorkingArea.Height*3/4);
-
-            switch (Type)
-            {
-                case DlgType.Info:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
-                    break;
-                case DlgType.Question:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
-                    break;
-                case DlgType.Warning:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
-                    break;
-                case DlgType.Error:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
-                    break;
-            }
-
-            switch (M.ShowDialog())
-            {
-                case DialogResult.OK:
-                    return 0;
-                case DialogResult.Cancel:
-                    return 1;
-                case DialogResult.Yes:
-                    return 2;
-                case DialogResult.No:
-                    return 3;
-            }
-
-            // Can't get here
-            throw new Exception("Internal exception in Util: unreachable code");
         }
 
         private bool ButtonPressed = false;
@@ -333,24 +113,235 @@ namespace RT.Util.Dialogs
         {
             ButtonPressed = true;
         }
-
-        private static DlgType MakeType(string[] Buttons)
-        {
-            if (Buttons.Length < 2)
-                return DlgType.Info;
-            else
-                return DlgType.Question;
-        }
-
-        private static Bitmap MakeImage(string[] Buttons)
-        {
-            return DefaultImage[(int)MakeType(Buttons)];
-        }
-
-        private static Bitmap MakeImage(DlgType Type)
-        {
-            return DefaultImage[(int)Type];
-        }
-
     }
+
+    /// <summary>
+    /// Holds a number of settings that define a message dialog. Provides a method to show the
+    /// dialog represented, as well as static methods to show some common dialog kinds with
+    /// most settings at their defaults.
+    /// </summary>
+    public class DlgMessage
+    {
+        /// <summary>
+        /// Specifies the message type. This selects a sound, an image and a caption to be used
+        /// by default, unless explicitly overridden in the other fields of this class. Defaults
+        /// to <see cref="DlgType.Info"/>.
+        /// </summary>
+        public DlgType Type = DlgType.Info;
+        /// <summary>
+        /// Specifies the labels of the buttons to be displayed in the dialog. Defaults to null,
+        /// in which case a single "OK" button will appear. May contain at most four elements.
+        /// The labels may include the ampersand to indicate a shortcut key, or double-ampersand
+        /// to include an ampersand.
+        /// </summary>
+        public string[] Buttons;
+        /// <summary>
+        /// Specifies the message to be displayed in the main message area. Defaults to null,
+        /// in which case the message area will be empty.
+        /// </summary>
+        public string Message;
+        /// <summary>
+        /// Specifies a caption to be displayed in the dialog's window title bar. Defaults to null,
+        /// which means choose a title based on the <see cref="Type"/> field.
+        /// </summary>
+        public string Caption;
+        /// <summary>
+        /// Specifies an image to be displayed in the image area of the dialog. Defaults to null,
+        /// which means use an image based on the <see cref="Type"/> field. If the type is <see cref="DlgType.Custom"/>,
+        /// and this field is null, no image will be displayed.
+        /// </summary>
+        public Bitmap Image;    // null acceptable as final value
+        /// <summary>
+        /// Specifies a font to be used for the message text (but not the buttons). Defaults to
+        /// null, which means use the font configured in the <see cref="DlgMessageForm"/> class (probably the system font).
+        /// </summary>
+        public Font Font;       // null acceptable as final value
+        /// <summary>
+        /// Specifies the index of the accept button (the one selected if the user just presses Enter).
+        /// Defaults to -1, which means the button with index 0.
+        /// </summary>
+        public int AcceptButton = -1;
+        /// <summary>
+        /// Specifies the index of the cancel button (the one selected if the user just presses Esc or Alt+F4).
+        /// Defaults to -1, which means the button with the largest valid index.
+        /// </summary>
+        public int CancelButton = -1;
+
+        /// <summary>
+        /// Shows a message using all the settings specified in this class instance. Anything
+        /// left at defaults will be modified to hold the appropriate value. Any invalid settings
+        /// will be flagged with an exception.
+        /// </summary>
+        public int Show()
+        {
+            deduceAndCheckSettings();
+            return showAsIs();
+        }
+
+        /// <summary>
+        /// Shows a message of the specified message type, using an appropriate caption, sound and image.
+        /// </summary>
+        public static int Show(string Message, DlgType Type)
+        {
+            return new DlgMessage() { Message = Message, Type = Type }.Show();
+        }
+
+        /// <summary>
+        /// Shows a message of the specified message type, using an appropriate sound and image.
+        /// </summary>
+        public static int Show(string Message, string Caption, DlgType Type, params string[] Buttons)
+        {
+            return new DlgMessage() { Message = Message, Caption = Caption, Type = Type, Buttons = Buttons }.Show();
+        }
+
+        /// <summary>
+        /// Shows an informational message using the image, caption and sound appropriate for this message type.
+        /// </summary>
+        public static int ShowInfo(string Message, params string[] Buttons)
+        {
+            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Info }.Show();
+        }
+
+        /// <summary>
+        /// Shows a question message using the image, caption and sound appropriate for this message type.
+        /// </summary>
+        public static int ShowQuestion(string Message, params string[] Buttons)
+        {
+            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Question }.Show();
+        }
+
+        /// <summary>
+        /// Shows a warning message using the image, caption and sound appropriate for this message type.
+        /// </summary>
+        public static int ShowWarning(string Message, params string[] Buttons)
+        {
+            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Warning }.Show();
+        }
+
+        /// <summary>
+        /// Shows an error message using the image, caption and sound appropriate for this message type.
+        /// </summary>
+        public static int ShowError(string Message, params string[] Buttons)
+        {
+            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Error }.Show();
+        }
+
+        /// <summary>
+        /// Verifies that all the settings are correct, throwing an exception if not. For all
+        /// settings left at defaults, stores a value deemed appropriate based on the other settings.
+        /// </summary>
+        private void deduceAndCheckSettings()
+        {
+            if (Buttons == null || Buttons.Length == 0)
+                Buttons = new[] { DlgMessageForm.DefaultOKCaption };
+            if (Buttons.Length > 4)
+                throw new RTException("The number of message buttons must not exceed 4. Actual number: {0}", Buttons.Length);
+
+            if (Message == null)
+                Message = "";
+
+            if (Caption == null)
+                Caption = DlgMessageForm.DefaultCaption[(int)Type];
+
+            if (Image == null && Type != DlgType.Custom)
+                Image = DlgMessageForm.DefaultImage[(int)Type];
+
+            if (AcceptButton < 0)
+                AcceptButton = 0;
+
+            if (CancelButton < 0)
+                CancelButton = Buttons.Length - 1;
+
+            if (AcceptButton > Buttons.Length - 1 || CancelButton > Buttons.Length - 1)
+                throw new RTException("AcceptButton or CancelButton is too large for the specified number of buttons.");
+        }
+
+        /// <summary>
+        /// Creates a message form and fills in the controls using the current settings. Does not
+        /// verify whether the settings are valid, so must only be used internally and only after the
+        /// settings have been verified.
+        /// </summary>
+        /// <returns>The index of the button pressed.</returns>
+        private int showAsIs()
+        {
+            DlgMessageForm Form = new DlgMessageForm();
+
+            if (Font != null)
+                Form.Message.Font = Font;
+
+            if (Image != null)
+            {
+                Form.img.Image = Image;
+                Form.img.Visible = true;
+            }
+
+            Form.Text = Caption;
+            Form.Message.Text = Message;
+
+            // --- Buttons - captions, visibility, accept/cancel
+
+            Button[] Btn = new Button[4];
+            Btn[0] = Form.Btn0;
+            Btn[1] = Form.Btn1;
+            Btn[2] = Form.Btn2;
+            Btn[3] = Form.Btn3;
+
+            Form.AcceptButton = null;
+            Form.CancelButton = null;
+
+            for (int i = Buttons.Length - 1; i >= 0; i--)
+            {
+                Btn[i].Visible = true;
+                Btn[i].Text = Buttons[i];
+                Btn[i].SendToBack(); // otherwise table layout ordering is messed up
+            }
+
+            Form.AcceptButton = Btn[AcceptButton];
+            Form.CancelButton = Btn[CancelButton];
+
+            // --- Ding
+
+            switch (Type)
+            {
+                case DlgType.Info:
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
+                    break;
+                case DlgType.Question:
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
+                    break;
+                case DlgType.Warning:
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
+                    break;
+                case DlgType.Error:
+                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
+                    break;
+            }
+
+            // --- Show
+
+            Form.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width*3/4, Screen.PrimaryScreen.WorkingArea.Height*3/4);
+
+            var result = Form.ShowDialog();
+            Form.Dispose();
+
+            // --- Return button index
+
+            switch (result)
+            {
+                case DialogResult.OK:
+                    return 0;
+                case DialogResult.Cancel:
+                    return 1;
+                case DialogResult.Yes:
+                    return 2;
+                case DialogResult.No:
+                    return 3;
+                default:
+                    // Should be unable to get here
+                    throw new Exception("Internal exception in Util: unreachable code");
+            }
+        }
+    }
+
+
 }

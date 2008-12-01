@@ -1,6 +1,6 @@
 namespace RT.Util.Dialogs
 {
-    partial class DlgMessage
+    partial class DlgMessageForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DlgMessage));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DlgMessageForm));
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.Btn2 = new System.Windows.Forms.Button();
@@ -42,6 +42,7 @@ namespace RT.Util.Dialogs
             this.question = new System.Windows.Forms.PictureBox();
             this.warning = new System.Windows.Forms.PictureBox();
             this.error = new System.Windows.Forms.PictureBox();
+            this.pnlLine = new System.Windows.Forms.Panel();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
@@ -58,22 +59,23 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.tableLayoutPanel3.ColumnCount = 1;
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel1, 0, 1);
+            this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel1, 0, 2);
             this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel2, 0, 0);
+            this.tableLayoutPanel3.Controls.Add(this.pnlLine, 0, 1);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel3.Location = new System.Drawing.Point(5, 5);
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel3.Margin = new System.Windows.Forms.Padding(0);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
-            this.tableLayoutPanel3.RowCount = 2;
+            this.tableLayoutPanel3.RowCount = 3;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1F));
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel3.Size = new System.Drawing.Size(718, 159);
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(728, 169);
             this.tableLayoutPanel3.TabIndex = 14;
             // 
             // tableLayoutPanel1
             // 
-            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)));
+            this.tableLayoutPanel1.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.tableLayoutPanel1.AutoSize = true;
             this.tableLayoutPanel1.ColumnCount = 4;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -84,12 +86,12 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel1.Controls.Add(this.Btn3, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.Btn0, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.Btn1, 0, 0);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(170, 110);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(345, 111);
             this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(472, 52);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(464, 68);
             this.tableLayoutPanel1.TabIndex = 19;
             // 
             // Btn2
@@ -98,11 +100,11 @@ namespace RT.Util.Dialogs
             this.Btn2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.Btn2.DialogResult = System.Windows.Forms.DialogResult.Yes;
             this.Btn2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Btn2.Location = new System.Drawing.Point(297, 5);
-            this.Btn2.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Btn2.Location = new System.Drawing.Point(289, 5);
+            this.Btn2.Margin = new System.Windows.Forms.Padding(5);
             this.Btn2.MinimumSize = new System.Drawing.Size(80, 25);
             this.Btn2.Name = "Btn2";
-            this.Btn2.Size = new System.Drawing.Size(80, 42);
+            this.Btn2.Size = new System.Drawing.Size(80, 58);
             this.Btn2.TabIndex = 2;
             this.Btn2.Text = "s";
             this.Btn2.UseVisualStyleBackColor = true;
@@ -115,11 +117,11 @@ namespace RT.Util.Dialogs
             this.Btn3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.Btn3.DialogResult = System.Windows.Forms.DialogResult.No;
             this.Btn3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Btn3.Location = new System.Drawing.Point(387, 5);
-            this.Btn3.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Btn3.Location = new System.Drawing.Point(379, 5);
+            this.Btn3.Margin = new System.Windows.Forms.Padding(5);
             this.Btn3.MinimumSize = new System.Drawing.Size(80, 25);
             this.Btn3.Name = "Btn3";
-            this.Btn3.Size = new System.Drawing.Size(80, 42);
+            this.Btn3.Size = new System.Drawing.Size(80, 58);
             this.Btn3.TabIndex = 3;
             this.Btn3.Text = "button3";
             this.Btn3.UseVisualStyleBackColor = true;
@@ -133,10 +135,10 @@ namespace RT.Util.Dialogs
             this.Btn0.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.Btn0.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Btn0.Location = new System.Drawing.Point(5, 5);
-            this.Btn0.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Btn0.Margin = new System.Windows.Forms.Padding(5);
             this.Btn0.MinimumSize = new System.Drawing.Size(80, 25);
             this.Btn0.Name = "Btn0";
-            this.Btn0.Size = new System.Drawing.Size(126, 42);
+            this.Btn0.Size = new System.Drawing.Size(126, 58);
             this.Btn0.TabIndex = 0;
             this.Btn0.Text = "Longish button text";
             this.Btn0.UseVisualStyleBackColor = true;
@@ -150,12 +152,12 @@ namespace RT.Util.Dialogs
             this.Btn1.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.Btn1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Btn1.Location = new System.Drawing.Point(141, 5);
-            this.Btn1.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Btn1.Margin = new System.Windows.Forms.Padding(5);
             this.Btn1.MinimumSize = new System.Drawing.Size(80, 25);
             this.Btn1.Name = "Btn1";
-            this.Btn1.Size = new System.Drawing.Size(146, 42);
+            this.Btn1.Size = new System.Drawing.Size(138, 58);
             this.Btn1.TabIndex = 1;
-            this.Btn1.Text = "Some more long text\r\nwow multi-line button!";
+            this.Btn1.Text = "Some more long text\r\nwow multi-line\r\nbutton!";
             this.Btn1.UseVisualStyleBackColor = true;
             this.Btn1.Visible = false;
             this.Btn1.Click += new System.EventHandler(this.Btn_Click);
@@ -167,6 +169,7 @@ namespace RT.Util.Dialogs
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel2.AutoSize = true;
             this.tableLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel2.BackColor = System.Drawing.Color.White;
             this.tableLayoutPanel2.ColumnCount = 2;
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -185,7 +188,7 @@ namespace RT.Util.Dialogs
             this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.Message.AutoSize = true;
             this.Message.Location = new System.Drawing.Point(71, 5);
-            this.Message.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Message.Margin = new System.Windows.Forms.Padding(5);
             this.Message.MinimumSize = new System.Drawing.Size(175, 0);
             this.Message.Name = "Message";
             this.Message.Size = new System.Drawing.Size(736, 96);
@@ -197,8 +200,8 @@ namespace RT.Util.Dialogs
             // 
             this.img.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.img.BackColor = System.Drawing.Color.Transparent;
-            this.img.Location = new System.Drawing.Point(9, 0);
-            this.img.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
+            this.img.Location = new System.Drawing.Point(9, 9);
+            this.img.Margin = new System.Windows.Forms.Padding(9);
             this.img.Name = "img";
             this.img.Size = new System.Drawing.Size(48, 48);
             this.img.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -211,7 +214,7 @@ namespace RT.Util.Dialogs
             this.info.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.info.BackColor = System.Drawing.Color.Transparent;
             this.info.Image = ((System.Drawing.Image)(resources.GetObject("info.Image")));
-            this.info.Location = new System.Drawing.Point(266, 5);
+            this.info.Location = new System.Drawing.Point(266, 0);
             this.info.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.info.Name = "info";
             this.info.Size = new System.Drawing.Size(48, 48);
@@ -225,7 +228,7 @@ namespace RT.Util.Dialogs
             this.question.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.question.BackColor = System.Drawing.Color.Transparent;
             this.question.Image = ((System.Drawing.Image)(resources.GetObject("question.Image")));
-            this.question.Location = new System.Drawing.Point(340, 5);
+            this.question.Location = new System.Drawing.Point(340, 0);
             this.question.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.question.Name = "question";
             this.question.Size = new System.Drawing.Size(48, 48);
@@ -239,7 +242,7 @@ namespace RT.Util.Dialogs
             this.warning.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.warning.BackColor = System.Drawing.Color.Transparent;
             this.warning.Image = ((System.Drawing.Image)(resources.GetObject("warning.Image")));
-            this.warning.Location = new System.Drawing.Point(415, 5);
+            this.warning.Location = new System.Drawing.Point(415, 0);
             this.warning.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.warning.Name = "warning";
             this.warning.Size = new System.Drawing.Size(48, 48);
@@ -253,7 +256,7 @@ namespace RT.Util.Dialogs
             this.error.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.error.BackColor = System.Drawing.Color.Transparent;
             this.error.Image = ((System.Drawing.Image)(resources.GetObject("error.Image")));
-            this.error.Location = new System.Drawing.Point(490, 5);
+            this.error.Location = new System.Drawing.Point(490, 0);
             this.error.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.error.Name = "error";
             this.error.Size = new System.Drawing.Size(48, 48);
@@ -261,6 +264,18 @@ namespace RT.Util.Dialogs
             this.error.TabIndex = 21;
             this.error.TabStop = false;
             this.error.Visible = false;
+            // 
+            // pnlLine
+            // 
+            this.pnlLine.AutoSize = true;
+            this.pnlLine.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.pnlLine.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.pnlLine.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlLine.Location = new System.Drawing.Point(0, 106);
+            this.pnlLine.Margin = new System.Windows.Forms.Padding(0);
+            this.pnlLine.Name = "pnlLine";
+            this.pnlLine.Size = new System.Drawing.Size(812, 1);
+            this.pnlLine.TabIndex = 20;
             // 
             // DlgMessage
             // 
@@ -280,7 +295,6 @@ namespace RT.Util.Dialogs
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "DlgMessage";
-            this.Padding = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DlgMessage";
@@ -305,17 +319,18 @@ namespace RT.Util.Dialogs
 
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.Button Btn2;
-        private System.Windows.Forms.Button Btn3;
-        private System.Windows.Forms.Button Btn0;
-        private System.Windows.Forms.Button Btn1;
+        public System.Windows.Forms.Button Btn2;
+        public System.Windows.Forms.Button Btn3;
+        public System.Windows.Forms.Button Btn0;
+        public System.Windows.Forms.Button Btn1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
-        private System.Windows.Forms.Label Message;
-        private System.Windows.Forms.PictureBox img;
-        private System.Windows.Forms.PictureBox info;
-        private System.Windows.Forms.PictureBox question;
-        private System.Windows.Forms.PictureBox warning;
-        private System.Windows.Forms.PictureBox error;
+        public System.Windows.Forms.Label Message;
+        public System.Windows.Forms.PictureBox img;
+        public System.Windows.Forms.PictureBox info;
+        public System.Windows.Forms.PictureBox question;
+        public System.Windows.Forms.PictureBox warning;
+        public System.Windows.Forms.PictureBox error;
+        private System.Windows.Forms.Panel pnlLine;
 
     }
 }

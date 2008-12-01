@@ -51,7 +51,7 @@ namespace RT.Util.Settings
             }
             catch (Exception E)
             {
-                DlgMessage.Show("Failed to save settings:\n" + E.Message + "\n\nDisk full?");
+                DlgMessage.ShowWarning("Failed to save settings:\n" + E.Message + "\n\nDisk full?");
             }
         }
     }
