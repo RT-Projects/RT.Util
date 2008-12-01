@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Permissions;
+using System.Text;
+using RT.Util.Dialogs;
 using RT.Util.Text;
 
 namespace RT.Util
@@ -65,14 +67,35 @@ namespace RT.Util
         private List<string> unmatchedArgs = new List<string>();
 
         /// <summary>
+        /// Holds a class providing an interface to the user, such as printing messages
+        /// on the command line or displaying message boxes. Defaults to a console printer.
+        /// </summary>
+        private CmdLinePrinterBase printer = new CmdLineConsolePrinter();
+
+        /// <summary>
         /// Keeps track of whether Parse() has ever been called.
         /// </summary>
         private bool Parsed = false;
 
         /// <summary>
-        /// Keeps track of whether PrintProgramInfo() has ever been called.
+        /// Keeps track of whether PrintProgramInfo() has been called.
         /// </summary>
-        private static bool ProgramInfoPrinted = false;
+        private bool ProgramInfoPrinted = false;
+
+        /// <summary>
+        /// Constructs a command line parser.
+        /// </summary>
+        public CmdLineParser()
+        {
+        }
+
+        /// <summary>
+        /// Constructs a command line parser which will use the specified printer class.
+        /// </summary>
+        public CmdLineParser(CmdLinePrinterBase printer)
+        {
+            this.printer = printer;
+        }
 
         /// <summary>
         /// Defines and describes a command-line argument.
@@ -187,6 +210,7 @@ namespace RT.Util
                 if ((opt.Flags & CmdOptionFlags.IsHelp) != 0)
                 {
                     PrintHelp();
+                    printer.Commit(true);
                     Environment.Exit(0);
                 }
 
@@ -235,6 +259,7 @@ namespace RT.Util
             if (errors.Count == 0)
             {
                 Parsed = true;
+                printer.Commit(true);
                 return null;
             }
             else
@@ -244,9 +269,10 @@ namespace RT.Util
 
                 if ((parseOptions & CmdParse.IfFailKillApp) != 0)
                 {
-                    // Print errors first
+                    // Print the errors first
                     foreach (string err in errors)
-                        System.Console.WriteLine(err);
+                        printer.PrintLine(err);
+                    printer.Commit(false);
 
                     // Then kill the app
                     Environment.Exit(1);
@@ -273,7 +299,7 @@ namespace RT.Util
         /// Calling this function multiple times won't have any effect - only the
         /// first call causes the info to be printed.
         /// </summary>
-        public static void PrintProgramInfo()
+        public void PrintProgramInfo()
         {
             if (ProgramInfoPrinted)
                 return;
@@ -281,18 +307,18 @@ namespace RT.Util
             Assembly assembly = Assembly.GetEntryAssembly();
 
             // Title
-            try { Console.WriteLine((assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0] as AssemblyTitleAttribute).Title); }
+            try { printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0] as AssemblyTitleAttribute).Title); }
             catch { }
 
             // Version
-            try { Console.WriteLine("Version: " + assembly.GetName().Version.ToString()); }
-            catch (Exception E) { Console.WriteLine(E.Message); }
+            try { printer.PrintLine("Version: " + assembly.GetName().Version.ToString()); }
+            catch (Exception E) { printer.PrintLine(E.Message); }
 
             // Copyright
-            try { Console.WriteLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
+            try { printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
             catch { }
 
-            Console.WriteLine();
+            printer.PrintLine("");
             ProgramInfoPrinted = true;
         }
 
@@ -322,8 +348,8 @@ namespace RT.Util
         {
             PrintProgramInfo();
 
-            Console.WriteLine("Usage:");
-            Console.WriteLine();
+            printer.PrintLine("Usage:");
+            printer.PrintLine("");
 
             //
             // Construct lists of tokens for the one line summary
@@ -370,13 +396,13 @@ namespace RT.Util
             //
             // Print the one-line summary
             //
-            Console.Write("    ");
-            Console.Write(Assembly.GetEntryAssembly().ManifestModule.Name);
+            printer.Print("    ");
+            printer.Print(Assembly.GetEntryAssembly().ManifestModule.Name);
             foreach (string token in requiredSwitches)
-                Console.Write(" " + token);
+                printer.Print(" " + token);
             foreach (string token in optionalSwitches)
-                Console.Write(" [" + token + "]");
-            Console.WriteLine();
+                printer.Print(" [" + token + "]");
+            printer.PrintLine("");
 
             //
             // Print a table of options and their descriptions
@@ -412,11 +438,11 @@ namespace RT.Util
 
             table.SetAutoSize(2, true);
 
-            Console.WriteLine();
-            Console.WriteLine("Available options:");
-            Console.WriteLine();
+            printer.PrintLine("");
+            printer.PrintLine("Available options:");
+            printer.PrintLine("");
 
-            Console.WriteLine(table.GetText(4, Console.WindowWidth - 5, 3, false));
+            printer.PrintLine(table.GetText(4, printer.MaxWidth - 5, 3, false));
         }
 
         /// <summary>
@@ -578,6 +604,99 @@ namespace RT.Util
 
         /// <summary>Parse will fail if any unmatched options are found.</summary>
         FailIfAnyUnmatched = 4,
+    }
+
+    /// <summary>
+    /// Abstract base class for a command line parser output printer. Provides an interface
+    /// through which <see cref="CmdLineParser"/> provides information to the user.
+    /// </summary>
+    public abstract class CmdLinePrinterBase
+    {
+        /// <summary>Prints the specified text</summary>
+        public abstract void Print(string text);
+        /// <summary>Prints the specified text, followed by an end of line</summary>
+        public abstract void PrintLine(string text);
+        /// <summary>"Commits" the text printed so far, for printers that can only show information in chunks.</summary>
+        public abstract void Commit(bool success);
+        /// <summary>Returns the maximum width that the messages printed to this printer can have.
+        /// Any longer messages will be automatically wrapped by the parser before printing them.</summary>
+        public abstract int MaxWidth { get; }
+    }
+
+    /// <summary>
+    /// Prints <see cref="CmdLineParser"/> messages to the console.
+    /// </summary>
+    public class CmdLineConsolePrinter: CmdLinePrinterBase
+    {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        public override void Print(string text)
+        {
+            Console.Write(text);
+        }
+
+        public override void PrintLine(string text)
+        {
+            Console.WriteLine(text);
+        }
+
+        public override void Commit(bool success)
+        {
+        }
+
+        public override int MaxWidth
+        {
+            get { return Console.WindowWidth; }
+        }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+    }
+
+    /// <summary>
+    /// Prints <see cref="CmdLineParser"/> messages using message boxes.
+    /// </summary>
+    public class CmdLineMessageboxPrinter: CmdLinePrinterBase
+    {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        private StringBuilder buffer = new StringBuilder();
+        private int maxWidth = 80;
+
+        public CmdLineMessageboxPrinter() { }
+
+        public CmdLineMessageboxPrinter(int maxWidth)
+        {
+            this.maxWidth = maxWidth;
+        }
+
+        public override void Print(string text)
+        {
+            buffer.Append(text);
+        }
+
+        public override void PrintLine(string text)
+        {
+            buffer.Append(text);
+            buffer.Append("\r\n");
+        }
+
+        public override void Commit(bool success)
+        {
+            if (buffer.Length == 0)
+                return;
+
+            new DlgMessage
+            {
+                Type = success ? DlgType.Info : DlgType.Warning,
+                Message = buffer.ToString(),
+                Font = new System.Drawing.Font("Consolas", 9)
+            }.Show();
+
+            buffer.Remove(0, buffer.Length);
+        }
+
+        public override int MaxWidth
+        {
+            get { return maxWidth; }
+        }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
 }
