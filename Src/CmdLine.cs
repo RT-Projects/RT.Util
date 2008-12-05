@@ -4,14 +4,16 @@ using System.Reflection;
 using System.Security.Permissions;
 using System.Text;
 using RT.Util.Dialogs;
+using RT.Util.ExtensionMethods;
 using RT.Util.Text;
 
 namespace RT.Util
 {
     /// <summary>
     /// A class which aids parsing command-line arguments.
-    /// Requires the UnmanagedCode security permission due to the use
-    /// of Environment.Exit function.
+    /// 
+    /// <remarks>Requires the UnmanagedCode security permission due to the use
+    /// of Environment.Exit function.</remarks>
     /// </summary>
     [SecurityPermission(SecurityAction.Demand, Flags=SecurityPermissionFlag.UnmanagedCode)]
     public class CmdLineParser
@@ -40,7 +42,7 @@ namespace RT.Util
         {
         }
 
-        /// <summary>All options that the user defined, including separators.</summary>
+        /// <summary>All options that the user has defined, including separators.</summary>
         private List<CmdLineOption> byDefineOrder = new List<CmdLineOption>();
 
         /// <summary>Only the options which had a non-null tiny name specified.</summary>
@@ -50,21 +52,32 @@ namespace RT.Util
         private Dictionary<string, CmdLineOption> byLongName = new Dictionary<string, CmdLineOption>();
 
         /// <summary>
-        /// This points to either byTinyName or byLongName. By default it points to
+        /// <para>This points to either byTinyName or byLongName. By default it points to
         /// byLongName, but the user of this class can call a method to change this to
-        /// byTinyName.
-        ///
-        /// The public methods used to access parse results will use this variable to
+        /// byTinyName.</para>
+        /// 
+        /// <para>The public methods used to access parse results use this variable to
         /// look up option names. Hence this basically determines whether the user
-        /// accesses options by their full names or their tiny names.
+        /// accesses options by their full names or their tiny names.</para>
         /// </summary>
         private Dictionary<string, CmdLineOption> byPreferredName;
 
         /// <summary>
-        /// Holds all unmatched arguments (i.e. arguments which were neither one of
-        /// the defined option names nor one of the arguments).
+        /// Holds all positional arguments, that is, all arguments which do not look like
+        /// named options and are not arguments to known named options.
         /// </summary>
-        private List<string> unmatchedArgs = new List<string>();
+        private List<string> unmatchedArgs;
+
+        /// <summary>
+        /// Holds all parse errors that occurred. Will be an empty (non-null) list when there
+        /// are no errors.
+        /// </summary>
+        private List<string> _errors;
+
+        /// <summary>
+        /// Set to true when a help option is encountered during parsing. False otherwise.
+        /// </summary>
+        private bool _help;
 
         /// <summary>
         /// Holds a class providing an interface to the user, such as printing messages
@@ -87,12 +100,14 @@ namespace RT.Util
         /// </summary>
         public CmdLineParser()
         {
+            ClearResults();
         }
 
         /// <summary>
         /// Constructs a command line parser which will use the specified printer class.
         /// </summary>
         public CmdLineParser(CmdLinePrinterBase printer)
+            : this()
         {
             this.printer = printer;
         }
@@ -109,7 +124,7 @@ namespace RT.Util
         /// <param name="flags">Selects the behaviour of this option.</param>
         /// <param name="description">A human-readable description of what the option does. This
         /// text is used when printing help. Note that the help text gets automatically wrapped,
-        /// so this string can be long and may include line breaks and indented examples. Cool eh?</param>
+        /// so this string can be long and may include line breaks and indented examples.</param>
         public void DefineOption(string tinyName, string longName, CmdOptionType type, CmdOptionFlags flags, string description)
         {
             if (tinyName == null && longName == null)
@@ -146,13 +161,15 @@ namespace RT.Util
         /// Defines standard help options. These options are marked with the IsHelp
         /// option flag, which means that:
         ///
-        /// * The options won't be printed when printing help.
-        /// * Specifying one of these options causes the program to print help
-        ///   and terminate (at the time of the parsing).
+        /// <list>
+        /// <item>The options won't be printed when printing help.</item>
+        /// <item>Specifying one of these options causes the program to print help
+        ///       and terminate (at the time of the parsing).</item>
+        /// </list>
         ///
-        /// The default help options are: -?, --help, --usage.
+        /// <para>Default help options comprise: -?, --help, --usage.</para>
         ///
-        /// For more details see the <see cref="Parse"/> function.
+        /// <para>For more info see the <see cref="Parse"/> function</para>.
         /// </summary>
         public void DefineDefaultHelpOptions()
         {
@@ -161,57 +178,61 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Parses the specified command line arguments according to the options
-        /// defined (using the Define* functions).
-        ///
-        /// The parse options define what happens in case there is an error. This
-        /// function can print help, list errors and terminate the program in such
-        /// case, but it doesn't have to. See individual <see cref="CmdParse"/> values
-        /// for more info.
-        ///
-        /// After a successful call to this function the results can be accessed
-        /// via the Opt* methods/properties.
-        ///
-        /// Calling this method multiple times erases the results produced by the
-        /// previous call and generates new results.
+        /// Clears all the results of the previous parse, effectively restoring the state of the
+        /// parser to before the Parse method was called, with all options still defined.
         /// </summary>
-        public List<string> Parse(string[] args, CmdParse parseOptions)
+        public void ClearResults()
         {
-            List<string> errors = new List<string>();
+            Parsed = false;
+            _errors = new List<string>();
+            _help = false;
+            unmatchedArgs = new List<string>();
+            foreach (var option in byDefineOrder)
+                option.Value = null;
+        }
+
+        /// <summary>
+        /// <para>Parses the specified command line arguments according to the options
+        /// defined (using the <see cref="DefineOption"/> etc functions).</para>
+        ///
+        /// <para>This method does not display the help message or errors when this is
+        /// necessary. It just makes fields/methods such as <see cref="Errors"/>,
+        /// <see cref="HadErrors"/>, <see cref="HadHelp"/> available for inspection and
+        /// processing. The method <see cref="ProcessHelpAndErrors"/> can be used
+        /// to print any information or messages as necessary and even terminate the
+        /// program if the parse is unsuccessful.</para>
+        /// </summary>
+        public void Parse(string[] args)
+        {
+            if (Parsed)
+                throw new RTException("Parse results must be cleared using ClearResults before calling Parse again.");
 
             // Reset the preferred access name to long name
             byPreferredName = byLongName;
 
-            // Reset all the previously parsed options, if any
-            unmatchedArgs.Clear();
-            foreach (CmdLineOption opt in byDefineOrder)
-                opt.Value = null;
-
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i];
-                CmdLineOption opt = null;
+                CmdLineOption opt;
 
                 if (arg.StartsWith("--") && byLongName.ContainsKey(arg.Substring(2)))
                     opt = byLongName[arg.Substring(2)];
                 else if (arg.StartsWith("-") && byTinyName.ContainsKey(arg.Substring(1)))
                     opt = byTinyName[arg.Substring(1)];
-
-                // Is this option unmatched?
-                if (opt == null)
+                else
                 {
-                    unmatchedArgs.Add(arg);
-                    if ((parseOptions & CmdParse.FailIfAnyUnmatched) != 0)
-                        errors.Add(string.Format("Option \"{0}\" doesn't match any of the allowed options.", arg));
+                    if (arg.StartsWith("-"))
+                        _errors.Add(string.Format("Option \"{0}\" doesn't match any of the allowed options.", arg));
+                    else
+                        unmatchedArgs.Add(arg);
                     continue;
                 }
 
                 // Is this a help option
                 if ((opt.Flags & CmdOptionFlags.IsHelp) != 0)
                 {
-                    PrintHelp();
-                    printer.Commit(true);
-                    Environment.Exit(0);
+                    _help = true;
+                    break;
                 }
 
                 // This option was matched
@@ -223,9 +244,9 @@ namespace RT.Util
 
                 case CmdOptionType.Value:
                     if (i == args.Length - 1)
-                        errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                        _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
                     else if (opt.Value != null)
-                        errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
+                        _errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
                     else
                     {
                         opt.Value = new List<string>();
@@ -236,7 +257,7 @@ namespace RT.Util
 
                 case CmdOptionType.List:
                     if (i == args.Length - 1)
-                        errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                        _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
                     else
                     {
                         if (opt.Value == null)
@@ -252,34 +273,94 @@ namespace RT.Util
             foreach (CmdLineOption opt in byDefineOrder)
             {
                 if ((opt.Flags & CmdOptionFlags.Required) != 0 && opt.Value == null)
-                    errors.Add(string.Format("Option \"{0}\" is a required option and cannot be omitted.", opt.NiceName));
+                    _errors.Add(string.Format("Option \"{0}\" is a required option and must not be omitted.", opt.NiceName));
             }
 
-            // All arguments are parsed now. Display errors, if any.
-            if (errors.Count == 0)
-            {
-                Parsed = true;
-                printer.Commit(true);
-                return null;
-            }
-            else
-            {
-                if ((parseOptions & CmdParse.IfFailShowHelp) != 0)
-                    PrintHelp();
+            Parsed = true;
+        }
 
-                if ((parseOptions & CmdParse.IfFailKillApp) != 0)
+        /// <summary>
+        /// Intended to follow up a call to <see cref="Parse"/>, will print help and/or errors
+        /// and terminate the program, if necessary. Does nothing on a normal successful parse.
+        /// </summary>
+        public void ProcessHelpAndErrors()
+        {
+            if (_help)
+            {
+                PrintHelp();
+                PrintCommit(true);
+                ExitProgram(true);
+            }
+            else if (_errors.Count > 0)
+            {
+                PrintHelp();
+                PrintErrors();
+                PrintCommit(false);
+                ExitProgram(false);
+            }
+        }
+
+        /// <summary>
+        /// Prints usage help, then prints the specified error, then terminates the program.
+        /// </summary>
+        public void Error(string text)
+        {
+            _errors.Add(text);
+            PrintHelp();
+            PrintErrors();
+            PrintCommit(false);
+            ExitProgram(false);
+        }
+
+        /// <summary>
+        /// Reports an error using <see cref="Error"/> if the number of positional arguments is
+        /// not equal to "count". Lists all positional arguments in the error message.
+        /// </summary>
+        public void ErrorIfPositionalArgsCountNot(int count)
+        {
+            if (count == 0 && OptPositional.Count > 0)
+                Error("No positional arguments are expected. Offending arguments: \"{0}\"".Fmt(OptPositional.Join("\", \"")));
+            else if (OptPositional.Count != count)
+                Error("Exactly {0} positional argument(s) expected. Got {1}: \"{2}\"".Fmt(count, OptPositional.Count, OptPositional.Join("\", \"")));
+        }
+
+        /// <summary>
+        /// Terminates the program. The exit code will be set to 0 or 1 according to
+        /// the "success" parameter.
+        /// </summary>
+        public void ExitProgram(bool success)
+        {
+            Environment.Exit(success ? 0 : 1);
+        }
+
+        #region Printing commands
+
+        /// <summary>
+        /// "Commits" the messages sent to the user. This is usually called when no further
+        /// messages are expected. For example, when using a <see cref="CmdLineMessageboxPrinter"/>
+        /// this causes the message box to be displayed.
+        /// </summary>
+        /// <param name="success">Indicates whether the message is a "success" or a "failure"-style message.</param>
+        public void PrintCommit(bool success)
+        {
+            printer.Commit(success);
+        }
+
+        /// <summary>
+        /// Prints all the error messages. Does nothing if there are none.
+        /// </summary>
+        public void PrintErrors()
+        {
+            if (_errors.Count > 0)
+            {
+                printer.PrintLine("Errors:");
+                printer.PrintLine("");
+                foreach (var err in _errors)
                 {
-                    // Print the errors first
-                    foreach (string err in errors)
-                        printer.PrintLine(err);
-                    printer.Commit(false);
-
-                    // Then kill the app
-                    Environment.Exit(1);
+                    foreach (var line in ("    " + err).WordWrap(printer.MaxWidth - 5))
+                        printer.PrintLine(line);
+                    printer.PrintLine("");
                 }
-
-                // Otherwise return the list of errors
-                return errors;
             }
         }
 
@@ -445,6 +526,10 @@ namespace RT.Util
             printer.PrintLine(table.GetText(4, printer.MaxWidth - 5, 3, false));
         }
 
+        #endregion
+
+        #region Option retrieval
+
         /// <summary>
         /// Call this function to change the behaviour of <see cref="OptValue(string)"/>
         /// and <see cref="OptList"/> functions so that they look up option values
@@ -467,10 +552,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Gets a list of all options which didn't match any of the defined
-        /// options and were not arguments to the defined options.
+        /// Gets a list of all options which did not look like named options (did not start
+        /// with a minus) and were not arguments to known named options.
         /// </summary>
-        public List<string> OptUnmatched
+        public List<string> OptPositional
         {
             get
             {
@@ -564,6 +649,56 @@ namespace RT.Util
                 }
             }
         }
+
+        #endregion
+
+        #region Other parse results
+
+        /// <summary>
+        /// Gets the list of parse errors found. Can only be called after 
+        /// </summary>
+        public List<string> Errors
+        {
+            get
+            {
+                if (!Parsed)
+                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+
+                return _errors;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the parse resulted in errors. Errors can be retrieved using <see cref="Errors"/>.
+        /// The user can be informed of these errors automatically by calling <see cref="ProcessHelpAndErrors"/>.
+        /// </summary>
+        public bool HadErrors
+        {
+            get
+            {
+                if (!Parsed)
+                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+
+                return _errors.Count > 0;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if a help option was specified. It can be processed manually by calling <see cref="PrintHelp"/>,
+        /// or automatically using <see cref="ProcessHelpAndErrors"/>.
+        /// </summary>
+        public bool HadHelp
+        {
+            get
+            {
+                if (!Parsed)
+                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+
+                return _help;
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>Enumerates the possible command line option types.</summary>
@@ -587,23 +722,6 @@ namespace RT.Util
         Optional = 0,
         /// <summary>If specified, this option causes help to be displayed. It is NOT listed on the help screen.</summary>
         IsHelp = 2,
-    }
-
-    /// <summary>Lists flags that determine the behaviour of the parser.</summary>
-    [Flags]
-    public enum CmdParse
-    {
-        /// <summary>Upon a parse failure print help to the console automatically.</summary>
-        IfFailShowHelp = 1,
-        /// <summary>Upon a parse failure the application will be terminated and a list of
-        /// errors will be printed to the console.</summary>
-        IfFailKillApp = 2,
-
-        /// <summary>The same as IfFailShowHelp + IfFailKillApp.</summary>
-        IfFailShowHelpAndKillApp = 3,
-
-        /// <summary>Parse will fail if any unmatched options are found.</summary>
-        FailIfAnyUnmatched = 4,
     }
 
     /// <summary>
