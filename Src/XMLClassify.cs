@@ -385,17 +385,20 @@ namespace RT.Util.XMLClassify
                             if (Value == null)
                             {
                                 Subtag = new XElement("item");
+                                if (Key != null) Subtag.SetAttributeValue("key", Key);
                                 Subtag.SetAttributeValue("null", 1);
                             }
                             else if (ValueType.IsEnum || ValueType == typeof(bool) || IsIntegerType(ValueType) || IsDecimalType(ValueType) || ValueType == typeof(string) || ValueType == typeof(DateTime))
                             {
                                 Subtag = new XElement("item");
+                                if (Key != null) Subtag.SetAttributeValue("key", Key);
                                 Subtag.SetAttributeValue("value", ValueType == typeof(DateTime) ? ((DateTime) Value).ToString("u") : Value.ToString());
                             }
                             else
+                            {
                                 Subtag = (XElement) XMLMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
-                            if (Key != null)
-                                Subtag.SetAttributeValue("key", Key);
+                                if (Key != null) Subtag.SetAttributeValue("key", Key);
+                            }
                             CollectionTag.Add(Subtag);
                         }
                         XElem.Add(CollectionTag);
