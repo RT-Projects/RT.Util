@@ -18,7 +18,13 @@ namespace RT.Util.Controls
         public event PaintEventHandler PaintBuffer;
 
         /// <summary>
-        /// Holds the off-screen image.
+        /// Is used for detecting that the paint buffer must be repainted due to the
+        /// paint event handler changing.
+        /// </summary>
+        private event PaintEventHandler _previousPaintBuffer;
+
+        /// <summary>
+        /// Holds the off-screen image. Initialised only when the first refresh occurs.
         /// </summary>
         protected Bitmap Buffer;
 
@@ -31,7 +37,6 @@ namespace RT.Util.Controls
                 ControlStyles.DoubleBuffer, true
             );
 
-            Buffer = new Bitmap(Width, Height);
             this.Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
             this.Resize += new EventHandler(DoubleBufferedPanel_Resize);
         }
@@ -49,9 +54,10 @@ namespace RT.Util.Controls
         /// </summary>
         public override void Refresh()
         {
+            _previousPaintBuffer = PaintBuffer;
             if (Width > 0 && Height > 0)
             {
-                if (Buffer.Width != Width || Buffer.Height != Height)
+                if (Buffer == null || Buffer.Width != Width || Buffer.Height != Height)
                     Buffer = new Bitmap(Width, Height);
 
                 if (PaintBuffer != null)
@@ -65,7 +71,10 @@ namespace RT.Util.Controls
 
         private void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);
+            if (Buffer == null || PaintBuffer != _previousPaintBuffer)
+                Refresh();
+            if (Buffer != null)
+                e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);
         }
     }
 }
