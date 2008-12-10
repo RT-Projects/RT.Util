@@ -62,6 +62,7 @@
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />
     <Compile Include="Ut\UtTests.cs" />
+    <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RT.Util.csproj">
