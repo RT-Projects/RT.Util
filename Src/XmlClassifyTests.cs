@@ -26,7 +26,7 @@ namespace RT.Util.XmlClassify
             public bool ABool;
             public ulong AULong;
             public double ADouble;
-            public DateTime AToughOne;
+            public DateTime ADateTime;
 
             public void AssertEqual(basicClass actual)
             {
@@ -36,7 +36,7 @@ namespace RT.Util.XmlClassify
                 Assert.AreEqual(ABool, actual.ABool);
                 Assert.AreEqual(AULong, actual.AULong);
                 Assert.AreEqual(ADouble, actual.ADouble);
-                Assert.AreEqual(AToughOne, actual.AToughOne);
+                Assert.AreEqual(ADateTime, actual.ADateTime);
             }
         }
 
@@ -63,36 +63,6 @@ namespace RT.Util.XmlClassify
         }
 
         [Test]
-        public void TestBaseTypes()
-        {
-            XElement xel;
-
-            xel = XmlClassify.ObjectToXElement((int)-25, null);
-            int _int = XmlClassify.ObjectFromXElement<int>(xel, null, null);
-            Assert.AreEqual(-25, _int);
-
-            xel = XmlClassify.ObjectToXElement((ulong)9999999999999999999, null);
-            ulong _ulong = XmlClassify.ObjectFromXElement<ulong>(xel, null, null);
-            Assert.AreEqual(9999999999999999999, _ulong);
-
-            xel = XmlClassify.ObjectToXElement((double)Math.PI, null);
-            double _double = XmlClassify.ObjectFromXElement<double>(xel, null, null);
-            Assert.AreEqual(Math.PI, _double);
-        }
-
-        [Test]
-        public void TestDict()
-        {
-            var dictEx = new Dictionary<string, string>();
-            dictEx.Add("abc", "def");
-            dictEx.Add("key", "value");
-            var xel = XmlClassify.ObjectToXElement(dictEx, null);
-            var dictAc = XmlClassify.ObjectFromXElement<Dictionary<string, string>>(xel, null, null);
-
-            assertDict(dictEx, dictAc);
-        }
-
-        [Test]
         public void TestBlankClass()
         {
             XElement xel;
@@ -111,7 +81,7 @@ namespace RT.Util.XmlClassify
                 ABool = true,
                 AULong = 9999999999999999999,
                 ADouble = Math.PI,
-                AToughOne = DateTime.UtcNow,
+                ADateTime = DateTime.UtcNow,
             };
             var xel = XmlClassify.ObjectToXElement(clsEx, null);
             var clsAc = XmlClassify.ObjectFromXElement<basicClass>(xel, null, null);
@@ -131,6 +101,7 @@ namespace RT.Util.XmlClassify
         {
             var clsEx = new classWithDict();
             clsEx.Dict.Add("abc", "def");
+            clsEx.Dict.Add("key", "value");
             var xel = XmlClassify.ObjectToXElement(clsEx, null);
             var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel, null, null);
 

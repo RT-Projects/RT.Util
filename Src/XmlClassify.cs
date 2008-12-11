@@ -125,8 +125,8 @@ namespace RT.Util.XmlClassify
                             Field.SetValue(ReturnObject, Attr.Value);
                         else if (t.IsEnum)
                             Field.SetValue(ReturnObject, Attr.Value.ToStaticValue(t));
-                        else    // bool, DateTime and integer types
-                            try { Field.SetValue(ReturnObject, ParseIntBoolOrDateTime(t, Attr.Value)); }
+                        else    // bool, DateTime, integer types, decimal types
+                            try { Field.SetValue(ReturnObject, ParseValue(t, Attr.Value)); }
                             catch { }
                     }
                     catch { }
@@ -201,7 +201,7 @@ namespace RT.Util.XmlClassify
                                 if (KeyType != null)
                                 {
                                     var KeyAttr = ItemTag.Attribute("key");
-                                    try { Key = IsIntegerType(KeyType) ? (object) ParseIntBoolOrDateTime(KeyType, KeyAttr.Value) : KeyAttr.Value; }
+                                    try { Key = IsIntegerType(KeyType) ? (object) ParseValue(KeyType, KeyAttr.Value) : KeyAttr.Value; }
                                     catch { continue; }
                                 }
                                 var NullAttr = ItemTag.Attribute("null");
@@ -214,7 +214,7 @@ namespace RT.Util.XmlClassify
                                         try
                                         {
                                             Value = Field.FieldType == typeof(bool) || Field.FieldType == typeof(DateTime) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType)
-                                                ? (object) ParseIntBoolOrDateTime(Field.FieldType, ValueAttr.Value)
+                                                ? (object) ParseValue(Field.FieldType, ValueAttr.Value)
                                                 : Field.FieldType.IsEnum ? (object) ValueAttr.Value.ToStaticValue(Field.FieldType) : ValueAttr.Value;
                                         }
                                         catch { Value = ValueType.IsValueType ? ValueType.GetConstructor(new Type[] { }).Invoke(new object[] { }) : null; }
@@ -334,74 +334,71 @@ namespace RT.Util.XmlClassify
                             });
                 }
 
-                // Primitive types
-                else if (Field.FieldType.IsEnum || Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || Field.FieldType == typeof(DateTime) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType))
-                {
-                    if (Field.GetValue(SaveObject) != null)
-                        XElem.SetAttributeValue(RFieldName, Field.FieldType == typeof(DateTime)
-                            ? ((DateTime) Field.GetValue(SaveObject)).ToString("u")
-                            : Field.GetValue(SaveObject).ToString());
-                }
-
                 else if (Field.GetValue(SaveObject) != null)
                 {
-                    var xmlMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectToXElement" && mi.GetParameters().Count() == 3).First();
-
-                    Type KeyType = null, ValueType = null;
-                    Type[] TypeParameters = null;
-
-                    if (Field.FieldType.IsArray)
-                        ValueType = Field.FieldType.GetElementType();
-                    else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out TypeParameters))
-                    {
-                        KeyType = TypeParameters[0];
-                        ValueType = TypeParameters[1];
-                    }
-                    else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out TypeParameters))
-                        ValueType = TypeParameters[0];
-
-                    if (ValueType == null)
-                    {
-                        // Field.FieldType is not an array or collection or dictionary; use recursion to store the object
-                        XElem.Add(xmlMethod.MakeGenericMethod(Field.FieldType)
-                            .Invoke(null, new object[] { Field.GetValue(SaveObject), BaseDir, RFieldName }));
-                    }
+                    // Primitive types
+                    if (Field.FieldType.IsEnum || Field.FieldType == typeof(string) || Field.FieldType == typeof(bool) || Field.FieldType == typeof(DateTime) || IsIntegerType(Field.FieldType) || IsDecimalType(Field.FieldType))
+                        XElem.SetAttributeValue(RFieldName, SafeToString(Field.FieldType, Field.GetValue(SaveObject)));
                     else
                     {
-                        xmlMethod = xmlMethod.MakeGenericMethod(ValueType);
-                        if (KeyType != null && KeyType != typeof(string) && !IsIntegerType(KeyType))
-                            throw new Exception("The field {0}.{1} is a dictionary whose key type is {2}, but only string and integer types are supported."
-                                .Fmt(typeof(T).FullName, Field.Name, KeyType.FullName));
-                        var Enumerator = Field.FieldType.GetMethod("GetEnumerator", new Type[] { }).Invoke(Field.GetValue(SaveObject), new object[] { }) as IEnumerator;
-                        Type KvpType = KeyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(KeyType, ValueType);
-                        var CollectionTag = new XElement(RFieldName);
-                        while (Enumerator.MoveNext())
+                        var xmlMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectToXElement" && mi.GetParameters().Count() == 3).First();
+
+                        Type KeyType = null, ValueType = null;
+                        Type[] TypeParameters = null;
+
+                        if (Field.FieldType.IsArray)
+                            ValueType = Field.FieldType.GetElementType();
+                        else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out TypeParameters))
                         {
-                            object Key = null;
-                            if (KeyType != null)
-                                Key = KvpType.GetProperty("Key").GetValue(Enumerator.Current, null);
-                            var Value = KeyType == null ? Enumerator.Current : KvpType.GetProperty("Value").GetValue(Enumerator.Current, null);
-                            XElement Subtag;
-                            if (Value == null)
-                            {
-                                Subtag = new XElement("item");
-                                if (Key != null) Subtag.SetAttributeValue("key", Key);
-                                Subtag.SetAttributeValue("null", 1);
-                            }
-                            else if (ValueType.IsEnum || ValueType == typeof(bool) || IsIntegerType(ValueType) || IsDecimalType(ValueType) || ValueType == typeof(string) || ValueType == typeof(DateTime))
-                            {
-                                Subtag = new XElement("item");
-                                if (Key != null) Subtag.SetAttributeValue("key", Key);
-                                Subtag.SetAttributeValue("value", ValueType == typeof(DateTime) ? ((DateTime) Value).ToString("u") : Value.ToString());
-                            }
-                            else
-                            {
-                                Subtag = (XElement) xmlMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
-                                if (Key != null) Subtag.SetAttributeValue("key", Key);
-                            }
-                            CollectionTag.Add(Subtag);
+                            KeyType = TypeParameters[0];
+                            ValueType = TypeParameters[1];
                         }
-                        XElem.Add(CollectionTag);
+                        else if (Field.FieldType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out TypeParameters))
+                            ValueType = TypeParameters[0];
+
+                        if (ValueType == null)
+                        {
+                            // Field.FieldType is not an array or collection or dictionary; use recursion to store the object
+                            XElem.Add(xmlMethod.MakeGenericMethod(Field.FieldType)
+                                .Invoke(null, new object[] { Field.GetValue(SaveObject), BaseDir, RFieldName }));
+                        }
+                        else
+                        {
+                            xmlMethod = xmlMethod.MakeGenericMethod(ValueType);
+                            if (KeyType != null && KeyType != typeof(string) && !IsIntegerType(KeyType))
+                                throw new Exception("The field {0}.{1} is a dictionary whose key type is {2}, but only string and integer types are supported."
+                                    .Fmt(typeof(T).FullName, Field.Name, KeyType.FullName));
+                            var Enumerator = Field.FieldType.GetMethod("GetEnumerator", new Type[] { }).Invoke(Field.GetValue(SaveObject), new object[] { }) as IEnumerator;
+                            Type KvpType = KeyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(KeyType, ValueType);
+                            var CollectionTag = new XElement(RFieldName);
+                            while (Enumerator.MoveNext())
+                            {
+                                object Key = null;
+                                if (KeyType != null)
+                                    Key = KvpType.GetProperty("Key").GetValue(Enumerator.Current, null);
+                                var Value = KeyType == null ? Enumerator.Current : KvpType.GetProperty("Value").GetValue(Enumerator.Current, null);
+                                XElement Subtag;
+                                if (Value == null)
+                                {
+                                    Subtag = new XElement("item");
+                                    if (Key != null) Subtag.SetAttributeValue("key", Key);
+                                    Subtag.SetAttributeValue("null", 1);
+                                }
+                                else if (ValueType.IsEnum || ValueType == typeof(bool) || IsIntegerType(ValueType) || IsDecimalType(ValueType) || ValueType == typeof(string) || ValueType == typeof(DateTime))
+                                {
+                                    Subtag = new XElement("item");
+                                    if (Key != null) Subtag.SetAttributeValue("key", Key);
+                                    Subtag.SetAttributeValue("value", SafeToString(ValueType, Value));
+                                }
+                                else
+                                {
+                                    Subtag = (XElement) xmlMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
+                                    if (Key != null) Subtag.SetAttributeValue("key", Key);
+                                }
+                                CollectionTag.Add(Subtag);
+                            }
+                            XElem.Add(CollectionTag);
+                        }
                     }
                 }
             }
@@ -409,9 +406,27 @@ namespace RT.Util.XmlClassify
             return XElem;
         }
 
-        private static object ParseIntBoolOrDateTime(Type type, string StringToParse)
+        private static string SafeToString(Type type, object obj)
         {
-            var met = type.GetMethods().Where(m => m.Name == "Parse" && m.IsStatic && m.GetParameters().Count() == 1 && m.GetParameters().First().ParameterType == typeof(string)).First();
+            if (type == typeof(DateTime))
+            {
+                string result;
+                RConvert.Exact((DateTime) obj, out result);
+                return result;
+            }
+
+            if (IsDecimalType(type))
+            {
+                var met = type.GetMethods().Where(m => m.Name == "ToString" && !m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
+                return (string) met.Invoke(obj, new object[] { "R" });
+            }
+
+            return obj.ToString();
+        }
+
+        private static object ParseValue(Type type, string StringToParse)
+        {
+            var met = type.GetMethods().Where(m => m.Name == "Parse" && m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
             return met.Invoke(null, new object[] { StringToParse });
         }
 
