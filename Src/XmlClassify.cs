@@ -78,19 +78,19 @@ namespace RT.Util.XmlClassify
                 string RFieldName = Field.Name.TrimStart('_');
                 var Attribs = Field.GetCustomAttributes(false);
 
-                // [XMLIgnore]
+                // [XmlIgnore]
                 if (Attribs.Any(x => x is XmlIgnoreAttribute))
                     continue;
 
-                // [XMLParent]
+                // [XmlParent]
                 else if (Attribs.Any(x => x is XmlParentAttribute))
                     Field.SetValue(ReturnObject, ParentNode);
 
-                // [XMLFollowId]
+                // [XmlFollowId]
                 else if (Attribs.Any(x => x is XmlFollowIdAttribute))
                 {
                     if (Field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                        throw new Exception("The field {0}.{1} uses the [XMLFollowId] attribute, but does not have the type XMLDeferredObject<T> for some T.".Fmt(typeof(T).FullName, Field.Name));
+                        throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(typeof(T).FullName, Field.Name));
 
                     Type InnerType = Field.FieldType.GetGenericArguments()[0];
                     var Attr = XElem.Attribute(RFieldName);
@@ -98,12 +98,13 @@ namespace RT.Util.XmlClassify
                     {
                         string NewFile = Path.Combine(BaseDir, InnerType.Name + Path.DirectorySeparatorChar + Attr.Value + ".xml");
                         Field.SetValue(ReturnObject,
+                            // new XmlDeferredObject<InnerType>(Attr.Value, XmlClassify.LoadObjectFromXmlFile<InnerType>(NewFile, BaseDir, t))
                             typeof(XmlDeferredObject<>).MakeGenericType(InnerType)
                                 .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
                                 .Invoke(new object[] {
                                     Attr.Value,
-                                    // XMLClassify.ReadObjectFromXMLFile<InnerType>(NewFile, BaseDir, t)
-                                    typeof(XmlClassify).GetMethod("ReadObjectFromXMLFile", new Type[] { typeof(string), typeof(string), typeof(object) })
+                                    // XmlClassify.LoadObjectFromXmlFile<InnerType>(NewFile, BaseDir, t)
+                                    typeof(XmlClassify).GetMethod("LoadObjectFromXmlFile", new Type[] { typeof(string), typeof(string), typeof(object) })
                                         .MakeGenericMethod(InnerType),
                                     null,
                                     new object[] { NewFile, BaseDir, ReturnObject }
@@ -141,7 +142,7 @@ namespace RT.Util.XmlClassify
                         Field.SetValue(ReturnObject, Subtag.Elements().FirstOrDefault());
                     else
                     {
-                        var XMLMethod = typeof(XmlClassify).GetMethod("ReadObjectFromXElement",
+                        var xmlMethod = typeof(XmlClassify).GetMethod("ObjectFromXElement",
                             new Type[] { typeof(XElement), typeof(string), typeof(object) });
 
                         // Check if it's an array, collection or dictionary
@@ -160,7 +161,7 @@ namespace RT.Util.XmlClassify
 
                         if (ValueType == null)
                         {
-                            Field.SetValue(ReturnObject, XMLMethod.MakeGenericMethod(Field.FieldType)
+                            Field.SetValue(ReturnObject, xmlMethod.MakeGenericMethod(Field.FieldType)
                                 .Invoke(null, new object[] { Subtag, BaseDir, ReturnObject }));
                         }
                         else
@@ -170,7 +171,7 @@ namespace RT.Util.XmlClassify
 
                             if (!ValueType.IsEnum && ValueType != typeof(string) && !IsIntegerType(ValueType) && !IsDecimalType(ValueType) &&
                                 ValueType != typeof(bool) && ValueType != typeof(DateTime) && ValueType != typeof(XElement))
-                                XMLMethod = XMLMethod.MakeGenericMethod(ValueType);
+                                xmlMethod = xmlMethod.MakeGenericMethod(ValueType);
 
                             object MyList;
                             if (Field.FieldType.IsArray)
@@ -221,7 +222,7 @@ namespace RT.Util.XmlClassify
                                     else if (ValueType == typeof(XElement))
                                         Value = ItemTag.Elements().FirstOrDefault();
                                     else
-                                        Value = XMLMethod.Invoke(null, new object[] { ItemTag, BaseDir, ReturnObject });
+                                        Value = xmlMethod.Invoke(null, new object[] { ItemTag, BaseDir, ReturnObject });
                                 }
                                 if (Field.FieldType.IsArray)
                                     AddMethod.Invoke(MyList, new object[] { i++, Value });
@@ -304,31 +305,31 @@ namespace RT.Util.XmlClassify
                 string RFieldName = Field.Name.TrimStart('_');
                 var Attribs = Field.GetCustomAttributes(false);
 
-                // [XMLIgnore]
+                // [XmlIgnore]
                 if (Attribs.Any(x => x is XmlIgnoreAttribute))
                     continue;
 
-                // [XMLParent]
+                // [XmlParent]
                 else if (Attribs.Any(x => x is XmlParentAttribute))
                     continue;
 
-                // [XMLFollowId]
+                // [XmlFollowId]
                 else if (Attribs.Any(x => x is XmlFollowIdAttribute))
                 {
                     if (Field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                        throw new Exception("A field that uses the [XMLFollowId] attribute must have the type XMLDeferredObject<T> for some T.");
+                        throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
 
-                    Type InnerType = Field.FieldType.GetGenericArguments()[0];
-                    Type XMLType = typeof(XmlDeferredObject<>).MakeGenericType(InnerType);
-                    string id = (string) XMLType.GetProperty("Id").GetValue(Field.GetValue(SaveObject), null);
+                    Type innerType = Field.FieldType.GetGenericArguments()[0];
+                    Type xmlType = typeof(XmlDeferredObject<>).MakeGenericType(innerType);
+                    string id = (string) xmlType.GetProperty("Id").GetValue(Field.GetValue(SaveObject), null);
                     XElem.SetAttributeValue(RFieldName, id);
 
-                    if ((bool) XMLType.GetProperty("Evaluated").GetValue(Field.GetValue(SaveObject), null))
+                    if ((bool) xmlType.GetProperty("Evaluated").GetValue(Field.GetValue(SaveObject), null))
                         typeof(XmlClassify).GetMethods()
-                            .Where(mi => mi.Name == "SaveObjectAsXML" && mi.GetParameters().Count() == 3)
-                            .First().MakeGenericMethod(InnerType).Invoke(null, new object[] {
-                                XMLType.GetProperty("Value").GetValue(Field.GetValue(SaveObject), null),
-                                Path.Combine(BaseDir, InnerType.Name + Path.DirectorySeparatorChar + id + ".xml"),
+                            .Where(mi => mi.Name == "SaveObjectToXmlFile" && mi.GetParameters().Count() == 3)
+                            .First().MakeGenericMethod(innerType).Invoke(null, new object[] {
+                                xmlType.GetProperty("Value").GetValue(Field.GetValue(SaveObject), null),
+                                Path.Combine(BaseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"),
                                 BaseDir
                             });
                 }
@@ -344,7 +345,7 @@ namespace RT.Util.XmlClassify
 
                 else if (Field.GetValue(SaveObject) != null)
                 {
-                    var XMLMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectAsXML" && mi.GetParameters().Count() == 3).First();
+                    var xmlMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectToXElement" && mi.GetParameters().Count() == 3).First();
 
                     Type KeyType = null, ValueType = null;
                     Type[] TypeParameters = null;
@@ -362,12 +363,12 @@ namespace RT.Util.XmlClassify
                     if (ValueType == null)
                     {
                         // Field.FieldType is not an array or collection or dictionary; use recursion to store the object
-                        XElem.Add(XMLMethod.MakeGenericMethod(Field.FieldType)
+                        XElem.Add(xmlMethod.MakeGenericMethod(Field.FieldType)
                             .Invoke(null, new object[] { Field.GetValue(SaveObject), BaseDir, RFieldName }));
                     }
                     else
                     {
-                        XMLMethod = XMLMethod.MakeGenericMethod(ValueType);
+                        xmlMethod = xmlMethod.MakeGenericMethod(ValueType);
                         if (KeyType != null && KeyType != typeof(string) && !IsIntegerType(KeyType))
                             throw new Exception("The field {0}.{1} is a dictionary whose key type is {2}, but only string and integer types are supported."
                                 .Fmt(typeof(T).FullName, Field.Name, KeyType.FullName));
@@ -395,7 +396,7 @@ namespace RT.Util.XmlClassify
                             }
                             else
                             {
-                                Subtag = (XElement) XMLMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
+                                Subtag = (XElement) xmlMethod.Invoke(null, new object[] { Value, BaseDir, "item" });
                                 if (Key != null) Subtag.SetAttributeValue("key", Key);
                             }
                             CollectionTag.Add(Subtag);
@@ -426,18 +427,18 @@ namespace RT.Util.XmlClassify
     }
 
     /// <summary>
-    /// If this attribute is used on a field, the XML tag attribute will contain an Id that points to another, separate
+    /// If this attribute is used on a field, the XML tag attribute will contain an ID that points to another, separate
     /// XML file which in turn contains the actual object for this field. This is only allowed on fields of type
     /// <see cref="XmlDeferredObject&lt;T&gt;"/> for some class type T. Use <see cref="XmlDeferredObject&lt;T&gt;.Value"/>
     /// to retrieve the object. This retrieval is deferred until first use. Use <see cref="XmlDeferredObject&lt;T&gt;.Id"/>
-    /// to retrieve the Id used to reference the object. You can also capture the Id into the class T by using the
+    /// to retrieve the Id used to reference the object. You can also capture the ID into the class T by using the
     /// <see cref="XmlIdAttribute"/> attribute within that class.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field, it is ignored by XMLClassify. Data stored in this field is not persisted.
+    /// If this attribute is used on a field, it is ignored by XmlClassify. Data stored in this field is not persisted.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class XmlIgnoreAttribute : Attribute { }
