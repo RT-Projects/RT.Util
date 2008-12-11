@@ -8,14 +8,19 @@ namespace RT.Util.Streams
     /// </summary>
     public class SlowStream : Stream
     {
-        /// <summary>Size of each chunk to read at a time.</summary>
-        public static int ChunkSize = 20;
+        /// <summary>Gets or sets the current chunk size (number of bytes read at a time).</summary>
+        public int ChunkSize { get; set; }
 
         private Stream MyStream;
 
         /// <summary>Initialises a new SlowStream instance.</summary>
-        /// <param name="MyStream">The underlying stream to read in chunks from.</param>
-        public SlowStream(Stream MyStream) { this.MyStream = MyStream; }
+        /// <param name="myStream">The underlying stream to read in chunks from.</param>
+        public SlowStream(Stream myStream) { MyStream = myStream; }
+
+        /// <summary>Initialises a new SlowStream instance.</summary>
+        /// <param name="myStream">The underlying stream to read in chunks from.</param>
+        /// <param name="chunkSize">The number of bytes to read per chunk.</param>
+        public SlowStream(Stream myStream, int chunkSize) { MyStream = myStream; ChunkSize = chunkSize; }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 

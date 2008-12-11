@@ -113,6 +113,16 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Converts the specified raw UTF-8 data to a string.
+        /// </summary>
+        /// <param name="Input">Data to interpret as UTF-8 text.</param>
+        /// <returns>A string containing the characters represented by the UTF-8-encoded input.</returns>
+        public static string FromUTF8(this byte[] Input)
+        {
+            return Encoding.UTF8.GetString(Input);
+        }
+
+        /// <summary>
         /// Determines the length of the UTF-8 encoding of the specified string.
         /// </summary>
         /// <param name="Input">String to determined UTF-8 length of.</param>
