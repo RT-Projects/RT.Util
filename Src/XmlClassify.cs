@@ -64,6 +64,17 @@ namespace RT.Util.XmlClassify
         /// </summary>
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="XElem">XML tree to reconstruct object from.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static T ObjectFromXElement<T>(XElement XElem) where T: new()
+        {
+            return ObjectFromXElement<T>(XElem, null, null);
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree.
+        /// </summary>
+        /// <typeparam name="T">Type of object to reconstruct.</typeparam>
+        /// <param name="XElem">XML tree to reconstruct object from.</param>
         /// <param name="BaseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="ParentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
@@ -272,6 +283,17 @@ namespace RT.Util.XmlClassify
         /// </summary>
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="SaveObject">Object to convert to an XML tree.</param>
+        /// <returns>XML tree generated from the object.</returns>
+        public static XElement ObjectToXElement<T>(T SaveObject)
+        {
+            return ObjectToXElement(SaveObject, null, "item");
+        }
+
+        /// <summary>
+        /// Converts the specified object into an XML tree.
+        /// </summary>
+        /// <typeparam name="T">Type of object to convert.</typeparam>
+        /// <param name="SaveObject">Object to convert to an XML tree.</param>
         /// <param name="BaseDir">The base directory from which to construct the paths for
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <returns>XML tree generated from the object.</returns>
@@ -296,7 +318,7 @@ namespace RT.Util.XmlClassify
 
             if (typeof(T) == typeof(XElement))
             {
-                XElem.Add(SaveObject);
+                XElem.Add(new XElement(SaveObject as XElement));
                 return XElem;
             }
 

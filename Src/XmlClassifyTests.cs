@@ -62,12 +62,18 @@ namespace RT.Util.XmlClassify
             }
         }
 
+        private class xmlClass
+        {
+            public string Str;
+            public XElement Xml;
+        }
+
         [Test]
         public void TestBlankClass()
         {
             XElement xel;
-            xel = XmlClassify.ObjectToXElement(new blankClass(), null);
-            XmlClassify.ObjectFromXElement<blankClass>(xel, null, null);
+            xel = XmlClassify.ObjectToXElement(new blankClass());
+            XmlClassify.ObjectFromXElement<blankClass>(xel);
         }
 
         [Test]
@@ -83,8 +89,8 @@ namespace RT.Util.XmlClassify
                 ADouble = Math.PI,
                 ADateTime = DateTime.UtcNow,
             };
-            var xel = XmlClassify.ObjectToXElement(clsEx, null);
-            var clsAc = XmlClassify.ObjectFromXElement<basicClass>(xel, null, null);
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<basicClass>(xel);
 
             clsEx.AssertEqual(clsAc);
 
@@ -102,10 +108,29 @@ namespace RT.Util.XmlClassify
             var clsEx = new classWithDict();
             clsEx.Dict.Add("abc", "def");
             clsEx.Dict.Add("key", "value");
-            var xel = XmlClassify.ObjectToXElement(clsEx, null);
-            var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel, null, null);
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel);
 
             assertDict(clsEx.Dict, clsAc.Dict);
+        }
+
+        [Test]
+        public void TestClassWithXML()
+        {
+            var clsEx = new xmlClass()
+            {
+                Str = "control",
+                Xml =
+                    new XElement("bla", new XAttribute("attr1", "val1"),
+                        new XElement("sub1",
+                            new XElement("sub1.1")),
+                        new XElement("sub2", new XAttribute("attr2", "val2")))
+            };
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<xmlClass>(xel);
+
+            Assert.AreEqual(clsEx.Str, clsAc.Str);
+            Assert.AreEqual(clsEx.Xml.ToString(SaveOptions.DisableFormatting), clsAc.Xml.ToString(SaveOptions.DisableFormatting));
         }
 
         [Test]
@@ -127,8 +152,8 @@ namespace RT.Util.XmlClassify
                     }
                 }
             };
-            var xel = XmlClassify.ObjectToXElement(nestedEx, null);
-            var nestedAc = XmlClassify.ObjectFromXElement<nestedClass>(xel, null, null);
+            var xel = XmlClassify.ObjectToXElement(nestedEx);
+            var nestedAc = XmlClassify.ObjectFromXElement<nestedClass>(xel);
 
             // Full comparison
             nestedEx.AssertEqual(nestedAc);
