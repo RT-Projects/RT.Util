@@ -48,11 +48,11 @@ namespace RT.Util.ExtensionMethods
         public void TestSorted()
         {
             List<int> a = new List<int>() { 9, 3, 5, 1, 2, 4, 2, 2 };
-            List<int> aSorted = new List<int>(a.Sorted());
+            List<int> aSorted = new List<int>(a.Order());
             Assert.IsTrue(aSorted.EqualItems(new List<int>() { 1, 2, 2, 2, 3, 4, 5, 9 }));
 
             List<string> s = new List<string>() { "some", "blah", "stuff", "apple" };
-            List<string> sSorted = new List<string>(s.Sorted());
+            List<string> sSorted = new List<string>(s.Order());
             Assert.IsTrue(sSorted.EqualItems(new List<string>() { "apple", "blah", "some", "stuff" }));
         }
 

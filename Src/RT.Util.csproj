@@ -93,8 +93,8 @@
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
+    <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
-    <Compile Include="ExtensionMethods\DictionaryExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
