@@ -10,7 +10,7 @@ namespace RT.Util.ExtensionMethods
     public class IEnumerableExtensionsTests
     {
         [Test]
-        public void TestIEnumerableJoin()
+        public void TestJoin()
         {
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
             var two = new string[] { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
@@ -28,7 +28,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestIEnumerableUniquePairs()
+        public void TestUniquePairs()
         {
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
             var iter = one.UniquePairs().GetEnumerator();
@@ -42,6 +42,48 @@ namespace RT.Util.ExtensionMethods
                 }
             }
             Assert.IsFalse(iter.MoveNext());
+        }
+
+        [Test]
+        public void TestSorted()
+        {
+            List<int> a = new List<int>() { 9, 3, 5, 1, 2, 4, 2, 2 };
+            List<int> aSorted = new List<int>(a.Sorted());
+            Assert.IsTrue(aSorted.EqualItems(new List<int>() { 1, 2, 2, 2, 3, 4, 5, 9 }));
+
+            List<string> s = new List<string>() { "some", "blah", "stuff", "apple" };
+            List<string> sSorted = new List<string>(s.Sorted());
+            Assert.IsTrue(sSorted.EqualItems(new List<string>() { "apple", "blah", "some", "stuff" }));
+        }
+
+        [Test]
+        public void TestEqualItems()
+        {
+            List<string> a, b;
+
+            a = new List<string>();
+            b = new List<string>();
+            Assert.IsTrue(a.EqualItems(b));
+
+            a = new List<string>() { "blah" };
+            b = new List<string>() { "blah" };
+            Assert.IsTrue(a.EqualItems(b));
+            a = new List<string>() { "blah", "stuff" };
+            b = new List<string>() { "blah", "stuff" };
+            Assert.IsTrue(a.EqualItems(b));
+            a = new List<string>() { "blah", "stuff" };
+            b = new List<string>() { "stuff", "blah" };
+            Assert.IsFalse(a.EqualItems(b));
+
+            a = new List<string>() { "blah", "stuff" };
+            b = new List<string>();
+            Assert.IsFalse(a.EqualItems(b));
+            a = new List<string>() { "blah", "stuff" };
+            b = new List<string>() { "blah" };
+            Assert.IsFalse(a.EqualItems(b));
+            a = new List<string>() { "blah", "stuff" };
+            b = new List<string>() { "blah", "stuff", "apples" };
+            Assert.IsFalse(a.EqualItems(b));
         }
     }
 }
