@@ -94,6 +94,7 @@
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
+    <Compile Include="ExtensionMethods\ControlExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
