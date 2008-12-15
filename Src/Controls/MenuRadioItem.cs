@@ -7,32 +7,32 @@ namespace RT.Util.Controls
 {
     /// <summary>
     /// Encapsulates a menu item that is associated with a value from a specified type, usually an enum.
-    /// These menu items are intended to be grouped using a <see cref="MenuRadioGroup&lt;ValueType&gt;"/>.
+    /// These menu items are intended to be grouped using a <see cref="MenuRadioGroup&lt;T&gt;"/>.
     /// </summary>
-    /// <typeparam name="ValueType">The type of the value associated with this menu item.</typeparam>
-    public class MenuRadioItem<ValueType> : ToolStripMenuItem where ValueType : struct
+    /// <typeparam name="T">The type of the value associated with this menu item.</typeparam>
+    public class MenuRadioItem<T> : ToolStripMenuItem where T : struct
     {
-        private ValueType FValue;
-        private MenuRadioGroup<ValueType> FParentGroup;
+        private T _value;
+        private MenuRadioGroup<T> _parentGroup;
 
         /// <summary>Returns the value associated with this menu item.</summary>
-        public ValueType Value
+        public T Value
         {
-            get { return FValue; }
-            set { FValue = value; }
+            get { return _value; }
+            set { _value = value; }
         }
 
         /// <summary>Returns the group to which this menu item belongs,
         /// or moves it to a different group.</summary>
-        public MenuRadioGroup<ValueType> ParentGroup
+        public MenuRadioGroup<T> ParentGroup
         {
-            get { return FParentGroup; }
+            get { return _parentGroup; }
             set
             {
-                if (FParentGroup != value)
+                if (_parentGroup != value)
                 {
-                    FParentGroup = value;
-                    FParentGroup.AddMember(this);
+                    _parentGroup = value;
+                    _parentGroup.AddMember(this);
                 }
             }
         }
@@ -46,8 +46,8 @@ namespace RT.Util.Controls
 
         private void MenuRadioItem_Click(object sender, EventArgs e)
         {
-            if (FParentGroup != null)
-                FParentGroup.SetValue(FValue);
+            if (_parentGroup != null)
+                _parentGroup.SetValue(_value);
         }
     }
 }

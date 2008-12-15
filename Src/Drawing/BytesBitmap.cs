@@ -14,17 +14,17 @@ namespace RT.Util.Drawing
     /// </summary>
     public class BytesBitmap : IDisposable
     {
-        private SharedPinnedByteArray FBytes;
-        private Bitmap FBitmap;
-        private int FStride;
-        private int FPixelFormatSize;
+        private SharedPinnedByteArray _bytes;
+        private Bitmap _bitmap;
+        private int _stride;
+        private int _pixelFormatSize;
 
         /// <summary>
         /// Gets an array that contains the bitmap bit buffer.
         /// </summary>
         public byte[] Bits
         {
-            get { return FBytes.Bits; }
+            get { return _bytes._bits; }
         }
 
         /// <summary>
@@ -32,8 +32,8 @@ namespace RT.Util.Drawing
         /// </summary>
         public Bitmap Bitmap
         {
-            get { return FBitmap; }
-            set { FBitmap = value; }
+            get { return _bitmap; }
+            set { _bitmap = value; }
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public int Stride
         {
-            get { return FStride; }
+            get { return _stride; }
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public int PixelFormatSize
         {
-            get { return FPixelFormatSize; }
+            get { return _pixelFormatSize; }
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public IntPtr BitPtr
         {
-            get { return FBytes.BitPtr; }
+            get { return _bytes._bitPtr; }
         }
 
         /// <summary>
@@ -65,23 +65,23 @@ namespace RT.Util.Drawing
         /// </summary>
         public BytesBitmap(int width, int height, PixelFormat format)
         {
-            FPixelFormatSize = Image.GetPixelFormatSize(format);
-            FStride = width * FPixelFormatSize / 8;
-            int padding = FStride % 4;
-            FStride += (padding == 0) ? 0 : 4 - padding;
-            FBytes = new SharedPinnedByteArray(FStride * height);
-            FBitmap = new Bitmap(width, height, FStride, format, FBytes.BitPtr);
+            _pixelFormatSize = Image.GetPixelFormatSize(format);
+            _stride = width * _pixelFormatSize / 8;
+            int padding = _stride % 4;
+            _stride += (padding == 0) ? 0 : 4 - padding;
+            _bytes = new SharedPinnedByteArray(_stride * height);
+            _bitmap = new Bitmap(width, height, _stride, format, _bytes._bitPtr);
         }
 
         #region Dispose stuff
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-        private bool FDisposed;
+        private bool _disposed;
 
         public bool Disposed
         {
-            get { return FDisposed; }
+            get { return _disposed; }
         }
 
         public void Dispose()
@@ -91,16 +91,16 @@ namespace RT.Util.Drawing
 
         protected void Dispose(bool disposing)
         {
-            if (FDisposed)
+            if (_disposed)
                 return;
 
-            FBitmap.Dispose();
-            FBytes.ReleaseReference();
-            FDisposed = true;
+            _bitmap.Dispose();
+            _bytes.releaseReference();
+            _disposed = true;
 
             if (disposing)
             {
-                FBitmap = null;
+                _bitmap = null;
             }
         }
 
@@ -120,46 +120,46 @@ namespace RT.Util.Drawing
     /// </summary>
     internal class SharedPinnedByteArray
     {
-        internal byte[] Bits;
-        internal GCHandle Handle;
-        internal IntPtr BitPtr;
+        internal byte[] _bits;
+        internal GCHandle _handle;
+        internal IntPtr _bitPtr;
 
-        int RefCount;
+        private int _refCount;
+        private bool _destroyed;
 
         public SharedPinnedByteArray(int length)
         {
-            Bits = new byte[length];
-            Handle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
-            BitPtr = Marshal.UnsafeAddrOfPinnedArrayElement(Bits, 0);
-            RefCount++;
+            _bits = new byte[length];
+            _handle = GCHandle.Alloc(_bits, GCHandleType.Pinned);
+            _bitPtr = Marshal.UnsafeAddrOfPinnedArrayElement(_bits, 0);
+            _refCount++;
         }
 
-        internal void AddReference()
+        internal void addReference()
         {
-            RefCount++;
+            _refCount++;
         }
 
-        internal void ReleaseReference()
+        internal void releaseReference()
         {
-            RefCount--;
-            if (RefCount <= 0)
-                Destroy();
+            _refCount--;
+            if (_refCount <= 0)
+                destroy();
         }
 
-        bool FDestroyed;
-        private void Destroy()
+        private void destroy()
         {
-            if (!FDestroyed)
+            if (!_destroyed)
             {
-                Handle.Free();
-                Bits = null;
-                FDestroyed = true;
+                _handle.Free();
+                _bits = null;
+                _destroyed = true;
             }
         }
 
         ~SharedPinnedByteArray()
         {
-            Destroy();
+            destroy();
         }
     }
 }

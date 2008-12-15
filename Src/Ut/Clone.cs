@@ -12,11 +12,11 @@ namespace RT.Util
         /// * Does not recognise references to objects already cloned, so this is currently
         ///   completely unsuitable for complex structures
         /// </summary>
-        public static object Clone(object Obj)
+        public static object Clone(object obj)
         {
-            Type T = Obj.GetType();
-            object newObj = Activator.CreateInstance(T);
-            FieldInfo[] fields = T.GetFields();
+            Type type = obj.GetType();
+            object newObj = Activator.CreateInstance(type);
+            FieldInfo[] fields = type.GetFields();
 
             foreach (FieldInfo fi in fields)
             {
@@ -26,13 +26,13 @@ namespace RT.Util
                 if (ICloneType != null)
                 {
                     // Cloneable - so clone it!
-                    ICloneable icl = (ICloneable)fi.GetValue(Obj);
+                    ICloneable icl = (ICloneable)fi.GetValue(obj);
                     fi.SetValue(newObj, icl == null ? null : icl.Clone());
                 }
                 else
                 {
                     // Not cloneable - just copy it then
-                    fi.SetValue(newObj, fi.GetValue(Obj));
+                    fi.SetValue(newObj, fi.GetValue(obj));
                 }
             }
             return newObj;

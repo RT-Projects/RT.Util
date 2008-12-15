@@ -18,16 +18,16 @@ namespace RT.Util.EventSim
         /// <summary>
         /// The list of all scheduled events.
         /// </summary>
-        private SortedList<double, Event> EL = new SortedList<double, Event>();
+        private SortedList<double, Event> _el = new SortedList<double, Event>();
         /// <summary>
         /// Current simulation time.
         /// </summary>
-        private double FTime;
+        private double _time;
 
         /// <summary>
         /// Gets the current simulation time.
         /// </summary>
-        public double Time { get { return FTime; } }
+        public double Time { get { return _time; } }
 
         /// <summary>
         /// Gets the next event to occur, or null if none are scheduled.
@@ -37,8 +37,8 @@ namespace RT.Util.EventSim
         {
             get
             {
-                if (EL.Count > 0)
-                    return EL.Values[0];
+                if (_el.Count > 0)
+                    return _el.Values[0];
                 else
                     return null;
             }
@@ -47,26 +47,26 @@ namespace RT.Util.EventSim
         /// <summary>
         /// Schedules a new event at the specified time.
         /// </summary>
-        public double AddEvent(Event Event, double Time)
+        public double AddEvent(Event evt, double time)
         {
-            if (Time <= FTime)
+            if (time <= _time)
                 throw new Exception("Events can only be added in the future");
 
-            while (EL.ContainsKey(Time))
-                Time = BitConverter.Int64BitsToDouble(
-                    BitConverter.DoubleToInt64Bits(Time) + 1);
-            EL.Add(Time, Event);
-            return Time;
+            while (_el.ContainsKey(time))
+                time = BitConverter.Int64BitsToDouble(
+                    BitConverter.DoubleToInt64Bits(time) + 1);
+            _el.Add(time, evt);
+            return time;
         }
 
         /// <summary>
         /// Removes the specified event from the scheduled event queue.
         /// </summary>
-        public void CancelEvent(Event Event)
+        public void CancelEvent(Event evt)
         {
-            int i = EL.IndexOfValue(Event);
+            int i = _el.IndexOfValue(evt);
             if (i >= 0)
-                EL.RemoveAt(i);
+                _el.RemoveAt(i);
         }
 
         /// <summary>
@@ -77,18 +77,18 @@ namespace RT.Util.EventSim
         public bool Tick()
         {
             // Check whether the simulation has finished
-            if (EL.Count == 0)
+            if (_el.Count == 0)
                 return false;
 
-            Event NE = EL.Values[0];
+            Event ne = _el.Values[0];
 
             // Process the event
-            FTime = EL.Keys[0];
-            NE.Callback(NE, this);
+            _time = _el.Keys[0];
+            ne.Callback(ne, this);
             // Remove the event. There is no way the Callback could have added another
             // event before NE, but it might have deleted the 0'th event.
-            if (EL.Values[0] == NE)
-                EL.RemoveAt(0);
+            if (_el.Values[0] == ne)
+                _el.RemoveAt(0);
 
             return true;
         }

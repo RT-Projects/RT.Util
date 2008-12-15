@@ -13,25 +13,25 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Determines whether the current type is or implements the specified generic interface, and determines that interface's generic type parameters.
         /// </summary>
-        /// <param name="T">The current type.</param>
-        /// <param name="Interface">A generic type definition for an interface, e.g. typeof(ICollection&lt;&gt;) or typeof(IDictionary&lt;,&gt;).</param>
-        /// <param name="TypeParameters">Will receive an array containing the generic type parameters of the interface.</param>
+        /// <param name="type">The current type.</param>
+        /// <param name="interface">A generic type definition for an interface, e.g. typeof(ICollection&lt;&gt;) or typeof(IDictionary&lt;,&gt;).</param>
+        /// <param name="typeParameters">Will receive an array containing the generic type parameters of the interface.</param>
         /// <returns>True if the current type is or implements the specified generic interface.</returns>
-        public static bool TryGetInterfaceGenericParameters(this Type T, Type Interface, out Type[] TypeParameters)
+        public static bool TryGetInterfaceGenericParameters(this Type type, Type @interface, out Type[] typeParameters)
         {
-            TypeParameters = null;
+            typeParameters = null;
 
-            if (T.IsGenericType && T.GetGenericTypeDefinition() == Interface)
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == @interface)
             {
-                TypeParameters = T.GetGenericArguments();
+                typeParameters = type.GetGenericArguments();
                 return true;
             }
 
-            var Implements = T.FindInterfaces((ty, obj) => ty.IsGenericType && ty.GetGenericTypeDefinition() == Interface, null).FirstOrDefault();
-            if (Implements == null)
+            var implements = type.FindInterfaces((ty, obj) => ty.IsGenericType && ty.GetGenericTypeDefinition() == @interface, null).FirstOrDefault();
+            if (implements == null)
                 return false;
 
-            TypeParameters = Implements.GetGenericArguments();
+            typeParameters = implements.GetGenericArguments();
             return true;
         }
     }

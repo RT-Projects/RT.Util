@@ -47,10 +47,10 @@ namespace RT.Util.Paths
         /// </summary>
         public object Clone()
         {
-            PathManager PM = new PathManager();
-            PM.Paths = new List<PathInfo>(Paths.Count);
-            PM.Paths.AddRange(Paths);
-            return PM;
+            PathManager pm = new PathManager();
+            pm.Paths = new List<PathInfo>(Paths.Count);
+            pm.Paths.AddRange(Paths);
+            return pm;
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace RT.Util.Paths
         /// </summary>
         private int FindPathEntry(string path)
         {
-            for (int i=0; i<Paths.Count; i++)
+            for (int i = 0; i < Paths.Count; i++)
                 if (Paths[i].Path.ToUpper() == path.ToUpper())
                     return i;
             return -1;
@@ -73,7 +73,7 @@ namespace RT.Util.Paths
         {
             // Delete the entry for this path, if it exists
             int i = FindPathEntry(path);
-            if (i!=-1)
+            if (i != -1)
                 Paths.RemoveAt(i);
             // Delete any entries which are subpaths of this path
             DeleteSubpathEntries(path);
@@ -104,7 +104,7 @@ namespace RT.Util.Paths
         /// </summary>
         private void DeleteSubpathEntries(string path)
         {
-            for (int i=Paths.Count-1; i>=0; i--)
+            for (int i = Paths.Count - 1; i >= 0; i--)
                 if (PathUtil.IsSubpath(path, Paths[i].Path))
                     Paths.RemoveAt(i);
         }
@@ -144,20 +144,20 @@ namespace RT.Util.Paths
         {
             int mindist = int.MaxValue;
             int mindistn = -1;
-            for (int i=0; i<Paths.Count; i++)
+            for (int i = 0; i < Paths.Count; i++)
             {
                 int d = PathUtil.PathLevelDistance(Paths[i].Path, path);
-                
+
                 if (d == int.MaxValue || d < 0)
                     continue;
 
-                if (d<mindist)
+                if (d < mindist)
                 {
                     mindist = d;
                     mindistn = i;
                 }
             }
-            if (mindistn==-1)
+            if (mindistn == -1)
                 return false;
             else
                 return Paths[mindistn].Include;
@@ -199,8 +199,8 @@ namespace RT.Util.Paths
         public IEnumerable<FileSystemInfo> GetFiles(bool includeDirs, bool includeFiles)
         {
             FailedFiles = new List<string>();
-            Stack<DirectoryInfo> ToScan = new Stack<DirectoryInfo>();
-            List<string> ToExclude = new List<string>();
+            Stack<DirectoryInfo> toScan = new Stack<DirectoryInfo>();
+            List<string> toExclude = new List<string>();
 
             List<string> l = new List<string>(); // so that we queue items in proper order
             for (int i = 0; i < Paths.Count; i++)
@@ -208,26 +208,26 @@ namespace RT.Util.Paths
                 if (Paths[i].Include)
                     l.Add(Paths[i].Path);
                 else
-                    ToExclude.Add(Paths[i].Path.ToLowerInvariant());
+                    toExclude.Add(Paths[i].Path.ToLowerInvariant());
             }
-            for (int i = l.Count-1; i >= 0; i--)
-                ToScan.Push(new DirectoryInfo(l[i]));
+            for (int i = l.Count - 1; i >= 0; i--)
+                toScan.Push(new DirectoryInfo(l[i]));
 
             // Scan all paths
-            while (ToScan.Count > 0)
+            while (toScan.Count > 0)
             {
-                DirectoryInfo curDI = ToScan.Pop();
+                DirectoryInfo curDir = toScan.Pop();
                 FileInfo[] files = null;
                 DirectoryInfo[] dirs;
                 try
                 {
                     if (includeFiles)
-                        files = curDI.GetFiles();
-                    dirs = curDI.GetDirectories();
+                        files = curDir.GetFiles();
+                    dirs = curDir.GetDirectories();
                 }
                 catch
                 {
-                    FailedFiles.Add(curDI.FullName);
+                    FailedFiles.Add(curDir.FullName);
                     continue;
                 }
 
@@ -239,13 +239,13 @@ namespace RT.Util.Paths
                 // Directories
                 foreach (DirectoryInfo di in dirs)
                 {
-                    if (ToExclude.Contains(PathUtil.NormPath(di.FullName).ToLowerInvariant()))
+                    if (toExclude.Contains(PathUtil.NormPath(di.FullName).ToLowerInvariant()))
                     {
                         // Remove this item to save searching time later?
-                        ToExclude.Remove(PathUtil.NormPath(di.FullName).ToLowerInvariant());
+                        toExclude.Remove(PathUtil.NormPath(di.FullName).ToLowerInvariant());
                         continue;
                     }
-                    ToScan.Push(di);
+                    toScan.Push(di);
                     if (includeDirs)
                         yield return di;
                 }
@@ -253,6 +253,5 @@ namespace RT.Util.Paths
         }
 
         #endregion
-
     }
 }

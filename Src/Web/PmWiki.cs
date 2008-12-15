@@ -14,7 +14,7 @@ namespace RT.Util.Web
         /// The instance of the Http class used to access PmWiki. Provided here to
         /// allow various features of Http to be used - such as debug logging.
         /// </summary>
-        public Http TheSite;
+        public Http Site;
 
         /// <summary>
         /// PmWiki edit password - this will be posted automatically if PmWiki asks
@@ -27,9 +27,9 @@ namespace RT.Util.Web
         /// <summary>
         /// Constructs an instance of PmWiki located at the specified Url.
         /// </summary>
-        public PmWiki(string Url)
+        public PmWiki(string url)
         {
-            TheSite = new Http(Url);
+            Site = new Http(url);
         }
 
         /// <summary>
@@ -38,10 +38,10 @@ namespace RT.Util.Web
         /// </summary>
         public string LoadPage(string page)
         {
-            if (!TheSite.Get(page+"?action=source"))
+            if (!Site.Get(page + "?action=source"))
                 return null;
 
-            return TheSite.LastHTML;
+            return Site.LastHtml;
         }
 
         /// <summary>
@@ -53,45 +53,45 @@ namespace RT.Util.Web
         public bool SavePage(string page, string source)
         {
             // Invoke the Edit command
-            if (!TheSite.Get(page+"?action=edit"))
+            if (!Site.Get(page + "?action=edit"))
                 return false;
 
             // Check if password needed
-            if (TheSite.LastHTML.Contains(@"<strong>Password required</strong>")
-                && TheSite.LastHTML.Contains(@"<input type='password' name='authpw'"))
+            if (Site.LastHtml.Contains(@"<strong>Password required</strong>")
+                && Site.LastHtml.Contains(@"<input type='password' name='authpw'"))
             {
                 Dictionary<string, string> p = new Dictionary<string, string>();
                 p["authpw"] = Password;
-                if (!TheSite.Post(page+"?action=edit", p))
+                if (!Site.Post(page + "?action=edit", p))
                     return false;
             }
 
             // Parse the edit form (just a little bit)
-            Dictionary<string, string> P = new Dictionary<string, string>();
-            if (!TheSite.LastHTML.Contains(@"type='hidden' name='action' value='edit'"))
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            if (!Site.LastHtml.Contains(@"type='hidden' name='action' value='edit'"))
                 return false;
-            P["action"] = "edit";
+            parameters["action"] = "edit";
 
             Match m;
-            m = Regex.Match(TheSite.LastHTML, @"type='hidden' name='n' value='([^']+)'");
+            m = Regex.Match(Site.LastHtml, @"type='hidden' name='n' value='([^']+)'");
             if (!m.Success)
                 return false;
-            P["n"] = m.Groups[1].Value;
+            parameters["n"] = m.Groups[1].Value;
 
-            m = Regex.Match(TheSite.LastHTML, @"type='hidden' name='basetime' value='([^']+)' />");
+            m = Regex.Match(Site.LastHtml, @"type='hidden' name='basetime' value='([^']+)' />");
             if (!m.Success)
                 return false;
-            P["basetime"] = m.Groups[1].Value;
+            parameters["basetime"] = m.Groups[1].Value;
 
-            P["csum"] = "PmWiki auto editor, at " + DateTime.Now.ToString();
-            P["text"] = source;
-            P["post"] = " Save ";
+            parameters["csum"] = "PmWiki auto editor, at " + DateTime.Now.ToString();
+            parameters["text"] = source;
+            parameters["post"] = " Save ";
 
             // Post it!
-            if (!TheSite.Post(page+"?action=edit", P))
+            if (!Site.Post(page + "?action=edit", parameters))
                 return false;
-            if (TheSite.LastHTML.Contains(@"<strong>Password required</strong>")
-                && TheSite.LastHTML.Contains(@"<input type='password' name='authpw'"))
+            if (Site.LastHtml.Contains(@"<strong>Password required</strong>")
+                && Site.LastHtml.Contains(@"<input type='password' name='authpw'"))
                 return false;
 
             return true;

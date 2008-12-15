@@ -8,22 +8,22 @@ namespace RT.Util.Forms
     /// <summary>Contains static methods to operate on managed forms (subclasses of <see cref="ManagedForm"/>).</summary>
     public static class FormManager
     {
-        private static Dictionary<Type, ManagedForm> Instances = new Dictionary<Type, ManagedForm>();
+        private static Dictionary<Type, ManagedForm> _instances = new Dictionary<Type, ManagedForm>();
 
-        internal static void FormCreated(Type type, ManagedForm instance)
+        internal static void formCreated(Type type, ManagedForm instance)
         {
-            if (Instances.ContainsKey(type))
+            if (_instances.ContainsKey(type))
                 throw new Exception(string.Format("Attempt to create an instance of the managed form {0} when another one is opened.", type.FullName));
             else
-                Instances.Add(type, instance);
+                _instances.Add(type, instance);
         }
 
-        internal static void FormClosed(Type type)
+        internal static void formClosed(Type type)
         {
-            if (!Instances.ContainsKey(type))
+            if (!_instances.ContainsKey(type))
                 throw new Exception(string.Format("Attempt to close managed form {0} when no instance is stored by FormManager.", type.FullName));
             else
-                Instances.Remove(type);
+                _instances.Remove(type);
         }
 
         /// <summary>Returns the managed form of the specified type. If none exists, it is created.</summary>
@@ -32,8 +32,8 @@ namespace RT.Util.Forms
         public static T GetForm<T>() where T : ManagedForm
         {
             T form;
-            if (Instances.ContainsKey(typeof(T)))
-                form = (T) Instances[typeof(T)];
+            if (_instances.ContainsKey(typeof(T)))
+                form = (T) _instances[typeof(T)];
             else
             {
                 // Create from a private constructor. Since this form is derived from
@@ -45,14 +45,14 @@ namespace RT.Util.Forms
                         System.Reflection.BindingFlags.CreateInstance,
                         null, null, null) as T;
                 }
-                catch (Exception E)
+                catch (Exception e)
                 {
                     // It looks like the derived form constructor has thrown an exception.
                     // Whatever the reason, ensure that there is no instance of this form
                     // stored by the FormManager. Propagate the exception in any case.
-                    if (Instances.ContainsKey(typeof(T)))
-                        Instances.Remove(typeof(T));
-                    throw E;
+                    if (_instances.ContainsKey(typeof(T)))
+                        _instances.Remove(typeof(T));
+                    throw e;
                 }
             }
             return form;

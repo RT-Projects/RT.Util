@@ -14,49 +14,29 @@ namespace RT.Util.Streams
     /// </summary>
     public class DynamicContentStream : Stream
     {
-        private IEnumerator<string> Enumerator = null;
-        private byte[] LastUnprocessedBytes = null;
-        private int LastUnprocessedBytesIndex = 0;
+        private IEnumerator<string> _enumerator = null;
+        private byte[] _lastUnprocessedBytes = null;
+        private int _lastUnprocessedBytesIndex = 0;
 
         /// <summary>
         /// Instantiates a buffered <see cref="DynamicContentStream"/>.
         /// </summary>
-        /// <param name="Enumerable">The object that provides the content for this stream to read from.</param>
-        public DynamicContentStream(IEnumerable<string> Enumerable)
+        /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
+        public DynamicContentStream(IEnumerable<string> enumerable)
         {
-            this.Enumerator = Enumerable.GetEnumerator();
-            this.Buffered = true;
+            _enumerator = enumerable.GetEnumerator();
+            Buffered = true;
         }
 
         /// <summary>
         /// Instantiates a <see cref="DynamicContentStream"/> and lets you configure whether it's buffered or not.
         /// </summary>
-        /// <param name="Enumerable">The object that provides the content for this stream to read from.</param>
-        /// <param name="Buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
-        public DynamicContentStream(IEnumerable<string> Enumerable, bool Buffered)
+        /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
+        /// <param name="buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
+        public DynamicContentStream(IEnumerable<string> enumerable, bool buffered)
         {
-            this.Enumerator = Enumerable.GetEnumerator();
-            this.Buffered = Buffered;
-        }
-
-        /// <summary>
-        /// Instantiates a buffered <see cref="DynamicContentStream"/>.
-        /// </summary>
-        /// <param name="Enumerator">The object that provides the content for this stream to read from.</param>
-        public DynamicContentStream(IEnumerator<string> Enumerator)
-        {
-            this.Enumerator = Enumerator;
-        }
-
-        /// <summary>
-        /// Instantiates a <see cref="DynamicContentStream"/> and lets you configure whether it's buffered or not.
-        /// </summary>
-        /// <param name="Enumerator">The object that provides the content for this stream to read from.</param>
-        /// <param name="Buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
-        public DynamicContentStream(IEnumerator<string> Enumerator, bool Buffered)
-        {
-            this.Enumerator = Enumerator;
-            this.Buffered = Buffered;
+            _enumerator = enumerable.GetEnumerator();
+            Buffered = buffered;
         }
 
         /// <summary>
@@ -77,72 +57,72 @@ namespace RT.Util.Streams
         /// <returns>The number of bytes actually copied into the buffer.</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (LastUnprocessedBytes != null && LastUnprocessedBytes.Length > 0)
+            if (_lastUnprocessedBytes != null && _lastUnprocessedBytes.Length > 0)
             {
-                if (LastUnprocessedBytes.Length - LastUnprocessedBytesIndex > count)
+                if (_lastUnprocessedBytes.Length - _lastUnprocessedBytesIndex > count)
                 {
-                    Array.Copy(LastUnprocessedBytes, LastUnprocessedBytesIndex, buffer, offset, count);
-                    LastUnprocessedBytesIndex += count;
+                    Array.Copy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, count);
+                    _lastUnprocessedBytesIndex += count;
                     return count;
                 }
                 else
                 {
-                    int HowMany = LastUnprocessedBytes.Length - LastUnprocessedBytesIndex;
-                    Array.Copy(LastUnprocessedBytes, LastUnprocessedBytesIndex, buffer, offset, HowMany);
-                    LastUnprocessedBytes = null;
-                    LastUnprocessedBytesIndex = 0;
-                    return HowMany;
+                    int howMany = _lastUnprocessedBytes.Length - _lastUnprocessedBytesIndex;
+                    Array.Copy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, howMany);
+                    _lastUnprocessedBytes = null;
+                    _lastUnprocessedBytesIndex = 0;
+                    return howMany;
                 }
             }
 
             if (Buffered)
             {
                 StringBuilder b = new StringBuilder();
-                long BytesSoFar = 0;
-                while (BytesSoFar < count)
+                long bytesSoFar = 0;
+                while (bytesSoFar < count)
                 {
-                    if (!Enumerator.MoveNext())
+                    if (!_enumerator.MoveNext())
                         break;
-                    b.Append(Enumerator.Current);
-                    BytesSoFar += Enumerator.Current.UTF8Length();
+                    b.Append(_enumerator.Current);
+                    bytesSoFar += _enumerator.Current.Utf8Length();
                 }
                 if (b.Length == 0)
                     return 0;
 
-                byte[] BigBuffer = b.ToString().ToUTF8();
-                if (BigBuffer.Length > count)
+                byte[] bigBuffer = b.ToString().ToUtf8();
+                if (bigBuffer.Length > count)
                 {
-                    Array.Copy(BigBuffer, 0, buffer, offset, count);
-                    LastUnprocessedBytes = BigBuffer;
-                    LastUnprocessedBytesIndex = count;
+                    Array.Copy(bigBuffer, 0, buffer, offset, count);
+                    _lastUnprocessedBytes = bigBuffer;
+                    _lastUnprocessedBytesIndex = count;
                     return count;
                 }
                 else
                 {
-                    Array.Copy(BigBuffer, 0, buffer, offset, BigBuffer.Length);
-                    LastUnprocessedBytes = null;
-                    return BigBuffer.Length;
+                    Array.Copy(bigBuffer, 0, buffer, offset, bigBuffer.Length);
+                    _lastUnprocessedBytes = null;
+                    return bigBuffer.Length;
                 }
             }
             else
             {
                 do
                 {
-                    if (!Enumerator.MoveNext())
+                    if (!_enumerator.MoveNext())
                         return 0;
-                } while (Enumerator.Current.Length == 0);
-                byte[] Encoded = Enumerator.Current.ToUTF8();
-                if (Encoded.Length > count)
+                } while (_enumerator.Current.Length == 0);
+                byte[] encoded = _enumerator.Current.ToUtf8();
+                if (encoded.Length > count)
                 {
-                    Array.Copy(Encoded, 0, buffer, 0, count);
-                    LastUnprocessedBytes = Encoded;
-                    LastUnprocessedBytesIndex = count;
+                    Array.Copy(encoded, 0, buffer, 0, count);
+                    _lastUnprocessedBytes = encoded;
+                    _lastUnprocessedBytesIndex = count;
                     return count;
                 }
                 else
                 {
-                    Array.Copy(Encoded, 0, buffer, 0, Encoded.Length);
-                    return Encoded.Length;
+                    Array.Copy(encoded, 0, buffer, 0, encoded.Length);
+                    return encoded.Length;
                 }
             }
         }
@@ -170,6 +150,5 @@ namespace RT.Util.Streams
             }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
-
     }
 }

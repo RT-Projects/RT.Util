@@ -15,10 +15,10 @@ namespace RT.Util.Streams
         /// <summary>
         /// Constructs a <see cref="StreamOnSocket"/> object that can send output to a <see cref="System.Net.Sockets.Socket"/>.
         /// </summary>
-        /// <param name="Socket">The socket to write all the output to.</param>
-        public StreamOnSocket(Socket Socket)
+        /// <param name="socket">The socket to write all the output to.</param>
+        public StreamOnSocket(Socket socket)
         {
-            this.Socket = Socket;
+            this.Socket = socket;
         }
 
         /// <summary>
@@ -63,11 +63,11 @@ namespace RT.Util.Streams
         /// Constructs a <see cref="StreamOnSocketChunked"/> object that can send output to a
         /// <see cref="Socket"/> in HTTP "chunked" Transfer-Encoding.
         /// </summary>
-        /// <param name="Socket">The socket to write all the output to.</param>
-        public StreamOnSocketChunked(Socket Socket)
-            : base(Socket)
+        /// <param name="socket">The socket to write all the output to.</param>
+        public StreamOnSocketChunked(Socket socket)
+            : base(socket)
         {
-            this.Socket = Socket;
+            Socket = socket;
         }
 
         /// <summary>

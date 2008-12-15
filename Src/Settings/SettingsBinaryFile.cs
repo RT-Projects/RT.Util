@@ -18,7 +18,7 @@ namespace RT.Util.Settings
         /// I don't even understand why BinaryFormatter doesn't have static methods
         /// for Serialize/Deserialize.
         /// </summary>
-        private BinaryFormatter BinFmt = new BinaryFormatter();
+        private BinaryFormatter _binFmt = new BinaryFormatter();
 
         /// <summary>
         /// It is a known design "feature" that BinaryWriter cannot serialize "null"
@@ -97,10 +97,10 @@ namespace RT.Util.Settings
         /// <summary>
         /// Helper function to load dirs recursively
         /// </summary>
-        private Dir LoadDir(BinaryReaderPlus br)
+        private dir LoadDir(BinaryReaderPlus br)
         {
             int nvals;
-            Dir dir = new Dir();
+            dir dir = new dir();
             // Load values
             try
             {
@@ -110,7 +110,7 @@ namespace RT.Util.Settings
                     try
                     {
                         string name = br.ReadString();
-                        object value = BinFmt.Deserialize(br.BaseStream);
+                        object value = _binFmt.Deserialize(br.BaseStream);
                         if (value is NullObject) value = null;
                         dir.Vals.Add(name, value);
                     }
@@ -139,7 +139,7 @@ namespace RT.Util.Settings
         /// <summary>
         /// Helper function to save dirs recursively
         /// </summary>
-        private void SaveDir(Dir dir, BinaryWriterPlus bw)
+        private void SaveDir(dir dir, BinaryWriterPlus bw)
         {
             // Save values
             bw.WriteUInt32Optim((uint)dir.Vals.Count);
@@ -147,11 +147,11 @@ namespace RT.Util.Settings
             {
                 bw.Write(kvp.Key);
                 bw.Flush();
-                BinFmt.Serialize(bw.BaseStream, kvp.Value == null ? new NullObject() : kvp.Value);
+                _binFmt.Serialize(bw.BaseStream, kvp.Value == null ? new NullObject() : kvp.Value);
             }
             // Save dirs
             bw.WriteUInt32Optim((uint)dir.Dirs.Count);
-            foreach (KeyValuePair<string, Dir> kvp in dir.Dirs)
+            foreach (KeyValuePair<string, dir> kvp in dir.Dirs)
             {
                 bw.Write(kvp.Key);
                 SaveDir(kvp.Value, bw);

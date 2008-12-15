@@ -8,7 +8,7 @@ namespace RT.Util.Streams
     /// </summary>
     public class CRC32Stream : Stream
     {
-        private static uint[] poly = new uint[]
+        private static uint[] _poly = new uint[]
         {
             0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
             0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
@@ -44,14 +44,13 @@ namespace RT.Util.Streams
             0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
         };
 
-        private uint crc;
-
-        private Stream stream = null;
+        private uint _crc;
+        private Stream _stream = null;
 
         /// <summary>
         /// The underlying stream to/from which writing/reading is performed.
         /// </summary>
-        public virtual Stream BaseStream { get { return stream; } }
+        public virtual Stream BaseStream { get { return _stream; } }
 
         private CRC32Stream() { }
 
@@ -59,44 +58,44 @@ namespace RT.Util.Streams
 
         public CRC32Stream(Stream stream)
         {
-            this.stream = stream;
-            crc = 0xFFFFFFFF;
+            this._stream = stream;
+            _crc = 0xFFFFFFFF;
         }
 
         public override bool CanRead
         {
-            get { return stream.CanRead; }
+            get { return _stream.CanRead; }
         }
 
         public override bool CanSeek
         {
-            get { return stream.CanSeek; }
+            get { return _stream.CanSeek; }
         }
 
         public override bool CanWrite
         {
-            get { return stream.CanWrite; }
+            get { return _stream.CanWrite; }
         }
 
         public override void Flush()
         {
-            stream.Flush();
+            _stream.Flush();
         }
 
         public override long Length
         {
-            get { return stream.Length; }
+            get { return _stream.Length; }
         }
 
         public override long Position
         {
             get
             {
-                return stream.Position;
+                return _stream.Position;
             }
             set
             {
-                stream.Position = value;
+                _stream.Position = value;
             }
         }
 
@@ -106,22 +105,22 @@ namespace RT.Util.Streams
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int numread = stream.Read(buffer, offset, count);
+            int numread = _stream.Read(buffer, offset, count);
 
             for (int i = offset; i < offset + count; i++)
-                crc = poly[(crc ^ (buffer[i])) & 0xFF] ^ (crc >> 8);
+                _crc = _poly[(_crc ^ (buffer[i])) & 0xFF] ^ (_crc >> 8);
 
             return numread;
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return stream.Seek(offset, origin);
+            return _stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            stream.SetLength(value);
+            _stream.SetLength(value);
         }
 
         /// <summary>
@@ -130,10 +129,10 @@ namespace RT.Util.Streams
         /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            stream.Write(buffer, offset, count);
+            _stream.Write(buffer, offset, count);
 
             for (int i = offset; i < offset + count; i++)
-                crc = poly[(crc ^ (buffer[i])) & 0xFF] ^ (crc >> 8);
+                _crc = _poly[(_crc ^ (buffer[i])) & 0xFF] ^ (_crc >> 8);
         }
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
@@ -145,7 +144,7 @@ namespace RT.Util.Streams
         {
             get
             {
-                return crc ^ 0xFFFFFFFF;
+                return _crc ^ 0xFFFFFFFF;
             }
         }
     }

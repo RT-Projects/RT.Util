@@ -41,7 +41,7 @@ namespace RT.Util.Settings
             Regex rgSection = new Regex(@"^\s*(\[+)\s*(.*?)\s*(\]+)\s*$");
             Regex rgValue = new Regex(@"^\s*([^=]*?)\s*=\s*(.*?)\s*$");
 
-            Data = new Dir();
+            Data = new dir();
             foreach (string ln in lines)
             {
                 if (ln.Trim().Length == 0)
@@ -77,17 +77,17 @@ namespace RT.Util.Settings
             File.WriteAllLines(name, lines.ToArray(), Encoding.UTF8);
         }
 
-        private Dir LoadDir()
+        private dir LoadDir()
         {
             throw new Exception("The method or operation is not implemented.");
         }
 
-        private void SaveDir(string dirname, int dirdepth, Dir dir, List<string> lines)
+        private void SaveDir(string dirname, int dirdepth, dir dir, List<string> lines)
         {
             // Section name
             string sn = dirname;
             string sp = "";
-            for (int i=0; i<dirdepth; i++)
+            for (int i = 0; i < dirdepth; i++)
             {
                 sn = "[" + sn + "]";
                 sp = sp + " ";
@@ -102,25 +102,25 @@ namespace RT.Util.Settings
             foreach (KeyValuePair<string, object> kvp in dir.Vals)
                 lines.Add(sp + MakeSingleString(kvp.Key) + " = " + Stringify(kvp.Value));
             // Subdirs
-            foreach (KeyValuePair<string, Dir> kvp in dir.Dirs)
-                SaveDir(kvp.Key, dirdepth+1, kvp.Value, lines);
+            foreach (KeyValuePair<string, dir> kvp in dir.Dirs)
+                SaveDir(kvp.Key, dirdepth + 1, kvp.Value, lines);
         }
 
         private string Stringify(object p)
         {
             IFormatProvider fmt = CultureInfo.InvariantCulture.NumberFormat;
             if (p is int)
-                return "i:"+((int)p).ToString(fmt);
+                return "i:" + ((int) p).ToString(fmt);
             else if (p is long)
-                return "l:"+((long)p).ToString(fmt);
+                return "l:" + ((long) p).ToString(fmt);
             else if (p is double)
-                return "d:"+((double)p).ToString(fmt);
+                return "d:" + ((double) p).ToString(fmt);
             else if (p is decimal)
-                return "m:"+((decimal)p).ToString(fmt);
+                return "m:" + ((decimal) p).ToString(fmt);
             else if (p is bool)
-                return "b:"+((bool)p).ToString(fmt);
+                return "b:" + ((bool) p).ToString(fmt);
             else if (p is string)
-                return "s:"+MakeSingleString(p as string);
+                return "s:" + MakeSingleString(p as string);
             else
                 return "<TYPE STRINGIFICATION HAS NOT BEEN IMPLEMENTED>";
         }

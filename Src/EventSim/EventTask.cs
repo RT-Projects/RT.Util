@@ -16,26 +16,26 @@ namespace RT.Util.EventSim
     /// </summary>
     public abstract class EventTask
     {
-        private IEnumerator<double> TheProc;
-        private Event TheEvent;
-        private EventEngine TheEngine;
+        private IEnumerator<double> _proc;
+        private Event _event;
+        private EventEngine _engine;
 
-        private void Callback(Event CbkEvent, EventEngine Engine)
+        private void Callback(Event callback, EventEngine engine)
         {
-            if (TheProc == null)
+            if (_proc == null)
                 throw new Exception("Callback received for stopped process");
 
-            if (!TheProc.MoveNext())
+            if (!_proc.MoveNext())
             {
-                TheProc = null;
-                TheEvent = null;
+                _proc = null;
+                _event = null;
                 return;
             }
 
             // Create an event for this delay
             // We can reuse the event we've just received. We also know that it's
             // the same one as stored in LastEvent.
-            Engine.AddEvent(CbkEvent, Engine.Time + TheProc.Current);
+            engine.AddEvent(callback, engine.Time + _proc.Current);
         }
 
         /// <summary>
@@ -46,27 +46,27 @@ namespace RT.Util.EventSim
         /// <summary>
         /// Starts the task running in the specified <see cref="EventEngine"/>.
         /// </summary>
-        public void Start(EventEngine Engine)
+        public void Start(EventEngine engine)
         {
-            if (TheProc != null)
+            if (_proc != null)
                 throw new Exception("Cannot start task because it is already running");
 
-            TheProc = Process();
-            if (!TheProc.MoveNext())
+            _proc = Process();
+            if (!_proc.MoveNext())
             {
-                TheProc = null;
+                _proc = null;
                 return;
             }
 
-            TheEngine = Engine;
+            _engine = engine;
 
             // Create a new event to be used for advancing the process
-            TheEvent = new Event();
-            TheEvent.Callback = new EventCallback(Callback);
-            TheEvent.User1 = this;
-            TheEvent.User2 = Engine;
+            _event = new Event();
+            _event.Callback = new EventCallback(Callback);
+            _event.User1 = this;
+            _event.User2 = engine;
             // Schedule it with the first delay returned by the process code
-            Engine.AddEvent(TheEvent, Engine.Time + TheProc.Current);
+            engine.AddEvent(_event, engine.Time + _proc.Current);
         }
 
         /// <summary>
@@ -75,14 +75,14 @@ namespace RT.Util.EventSim
         /// </summary>
         public void StopReset()
         {
-            if (TheProc == null)
+            if (_proc == null)
                 throw new Exception("Cannot stop task because it is not running");
 
-            TheEngine.CancelEvent(TheEvent);
+            _engine.CancelEvent(_event);
 
-            TheProc = null;
-            TheEvent = null;
-            TheEngine = null;
+            _proc = null;
+            _event = null;
+            _engine = null;
         }
     }
 }

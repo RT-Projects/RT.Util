@@ -4,14 +4,14 @@ namespace RT.Util
 {
     public static partial class Ut
     {
-        private static long TicStart = 0;
+        private static long _start = 0;
 
         /// <summary>
         /// Starts a simple performance timer.
         /// </summary>
         public static void Tic()
         {
-            WinAPI.QueryPerformanceCounter(out TicStart);
+            WinAPI.QueryPerformanceCounter(out _start);
         }
 
         /// <summary>
@@ -22,9 +22,9 @@ namespace RT.Util
         /// </summary>
         public static double Toc()
         {
-            long TicStop;
-            WinAPI.QueryPerformanceCounter(out TicStop);
-            return ((double)(TicStop - TicStart)) / (double)WinAPI.PerformanceFreq;
+            long stop;
+            WinAPI.QueryPerformanceCounter(out stop);
+            return ((double) (stop - _start)) / (double) WinAPI.PerformanceFreq;
         }
     }
 }

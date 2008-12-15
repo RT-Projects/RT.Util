@@ -18,11 +18,11 @@ namespace RT.Util.Collections
         /// exists, the next available time will be used, effectively adding Value just
         /// after the other items with the same time.
         /// </summary>
-        public new void Add(DateTime Key, TV Value)
+        public new void Add(DateTime key, TV value)
         {
-            while (ContainsKey(Key))
-                Key.AddTicks(1);
-            base.Add(Key, Value);
+            while (ContainsKey(key))
+                key.AddTicks(1);
+            base.Add(key, value);
         }
     }
 }

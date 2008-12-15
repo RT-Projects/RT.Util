@@ -53,7 +53,7 @@ namespace RT.Util.Web
         /// <summary>
         /// Contains the data received in response to the most recent request.
         /// </summary>
-        public string LastHTML = null;
+        public string LastHtml = null;
         /// <summary>
         /// Encapsulates the response to the most recent request.
         /// </summary>
@@ -77,15 +77,15 @@ namespace RT.Util.Web
         {
         }
 
-        public Http(string SiteUrl)
+        public Http(string siteUrl)
         {
-            this.SiteUrl = SiteUrl;
+            SiteUrl = siteUrl;
         }
 
-        public Http(string SiteUrl, string UserAgent)
+        public Http(string siteUrl, string userAgent)
         {
-            this.SiteUrl = SiteUrl;
-            this.UserAgent = UserAgent;
+            SiteUrl = siteUrl;
+            UserAgent = userAgent;
         }
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
@@ -94,7 +94,7 @@ namespace RT.Util.Web
 
         #region Cookie stuff
 
-        private CookieContainer Cookies = new CookieContainer();
+        private CookieContainer _cookies = new CookieContainer();
 
         /// <summary>
         /// Loads cookies from the specified stream. On success returns true. On failure
@@ -105,8 +105,8 @@ namespace RT.Util.Web
         {
             try
             {
-                BinaryFormatter BF = new BinaryFormatter();
-                Cookies = (CookieContainer)BF.Deserialize(stream);
+                BinaryFormatter bf = new BinaryFormatter();
+                _cookies = (CookieContainer) bf.Deserialize(stream);
                 return true;
             }
             catch
@@ -120,8 +120,8 @@ namespace RT.Util.Web
         /// </summary>
         public void SaveCookies(Stream stream)
         {
-            BinaryFormatter BF = new BinaryFormatter();
-            BF.Serialize(stream, Cookies);
+            BinaryFormatter bf = new BinaryFormatter();
+            bf.Serialize(stream, _cookies);
         }
 
         /// <summary>
@@ -129,82 +129,82 @@ namespace RT.Util.Web
         /// </summary>
         public void ClearCookies()
         {
-            Cookies = new CookieContainer();
+            _cookies = new CookieContainer();
         }
 
         #endregion
 
-        private Queue<DateTime> LastRequestTime = new Queue<DateTime>();
+        private Queue<DateTime> _lastRequestTime = new Queue<DateTime>();
 
         /// <summary>
         /// Performs an HTTP request to the specified Url on the Site associated with this instance. If
         /// everything is fine returns OK.
-        /// <param name="Url">The Url to be requested, relative to the SiteUrl</param>
-        /// <param name="DoGet">If true, method is GET. Otherwise method is POST.</param>
-        /// <param name="Params">A set of parameters to be sent. These are URL-encoded automatically and posted appropriately for the specified method. Can be null.</param>
-        /// <param name="Referer">An optional Referer header. Can be null.</param>
-        /// <param name="MaxRedirectDepth">Maximum number of HTTP redirects to follow.</param>
+        /// <param name="url">The Url to be requested, relative to the SiteUrl</param>
+        /// <param name="doGet">If true, method is GET. Otherwise method is POST.</param>
+        /// <param name="parameters">A set of parameters to be sent. These are URL-encoded automatically and posted appropriately for the specified method. Can be null.</param>
+        /// <param name="referer">An optional Referer header. Can be null.</param>
+        /// <param name="maxRedirectDepth">Maximum number of HTTP redirects to follow.</param>
         /// </summary>
-        private bool DoRequest(string Url, bool DoGet, Dictionary<string, string> Params, string Referer, int MaxRedirectDepth)
+        private bool doRequest(string url, bool doGet, Dictionary<string, string> parameters, string referer, int maxRedirectDepth)
         {
             // Initialise
-            LastHTML = null;
+            LastHtml = null;
             LastResponse = null;
             LastException = null;
-            if (SiteUrl[SiteUrl.Length-1] != '/')
+            if (SiteUrl[SiteUrl.Length - 1] != '/')
                 SiteUrl = SiteUrl + "/";
-            Url = SiteUrl + Url;
-            if (OnReportStatus!=null) OnReportStatus((DoGet ? "GET " : "POST ") + Url);
+            url = SiteUrl + url;
+            if (OnReportStatus != null) OnReportStatus((doGet ? "GET " : "POST ") + url);
 
             // Maintain requests-per-minute
             DateTime curTime = DateTime.Now;
             do
             {
-                while (LastRequestTime.Count > 0 && (curTime - LastRequestTime.Peek()) > TimeSpan.FromSeconds(60))
-                    LastRequestTime.Dequeue();
-                if (LastRequestTime.Count >= MaxRequestsPerMinute)
+                while (_lastRequestTime.Count > 0 && (curTime - _lastRequestTime.Peek()) > TimeSpan.FromSeconds(60))
+                    _lastRequestTime.Dequeue();
+                if (_lastRequestTime.Count >= MaxRequestsPerMinute)
                     // Gotta wait, have already made that many requests in the last minute
-                    Thread.Sleep(curTime - LastRequestTime.Peek());
+                    Thread.Sleep(curTime - _lastRequestTime.Peek());
                 // In theory one iteration is all we need, but that relies on the fact that the statement
                 // above has worked as intended. Much better if we go and update the queue once again
                 // and check everything again. Note that multiple iterations only happen when we /are/
                 // hitting the maximum-requests limit.
-            } while (LastRequestTime.Count >= MaxRequestsPerMinute);
+            } while (_lastRequestTime.Count >= MaxRequestsPerMinute);
 
             // Add this request to the list of request times
-            LastRequestTime.Enqueue(DateTime.Now);
+            _lastRequestTime.Enqueue(DateTime.Now);
 
             // Prepare parameters, if any
-            StringBuilder ParamsSB = new StringBuilder();
-            if (Params != null)
+            StringBuilder paramsSB = new StringBuilder();
+            if (parameters != null)
             {
-                foreach (KeyValuePair<string, string> kvp in Params)
+                foreach (KeyValuePair<string, string> kvp in parameters)
                 {
-                    ParamsSB.Append(HttpUtility.UrlEncode(kvp.Key));
-                    ParamsSB.Append('=');
-                    ParamsSB.Append(HttpUtility.UrlEncode(kvp.Value));
-                    ParamsSB.Append('&');
+                    paramsSB.Append(HttpUtility.UrlEncode(kvp.Key));
+                    paramsSB.Append('=');
+                    paramsSB.Append(HttpUtility.UrlEncode(kvp.Value));
+                    paramsSB.Append('&');
                 }
-                if (Params.Count > 0)
-                    ParamsSB.Remove(ParamsSB.Length-1, 1);
+                if (parameters.Count > 0)
+                    paramsSB.Remove(paramsSB.Length - 1, 1);
             }
 
             // Prepare the request
             HttpWebRequest request;
-            if (DoGet && ParamsSB.Length > 0)
-                request = (HttpWebRequest)WebRequest.Create(Url + "?" + ParamsSB.ToString());
+            if (doGet && paramsSB.Length > 0)
+                request = (HttpWebRequest) WebRequest.Create(url + "?" + paramsSB.ToString());
             else
-                request = (HttpWebRequest)WebRequest.Create(Url);
-            request.Method = DoGet ? "GET" : "POST";
+                request = (HttpWebRequest) WebRequest.Create(url);
+            request.Method = doGet ? "GET" : "POST";
             request.UserAgent = UserAgent;
-            request.CookieContainer = Cookies;
-            if (Referer != null)
-                request.Referer = Referer;
+            request.CookieContainer = _cookies;
+            if (referer != null)
+                request.Referer = referer;
 
-            if (!DoGet)
+            if (!doGet)
             {
                 // Attach the data to the POST request
-                byte[] data = (new ASCIIEncoding()).GetBytes(ParamsSB.ToString());
+                byte[] data = (new ASCIIEncoding()).GetBytes(paramsSB.ToString());
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.ContentLength = data.Length;
                 // This must be done after all other fields are set - apparently
@@ -217,33 +217,33 @@ namespace RT.Util.Web
             // Send the request!
             try
             {
-                LastResponse = (HttpWebResponse)request.GetResponse();
+                LastResponse = (HttpWebResponse) request.GetResponse();
             }
-            catch (WebException E)
+            catch (WebException e)
             {
-                LastException = E;
-                if (OnReportStatus!=null) OnReportStatus((DoGet ? "GET failed: " : "POST failed: ") + Url);
+                LastException = e;
+                if (OnReportStatus != null) OnReportStatus((doGet ? "GET failed: " : "POST failed: ") + url);
                 return LastResult = false; // yes, _assignment_ here
             }
 
             // Get the response as a string
-            LastHTML = StreamToString(LastResponse.GetResponseStream(), new ASCIIEncoding());
+            LastHtml = streamToString(LastResponse.GetResponseStream(), new ASCIIEncoding());
             // Dump it to a debug location on the disk if necessary
             if (DebugDumpLocation != null)
-                DumpHtml(MaxRedirectDepth);
+                dumpHtml(maxRedirectDepth);
 
             // Do redirect if necessary
-            int respcode = (int)LastResponse.StatusCode;
-            if (respcode >= 300 && respcode <= 399 && DoGet                                    // redirection necessary
-                && MaxRedirectDepth > 0 && LastResponse.Headers[HttpResponseHeader.Location] != null) // redirection possible
+            int respcode = (int) LastResponse.StatusCode;
+            if (respcode >= 300 && respcode <= 399 && doGet                                    // redirection necessary
+                && maxRedirectDepth > 0 && LastResponse.Headers[HttpResponseHeader.Location] != null) // redirection possible
             {
-                if (OnReportStatus!=null) OnReportStatus("Redirected to: " + Url);
-                return DoRequest(LastResponse.Headers[HttpResponseHeader.Location], true, null, Url, MaxRedirectDepth-1);
+                if (OnReportStatus != null) OnReportStatus("Redirected to: " + url);
+                return doRequest(LastResponse.Headers[HttpResponseHeader.Location], true, null, url, maxRedirectDepth - 1);
                 // The last of the redirects will set all the global fields as necessary, so we've
                 // got nothing else to do here.
             }
 
-            if (OnReportStatus!=null) OnReportStatus("Done.");
+            if (OnReportStatus != null) OnReportStatus("Done.");
             LastResult = respcode >= 200 && respcode <= 299;
             return LastResult;
         }
@@ -252,56 +252,56 @@ namespace RT.Util.Web
         /// Performs a GET request for the specified Url.
         /// Returns true on success.
         /// </summary>
-        public bool Get(string Url)
+        public bool Get(string url)
         {
-            RequestCounter++;
-            return DoRequest(Url, true, null, null, MaxRedirectCount);
+            _requestCounter++;
+            return doRequest(url, true, null, null, MaxRedirectCount);
         }
 
         /// <summary>
         /// Performs a POST request for the specified Url, passing the specified arguments.
         /// Returns true on success.
         /// </summary>
-        public bool Post(string Url, Dictionary<string, string> Params)
+        public bool Post(string url, Dictionary<string, string> parameters)
         {
-            RequestCounter++;
-            return DoRequest(Url, false, Params, null, MaxRedirectCount);
+            _requestCounter++;
+            return doRequest(url, false, parameters, null, MaxRedirectCount);
         }
 
         #region Private helper functions
 
-        private int RequestCounter = -1;
+        private int _requestCounter = -1;
 
-        private void DumpHtml(int DepthLeft)
+        private void dumpHtml(int depthLeft)
         {
-            string FileName = string.Format(DebugDumpLocation, RequestCounter, MaxRedirectCount - DepthLeft);
-            StreamWriter TW = new StreamWriter(FileName);
-            TW.WriteLine("<!-- This information is inserted by the Http class.");
-            TW.WriteLine("Status code: " + ((int)LastResponse.StatusCode) + " " + LastResponse.StatusCode);
-            TW.WriteLine("Response URI: " + LastResponse.ResponseUri);
-            TW.WriteLine("Status code: " + ((int)LastResponse.StatusCode) + " " + LastResponse.StatusCode);
-            TW.WriteLine("Headers:");
+            string filename = string.Format(DebugDumpLocation, _requestCounter, MaxRedirectCount - depthLeft);
+            StreamWriter tw = new StreamWriter(filename);
+            tw.WriteLine("<!-- This information is inserted by the Http class.");
+            tw.WriteLine("Status code: " + ((int) LastResponse.StatusCode) + " " + LastResponse.StatusCode);
+            tw.WriteLine("Response URI: " + LastResponse.ResponseUri);
+            tw.WriteLine("Status code: " + ((int) LastResponse.StatusCode) + " " + LastResponse.StatusCode);
+            tw.WriteLine("Headers:");
             foreach (string hdr in LastResponse.Headers.AllKeys)
                 if (LastResponse.Headers[hdr] != null)
-                    TW.WriteLine("  {0}: {1}", hdr, LastResponse.Headers[hdr]);
-            TW.WriteLine("END of information inserted by the Http class. -->");
+                    tw.WriteLine("  {0}: {1}", hdr, LastResponse.Headers[hdr]);
+            tw.WriteLine("END of information inserted by the Http class. -->");
 
-            TW.Write(LastHTML);
-            TW.Close();
+            tw.Write(LastHtml);
+            tw.Close();
         }
 
-        private string StreamToString(Stream S, Encoding E)
+        private string streamToString(Stream stream, Encoding encoding)
         {
-            StringBuilder sb  = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             byte[] buf = new byte[8192];
             int count;
 
             do
             {
-                count = S.Read(buf, 0, buf.Length);
+                count = stream.Read(buf, 0, buf.Length);
 
                 if (count != 0)
-                    sb.Append(E.GetString(buf, 0, count));
+                    sb.Append(encoding.GetString(buf, 0, count));
             }
             while (count > 0);
 

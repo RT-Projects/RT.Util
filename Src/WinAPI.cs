@@ -27,43 +27,43 @@ namespace RT.Util
         public enum MessageBeepType
         {
             /// <summary>Specifies the default sound.</summary>
-            Default=-1,
+            Default = -1,
             /// <summary>Specifies the OK sound.</summary>
-            Ok=0x00000000,
+            Ok = 0x00000000,
             /// <summary>Specifies the error sound.</summary>
-            Error=0x00000010,
+            Error = 0x00000010,
             /// <summary>Specifies the question sound.</summary>
-            Question=0x00000020,
+            Question = 0x00000020,
             /// <summary>Specifies the warning sound.</summary>
-            Warning=0x00000030,
+            Warning = 0x00000030,
             /// <summary>Specifies the information sound.</summary>
-            Information=0x00000040,
+            Information = 0x00000040,
         }
 
         [Flags]
-        public enum SnapshotFlags: uint
+        public enum SnapshotFlags : uint
         {
-            HeapList=0x00000001,
-            Process=0x00000002,
-            Thread=0x00000004,
-            Module=0x00000008,
-            Module32=0x00000010,
-            Inherit=0x80000000,
-            All=0x0000001F
+            HeapList = 0x00000001,
+            Process = 0x00000002,
+            Thread = 0x00000004,
+            Module = 0x00000008,
+            Module32 = 0x00000010,
+            Inherit = 0x80000000,
+            All = 0x0000001F
         }
 
         // Low-Level Keyboard Constants
-        public const int HC_ACTION       = 0;
-        public const int LLKHF_EXTENDED  = 0x1;
-        public const int LLKHF_INJECTED  = 0x10;
-        public const int LLKHF_ALTDOWN   = 0x20;
-        public const int LLKHF_UP        = 0x80;
+        public const int HC_ACTION = 0;
+        public const int LLKHF_EXTENDED = 0x1;
+        public const int LLKHF_INJECTED = 0x10;
+        public const int LLKHF_ALTDOWN = 0x20;
+        public const int LLKHF_UP = 0x80;
 
         // Virtual Keys
-        public const int VK_TAB     = 0x9;
+        public const int VK_TAB = 0x9;
         public const int VK_CONTROL = 0x11;
-        public const int VK_ESCAPE  = 0x1B;
-        public const int VK_DELETE  = 0x2E;
+        public const int VK_ESCAPE = 0x1B;
+        public const int VK_DELETE = 0x2E;
 
         public const int WH_KEYBOARD_LL = 13;
 
@@ -96,7 +96,7 @@ namespace RT.Util
             public uint th32ParentProcessID;
             public int pcPriClassBase;
             public uint dwFlags;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst=260)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
             public string szExeFile;
         }
 
@@ -120,25 +120,21 @@ namespace RT.Util
         #region Function imports
 
         [DllImport("Kernel32.dll")]
-        public static extern bool QueryPerformanceCounter(
-            out long lpPerformanceCount);
+        public static extern bool QueryPerformanceCounter(out long lpPerformanceCount);
 
         [DllImport("Kernel32.dll")]
-        private static extern bool QueryPerformanceFrequency(
-            out long lpFrequency);
+        private static extern bool QueryPerformanceFrequency(out long lpFrequency);
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool MessageBeep(
-            MessageBeepType type);
+        public static extern bool MessageBeep(MessageBeepType type);
 
         [DllImport("kernel32.dll")]
         public static extern void GlobalMemoryStatus(out MemoryStatus mem);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
-        public static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags,
-           uint th32ProcessID);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr CreateToolhelp32Snapshot(SnapshotFlags dwFlags, uint th32ProcessID);
 
         [DllImport("kernel32.dll")]
@@ -147,14 +143,14 @@ namespace RT.Util
         [DllImport("kernel32.dll")]
         public static extern bool Process32Next(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
 
-        [DllImport("kernel32.dll", SetLastError=true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("user32.dll")]
         public static extern int UnhookWindowsHookEx(int hHook);
 
-        [DllImport("user32.dll", EntryPoint="SetWindowsHookExA")]
+        [DllImport("user32.dll", EntryPoint = "SetWindowsHookExA")]
         public static extern int SetWindowsHookEx(int idHook, KeyboardHookDelegate lpfn, int hmod, int dwThreadId);
 
         [DllImport("user32.dll")]

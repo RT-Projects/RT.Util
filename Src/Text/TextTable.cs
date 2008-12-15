@@ -27,8 +27,8 @@ namespace RT.Util.Text
     {
         private class TextColumn
         {
-            private readonly List<string> rows = new List<string>();
-            private readonly List<int> maxParaLength = new List<int>();
+            private readonly List<string> _rows = new List<string>();
+            private readonly List<int> _maxParaLength = new List<int>();
 
             /// <summary>
             /// Gets/sets the text associated with the specified row index.
@@ -40,31 +40,31 @@ namespace RT.Util.Text
             {
                 get
                 {
-                    if (row < rows.Count)
-                        return rows[row];
+                    if (row < _rows.Count)
+                        return _rows[row];
                     else
                         return "";
                 }
 
                 set
                 {
-                    if (row < rows.Count && maxParaLength[row] == maxWidth)
-                        maxWidthNeedsRecalc = true; // removing a longest element
+                    if (row < _rows.Count && _maxParaLength[row] == _maxWidth)
+                        _maxWidthNeedsRecalc = true; // removing a longest element
 
                     // Grow the list as necessary
-                    while (row >= rows.Count)
+                    while (row >= _rows.Count)
                     {
-                        rows.Add("");
-                        maxParaLength.Add(0);
+                        _rows.Add("");
+                        _maxParaLength.Add(0);
                     }
 
-                    rows[row] = value == null ? "" : value;
-                    maxParaLength[row] = getMaxParaLength(rows[row]);
+                    _rows[row] = value == null ? "" : value;
+                    _maxParaLength[row] = getMaxParaLength(_rows[row]);
 
-                    if (maxWidth < maxParaLength[row])
+                    if (_maxWidth < _maxParaLength[row])
                     {
-                        maxWidth = maxParaLength[row];
-                        maxWidthNeedsRecalc = false; // adding THE longest element
+                        _maxWidth = _maxParaLength[row];
+                        _maxWidthNeedsRecalc = false; // adding THE longest element
                     }
                 }
             }
@@ -74,15 +74,15 @@ namespace RT.Util.Text
             /// </summary>
             private void UpdateMaxWidth()
             {
-                maxWidth = 0;
-                for (int row = 0; row < rows.Count; row++)
+                _maxWidth = 0;
+                for (int row = 0; row < _rows.Count; row++)
                 {
-                    maxParaLength[row] = getMaxParaLength(rows[row]);
-                    if (maxWidth < maxParaLength[row])
-                        maxWidth = maxParaLength[row];
+                    _maxParaLength[row] = getMaxParaLength(_rows[row]);
+                    if (_maxWidth < _maxParaLength[row])
+                        _maxWidth = _maxParaLength[row];
                 }
 
-                maxWidthNeedsRecalc = false;
+                _maxWidthNeedsRecalc = false;
             }
 
             /// <summary>
@@ -104,13 +104,13 @@ namespace RT.Util.Text
             /// <summary>
             /// Keeps track of the longest string found so far.
             /// </summary>
-            private int maxWidth = 0;
+            private int _maxWidth = 0;
 
             /// <summary>
             /// This is set to true whenever we're unsure if maxWidth is
             /// correct, and reset to false whenever that's certain.
             /// </summary>
-            private bool maxWidthNeedsRecalc = false;
+            private bool _maxWidthNeedsRecalc = false;
 
             /// <summary>
             /// Returns the width of the widest row currently in this column.
@@ -123,9 +123,9 @@ namespace RT.Util.Text
             {
                 get
                 {
-                    if (maxWidthNeedsRecalc)
+                    if (_maxWidthNeedsRecalc)
                         UpdateMaxWidth();
-                    return maxWidth;
+                    return _maxWidth;
                 }
             }
 
@@ -140,9 +140,9 @@ namespace RT.Util.Text
             /// </summary>
             public bool AutoSize;
 
-            public TextColumn(bool DefaultAutoSize)
+            public TextColumn(bool defaultAutoSize)
             {
-                AutoSize = DefaultAutoSize;
+                AutoSize = defaultAutoSize;
             }
         }
 
@@ -152,38 +152,38 @@ namespace RT.Util.Text
         /// </summary>
         public TextTable()
         {
-            this.DefaultAutoSize = false;
+            _defaultAutoSize = false;
         }
 
         /// <summary>
         /// Constructs a TextTable in which all columns initially have the specified AutoSize setting.
         /// Use <see cref="SetAutoSize"/> to change the AutoSize setting for individual columns.
         /// </summary>
-        public TextTable(bool DefaultAutoSize)
+        public TextTable(bool defaultAutoSize)
         {
-            this.DefaultAutoSize = DefaultAutoSize;
+            _defaultAutoSize = defaultAutoSize;
         }
 
         /// <summary>Remembers the default AutoSize setting for new columns.</summary>
-        private readonly bool DefaultAutoSize;
+        private readonly bool _defaultAutoSize;
 
         /// <summary>Holds a list of every column in the table.</summary>
-        private readonly List<TextColumn> cols = new List<TextColumn>();
+        private readonly List<TextColumn> _cols = new List<TextColumn>();
 
         /// <summary>
         /// This is updated to hold the number of rows deduced from the
         /// furthest row to ever be assigned a value.
         /// </summary>
-        private int numRows = 0;
+        private int _numRows = 0;
 
         /// <summary>
-        /// Makes the <see cref="cols"/> member long enough to be able to
+        /// Makes the <see cref="_cols"/> member long enough to be able to
         /// access the specified column.
         /// </summary>
         private void growAsNecessary(int columnIndex)
         {
-            while (columnIndex >= cols.Count)
-                cols.Add(new TextColumn(DefaultAutoSize));
+            while (columnIndex >= _cols.Count)
+                _cols.Add(new TextColumn(_defaultAutoSize));
         }
 
         /// <summary>
@@ -196,8 +196,8 @@ namespace RT.Util.Text
         {
             get
             {
-                if (columnIndex < cols.Count)
-                    return cols[columnIndex][rowIndex];
+                if (columnIndex < _cols.Count)
+                    return _cols[columnIndex][rowIndex];
                 else
                     return "";
             }
@@ -206,10 +206,10 @@ namespace RT.Util.Text
             {
                 growAsNecessary(columnIndex);
 
-                cols[columnIndex][rowIndex] = value;
+                _cols[columnIndex][rowIndex] = value;
 
-                if (numRows <= rowIndex)
-                    numRows = rowIndex + 1;
+                if (_numRows <= rowIndex)
+                    _numRows = rowIndex + 1;
             }
         }
 
@@ -221,7 +221,7 @@ namespace RT.Util.Text
             if (columnIndex < 0) throw new ArgumentException("Column index must not be negative");
 
             growAsNecessary(columnIndex);
-            cols[columnIndex].AutoSize = autoSize;
+            _cols[columnIndex].AutoSize = autoSize;
 
         }
 
@@ -248,15 +248,15 @@ namespace RT.Util.Text
             if (nullIfTooWide && !fits)
                 return null;
 
-            for (int r = 0; r < numRows; r++)
+            for (int r = 0; r < _numRows; r++)
             {
-                string[][] wwrap = new string[cols.Count][];
+                string[][] wwrap = new string[_cols.Count][];
                 int maxSubrowCount = 0;
 
                 // Iterate over columns to determine number of sub-rows
-                for (int c = 0; c < cols.Count; c++)
+                for (int c = 0; c < _cols.Count; c++)
                 {
-                    wwrap[c] = this[r, c].WordWrap((int) cols[c].CalculatedWidth).ToArray();
+                    wwrap[c] = this[r, c].WordWrap((int) _cols[c].CalculatedWidth).ToArray();
                     if (maxSubrowCount < wwrap[c].Length)
                         maxSubrowCount = wwrap[c].Length;
                 }
@@ -267,12 +267,12 @@ namespace RT.Util.Text
                     sb.Append(' ', leftIndent);
 
                     // Render this sub-row in each column
-                    for (int c = 0; c < cols.Count; c++)
+                    for (int c = 0; c < _cols.Count; c++)
                     {
                         string s = wwrap[c].Length <= subRow ? "" : wwrap[c][subRow];
                         sb.Append(s);
-                        if (c < cols.Count - 1)
-                            sb.Append(' ', (int) cols[c].CalculatedWidth - s.Length + intraColumnIndent);
+                        if (c < _cols.Count - 1)
+                            sb.Append(' ', (int) _cols[c].CalculatedWidth - s.Length + intraColumnIndent);
                     }
 
                     sb.AppendLine();
@@ -289,17 +289,17 @@ namespace RT.Util.Text
         /// </summary>
         private bool autoSizeColumns(int intraColumnIndent, int maxTableWidth)
         {
-            int[] min = new int[cols.Count];
-            int[] cur = new int[cols.Count];
-            bool[] auto = new bool[cols.Count];
+            int[] min = new int[_cols.Count];
+            int[] cur = new int[_cols.Count];
+            bool[] auto = new bool[_cols.Count];
 
             int mintot_auto = 0, curtot_auto = 0, curtot_fix = 0;
 
             // Pass 1: fill in the arrays and calculate the totals
-            for (int i = 0; i < cols.Count; i++)
+            for (int i = 0; i < _cols.Count; i++)
             {
-                cur[i] = cols[i].MaxWidth;
-                auto[i] = cols[i].AutoSize;
+                cur[i] = _cols[i].MaxWidth;
+                auto[i] = _cols[i].AutoSize;
 
                 if (i != 0)
                     curtot_fix += intraColumnIndent;
@@ -312,7 +312,7 @@ namespace RT.Util.Text
                 }
                 else
                 {
-                    min[i] = cols[i].MaxWidth;
+                    min[i] = _cols[i].MaxWidth;
                     curtot_fix += cur[i];
                 }
             }
@@ -323,16 +323,16 @@ namespace RT.Util.Text
             while (curtot_auto > mintot_auto && curtot_auto + curtot_fix > maxTableWidth)
             {
                 double ratio = (double) (maxTableWidth - curtot_fix) / curtot_auto;
-                for (int i = 0; i < cols.Count; i++)
+                for (int i = 0; i < _cols.Count; i++)
                 {
                     if (!auto[i])
                         continue;
 
                     curtot_auto -= cur[i];
 
-                    cur[i] = (int) (cols[i].MaxWidth * ratio);
-                    if (cur[i] > cols[i].MaxWidth)
-                        cur[i] = cols[i].MaxWidth;
+                    cur[i] = (int) (_cols[i].MaxWidth * ratio);
+                    if (cur[i] > _cols[i].MaxWidth)
+                        cur[i] = _cols[i].MaxWidth;
 
                     if (cur[i] < min[i])
                     {
@@ -347,8 +347,8 @@ namespace RT.Util.Text
             }
 
             // Store the results
-            for (int i = 0; i < cols.Count; i++)
-                cols[i].CalculatedWidth = cur[i];
+            for (int i = 0; i < _cols.Count; i++)
+                _cols[i].CalculatedWidth = cur[i];
 
             // Return true if the table fits in the specified limits
             return curtot_auto + curtot_fix <= maxTableWidth;

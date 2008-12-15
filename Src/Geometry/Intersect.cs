@@ -149,25 +149,25 @@ namespace RT.Util.Geometry
         {
             double dx = ray.End.X - ray.Start.X;
             double dy = ray.End.Y - ray.Start.Y;
-            double L, C;  // temporaries
+            double k, c;  // temporaries
 
             // Check intersection with horizontal bounds
             if (dy != 0)
             {
                 // Upper line
-                L = (box.Ymax - ray.Start.Y) / dy;
-                if (L >= 0)
+                k = (box.Ymax - ray.Start.Y) / dy;
+                if (k >= 0)
                 {
-                    C = ray.Start.X + L * dx;
-                    if (C >= box.Xmin && C <= box.Xmax)
+                    c = ray.Start.X + k * dx;
+                    if (c >= box.Xmin && c <= box.Xmax)
                         return true;
                 }
                 // Lower line
-                L = (box.Ymin - ray.Start.Y) / dy;
-                if (L >= 0)
+                k = (box.Ymin - ray.Start.Y) / dy;
+                if (k >= 0)
                 {
-                    C = ray.Start.X + L * dx;
-                    if (C >= box.Xmin && C <= box.Xmax)
+                    c = ray.Start.X + k * dx;
+                    if (c >= box.Xmin && c <= box.Xmax)
                         return true;
                 }
             }
@@ -175,19 +175,19 @@ namespace RT.Util.Geometry
             if (dx != 0)
             {
                 // Rightmost line
-                L = (box.Xmax - ray.Start.X) / dx;
-                if (L >= 0)
+                k = (box.Xmax - ray.Start.X) / dx;
+                if (k >= 0)
                 {
-                    C = ray.Start.Y + L * dy;
-                    if (C >= box.Ymin && C <= box.Ymax)
+                    c = ray.Start.Y + k * dy;
+                    if (c >= box.Ymin && c <= box.Ymax)
                         return true;
                 }
                 // Leftmost line
-                L = (box.Xmin - ray.Start.X) / dx;
-                if (L >= 0)
+                k = (box.Xmin - ray.Start.X) / dx;
+                if (k >= 0)
                 {
-                    C = ray.Start.Y + L * dy;
-                    if (C >= box.Ymin && C <= box.Ymax)
+                    c = ray.Start.Y + k * dy;
+                    if (c >= box.Ymin && c <= box.Ymax)
                         return true;
                 }
             }

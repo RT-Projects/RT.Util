@@ -14,190 +14,189 @@ namespace RT.Util.Drawing
         /// Blends the specified colors together. Amount specifies how much
         /// of the Color to keep, "on top of" the BackColor.
         /// </summary>
-        public static Color ColorBlend(Color Color, Color BackColor, double Amount)
+        public static Color ColorBlend(Color color, Color backColor, double amount)
         {
-            byte R = (byte) ((Color.R * Amount) + BackColor.R * (1 - Amount));
-            byte G = (byte) ((Color.G * Amount) + BackColor.G * (1 - Amount));
-            byte B = (byte) ((Color.B * Amount) + BackColor.B * (1 - Amount));
-            return Color.FromArgb(R, G, B);
+            byte r = (byte) ((color.R * amount) + backColor.R * (1 - amount));
+            byte g = (byte) ((color.G * amount) + backColor.G * (1 - amount));
+            byte b = (byte) ((color.B * amount) + backColor.B * (1 - amount));
+            return Color.FromArgb(r, g, b);
         }
 
         /// <summary>
         /// Draws the specified Image into the destination rectangle DestRect of the Graphics object g using the specified Opacity.
         /// </summary>
         /// <param name="g">Graphics object to alpha-blend the image onto.</param>
-        /// <param name="Image">Image to draw.</param>
-        /// <param name="DestRect">Destination rectangle within the target Graphics canvas.</param>
-        /// <param name="Opacity">Opacity level to use when drawing the image. 0 means nothing changes.
+        /// <param name="image">Image to draw.</param>
+        /// <param name="destRect">Destination rectangle within the target Graphics canvas.</param>
+        /// <param name="opacity">Opacity level to use when drawing the image. 0 means nothing changes.
         /// 1 means the image is drawn normally. 0.5 means a 50% blend between source and destination.</param>
-        public static void DrawImageAlpha(Graphics g, Image Image, Rectangle DestRect, float Opacity)
+        public static void DrawImageAlpha(Graphics g, Image image, Rectangle destRect, float opacity)
         {
-            ColorMatrix ColorMatrix = new ColorMatrix(new float[][] {
+            ColorMatrix matrix = new ColorMatrix(new float[][] {
                 new float[] {1, 0, 0, 0, 0},
                 new float[] {0, 1, 0, 0, 0},
                 new float[] {0, 0, 1, 0, 0},
-                new float[] {0, 0, 0, Opacity, 0},
+                new float[] {0, 0, 0, opacity, 0},
                 new float[] {0, 0, 0, 0, 1}
             });
-            ImageAttributes ImageAttributes = new ImageAttributes();
-            ImageAttributes.SetColorMatrix(ColorMatrix,
+            ImageAttributes attr = new ImageAttributes();
+            attr.SetColorMatrix(matrix,
                 ColorMatrixFlag.Default,
                 ColorAdjustType.Bitmap);
-            g.DrawImage(Image, DestRect, 0, 0, Image.Width, Image.Height, GraphicsUnit.Pixel, ImageAttributes);
+            g.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
         /// <summary>Given a two-dimensional array of booleans, generates the "outline" of the region described by the booleans set to true.
         /// If there are several disjoint regions, several separate outlines are generated.</summary>
-        /// <param name="Input">The input array of booleans to generate the outline from.</param>
+        /// <param name="input">The input array of booleans to generate the outline from.</param>
         /// <returns>An array of paths, where each path is an array of points. The co-ordinates of the points are the indexes in the input array.</returns>
         /// <example>An input array full of booleans set to false generates an empty output array.
         /// 
         /// An input array full of booleans set to true generates a single output path which describes the complete rectangle.</example>
-        public static Point[][] BoolsToPaths(Virtual2DArray<bool> Input)
+        public static Point[][] BoolsToPaths(Virtual2DArray<bool> input)
         {
-            List<List<Point>> ActiveSegments = new List<List<Point>>();
-            List<Point[]> CompletedPaths = new List<Point[]>();
-            for (int y = 0; y <= Input.Height; y++)
+            List<List<Point>> activeSegments = new List<List<Point>>();
+            List<Point[]> completedPaths = new List<Point[]>();
+            for (int y = 0; y <= input.Height; y++)
             {
-                List<RTUtilPathEvent> Events = FindEvents(ActiveSegments, Input, y);
-                for (int i = 0; i < Events.Count; i += 2)
+                List<pathEvent> events = findEvents(activeSegments, input, y);
+                for (int i = 0; i < events.Count; i += 2)
                 {
-                    if (Events[i] is RTUtilPathEventSegment && Events[i + 1] is RTUtilPathEventSegment)
+                    if (events[i] is pathEventSegment && events[i + 1] is pathEventSegment)
                     {
-                        int Index1 = ((RTUtilPathEventSegment) Events[i]).SegmentIndex;
-                        int Index2 = ((RTUtilPathEventSegment) Events[i + 1]).SegmentIndex;
-                        bool Start = ((RTUtilPathEventSegment) Events[i]).StartOfSegment;
-                        if (Index1 == Index2 && Start)
+                        int index1 = ((pathEventSegment) events[i]).SegmentIndex;
+                        int index2 = ((pathEventSegment) events[i + 1]).SegmentIndex;
+                        bool start = ((pathEventSegment) events[i]).StartOfSegment;
+                        if (index1 == index2 && start)
                         {
                             // A segment becomes a closed path
-                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
-                            ActiveSegments[Index2].Add(new Point(Events[i].X, y));
-                            CompletedPaths.Add(ActiveSegments[Index2].ToArray());
+                            activeSegments[index2].Add(new Point(events[i + 1].X, y));
+                            activeSegments[index2].Add(new Point(events[i].X, y));
+                            completedPaths.Add(activeSegments[index2].ToArray());
                         }
-                        else if (Index1 == Index2)
+                        else if (index1 == index2)
                         {
                             // A segment becomes a closed path
-                            ActiveSegments[Index2].Add(new Point(Events[i].X, y));
-                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
-                            CompletedPaths.Add(ActiveSegments[Index2].ToArray());
+                            activeSegments[index2].Add(new Point(events[i].X, y));
+                            activeSegments[index2].Add(new Point(events[i + 1].X, y));
+                            completedPaths.Add(activeSegments[index2].ToArray());
                         }
-                        else if (Start)
+                        else if (start)
                         {
                             // Two segments join up
-                            ActiveSegments[Index2].Add(new Point(Events[i + 1].X, y));
-                            ActiveSegments[Index2].Add(new Point(Events[i].X, y));
-                            ActiveSegments[Index1].InsertRange(0, ActiveSegments[Index2]);
+                            activeSegments[index2].Add(new Point(events[i + 1].X, y));
+                            activeSegments[index2].Add(new Point(events[i].X, y));
+                            activeSegments[index1].InsertRange(0, activeSegments[index2]);
                         }
                         else
                         {
                             // Two segments join up
-                            ActiveSegments[Index1].Add(new Point(Events[i].X, y));
-                            ActiveSegments[Index1].Add(new Point(Events[i + 1].X, y));
-                            ActiveSegments[Index1].AddRange(ActiveSegments[Index2]);
+                            activeSegments[index1].Add(new Point(events[i].X, y));
+                            activeSegments[index1].Add(new Point(events[i + 1].X, y));
+                            activeSegments[index1].AddRange(activeSegments[index2]);
                         }
-                        ActiveSegments.RemoveAt(Index2);
-                        for (int Correction = i + 2; Correction < Events.Count; Correction++)
+                        activeSegments.RemoveAt(index2);
+                        for (int correction = i + 2; correction < events.Count; correction++)
                         {
-                            if (Events[Correction] is RTUtilPathEventSegment &&
-                                (Events[Correction] as RTUtilPathEventSegment).SegmentIndex == Index2)
-                                (Events[Correction] as RTUtilPathEventSegment).SegmentIndex = Index1;
-                            if (Events[Correction] is RTUtilPathEventSegment &&
-                                (Events[Correction] as RTUtilPathEventSegment).SegmentIndex > Index2)
-                                (Events[Correction] as RTUtilPathEventSegment).SegmentIndex--;
+                            if (events[correction] is pathEventSegment &&
+                                (events[correction] as pathEventSegment).SegmentIndex == index2)
+                                (events[correction] as pathEventSegment).SegmentIndex = index1;
+                            if (events[correction] is pathEventSegment &&
+                                (events[correction] as pathEventSegment).SegmentIndex > index2)
+                                (events[correction] as pathEventSegment).SegmentIndex--;
                         }
                     }
-                    else if (Events[i] is RTUtilPathEventChange && Events[i + 1] is RTUtilPathEventChange)
+                    else if (events[i] is pathEventChange && events[i + 1] is pathEventChange)
                     {
                         // Both events are changes - create a new segment
-                        ActiveSegments.Add(new List<Point>(new Point[] { 
-                            new Point (Events[Input.Get(Events[i].X, y) ? i : i+1].X,y),
-                            new Point (Events[Input.Get(Events[i].X, y) ? i+1 : i].X,y)
+                        activeSegments.Add(new List<Point>(new Point[] { 
+                            new Point (events[input.Get(events[i].X, y) ? i : i+1].X,y),
+                            new Point (events[input.Get(events[i].X, y) ? i+1 : i].X,y)
                         }));
                     }
-                    else if (Events[i] is RTUtilPathEventSegment) // ... && Events[i+1] is RTUtilPathEventChange
+                    else if (events[i] is pathEventSegment) // ... && Events[i+1] is RTUtilPathEventChange
                     {
-                        RTUtilPathEventSegment Ev = Events[i] as RTUtilPathEventSegment;
-                        if (Ev.StartOfSegment)
+                        pathEventSegment ev = events[i] as pathEventSegment;
+                        if (ev.StartOfSegment)
                         {
-                            ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Ev.X, y));
-                            if (Ev.X != Events[i + 1].X)
-                                ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Events[i + 1].X, y));
+                            activeSegments[ev.SegmentIndex].Insert(0, new Point(ev.X, y));
+                            if (ev.X != events[i + 1].X)
+                                activeSegments[ev.SegmentIndex].Insert(0, new Point(events[i + 1].X, y));
                         }
                         else
                         {
-                            ActiveSegments[Ev.SegmentIndex].Add(new Point(Ev.X, y));
-                            if (Ev.X != Events[i + 1].X)
-                                ActiveSegments[Ev.SegmentIndex].Add(new Point(Events[i + 1].X, y));
+                            activeSegments[ev.SegmentIndex].Add(new Point(ev.X, y));
+                            if (ev.X != events[i + 1].X)
+                                activeSegments[ev.SegmentIndex].Add(new Point(events[i + 1].X, y));
                         }
                     }
                     else  // ... Events[i] is RTUtilPathEventChange && Events[i+1] is RTUtilPathEventSegment
                     {
-                        RTUtilPathEventSegment Ev = Events[i + 1] as RTUtilPathEventSegment;
-                        if (Ev.StartOfSegment)
+                        pathEventSegment ev = events[i + 1] as pathEventSegment;
+                        if (ev.StartOfSegment)
                         {
-                            ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Ev.X, y));
-                            if (Ev.X != Events[i].X)
-                                ActiveSegments[Ev.SegmentIndex].Insert(0, new Point(Events[i].X, y));
+                            activeSegments[ev.SegmentIndex].Insert(0, new Point(ev.X, y));
+                            if (ev.X != events[i].X)
+                                activeSegments[ev.SegmentIndex].Insert(0, new Point(events[i].X, y));
                         }
                         else
                         {
-                            ActiveSegments[Ev.SegmentIndex].Add(new Point(Ev.X, y));
-                            if (Ev.X != Events[i].X)
-                                ActiveSegments[Ev.SegmentIndex].Add(new Point(Events[i].X, y));
+                            activeSegments[ev.SegmentIndex].Add(new Point(ev.X, y));
+                            if (ev.X != events[i].X)
+                                activeSegments[ev.SegmentIndex].Add(new Point(events[i].X, y));
                         }
                     }
                 }
             }
-            return CompletedPaths.ToArray();
+            return completedPaths.ToArray();
         }
 
-        private static List<RTUtilPathEvent> FindEvents(List<List<Point>> ActiveSegments,
-            Virtual2DArray<bool> Input, int y)
+        private static List<pathEvent> findEvents(List<List<Point>> activeSegments, Virtual2DArray<bool> input, int y)
         {
-            List<RTUtilPathEvent> Results = new List<RTUtilPathEvent>();
+            List<pathEvent> results = new List<pathEvent>();
 
             // First add all the validity change events in the correct order
-            if (y < Input.Height)
+            if (y < input.Height)
             {
-                for (int x = 0; x <= Input.Width; x++)  // "<=" is intentional
-                    if (Input.Get(x, y) != Input.Get(x - 1, y))
-                        Results.Add(new RTUtilPathEventChange(x));
+                for (int x = 0; x <= input.Width; x++)  // "<=" is intentional
+                    if (input.Get(x, y) != input.Get(x - 1, y))
+                        results.Add(new pathEventChange(x));
             }
 
             // Now insert the segment events in the right places
-            for (int i = 0; i < ActiveSegments.Count; i++)
+            for (int i = 0; i < activeSegments.Count; i++)
             {
-                int Index = 0;
-                while (Index < Results.Count && Results[Index].X <= ActiveSegments[i][0].X)
-                    Index++;
-                Results.Insert(Index, new RTUtilPathEventSegment(i, true, ActiveSegments[i][0].X));
-                Index = 0;
-                while (Index < Results.Count && Results[Index].X < ActiveSegments[i][ActiveSegments[i].Count - 1].X)
-                    Index++;
-                Results.Insert(Index, new RTUtilPathEventSegment(i, false, ActiveSegments[i][ActiveSegments[i].Count - 1].X));
+                int index = 0;
+                while (index < results.Count && results[index].X <= activeSegments[i][0].X)
+                    index++;
+                results.Insert(index, new pathEventSegment(i, true, activeSegments[i][0].X));
+                index = 0;
+                while (index < results.Count && results[index].X < activeSegments[i][activeSegments[i].Count - 1].X)
+                    index++;
+                results.Insert(index, new pathEventSegment(i, false, activeSegments[i][activeSegments[i].Count - 1].X));
             }
-            return Results;
+            return results;
         }
-        private abstract class RTUtilPathEvent
+        private abstract class pathEvent
         {
             public int X;
         }
-        private class RTUtilPathEventSegment : RTUtilPathEvent
+        private class pathEventSegment : pathEvent
         {
             public int SegmentIndex;
             public bool StartOfSegment;
-            public RTUtilPathEventSegment(int Index, bool Start, int NewX)
+            public pathEventSegment(int index, bool start, int newX)
             {
-                SegmentIndex = Index;
-                StartOfSegment = Start;
-                X = NewX;
+                SegmentIndex = index;
+                StartOfSegment = start;
+                X = newX;
             }
         }
-        private class RTUtilPathEventChange : RTUtilPathEvent
+        private class pathEventChange : pathEvent
         {
-            public RTUtilPathEventChange(int NewX)
+            public pathEventChange(int newX)
             {
-                X = NewX;
+                X = newX;
             }
         }
     }

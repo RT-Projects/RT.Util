@@ -11,74 +11,74 @@ namespace RT.Util.Streams
         /// <summary>Gets or sets the current chunk size (number of bytes read at a time).</summary>
         public int ChunkSize { get; set; }
 
-        private Stream MyStream;
+        private Stream _stream;
 
         /// <summary>Initialises a new SlowStream instance.</summary>
-        /// <param name="myStream">The underlying stream to read in chunks from.</param>
-        public SlowStream(Stream myStream) { MyStream = myStream; }
+        /// <param name="stream">The underlying stream to read in chunks from.</param>
+        public SlowStream(Stream stream) { _stream = stream; }
 
         /// <summary>Initialises a new SlowStream instance.</summary>
-        /// <param name="myStream">The underlying stream to read in chunks from.</param>
+        /// <param name="stream">The underlying stream to read in chunks from.</param>
         /// <param name="chunkSize">The number of bytes to read per chunk.</param>
-        public SlowStream(Stream myStream, int chunkSize) { MyStream = myStream; ChunkSize = chunkSize; }
+        public SlowStream(Stream stream, int chunkSize) { _stream = stream; ChunkSize = chunkSize; }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
         public override bool CanRead
         {
-            get { return MyStream.CanRead; }
+            get { return _stream.CanRead; }
         }
 
         public override bool CanSeek
         {
-            get { return MyStream.CanSeek; }
+            get { return _stream.CanSeek; }
         }
 
         public override bool CanWrite
         {
-            get { return MyStream.CanWrite; }
+            get { return _stream.CanWrite; }
         }
 
         public override void Flush()
         {
-            MyStream.Flush();
+            _stream.Flush();
         }
 
         public override long Length
         {
-            get { return MyStream.Length; }
+            get { return _stream.Length; }
         }
 
         public override long Position
         {
             get
             {
-                return MyStream.Position;
+                return _stream.Position;
             }
             set
             {
-                MyStream.Position = value;
+                _stream.Position = value;
             }
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return MyStream.Seek(offset, origin);
+            return _stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            MyStream.SetLength(value);
+            _stream.SetLength(value);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            MyStream.Write(buffer, offset, count);
+            _stream.Write(buffer, offset, count);
         }
 
         public override void Close()
         {
-            MyStream.Close();
+            _stream.Close();
         }
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
@@ -90,7 +90,7 @@ namespace RT.Util.Streams
         /// <returns>Number of bytes read.</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return MyStream.Read(buffer, offset, Math.Min(count, ChunkSize));
+            return _stream.Read(buffer, offset, Math.Min(count, ChunkSize));
         }
     }
 }

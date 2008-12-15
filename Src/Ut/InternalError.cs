@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using RT.Util.Dialogs;
 
@@ -21,10 +20,10 @@ namespace RT.Util
         /// actually terminate the program, so if the problem is not fatal the user
         /// could save their work etc.
         /// </summary>
-        /// <param name="ErrorCode">Some error code to help the developer pinpoint the problem.</param>
-        public static void InternalError(int ErrorCode)
+        /// <param name="errorCode">Some error code to help the developer pinpoint the problem.</param>
+        public static void InternalError(int errorCode)
         {
-            InternalErrorPrivate(ErrorCode.ToString());
+            InternalErrorPrivate(errorCode.ToString());
         }
 
         /// <summary>
@@ -32,10 +31,10 @@ namespace RT.Util
         /// actually terminate the program, so if the problem is not fatal the user
         /// could save their work etc.
         /// </summary>
-        /// <param name="ErrorMsg">An error message to help the developer pinpoint the problem.</param>
-        public static void InternalError(string ErrorMsg)
+        /// <param name="errorMsg">An error message to help the developer pinpoint the problem.</param>
+        public static void InternalError(string errorMsg)
         {
-            InternalErrorPrivate(ErrorMsg);
+            InternalErrorPrivate(errorMsg);
         }
 
         /// <summary>
@@ -44,10 +43,10 @@ namespace RT.Util
         /// function can always backtrack exactly 2 stack frames to get to the place
         /// which invoked InternalError.
         /// </summary>
-        private static void InternalErrorPrivate(string ErrorMsg)
+        private static void InternalErrorPrivate(string errorMsg)
         {
             string str = "Internal application error has occurred. Please inform the developer.\n";
-            if (ErrorMsg != null) str += "\nError message: " + ErrorMsg;
+            if (errorMsg != null) str += "\nError message: " + errorMsg;
             StackFrame sf = new StackFrame(2, true);
             str += "\nMethod: " + sf.GetMethod();
             if (sf.GetFileLineNumber() != 0)

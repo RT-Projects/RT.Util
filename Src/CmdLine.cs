@@ -15,13 +15,13 @@ namespace RT.Util
     /// <remarks>Requires the UnmanagedCode security permission due to the use
     /// of Environment.Exit function.</remarks>
     /// </summary>
-    [SecurityPermission(SecurityAction.Demand, Flags=SecurityPermissionFlag.UnmanagedCode)]
+    [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     public class CmdLineParser
     {
         /// <summary>
         /// Describes a single option.
         /// </summary>
-        private class CmdLineOption
+        private class option
         {
             public string TinyName;
             public string LongName;
@@ -38,18 +38,18 @@ namespace RT.Util
         /// <summary>
         /// Describes a blank line used to separate options when printing help.
         /// </summary>
-        private class CmdLineOptionSeparator : CmdLineOption
+        private class separator : option
         {
         }
 
         /// <summary>All options that the user has defined, including separators.</summary>
-        private List<CmdLineOption> byDefineOrder = new List<CmdLineOption>();
+        private List<option> _byDefineOrder = new List<option>();
 
         /// <summary>Only the options which had a non-null tiny name specified.</summary>
-        private Dictionary<string, CmdLineOption> byTinyName = new Dictionary<string, CmdLineOption>();
+        private Dictionary<string, option> _byTinyName = new Dictionary<string, option>();
 
         /// <summary>Only the options which had a non-null long name specified.</summary>
-        private Dictionary<string, CmdLineOption> byLongName = new Dictionary<string, CmdLineOption>();
+        private Dictionary<string, option> _byLongName = new Dictionary<string, option>();
 
         /// <summary>
         /// <para>This points to either byTinyName or byLongName. By default it points to
@@ -60,13 +60,13 @@ namespace RT.Util
         /// look up option names. Hence this basically determines whether the user
         /// accesses options by their full names or their tiny names.</para>
         /// </summary>
-        private Dictionary<string, CmdLineOption> byPreferredName;
+        private Dictionary<string, option> _byPreferredName;
 
         /// <summary>
         /// Holds all positional arguments, that is, all arguments which do not look like
         /// named options and are not arguments to known named options.
         /// </summary>
-        private List<string> unmatchedArgs;
+        private List<string> _unmatchedArgs;
 
         /// <summary>
         /// Holds all parse errors that occurred. Will be an empty (non-null) list when there
@@ -83,17 +83,17 @@ namespace RT.Util
         /// Holds a class providing an interface to the user, such as printing messages
         /// on the command line or displaying message boxes. Defaults to a console printer.
         /// </summary>
-        private CmdLinePrinterBase printer = new CmdLineConsolePrinter();
+        private CmdLinePrinterBase _printer = new CmdLineConsolePrinter();
 
         /// <summary>
         /// Keeps track of whether Parse() has ever been called.
         /// </summary>
-        private bool Parsed = false;
+        private bool _parsed = false;
 
         /// <summary>
         /// Keeps track of whether PrintProgramInfo() has been called.
         /// </summary>
-        private bool ProgramInfoPrinted = false;
+        private bool _programInfoPrinted = false;
 
         /// <summary>
         /// Constructs a command line parser.
@@ -109,7 +109,7 @@ namespace RT.Util
         public CmdLineParser(CmdLinePrinterBase printer)
             : this()
         {
-            this.printer = printer;
+            this._printer = printer;
         }
 
         /// <summary>
@@ -130,19 +130,19 @@ namespace RT.Util
             if (tinyName == null && longName == null)
                 throw new ArgumentException("Both the tiny and the long switch names are null. The user won't be able to specify it.");
 
-            CmdLineOption opt = new CmdLineOption();
+            option opt = new option();
             opt.TinyName = tinyName;
             opt.LongName = longName;
             opt.Type = type;
             opt.Flags = flags;
             opt.Description = description;
-            opt.NiceName = tinyName == null ? ("--"+longName) : longName == null ? ("-"+tinyName) : string.Format("-{0}/--{1}", tinyName, longName);
+            opt.NiceName = tinyName == null ? ("--" + longName) : longName == null ? ("-" + tinyName) : string.Format("-{0}/--{1}", tinyName, longName);
 
-            byDefineOrder.Add(opt);
+            _byDefineOrder.Add(opt);
             if (tinyName != null)
-                byTinyName.Add(tinyName, opt);
+                _byTinyName.Add(tinyName, opt);
             if (longName != null)
-                byLongName.Add(longName, opt);
+                _byLongName.Add(longName, opt);
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace RT.Util
         /// </summary>
         public void DefineHelpSeparator()
         {
-            byDefineOrder.Add(new CmdLineOptionSeparator());
+            _byDefineOrder.Add(new separator());
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace RT.Util
         /// </summary>
         public void DefineDefaultHelpOptions()
         {
-            DefineOption("?",  "help",  CmdOptionType.Switch, CmdOptionFlags.IsHelp, null);
+            DefineOption("?", "help", CmdOptionType.Switch, CmdOptionFlags.IsHelp, null);
             DefineOption(null, "usage", CmdOptionType.Switch, CmdOptionFlags.IsHelp, null);
         }
 
@@ -183,11 +183,11 @@ namespace RT.Util
         /// </summary>
         public void ClearResults()
         {
-            Parsed = false;
+            _parsed = false;
             _errors = new List<string>();
             _help = false;
-            unmatchedArgs = new List<string>();
-            foreach (var option in byDefineOrder)
+            _unmatchedArgs = new List<string>();
+            foreach (var option in _byDefineOrder)
                 option.Value = null;
         }
 
@@ -204,27 +204,27 @@ namespace RT.Util
         /// </summary>
         public void Parse(string[] args)
         {
-            if (Parsed)
+            if (_parsed)
                 throw new RTException("Parse results must be cleared using ClearResults before calling Parse again.");
 
             // Reset the preferred access name to long name
-            byPreferredName = byLongName;
+            _byPreferredName = _byLongName;
 
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i];
-                CmdLineOption opt;
+                option opt;
 
-                if (arg.StartsWith("--") && byLongName.ContainsKey(arg.Substring(2)))
-                    opt = byLongName[arg.Substring(2)];
-                else if (arg.StartsWith("-") && byTinyName.ContainsKey(arg.Substring(1)))
-                    opt = byTinyName[arg.Substring(1)];
+                if (arg.StartsWith("--") && _byLongName.ContainsKey(arg.Substring(2)))
+                    opt = _byLongName[arg.Substring(2)];
+                else if (arg.StartsWith("-") && _byTinyName.ContainsKey(arg.Substring(1)))
+                    opt = _byTinyName[arg.Substring(1)];
                 else
                 {
                     if (arg.StartsWith("-"))
                         _errors.Add(string.Format("Option \"{0}\" doesn't match any of the allowed options.", arg));
                     else
-                        unmatchedArgs.Add(arg);
+                        _unmatchedArgs.Add(arg);
                     continue;
                 }
 
@@ -238,45 +238,45 @@ namespace RT.Util
                 // This option was matched
                 switch (opt.Type)
                 {
-                case CmdOptionType.Switch:
-                    opt.Value = new List<string>();
-                    break;
-
-                case CmdOptionType.Value:
-                    if (i == args.Length - 1)
-                        _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
-                    else if (opt.Value != null)
-                        _errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
-                    else
-                    {
+                    case CmdOptionType.Switch:
                         opt.Value = new List<string>();
-                        opt.Value.Add(args[i + 1]);
-                        i++;
-                    }
-                    break;
+                        break;
 
-                case CmdOptionType.List:
-                    if (i == args.Length - 1)
-                        _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
-                    else
-                    {
-                        if (opt.Value == null)
+                    case CmdOptionType.Value:
+                        if (i == args.Length - 1)
+                            _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                        else if (opt.Value != null)
+                            _errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
+                        else
+                        {
                             opt.Value = new List<string>();
-                        opt.Value.Add(args[i + 1]);
-                        i++;
-                    }
-                    break;
+                            opt.Value.Add(args[i + 1]);
+                            i++;
+                        }
+                        break;
+
+                    case CmdOptionType.List:
+                        if (i == args.Length - 1)
+                            _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                        else
+                        {
+                            if (opt.Value == null)
+                                opt.Value = new List<string>();
+                            opt.Value.Add(args[i + 1]);
+                            i++;
+                        }
+                        break;
                 }
             }
 
             // Verify that all required options have been specified.
-            foreach (CmdLineOption opt in byDefineOrder)
+            foreach (option opt in _byDefineOrder)
             {
                 if ((opt.Flags & CmdOptionFlags.Required) != 0 && opt.Value == null)
                     _errors.Add(string.Format("Option \"{0}\" is a required option and must not be omitted.", opt.NiceName));
             }
 
-            Parsed = true;
+            _parsed = true;
         }
 
         /// <summary>
@@ -343,7 +343,7 @@ namespace RT.Util
         /// <param name="success">Indicates whether the message is a "success" or a "failure"-style message.</param>
         public void PrintCommit(bool success)
         {
-            printer.Commit(success);
+            _printer.Commit(success);
         }
 
         /// <summary>
@@ -353,13 +353,13 @@ namespace RT.Util
         {
             if (_errors.Count > 0)
             {
-                printer.PrintLine("Errors:");
-                printer.PrintLine("");
+                _printer.PrintLine("Errors:");
+                _printer.PrintLine("");
                 foreach (var err in _errors)
                 {
-                    foreach (var line in ("    " + err).WordWrap(printer.MaxWidth - 5))
-                        printer.PrintLine(line);
-                    printer.PrintLine("");
+                    foreach (var line in ("    " + err).WordWrap(_printer.MaxWidth - 5))
+                        _printer.PrintLine(line);
+                    _printer.PrintLine("");
                 }
             }
         }
@@ -382,25 +382,25 @@ namespace RT.Util
         /// </summary>
         public void PrintProgramInfo()
         {
-            if (ProgramInfoPrinted)
+            if (_programInfoPrinted)
                 return;
 
             Assembly assembly = Assembly.GetEntryAssembly();
 
             // Title
-            try { printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0] as AssemblyTitleAttribute).Title); }
+            try { _printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0] as AssemblyTitleAttribute).Title); }
             catch { }
 
             // Version
-            try { printer.PrintLine("Version: " + assembly.GetName().Version.ToString()); }
-            catch (Exception E) { printer.PrintLine(E.Message); }
+            try { _printer.PrintLine("Version: " + assembly.GetName().Version.ToString()); }
+            catch (Exception E) { _printer.PrintLine(E.Message); }
 
             // Copyright
-            try { printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
+            try { _printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
             catch { }
 
-            printer.PrintLine("");
-            ProgramInfoPrinted = true;
+            _printer.PrintLine("");
+            _programInfoPrinted = true;
         }
 
         /// <summary>
@@ -429,8 +429,8 @@ namespace RT.Util
         {
             PrintProgramInfo();
 
-            printer.PrintLine("Usage:");
-            printer.PrintLine("");
+            _printer.PrintLine("Usage:");
+            _printer.PrintLine("");
 
             //
             // Construct lists of tokens for the one line summary
@@ -438,9 +438,9 @@ namespace RT.Util
             List<string> requiredSwitches = new List<string>();
             List<string> optionalSwitches = new List<string>();
 
-            foreach (CmdLineOption option in byDefineOrder)
+            foreach (option option in _byDefineOrder)
             {
-                if ((option.Flags & CmdOptionFlags.IsHelp) != 0 || option is CmdLineOptionSeparator)
+                if ((option.Flags & CmdOptionFlags.IsHelp) != 0 || option is separator)
                     continue;
 
                 List<string> switches = (option.Flags & CmdOptionFlags.Required) != 0
@@ -462,43 +462,43 @@ namespace RT.Util
                 // Build the string
                 switch (option.Type)
                 {
-                case CmdOptionType.Switch:
-                    switches.Add(switchName);
-                    break;
-                case CmdOptionType.Value:
-                    switches.Add(string.Format("{0} <{1}>", switchName, argName));
-                    break;
-                case CmdOptionType.List:
-                    switches.Add(string.Format("[{0} <{1} 1> [... {0} <{1} N>]]", switchName, argName));
-                    break;
+                    case CmdOptionType.Switch:
+                        switches.Add(switchName);
+                        break;
+                    case CmdOptionType.Value:
+                        switches.Add(string.Format("{0} <{1}>", switchName, argName));
+                        break;
+                    case CmdOptionType.List:
+                        switches.Add(string.Format("[{0} <{1} 1> [... {0} <{1} N>]]", switchName, argName));
+                        break;
                 }
             }
 
             //
             // Print the one-line summary
             //
-            printer.Print("    ");
-            printer.Print(Assembly.GetEntryAssembly().ManifestModule.Name);
+            _printer.Print("    ");
+            _printer.Print(Assembly.GetEntryAssembly().ManifestModule.Name);
             foreach (string token in requiredSwitches)
-                printer.Print(" " + token);
+                _printer.Print(" " + token);
             foreach (string token in optionalSwitches)
-                printer.Print(" [" + token + "]");
-            printer.PrintLine("");
+                _printer.Print(" [" + token + "]");
+            _printer.PrintLine("");
 
             //
             // Print a table of options and their descriptions
             //
             TextTable table = new TextTable();
             int row = 0;
-            for (int i = 0; i < byDefineOrder.Count; i++)
+            for (int i = 0; i < _byDefineOrder.Count; i++)
             {
-                CmdLineOption option = byDefineOrder[i];
+                option option = _byDefineOrder[i];
 
                 // Skip help options
                 if ((option.Flags & CmdOptionFlags.IsHelp) != 0)
                     continue;
 
-                if (option is CmdLineOptionSeparator)
+                if (option is separator)
                 {
                     /* nothing - this will leave an empty row in the table */
                 }
@@ -519,11 +519,11 @@ namespace RT.Util
 
             table.SetAutoSize(2, true);
 
-            printer.PrintLine("");
-            printer.PrintLine("Available options:");
-            printer.PrintLine("");
+            _printer.PrintLine("");
+            _printer.PrintLine("Available options:");
+            _printer.PrintLine("");
 
-            printer.PrintLine(table.GetText(4, printer.MaxWidth - 5, 3, false));
+            _printer.PrintLine(table.GetText(4, _printer.MaxWidth - 5, 3, false));
         }
 
         #endregion
@@ -537,7 +537,7 @@ namespace RT.Util
         /// </summary>
         public void GetOptionsByTinyName()
         {
-            byPreferredName = byTinyName;
+            _byPreferredName = _byTinyName;
         }
 
         /// <summary>
@@ -548,7 +548,7 @@ namespace RT.Util
         /// </summary>
         public void GetOptionsByLongName()
         {
-            byPreferredName = byLongName;
+            _byPreferredName = _byLongName;
         }
 
         /// <summary>
@@ -559,10 +559,10 @@ namespace RT.Util
         {
             get
             {
-                if (!Parsed)
+                if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-                return unmatchedArgs;
+                return _unmatchedArgs;
             }
         }
 
@@ -571,10 +571,10 @@ namespace RT.Util
         /// </summary>
         public bool OptSwitch(string name)
         {
-            if (!Parsed)
+            if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            return byPreferredName[name].Value != null;
+            return _byPreferredName[name].Value != null;
         }
 
         /// <summary>
@@ -585,7 +585,7 @@ namespace RT.Util
         /// </summary>
         public string OptValue(string name)
         {
-            if (!Parsed)
+            if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
             return OptValue(name, null);
@@ -597,10 +597,10 @@ namespace RT.Util
         /// </summary>
         public string OptValue(string name, string defaultIfUnspecified)
         {
-            if (!Parsed)
+            if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            return byPreferredName[name].Value == null ? defaultIfUnspecified : byPreferredName[name].Value[0];
+            return _byPreferredName[name].Value == null ? defaultIfUnspecified : _byPreferredName[name].Value[0];
         }
 
         /// <summary>
@@ -610,13 +610,13 @@ namespace RT.Util
         /// </summary>
         public List<string> OptList(string name)
         {
-            if (!Parsed)
+            if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            if (byPreferredName[name].Value == null)
+            if (_byPreferredName[name].Value == null)
                 return new List<string>();
             else
-                return byPreferredName[name].Value;
+                return _byPreferredName[name].Value;
         }
 
         /// <summary>
@@ -633,15 +633,15 @@ namespace RT.Util
         {
             get
             {
-                if (!Parsed)
+                if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-                switch (byPreferredName[name].Type)
+                switch (_byPreferredName[name].Type)
                 {
                     case CmdOptionType.Switch:
-                        return byPreferredName[name].Value == null ? null : "true";
+                        return _byPreferredName[name].Value == null ? null : "true";
                     case CmdOptionType.Value:
-                        return byPreferredName[name].Value == null ? null : byPreferredName[name].Value[0];
+                        return _byPreferredName[name].Value == null ? null : _byPreferredName[name].Value[0];
                     case CmdOptionType.List:
                         throw new InvalidOperationException("Cannot access a List-type command line option using the indexer.");
                     default:
@@ -661,7 +661,7 @@ namespace RT.Util
         {
             get
             {
-                if (!Parsed)
+                if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
                 return _errors;
@@ -676,7 +676,7 @@ namespace RT.Util
         {
             get
             {
-                if (!Parsed)
+                if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
                 return _errors.Count > 0;
@@ -691,7 +691,7 @@ namespace RT.Util
         {
             get
             {
-                if (!Parsed)
+                if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
                 return _help;
@@ -744,7 +744,7 @@ namespace RT.Util
     /// <summary>
     /// Prints <see cref="CmdLineParser"/> messages to the console.
     /// </summary>
-    public class CmdLineConsolePrinter: CmdLinePrinterBase
+    public class CmdLineConsolePrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         public override void Print(string text)
@@ -771,7 +771,7 @@ namespace RT.Util
     /// <summary>
     /// Prints <see cref="CmdLineParser"/> messages using message boxes.
     /// </summary>
-    public class CmdLineMessageboxPrinter: CmdLinePrinterBase
+    public class CmdLineMessageboxPrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         private StringBuilder buffer = new StringBuilder();

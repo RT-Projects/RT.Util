@@ -15,17 +15,17 @@ namespace RT.Util.Geometry
         public PointD End;
 
         /// <summary>Initialises a line segment using the specified start and end point.</summary>
-        public EdgeD(PointD Start, PointD End)
+        public EdgeD(PointD start, PointD end)
         {
-            this.Start = Start;
-            this.End = End;
+            Start = start;
+            End = end;
         }
 
         /// <summary>Initialises a line segment using the start point (X1, Y1) and the end point (X2, Y2).</summary>
-        public EdgeD(double X1, double Y1, double X2, double Y2)
+        public EdgeD(double x1, double y1, double x2, double y2)
         {
-            this.Start = new PointD(X1, Y1);
-            this.End = new PointD(X2, Y2);
+            Start = new PointD(x1, y1);
+            End = new PointD(x2, y2);
         }
 
         /// <summary>Returns the difference in the X-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>

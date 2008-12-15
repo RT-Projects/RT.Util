@@ -27,16 +27,16 @@ namespace RT.Util.FSM
         /// Constructs a new State Machine, which is initially in the specified state.
         /// No events are sent to the state by this procedure.
         /// </summary>
-        /// <param name="StartingState">The initial state of the FSM</param>
-        public StateMachine(Type StartingState)
+        /// <param name="startingState">The initial state of the FSM</param>
+        public StateMachine(Type startingState)
         {
-            Cur = StartingState;
+            _cur = startingState;
         }
 
         /// <summary>
         /// The current state that the FSM is in.
         /// </summary>
-        private Type Cur = null;
+        private Type _cur = null;
 
         /// <summary>
         /// Gets the current state of the FSM. Currently there appears to be no need for
@@ -45,27 +45,27 @@ namespace RT.Util.FSM
         /// </summary>
         public Type State
         {
-            get { return Cur; }
+            get { return _cur; }
         }
 
         /// <summary>
         /// The "queue" of inputs which haven't yet been processed. They are sent to the
         /// current state in FIFO order.
         /// </summary>
-        private SortedDictionaryDT<object> Inputs = new SortedDictionaryDT<object>();
+        private SortedDictionaryDT<object> _inputs = new SortedDictionaryDT<object>();
 
         /// <summary>
         /// This object is used to synchronize input addition with the input processing
         /// thread.
         /// </summary>
-        private object SendInputLock = new object();
+        private object _sendInputLock = new object();
 
         /// <summary>
         /// This is used to note calls to SendInput made by state transition code. The
         /// SendInputLock is not enough because it does not prevent the same thread from
         /// modifying Inputs while the enumeration is running.
         /// </summary>
-        private bool InputsModified;
+        private bool _inputsModified;
 
         /// <summary>
         /// Sends an input to the state machine. The input is added to the list of
@@ -73,24 +73,24 @@ namespace RT.Util.FSM
         /// state transition code to send inputs without being immediately deprived of
         /// control flow in favour of the new state.
         /// </summary>
-        /// <param name="Input">The input to send.</param>
-        public void SendInput(object Input)
+        /// <param name="input">The input to send.</param>
+        public void SendInput(object input)
         {
-            SendInput(Input, TimeSpan.Zero);
+            SendInput(input, TimeSpan.Zero);
         }
 
         /// <summary>
         /// Same as HaveInput(object), except that the input will be sent after the
         /// specified interval has elapsed.
         /// </summary>
-        /// <param name="Input">The input received.</param>
-        /// <param name="Interval">Interval after which the input will be sent.</param>
-        public void SendInput(object Input, TimeSpan Interval)
+        /// <param name="input">The input received.</param>
+        /// <param name="interval">Interval after which the input will be sent.</param>
+        public void SendInput(object input, TimeSpan interval)
         {
-            lock (SendInputLock)
+            lock (_sendInputLock)
             {
-                Inputs.Add(DateTime.Now + Interval, Input);
-                InputsModified = true;
+                _inputs.Add(DateTime.Now + interval, input);
+                _inputsModified = true;
             }
         }
 
@@ -100,78 +100,78 @@ namespace RT.Util.FSM
         /// FIFO order. Note that the current state may be different by this time than 
         /// what it was when the input was sent.
         /// </summary>
-        /// <param name="N">The maximum number of inputs to process. If zero, all inputs
+        /// <param name="n">The maximum number of inputs to process. If zero, all inputs
         ///        will be processed but there can be circumstances in which this never
         ///        returns.</param>
         /// <returns>True if there are still inputs left on the queue. Note that this means
         ///        any inputs, not just those which are due. This means that a construct like
         ///        while (ProcessQueue(5)); should not be used.</returns>
-        public bool ProcessQueue(int N)
+        public bool ProcessQueue(int n)
         {
-            int PN = 0; // number of items processed - to respect the N parameter
-            List<DateTime> ToRemove = new List<DateTime>(); // inputs to be removed
-            bool ToAddEntered = false;
+            int pn = 0; // number of items processed - to respect the N parameter
+            List<DateTime> toRemove = new List<DateTime>(); // inputs to be removed
+            bool toAddEntered = false;
 
             // This while loop allows us to continue processing the Inputs after adding
             // new inputs during processing.
-            while (PN < N)
+            while (pn < n)
             {
-                lock (SendInputLock)
+                lock (_sendInputLock)
                 {
                     // Add the Entered input if necessary
-                    if (ToAddEntered)
+                    if (toAddEntered)
                     {
-                        Inputs.Add(DateTime.MinValue, new FsmEvent_Entered());
-                        ToAddEntered = false;
+                        _inputs.Add(DateTime.MinValue, new FsmEvent_Entered());
+                        toAddEntered = false;
                     }
 
-                    InputsModified = false;
-                    foreach (KeyValuePair<DateTime, object> Inp in Inputs)
+                    _inputsModified = false;
+                    foreach (KeyValuePair<DateTime, object> Inp in _inputs)
                     {
                         // Stop if we hit one which isn't due
                         if (Inp.Key > DateTime.Now)
                         {
-                            PN = int.MaxValue;
+                            pn = int.MaxValue;
                             break;
                         }
 
                         // This signal is definitely getting processed, so make sure it'll
                         // get removed once we're done enumerating.
-                        ToRemove.Add(Inp.Key);
-                        PN++;
+                        toRemove.Add(Inp.Key);
+                        pn++;
 
                         // Invoke the transition method
-                        MethodBase TransitionMethod = Cur.GetMethod("Transition");
-                        Type newstate = (Type)TransitionMethod.Invoke(null, new object[] { Inp.Value });
+                        MethodBase transitionMethod = _cur.GetMethod("Transition");
+                        Type newState = (Type) transitionMethod.Invoke(null, new object[] { Inp.Value });
                         // Update the state if a transition was requested
-                        if (newstate != null)
+                        if (newState != null)
                         {
-                            Fault.AddMT("newstate = " + newstate.Name);
-                            Cur = newstate;
+                            Fault.AddMT("newstate = " + newState.Name);
+                            _cur = newState;
                             // The Entry input must be sent immediately, otherwise it may
                             // get sent to the wrong state. Can't do this from within the
                             // enumeration, so we have to flag and restart.
-                            ToAddEntered = true;
+                            toAddEntered = true;
                             break;
                         }
 
                         // Restart enumeration if Inputs modified
-                        if (InputsModified)
+                        if (_inputsModified)
                             break;
                         // Stop if we've processed N items
-                        if (PN >= N)
+                        if (pn >= n)
                             break;
                     }
 
                     // Remove all processed inputs
-                    foreach (DateTime dt in ToRemove)
-                        Inputs.Remove(dt);
+                    foreach (DateTime dt in toRemove)
+                        _inputs.Remove(dt);
                 }
             }
 
             // Return true if any inputs remaining
-            lock (SendInputLock)
-                return Inputs.Count > 0;
+            lock (_sendInputLock)
+                return _inputs.Count > 0;
         }
     }
 
@@ -190,34 +190,34 @@ namespace RT.Util.FSM
         /// <summary>
         /// A user-defined object which the state can use to determine the transition.
         /// </summary>
-        private object UserObj = null;
-        private string UserStr = null;
+        private object _userObj = null;
+        private string _userStr = null;
 
         /// <summary>
         /// Creates a new User event setting UserObject to null.
         /// </summary>
         public FsmEvent_User()
         {
-            UserObj = null;
+            _userObj = null;
         }
 
         /// <summary>
         /// Creates a new User event, storing the specified object so that it can be
         /// used by the state to determine a transition.
         /// </summary>
-        public FsmEvent_User(object UserObj)
+        public FsmEvent_User(object userObj)
         {
-            this.UserObj = UserObj;
+            _userObj = userObj;
         }
 
         /// <summary>
         /// Creates a new User event, storing the specified string. This may be more
         /// convenient for simple events than an object.
         /// </summary>
-        /// <param name="UserStr"></param>
-        public FsmEvent_User(string UserStr)
+        /// <param name="userStr"></param>
+        public FsmEvent_User(string userStr)
         {
-            this.UserStr = UserStr;
+            _userStr = userStr;
         }
 
         /// <summary>
@@ -225,7 +225,7 @@ namespace RT.Util.FSM
         /// </summary>
         public object UserObject
         {
-            get { return UserObj; }
+            get { return _userObj; }
         }
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace RT.Util.FSM
         /// </summary>
         public string UserString
         {
-            get { return UserStr; }
+            get { return _userStr; }
         }
     }
 
@@ -248,7 +248,7 @@ namespace RT.Util.FSM
     /// new state, which must be null (to remain in the current state) or the Type
     /// of another class marked with this attribute.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class FsmStateAttribute : Attribute
     {
     }

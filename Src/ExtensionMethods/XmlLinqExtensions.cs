@@ -45,8 +45,7 @@ namespace RT.Util.ExtensionMethods
         {
             XElement result = element.Element(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an element named \"{1}\".",
-                    element.Path(), name);
+                throw new RTException("Element \"{0}\" is expected contain an element named \"{1}\".", element.Path(), name);
             else
                 return result;
         }
@@ -60,8 +59,7 @@ namespace RT.Util.ExtensionMethods
         {
             XAttribute result = element.Attribute(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an attribute named \"{1}\".",
-                    element.Path(), name);
+                throw new RTException("Element \"{0}\" is expected contain an attribute named \"{1}\".", element.Path(), name);
             else
                 return result;
         }
@@ -77,8 +75,7 @@ namespace RT.Util.ExtensionMethods
             if (double.TryParse(value, out result))
                 return result;
             else
-                throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")",
-                    attribute.Path());
+                throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")", attribute.Path());
         }
     }
 }

@@ -62,10 +62,10 @@ namespace RT.Util.Drawing
         public Font DefaultFont = new Font("Arial", 10f);
 
         // Really try to keep these private if at all possible. ScaleX/Y must be greater than zero.
-        private double ScaleX = 1;
-        private double ScaleY = 1;
-        private double OffsetX = 0;
-        private double OffsetY = 0;
+        private double _scaleX = 1;
+        private double _scaleY = 1;
+        private double _offsetX = 0;
+        private double _offsetY = 0;
 
         /// <summary>
         /// Creates an instance without initializing any of the required fields.
@@ -129,24 +129,24 @@ namespace RT.Util.Drawing
             //   ScreenSize.Width == SX(rightWX)
             //   ScreenSize.Height == SY(bottomWY)
 
-             ScaleX = ScreenSize.Width / (rightWX - leftWX);
-             OffsetX = -leftWX * ScaleX;
-             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
-             {
-                 ScaleY = ScreenSize.Height / (topWY - bottomWY);
-                 OffsetY = topWY * ScaleY;
-             }
-             else
-             {
-                 ScaleY = ScreenSize.Height / (bottomWY - topWY);
-                 OffsetY = -topWY * ScaleY;
-             }
+            _scaleX = ScreenSize.Width / (rightWX - leftWX);
+            _offsetX = -leftWX * _scaleX;
+            if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
+            {
+                _scaleY = ScreenSize.Height / (topWY - bottomWY);
+                _offsetY = topWY * _scaleY;
+            }
+            else
+            {
+                _scaleY = ScreenSize.Height / (bottomWY - topWY);
+                _offsetY = -topWY * _scaleY;
+            }
 
             if (maintainAspect)
             {
-                ScaleX = Math.Min(ScaleX, ScaleY);
-                ScaleY = Math.Min(ScaleX, ScaleY);
-                MoveViewport((float)ScreenSize.Width / 2f, (float)ScreenSize.Height / 2f, (leftWX + rightWX) / 2, (topWY + bottomWY) / 2);
+                _scaleX = Math.Min(_scaleX, _scaleY);
+                _scaleY = Math.Min(_scaleX, _scaleY);
+                MoveViewport((float) ScreenSize.Width / 2f, (float) ScreenSize.Height / 2f, (leftWX + rightWX) / 2, (topWY + bottomWY) / 2);
             }
         }
 
@@ -159,11 +159,11 @@ namespace RT.Util.Drawing
             // Want this to be true:
             //   SX(wx) == sx;
             //   SY(wy) == sy;
-            OffsetX = sx - wx * ScaleX;
+            _offsetX = sx - wx * _scaleX;
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
-                OffsetY = sy + wy * ScaleY;
+                _offsetY = sy + wy * _scaleY;
             else
-                OffsetY = sy - wy * ScaleY;
+                _offsetY = sy - wy * _scaleY;
         }
 
         #region World-to-screen conversion
@@ -174,7 +174,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public float SX(double wx)
         {
-            return (float)(wx * ScaleX + OffsetX);
+            return (float) (wx * _scaleX + _offsetX);
         }
 
         /// <summary>
@@ -184,9 +184,9 @@ namespace RT.Util.Drawing
         public float SY(double wy)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
-                return (float)(-wy * ScaleY + OffsetY);
+                return (float) (-wy * _scaleY + _offsetY);
             else
-                return (float)(wy * ScaleY + OffsetY);
+                return (float) (wy * _scaleY + _offsetY);
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public float SW(double ww)
         {
-            return (float)(ww * ScaleX);
+            return (float) (ww * _scaleX);
         }
 
         /// <summary>
@@ -202,19 +202,19 @@ namespace RT.Util.Drawing
         /// </summary>
         public float SH(double wh)
         {
-            return (float)(wh * ScaleY);
+            return (float) (wh * _scaleY);
         }
 
         /// <summary>
         /// For internal use only. Converts world angle into screen angle as understood by
         /// GDI routines.
         /// </summary>
-        private float SA(double wa)
+        private float sa(double wa)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
-                return -(float)wa;
+                return -(float) wa;
             else
-                return (float)wa;
+                return (float) wa;
         }
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace RT.Util.Drawing
         /// Given two world coordinates, one known to be smaller than the other one,
         /// returns the one that would be higher on the screen, converted to screen coordinates.
         /// </summary>
-        private float STop(double yMin, double yMax)
+        private float sTop(double yMin, double yMax)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightDown)
                 return SY(yMin);
@@ -240,7 +240,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public double WX(float sx)
         {
-            return (sx - OffsetX) / ScaleX;
+            return (sx - _offsetX) / _scaleX;
         }
 
         /// <summary>
@@ -250,9 +250,9 @@ namespace RT.Util.Drawing
         public double WY(float sy)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
-                return -(sy - OffsetY) / ScaleY;
+                return -(sy - _offsetY) / _scaleY;
             else
-                return (sy - OffsetY) / ScaleY;
+                return (sy - _offsetY) / _scaleY;
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public double WW(float sw)
         {
-            return sw / ScaleX;
+            return sw / _scaleX;
         }
 
         /// <summary>
@@ -268,7 +268,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public double WH(float sh)
         {
-            return sh / ScaleY;
+            return sh / _scaleY;
         }
 
         #endregion
@@ -316,7 +316,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public void DrawRectangle(Pen pen, double xMin, double yMin, double width, double height)
         {
-            Graphics.DrawRectangle(pen, SX(xMin), STop(yMin, yMin+height), SW(width), SH(height));
+            Graphics.DrawRectangle(pen, SX(xMin), sTop(yMin, yMin + height), SW(width), SH(height));
         }
 
         /// <summary>
@@ -324,7 +324,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public void DrawRectangle(Pen pen, ref BoundingBoxD box)
         {
-            Graphics.DrawRectangle(pen, SX(box.Xmin), STop(box.Ymin, box.Ymax), SW(box.Xmax-box.Xmin), SH(box.Ymax-box.Ymin));
+            Graphics.DrawRectangle(pen, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin), SH(box.Ymax - box.Ymin));
         }
 
         /// <summary>
@@ -334,7 +334,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public void FillRectangle(Brush brush, double xMin, double yMin, double width, double height)
         {
-            Graphics.FillRectangle(brush, SX(xMin), STop(yMin, yMin+height), SW(width), SH(height));
+            Graphics.FillRectangle(brush, SX(xMin), sTop(yMin, yMin + height), SW(width), SH(height));
         }
 
         /// <summary>
@@ -342,7 +342,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public void FillRectangle(Brush brush, ref BoundingBoxD box)
         {
-            Graphics.FillRectangle(brush, SX(box.Xmin), STop(box.Ymin, box.Ymax), SW(box.Xmax-box.Xmin), SH(box.Ymax-box.Ymin));
+            Graphics.FillRectangle(brush, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin), SH(box.Ymax - box.Ymin));
         }
 
         /// <summary>
@@ -351,8 +351,8 @@ namespace RT.Util.Drawing
         public void DrawCircle(Pen pen, PointD center, double radius)
         {
             Graphics.DrawEllipse(pen,
-                SX(center.X - radius), STop(center.Y - radius, center.Y + radius),
-                SW(2*radius), SH(2*radius));
+                SX(center.X - radius), sTop(center.Y - radius, center.Y + radius),
+                SW(2 * radius), SH(2 * radius));
         }
 
         /// <summary>
@@ -361,8 +361,8 @@ namespace RT.Util.Drawing
         public void DrawCircle(Pen pen, double centerX, double centerY, double radius)
         {
             Graphics.DrawEllipse(pen,
-                SX(centerX - radius), STop(centerY - radius, centerY + radius),
-                SW(2*radius), SH(2*radius));
+                SX(centerX - radius), sTop(centerY - radius, centerY + radius),
+                SW(2 * radius), SH(2 * radius));
         }
 
         /// <summary>
@@ -374,8 +374,8 @@ namespace RT.Util.Drawing
             // DrawPie angles are in fricken degrees! I bet they are converted to radians internally before use...
             Graphics.DrawPie(pen,
                 SX(center.X) - SW(radius), SY(center.Y) - SH(radius),
-                SW(2*radius), SH(2*radius),
-                SA(startAngle / Math.PI * 180), SA(sweepAngle / Math.PI * 180));
+                SW(2 * radius), SH(2 * radius),
+                sa(startAngle / Math.PI * 180), sa(sweepAngle / Math.PI * 180));
         }
 
         /// <summary>
@@ -386,9 +386,9 @@ namespace RT.Util.Drawing
         {
             // DrawPie angles are in fricken degrees! I bet they are converted to radians internally before use...
             Graphics.DrawPie(pen,
-                SX(centerX - radius), STop(centerY - radius, centerY + radius),
-                SW(2*radius), SH(2*radius),
-                SA(startAngle / Math.PI * 180), SA(sweepAngle / Math.PI * 180));
+                SX(centerX - radius), sTop(centerY - radius, centerY + radius),
+                SW(2 * radius), SH(2 * radius),
+                sa(startAngle / Math.PI * 180), sa(sweepAngle / Math.PI * 180));
         }
 
         /// <summary>
@@ -398,7 +398,7 @@ namespace RT.Util.Drawing
         public void DrawText(string text, Font font, Brush brush, double centerX, double centerY)
         {
             SizeF size = Graphics.MeasureString(text, font);
-            Graphics.DrawString(text, font, brush, SX(centerX) - size.Width/2, SY(centerY) - size.Height/2);
+            Graphics.DrawString(text, font, brush, SX(centerX) - size.Width / 2, SY(centerY) - size.Height / 2);
         }
 
         /// <summary>
@@ -411,6 +411,5 @@ namespace RT.Util.Drawing
         }
 
         #endregion
-
     }
 }

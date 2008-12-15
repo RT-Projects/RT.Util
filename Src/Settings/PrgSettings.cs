@@ -32,9 +32,9 @@ namespace RT.Util.Settings
         /// Loads all settings using the specified Store. Call this in Program.cs just before
         /// any user code is executed, passing it a newly constructed instance of a store.
         /// </summary>
-        public static void LoadSettings(SettingsStore TheStore)
+        public static void LoadSettings(SettingsStore store)
         {
-            Store = TheStore;
+            Store = store;
             Store.LoadSettings();
         }
 
@@ -49,9 +49,9 @@ namespace RT.Util.Settings
             {
                 Store.SaveSettings();
             }
-            catch (Exception E)
+            catch (Exception e)
             {
-                DlgMessage.ShowWarning("Failed to save settings:\n" + E.Message + "\n\nDisk full?");
+                DlgMessage.ShowWarning("Failed to save settings:\n" + e.Message + "\n\nDisk full?");
             }
         }
     }

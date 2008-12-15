@@ -11,29 +11,28 @@ namespace RT.Util
     /// </summary>
     public class TimeOut
     {
-        /// Hidden from public use
-        private TimeSpan Interval;
-        private DateTime StartTime;
+        private TimeSpan _interval;
+        private DateTime _startTime;
         private TimeOut() { }
 
         /// <summary>
         /// Constructs an instance of the time-out class starting immediately and timing out
         /// after the Interval has elapsed.
         /// </summary>
-        public TimeOut(TimeSpan Interval)
+        public TimeOut(TimeSpan interval)
         {
-            this.Interval = Interval;
-            this.StartTime = DateTime.Now;
+            _interval = interval;
+            _startTime = DateTime.Now;
         }
 
         /// <summary>
         /// Constructs an instance of the time-out class starting immediately and timing out
         /// after the specified number of Seconds has elapsed.
         /// </summary>
-        public TimeOut(double Seconds)
+        public TimeOut(double seconds)
         {
-            this.Interval = TimeSpan.FromSeconds(Seconds);
-            this.StartTime = DateTime.Now;
+            _interval = TimeSpan.FromSeconds(seconds);
+            _startTime = DateTime.Now;
         }
 
         /// <summary>
@@ -41,7 +40,7 @@ namespace RT.Util
         /// </summary>
         public bool TimedOut
         {
-            get { return TimeSpan.Compare(DateTime.Now - StartTime, Interval) >= 0; }
+            get { return TimeSpan.Compare(DateTime.Now - _startTime, _interval) >= 0; }
         }
 
         /// <summary>
@@ -51,7 +50,7 @@ namespace RT.Util
         {
             get
             {
-                TimeSpan ts = (StartTime + Interval) - DateTime.Now;
+                TimeSpan ts = (_startTime + _interval) - DateTime.Now;
                 return ts < TimeSpan.Zero ? TimeSpan.Zero : ts;
             }
         }

@@ -62,7 +62,7 @@ namespace RT.Util.Forms
                 if (st.Get(path + "Maximized", false))
                     Maximized = true;
                 // Register with the FormManager
-                FormManager.FormCreated(this.GetType(), this);
+                FormManager.formCreated(this.GetType(), this);
             }
         }
 
@@ -79,7 +79,7 @@ namespace RT.Util.Forms
                 st.Set(path + "Top", NormalTop);
                 st.Set(path + "Maximized", Maximized);
                 // Notify the form manager that this form is gone
-                FormManager.FormClosed(this.GetType());
+                FormManager.formClosed(this.GetType());
             }
         }
 

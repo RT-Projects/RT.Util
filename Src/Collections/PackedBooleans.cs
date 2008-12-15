@@ -9,26 +9,26 @@ namespace RT.Util.Collections
     /// </summary>
     public class PackedBooleans
     {
-        private byte[] FBooleans;
+        private byte[] _booleans;
 
         /// <summary>Initialises a PackedBooleans array containing the specified number of bits.</summary>
-        /// <param name="Length">Number of bits to store.</param>
-        public PackedBooleans(int Length) { FBooleans = new byte[(Length+7)/8]; }
+        /// <param name="length">Number of bits to store.</param>
+        public PackedBooleans(int length) { _booleans = new byte[(length+7)/8]; }
 
         /// <summary>Returns the bit at index Index.</summary>
-        /// <param name="Index">The index of the bit to return.</param>
+        /// <param name="index">The index of the bit to return.</param>
         /// <returns>The bit at index Index.</returns>
-        public bool Get(int Index) { return (FBooleans[Index/8] & (1 << (Index % 8))) != 0; }
+        public bool Get(int index) { return (_booleans[index/8] & (1 << (index % 8))) != 0; }
 
         /// <summary>Sets the bit at index Index.</summary>
-        /// <param name="Index">The index of the bit to set.</param>
-        /// <param name="Value">The value to set the specified bit to.</param>
-        public void Set(int Index, bool Value)
+        /// <param name="index">The index of the bit to set.</param>
+        /// <param name="value">The value to set the specified bit to.</param>
+        public void Set(int index, bool value)
         {
-            if (Value)
-                FBooleans[Index/8] |= (byte) (1 << (Index % 8));
+            if (value)
+                _booleans[index/8] |= (byte) (1 << (index % 8));
             else
-                FBooleans[Index/8] &= (byte) (~(1 << (Index % 8)));
+                _booleans[index/8] &= (byte) (~(1 << (index % 8)));
         }
     }
 }

@@ -79,22 +79,22 @@ namespace RT.Util
         /// 
         /// Multi-threading: use AddMT instead.
         /// </summary>
-        public static void Add(string Message)
+        public static void Add(string message)
         {
             // Skip the stack frame for the current function
             StackFrame sf = new StackFrame(1, true);
 
             // Create the new fault entry
-            FaultEntry FE = new FaultEntry();
-            FE.Timestamp = DateTime.Now;
-            FE.Message = Message;
-            FE.Filename = sf.GetFileName();
-            FE.Method = sf.GetMethod().Name;
-            FE.LineNumber = sf.GetFileLineNumber();
-            FE.Thread = null;
+            FaultEntry fe = new FaultEntry();
+            fe.Timestamp = DateTime.Now;
+            fe.Message = message;
+            fe.Filename = sf.GetFileName();
+            fe.Method = sf.GetMethod().Name;
+            fe.LineNumber = sf.GetFileLineNumber();
+            fe.Thread = null;
 
             // Add to the list
-            Entries.Add(FE);
+            Entries.Add(fe);
         }
 
         /// <summary>
@@ -102,23 +102,23 @@ namespace RT.Util
         /// multiple threads. This method will also store a reference to the thread
         /// which invoked it. See also information about Add.
         /// </summary>
-        public static void AddMT(string Message)
+        public static void AddMT(string message)
         {
             // Skip the stack frame for the current function
             StackFrame sf = new StackFrame(1, true);
 
             // Create the new fault entry
-            FaultEntry FE = new FaultEntry();
-            FE.Timestamp = DateTime.Now;
-            FE.Message = Message;
-            FE.Filename = sf.GetFileName();
-            FE.Method = sf.GetMethod().Name;
-            FE.LineNumber = sf.GetFileLineNumber();
-            FE.Thread = Thread.CurrentThread;
+            FaultEntry fe = new FaultEntry();
+            fe.Timestamp = DateTime.Now;
+            fe.Message = message;
+            fe.Filename = sf.GetFileName();
+            fe.Method = sf.GetMethod().Name;
+            fe.LineNumber = sf.GetFileLineNumber();
+            fe.Thread = Thread.CurrentThread;
 
             // Add to the list
             lock (Entries)
-                Entries.Add(FE);
+                Entries.Add(fe);
         }
     }
 }

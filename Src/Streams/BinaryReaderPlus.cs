@@ -33,7 +33,7 @@ namespace RT.Util.Streams
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
+                b = (byte) (b & 127);
                 res = res | (b << shifts);
                 shifts += 7;
                 if (!havemore)
@@ -59,7 +59,7 @@ namespace RT.Util.Streams
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
+                b = (byte) (b & 127);
                 res = res | (b << shifts);
                 shifts += 7;
                 if (!havemore)
@@ -81,8 +81,8 @@ namespace RT.Util.Streams
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
-                res = res | ((long)b << shifts);
+                b = (byte) (b & 127);
+                res = res | ((long) b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
@@ -107,8 +107,8 @@ namespace RT.Util.Streams
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
-                res = res | ((ulong)b << shifts);
+                b = (byte) (b & 127);
+                res = res | ((ulong) b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;

@@ -11,9 +11,9 @@ namespace RT.Util.Settings
     public abstract class SettingsStore
     {
         [Serializable]
-        protected class Dir
+        protected class dir
         {
-            public Dictionary<string, Dir> Dirs = new Dictionary<string, Dir>();
+            public Dictionary<string, dir> Dirs = new Dictionary<string, dir>();
             public Dictionary<string, object> Vals = new Dictionary<string, object>();
         }
 
@@ -23,7 +23,7 @@ namespace RT.Util.Settings
         /// other than the target non-volatile store, such as the registry), so Data may
         /// not even contain anything.
         /// </summary>
-        protected Dir Data = new Dir();
+        protected dir Data = new dir();
 
         /// <summary>
         /// Derived classes implement this to load the settings from a permanent store.
@@ -72,7 +72,7 @@ namespace RT.Util.Settings
         public bool Exists(string path)
         {
             string[] patharr = MakePath(path);
-            Dir cur = Data;
+            dir cur = Data;
             // Navigate to the dir
             int i;
             for (i = 0; i < patharr.Length - 1; i++)
@@ -87,7 +87,7 @@ namespace RT.Util.Settings
         public void Remove(string path)
         {
             string[] patharr = MakePath(path);
-            List<Dir> Lst = new List<Dir>();
+            List<dir> Lst = new List<dir>();
             Lst.Add(Data);
             int i;
             for (i = 0; i < patharr.Length - 1; i++)
@@ -121,7 +121,7 @@ namespace RT.Util.Settings
         /// </summary>
         public virtual object GetObject(string[] path)
         {
-            Dir cur = Data;
+            dir cur = Data;
             // Navigate to the dir
             int i;
             for (i = 0; i < path.Length - 1; i++)
@@ -147,13 +147,13 @@ namespace RT.Util.Settings
         /// </summary>
         public virtual void SetObject(string[] path, object obj)
         {
-            Dir cur = Data;
+            dir cur = Data;
             // Navigate to the dir
             int i;
             for (i = 0; i < path.Length - 1; i++)
             {
                 if (!cur.Dirs.ContainsKey(path[i]))
-                    cur.Dirs.Add(path[i], new Dir());
+                    cur.Dirs.Add(path[i], new dir());
                 cur = cur.Dirs[path[i]];
             }
             // Store the value

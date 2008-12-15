@@ -16,12 +16,12 @@ namespace RT.Util.Collections
         public T2 E2;
 
         /// <summary>Initialises a new two-element tuple.</summary>
-        /// <param name="Element1">First element.</param>
-        /// <param name="Element2">Second element.</param>
-        public Tuple(T1 Element1, T2 Element2)
+        /// <param name="element1">First element.</param>
+        /// <param name="element2">Second element.</param>
+        public Tuple(T1 element1, T2 element2)
         {
-            E1 = Element1;
-            E2 = Element2;
+            E1 = element1;
+            E2 = element2;
         }
 
         /// <summary>
@@ -59,14 +59,14 @@ namespace RT.Util.Collections
         public T3 E3;
 
         /// <summary>Initialises a new three-element tuple.</summary>
-        /// <param name="Element1">First element.</param>
-        /// <param name="Element2">Second element.</param>
-        /// <param name="Element3">Third element.</param>
-        public Tuple(T1 Element1, T2 Element2, T3 Element3)
+        /// <param name="element1">First element.</param>
+        /// <param name="element2">Second element.</param>
+        /// <param name="element3">Third element.</param>
+        public Tuple(T1 element1, T2 element2, T3 element3)
         {
-            E1 = Element1;
-            E2 = Element2;
-            E3 = Element3;
+            E1 = element1;
+            E2 = element2;
+            E3 = element3;
         }
 
         /// <summary>
@@ -112,16 +112,16 @@ namespace RT.Util.Collections
         public T4 E4;
 
         /// <summary>Initialises a new four-element tuple.</summary>
-        /// <param name="Element1">First element.</param>
-        /// <param name="Element2">Second element.</param>
-        /// <param name="Element3">Third element.</param>
-        /// <param name="Element4">Fourth element.</param>
-        public Tuple(T1 Element1, T2 Element2, T3 Element3, T4 Element4)
+        /// <param name="element1">First element.</param>
+        /// <param name="element2">Second element.</param>
+        /// <param name="element3">Third element.</param>
+        /// <param name="element4">Fourth element.</param>
+        public Tuple(T1 element1, T2 element2, T3 element3, T4 element4)
         {
-            E1 = Element1;
-            E2 = Element2;
-            E3 = Element3;
-            E4 = Element4;
+            E1 = element1;
+            E2 = element2;
+            E3 = element3;
+            E4 = element4;
         }
 
         /// <summary>
@@ -156,5 +156,4 @@ namespace RT.Util.Collections
             return res;
         }
     }
-
 }

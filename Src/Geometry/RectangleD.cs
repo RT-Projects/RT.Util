@@ -17,12 +17,12 @@ namespace RT.Util.Geometry
         public double Height;
 
         /// <summary>Constructs a new rectangle.</summary>
-        public RectangleD(double X, double Y, double Width, double Height)
+        public RectangleD(double x, double y, double width, double height)
         {
-            this.X = X;
-            this.Y = Y;
-            this.Width = Width;
-            this.Height = Height;
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
         }
 
         /// <summary>Gets the X coordinate of the minimal-X boundary.</summary>
@@ -51,9 +51,9 @@ namespace RT.Util.Geometry
         /// Returns true if the specified point is contained within the rectangle
         /// (or lies exactly on a boundary).
         /// </summary>
-        public bool ContainsPoint(double X, double Y)
+        public bool ContainsPoint(double x, double y)
         {
-            return (X >= Left) && (X <= Right) && (Y >= Top) && (Y <= Bottom);
+            return (x >= Left) && (x <= Right) && (y >= Top) && (y <= Bottom);
         }
 
         /// <summary>

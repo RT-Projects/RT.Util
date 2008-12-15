@@ -10,7 +10,7 @@ namespace RT.Util.Controls
     /// tooltip window's title bar with a close button.</summary>
     public class NiceClosePanel : Panel
     {
-        private Button FCloseButton;
+        private Button _closeButton;
 
         /// <summary>Triggers when the close button is clicked.</summary>
         public event EventHandler CloseClicked;
@@ -19,59 +19,58 @@ namespace RT.Util.Controls
         public NiceClosePanel()
             : base()
         {
-            InitializeComponent();
-            this.Resize += new EventHandler(NiceClosePanel_Resize);
-            this.Paint += new PaintEventHandler(NiceClosePanel_Paint);
-            this.FCloseButton.Click += new EventHandler(FCloseButton_Click);
+            initializeComponent();
+            this.Resize += new EventHandler(resize);
+            this.Paint += new PaintEventHandler(paint);
+            this._closeButton.Click += new EventHandler(closeButton_Click);
         }
 
-        private void FCloseButton_Click(object sender, EventArgs e)
+        private void closeButton_Click(object sender, EventArgs e)
         {
             if (CloseClicked != null)
                 CloseClicked(this, e);
         }
 
-        private void NiceClosePanel_Paint(object sender, PaintEventArgs e)
+        private void paint(object sender, PaintEventArgs e)
         {
             for (int i = 2; i < ClientSize.Height - 2; i++)
                 e.Graphics.DrawLine(
                     new Pen(Color.FromKnownColor(
                         i % 2 == 1 ? KnownColor.ControlDark : KnownColor.ControlLightLight
                     )),
-                    0, i, ClientSize.Width - FCloseButton.Width - 3, i
+                    0, i, ClientSize.Width - _closeButton.Width - 3, i
                 );
         }
 
-        private void NiceClosePanel_Resize(object sender, EventArgs e)
+        private void resize(object sender, EventArgs e)
         {
-            FCloseButton.Size = new Size(ClientSize.Height, ClientSize.Height);
-            FCloseButton.Location = new Point(ClientSize.Width - FCloseButton.Width, 0);
+            _closeButton.Size = new Size(ClientSize.Height, ClientSize.Height);
+            _closeButton.Location = new Point(ClientSize.Width - _closeButton.Width, 0);
             Refresh();
         }
 
-        private void InitializeComponent()
+        private void initializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NiceClosePanel));
-            this.FCloseButton = new System.Windows.Forms.Button();
+            this._closeButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // FCloseButton
             // 
-            this.FCloseButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.FCloseButton.Image = ((System.Drawing.Image) (resources.GetObject("FCloseButton.Image")));
-            this.FCloseButton.Location = new System.Drawing.Point(0, 0);
-            this.FCloseButton.Margin = new System.Windows.Forms.Padding(0);
-            this.FCloseButton.Name = "FCloseButton";
-            this.FCloseButton.Padding = new System.Windows.Forms.Padding(0, 0, 2, 2);
-            this.FCloseButton.Size = new System.Drawing.Size(8, 8);
-            this.FCloseButton.TabIndex = 0;
-            this.FCloseButton.TabStop = false;
+            this._closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this._closeButton.Image = ((System.Drawing.Image) (resources.GetObject("FCloseButton.Image")));
+            this._closeButton.Location = new System.Drawing.Point(0, 0);
+            this._closeButton.Margin = new System.Windows.Forms.Padding(0);
+            this._closeButton.Name = "FCloseButton";
+            this._closeButton.Padding = new System.Windows.Forms.Padding(0, 0, 2, 2);
+            this._closeButton.Size = new System.Drawing.Size(8, 8);
+            this._closeButton.TabIndex = 0;
+            this._closeButton.TabStop = false;
             // 
             // NiceClosePanel
             // 
-            this.Controls.Add(this.FCloseButton);
+            this.Controls.Add(this._closeButton);
             this.ResumeLayout(false);
-
         }
     }
 }

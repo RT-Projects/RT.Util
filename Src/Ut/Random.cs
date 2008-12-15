@@ -27,9 +27,9 @@ namespace RT.Util
         /// Returns a random double between Min and Max. It is unclear whether
         /// Min or Max can ever be returned.
         /// </summary>
-        public static double RndDouble(double Min, double Max)
+        public static double RndDouble(double min, double max)
         {
-            return Rnd.NextDouble() * (Max - Min) + Min;
+            return Rnd.NextDouble() * (max - min) + min;
         }
 
         /// <summary>
@@ -43,9 +43,9 @@ namespace RT.Util
         /// <summary>
         /// Returns a random integer between Min (inclusive) and Max (exclusive).
         /// </summary>
-        public static int RndInt(int Min, int Max)
+        public static int RndInt(int min, int max)
         {
-            return Rnd.Next(Min, Max);
+            return Rnd.Next(min, max);
         }
     }
 }

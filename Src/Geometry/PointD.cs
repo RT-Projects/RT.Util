@@ -5,7 +5,7 @@ using System.Text;
 namespace RT.Util.Geometry
 {
     /// <summary>Encapsulates a double-precision point.</summary>
-    public struct PointD: IEquatable<PointD>
+    public struct PointD : IEquatable<PointD>
     {
         /// <summary>X-co-ordinate of the point.</summary>
         public double X;
@@ -13,17 +13,17 @@ namespace RT.Util.Geometry
         public double Y;
 
         /// <summary>Initialises a double-precision point with the specified co-ordinates.</summary>
-        public PointD(double X, double Y)
+        public PointD(double x, double y)
         {
-            this.X = X;
-            this.Y = Y;
+            X = x;
+            Y = y;
         }
 
         /// <summary>Initialises a double-precision point as a unit vector at a specified angle (in radians).</summary>
         public PointD(double angle)
         {
-            this.X = Math.Cos(angle);
-            this.Y = Math.Sin(angle);
+            X = Math.Cos(angle);
+            Y = Math.Sin(angle);
         }
 
         /// <summary>Compares two <see cref="PointD"/> objects for equality.</summary>
@@ -32,7 +32,7 @@ namespace RT.Util.Geometry
         public override bool Equals(object obj)
         {
             if (obj is PointD)
-                return ((PointD)obj).X == X && ((PointD)obj).Y == Y;
+                return ((PointD) obj).X == X && ((PointD) obj).Y == Y;
             return base.Equals(obj);
         }
 
@@ -66,37 +66,37 @@ namespace RT.Util.Geometry
         /// Performs unary vector negation (i.e. the resulting point is of the same length but
         /// pointing in the opposite direction).
         /// </summary>
-        public static PointD operator-(PointD vector)
+        public static PointD operator -(PointD vector)
         {
             return new PointD(-vector.X, -vector.Y);
         }
 
         /// <summary>Performs vector addition, returning the result.</summary>
-        public static PointD operator+(PointD one, PointD other)
+        public static PointD operator +(PointD one, PointD other)
         {
             return new PointD(one.X + other.X, one.Y + other.Y);
         }
 
         /// <summary>Performs vector subtraction, returning the result.</summary>
-        public static PointD operator-(PointD left, PointD right)
+        public static PointD operator -(PointD left, PointD right)
         {
             return new PointD(left.X - right.X, left.Y - right.Y);
         }
 
         /// <summary>Scales a vector by a scalar.</summary>
-        public static PointD operator*(double scalar, PointD vector)
+        public static PointD operator *(double scalar, PointD vector)
         {
             return new PointD(scalar * vector.X, scalar * vector.Y);
         }
 
         /// <summary>Scales a vector by a scalar.</summary>
-        public static PointD operator*(PointD vector, double scalar)
+        public static PointD operator *(PointD vector, double scalar)
         {
             return new PointD(scalar * vector.X, scalar * vector.Y);
         }
 
         /// <summary>Scales a vector by 1 / scalar (i.e. performs scalar division).</summary>
-        public static PointD operator/(PointD vector, double scalar)
+        public static PointD operator /(PointD vector, double scalar)
         {
             return new PointD(vector.X / scalar, vector.Y / scalar);
         }
@@ -112,7 +112,7 @@ namespace RT.Util.Geometry
         /// <returns>Lower-precision <see cref="System.Drawing.PointF"/>.</returns>
         public System.Drawing.PointF ToPointF()
         {
-            return new System.Drawing.PointF((float)X, (float)Y);
+            return new System.Drawing.PointF((float) X, (float) Y);
         }
 
         /// <summary>Provides a string representation of the current <see cref="PointD"/>.</summary>
@@ -125,7 +125,7 @@ namespace RT.Util.Geometry
         /// <summary>Returns the length of the vector represented by this <see cref="PointD"/>.</summary>
         public double Abs()
         {
-            return Math.Sqrt(X*X + Y*Y);
+            return Math.Sqrt(X * X + Y * Y);
         }
 
         /// <summary>Returns the theta (angle) of the vector represented by this <see cref="PointD"/>.</summary>
@@ -137,7 +137,7 @@ namespace RT.Util.Geometry
         /// <summary>Returns the unit vector in the same direction as this one.</summary>
         public PointD Unit()
         {
-            double len = Math.Sqrt(X*X + Y*Y);
+            double len = Math.Sqrt(X * X + Y * Y);
             return new PointD(X / len, Y / len);
         }
 
@@ -161,8 +161,8 @@ namespace RT.Util.Geometry
         /// <param name="lenNormal">Length of this vector normal to the reference vector.</param>
         public void DecomposeAlong(PointD vector, out double lenAlong, out double lenNormal)
         {
-            lenAlong = this.LengthProjectedOnto(vector);
-            lenNormal = this.LengthProjectedOnto(vector.Normal());
+            lenAlong = LengthProjectedOnto(vector);
+            lenNormal = LengthProjectedOnto(vector.Normal());
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace RT.Util.Geometry
         /// </summary>
         public double LengthProjectedOnto(PointD vector)
         {
-            return this.Dot(vector) / vector.Abs();
+            return Dot(vector) / vector.Abs();
         }
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace RT.Util.Geometry
         public double LengthProjectedOnto(double angle)
         {
             // Simplifying the following, where vector is a unit vector with theta = angle
-            // return this.Dot(vector) / vector.Abs();
+            // return Dot(vector) / vector.Abs();
             // return (X*vector.X + Y*vector.Y) / 1.0;
             return X * Math.Cos(angle) + Y * Math.Sin(angle);
         }
@@ -205,7 +205,7 @@ namespace RT.Util.Geometry
         public PointD ProjectedOnto(PointD vector)
         {
             PointD unitVector = vector.Unit();
-            return this.Dot(unitVector) * unitVector;
+            return Dot(unitVector) * unitVector;
         }
     }
 }
