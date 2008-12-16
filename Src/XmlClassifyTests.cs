@@ -20,12 +20,12 @@ namespace RT.Util.XmlClassify
 
         private class basicClass
         {
-            public int AnInt;
-            public ushort AUShort;
-            public string AString;
+            public int AnInt = -123;
+            public ushort AUShort = 4747;
+            public string AString = "str";
             public bool ABool;
             public ulong AULong;
-            public double ADouble;
+            public double ADouble = 3.14;
             public DateTime ADateTime;
 
             public void AssertEqual(basicClass actual)
@@ -160,7 +160,7 @@ namespace RT.Util.XmlClassify
 
             // Sanity checks
             Assert.AreEqual(null, nestedEx.Nested.Nested);
-            Assert.AreEqual(0, nestedEx.Nested.Basic.AnInt);
+            Assert.AreEqual(-123, nestedEx.Nested.Basic.AnInt);
             Assert.AreEqual(false, nestedEx.Nested.Basic.ABool);
 
             // Spot checks
@@ -179,6 +179,19 @@ namespace RT.Util.XmlClassify
                 Assert.IsTrue(actual.ContainsKey(key));
                 Assert.AreEqual(expected[key], actual[key]);
             }
+        }
+
+        [Test]
+        public void TestPartialLoad()
+        {
+            var elem = new XElement("item", new XAttribute("AULong", "987654"));
+            var loaded = XmlClassify.ObjectFromXElement<basicClass>(elem);
+
+            Assert.AreEqual(-123, loaded.AnInt);
+            Assert.AreEqual(4747, loaded.AUShort);
+            Assert.AreEqual("str", loaded.AString);
+            Assert.AreEqual(987654L, loaded.AULong);
+            Assert.AreEqual(3.14, loaded.ADouble);
         }
     }
 }
