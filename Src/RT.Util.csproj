@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
     <Compile Include="Collections\PackedBooleans.cs" />
+    <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\RVariant.cs" />
     <Compile Include="Collections\Set.cs" />
     <Compile Include="Collections\SortedDictionaryDT.cs" />
