@@ -96,8 +96,7 @@ namespace RT.Util.Streams
         }
 
         /// <summary>
-        /// Reads an int written by WriteUInt32Optim of the BinaryWriterPlus
-        /// class. See that method for details.
+        /// Reads an int written by <see cref="BinaryWriterPlus.WriteUInt64Optim"/> of the <see cref="BinaryWriterPlus"/> class.
         /// </summary>
         public ulong ReadUInt64Optim()
         {
