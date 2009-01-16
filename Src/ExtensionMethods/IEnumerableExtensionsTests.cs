@@ -49,41 +49,11 @@ namespace RT.Util.ExtensionMethods
         {
             List<int> a = new List<int>() { 9, 3, 5, 1, 2, 4, 2, 2 };
             List<int> aSorted = new List<int>(a.Order());
-            Assert.IsTrue(aSorted.EqualItems(new List<int>() { 1, 2, 2, 2, 3, 4, 5, 9 }));
+            Assert.IsTrue(aSorted.SequenceEqual(new List<int>() { 1, 2, 2, 2, 3, 4, 5, 9 }));
 
             List<string> s = new List<string>() { "some", "blah", "stuff", "apple" };
             List<string> sSorted = new List<string>(s.Order());
-            Assert.IsTrue(sSorted.EqualItems(new List<string>() { "apple", "blah", "some", "stuff" }));
-        }
-
-        [Test]
-        public void TestEqualItems()
-        {
-            List<string> a, b;
-
-            a = new List<string>();
-            b = new List<string>();
-            Assert.IsTrue(a.EqualItems(b));
-
-            a = new List<string>() { "blah" };
-            b = new List<string>() { "blah" };
-            Assert.IsTrue(a.EqualItems(b));
-            a = new List<string>() { "blah", "stuff" };
-            b = new List<string>() { "blah", "stuff" };
-            Assert.IsTrue(a.EqualItems(b));
-            a = new List<string>() { "blah", "stuff" };
-            b = new List<string>() { "stuff", "blah" };
-            Assert.IsFalse(a.EqualItems(b));
-
-            a = new List<string>() { "blah", "stuff" };
-            b = new List<string>();
-            Assert.IsFalse(a.EqualItems(b));
-            a = new List<string>() { "blah", "stuff" };
-            b = new List<string>() { "blah" };
-            Assert.IsFalse(a.EqualItems(b));
-            a = new List<string>() { "blah", "stuff" };
-            b = new List<string>() { "blah", "stuff", "apples" };
-            Assert.IsFalse(a.EqualItems(b));
+            Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "stuff" }));
         }
     }
 }

@@ -13,7 +13,6 @@ namespace RT.Util
             // Note: this is not supposed to list every single test, since keeping the list
             // up-to-date would be a chore. Instead this is here so that individual tests
             // can be executed and debugged using Visual Studio rather than NUnit.
-            new IEnumerableExtensionsTests().TestEqualItems();
 
             Console.WriteLine("Done testing.");
         }

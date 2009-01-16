@@ -66,25 +66,5 @@ namespace RT.Util.ExtensionMethods
         {
             return source.OrderBy(x => x, comparison);
         }
-
-        /// <summary>
-        /// Compares this IEnumerable to another one. The two IEnumerables are only deemed equal if the
-        /// number of items contained in them is the same, and all items are equal and come in the same order.
-        /// </summary>
-        public static bool EqualItems<T>(this IEnumerable<T> one, IEnumerable<T> other) where T : IEquatable<T>
-        {
-            var enum1 = one.GetEnumerator();
-            var enum2 = other.GetEnumerator();
-            bool havemore1, havemore2;
-            while (true)
-            {
-                havemore1 = enum1.MoveNext();
-                havemore2 = enum2.MoveNext();
-                if (!havemore1 || !havemore2)
-                    return !havemore1 && !havemore2;
-                if (!enum1.Current.Equals(enum2.Current))
-                    return false;
-            }
-        }
     }
 }
