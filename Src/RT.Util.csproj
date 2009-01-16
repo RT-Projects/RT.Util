@@ -97,6 +97,7 @@
     <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="ExtensionMethods\ControlExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
+    <Compile Include="ExtensionMethods\IDictionaryExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
