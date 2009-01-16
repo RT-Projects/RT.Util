@@ -65,9 +65,13 @@ namespace RT.Util.Web
         /// </summary>
         public WebException LastException = null;
         /// <summary>
-        /// Contains the return value of the last request.
+        /// Contains the status code of the last request.
         /// </summary>
-        public bool LastResult = false;
+        public int LastStatusCode = -1;
+        /// <summary>
+        /// True if the last request was successful.
+        /// </summary>
+        public bool LastSuccess = false;
 
         #region Constructors
 
@@ -221,9 +225,7 @@ namespace RT.Util.Web
             }
             catch (WebException e)
             {
-                LastException = e;
-                if (OnReportStatus != null) OnReportStatus((doGet ? "GET failed: " : "POST failed: ") + url);
-                return LastResult = false; // yes, _assignment_ here
+                LastResponse = (HttpWebResponse) e.Response;
             }
 
             // Get the response as a string
@@ -244,8 +246,9 @@ namespace RT.Util.Web
             }
 
             if (OnReportStatus != null) OnReportStatus("Done.");
-            LastResult = respcode >= 200 && respcode <= 299;
-            return LastResult;
+            LastStatusCode = respcode;
+            LastSuccess = respcode >= 200 && respcode <= 299;
+            return LastSuccess;
         }
 
         /// <summary>
