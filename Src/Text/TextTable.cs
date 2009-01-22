@@ -25,6 +25,19 @@ namespace RT.Util.Text
     /// </remarks>
     public class TextTable
     {
+        /// <summary>
+        /// Defines what kind of text alignment to use within the cells of the TextTable.
+        /// </summary>
+        public enum Alignment
+        {
+            /// <summary>Left-align the text</summary>
+            Left,
+            /// <summary>Right-align the text</summary>
+            Right,
+            /// <summary>Center the text</summary>
+            Center,
+        }
+
         private class TextColumn
         {
             private readonly List<string> _rows = new List<string>();
@@ -140,9 +153,15 @@ namespace RT.Util.Text
             /// </summary>
             public bool AutoSize;
 
-            public TextColumn(bool defaultAutoSize)
+            /// <summary>
+            /// Specifies whether the values in this column are left-aligned, right-aligned or centered.
+            /// </summary>
+            public Alignment Alignment;
+
+            public TextColumn(bool defaultAutoSize, Alignment defaultAlignment)
             {
                 AutoSize = defaultAutoSize;
+                Alignment = defaultAlignment;
             }
         }
 
@@ -153,6 +172,7 @@ namespace RT.Util.Text
         public TextTable()
         {
             _defaultAutoSize = false;
+
         }
 
         /// <summary>
@@ -164,8 +184,23 @@ namespace RT.Util.Text
             _defaultAutoSize = defaultAutoSize;
         }
 
+        /// <summary>
+        /// Constructs a TextTable in which all columns initially have the specified AutoSize and
+        /// Alignment setting.
+        /// Use <see cref="SetAutoSize"/> to change the AutoSize setting for individual columns.
+        /// Use <see cref="SetAlignment"/> to change the Alignment setting for individual columns.
+        /// </summary>
+        public TextTable(bool defaultAutoSize, Alignment defaultAlignment)
+        {
+            _defaultAutoSize = defaultAutoSize;
+            _defaultAlignment = defaultAlignment;
+        }
+
         /// <summary>Remembers the default AutoSize setting for new columns.</summary>
         private readonly bool _defaultAutoSize;
+
+        /// <summary>Remembers the default Alignment setting for new columns.</summary>
+        private readonly Alignment _defaultAlignment;
 
         /// <summary>Holds a list of every column in the table.</summary>
         private readonly List<TextColumn> _cols = new List<TextColumn>();
@@ -183,7 +218,7 @@ namespace RT.Util.Text
         private void growAsNecessary(int columnIndex)
         {
             while (columnIndex >= _cols.Count)
-                _cols.Add(new TextColumn(_defaultAutoSize));
+                _cols.Add(new TextColumn(_defaultAutoSize, _defaultAlignment));
         }
 
         /// <summary>
@@ -222,6 +257,18 @@ namespace RT.Util.Text
 
             growAsNecessary(columnIndex);
             _cols[columnIndex].AutoSize = autoSize;
+
+        }
+
+        /// <summary>
+        /// Configures the alignment of the specified column.
+        /// </summary>
+        public void SetAlignment(int columnIndex, Alignment alignment)
+        {
+            if (columnIndex < 0) throw new ArgumentException("Column index must not be negative");
+
+            growAsNecessary(columnIndex);
+            _cols[columnIndex].Alignment = alignment;
 
         }
 
@@ -270,9 +317,26 @@ namespace RT.Util.Text
                     for (int c = 0; c < _cols.Count; c++)
                     {
                         string s = wwrap[c].Length <= subRow ? "" : wwrap[c][subRow];
+                        int leftpad, rightpad;
+                        if (_cols[c].Alignment == Alignment.Left)
+                        {
+                            leftpad = 0;
+                            rightpad = (int) _cols[c].CalculatedWidth - s.Length;
+                        }
+                        else if (_cols[c].Alignment == Alignment.Right)
+                        {
+                            leftpad = (int)_cols[c].CalculatedWidth - s.Length;
+                            rightpad = 0;
+                        }
+                        else
+                        {
+                            leftpad = (int) (_cols[c].CalculatedWidth - s.Length) / 2;
+                            rightpad = (int)(_cols[c].CalculatedWidth - s.Length + 1) / 2;
+                        }
+                        sb.Append(' ', leftpad);
                         sb.Append(s);
                         if (c < _cols.Count - 1)
-                            sb.Append(' ', (int) _cols[c].CalculatedWidth - s.Length + intraColumnIndent);
+                            sb.Append(' ', (int) rightpad + intraColumnIndent);
                     }
 
                     sb.AppendLine();
