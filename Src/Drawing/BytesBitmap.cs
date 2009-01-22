@@ -28,12 +28,28 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Gets the underlying Bitmap that this BytesBitmap wraps.
+        /// Gets the underlying Bitmap that this BytesBitmap wraps. USAGE WARNING:
+        /// DO NOT use this if the BytesBitmap wrapping it may have gone out of context
+        /// and disposed of. This will cause intermittent issues - when the BytesBitmap
+        /// gets GC'd. Use <see cref="GetBitmapCopy"/> instead.
         /// </summary>
         public Bitmap Bitmap
         {
             get { return _bitmap; }
             set { _bitmap = value; }
+        }
+
+        /// <summary>
+        /// Use this to create a new Bitmap that is a copy of the image stored in this
+        /// BytesBitmap. This can be passed around safely, unlike the wrapped bitmap
+        /// returned by <see cref="Bitmap"/>.
+        /// </summary>
+        public Bitmap GetBitmapCopy()
+        {
+            Bitmap bmp = new Bitmap(_bitmap);
+            Graphics gr = Graphics.FromImage(bmp);
+            gr.DrawImageUnscaled(_bitmap, 0, 0);
+            return bmp;
         }
 
         /// <summary>
