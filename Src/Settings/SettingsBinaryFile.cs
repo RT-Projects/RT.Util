@@ -4,7 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
-using RT.Util.Streams;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Settings
 {
@@ -63,7 +63,7 @@ namespace RT.Util.Settings
                 // This serializes the entire data dictionary somewhat inefficiently
                 // Data = (Dir)BinFmt.Deserialize(gz);
                 // So instead we use our custom tree writing function
-                Data = LoadDir(new BinaryReaderPlus(gz));
+                Data = LoadDir(new BinaryReader(gz));
             }
             catch { }
 
@@ -85,7 +85,7 @@ namespace RT.Util.Settings
                 // This serializes the entire data dictionary somewhat inefficiently
                 // BinFmt.Serialize(gz, Data);
                 // So instead we use our custom tree writing function
-                SaveDir(Data, new BinaryWriterPlus(gz));
+                SaveDir(Data, new BinaryWriter(gz));
             }
             finally
             {
@@ -97,14 +97,14 @@ namespace RT.Util.Settings
         /// <summary>
         /// Helper function to load dirs recursively
         /// </summary>
-        private dir LoadDir(BinaryReaderPlus br)
+        private dir LoadDir(BinaryReader br)
         {
             int nvals;
             dir dir = new dir();
             // Load values
             try
             {
-                nvals = (int)br.ReadUInt32Optim();
+                nvals = (int)br.BaseStream.ReadUInt32Optim();
                 for (int i=0; i<nvals; i++)
                 {
                     try
@@ -121,7 +121,7 @@ namespace RT.Util.Settings
             // Load dirs
             try
             {
-                nvals = (int)br.ReadUInt32Optim();
+                nvals = (int)br.BaseStream.ReadUInt32Optim();
                 for (int i=0; i<nvals; i++)
                 {
                     try
@@ -139,10 +139,10 @@ namespace RT.Util.Settings
         /// <summary>
         /// Helper function to save dirs recursively
         /// </summary>
-        private void SaveDir(dir dir, BinaryWriterPlus bw)
+        private void SaveDir(dir dir, BinaryWriter bw)
         {
             // Save values
-            bw.WriteUInt32Optim((uint)dir.Vals.Count);
+            bw.BaseStream.WriteUInt32Optim((uint)dir.Vals.Count);
             foreach (KeyValuePair<string, object> kvp in dir.Vals)
             {
                 bw.Write(kvp.Key);
@@ -150,7 +150,7 @@ namespace RT.Util.Settings
                 _binFmt.Serialize(bw.BaseStream, kvp.Value == null ? new NullObject() : kvp.Value);
             }
             // Save dirs
-            bw.WriteUInt32Optim((uint)dir.Dirs.Count);
+            bw.BaseStream.WriteUInt32Optim((uint)dir.Dirs.Count);
             foreach (KeyValuePair<string, dir> kvp in dir.Dirs)
             {
                 bw.Write(kvp.Key);

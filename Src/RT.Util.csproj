@@ -148,8 +148,6 @@
     <Compile Include="StateMachine.cs" />
     <Compile Include="Streams\ArithmeticCodingReader.cs" />
     <Compile Include="Streams\ArithmeticCodingWriter.cs" />
-    <Compile Include="Streams\BinaryReaderPlus.cs" />
-    <Compile Include="Streams\BinaryWriterPlus.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
     <Compile Include="Streams\DynamicContentStream.cs" />
     <Compile Include="Streams\SlowStream.cs" />
