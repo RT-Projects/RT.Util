@@ -152,6 +152,7 @@
     <Compile Include="Streams\DynamicContentStream.cs" />
     <Compile Include="Streams\SlowStream.cs" />
     <Compile Include="Streams\StreamOnSocket.cs" />
+    <Compile Include="Text\CsvTable.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Ut\Clone.cs" />
