@@ -1,104 +1,108 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace RT.Util
 {
     /// <summary>
-    /// Listens for a global keyboard shortcut and fires an event when the user presses it.
-    /// 
-    /// WARNING: This code is unfinished; review carefully before using in new stuff.
+    /// A class that manages a global low-level keyboard hook
     /// </summary>
     public class GlobalKeyboardListener
     {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        /// <summary>
+        /// The collections of keys to watch for
+        /// </summary>
+        public List<Keys> HookedKeys { get { return _hookedKeys; } }
+        private List<Keys> _hookedKeys = new List<Keys>();
 
-        private int KeyboardHandle;
+        /// <summary>
+        /// Handle to the hook, need this to unhook and call the next hook
+        /// </summary>
+        private IntPtr hhook = IntPtr.Zero;
 
-        /*
-        // Implement this function to block as many
-        // key combinations as you'd like
-        public bool IsHooked(WinAPI.KBDLLHOOKSTRUCT Hookstruct)
+        #region Events
+        /// <summary>
+        /// Occurs when one of the hooked keys is pressed
+        /// </summary>
+        public event KeyEventHandler KeyDown;
+        /// <summary>
+        /// Occurs when one of the hooked keys is released
+        /// </summary>
+        public event KeyEventHandler KeyUp;
+        #endregion
+
+        #region Constructors and Destructors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GlobalKeyboardListener"/> class and installs the keyboard hook.
+        /// </summary>
+        public GlobalKeyboardListener()
         {
-            Console.WriteLine("Hookstruct.vkCode: " + Hookstruct.vkCode);
-            Console.WriteLine(Hookstruct.vkCode = WinAPI.VK_ESCAPE);
-            Console.WriteLine(Hookstruct.vkCode = WinAPI.VK_TAB);
-
-            if ((Hookstruct.vkCode == WinAPI.VK_ESCAPE) && (WinAPI.GetAsyncKeyState(WinAPI.VK_CONTROL) & 0x8000) != 0)
-            {
-                HookedState("Ctrl + Esc blocked");
-                return true;
-            }
-
-            if ((Hookstruct.vkCode == WinAPI.VK_TAB) && (Hookstruct.flags & WinAPI.LLKHF_ALTDOWN) != 0)
-            {
-                HookedState("Alt + Tab blockd");
-                return true;
-            }
-
-            if ((Hookstruct.vkCode == WinAPI.VK_ESCAPE) && (Hookstruct.flags & WinAPI.LLKHF_ALTDOWN) != 0)
-            {
-                HookedState("Alt + Escape blocked");
-                return true;
-            }
-
-            return false;
+            hook();
         }
 
-        private void HookedState(string Text)
+        /// <summary>
+        /// Releases unmanaged resources and performs other cleanup operations before the
+        /// <see cref="GlobalKeyboardListener"/> is reclaimed by garbage collection and uninstalls the keyboard hook.
+        /// </summary>
+        ~GlobalKeyboardListener()
         {
-            Console.WriteLine(Text);
+            unhook();
         }
-        */
+        #endregion
 
-        public int KeyboardCallback(int Code, int wParam, WinAPI.KBDLLHOOKSTRUCT lParam)
+        private WinAPI.KeyboardHookProc hookDelegate;
+
+        #region Public Methods
+        /// <summary>
+        /// Installs the global hook
+        /// </summary>
+        public void hook()
         {
-            if (Code == WinAPI.HC_ACTION)
+            IntPtr hInstance = WinAPI.LoadLibrary("User32");
+            hookDelegate = new WinAPI.KeyboardHookProc(hookProc);
+            hhook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, hookDelegate, hInstance, 0);
+        }
+
+        /// <summary>
+        /// Uninstalls the global hook
+        /// </summary>
+        public void unhook()
+        {
+            WinAPI.UnhookWindowsHookEx(hhook);
+        }
+
+        /// <summary>
+        /// The callback for the keyboard hook
+        /// </summary>
+        /// <param name="code">The hook code, if it isn't >= 0, the function shouldn't do anyting</param>
+        /// <param name="wParam">The event type</param>
+        /// <param name="lParam">The keyhook event information</param>
+        /// <returns></returns>
+        public int hookProc(int code, int wParam, ref WinAPI.KeyboardHookStruct lParam)
+        {
+            if (code >= 0)
             {
-                //Console.WriteLine("Calling IsHooked");
-                /*
-                if (IsHooked(lParam))
+                Keys key = (Keys) lParam.vkCode;
+
+                if (HookedKeys.Contains(key))
                 {
-                    return 1;
-                }*/
+                    KeyEventArgs kea = new KeyEventArgs(key);
+                    if ((wParam == WinAPI.WM_KEYDOWN || wParam == WinAPI.WM_SYSKEYDOWN) && (KeyDown != null))
+                    {
+                        KeyDown(this, kea);
+                    }
+                    else if ((wParam == WinAPI.WM_KEYUP || wParam == WinAPI.WM_SYSKEYUP) && (KeyUp != null))
+                    {
+                        KeyUp(this, kea);
+                    }
+                    if (kea.Handled)
+                        return 1;
+                }
             }
-            return WinAPI.CallNextHookEx(KeyboardHandle, Code, wParam, lParam);
+            return WinAPI.CallNextHookEx(hhook, code, wParam, ref lParam);
         }
-
-        [MarshalAs(UnmanagedType.FunctionPtr)]
-        private WinAPI.KeyboardHookDelegate callback;
-
-        public void HookKeyboard()
-        {
-            callback = new WinAPI.KeyboardHookDelegate(KeyboardCallback);
-
-            KeyboardHandle = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, callback,
-                Marshal.GetHINSTANCE(Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(), 0);
-
-            CheckHooked();
-        }
-
-        public void CheckHooked()
-        {
-            if (Hooked())
-                Console.WriteLine("Keyboard hooked");
-            else
-                Console.WriteLine("Keyboard hook failed: " + WinAPI.GetLastError());
-        }
-
-        private bool Hooked()
-        {
-            return KeyboardHandle != 0;
-        }
-
-        public void UnhookKeyboard()
-        {
-            if (Hooked())
-            {
-                WinAPI.UnhookWindowsHookEx(KeyboardHandle);
-            }
-        }
-
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+        #endregion
     }
 }
