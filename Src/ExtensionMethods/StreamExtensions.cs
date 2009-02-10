@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -23,6 +24,18 @@ namespace RT.Util.ExtensionMethods
                     ms.Write(buffer, 0, read);
                 }
             }
+        }
+
+        /// <summary>
+        /// Reads all bytes from the current Stream and converts them into text using the specified encoding.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="encoding">Encoding to expect the text to be in.</param>
+        /// <returns>The text read from the stream.</returns>
+        public static string ReadAllText(this Stream stream, Encoding encoding)
+        {
+            var txt = encoding.GetString(stream.ReadAllBytes());
+            return txt;
         }
 
         #region Optim write

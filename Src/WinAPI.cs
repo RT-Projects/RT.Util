@@ -59,13 +59,17 @@ namespace RT.Util
         public const int LLKHF_ALTDOWN = 0x20;
         public const int LLKHF_UP = 0x80;
 
-        // Virtual Keys
-        public const int VK_TAB = 0x9;
-        public const int VK_CONTROL = 0x11;
-        public const int VK_ESCAPE = 0x1B;
-        public const int VK_DELETE = 0x2E;
-
         public const int WH_KEYBOARD_LL = 13;
+        public const int WM_KEYDOWN = 0x100;
+        public const int WM_KEYUP = 0x101;
+        public const int WM_SYSKEYDOWN = 0x104;
+        public const int WM_SYSKEYUP = 0x105;
+
+        public const int HWND_TOPMOST = -1;
+        public const int HWND_NOTOPMOST = -2;
+        public const int SWP_NOMOVE = 2;
+        public const int SWP_NOSIZE = 1;
+        public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE;
 
         #endregion
 
@@ -73,7 +77,6 @@ namespace RT.Util
 
         public struct MemoryStatus
         {
-
             public uint Length; //Length of struct
             public uint MemoryLoad; //Value from 0-100 represents memory usage
             public uint TotalPhysical;
@@ -100,7 +103,7 @@ namespace RT.Util
             public string szExeFile;
         }
 
-        public struct KBDLLHOOKSTRUCT
+        public struct KeyboardHookStruct
         {
             public int vkCode;
             public int scanCode;
@@ -111,11 +114,10 @@ namespace RT.Util
 
         #endregion
 
-        #region Delegates
-
-        public delegate int KeyboardHookDelegate(int Code, int wParam, WinAPI.KBDLLHOOKSTRUCT lParam);
-
-        #endregion
+        /// <summary>
+        /// Defines the callback type for a keyboard hook procedure.
+        /// </summary>
+        public delegate int KeyboardHookProc(int code, int wParam, ref KeyboardHookStruct lParam);
 
         #region Function imports
 
@@ -150,17 +152,58 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern int UnhookWindowsHookEx(int hHook);
 
-        [DllImport("user32.dll", EntryPoint = "SetWindowsHookExA")]
-        public static extern int SetWindowsHookEx(int idHook, KeyboardHookDelegate lpfn, int hmod, int dwThreadId);
-
         [DllImport("user32.dll")]
         public static extern int GetAsyncKeyState(int vKey);
 
         [DllImport("user32.dll")]
-        public static extern int CallNextHookEx(int hHook, int nCode, int wParam, KBDLLHOOKSTRUCT lParam);
+        public static extern int GetLastError();
+
+        /// <summary>
+        /// Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null
+        /// </summary>
+        /// <param name="idHook">The id of the event you want to hook</param>
+        /// <param name="callback">The callback.</param>
+        /// <param name="hInstance">The handle you want to attach the event to, can be null</param>
+        /// <param name="threadId">The thread you want to attach the event to, can be null</param>
+        /// <returns>a handle to the desired hook</returns>
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetWindowsHookEx(int idHook, WinAPI.KeyboardHookProc callback, IntPtr hInstance, uint threadId);
+
+        /// <summary>
+        /// Unhooks the windows hook.
+        /// </summary>
+        /// <param name="hInstance">The hook handle that was returned from SetWindowsHookEx</param>
+        /// <returns>True if successful, false otherwise</returns>
+        [DllImport("user32.dll")]
+        public static extern bool UnhookWindowsHookEx(IntPtr hInstance);
+
+        /// <summary>
+        /// Calls the next hook.
+        /// </summary>
+        /// <param name="idHook">The hook id</param>
+        /// <param name="nCode">The hook code</param>
+        /// <param name="wParam">The wparam.</param>
+        /// <param name="lParam">The lparam.</param>
+        /// <returns></returns>
+        [DllImport("user32.dll")]
+        public static extern int CallNextHookEx(IntPtr idHook, int nCode, int wParam, ref KeyboardHookStruct lParam);
+
+        /// <summary>
+        /// Loads the library.
+        /// </summary>
+        /// <param name="lpFileName">Name of the library</param>
+        /// <returns>A handle to the library</returns>
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LoadLibrary(string lpFileName);
 
         [DllImport("user32.dll")]
-        public static extern int GetLastError();
+        public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         #endregion
 

@@ -66,5 +66,21 @@ namespace RT.Util.ExtensionMethods
         {
             return source.OrderBy(x => x, comparison);
         }
+
+        /// <summary>
+        /// Returns a collection containing numberOfTimes references/copies of the specified object/struct.
+        /// </summary>
+        /// <typeparam name="T">Type of object to repeat.</typeparam>
+        /// <param name="repeatWhat">Object or struct to repeat.</param>
+        /// <param name="numberOfTimes">Number of times to repeat the object or struct.</param>
+        /// <returns></returns>
+        public static IEnumerable<T> Repeat<T>(this T repeatWhat, int numberOfTimes)
+        {
+            while (numberOfTimes > 0)
+            {
+                yield return repeatWhat;
+                numberOfTimes--;
+            }
+        }
     }
 }
