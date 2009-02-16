@@ -13,10 +13,9 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Bitwise rotate left.
         /// </summary>
-        /// <param name="op">How many bits to rotate by.</param>
-        public static ulong RotateLeft(this ulong input, int op)
+        public static ulong RotateLeft(this ulong input, int bitsToRotateBy)
         {
-            return (input << op) | (input >> (64 - op));
+            return (input << bitsToRotateBy) | (input >> (64 - bitsToRotateBy));
         }
     }
 }

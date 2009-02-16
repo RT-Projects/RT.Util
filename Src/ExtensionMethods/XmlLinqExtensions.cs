@@ -77,5 +77,19 @@ namespace RT.Util.ExtensionMethods
             else
                 throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")", attribute.Path());
         }
+
+        /// <summary>
+        /// Returns the value of this element, converted to type T. If the element does not exist returns
+        /// the default value. If the element's value cannot be converted, throws an exception.
+        /// </summary>
+        public static T ValueOrDefault<T>(this XElement element, XName name, T defaultValue)
+        {
+            XElement el = element.Element(name);
+            if (el == null)
+                return defaultValue;
+            else
+                try { return RConvert.Exact<T>(el.Value); }
+                catch (RConvertException E) { throw new RTException("Element \"{0}\", when present, must contain a value convertible to a certain type: " + E.Message, element.Path()); }
+        }
     }
 }

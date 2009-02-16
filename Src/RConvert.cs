@@ -1385,6 +1385,49 @@ namespace RT.Util
 
         #endregion
 
+        /// <summary>
+        /// Converts the value to type T using the Exact conversion. Throws an
+        /// <see cref="RConvertException"/> if the Exact conversion fails.
+        /// </summary>
+        public static T Exact<T>(object value)
+        {
+            TypeCode code = Type.GetTypeCode(typeof(T));
+            switch (code)
+            {
+                case TypeCode.Boolean:
+                    return (T)(object)ExactToBool(value);
+                case TypeCode.Byte:
+                    return (T)(object)ExactToByte(value);
+                case TypeCode.SByte:
+                    return (T)(object)ExactToSByte(value);
+                case TypeCode.Int16:
+                    return (T)(object)ExactToShort(value);
+                case TypeCode.UInt16:
+                    return (T)(object)ExactToUShort(value);
+                case TypeCode.Int32:
+                    return (T)(object)ExactToInt(value);
+                case TypeCode.UInt32:
+                    return (T)(object)ExactToUInt(value);
+                case TypeCode.Int64:
+                    return (T)(object)ExactToLong(value);
+                case TypeCode.UInt64:
+                    return (T)(object)ExactToULong(value);
+                case TypeCode.Single:
+                    return (T)(object)ExactToFloat(value);
+                case TypeCode.Double:
+                    return (T)(object)ExactToDouble(value);
+                case TypeCode.Decimal:
+                    return (T)(object)ExactToDecimal(value);
+                case TypeCode.DateTime:
+                    return (T)(object)ExactToDateTime(value);
+                case TypeCode.Char:
+                    return (T)(object)ExactToChar(value);
+                case TypeCode.String:
+                    return (T)(object)ExactToString(value);
+                default:
+                    throw new RConvertException(value, typeof(T));
+            }
+        }
     }
 
     /// <summary>

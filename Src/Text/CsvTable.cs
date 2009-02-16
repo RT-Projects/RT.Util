@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using RT.Util.Collections;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Text
 {
@@ -91,6 +92,29 @@ namespace RT.Util.Text
                 }
                 wr.WriteLine();
             }
+            wr.Close();
+        }
+
+        /// <summary>
+        /// Saves the table to a file in Excel-compatible CSV format.
+        /// </summary>
+        public void SaveToFileXls(string name)
+        {
+            StreamWriter wr = new StreamWriter(name);
+            wr.WriteLine(@"<html><meta http-equiv=""Content-Type"" content=""text/html"" charset=""utf-8"" /><table>");
+            foreach (var row in _data)
+            {
+                wr.Write(@"<tr>");
+                foreach (var cell in row)
+                {
+                    if (cell.Kind == RVariantKind.Stub)
+                        wr.Write(@"<td></td>");
+                    else
+                        wr.Write(@"<td>" + cell.ToString().HtmlEscape() + @"</td>");
+                }
+                wr.WriteLine(@"</tr>");
+            }
+            wr.WriteLine(@"</table></html>");
             wr.Close();
         }
     }

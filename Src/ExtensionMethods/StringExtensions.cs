@@ -255,7 +255,7 @@ namespace RT.Util.ExtensionMethods
         /// on a single line, not counting the end-of-line terminator.</param>
         public static IEnumerable<string> WordWrap(this string text, int maxWidth)
         {
-            if (text == null)
+            if (text == null || text == "")
                 yield break;
             if (maxWidth < 1)
                 throw new ArgumentOutOfRangeException("maxWidth cannot be less than 1");
