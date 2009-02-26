@@ -63,5 +63,57 @@ namespace RT.Util.ExtensionMethods
             }
             return true;
         }
+
+        /// <summary>
+        /// Performs a binary search for the specified key on a <see cref="SortedList"/>. When no
+        /// match exists, returns the nearest indices for interpolation/extrapolation purposes.
+        /// </summary>
+        /// <remarks>
+        /// If an exact match exists, index1 == index2 == the index of the match. If an exact match
+        /// is not found, index1 &lt; index2. If the key is less than every key in the list, index1
+        /// is int.MinValue and index2 is 0. If it's greater than every key, index1 = last item
+        /// index and index2 = int.MaxValue. Otherwise index1 and index2 are the indices of the items
+        /// that would surround the key were it present in the list.
+        /// </remarks>
+        /// <param name="key">The key to look for.</param>
+        /// <param name="index1">Receives the value of the first index (see remarks).</param>
+        /// <param name="index2">Receives the value of the second index (see remarks).</param>
+        public static void BinarySearch<TK, TV>(this SortedList<TK, TV> list, TK key, out int index1, out int index2)
+        {
+            var keys = list.Keys;
+            var comparer = Comparer<TK>.Default;
+
+            int imin = 0;
+            int imax = (0 + keys.Count) - 1;
+            while (imin <= imax)
+            {
+                int inew = imin + ((imax - imin) >> 1);
+
+                int cmp_res;
+                try { cmp_res = comparer.Compare(keys[inew], key); }
+                catch (Exception exception) { throw new InvalidOperationException("SortedList.BinarySearch could not compare keys due to a comparer exception.", exception); }
+
+                if (cmp_res == 0)
+                {
+                    index1 = index2 = inew;
+                    return;
+                }
+                else if (cmp_res < 0)
+                {
+                    imin = inew + 1;
+                }
+                else
+                {
+                    imax = inew - 1;
+                }
+            }
+
+            index1 = imax; // we know that imax + 1 == imin
+            index2 = imin;
+            if (imax < 0)
+                index1 = int.MinValue;
+            if (imin >= keys.Count)
+                index2 = int.MaxValue;
+        }
     }
 }
