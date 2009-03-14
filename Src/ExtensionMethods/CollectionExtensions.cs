@@ -65,7 +65,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Performs a binary search for the specified key on a <see cref="SortedList"/>. When no
+        /// Performs a binary search for the specified key on a <see cref="SortedList&lt;TK,TV&gt;"/>. When no
         /// match exists, returns the nearest indices for interpolation/extrapolation purposes.
         /// </summary>
         /// <remarks>
@@ -75,6 +75,7 @@ namespace RT.Util.ExtensionMethods
         /// index and index2 = int.MaxValue. Otherwise index1 and index2 are the indices of the items
         /// that would surround the key were it present in the list.
         /// </remarks>
+        /// <param name="list">List to operate on.</param>
         /// <param name="key">The key to look for.</param>
         /// <param name="index1">Receives the value of the first index (see remarks).</param>
         /// <param name="index2">Receives the value of the second index (see remarks).</param>
@@ -114,6 +115,22 @@ namespace RT.Util.ExtensionMethods
                 index1 = int.MinValue;
             if (imin >= keys.Count)
                 index2 = int.MaxValue;
+        }
+
+        /// <summary>
+        /// Gets a value from a dictionary by key. If the key does not exist in the dictionary,
+        /// the default value is returned instead.
+        /// </summary>
+        /// <param name="dict">Dictionary to operate on.</param>
+        /// <param name="key">Key to look up.</param>
+        /// <param name="defaultVal">Value to return if key is not contained in the dictionary.</param>
+        public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultVal)
+        {
+            TValue value;
+            if (dict.TryGetValue(key, out value))
+                return value;
+            else
+                return defaultVal;
         }
     }
 }
