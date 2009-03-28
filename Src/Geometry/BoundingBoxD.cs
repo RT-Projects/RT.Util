@@ -95,5 +95,13 @@ namespace RT.Util.Geometry
         {
             return Intersect.RayWithBoundingBox(ref ray, ref this);
         }
+
+        /// <summary>
+        /// Returns true if this bounding box intersects with the specified bounding box.
+        /// </summary>
+        public bool IntersectsWithBoundingBox(BoundingBoxD box)
+        {
+            return Intersect.BoundingBoxWithBoundingBox(ref this, ref box);
+        }
     }
 }

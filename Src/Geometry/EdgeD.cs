@@ -28,6 +28,14 @@ namespace RT.Util.Geometry
             End = new PointD(x2, y2);
         }
 
+        /// <summary>Initialises a line segment starting at the specified point. The ending point is 1 unit away at the specified angle.</summary>
+        public EdgeD(PointD start, double angle)
+        {
+            Start = start;
+            End.X = Start.X + Math.Cos(angle);
+            End.Y = Start.Y + Math.Sin(angle);
+        }
+
         /// <summary>Returns the difference in the X-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
         public double Width { get { return Math.Abs(Start.X - End.X); } }
         /// <summary>Returns the difference in the Y-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
@@ -99,6 +107,49 @@ namespace RT.Util.Geometry
             if (obj is EdgeD)
                 return Equals((EdgeD)obj);
             return base.Equals(obj);
+        }
+
+        /// <summary>
+        /// Returns a point on this edge that is as near as possible to
+        /// the specified point.
+        /// </summary>
+        public PointD PointOnEdgeNearestTo(PointD point)
+        {
+            double lambda = LambdaOfPointDroppedPerpendicularly(point);
+
+            if (lambda <= 0)
+                return Start;
+            else if (lambda >= 1)
+                return End;
+            else
+                return Start + lambda * (End - Start);
+        }
+
+        /// <summary>
+        /// Calculates the projection of the specified point onto the line defined
+        /// by this edge. Returns the Lambda of this point P, defined by P = Start + Lambda * (End - Start).
+        /// Hence the lambda is 0 if the projection falls exactly onto the Start point, and 1 if it
+        /// falls on the End point.
+        /// </summary>
+        public double LambdaOfPointDroppedPerpendicularly(PointD point)
+        {
+            // Drop the point onto the line defined by:  L = Start + lambda * (End - Start)
+            // Perpendicular line goes through "point" and the direction is (End - Start).Normal()
+            PointD dir = End - Start;
+            // for reference below: PointD Ndir = dir.Normal();
+
+            // Now solve for lambda:
+            // L = N
+            // L = Start + lambda * dir;
+            // N = point + m * Ndir;
+            // Start + lambda * dir = point + m * Ndir;
+            //
+            // start.x + l * dir.x = point.x + m * Ndir.x;
+            // start.y + l * dir.y = point.y + m * Ndir.y;
+            // Now substitute Ndir.X = dir.Y, and Ndir.Y = -dir.X
+            // [...]
+
+            return (dir.X*(point.X - Start.X) + dir.Y*(point.Y - Start.Y)) / (dir.X*dir.X + dir.Y*dir.Y);
         }
     }
 }

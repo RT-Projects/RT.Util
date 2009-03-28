@@ -21,6 +21,15 @@ namespace RT.Util.Geometry
             Radius = rad;
         }
 
+        /// <summary>Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
+        /// <param name="center">Center co-ordinates.</param>
+        /// <param name="rad">Radius.</param>
+        public CircleD(PointD center, double rad)
+        {
+            Center = center;
+            Radius = rad;
+        }
+
         /// <summary>Provides a string representation of the current <see cref="CircleD"/>.</summary>
         /// <returns>A string representation of the current <see cref="CircleD"/>.</returns>
         public override string ToString()

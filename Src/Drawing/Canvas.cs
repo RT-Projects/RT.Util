@@ -102,6 +102,16 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
+        /// Sets the viewport so that the specified world coordinate is in the centre of the
+        /// viewable screen, using the specified scaling factor.
+        /// </summary>
+        public void SetViewport(double centerWX, double centerWY, double scale)
+        {
+            _scaleX = _scaleY = scale;
+            MoveViewport(ScreenSize.Width / 2, ScreenSize.Height / 2, centerWX, centerWY);
+        }
+
+        /// <summary>
         /// Sets the scaling and offset so that the world coordinate "leftWX" corresponds to the leftmost
         /// coordinate on the screen, world "topWY" to the topmost screen coordinate, etc. If "maintainAspect"
         /// is "true", ensures that X and Y scaling is the same, by making one of the axes show more than implied by

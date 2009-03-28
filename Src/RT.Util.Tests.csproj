@@ -62,6 +62,7 @@
     <Compile Include="ExtensionMethods\IEnumerableExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\StringExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
+    <Compile Include="Geometry\GeomUtTests.cs" />
     <Compile Include="Geometry\IntersectTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />

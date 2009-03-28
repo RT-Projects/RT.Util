@@ -56,6 +56,99 @@ namespace RT.Util.Geometry
             }
         }
 
+        /// <summary>
+        /// <para>Finds the point of intersection between two lines, specified by a
+        /// point on a line and the gradient. Works correctly if the gradient
+        /// is infinite (vertical line), for both positive and negative inf.</para>
+        /// 
+        /// <para>If a single intersection exists, returns the coordinates in ix, iy.
+        /// If the lines coincide, returns Inf,Inf. If lines are parallel but
+        /// don't coincide returns NaN,NaN.</para>
+        /// 
+        /// <para>WARNING: untested.</para>
+        /// </summary>
+        public static void LineWithLine(out double ix, out double iy,
+            double x1, double y1, double dydx1, double x2, double y2, double dydx2)
+        {
+            bool gradeq = dydx1 == dydx2;
+            bool inf1 = double.IsInfinity(dydx1);
+            bool inf2 = double.IsInfinity(dydx2);
+
+            if (!(gradeq || inf1 || inf2))
+            {
+                // Most common case - no infinities, lines not parallel.
+                // Could do extra checks for max accuracy but not convinced that's
+                // going to be worth the performance penalty.
+                ix = (y2 - y1 + dydx1 * x1 - dydx2 * x2) / (dydx1 - dydx2);
+                iy = y1 + dydx1 * (ix - x1);
+            }
+            else if (gradeq || (inf1 && inf2))
+            {
+                // Lines are parallel
+                bool intersect = false;
+                if (double.IsInfinity(dydx1))
+                    // Vertical lines
+                    intersect = x1 == x2;
+                else
+                    // Not vertical lines
+                    intersect = (y1 == y2 + dydx2 * (x1 - x2));
+
+                // If they intersect, return Inf,Inf. If not, return NaN,NaN
+                if (intersect)
+                    ix = iy = double.PositiveInfinity;
+                else
+                    ix = iy = double.NaN;
+            }
+            else if (inf1)
+            {
+                // Line 1 is vertical but the other one isn't
+                ix = x1;
+                iy = y2 + dydx2 * (x1 - x2);
+            }
+            else /*if (inf2)*/
+            {
+                // Line 2 is vertical but the other one isn't
+                ix = x2;
+                iy = y1 + dydx1 * (x2 - x1);
+            }
+        }
+
+        /// <summary>
+        /// <para>Finds the point of intersection between two lines, specified by
+        /// two points each.</para>
+        /// 
+        /// <para>If a single intersection exists, returns the coordinates in ix, iy.
+        /// If the lines coincide, returns Inf,Inf. If lines are parallel but
+        /// don't coincide returns NaN,NaN.</para>
+        /// 
+        /// <para>WARNING: untested.</para>
+        /// </summary>
+        public static void LineWithLine(out double ix, out double iy,
+            double fx1, double fy1, double tx1, double ty1,
+            double fx2, double fy2, double tx2, double ty2)
+        {
+            double num = (tx2 - fx2) * (fy1 - fy2) - (ty2 - fy2) * (fx1 - fx2);
+            double den = (ty2 - fy2) * (tx1 - fx1) - (tx2 - fx2) * (ty1 - fy1);
+
+            if (den != 0)
+            {
+                // Lines are not parallel
+                double u = num / den;
+                ix = fx1 + u * (tx1 - fx1);
+                iy = fy1 + u * (ty2 - fy1);
+            }
+            else if (num != 0)
+            {
+                // Parallel but not coincident
+                ix = iy = double.NaN;
+            }
+            else
+            {
+                // Parallel and coincident
+                ix = iy = double.PositiveInfinity;
+            }
+        }
+
         #endregion
 
         #region LineWithCircle
@@ -193,6 +286,69 @@ namespace RT.Util.Geometry
             }
 
             return false;
+        }
+
+        #endregion
+
+        #region SegmentWithSegment
+
+        /// <summary>
+        /// If the two specified line segments touch anywhere, returns true. Otherwise
+        /// returns false.
+        /// <remarks>
+        /// Support for zero-length segments is partial - if one of the segments is of
+        /// length 0 the result is correct, but if both are the result is always true.
+        /// </remarks>
+        /// </summary>
+        public static bool SegmentWithSegment(
+            double f1x, double f1y, double t1x, double t1y,
+            double f2x, double f2y, double t2x, double t2y)
+        {
+            // This is what's intended:
+            //bool a = GeomUt.ArePointsSameSideOfLine(t1x - f1x, t1y - f1y,
+            //    f2x - f1x, f2y - f1y, t2x - f1x, t2y - f1y);
+            //bool b = GeomUt.ArePointsSameSideOfLine(t2x - f2x, t2y - f2y,
+            //    f1x - f2x, f1y - f2y, t1x - f2x, t1y - f2y);
+            //return !(a || b);
+
+            // This is the same but expanded and rearranged slightly for speed
+            double tf1x = t1x - f1x;
+            double tf1y = t1y - f1y;
+            double tf2x = t2x - f2x;
+            double tf2y = t2y - f2y;
+            double f21x = f2x - f1x;
+            double f21y = f2y - f1y;
+            return
+                ((tf1x * f21y - tf1y * f21x) * (tf1x * (t2y - f1y) - tf1y * (t2x - f1x)) <= 0) &&
+                ((tf2y * f21x - tf2x * f21y) * (tf2x * (t1y - f2y) - tf2y * (t1x - f2x)) <= 0);
+        }
+
+        #endregion
+
+        #region BoundingBoxWithBoundingBox
+
+        /// <summary>
+        /// Checks for intersections between the two bounding boxes specified by the coordinates.
+        /// Returns true if there is at least one intersection. Coordinates ending with "1" belong
+        /// to the first box, "2" to the second one. Coordinates starting with "f" MUST be less than
+        /// or equal to ones starting with "t".
+        /// </summary>
+        public static bool BoundingBoxWithBoundingBox(
+            double fx1, double fy1, double tx1, double ty1,
+            double fx2, double fy2, double tx2, double ty2)
+        {
+            return !((fx2 > tx1 && tx2 > tx1) || (fx2 < fx1 && tx2 < fx1)
+                  || (fy2 > ty1 && ty2 > ty1) || (fy2 < fy1 && ty2 < fy1));
+        }
+
+        /// <summary>
+        /// Checks for intersections between the two bounding boxes specified by the coordinates.
+        /// Returns true if there is at least one intersection.
+        /// </summary>
+        public static bool BoundingBoxWithBoundingBox(ref BoundingBoxD box1, ref BoundingBoxD box2)
+        {
+            return !((box2.Xmin > box1.Xmax && box2.Xmax > box1.Xmax) || (box2.Xmin < box1.Xmin && box2.Xmax < box1.Xmin)
+                  || (box2.Ymin > box1.Ymax && box2.Ymax > box1.Ymax) || (box2.Ymin < box1.Ymin && box2.Ymax < box1.Ymin));
         }
 
         #endregion
