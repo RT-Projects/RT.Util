@@ -82,5 +82,36 @@ namespace RT.Util.ExtensionMethods
                 numberOfTimes--;
             }
         }
+
+        /// <summary>
+        /// Splits the specified IEnumerable at every element that satisfies a specified predicate and returns
+        /// a collection containing each sequence of elements in between each pair of such elements.
+        /// The elements satisfying the predicate are not included.
+        /// </summary>
+        /// <param name="splitWhat">The collection to be split.</param>
+        /// <param name="splitWhere">A predicate that determines which elements constitute the separators.</param>
+        /// <returns>A collection containing the individual pieces taken from the original collection.</returns>
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
+        {
+            int prevIndex = 0;
+            foreach (var index in splitWhat.Select((elem, ind) => new { e = elem, i = ind }).Where(x => splitWhere(x.e)))
+            {
+                yield return splitWhat.Skip(prevIndex).Take(index.i - prevIndex);
+                prevIndex = index.i + 1;
+            }
+            yield return splitWhat.Skip(prevIndex);
+        }
+
+        /// <summary>
+        /// Adds a single element to the end of an IEnumerable.
+        /// </summary>
+        /// <typeparam name="T">Type of enumerable to return.</typeparam>
+        /// <returns>IEnumerable containing all the input elements, followed by the specified additional element.</returns>
+        public static IEnumerable<T> Add<T>(this IEnumerable<T> input, T element)
+        {
+            foreach (var e in input)
+                yield return e;
+            yield return element;
+        }
     }
 }

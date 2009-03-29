@@ -77,5 +77,15 @@ namespace RT.Util
             for (int i = first; i <= last; i++)
                 yield return i;
         }
+
+        /// <summary>
+        /// Returns an IEnumerable of the specified type that contains no elements.
+        /// </summary>
+        /// <typeparam name="T">Type of enumerable to return.</typeparam>
+        /// <returns>IEnumerable containing no elements.</returns>
+        public static IEnumerable<T> EmptyEnumberale<T>()
+        {
+            yield break;
+        }
     }
 }
