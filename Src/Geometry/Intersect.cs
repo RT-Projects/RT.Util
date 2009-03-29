@@ -205,6 +205,23 @@ namespace RT.Util.Geometry
 
         #endregion
 
+        #region RayWithSegment
+
+        /// <summary>
+        /// Calculates the intersection of a ray with a segment. Returns the result as the
+        /// lambdas of the intersection point along the ray and the segment. If there is no
+        /// intersection returns double.NaN in both lambdas.
+        /// </summary>
+        public static void RayWithSegment(ref EdgeD ray, ref EdgeD segment, out double rayL, out double segmentL)
+        {
+            Intersect.LineWithLine(ref ray, ref segment, out rayL, out segmentL);
+
+            if (!double.IsNaN(rayL) && ((rayL < 0) || (segmentL < 0) || (segmentL > 1)))
+                rayL = segmentL = double.NaN;
+        }
+
+        #endregion
+
         #region RayWithCircle
 
         /// <summary>
