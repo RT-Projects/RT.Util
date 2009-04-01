@@ -65,27 +65,5 @@ namespace RT.Util
             else
                 return (size / (1024d * 1024d * 1024d)).ToString("#,###.## GB");
         }
-
-        /// <summary>
-        /// Returns an IEnumerable containing all integers between the specified First and Last integers (all inclusive).
-        /// </summary>
-        /// <param name="first">First integer to return.</param>
-        /// <param name="last">Last integer to return.</param>
-        /// <returns>An IEnumerable containing all integers between the specified First and Last integers (all inclusive).</returns>
-        public static IEnumerable<int> Range(int first, int last)
-        {
-            for (int i = first; i <= last; i++)
-                yield return i;
-        }
-
-        /// <summary>
-        /// Returns an IEnumerable of the specified type that contains no elements.
-        /// </summary>
-        /// <typeparam name="T">Type of enumerable to return.</typeparam>
-        /// <returns>IEnumerable containing no elements.</returns>
-        public static IEnumerable<T> EmptyEnumberale<T>()
-        {
-            yield break;
-        }
     }
 }
