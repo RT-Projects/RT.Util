@@ -107,7 +107,7 @@ namespace RT.Util.Streams
         {
             int numread = _stream.Read(buffer, offset, count);
 
-            for (int i = offset; i < offset + count; i++)
+            for (int i = offset; i < offset + numread; i++)
                 _crc = _poly[(_crc ^ (buffer[i])) & 0xFF] ^ (_crc >> 8);
 
             return numread;

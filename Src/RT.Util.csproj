@@ -151,8 +151,11 @@
     <Compile Include="Streams\ArithmeticCodingWriter.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
     <Compile Include="Streams\DynamicContentStream.cs" />
+    <Compile Include="Streams\MD5Stream.cs" />
+    <Compile Include="Streams\RSyncChecksumStream.cs" />
     <Compile Include="Streams\SlowStream.cs" />
     <Compile Include="Streams\StreamOnSocket.cs" />
+    <Compile Include="Streams\VoidStream.cs" />
     <Compile Include="Text\CsvTable.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="TimeOut.cs" />
