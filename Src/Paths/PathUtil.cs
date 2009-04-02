@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
@@ -10,7 +11,6 @@ namespace RT.Util
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         public PathException() : base() { }
         public PathException(string message) : base(message) { }
-        public PathException(string message, params object[] args) : base(message, args) { }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
@@ -175,7 +175,7 @@ namespace RT.Util
             if (path.Length >= 2)
                 pos = path.LastIndexOfAny(new[] { '/', '\\' }, path.Length - 2);
             if (pos < 0)
-                throw new PathException("Path \"{0}\" does not have a parent path.", path);
+                throw new PathException("Path \"{0}\" does not have a parent path.".Fmt(path));
 
             // Leave the slash if the original path also ended in slash
             if (path[path.Length - 1] == '/' || path[path.Length - 1] == '\\')
@@ -198,7 +198,7 @@ namespace RT.Util
             if (path.Length >= 2)
                 pos = path.LastIndexOf(separator, path.Length - 2);
             if (pos < 0)
-                throw new PathException("Path \"{0}\" does not have a parent path.", path);
+                throw new PathException("Path \"{0}\" does not have a parent path.".Fmt(path));
 
             // Leave the slash if the original path also ended in slash
             if (path[path.Length - 1] == separator)
@@ -234,7 +234,7 @@ namespace RT.Util
             if (root.ToLower() == PathUtil.NormPath(fullpath).ToLower())
                 return "";
             if (!fullpath.ToLower().StartsWith(root.ToLower()))
-                throw new PathException("Path \"{0}\" is not a subpath of \"{1}\"", fullpath, root);
+                throw new PathException("Path \"{0}\" is not a subpath of \"{1}\"".Fmt(fullpath, root));
             return fullpath.Substring(root.Length);
         }
 

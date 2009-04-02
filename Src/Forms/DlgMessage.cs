@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Resources;
 using System.Windows.Forms;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Dialogs
 {
@@ -235,7 +236,7 @@ namespace RT.Util.Dialogs
             if (Buttons == null || Buttons.Length == 0)
                 Buttons = new[] { DlgMessageForm.DefaultOKCaption };
             if (Buttons.Length > 4)
-                throw new RTException("The number of message buttons must not exceed 4. Actual number: {0}", Buttons.Length);
+                throw new RTException("The number of message buttons must not exceed 4. Actual number: {0}".Fmt(Buttons.Length));
 
             if (Message == null)
                 Message = "";

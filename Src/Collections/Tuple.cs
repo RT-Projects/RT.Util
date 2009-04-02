@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Collections
 {
@@ -33,13 +34,13 @@ namespace RT.Util.Collections
 
             if (E1 is IComparable<T1>) res = (E1 as IComparable<T1>).CompareTo(other.E1);
             else if (E1 is IComparable) res = (E1 as IComparable).CompareTo(other.E1);
-            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>", typeof(T1));
+            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>".Fmt(typeof(T1)));
 
             if (res != 0) return res;
 
             if (E2 is IComparable<T2>) res = (E2 as IComparable<T2>).CompareTo(other.E2);
             else if (E2 is IComparable) res = (E2 as IComparable).CompareTo(other.E2);
-            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>", typeof(T2));
+            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>".Fmt(typeof(T2)));
 
             return res;
         }
@@ -78,19 +79,19 @@ namespace RT.Util.Collections
 
             if (E1 is IComparable<T1>) res = (E1 as IComparable<T1>).CompareTo(other.E1);
             else if (E1 is IComparable) res = (E1 as IComparable).CompareTo(other.E1);
-            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>", typeof(T1));
+            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>".Fmt(typeof(T1)));
 
             if (res != 0) return res;
 
             if (E2 is IComparable<T2>) res = (E2 as IComparable<T2>).CompareTo(other.E2);
             else if (E2 is IComparable) res = (E2 as IComparable).CompareTo(other.E2);
-            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>", typeof(T2));
+            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>".Fmt(typeof(T2)));
 
             if (res != 0) return res;
 
             if (E3 is IComparable<T3>) res = (E3 as IComparable<T3>).CompareTo(other.E3);
             else if (E3 is IComparable) res = (E3 as IComparable).CompareTo(other.E3);
-            else throw new RTException("Cannot compare Tuple because type T3 ({0}) does not implement IComparable or IComparable<T3>", typeof(T3));
+            else throw new RTException("Cannot compare Tuple because type T3 ({0}) does not implement IComparable or IComparable<T3>".Fmt(typeof(T3)));
 
             return res;
         }
@@ -133,25 +134,25 @@ namespace RT.Util.Collections
 
             if (E1 is IComparable<T1>) res = (E1 as IComparable<T1>).CompareTo(other.E1);
             else if (E1 is IComparable) res = (E1 as IComparable).CompareTo(other.E1);
-            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>", typeof(T1));
+            else throw new RTException("Cannot compare Tuple because type T1 ({0}) does not implement IComparable or IComparable<T1>".Fmt(typeof(T1)));
 
             if (res != 0) return res;
 
             if (E2 is IComparable<T2>) res = (E2 as IComparable<T2>).CompareTo(other.E2);
             else if (E2 is IComparable) res = (E2 as IComparable).CompareTo(other.E2);
-            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>", typeof(T2));
+            else throw new RTException("Cannot compare Tuple because type T2 ({0}) does not implement IComparable or IComparable<T2>".Fmt(typeof(T2)));
 
             if (res != 0) return res;
 
             if (E3 is IComparable<T3>) res = (E3 as IComparable<T3>).CompareTo(other.E3);
             else if (E3 is IComparable) res = (E3 as IComparable).CompareTo(other.E3);
-            else throw new RTException("Cannot compare Tuple because type T3 ({0}) does not implement IComparable or IComparable<T3>", typeof(T3));
+            else throw new RTException("Cannot compare Tuple because type T3 ({0}) does not implement IComparable or IComparable<T3>".Fmt(typeof(T3)));
 
             if (res != 0) return res;
 
             if (E4 is IComparable<T4>) res = (E4 as IComparable<T4>).CompareTo(other.E4);
             else if (E4 is IComparable) res = (E4 as IComparable).CompareTo(other.E4);
-            else throw new RTException("Cannot compare Tuple because type T4 ({0}) does not implement IComparable or IComparable<T4>", typeof(T4));
+            else throw new RTException("Cannot compare Tuple because type T4 ({0}) does not implement IComparable or IComparable<T4>".Fmt(typeof(T4)));
 
             return res;
         }

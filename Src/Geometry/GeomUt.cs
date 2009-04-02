@@ -44,23 +44,6 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Returns true if both points do not lie on the same side of the o->l line.
-        /// This implies that this returns true if at least one of the points is ON
-        /// the line.
-        /// </summary>
-        //public static bool ArePointsSameSideOfLine(double ox, double oy,
-        //    double lX, double lY, double pt1X, double pt1Y, double pt2X, double pt2Y)
-        //{
-        //    // If both cross products are positive or both are negative then they are
-        //    // on the same side. This means that if xp1 * xp2 > 0  then they are on
-        //    // the same side.
-
-        //    // Let the compiler sort out common subexpressions.
-        //    return (((lX-ox)*(pt1Y-oy) - (lY-oy)*(pt1X-ox)))
-        //        *  (((lX-ox)*(pt2Y-oy) - (lY-oy)*(pt2X-ox))) > 0;
-        //}
-
-        /// <summary>
         /// Given a vector l, and two points pt1 and pt2, splits the space into two
         /// halves on the line defined by the vector l. If both points lie in the same
         /// half, returns true. If they lie in different halves, or if at least one point

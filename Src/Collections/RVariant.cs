@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
+using RT.Util.ExtensionMethods;
 
 // TODO: possible areas of improvement
 //
@@ -1195,8 +1196,8 @@ namespace RT.Util.Collections
                         if (subNode is XmlElement)
                         {
                             if (_dict.ContainsKey(subNode.Name))
-                                throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"dict\", has more than one element with name \"{2}\"",
-                                    element.OwnerDocument.DocumentElement.Name, path, subNode.Name);
+                                throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"dict\", has more than one element with name \"{2}\"".Fmt(
+                                    element.OwnerDocument.DocumentElement.Name, path, subNode.Name));
                             else
                             {
                                 RVariant newEl = new RVariant();
@@ -1223,14 +1224,14 @@ namespace RT.Util.Collections
                                 _list.Add(newEl);
                             }
                             else
-                                throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"list\", has an element with an unexpected name: \"{1}\"",
-                                    element.OwnerDocument.DocumentElement.Name, path, children[i].Name);
+                                throw new RVariantXmlException("XML node \"{0}{1}\", which is of kind \"list\", has an element with an unexpected name: \"{1}\"".Fmt(
+                                    element.OwnerDocument.DocumentElement.Name, path, children[i].Name));
                         }
                     }
                 }
                 else
                 {
-                    throw new RVariantXmlException("XML node \"{0}{1}\" has an unrecognized \"kind\" attribute: \"{2}\"", element.OwnerDocument.DocumentElement.Name, path, kind);
+                    throw new RVariantXmlException("XML node \"{0}{1}\" has an unrecognized \"kind\" attribute: \"{2}\"".Fmt(element.OwnerDocument.DocumentElement.Name, path, kind));
                 }
             }
         }
@@ -1295,7 +1296,7 @@ namespace RT.Util.Collections
         private void ICollection_AssumeListKind()
         {
             if (_kind != RVariantKind.Stub && _kind != RVariantKind.List)
-                throw new RVariantException("Location \"{0}\": cannot access as a list because item is already a {1}", FullPathNoNull, _kind);
+                throw new RVariantException("Location \"{0}\": cannot access as a list because item is already a {1}".Fmt(FullPathNoNull, _kind));
             assumeKind(RVariantKind.List);
         }
 
@@ -1378,20 +1379,17 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantException : RTException
     {
-        /// <summary></summary>
-        public RVariantException()
+        /// <summary>
+        /// Should only be used by constructors which initialise the error message in
+        /// the constructor body.
+        /// </summary>
+        protected RVariantException()
         {
         }
 
-        /// <summary></summary>
+        /// <summary>Creates an exception instance with the specified message.</summary>
         public RVariantException(string message) :
             base(message)
-        {
-        }
-
-        /// <summary></summary>
-        public RVariantException(string message, params object[] args) :
-            base(message, args)
         {
         }
     }
@@ -1402,7 +1400,7 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantConvertException : RVariantException
     {
-        /// <summary></summary>
+        /// <summary>Creates a conversion error exception with the appropriate message.</summary>
         public RVariantConvertException(RVariant variant, TypeCode desiredType)
         {
             _message = string.Format("Location \"{0}\": value \"{1}\" cannot be converted to type \"{2}\"",
@@ -1416,7 +1414,7 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantNotFoundException : RVariantException
     {
-        /// <summary></summary>
+        /// <summary>Creates a value-not-found exception with the appropriate message.</summary>
         public RVariantNotFoundException(RVariant variant, TypeCode desiredType)
         {
             if (variant.Kind != RVariantKind.Value)
@@ -1426,7 +1424,7 @@ namespace RT.Util.Collections
             }
         }
 
-        /// <summary></summary>
+        /// <summary>Creates a value-not-found exception with the appropriate message.</summary>
         public RVariantNotFoundException(RVariant variant, RVariantKind desiredKind)
         {
             _message = string.Format("Location \"{0}\": expected a variant of kind {1}",
@@ -1439,15 +1437,9 @@ namespace RT.Util.Collections
     /// </summary>
     public class RVariantXmlException : RVariantException
     {
-        /// <summary></summary>
+        /// <summary>Creates an exception instance with the specified message.</summary>
         public RVariantXmlException(string message) :
             base(message)
-        {
-        }
-
-        /// <summary></summary>
-        public RVariantXmlException(string message, params object[] args) :
-            base(message, args)
         {
         }
     }

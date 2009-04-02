@@ -52,7 +52,7 @@ namespace RT.Util.Drawing
 
         /// <summary>
         /// Stores the screen size. "Screen" here refers to the final surface that this Canvas is destined
-        /// for. This field may be left unspecified if no "viewport" functions are used (eg, <see cref="SetViewport"/>).
+        /// for. This field may be left unspecified if no "viewport" functions are used (eg, <see cref="SetViewport(double,double,double)"/>).
         /// </summary>
         public Size ScreenSize;
 

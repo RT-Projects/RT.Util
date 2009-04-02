@@ -45,7 +45,7 @@ namespace RT.Util.ExtensionMethods
         {
             XElement result = element.Element(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an element named \"{1}\".", element.Path(), name);
+                throw new RTException("Element \"{0}\" is expected contain an element named \"{1}\".".Fmt(element.Path(), name));
             else
                 return result;
         }
@@ -59,7 +59,7 @@ namespace RT.Util.ExtensionMethods
         {
             XAttribute result = element.Attribute(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an attribute named \"{1}\".", element.Path(), name);
+                throw new RTException("Element \"{0}\" is expected contain an attribute named \"{1}\".".Fmt(element.Path(), name));
             else
                 return result;
         }
@@ -75,7 +75,7 @@ namespace RT.Util.ExtensionMethods
             if (double.TryParse(value, out result))
                 return result;
             else
-                throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")", attribute.Path());
+                throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")".Fmt(attribute.Path()));
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace RT.Util.ExtensionMethods
                 return defaultValue;
             else
                 try { return RConvert.Exact<T>(el.Value); }
-                catch (RConvertException E) { throw new RTException("Element \"{0}\", when present, must contain a value convertible to a certain type: " + E.Message, element.Path()); }
+                catch (RConvertException E) { throw new RTException(("Element \"{0}\", when present, must contain a value convertible to a certain type: " + E.Message).Fmt(element.Path())); }
         }
     }
 }

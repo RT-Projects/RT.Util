@@ -10,6 +10,20 @@ namespace RT.Util
     /// but you'll probably want to, as it provides a few crutches for the standard
     /// Exception class.
     /// </summary>
+    /// 
+    /// <example>
+    /// Copy and paste the following constructors to your class for "default" behaviour:
+    /// 
+    /// /// <summary>Creates an exception instance with the specified message.</summary>
+    /// public !!!MyException!!!(string message)
+    ///     : base(message)
+    /// { }
+    ///
+    /// /// <summary>Creates an exception instance with the specified message and inner exception.</summary>
+    /// public !!!MyException!!!(string message, Exception innerException)
+    ///     : base(null, innerException)
+    /// { }
+    /// </example>
     public class RTException : Exception
     {
         /// <summary>
@@ -28,18 +42,18 @@ namespace RT.Util
         /// <summary>
         /// Set this field to change the message stored in this exception.
         /// </summary>
-        protected string _message = "An RT exception has occurred.";
+        protected string _message = "An RT exception has occurred";
 
         /// <summary>
-        /// It's probably a good idea to never use this constructor, since it
-        /// leaves the message uninitialised.
+        /// Should only be used by constructors which initialise <see cref="_message"/> in
+        /// the constructor body.
         /// </summary>
-        public RTException()
+        protected RTException()
         {
         }
 
         /// <summary>
-        /// A non-formatting constructor: simply uses the specified message.
+        /// Creates an exception instance with the specified initial message.
         /// </summary>
         public RTException(string message)
         {
@@ -47,7 +61,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// A non-formatting constructor: simply uses the specified message.
+        /// Creates an exception instance with the specified initial message and
+        /// inner exception.
         /// </summary>
         public RTException(string message, Exception innerException)
             : base(null, innerException)
@@ -55,24 +70,23 @@ namespace RT.Util
             _message = message;
         }
 
-        /// <summary>
-        /// A formatting constructor: string.Format's the arguments
-        /// into the supplied string.
-        /// </summary>
-        public RTException(string message, params object[] args)
-        {
-            _message = string.Format(message, args);
-        }
+    }
 
-        /// <summary>
-        /// A formatting constructor: string.Format's the arguments
-        /// into the supplied string.
-        /// </summary>
-        public RTException(string message, Exception innerException, params object[] args)
+    /// <summary>
+    /// Represents an internal error in the code. Any place where the code is able
+    /// to verify its own consistency is where this exception should be thrown, for
+    /// example in "unreachable" code safeguards.
+    /// </summary>
+    public class InternalError : RTException
+    {
+        /// <summary>Creates an exception instance with the specified message.</summary>
+        public InternalError(string message)
+            : base(message)
+        { }
+
+        /// <summary>Creates an exception instance with the specified message and inner exception.</summary>
+        public InternalError(string message, Exception innerException)
             : base(null, innerException)
-        {
-            _message = string.Format(message, args);
-        }
-
+        { }
     }
 }
