@@ -116,5 +116,52 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual(" Para with windows line break and a single space", tww[9]);
             Assert.AreEqual(" indentation.", tww[10]);
         }
+
+        private void assertBase64UrlArray(byte[] arr)
+        {
+            string b64u = arr.Base64UrlEncode();
+            string b64u_check = Convert.ToBase64String(arr).Replace('+', '-').Replace('/', '_').Replace("=", "");
+            Assert.AreEqual(b64u, b64u_check);
+
+            byte[] dec = b64u.Base64UrlDecode();
+            Assert.AreEqual(arr, dec);
+        }
+
+        [Test]
+        public void TestBase64Url()
+        {
+            assertBase64UrlArray(new byte[] { });
+
+            for (int i = 0; i < 256; i++)
+                assertBase64UrlArray(new byte[] { (byte) i });
+
+            for (byte i = 5; i < 200; i += 61) // 5, 66, 127, 188
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, i, i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, i, i, i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, i, (byte) j, i, i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, i, i, (byte) j, i, i, (byte) j });
+
+            for (byte i = 5; i < 200; i += 61)
+                for (int j = 0; j < 256; j++)
+                    assertBase64UrlArray(new byte[] { i, (byte) j, i, i, i, i, i, (byte) j });
+        }
     }
 }
