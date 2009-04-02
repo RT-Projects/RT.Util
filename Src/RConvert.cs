@@ -1428,6 +1428,168 @@ namespace RT.Util
                     throw new RConvertException(value, typeof(T));
             }
         }
+
+        /// <summary>
+        /// Contains static methods to perform an Exact conversion to a nullable type.
+        /// These methods return null only if the input is null. A failed conversion
+        /// results in an <see cref="RConvertException"/>.
+        /// </summary>
+        public static class ExactToNullable
+        {
+            /// <summary>
+            /// Converts the specified object to a nullable bool using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static bool? Bool(object value)
+            {
+                if (value == null) return null;
+                else return ExactToBool(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable byte using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static byte? Byte(object value)
+            {
+                if (value == null) return null;
+                else return ExactToByte(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to an nullable sbyte using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static sbyte? SByte(object value)
+            {
+                if (value == null) return null;
+                else return ExactToSByte(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable short using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static short? Short(object value)
+            {
+                if (value == null) return null;
+                else return ExactToShort(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable ushort using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static ushort? UShort(object value)
+            {
+                if (value == null) return null;
+                else return ExactToUShort(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to an nullable int using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static int? Int(object value)
+            {
+                if (value == null) return null;
+                else return ExactToInt(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable uint using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static uint? UInt(object value)
+            {
+                if (value == null) return null;
+                else return ExactToUInt(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable long using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static long? Long(object value)
+            {
+                if (value == null) return null;
+                else return ExactToLong(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable ulong using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static ulong? ULong(object value)
+            {
+                if (value == null) return null;
+                else return ExactToULong(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable float using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static float? Float(object value)
+            {
+                if (value == null) return null;
+                else return ExactToFloat(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable double using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static double? Double(object value)
+            {
+                if (value == null) return null;
+                else return ExactToDouble(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable decimal using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static decimal? Decimal(object value)
+            {
+                if (value == null) return null;
+                else return ExactToDecimal(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable DateTime using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static DateTime? DateTime(object value)
+            {
+                if (value == null) return null;
+                else return ExactToDateTime(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable char using the Exact conversion.
+            /// Returns null if value is null.
+            /// Throws an <see>RConvertException</see> if the Exact conversion fails.
+            /// </summary>
+            public static char? Char(object value)
+            {
+                if (value == null) return null;
+                else return ExactToChar(value);
+            }
+        }
     }
 
     /// <summary>

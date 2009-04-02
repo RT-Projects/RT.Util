@@ -1398,5 +1398,28 @@ namespace RT.Util
         #endregion
 
         #endregion
+
+        [Test]
+        public void TestNullable()
+        {
+            Assert.AreEqual(RConvert.ExactToNullable.Int("-872").Value, -872);
+            Assert.IsNull(RConvert.ExactToNullable.Int(null));
+
+            Assert.AreEqual(RConvert.ExactToNullable.ULong("872").Value, 872);
+            Assert.IsNull(RConvert.ExactToNullable.ULong(null));
+
+            try
+            {
+                Assert.IsNull(RConvert.ExactToNullable.Int("blah"));
+                Assert.Fail("Exception expected");
+            }
+            catch { }
+            try
+            {
+                Assert.IsNull(RConvert.ExactToNullable.ULong("-872"));
+                Assert.Fail("Exception expected");
+            }
+            catch { }
+        }
     }
 }
