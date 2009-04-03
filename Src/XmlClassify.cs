@@ -137,7 +137,7 @@ namespace RT.Util.XmlClassify
                         else if (t.IsEnum)
                             field.SetValue(ret, Enum.Parse(t, attr.Value));
                         else    // bool, DateTime, integer types, decimal types
-                            try { field.SetValue(ret, parseValue(t, attr.Value)); }
+                            try { field.SetValue(ret, RConvert.Exact(t, attr.Value)); }
                             catch { }
                     }
                     catch { }
@@ -212,7 +212,7 @@ namespace RT.Util.XmlClassify
                                 if (keyType != null)
                                 {
                                     var keyAttr = itemTag.Attribute("key");
-                                    try { key = isIntegerType(keyType) ? (object) parseValue(keyType, keyAttr.Value) : keyAttr.Value; }
+                                    try { key = isIntegerType(keyType) ? RConvert.Exact(keyType, keyAttr.Value) : keyAttr.Value; }
                                     catch { continue; }
                                 }
                                 var nullAttr = itemTag.Attribute("null");
@@ -225,7 +225,7 @@ namespace RT.Util.XmlClassify
                                         try
                                         {
                                             value = field.FieldType == typeof(bool) || field.FieldType == typeof(DateTime) || isIntegerType(field.FieldType) || isDecimalType(field.FieldType)
-                                                ? (object) parseValue(field.FieldType, valueAttr.Value)
+                                                ? RConvert.Exact(field.FieldType, valueAttr.Value)
                                                 : field.FieldType.IsEnum ? Enum.Parse(field.FieldType, valueAttr.Value) : valueAttr.Value;
                                         }
                                         catch { value = valueType.IsValueType ? valueType.GetConstructor(new Type[] { }).Invoke(new object[] { }) : null; }
@@ -444,12 +444,6 @@ namespace RT.Util.XmlClassify
             }
 
             return obj.ToString();
-        }
-
-        private static object parseValue(Type type, string strToParse)
-        {
-            var met = type.GetMethods().Where(m => m.Name == "Parse" && m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
-            return met.Invoke(null, new object[] { strToParse });
         }
 
         private static bool isIntegerType(Type t)

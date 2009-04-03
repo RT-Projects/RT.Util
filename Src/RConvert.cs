@@ -1386,7 +1386,51 @@ namespace RT.Util
         #endregion
 
         /// <summary>
-        /// Converts the value to type T using the Exact conversion. Throws an
+        /// Converts the value to type "t" using the Exact conversion. Throws an
+        /// <see cref="RConvertException"/> if the Exact conversion fails.
+        /// </summary>
+        public static object Exact(Type t, object value)
+        {
+            TypeCode code = Type.GetTypeCode(t);
+            switch (code)
+            {
+                case TypeCode.Boolean:
+                    return ExactToBool(value);
+                case TypeCode.Byte:
+                    return ExactToByte(value);
+                case TypeCode.SByte:
+                    return ExactToSByte(value);
+                case TypeCode.Int16:
+                    return ExactToShort(value);
+                case TypeCode.UInt16:
+                    return ExactToUShort(value);
+                case TypeCode.Int32:
+                    return ExactToInt(value);
+                case TypeCode.UInt32:
+                    return ExactToUInt(value);
+                case TypeCode.Int64:
+                    return ExactToLong(value);
+                case TypeCode.UInt64:
+                    return ExactToULong(value);
+                case TypeCode.Single:
+                    return ExactToFloat(value);
+                case TypeCode.Double:
+                    return ExactToDouble(value);
+                case TypeCode.Decimal:
+                    return ExactToDecimal(value);
+                case TypeCode.DateTime:
+                    return ExactToDateTime(value);
+                case TypeCode.Char:
+                    return ExactToChar(value);
+                case TypeCode.String:
+                    return ExactToString(value);
+                default:
+                    throw new RConvertException(value, t);
+            }
+        }
+
+        /// <summary>
+        /// Converts the value to type "T" using the Exact conversion. Throws an
         /// <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
         public static T Exact<T>(object value)
