@@ -164,6 +164,54 @@ namespace RT.Util.Paths
         }
 
         /// <summary>
+        /// Returns true only if the specified path is included as well as all
+        /// subfiles and subpaths, recursively.
+        /// </summary>
+        public bool IsPathIncludedWithAllSubpaths(string path)
+        {
+            // This is true if and only if the nearest path above is Include
+            // and there are no paths (either Incl. or Excl.) below this path
+            int mindist = int.MaxValue;
+            int mindistn = -1;
+            for (int i=0; i<Paths.Count; i++)
+            {
+                int d = PathUtil.PathLevelDistance(Paths[i].Path, path);
+
+                if (d == int.MaxValue)
+                    continue;
+                else if (d < 0)
+                    return false;
+
+                if (d<mindist)
+                {
+                    mindist = d;
+                    mindistn = i;
+                }
+            }
+            if (mindistn==-1)
+                return false;
+            else
+                return Paths[mindistn].Include;
+        }
+
+        /// <summary>
+        /// Returns true only if none of the immediate children of the specified
+        /// path are to be excluded from the scan.
+        /// 
+        /// Note: this doesn't check whether the specified path itself is included,
+        /// nor whether the excluded directories actually exist. The files are currently
+        /// always listed so this only checks to see whether there are any immediate
+        /// exclude paths, that's it.
+        /// </summary>
+        public bool AllImmediateChildrenIncluded(string path)
+        {
+            for (int i = 0; i < Paths.Count; i++)
+                if (PathUtil.PathLevelDistance(path, Paths[i].Path) == 1 && !Paths[i].Include)
+                    return false;
+            return true;
+        }
+
+        /// <summary>
         /// Returns the number of paths marked as "include". Mainly intended to verify
         /// that there is at least one path included.
         /// </summary>
@@ -179,13 +227,29 @@ namespace RT.Util.Paths
             }
         }
 
-        #region Enumeration & failed files list
+        #region Enumeration & failed files list/event
+
+        /// <summary>
+        /// If assigned, this delegate will be called whenever a directory cannot be
+        /// enumerated, e.g. due to being unreadable etc. This function must return
+        /// "false" in order to terminate scanning or "true" to continue.
+        /// </summary>
+        public Func<string, string, bool> ReportFail = null;
 
         /// <summary>
         /// Paths which could not be read while enumerating PathManager. This is automatically
         /// cleared for each enumeration.
         /// </summary>
         public List<string> FailedFiles;
+
+        private bool DoReportFail(string DirName, string Message)
+        {
+            FailedFiles.Add(DirName);
+            if (ReportFail == null)
+                return true;
+            else
+                return ReportFail(DirName, Message);
+        }
 
         /// <summary>
         /// Enumerates all files and folders visible to the PathManager, according to which
@@ -225,10 +289,12 @@ namespace RT.Util.Paths
                         files = curDir.GetFiles();
                     dirs = curDir.GetDirectories();
                 }
-                catch
+                catch (Exception E)
                 {
-                    FailedFiles.Add(curDir.FullName);
-                    continue;
+                    if (DoReportFail(curDir.FullName, E.Message))
+                        continue;
+                    else
+                        yield break;
                 }
 
                 // Files

@@ -55,22 +55,42 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// "Normalises" the path so that it ends with the Directory separator
-        /// character. Does not check the path or otherwise guarantee it's
-        /// valid.
+		/// Returns a normalized copy of the specified path.
+        /// A "normalized path" is a path to a directory (not a file!) which
+        /// ALWAYS ends with a slash. Cf. <see>NormName</see>.
+		///
+        /// <para>Returns null for null inputs.</para>
         /// </summary>
         /// <param name="path">Path to be normalised</param>
         /// <returns>Normalised version of Path</returns>
         public static string NormPath(string path)
         {
             if (path == null)
-                return "";
+                return null;
             else if (path.Length == 0)
-                return "";
+                return "" + Path.DirectorySeparatorChar;
             else if (path[path.Length - 1] == Path.DirectorySeparatorChar)
                 return path;
             else
                 return path + Path.DirectorySeparatorChar;
+        }
+
+        /// <summary>
+        /// A "normalized name" is file or directory name which NEVER
+        /// ends with a slash. Cf. <see>NormPath</see>. This includes
+        /// the root directory on Windows, which normalised name is "C:"
+        /// and unix, where it is "".
+		///
+        /// <para>Returns null for null inputs.</para>
+        /// </summary>
+        public static string NormName(string filedir)
+        {
+            if (filedir == null || filedir.Length == 0)
+                return null;
+            else if (filedir[filedir.Length - 1] == Path.DirectorySeparatorChar)
+                return filedir;
+            else
+                return filedir + Path.DirectorySeparatorChar;
         }
 
         /// <summary>
