@@ -43,6 +43,7 @@ namespace RT.Util.XmlClassify
         private class classWithDict
         {
             public Dictionary<string, string> Dict = new Dictionary<string, string>();
+            public Dictionary<string, List<string>> DictLists = new Dictionary<string, List<string>>();
         }
 
         private class nestedClass
@@ -108,10 +109,14 @@ namespace RT.Util.XmlClassify
             var clsEx = new classWithDict();
             clsEx.Dict.Add("abc", "def");
             clsEx.Dict.Add("key", "value");
+            clsEx.DictLists.AddSafe("abc", "def");
+            clsEx.DictLists.AddSafe("key", "value");
+            clsEx.DictLists.AddSafe("key", "value2");
             var xel = XmlClassify.ObjectToXElement(clsEx);
             var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel);
 
             assertDict(clsEx.Dict, clsAc.Dict);
+            assertDictList(clsEx.DictLists, clsAc.DictLists);
         }
 
         [Test]
@@ -178,6 +183,16 @@ namespace RT.Util.XmlClassify
             {
                 Assert.IsTrue(actual.ContainsKey(key));
                 Assert.AreEqual(expected[key], actual[key]);
+            }
+        }
+
+        private void assertDictList<K, V>(Dictionary<K, List<V>> expected, Dictionary<K, List<V>> actual)
+        {
+            Assert.AreEqual(expected.Count, actual.Count);
+            foreach (var key in expected.Keys)
+            {
+                Assert.IsTrue(actual.ContainsKey(key));
+                Assert.IsTrue(expected[key].SequenceEqual(actual[key]));
             }
         }
 
