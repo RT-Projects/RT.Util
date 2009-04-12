@@ -229,7 +229,7 @@ namespace RT.Util
             if (exception.InnerException != null)
                 Exception(exception.InnerException, verbosity, type);
 
-            Log(verbosity, type, "<{0}>", exception.GetType().ToString());
+            Log(verbosity, type, "<{0}>: {1}", exception.GetType().ToString(), exception.Message);
             Log(verbosity, type, exception.StackTrace);
         }
     }

@@ -318,10 +318,11 @@ namespace RT.Util
         /// </summary>
         public void ErrorIfPositionalArgsCountNot(int count)
         {
+            var arguments = OptPositional.Count == 0 ? "none" : ("\"" + OptPositional.Join("\", \"") + "\"");
             if (count == 0 && OptPositional.Count > 0)
-                Error("No positional arguments are expected. Offending arguments: \"{0}\"".Fmt(OptPositional.Join("\", \"")));
+                Error("No positional arguments are expected. Received arguments: {0}".Fmt(arguments));
             else if (OptPositional.Count != count)
-                Error("Exactly {0} positional argument(s) expected. Got {1}: \"{2}\"".Fmt(count, OptPositional.Count, OptPositional.Join("\", \"")));
+                Error("Exactly {0} positional argument(s) expected. Received arguments: {1}".Fmt(count, arguments));
         }
 
         /// <summary>
@@ -488,6 +489,7 @@ namespace RT.Util
             //
             // Print a table of options and their descriptions
             //
+            bool anyPrintableOptions = false;
             TextTable table = new TextTable();
             int row = 0;
             for (int i = 0; i < _byDefineOrder.Count; i++)
@@ -504,6 +506,8 @@ namespace RT.Util
                 }
                 else
                 {
+                    anyPrintableOptions = true;
+
                     if (option.TinyName != null)
                         table[row, 0] = "-" + option.TinyName;
 
@@ -520,10 +524,13 @@ namespace RT.Util
             table.SetAutoSize(2, true);
 
             _printer.PrintLine("");
-            _printer.PrintLine("Available options:");
-            _printer.PrintLine("");
+            if (anyPrintableOptions)
+            {
+                _printer.PrintLine("Available options:");
+                _printer.PrintLine("");
 
-            _printer.PrintLine(table.GetText(4, _printer.MaxWidth - 5, 3, false));
+                _printer.PrintLine(table.GetText(4, _printer.MaxWidth - 5, 3, false));
+            }
         }
 
         #endregion
