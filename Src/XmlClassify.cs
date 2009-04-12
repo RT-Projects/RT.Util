@@ -143,7 +143,7 @@ namespace RT.Util.XmlClassify
                 {
                     var subtags = elem.Elements(rFieldName);
                     if (!subtags.Any()) continue;
-                    var retObj = bultinFromXElement(field.FieldType, subtags.First(), rFieldName, baseDir, typeof(T).FullName + "." + field.Name, field.GetValue(ret));
+                    var retObj = builtinFromXElement(field.FieldType, subtags.First(), rFieldName, baseDir, typeof(T).FullName + "." + field.Name, field.GetValue(ret));
                     if (retObj != null)
                         field.SetValue(ret, retObj);
                 }
@@ -151,7 +151,7 @@ namespace RT.Util.XmlClassify
             return ret;
         }
 
-        private static object bultinFromXElement(Type objectType, XElement elem, string rFieldName, string baseDir, string debugType, object curValue)
+        private static object builtinFromXElement(Type objectType, XElement elem, string rFieldName, string baseDir, string debugType, object curValue)
         {
             if (objectType == typeof(XElement))
                 return elem.Elements().FirstOrDefault();
@@ -227,8 +227,7 @@ namespace RT.Util.XmlClassify
                             value = itemTag.Elements().FirstOrDefault();
                         else
                         {
-                            // private static object bultinFromXElement(Type objectType, XElement elem, string rFieldName, string baseDir, string debugType)
-                            MethodInfo xmlMethod = typeof(XmlClassify).GetMethod("bultinFromXElement", BindingFlags.NonPublic | BindingFlags.Static, null,
+                            MethodInfo xmlMethod = typeof(XmlClassify).GetMethod("builtinFromXElement", BindingFlags.NonPublic | BindingFlags.Static, null,
                                 new Type[] { typeof(Type), typeof(XElement), typeof(string), typeof(string), typeof(string), typeof(object) }, null);
                             value = xmlMethod.Invoke(null, new object[] { valueType, itemTag, "item", baseDir, debugType + ".<Value>", null });
                         }
@@ -382,7 +381,7 @@ namespace RT.Util.XmlClassify
             if (valueType == null)
             {
                 var xmlMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectToXElement" && mi.GetParameters().Count() == 3).First();
-                // fieldType is not an array or collection or dictionary; use recursion to store the object
+                // objectType is not an array or collection or dictionary; use recursion to store the object
                 return (XElement) xmlMethod.MakeGenericMethod(objectType).Invoke(null, new object[] { theObject, baseDir, rFieldName });
             }
             else
@@ -414,7 +413,6 @@ namespace RT.Util.XmlClassify
                     else
                     {
                         var xmlMethod = typeof(XmlClassify).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(mi => mi.Name == "complexObjectToXElement" && mi.GetParameters().Count() == 5).First();
-                        // private static XElement complexObjectToXElement(Type objectType, object theObject, string baseDir, string rFieldName, string debugFieldName)
                         subtag = (XElement) xmlMethod.Invoke(null, new object[] { valueType, value, baseDir, "item", debugFieldName + ".<Value>" });
                         if (key != null) subtag.SetAttributeValue("key", key);
                     }
