@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Xml.Linq;
-using RT.Util.ExtensionMethods;
 using NUnit.Framework;
 
 namespace RT.Util.XmlClassify
@@ -38,6 +32,12 @@ namespace RT.Util.XmlClassify
                 Assert.AreEqual(ADouble, actual.ADouble);
                 Assert.AreEqual(ADateTime, actual.ADateTime);
             }
+        }
+
+        private class classWithList
+        {
+            public List<string> List = new List<string>();
+            public List<Dictionary<string, string>> ListDicts = new List<Dictionary<string, string>>();
         }
 
         private class classWithDict
@@ -104,14 +104,35 @@ namespace RT.Util.XmlClassify
         }
 
         [Test]
+        public void TestClassWithList()
+        {
+            var clsEx = new classWithList();
+            clsEx.List.Add("abc");
+            clsEx.List.Add(null);
+            clsEx.List.Add("def");
+            clsEx.ListDicts.Add(new Dictionary<string, string>());
+            clsEx.ListDicts.Add(null);
+            clsEx.ListDicts.Add(new Dictionary<string, string>() { { "abc", "def" }, { "key", "value" }, { "null", null } });
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<classWithList>(xel);
+
+            assertList(clsEx.List, clsAc.List);
+            assertListDict(clsEx.ListDicts, clsAc.ListDicts);
+        }
+
+        [Test]
         public void TestClassWithDict()
         {
             var clsEx = new classWithDict();
             clsEx.Dict.Add("abc", "def");
             clsEx.Dict.Add("key", "value");
-            clsEx.DictLists.AddSafe("abc", "def");
-            clsEx.DictLists.AddSafe("key", "value");
-            clsEx.DictLists.AddSafe("key", "value2");
+            clsEx.Dict.Add("null", null);
+            clsEx.DictLists = new Dictionary<string, List<string>>() {
+                { "null", null },
+                { "empty", new List<string>() },
+                { "single", new List<string>() { "def" } },
+                { "multple", new List<string>() { "one", null, "three" } }
+            };
             var xel = XmlClassify.ObjectToXElement(clsEx);
             var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel);
 
@@ -120,7 +141,7 @@ namespace RT.Util.XmlClassify
         }
 
         [Test]
-        public void TestClassWithXML()
+        public void TestClassWithXml()
         {
             var clsEx = new xmlClass()
             {
@@ -178,6 +199,9 @@ namespace RT.Util.XmlClassify
 
         private void assertDict<K, V>(Dictionary<K, V> expected, Dictionary<K, V> actual)
         {
+            if (expected == null && actual == null)
+                return;
+            Assert.IsTrue(expected != null && actual != null);
             Assert.AreEqual(expected.Count, actual.Count);
             foreach (var key in expected.Keys)
             {
@@ -186,14 +210,37 @@ namespace RT.Util.XmlClassify
             }
         }
 
+        private void assertList<V>(List<V> expected, List<V> actual)
+        {
+            if (expected == null && actual == null)
+                return;
+            Assert.IsTrue(expected != null && actual != null);
+            Assert.AreEqual(expected.Count, actual.Count);
+            for (int i = 0; i < expected.Count; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
         private void assertDictList<K, V>(Dictionary<K, List<V>> expected, Dictionary<K, List<V>> actual)
         {
+            if (expected == null && actual == null)
+                return;
+            Assert.IsTrue(expected != null && actual != null);
             Assert.AreEqual(expected.Count, actual.Count);
             foreach (var key in expected.Keys)
             {
                 Assert.IsTrue(actual.ContainsKey(key));
-                Assert.IsTrue(expected[key].SequenceEqual(actual[key]));
+                assertList(expected[key], actual[key]);
             }
+        }
+
+        private void assertListDict<K, V>(List<Dictionary<K, V>> expected, List<Dictionary<K, V>> actual)
+        {
+            if (expected == null && actual == null)
+                return;
+            Assert.IsTrue(expected != null && actual != null);
+            Assert.AreEqual(expected.Count, actual.Count);
+            for (int i = 0; i < expected.Count; i++)
+                assertDict(expected[i], actual[i]);
         }
 
         [Test]
