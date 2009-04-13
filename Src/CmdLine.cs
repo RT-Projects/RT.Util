@@ -770,7 +770,7 @@ namespace RT.Util
 
         public override int MaxWidth
         {
-            get { return Console.WindowWidth; }
+            get { return ConsoleUtil.WrapWidth(); }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }

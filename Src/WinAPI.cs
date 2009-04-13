@@ -52,6 +52,8 @@ namespace RT.Util
             All = 0x0000001F
         }
 
+        public static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+
         // Low-Level Keyboard Constants
         public const int HC_ACTION = 0;
         public const int LLKHF_EXTENDED = 0x1;
@@ -70,6 +72,17 @@ namespace RT.Util
         public const int SWP_NOMOVE = 2;
         public const int SWP_NOSIZE = 1;
         public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE;
+
+        // GetStdHandle constants
+        public const int STD_INPUT_HANDLE = -10;
+        public const int STD_OUTPUT_HANDLE = -11;
+        public const int STD_ERROR_HANDLE = -12;
+
+        // GetFileType constants
+        public const int FILE_TYPE_UNKNOWN = 0x0000;
+        public const int FILE_TYPE_DISK = 0x0001;
+        public const int FILE_TYPE_CHAR = 0x0002;
+        public const int FILE_TYPE_PIPE = 0x0003;
 
         #endregion
 
@@ -157,6 +170,12 @@ namespace RT.Util
 
         [DllImport("user32.dll")]
         public static extern int GetLastError();
+
+        [DllImport("kernel32.dll")]
+        public static extern uint GetFileType(IntPtr hFile);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GetStdHandle(int nStdHandle);
 
         /// <summary>
         /// Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null

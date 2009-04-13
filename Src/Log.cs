@@ -297,7 +297,7 @@ namespace RT.Util
                 {
                     string indent = new string(' ', fmtInfo.Length);
                     bool first = true;
-                    foreach (var line in fmtText.WordWrap(Console.WindowWidth - 1 - fmtInfo.Length))
+                    foreach (var line in fmtText.WordWrap(ConsoleUtil.WrapWidth() - 1 - fmtInfo.Length))
                     {
                         consoleStream.Write(first ? fmtInfo : indent);
                         first = false;
