@@ -147,6 +147,15 @@ namespace RT.Util.Geometry
             return X * other.X + Y * other.Y;
         }
 
+        /// <summary>
+        /// Returns the Z-component of the cross product of this vector with the other one.
+        /// Note that the X and Y components of a cross product of 2-vectors are always zero.
+        /// </summary>
+        public double CrossZ(PointD other)
+        {
+            return X * other.Y - Y * other.X;
+        }
+
         /// <summary>Returns a vector normal to this one.</summary>
         public PointD Normal()
         {
