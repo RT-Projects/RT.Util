@@ -11,11 +11,11 @@ namespace RT.Util.Forms
     /// </summary>
     public class ManagedForm : Form
     {
-        private FormWindowState PrevWindowState;
-        private bool StateMaximized;
-        private bool StateMinimized;
-        private int FNormalWidth, FNormalHeight;
-        private int FNormalLeft, FNormalTop;
+        private FormWindowState _prevWindowState;
+        private bool _stateMaximized;
+        private bool _stateMinimized;
+        private int _normalWidth, _normalHeight;
+        private int _normalLeft, _normalTop;
 
         /// <summary>Initialises a new managed form.</summary>
         public ManagedForm()
@@ -29,21 +29,21 @@ namespace RT.Util.Forms
             // Move event: keeps track of normal position
             Move += new EventHandler(ManagedForm_Move);
 
-            PrevWindowState = WindowState;
+            _prevWindowState = WindowState;
 
             switch (WindowState)
             {
                 case FormWindowState.Minimized:
-                    StateMinimized = true;
-                    StateMaximized = false; // (guessing?)
+                    _stateMinimized = true;
+                    _stateMaximized = false; // (guessing?)
                     break;
                 case FormWindowState.Maximized:
-                    StateMinimized = false;
-                    StateMaximized = true;
+                    _stateMinimized = false;
+                    _stateMaximized = true;
                     break;
                 case FormWindowState.Normal:
-                    StateMinimized = false;
-                    StateMaximized = false;
+                    _stateMinimized = false;
+                    _stateMaximized = false;
                     break;
             }
         }
@@ -88,41 +88,41 @@ namespace RT.Util.Forms
             // Update normal size
             if (WindowState == FormWindowState.Normal)
             {
-                FNormalWidth = Width;
-                FNormalHeight = Height;
-                FNormalLeft = Left;
-                FNormalTop = Top;
+                _normalWidth = Width;
+                _normalHeight = Height;
+                _normalLeft = Left;
+                _normalTop = Top;
             }
 
-            if (WindowState != PrevWindowState)
+            if (WindowState != _prevWindowState)
             {
                 // Set new state
                 switch (WindowState)
                 {
                     case FormWindowState.Minimized:
-                        StateMinimized = true;
+                        _stateMinimized = true;
                         break;
                     case FormWindowState.Maximized:
-                        StateMaximized = true;
+                        _stateMaximized = true;
                         break;
                     case FormWindowState.Normal:
                         // Fix for maximize while minimized
-                        if (StateMaximized && PrevWindowState == FormWindowState.Minimized)
+                        if (_stateMaximized && _prevWindowState == FormWindowState.Minimized)
                             WindowState = FormWindowState.Maximized;
                         else
-                            StateMaximized = false;
+                            _stateMaximized = false;
                         break;
                 }
 
                 // Unset old state
-                switch (PrevWindowState)
+                switch (_prevWindowState)
                 {
                     case FormWindowState.Minimized:
-                        StateMinimized = false;
+                        _stateMinimized = false;
                         break;
                 }
 
-                PrevWindowState = WindowState;
+                _prevWindowState = WindowState;
             }
         }
 
@@ -131,8 +131,8 @@ namespace RT.Util.Forms
             // Update normal size
             if (WindowState == FormWindowState.Normal)
             {
-                FNormalLeft = Left;
-                FNormalTop = Top;
+                _normalLeft = Left;
+                _normalTop = Top;
             }
         }
 
@@ -143,11 +143,11 @@ namespace RT.Util.Forms
         {
             get
             {
-                return StateMinimized;
+                return _stateMinimized;
             }
             set
             {
-                if (StateMinimized == value)
+                if (_stateMinimized == value)
                     return;
 
                 if (value)
@@ -155,9 +155,9 @@ namespace RT.Util.Forms
                     WindowState = FormWindowState.Minimized;
                 else
                     // Un-minimize
-                    WindowState = StateMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
+                    WindowState = _stateMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
 
-                StateMinimized = value;
+                _stateMinimized = value;
             }
         }
 
@@ -168,15 +168,15 @@ namespace RT.Util.Forms
         {
             get
             {
-                return StateMaximized;
+                return _stateMaximized;
             }
             set
             {
-                if (StateMaximized == value)
+                if (_stateMaximized == value)
                     return;
 
                 // Don't change the actual state if the window is minimized
-                if (!StateMinimized)
+                if (!_stateMinimized)
                 {
                     if (value)
                         // Maximize
@@ -186,29 +186,29 @@ namespace RT.Util.Forms
                         WindowState = FormWindowState.Normal;
                 }
 
-                StateMaximized = value;
+                _stateMaximized = value;
             }
         }
 
         /// <summary>
         /// Gets the width of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalWidth { get { return FNormalWidth; } }
+        public int NormalWidth { get { return _normalWidth; } }
 
         /// <summary>
         /// Gets the height of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalHeight { get { return FNormalHeight; } }
+        public int NormalHeight { get { return _normalHeight; } }
 
         /// <summary>
         /// Gets the X-coordinate of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalLeft { get { return FNormalLeft; } }
+        public int NormalLeft { get { return _normalLeft; } }
 
         /// <summary>
         /// Gets the Y-coordinate of the form when in normal state (i.e. not minimized or maximized)
         /// </summary>
-        public int NormalTop { get { return FNormalTop; } }
+        public int NormalTop { get { return _normalTop; } }
 
         /// <summary>
         /// Shows the form properly: if it is visible but minimized it will be restored
