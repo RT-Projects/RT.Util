@@ -54,7 +54,7 @@ namespace RT.Util
                 // application directory (which is the case when a normal user runs it)
                 str += "\nFile: " + sf.GetFileName() + "\nLine: " + sf.GetFileLineNumber();
 
-            DlgMessage.ShowError(str, "Internal error", "OK");
+            DlgMessage.Show(str, "Internal error", DlgType.Error, "OK");
         }
 
     }
