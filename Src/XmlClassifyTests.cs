@@ -21,6 +21,7 @@ namespace RT.Util.XmlClassify
             public ulong AULong;
             public double ADouble = 3.14;
             public DateTime ADateTime;
+            public int key = 25; // to test Dictionary keys
 
             public void AssertEqual(basicClass actual)
             {
@@ -44,6 +45,7 @@ namespace RT.Util.XmlClassify
         {
             public Dictionary<string, string> Dict = new Dictionary<string, string>();
             public Dictionary<string, List<string>> DictLists = new Dictionary<string, List<string>>();
+            public Dictionary<string, basicClass> DictClasses = new Dictionary<string, basicClass>();
         }
 
         private class nestedClass
@@ -138,6 +140,21 @@ namespace RT.Util.XmlClassify
 
             assertDict(clsEx.Dict, clsAc.Dict);
             assertDictList(clsEx.DictLists, clsAc.DictLists);
+        }
+
+        [Test]
+        public void TestDictSubclass()
+        {
+            var clsEx = new classWithDict();
+            clsEx.DictClasses.Add("test1", new basicClass());
+            clsEx.DictClasses.Add("test2", new basicClass() { AnInt = 63827, key = 429745 });
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<classWithDict>(xel);
+
+            Assert.AreEqual(clsEx.DictClasses["test1"].AnInt, clsAc.DictClasses["test1"].AnInt);
+            Assert.AreEqual(clsEx.DictClasses["test1"].key, clsAc.DictClasses["test1"].key);
+            Assert.AreEqual(clsEx.DictClasses["test2"].AnInt, clsAc.DictClasses["test2"].AnInt);
+            Assert.AreEqual(clsEx.DictClasses["test2"].key, clsAc.DictClasses["test2"].key);
         }
 
         [Test]
