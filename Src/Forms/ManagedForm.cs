@@ -9,24 +9,21 @@ namespace RT.Util.Forms
     /// <summary>
     /// A form which has all the proper minimize/restore methods
     /// </summary>
-    public class ManagedForm : Form
+    public class ManagedForm : Form, IHasSettings
     {
         private FormWindowState _prevWindowState;
         private bool _stateMaximized;
         private bool _stateMinimized;
         private int _normalWidth, _normalHeight;
         private int _normalLeft, _normalTop;
+        private Settings _settings;
 
         /// <summary>Initialises a new managed form.</summary>
         public ManagedForm()
         {
-            // Load event: registers with the FormManager
-            Load += new EventHandler(ManagedForm_Load);
-            // FormClose event: unregisters with the FormManager
-            FormClosed += new FormClosedEventHandler(ManagedForm_FormClosed);
             // SizeChanged event: keeps track of minimize/maximize and normal size
             SizeChanged += new EventHandler(ManagedForm_SizeChanged);
-            // Move event: keeps track of normal position
+            // Move event: keeps track of normal dimensions
             Move += new EventHandler(ManagedForm_Move);
 
             _prevWindowState = WindowState;
@@ -45,41 +42,6 @@ namespace RT.Util.Forms
                     _stateMinimized = false;
                     _stateMaximized = false;
                     break;
-            }
-        }
-
-        private void ManagedForm_Load(object sender, EventArgs e)
-        {
-            if (!DesignMode)
-            {
-                // Load settings
-                SettingsStore st = PrgSettings.Store;
-                string path = "Managed-Form-Settings." + this.GetType().ToString() + ".";
-                Width = st.Get(path + "Width", Width);
-                Height = st.Get(path + "Height", Height);
-                Left = st.Get(path + "Left", Screen.PrimaryScreen.WorkingArea.Width/2 - Width/2);
-                Top = st.Get(path + "Top", Screen.PrimaryScreen.WorkingArea.Height/2 - Height/2);
-                if (st.Get(path + "Maximized", false))
-                    Maximized = true;
-                // Register with the FormManager
-                FormManager.formCreated(this.GetType(), this);
-            }
-        }
-
-        private void ManagedForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            if (!DesignMode)
-            {
-                // Save settings
-                SettingsStore st = PrgSettings.Store;
-                string path = "Managed-Form-Settings." + this.GetType().ToString() + ".";
-                st.Set(path + "Width", NormalWidth);
-                st.Set(path + "Height", NormalHeight);
-                st.Set(path + "Left", NormalLeft);
-                st.Set(path + "Top", NormalTop);
-                st.Set(path + "Maximized", Maximized);
-                // Notify the form manager that this form is gone
-                FormManager.formClosed(this.GetType());
             }
         }
 
@@ -224,5 +186,98 @@ namespace RT.Util.Forms
             else
                 base.Show();
         }
+
+        #region Settings-related
+
+        /// <summary>
+        /// Holds all the settings of the <see cref="ManagedForm"/>.
+        /// </summary>
+        public class Settings
+        {
+            /// <summary>
+            /// Holds form dimensions for each screen resolution.
+            /// </summary>
+            public Dictionary<string, FormDimensions> DimensionsByRes = new Dictionary<string, FormDimensions>();
+        }
+
+        /// <summary>
+        /// Stores the size, position and maximized state of the form.
+        /// </summary>
+        public class FormDimensions
+        {
+            /// <summary>Stores the left (X) coordinate of the form when not maximized.</summary>
+            public int Left;
+            /// <summary>Stores the top (Y) coordinate of the form when not maximized.</summary>
+            public int Top;
+            /// <summary>Stores the width of the form when not maximized.</summary>
+            public int Width;
+            /// <summary>Stores the height of the form when not maximized.</summary>
+            public int Height;
+            /// <summary>Stores whether the form is maximized.</summary>
+            public bool Maximized;
+        }
+
+        /// <summary>
+        /// Tells the form to load settings from the specified instance of <see cref="Settings"/>,
+        /// and to remember this instance for later use with <see cref="SaveSettings"/>.
+        /// For more info see <see cref="IHasSettings.SetSettings"/>.
+        /// </summary>
+        public virtual void SetSettings(object settings)
+        {
+            // Boilerplate code
+            if (!(settings is Settings)) throw new ArgumentException("Argument is null or of the wrong type.");
+            else _settings = (Settings) settings;
+            // End boilerplate
+
+            try
+            {
+                var vs = SystemInformation.VirtualScreen;
+                var resolution = vs.Width + "x" + vs.Height;
+
+                FormDimensions dimensions = null;
+                if (_settings.DimensionsByRes.ContainsKey(resolution))
+                    dimensions = _settings.DimensionsByRes[resolution];
+
+                if (dimensions == null)
+                {
+                    Left = Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
+                    Top = Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
+                }
+                else
+                {
+                    Left = _normalLeft = dimensions.Left;
+                    Top = _normalTop = dimensions.Top;
+                    Width = _normalWidth = dimensions.Width;
+                    Height = _normalHeight = dimensions.Height;
+                    Maximized = dimensions.Maximized;
+                }
+            }
+            catch
+            { }
+        }
+
+        /// <summary>
+        /// Tells the form to save settings into the same instance as used in the last
+        /// call to <see cref="SetSettings"/>.
+        /// For more info see <see cref="IHasSettings.SaveSettings"/>.
+        /// </summary>
+        public virtual void SaveSettings()
+        {
+            // Boilerplate code
+            if (_settings == null) throw new InvalidOperationException("SaveSettings called before SetSettings.");
+            // End boilerplate
+
+            var vs = SystemInformation.VirtualScreen;
+            var resolution = vs.Width + "x" + vs.Height;
+            var dimensions = new FormDimensions();
+            dimensions.Left = _normalLeft;
+            dimensions.Top = _normalTop;
+            dimensions.Width = _normalWidth;
+            dimensions.Height = _normalHeight;
+            dimensions.Maximized = Maximized;
+            _settings.DimensionsByRes[resolution] = dimensions;
+        }
+
+        #endregion
     }
 }
