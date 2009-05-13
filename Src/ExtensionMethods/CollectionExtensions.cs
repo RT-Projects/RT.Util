@@ -132,5 +132,32 @@ namespace RT.Util.ExtensionMethods
             else
                 return defaultVal;
         }
+
+        /// <summary>
+        /// Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new
+        /// array containing all items from the specified index onwards.
+        /// </summary>
+        public static T[] Subarray<T>(this T[] array, int startIndex)
+        {
+            if (startIndex < 0 || startIndex > array.Length)
+                throw new ArgumentOutOfRangeException();
+            int length = array.Length - startIndex;
+            T[] result = new T[length];
+            Array.Copy(array, startIndex, result, 0, length);
+            return result;
+        }
+
+        /// <summary>
+        /// Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new
+        /// array containing "length" items from the specified index onwards.
+        /// </summary>
+        public static T[] Subarray<T>(this T[] array, int startIndex, int length)
+        {
+            if (startIndex < 0 || length < 0 || startIndex + length > array.Length)
+                throw new ArgumentOutOfRangeException();
+            T[] result = new T[length];
+            Array.Copy(array, startIndex, result, 0, length);
+            return result;
+        }
     }
 }
