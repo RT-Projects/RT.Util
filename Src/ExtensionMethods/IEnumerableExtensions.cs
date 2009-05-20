@@ -113,5 +113,168 @@ namespace RT.Util.ExtensionMethods
                 yield return e;
             yield return element;
         }
+
+        /// <summary>
+        /// This does the same as .Order(), but it uses HeapSort instead of QuickSort.
+        /// This is faster if you intend to extract only the first few items using .Take().
+        /// </summary>
+        /// <param name="source">The sequence to be sorted.</param>
+        /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
+        public static IEnumerable<T> OrderTake<T>(this IEnumerable<T> source)
+        {
+            return OrderTake(source, Comparer<T>.Default);
+        }
+
+        /// <summary>
+        /// This does the same as .Order(), but it uses HeapSort instead of QuickSort.
+        /// This is faster if you intend to extract only the first few items using .Take().
+        /// </summary>
+        /// <param name="source">The sequence to be sorted.</param>
+        /// <param name="comparer">An instance of <see cref="IComparer&lt;T&gt;"/> specifying the comparison to use on the items.</param>
+        /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
+        public static IEnumerable<T> OrderTake<T>(this IEnumerable<T> source, IComparer<T> comparer)
+        {
+            return new MyOrderedEnumerable<T>(source, comparer);
+        }
+
+        /// <summary>Used by <see cref="MyOrderedEnumerable&lt;T&gt;"/>,
+        /// and thus indirectly by <see cref="IEnumerableExtensions.OrderTake&lt;T&gt;(IEnumerable&lt;T&gt;)"/>.</summary>
+        private class MyOrderedEnumerator<T> : IEnumerator<T>
+        {
+            private T[] _heap;
+            private T _current;
+            private int _heapSize;
+            private IComparer<T> _comparer;
+            public MyOrderedEnumerator(IEnumerable<T> source, IComparer<T> comparer)
+            {
+                _heap = source.ToArray();
+                _comparer = comparer;
+                Reset();
+            }
+
+            public T Current { get { return _current; } }
+            object System.Collections.IEnumerator.Current { get { return _current; } }
+            public void Dispose() { }
+
+            public bool MoveNext()
+            {
+                if (_heapSize < 1)
+                    return false;
+                _current = _heap[0];
+                _heapSize--;
+                if (_heapSize > 0)
+                {
+                    T t = _heap[_heapSize];
+                    _heap[_heapSize] = _current;
+                    _heap[0] = t;
+                    int index = 0;
+                    while (index < _heapSize / 2)
+                        index = heapifyElement(index);
+                }
+                return true;
+            }
+
+            public void Reset()
+            {
+                _heapSize = _heap.Length;
+                for (int i = _heapSize / 2 - 1; i >= 0; i--)
+                {
+                    var index = i;
+                    while (index < _heapSize / 2)
+                        index = heapifyElement(index);
+                }
+            }
+
+            private int heapifyElement(int index)
+            {
+                if (2 * index + 2 > _heapSize)
+                    return _heapSize;
+                int compareIndex;
+                if (2 * index + 2 == _heapSize)
+                    compareIndex = 2 * index + 1;
+                else
+                    compareIndex = 2 * index + (_comparer.Compare(_heap[2 * index + 1], _heap[2 * index + 2]) < 0 ? 1 : 2);
+                if (_comparer.Compare(_heap[index], _heap[compareIndex]) > 0)
+                {
+                    T t = _heap[index];
+                    _heap[index] = _heap[compareIndex];
+                    _heap[compareIndex] = t;
+                    return compareIndex;
+                }
+                return _heapSize;
+            }
+        }
+
+        /// <summary>Used by <see cref="IEnumerableExtensions.OrderTake&lt;T&gt;(IEnumerable&lt;T&gt;)"/>.</summary>
+        private class MyOrderedEnumerable<T> : IEnumerable<T>
+        {
+            private IEnumerable<T> _original;
+            private IComparer<T> _comparer;
+
+            public MyOrderedEnumerable(IEnumerable<T> original, IComparer<T> comparer)
+            {
+                _original = original;
+                _comparer = comparer;
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return new MyOrderedEnumerator<T>(_original, _comparer);
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+        }
+
+        /// <summary>
+        /// Returns all permutations of the input IEnumerable&lt;T&gt;.
+        /// </summary>
+        /// <param name="items">The list of items to permute.</param>
+        /// <returns>IEnumerable&lt;IEnumerable&lt;T&gt;&gt; containing all permutations of the input IEnumerable&lt;T&gt;.</returns>
+        public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> source)
+        {
+            // Ensure that the source IEnumerable is evaluated only once
+            return permutations(source.ToArray());
+        }
+
+        private static IEnumerable<IEnumerable<T>> permutations<T>(IEnumerable<T> source)
+        {
+            var c = source.Count();
+            if (c == 1)
+                yield return source;
+            else
+                for (int i = 0; i < c; i++)
+                    foreach (var p in permutations(source.Take(i).Concat(source.Skip(i + 1))))
+                        yield return source.Skip(i).Take(1).Concat(p);
+        }
+
+        /// <summary>
+        /// Returns all subsequences of the input IEnumerable&lt;T&gt;.
+        /// </summary>
+        /// <param name="source">The sequence of items to generate subsequences of.</param>
+        /// <returns>IEnumerable&lt;IEnumerable&lt;T&gt;&gt; containing all subsequences of the input IEnumerable&lt;T&gt;.</returns>
+        public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source)
+        {
+            // Ensure that the source IEnumerable is evaluated only once
+            return subsequences(source.ToArray());
+        }
+
+        private static IEnumerable<IEnumerable<T>> subsequences<T>(IEnumerable<T> source)
+        {
+            if (source.Any())
+            {
+                foreach (var comb in subsequences(source.Skip(1)))
+                {
+                    yield return comb;
+                    yield return source.Take(1).Concat(comb);
+                }
+            }
+            else
+            {
+                yield return Enumerable.Empty<T>();
+            }
+        }
     }
 }
