@@ -231,7 +231,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns all permutations of the input IEnumerable&lt;T&gt;.
         /// </summary>
-        /// <param name="items">The list of items to permute.</param>
+        /// <param name="source">The list of items to permute.</param>
         /// <returns>IEnumerable&lt;IEnumerable&lt;T&gt;&gt; containing all permutations of the input IEnumerable&lt;T&gt;.</returns>
         public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> source)
         {
