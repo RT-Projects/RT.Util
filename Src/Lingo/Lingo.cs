@@ -104,7 +104,7 @@ namespace RT.Util
         /// <param name="translation">Object containing the translations. Use [TranslationDebug] attribute on the class you use for this.</param>
         public static void TranslateControl(Control control, object translation)
         {
-            translateControl(control, translation, "");
+            translateControl(control, translation);
         }
 
         private static string translate(string key, object translation, object control)
@@ -126,55 +126,51 @@ namespace RT.Util
             return null;
         }
 
-        private static void translateControl(Control control, object translation, string prefix)
+        private static void translateControl(Control control, object translation)
         {
             if (control == null)
                 return;
 
-            string add = "";
             if (!string.IsNullOrEmpty(control.Name))
             {
-                add = control.Name + "_";
                 if (!string.IsNullOrEmpty(control.Text) && (!(control.Tag is string) || ((string) control.Tag != "notranslate")))
                 {
-                    string translated = translate(prefix + control.Name, translation, control);
+                    string translated = translate(control.Name, translation, control);
                     if (translated != null)
                         control.Text = translated;
 #if DEBUG
                     else
-                        setMissingTranslation(translation, prefix + control.Name, control.Text);
+                        setMissingTranslation(translation, control.Name, control.Text);
 #endif
                 }
             }
 
             if (control is ToolStrip)
                 foreach (ToolStripItem tsi in ((ToolStrip) control).Items)
-                    translateToolStripItem(tsi, translation, prefix + add);
+                    translateToolStripItem(tsi, translation);
             foreach (Control subcontrol in control.Controls)
-                translateControl(subcontrol, translation, prefix + add);
+                translateControl(subcontrol, translation);
         }
 
-        private static void translateToolStripItem(ToolStripItem tsi, object translation, string prefix)
+        private static void translateToolStripItem(ToolStripItem tsi, object translation)
         {
-            string add = "";
             if (!string.IsNullOrEmpty(tsi.Name))
             {
-                add = tsi.Name + "_";
                 if (!string.IsNullOrEmpty(tsi.Text) && (!(tsi.Tag is string) || ((string) tsi.Tag != "notranslate")))
                 {
-                    string translated = translate(prefix + tsi.Name, translation, tsi);
+                    string translated = translate(tsi.Name, translation, tsi);
                     if (translated != null)
                         tsi.Text = translated;
 #if DEBUG
                     else
-                        setMissingTranslation(translation, prefix + tsi.Name, tsi.Text);
+                        setMissingTranslation(translation, tsi.Name, tsi.Text);
 #endif
                 }
             }
             if (tsi is ToolStripDropDownItem)
             {
                 foreach (ToolStripItem subitem in ((ToolStripDropDownItem) tsi).DropDownItems)
-                    translateToolStripItem(subitem, translation, prefix + add);
+                    translateToolStripItem(subitem, translation);
             }
         }
 
