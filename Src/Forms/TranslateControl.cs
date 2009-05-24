@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.IO;
 using System.Text.RegularExpressions;
+using RT.Util.Collections;
 
 namespace RT.Util.Forms
 {
@@ -37,49 +38,92 @@ namespace RT.Util.Forms
             translateControl(control, translation, "");
         }
 
-        private static void translateControl(Control control, object translation, string prefix)
+        private static string translate(string key, object translation, object control)
         {
             var translationType = translation.GetType();
+
+            FieldInfo field = translationType.GetField(key);
+            if (field != null)
+                return field.GetValue(translation).ToString();
+
+            PropertyInfo property = translationType.GetProperty(key);
+            if (property != null)
+                return property.GetValue(translation, null).ToString();
+
+            MethodInfo method = translationType.GetMethod(key, new Type[] { typeof(Control) });
+            if (method != null)
+                return method.Invoke(translation, new object[] { control }).ToString();
+
+            return null;
+        }
+
+        private static void translateControl(Control control, object translation, string prefix)
+        {
+            if (control == null)
+                return;
+
+            string add = "";
             if (!string.IsNullOrEmpty(control.Name))
             {
+                add = control.Name + "_";
                 if (!string.IsNullOrEmpty(control.Text) && (!(control.Tag is string) || ((string) control.Tag != "notranslate")))
                 {
-                    FieldInfo field = translationType.GetField(prefix + control.Name);
-                    if (field != null)
-                        control.Text = field.GetValue(translation).ToString();
-                    else
-                    {
-                        PropertyInfo property = translationType.GetProperty(prefix + control.Name);
-                        if (property != null)
-                            control.Text = property.GetValue(translation, null).ToString();
-                        else
-                        {
-                            MethodInfo method = translationType.GetMethod(prefix + control.Name, new Type[] { typeof(Control) });
-                            if (method != null)
-                                control.Text = method.Invoke(translation, new object[] { control }).ToString();
+                    string translated = translate(prefix + control.Name, translation, control);
+                    if (translated != null)
+                        control.Text = translated;
 #if DEBUG
-                            else
-                            {
-                                var attributes = translationType.GetCustomAttributes(typeof(TranslationDebugAttribute), false);
-                                if (!attributes.Any())
-                                    throw new Exception("Your translation type must have a [TranslationDebug(...)] attribute which specifies the relative path from the compiled assembly to the source of that translation type.");
-
-                                var translationDebugAttribute = (TranslationDebugAttribute) attributes.First();
-                                var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), translationDebugAttribute.RelativePath);
-                                string source = File.ReadAllText(path);
-                                var match = Regex.Match(source, @"^(\s*)#endregion", RegexOptions.Multiline);
-                                if (match.Success)
-                                {
-                                    source = source.Substring(0, match.Index) + match.Groups[1].Value + "public string " + prefix + control.Name + " = \"" + control.Text + "\";\n" + source.Substring(match.Index);
-                                    File.WriteAllText(path, source);
-                                }
-                            }
+                    else
+                        setMissingTranslation(translation, prefix + control.Name, control.Text);
 #endif
-                        }
-                    }
                 }
-                foreach (Control subcontrol in control.Controls)
-                    translateControl(subcontrol, translation, control.Name + "_");
+            }
+
+            if (control is ToolStrip)
+                foreach (ToolStripItem tsi in ((ToolStrip) control).Items)
+                    translateToolStripItem(tsi, translation, prefix + add);
+            foreach (Control subcontrol in control.Controls)
+                translateControl(subcontrol, translation, prefix + add);
+        }
+
+        private static void translateToolStripItem(ToolStripItem tsi, object translation, string prefix)
+        {
+            string add = "";
+            if (!string.IsNullOrEmpty(tsi.Name))
+            {
+                add = tsi.Name + "_";
+                if (!string.IsNullOrEmpty(tsi.Text) && (!(tsi.Tag is string) || ((string) tsi.Tag != "notranslate")))
+                {
+                    string translated = translate(prefix + tsi.Name, translation, tsi);
+                    if (translated != null)
+                        tsi.Text = translated;
+#if DEBUG
+                    else
+                        setMissingTranslation(translation, prefix + tsi.Name, tsi.Text);
+#endif
+                }
+            }
+            if (tsi is ToolStripDropDownItem)
+            {
+                foreach (ToolStripItem subitem in ((ToolStripDropDownItem) tsi).DropDownItems)
+                    translateToolStripItem(subitem, translation, prefix + add);
+            }
+        }
+
+        private static void setMissingTranslation(object translation, string key, string origText)
+        {
+            var translationType = translation.GetType();
+            var attributes = translationType.GetCustomAttributes(typeof(TranslationDebugAttribute), false);
+            if (!attributes.Any())
+                throw new Exception("Your translation type must have a [TranslationDebug(...)] attribute which specifies the relative path from the compiled assembly to the source of that translation type.");
+
+            var translationDebugAttribute = (TranslationDebugAttribute) attributes.First();
+            var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), translationDebugAttribute.RelativePath);
+            string source = File.ReadAllText(path);
+            var match = Regex.Match(source, @"^(\s*)#endregion", RegexOptions.Multiline);
+            if (match.Success)
+            {
+                source = source.Substring(0, match.Index) + match.Groups[1].Value + "public string " + key + " = \"" + origText + "\";\n" + source.Substring(match.Index);
+                File.WriteAllText(path, source);
             }
         }
     }
