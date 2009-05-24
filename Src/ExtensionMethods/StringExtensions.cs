@@ -23,7 +23,7 @@ namespace RT.Util.ExtensionMethods
             for (int i = 0; i < _invBase64Url.Length; i++)
                 _invBase64Url[i] = -1;
             for (int i = 0; i < _charsBase64Url.Length; i++)
-                _invBase64Url[(int)_charsBase64Url[i]] = i;
+                _invBase64Url[(int) _charsBase64Url[i]] = i;
         }
 
         /// <summary>
@@ -182,25 +182,25 @@ namespace RT.Util.ExtensionMethods
                 if (bytes.Length - i >= 3)
                 {
                     // 000000 001111 111122 222222
-                    result.Append(_charsBase64Url[                           bytes[i  ] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i  ] &  3) << 4  |  bytes[i+1] >> 4]);
-                    result.Append(_charsBase64Url[(bytes[i+1] & 15) << 2  |  bytes[i+2] >> 6]);
-                    result.Append(_charsBase64Url[ bytes[i+2] & 63                          ]);
+                    result.Append(_charsBase64Url[bytes[i] >> 2]);
+                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
+                    result.Append(_charsBase64Url[(bytes[i + 1] & 15) << 2 | bytes[i + 2] >> 6]);
+                    result.Append(_charsBase64Url[bytes[i + 2] & 63]);
                     i += 3;
                 }
                 else if (bytes.Length - i == 2)
                 {
                     // 000000 001111 1111--
-                    result.Append(_charsBase64Url[                           bytes[i  ] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i  ] &  3) << 4  |  bytes[i+1] >> 4]);
-                    result.Append(_charsBase64Url[(bytes[i+1] & 15) << 2                    ]);
+                    result.Append(_charsBase64Url[bytes[i] >> 2]);
+                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
+                    result.Append(_charsBase64Url[(bytes[i + 1] & 15) << 2]);
                     i += 2;
                 }
                 else /* if (bytes.Length - i == 1) -- always true here given the while condition */
                 {
                     // 000000 00----
-                    result.Append(_charsBase64Url[                           bytes[i  ] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i  ] &  3) << 4                    ]);
+                    result.Append(_charsBase64Url[bytes[i] >> 2]);
+                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4]);
                     i += 1;
                 }
             }
@@ -221,7 +221,7 @@ namespace RT.Util.ExtensionMethods
             if (padding > 0)
                 padding--;
 
-            byte[] result = new byte[(input.Length/4)*3 + padding];
+            byte[] result = new byte[(input.Length / 4) * 3 + padding];
             int ri = 0, ii = 0; // result index & input index
 
             while (ii < input.Length)
@@ -229,29 +229,29 @@ namespace RT.Util.ExtensionMethods
                 if (input.Length - ii >= 4)
                 {
                     // 00000011 11112222 22333333
-                    uint v0 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v2 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v3 = checked((uint)_invBase64Url[input[ii++]]);
-                    result[ri++] = (byte)( v0       << 2  |  v1 >> 4);
-                    result[ri++] = (byte)((v1 & 15) << 4  |  v2 >> 2);
-                    result[ri++] = (byte)((v2 &  3) << 6  |  v3);
+                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v2 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v3 = checked((uint) _invBase64Url[input[ii++]]);
+                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
+                    result[ri++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
+                    result[ri++] = (byte) ((v2 & 3) << 6 | v3);
                 }
                 else if (input.Length - ii == 3)
                 {
                     // 00000011 11112222 [22------]
-                    uint v0 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v2 = checked((uint)_invBase64Url[input[ii++]]);
-                    result[ri++] = (byte)( v0       << 2  |  v1 >> 4);
-                    result[ri++] = (byte)((v1 & 15) << 4  |  v2 >> 2);
+                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v2 = checked((uint) _invBase64Url[input[ii++]]);
+                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
+                    result[ri++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
                 }
                 else if (input.Length - ii == 2)
                 {
                     // 00000011 [1111----]
-                    uint v0 = checked((uint)_invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint)_invBase64Url[input[ii++]]);
-                    result[ri++] = (byte)(v0 << 2  |  v1 >> 4);
+                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
+                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
                 }
                 else
                     throw new InternalError("Internal error in Base64UrlDecode");
@@ -308,6 +308,23 @@ namespace RT.Util.ExtensionMethods
         public static string Join(this IEnumerable<string> values, string separator)
         {
             return separator.Join(values);
+        }
+
+        /// <summary>
+        /// Joins all strings in the enumerable into a single string.
+        /// <example>
+        ///     <code>
+        ///         var a = (new[] { 'Paris', 'London', 'Tokyo' }).Join();
+        ///         // a contains "ParisLondonTokyo"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string Join(this IEnumerable<string> values)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var str in values)
+                sb.Append(str);
+            return sb.ToString();
         }
 
         /// <summary>

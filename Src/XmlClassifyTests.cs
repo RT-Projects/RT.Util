@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 using NUnit.Framework;
 
-namespace RT.Util.XmlClassify
+namespace RT.Util.Xml
 {
     [TestFixture]
     public class XmlClassifyTests

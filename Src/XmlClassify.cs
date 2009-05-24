@@ -8,7 +8,7 @@ using System.Text;
 using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.XmlClassify
+namespace RT.Util.Xml
 {
     /// <summary>
     /// Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again.
