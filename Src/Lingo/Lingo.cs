@@ -184,12 +184,16 @@ namespace RT.Util
             var translationDebugAttribute = (LingoDebugAttribute) attributes.First();
             var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), translationDebugAttribute.RelativePath);
             string source = File.ReadAllText(path);
-            var match = Regex.Match(source, @"^(\s*)#endregion", RegexOptions.Multiline);
-            if (match.Success)
-            {
-                source = source.Substring(0, match.Index) + match.Groups[1].Value + "public string " + key + " = \"" + origText + "\";\n" + source.Substring(match.Index);
-                File.WriteAllText(path, source);
-            }
+            var match = Regex.Match(source, @"^\s*#region " + translationType.Name + @"\s*$", RegexOptions.Multiline);
+            if (!match.Success)
+                return;
+            string beforeRegion = source.Substring(0, match.Index);
+            var afterRegion = source.Substring(match.Index);
+            match = Regex.Match(afterRegion, @"^(\s*)#endregion", RegexOptions.Multiline);
+            if (!match.Success)
+                return;
+            var newSource = beforeRegion + afterRegion.Substring(0, match.Index) + match.Groups[1].Value + "public string " + key + " = \"" + origText + "\";\n" + afterRegion.Substring(match.Index);
+            File.WriteAllText(path, newSource);
         }
     }
 }
