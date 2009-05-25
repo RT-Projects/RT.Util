@@ -9,6 +9,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using RT.Util.Collections;
 using RT.Util.Xml;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
@@ -30,6 +31,45 @@ namespace RT.Util
     public static class Lingo
     {
         /// <summary>
+        /// Attempts to load the translation for the specified module and language. The translation must exist
+        /// in the application executable directory under a subdirectory called "Translations". See remarks for
+        /// more info.
+        /// </summary>
+        /// <remarks>
+        /// If the translation can be loaded successfully, this function will return true and will store the translation
+        /// in the specified variable. Otherwise, the variable will be unmodified. In DEBUG mode, any exception when
+        /// loading the translation will be propagated, but in release mode the function will simply behave as if the
+        /// file didn't exist.
+        /// </remarks>
+        /// <typeparam name="TTranslation">The type of the translation class to load the translation into.</typeparam>
+        /// <param name="module">The name of the module whose translation is being loaded.</param>
+        /// <param name="language">The language code of the language to be loaded.</param>
+        /// <param name="translation">Upon success, the translation will be stored here. On failure, this will not be modified.</param>
+        /// <returns>True if the translation has been loaded and stored in "translation"; false otherwise.</returns>
+        public static bool TryLoadTranslation<TTranslation>(string module, string language, ref TTranslation translation) where TTranslation : new()
+        {
+            string path = PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language + ".xml");
+            if (language == null || !File.Exists(path))
+                return false;
+            try
+            {
+                translation = XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
+            }
+#if DEBUG
+            catch (Exception e)
+            {
+                throw new RTException(@"Could not load translation for module ""{0}"", language ""{1}"", from file ""{2}""".Fmt(module, language, path), e);
+            }
+#else
+            catch
+            {
+                return false;
+            }
+#endif
+            return true;
+        }
+
+        /// <summary>
         /// Generates a list of menu items for the user to select a language from. The list is generated from the set of available XML files in the application's directory.
         /// </summary>
         /// <typeparam name="Translation">The type in which translations stored.</typeparam>
@@ -45,7 +85,7 @@ namespace RT.Util
             // Generate the context menu for language selection
             var languageList = new List<Tuple<Translation, Match>>();
             languageList.Add(new Tuple<Translation, Match>(new Translation(), null));
-            foreach (var file in new DirectoryInfo(Path.GetDirectoryName(Application.ExecutablePath)).GetFiles(filemask))
+            foreach (var file in new DirectoryInfo(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations")).GetFiles(filemask))
             {
                 try
                 {
@@ -79,7 +119,7 @@ namespace RT.Util
             // Generate the context menu for language selection
             var languageList = new List<Tuple<Translation, Match>>();
             languageList.Add(new Tuple<Translation, Match>(new Translation(), null));
-            foreach (var file in new DirectoryInfo(Path.GetDirectoryName(Application.ExecutablePath)).GetFiles(filemask))
+            foreach (var file in new DirectoryInfo(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations")).GetFiles(filemask))
             {
                 try
                 {
