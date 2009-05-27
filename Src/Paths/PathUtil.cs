@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
@@ -55,10 +56,10 @@ namespace RT.Util
         }
 
         /// <summary>
-		/// Returns a normalized copy of the specified path.
+        /// Returns a normalized copy of the specified path.
         /// A "normalized path" is a path to a directory (not a file!) which
         /// ALWAYS ends with a slash. Cf. <see>NormName</see>.
-		///
+        ///
         /// <para>Returns null for null inputs.</para>
         /// </summary>
         /// <param name="path">Path to be normalised</param>
@@ -80,7 +81,7 @@ namespace RT.Util
         /// ends with a slash. Cf. <see>NormPath</see>. This includes
         /// the root directory on Windows, which normalised name is "C:"
         /// and unix, where it is "".
-		///
+        ///
         /// <para>Returns null for null inputs.</para>
         /// </summary>
         public static string NormName(string filedir)
@@ -148,14 +149,14 @@ namespace RT.Util
                 if (p2.Substring(0, p1.Length) != p1)
                     return int.MaxValue;
                 p1 = p2.Substring(p1.Length);
-                return Ut.CountStrings(p1, Path.DirectorySeparatorChar + "");
+                return p1.Count(c => c == Path.DirectorySeparatorChar);
             }
             else
             {
                 if (p1.Substring(0, p2.Length) != p2)
                     return int.MaxValue;
                 p2 = p1.Substring(p2.Length);
-                return -Ut.CountStrings(p2, Path.DirectorySeparatorChar + "");
+                return -p2.Count(c => c == Path.DirectorySeparatorChar);
             }
         }
 

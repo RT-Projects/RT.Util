@@ -9,7 +9,7 @@ namespace RT.Util.Collections
     /// A tuple of two values of specified types.
     /// </summary>
     [Serializable]
-    public struct Tuple<T1, T2>: IComparable<Tuple<T1, T2>>
+    public struct Tuple<T1, T2> : IComparable<Tuple<T1, T2>>
     {
         /// <summary>The first element in the tuple.</summary>
         public T1 E1;
@@ -23,6 +23,14 @@ namespace RT.Util.Collections
         {
             E1 = element1;
             E2 = element2;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the current <see cref="Tuple&lt;T1, T2&gt;"/>.
+        /// </summary>
+        public override string ToString()
+        {
+            return "({0}, {1})".Fmt(E1.ToString(), E2.ToString());
         }
 
         /// <summary>
@@ -50,7 +58,7 @@ namespace RT.Util.Collections
     /// A tuple of three values of specified types.
     /// </summary>
     [Serializable]
-    public struct Tuple<T1, T2, T3>: IComparable<Tuple<T1, T2, T3>>
+    public struct Tuple<T1, T2, T3> : IComparable<Tuple<T1, T2, T3>>
     {
         /// <summary>The first element in the tuple.</summary>
         public T1 E1;
@@ -68,6 +76,14 @@ namespace RT.Util.Collections
             E1 = element1;
             E2 = element2;
             E3 = element3;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the current <see cref="Tuple&lt;T1, T2, T3&gt;"/>.
+        /// </summary>
+        public override string ToString()
+        {
+            return "({0}, {1}, {2})".Fmt(E1.ToString(), E2.ToString(), E3.ToString());
         }
 
         /// <summary>
@@ -101,7 +117,7 @@ namespace RT.Util.Collections
     /// A tuple of four values of specified types.
     /// </summary>
     [Serializable]
-    public struct Tuple<T1, T2, T3, T4>: IComparable<Tuple<T1, T2, T3, T4>>
+    public struct Tuple<T1, T2, T3, T4> : IComparable<Tuple<T1, T2, T3, T4>>
     {
         /// <summary>The first element in the tuple.</summary>
         public T1 E1;
@@ -123,6 +139,14 @@ namespace RT.Util.Collections
             E2 = element2;
             E3 = element3;
             E4 = element4;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the current <see cref="Tuple&lt;T1, T2, T3, T4&gt;"/>.
+        /// </summary>
+        public override string ToString()
+        {
+            return "({0}, {1}, {2}, {3})".Fmt(E1.ToString(), E2.ToString(), E3.ToString(), E4.ToString());
         }
 
         /// <summary>
