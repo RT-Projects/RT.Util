@@ -106,6 +106,16 @@ namespace RT.Util.Xml
         }
 
         [Test]
+        public void TestStringNull()
+        {
+            var clsEx = new basicClass() { AString = null };
+            var xel = XmlClassify.ObjectToXElement(clsEx);
+            var clsAc = XmlClassify.ObjectFromXElement<basicClass>(xel);
+
+            clsEx.AssertEqual(clsAc);
+        }
+
+        [Test]
         public void TestClassWithList()
         {
             var clsEx = new classWithList();
