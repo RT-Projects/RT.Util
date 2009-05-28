@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.ComponentModel;
-using System.Reflection;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using RT.Util.Collections;
-using RT.Util.Xml;
 using RT.Util.ExtensionMethods;
+using RT.Util.Xml;
 
 namespace RT.Util
 {

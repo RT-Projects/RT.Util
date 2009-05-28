@@ -1,41 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
-using System.Drawing;
 
 namespace RT.Util
 {
     public static partial class Ut
     {
         /// <summary>
-        /// Computes a representation of the differences between 'old' and 'new' using the generic type parameter's default equality comparer.
+        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the
+        /// generic type parameter's default equality comparer.
         /// </summary>
         /// <typeparam name="T">The type of items to compare.</typeparam>
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
         /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
-        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between 'old' and 'new.
-        /// Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an element
-        /// present only in 'old' (the element is considered "deleted"), an element present only in 'new' (the element is 
-        /// considered "inserted") or an element present in both.</returns>
+        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
+        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
+        /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
+        /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new)
         {
             return Diff(old, @new, null);
         }
 
         /// <summary>
-        /// Computes a representation of the differences between 'old' and 'new' using the specified equality comparer.
+        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the
+        /// specified equality comparer.
         /// </summary>
         /// <typeparam name="T">The type of items to compare.</typeparam>
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
         /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
         /// <param name="options">An instance of <see cref="DiffOptions&lt;T&gt;"/> which specifies additional options.</param>
-        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between 'old' and 'new.
-        /// Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an element
-        /// present only in 'old' (the element is considered "deleted"), an element present only in 'new' (the element is 
-        /// considered "inserted") or an element present in both.</returns>
+        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
+        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
+        /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
+        /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new, DiffOptions<T> options)
         {
             IEqualityComparer<T> comparer = options == null || options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
