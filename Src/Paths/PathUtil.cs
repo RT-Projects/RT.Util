@@ -39,10 +39,29 @@ namespace RT.Util
                 {
                     _cachedAppPath = Application.ExecutablePath;
                     _cachedAppPath = _cachedAppPath.Remove(
-                        _cachedAppPath.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1);
+                        _cachedAppPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
                 }
                 return _cachedAppPath;
             }
+        }
+
+        /// <summary>
+        /// Combines the full path containing the running executable with the specified string.
+        /// Ensures that only a single <see cref="Path.DirectorySeparatorChar"/> separates the two.
+        /// </summary>
+        public static string AppPathCombine(string path)
+        {
+            return AppPath + path;
+        }
+
+        /// <summary>
+        /// Combines the full path containing the running executable with one or more strings.
+        /// Ensures that only a single <see cref="Path.DirectorySeparatorChar"/> separates
+        /// the executable path and every string.
+        /// </summary>
+        public static string AppPathCombine(string path1, params string[] morePaths)
+        {
+            return Combine(AppPath, path1, morePaths);
         }
 
         /// <summary>
