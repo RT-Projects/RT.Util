@@ -134,98 +134,51 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
         public static IEnumerable<T> OrderTake<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
-            return new MyOrderedEnumerable<T>(source, comparer);
+            var arr = source.ToArray();
+            if (arr.Length < 2)
+                return arr;
+            int[] map = new int[arr.Length];
+            for (int i = 0; i < arr.Length; i++)
+                map[i] = i;
+            return quickSort(arr, map, 0, arr.Length - 1, comparer);
         }
 
-        /// <summary>Used by <see cref="MyOrderedEnumerable&lt;T&gt;"/>,
-        /// and thus indirectly by <see cref="IEnumerableExtensions.OrderTake&lt;T&gt;(IEnumerable&lt;T&gt;)"/>.</summary>
-        private class MyOrderedEnumerator<T> : IEnumerator<T>
+        private static IEnumerable<T> quickSort<T>(T[] items, int[] map, int left, int right, IComparer<T> comparer)
         {
-            private T[] _heap;
-            private T _current;
-            private int _heapSize;
-            private IComparer<T> _comparer;
-            public MyOrderedEnumerator(IEnumerable<T> source, IComparer<T> comparer)
+            while (left < right)
             {
-                _heap = source.ToArray();
-                _comparer = comparer;
-                Reset();
-            }
-
-            public T Current { get { return _current; } }
-            object System.Collections.IEnumerator.Current { get { return _current; } }
-            public void Dispose() { }
-
-            public bool MoveNext()
-            {
-                if (_heapSize < 1)
-                    return false;
-                _current = _heap[0];
-                _heapSize--;
-                if (_heapSize > 0)
+                int curleft = left;
+                int curright = right;
+                T pivot = items[map[curleft + ((curright - curleft) >> 1)]];
+                do
                 {
-                    T t = _heap[_heapSize];
-                    _heap[_heapSize] = _current;
-                    _heap[0] = t;
-                    int index = 0;
-                    while (index < _heapSize / 2)
-                        index = heapifyElement(index);
+                    while ((curleft < map.Length) && (comparer.Compare(pivot, items[map[curleft]]) > 0))
+                        curleft++;
+                    while ((curright >= 0) && (comparer.Compare(pivot, items[map[curright]]) < 0))
+                        curright--;
+                    if (curleft > curright)
+                        break;
+
+                    if (curleft < curright)
+                    {
+                        int tmp = map[curleft];
+                        map[curleft] = map[curright];
+                        map[curright] = tmp;
+                    }
+                    curleft++;
+                    curright--;
                 }
-                return true;
+                while (curleft <= curright);
+                if (left < curright)
+                    foreach (var s in quickSort(items, map, left, curright, comparer))
+                        yield return s;
+                else if (left == curright)
+                    yield return items[map[curright]];
+                if (curright + 1 < curleft)
+                    yield return items[map[curright + 1]];
+                left = curleft;
             }
-
-            public void Reset()
-            {
-                _heapSize = _heap.Length;
-                for (int i = _heapSize / 2 - 1; i >= 0; i--)
-                {
-                    var index = i;
-                    while (index < _heapSize / 2)
-                        index = heapifyElement(index);
-                }
-            }
-
-            private int heapifyElement(int index)
-            {
-                if (2 * index + 2 > _heapSize)
-                    return _heapSize;
-                int compareIndex;
-                if (2 * index + 2 == _heapSize)
-                    compareIndex = 2 * index + 1;
-                else
-                    compareIndex = 2 * index + (_comparer.Compare(_heap[2 * index + 1], _heap[2 * index + 2]) < 0 ? 1 : 2);
-                if (_comparer.Compare(_heap[index], _heap[compareIndex]) > 0)
-                {
-                    T t = _heap[index];
-                    _heap[index] = _heap[compareIndex];
-                    _heap[compareIndex] = t;
-                    return compareIndex;
-                }
-                return _heapSize;
-            }
-        }
-
-        /// <summary>Used by <see cref="IEnumerableExtensions.OrderTake&lt;T&gt;(IEnumerable&lt;T&gt;)"/>.</summary>
-        private class MyOrderedEnumerable<T> : IEnumerable<T>
-        {
-            private IEnumerable<T> _original;
-            private IComparer<T> _comparer;
-
-            public MyOrderedEnumerable(IEnumerable<T> original, IComparer<T> comparer)
-            {
-                _original = original;
-                _comparer = comparer;
-            }
-
-            public IEnumerator<T> GetEnumerator()
-            {
-                return new MyOrderedEnumerator<T>(_original, _comparer);
-            }
-
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            yield return items[map[left]];
         }
 
         /// <summary>

@@ -27,6 +27,37 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Increments an integer in a <see cref="Dictionary&lt;K, V&gt;"/> by 1. If the specified key does
+        /// not exist in the current dictionary, the value 1 is inserted.
+        /// </summary>
+        /// <typeparam name="K">Type of the key of the Dictionary.</typeparam>
+        /// <param name="dic">Dictionary to operate on.</param>
+        /// <param name="key">Key at which the list is located in the Dictionary.</param>
+        public static void IncSafe<K>(this Dictionary<K, int> dic, K key)
+        {
+            if (!dic.ContainsKey(key))
+                dic[key] = 1;
+            else
+                dic[key] = dic[key] + 1;
+        }
+
+        /// <summary>
+        /// Increments an integer in a <see cref="Dictionary&lt;K, V&gt;"/> by the specified amount.
+        /// If the specified key does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.
+        /// </summary>
+        /// <typeparam name="K">Type of the key of the Dictionary.</typeparam>
+        /// <param name="dic">Dictionary to operate on.</param>
+        /// <param name="key">Key at which the list is located in the Dictionary.</param>
+        /// <param name="amount">The amount by which to increment the integer.</param>
+        public static void IncSafe<K>(this Dictionary<K, int> dic, K key, int amount)
+        {
+            if (!dic.ContainsKey(key))
+                dic[key] = amount;
+            else
+                dic[key] = dic[key] + amount;
+        }
+
+        /// <summary>
         /// Brings the elements of the given list into a random order
         /// </summary>
         /// <typeparam name="T">Type of elements in the list.</typeparam>
