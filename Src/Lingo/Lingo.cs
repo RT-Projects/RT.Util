@@ -135,7 +135,10 @@ namespace RT.Util
         private static IEnumerable<Tuple<TTranslation, Match>> languageMenuItems<TTranslation>(string filemask, string fileregex) where TTranslation : new()
         {
             yield return new Tuple<TTranslation, Match>(new TTranslation(), null);
-            foreach (var file in new DirectoryInfo(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations")).GetFiles(filemask))
+            var path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations");
+            if (!Directory.Exists(path))
+                yield break;
+            foreach (var file in new DirectoryInfo(path).GetFiles(filemask))
             {
                 Match match = Regex.Match(file.Name, fileregex);
                 if (!match.Success) continue;
