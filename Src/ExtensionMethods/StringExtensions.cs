@@ -261,42 +261,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Joins all strings in <see pref="values"/> using the string as the separator.
-        /// <example>
-        ///     <code>
-        ///         var a = ", ".Join(new[] { 'Paris', 'London', 'Tokyo' });
-        ///         // a contains "Paris, London, Tokyo"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string Join(this string separator, IEnumerable<string> values)
-        {
-            return separator.Join(values.GetEnumerator());
-        }
-
-        /// <summary>
-        /// Joins all strings in <see pref="values"/> using the string as the separator.
-        /// <example>
-        ///     <code>
-        ///         var a = ", ".Join(new[] { 'Paris', 'London', 'Tokyo' });
-        ///         // a contains "Paris, London, Tokyo"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string Join(this string separator, IEnumerator<string> values)
-        {
-            if (!values.MoveNext()) return "";
-            StringBuilder sb = new StringBuilder();
-            sb.Append(values.Current);
-            while (values.MoveNext())
-            {
-                sb.Append(separator);
-                sb.Append(values.Current);
-            }
-            return sb.ToString();
-        }
-
-        /// <summary>
         /// Joins all strings in the enumerable using the specified string as the separator.
         /// <example>
         ///     <code>
@@ -305,9 +269,19 @@ namespace RT.Util.ExtensionMethods
         ///     </code>
         /// </example>
         /// </summary>
-        public static string Join(this IEnumerable<string> values, string separator)
+        public static string JoinString(this IEnumerable<string> values, string separator)
         {
-            return separator.Join(values);
+            var enumerator = values.GetEnumerator();
+            if (!enumerator.MoveNext())
+                return string.Empty;
+            StringBuilder sb = new StringBuilder();
+            sb.Append(enumerator.Current);
+            while (enumerator.MoveNext())
+            {
+                sb.Append(separator);
+                sb.Append(enumerator.Current);
+            }
+            return sb.ToString();
         }
 
         /// <summary>
@@ -319,7 +293,7 @@ namespace RT.Util.ExtensionMethods
         ///     </code>
         /// </example>
         /// </summary>
-        public static string Join(this IEnumerable<string> values)
+        public static string JoinString(this IEnumerable<string> values)
         {
             StringBuilder sb = new StringBuilder();
             foreach (var str in values)

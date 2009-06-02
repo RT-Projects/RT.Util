@@ -318,7 +318,7 @@ namespace RT.Util
         /// </summary>
         public void ErrorIfPositionalArgsCountNot(int count)
         {
-            var arguments = OptPositional.Count == 0 ? "none" : ("\"" + OptPositional.Join("\", \"") + "\"");
+            var arguments = OptPositional.Count == 0 ? "none" : ("\"" + OptPositional.JoinString("\", \"") + "\"");
             if (count == 0 && OptPositional.Count > 0)
                 Error("No positional arguments are expected. Received arguments: {0}".Fmt(arguments));
             else if (OptPositional.Count != count)

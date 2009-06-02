@@ -11,8 +11,7 @@ namespace RT.Util.ExtensionMethods
     {
         public void Assert_Join(string separator, IEnumerable<string> values, string expected)
         {
-            Assert.AreEqual(expected, separator.Join(values));
-            Assert.AreEqual(expected, values.Join(separator));
+            Assert.AreEqual(expected, values.JoinString(separator));
         }
 
         [Test]

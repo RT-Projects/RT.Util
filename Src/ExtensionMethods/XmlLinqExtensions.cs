@@ -24,7 +24,7 @@ namespace RT.Util.ExtensionMethods
                 element = element.Parent;
             }
             list.Reverse();
-            return "/".Join(list);
+            return list.JoinString("/");
         }
 
         /// <summary>
