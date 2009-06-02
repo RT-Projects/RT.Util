@@ -65,10 +65,10 @@ namespace RT.Util.Dialogs
         /// ARGH 2: and the bloody names are deduced based on which class is declared first
         /// in this source file, which is just absolutely un-fucking-believable. So merely
         /// declaring a new empty class at the start of this file breaks the fucking resources.
-        private static Bitmap bmpInfo = (Bitmap)ResourceMgr.GetObject("info.Image");
-        private static Bitmap bmpQuestion = (Bitmap)ResourceMgr.GetObject("question.Image");
-        private static Bitmap bmpWarning = (Bitmap)ResourceMgr.GetObject("warning.Image");
-        private static Bitmap bmpError = (Bitmap)ResourceMgr.GetObject("error.Image");
+        private static Bitmap bmpInfo = (Bitmap) ResourceMgr.GetObject("info.Image");
+        private static Bitmap bmpQuestion = (Bitmap) ResourceMgr.GetObject("question.Image");
+        private static Bitmap bmpWarning = (Bitmap) ResourceMgr.GetObject("warning.Image");
+        private static Bitmap bmpError = (Bitmap) ResourceMgr.GetObject("error.Image");
 
         #endregion
 
@@ -242,10 +242,10 @@ namespace RT.Util.Dialogs
                 Message = "";
 
             if (Caption == null)
-                Caption = DlgMessageForm.DefaultCaption[(int)Type];
+                Caption = DlgMessageForm.DefaultCaption[(int) Type];
 
             if (Image == null && Type != DlgType.Custom)
-                Image = DlgMessageForm.DefaultImage[(int)Type];
+                Image = DlgMessageForm.DefaultImage[(int) Type];
 
             if (AcceptButton < 0)
                 AcceptButton = 0;
@@ -320,7 +320,7 @@ namespace RT.Util.Dialogs
 
             // --- Show
 
-            Form.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width*3/4, Screen.PrimaryScreen.WorkingArea.Height*3/4);
+            Form.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width * 3 / 4, Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
 
             var result = Form.ShowDialog();
             Form.Dispose();
