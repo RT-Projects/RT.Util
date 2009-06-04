@@ -32,6 +32,7 @@ namespace RT.Util.Xml
                 Assert.AreEqual(AULong, actual.AULong);
                 Assert.AreEqual(ADouble, actual.ADouble);
                 Assert.AreEqual(ADateTime, actual.ADateTime);
+                Assert.AreEqual(key, actual.key);
             }
         }
 
