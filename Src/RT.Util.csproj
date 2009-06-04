@@ -87,6 +87,9 @@
     <Compile Include="Controls\SplitContainerEx.Designer.cs">
       <DependentUpon>SplitContainerEx.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\TextBoxAutoHeight.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Delegates.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\Canvas.cs" />
@@ -131,6 +134,11 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Lingo\Lingo.cs" />
+    <Compile Include="Lingo\LingoAttributes.cs" />
+    <Compile Include="Lingo\TranslationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
