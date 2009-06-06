@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -153,6 +153,7 @@
     </Compile>
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
+    <Compile Include="SettingsUtil.cs" />
     <Compile Include="SoundPlayerAsync.cs" />
     <Compile Include="StateMachine.cs" />
     <Compile Include="Streams\ArithmeticCodingReader.cs" />
