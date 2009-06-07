@@ -49,6 +49,7 @@ namespace RT.Util.Lingo
 #else
             catch
             {
+                string dummy = "{0}".Fmt(""); // Crappy solution for the IDE thinking that .Fmt is not used when in Release mode.
                 return false;
             }
 #endif
