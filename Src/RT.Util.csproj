@@ -57,7 +57,6 @@
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\RVariant.cs" />
     <Compile Include="Collections\Set.cs" />
-    <Compile Include="Collections\SortedDictionaryDT.cs" />
     <Compile Include="Collections\Tuple.cs" />
     <Compile Include="Collections\Virtual2DArray.cs" />
     <Compile Include="ConsoleUtil.cs" />

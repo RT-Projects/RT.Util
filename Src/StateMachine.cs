@@ -52,7 +52,7 @@ namespace RT.Util.FSM
         /// The "queue" of inputs which haven't yet been processed. They are sent to the
         /// current state in FIFO order.
         /// </summary>
-        private SortedDictionaryDT<object> _inputs = new SortedDictionaryDT<object>();
+        private ListSorted<RealTimeEvent<object>> _inputs = new ListSorted<RealTimeEvent<object>>();
 
         /// <summary>
         /// This object is used to synchronize input addition with the input processing
@@ -89,7 +89,7 @@ namespace RT.Util.FSM
         {
             lock (_sendInputLock)
             {
-                _inputs.Add(DateTime.Now + interval, input);
+                _inputs.Add(new RealTimeEvent<object>(DateTime.Now + interval, input));
                 _inputsModified = true;
             }
         }
@@ -109,7 +109,6 @@ namespace RT.Util.FSM
         public bool ProcessQueue(int n)
         {
             int pn = 0; // number of items processed - to respect the N parameter
-            List<DateTime> toRemove = new List<DateTime>(); // inputs to be removed
             bool toAddEntered = false;
 
             // This while loop allows us to continue processing the Inputs after adding
@@ -121,15 +120,20 @@ namespace RT.Util.FSM
                     // Add the Entered input if necessary
                     if (toAddEntered)
                     {
-                        _inputs.Add(DateTime.MinValue, new FsmEvent_Entered());
+                        _inputs.Add(new RealTimeEvent<object>(DateTime.MinValue, new FsmEvent_Entered()));
                         toAddEntered = false;
                     }
 
+                    List<int> toRemove = new List<int>(); // inputs to be removed
+
                     _inputsModified = false;
-                    foreach (KeyValuePair<DateTime, object> Inp in _inputs)
+                    int index = -1;
+                    foreach (RealTimeEvent<object> Inp in _inputs)
                     {
+                        index++;
+
                         // Stop if we hit one which isn't due
-                        if (Inp.Key > DateTime.Now)
+                        if (Inp.Timestamp > DateTime.Now)
                         {
                             pn = int.MaxValue;
                             break;
@@ -137,12 +141,12 @@ namespace RT.Util.FSM
 
                         // This signal is definitely getting processed, so make sure it'll
                         // get removed once we're done enumerating.
-                        toRemove.Add(Inp.Key);
+                        toRemove.Add(index);
                         pn++;
 
                         // Invoke the transition method
                         MethodBase transitionMethod = _cur.GetMethod("Transition");
-                        Type newState = (Type) transitionMethod.Invoke(null, new object[] { Inp.Value });
+                        Type newState = (Type) transitionMethod.Invoke(null, new object[] { Inp.Data });
                         // Update the state if a transition was requested
                         if (newState != null)
                         {
@@ -164,8 +168,8 @@ namespace RT.Util.FSM
                     }
 
                     // Remove all processed inputs
-                    foreach (DateTime dt in toRemove)
-                        _inputs.Remove(dt);
+                    foreach (int i in toRemove)
+                        _inputs.RemoveAt(i);
                 }
             }
 
@@ -251,5 +255,26 @@ namespace RT.Util.FSM
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class FsmStateAttribute : Attribute
     {
+    }
+
+    public class RealTimeEvent<T> : IComparable<DateTime>
+    {
+        private DateTime _timestamp;
+        private T _data;
+
+        public RealTimeEvent(DateTime timestamp, T data)
+        {
+            _timestamp = timestamp;
+            _data = data;
+        }
+
+        public DateTime Timestamp { get { return _timestamp; } }
+
+        public T Data { get { return _data; } }
+
+        public int CompareTo(DateTime other)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
