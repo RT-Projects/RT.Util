@@ -8,6 +8,7 @@ using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 using RT.Util.Xml;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace RT.Util.Lingo
 {
@@ -718,7 +719,9 @@ namespace RT.Util.Lingo
 
             public override bool Contains(string substring, bool inOriginal, bool inTranslation)
             {
-                return (inOriginal && _original.Translation.Contains(substring)) || (inTranslation && _translation.Translation.Contains(substring));
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols | CompareOptions.IgnoreWidth;
+                return (inOriginal && CultureInfo.InvariantCulture.CompareInfo.IndexOf(_original.Translation, substring, co) != -1) ||
+                    (inTranslation && CultureInfo.InvariantCulture.CompareInfo.IndexOf(_translation.Translation, substring, co) != -1);
             }
 
             public override void FocusFirstTranslationBox()
@@ -959,9 +962,10 @@ namespace RT.Util.Lingo
 
             public override bool Contains(string substring, bool inOriginal, bool inTranslation)
             {
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols | CompareOptions.IgnoreWidth;
                 return
-                    (inOriginal && _original.Translations.Any(t => t.Contains(substring))) ||
-                    (inTranslation && _translation.Translations.Any(t => t.Contains(substring)));
+                    (inOriginal && _original.Translations.Any(t => CultureInfo.InvariantCulture.CompareInfo.IndexOf(t, substring, co) != -1)) ||
+                    (inTranslation && _translation.Translations.Any(t => CultureInfo.InvariantCulture.CompareInfo.IndexOf(t, substring, co) != -1));
             }
 
             public override void FocusFirstTranslationBox()
