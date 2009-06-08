@@ -6,7 +6,7 @@ using RT.Util.Collections;
 namespace RT.Util.FSM
 {
     /// <summary>
-    /// Represents a finite state machine. Terse overview: each state is represented by a static class.
+    /// Represents a finite state machine. Terse overview: each state is represented by a static class
     /// (marked with <see cref="FsmStateAttribute"/> and expected to implement certain methods).
     /// The FSM receives inputs via "events", which occur at a specified point in time
     /// (some time in the future or "ASAP"). Events, when their time comes, get sent to the
@@ -274,7 +274,7 @@ namespace RT.Util.FSM
 
         public int CompareTo(DateTime other)
         {
-            throw new NotImplementedException();
+            return _timestamp.CompareTo(other);
         }
     }
 }
