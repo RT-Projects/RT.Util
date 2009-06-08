@@ -45,16 +45,16 @@ namespace RT.Util.Lingo
     public class TrStringNumbers
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
-        private bool[] IsNumber;
+        public bool[] IsNumber;
 
         /// <summary>Contains the current translation of this string, or for the original language, the current original text.</summary>
         public string[] Translations;
 
-        /// <summary>Contains the original text this string was last translated from, or for the original language, the empty array.</summary>
-        public string[] OldEnglish = new string[0];
+        /// <summary>Contains the original text this string was last translated from. Null for the original language.</summary>
+        public string[] OldEnglish = null;
 
         /// <summary>Default constructor (required for XmlClassify).</summary>
-        public TrStringNumbers() { }
+        public TrStringNumbers() { Translations = new string[0]; IsNumber = new[] { true }; }
 
         /// <summary>Constructs a new translatable string with the specified translations.</summary>
         /// <param name="translations">Specifies the translations for this string. The number of elements is expected to be equal to the number

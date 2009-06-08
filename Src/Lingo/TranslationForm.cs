@@ -22,7 +22,8 @@ namespace RT.Util.Lingo
 
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;
-        private Panel _pnlRight;
+        private Panel _pnlRightOuter;
+        private TableLayoutPanel _pnlRightInner;
         private ToolStripMenuItem _mnuFindNext;
         private ToolStripMenuItem _mnuFindPrev;
         private TreeView _ctTreeView;
@@ -36,6 +37,7 @@ namespace RT.Util.Lingo
         private T _translation;
         private bool _anyChanges;
         private Settings _settings;
+        private NumberSystem _origNumberSystem;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
         public new class Settings : ManagedForm.Settings
@@ -83,11 +85,13 @@ namespace RT.Util.Lingo
             _ctTreeView = new TreeView { Dock = DockStyle.Fill, HideSelection = false };
             pnlSplit.Panel1.Controls.Add(_ctTreeView);
             var lstPanels = new List<TranslationPanel>();
-            _ctTreeView.Nodes.Add(createNodeWithPanels(typeof(T), new T(), _translation, lstPanels));
+            T orig = new T();
+            _origNumberSystem = orig.NumberSystem;
+            _ctTreeView.Nodes.Add(createNodeWithPanels(typeof(T), orig, _translation, lstPanels));
             _allTranslationPanels = lstPanels.ToArray();
             _ctTreeView.ExpandAll();
 
-            TableLayoutPanel tlp = new TableLayoutPanel
+            _pnlRightInner = new TableLayoutPanel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -95,7 +99,7 @@ namespace RT.Util.Lingo
                 Dock = DockStyle.Top,
                 GrowStyle = TableLayoutPanelGrowStyle.AddRows,
             };
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            _pnlRightInner.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             TableLayoutPanel topInfo = new TableLayoutPanel
             {
@@ -119,9 +123,9 @@ namespace RT.Util.Lingo
             };
             topInfo.Controls.Add(_lblGroupInfo);
 
-            _pnlRight = new Panel { AutoScroll = true, Dock = DockStyle.Fill };
-            _pnlRight.Controls.Add(tlp);
-            pnlSplit.Panel2.Controls.Add(_pnlRight);
+            _pnlRightOuter = new Panel { AutoScroll = true, Dock = DockStyle.Fill };
+            _pnlRightOuter.Controls.Add(_pnlRightInner);
+            pnlSplit.Panel2.Controls.Add(_pnlRightOuter);
             pnlSplit.Panel2.Controls.Add(topInfo);
 
             TableLayoutPanel pnlBottom = new TableLayoutPanel { Dock = DockStyle.Bottom, ColumnCount = 4, RowCount = 1, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
@@ -141,18 +145,17 @@ namespace RT.Util.Lingo
 
             _ctTreeView.AfterSelect += (s, e) =>
             {
-                _pnlRight.VerticalScroll.Value = 0;
-                tlp.SuspendLayout();
-                tlp.Controls.Clear();
+                _pnlRightOuter.VerticalScroll.Value = 0;
+                _pnlRightInner.SuspendLayout();
+                _pnlRightInner.Controls.Clear();
                 TranslationTreeNode tn = _ctTreeView.SelectedNode as TranslationTreeNode;
                 if (tn == null)
                     return;
                 _currentlyVisibleTranslationPanels = tn.TranslationPanels;
-                tlp.Controls.AddRange(_currentlyVisibleTranslationPanels);
-                tlp.ResumeLayout(true);
+                _pnlRightInner.Controls.AddRange(_currentlyVisibleTranslationPanels);
+                _pnlRightInner.ResumeLayout(true);
                 if (_currentlyVisibleTranslationPanels.Length > 0)
-                    _currentlyVisibleTranslationPanels[0].FocusTranslationBox();
-                _ctTreeView.Focus();
+                    _lastFocusedPanel = _currentlyVisibleTranslationPanels[0];
                 _lblGroupInfo.Text = tn.Notes;
             };
 
@@ -207,7 +210,7 @@ namespace RT.Util.Lingo
             // Calculate the new size of the "OK" buttons in each panel
             var f = TextRenderer.MeasureText("OK", font) + new Size(10, 10);
 
-            _pnlRight.SuspendLayout();
+            _pnlRightInner.SuspendLayout();
             Font = new Font(font, FontStyle.Regular);
             _lblGroupInfo.Font = new Font(font, FontStyle.Bold);
             foreach (var pnl in _allTranslationPanels)
@@ -220,7 +223,7 @@ namespace RT.Util.Lingo
                 pnl.ResumeLayout(true);
             _settings.FontName = font.Name;
             _settings.FontSize = font.Size;
-            _pnlRight.ResumeLayout(true);
+            _pnlRightInner.ResumeLayout(true);
         }
 
         private void find(object sender, EventArgs e)
@@ -286,7 +289,7 @@ namespace RT.Util.Lingo
                 if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
                 {
                     _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
-                    _allTranslationPanels[i].FocusTranslationBox();
+                    _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
             }
@@ -307,7 +310,7 @@ namespace RT.Util.Lingo
                 if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
                 {
                     _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
-                    _allTranslationPanels[i].FocusTranslationBox();
+                    _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
             }
@@ -323,7 +326,7 @@ namespace RT.Util.Lingo
                 if (_allTranslationPanels[i].OutOfDate)
                 {
                     _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
-                    _allTranslationPanels[i].FocusTranslationBox();
+                    _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
             }
@@ -355,7 +358,7 @@ namespace RT.Util.Lingo
             LingoGroupAttribute lga = (LingoGroupAttribute) attrs.First();
             var tn = new TranslationTreeNode { Text = lga.Label, Notes = lga.Description };
             tn.TranslationPanels = type.GetFields()
-                .Where(f => f.FieldType == typeof(TrString))
+                .Where(f => f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNumbers))
                 .Select(f => createTranslationPanel(
                     f.GetCustomAttributes(typeof(LingoNotesAttribute), false).Select(a => ((LingoNotesAttribute) a).Notes).Where(s => s != null).JoinString("\n"),
                     f.GetValue(original), f.GetValue(translation), f.Name, tn))
@@ -368,35 +371,19 @@ namespace RT.Util.Lingo
 
         private TranslationPanel createTranslationPanel(string notes, object orig, object trans, string fieldname, TranslationTreeNode tn)
         {
-            if (orig is TrString && trans is TrString)
-            {
-                TranslationPanelTrString pnl = new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname, tn);
-                pnl.ChangeMade += (s, e) => { _anyChanges = true; };
-                pnl.EnterPanel += new EventHandler(enterPanel);
-                pnl.CtrlUp += new EventHandler(ctrlUp);
-                pnl.CtrlDown += new EventHandler(ctrlDown);
-                pnl.CtrlHome += new EventHandler(ctrlHome);
-                pnl.CtrlEnd += new EventHandler(ctrlEnd);
-                pnl.PageUp += new EventHandler(pageUp);
-                pnl.PageDown += new EventHandler(pageDown);
-                return pnl;
-            }
-            if (orig is TrStringNumbers && trans is TrStringNumbers)
-            {
-                /*
-                TranslationPanelTrStringNumbers pnl = new TranslationPanelTrStringNumbers(notes, (TrStringNumbers) orig, (TrStringNumbers) trans, fieldname, tn);
-                pnl.ChangeMade += (s, e) => { _anyChanges = true; };
-                pnl.EnterPanel += new EventHandler(enterPanel);
-                pnl.CtrlUp += new EventHandler(ctrlUp);
-                pnl.CtrlDown += new EventHandler(ctrlDown);
-                pnl.CtrlHome += new EventHandler(ctrlHome);
-                pnl.CtrlEnd += new EventHandler(ctrlEnd);
-                pnl.PageUp += new EventHandler(pageUp);
-                pnl.PageDown += new EventHandler(pageDown);
-                return pnl;
-                 * */
-            }
-            return null;
+            TranslationPanel pnl = (orig is TrString)
+                ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname, tn)
+                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNumbers) orig, (TrStringNumbers) trans, fieldname, tn, _origNumberSystem, _translation.NumberSystem);
+
+            pnl.ChangeMade += (s, e) => { _anyChanges = true; };
+            pnl.EnterPanel += new EventHandler(enterPanel);
+            pnl.CtrlUp += new EventHandler(ctrlUp);
+            pnl.CtrlDown += new EventHandler(ctrlDown);
+            pnl.CtrlHome += new EventHandler(ctrlHome);
+            pnl.CtrlEnd += new EventHandler(ctrlEnd);
+            pnl.PageUp += new EventHandler(pageUp);
+            pnl.PageDown += new EventHandler(pageDown);
+            return pnl;
         }
 
         private void ctrlUp(object sender, EventArgs e)
@@ -404,7 +391,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index > 0)
-                _currentlyVisibleTranslationPanels[index - 1].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[index - 1].FocusLastTranslationBox();
         }
 
         private void ctrlDown(object sender, EventArgs e)
@@ -412,7 +399,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index >= 0 && index < _currentlyVisibleTranslationPanels.Length - 1)
-                _currentlyVisibleTranslationPanels[index + 1].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[index + 1].FocusFirstTranslationBox();
         }
 
         private void ctrlHome(object sender, EventArgs e)
@@ -420,7 +407,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
-                _currentlyVisibleTranslationPanels[0].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[0].FocusFirstTranslationBox();
         }
 
         private void ctrlEnd(object sender, EventArgs e)
@@ -428,7 +415,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
-                _currentlyVisibleTranslationPanels[_currentlyVisibleTranslationPanels.Length - 1].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[_currentlyVisibleTranslationPanels.Length - 1].FocusLastTranslationBox();
         }
 
         private void pageUp(object sender, EventArgs e)
@@ -436,7 +423,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
-                _currentlyVisibleTranslationPanels[Math.Max(index - 10, 0)].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[Math.Max(index - 10, 0)].FocusFirstTranslationBox();
         }
 
         private void pageDown(object sender, EventArgs e)
@@ -444,7 +431,7 @@ namespace RT.Util.Lingo
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
             if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
-                _currentlyVisibleTranslationPanels[Math.Min(index + 10, _currentlyVisibleTranslationPanels.Length - 1)].FocusTranslationBox();
+                _currentlyVisibleTranslationPanels[Math.Min(index + 10, _currentlyVisibleTranslationPanels.Length - 1)].FocusFirstTranslationBox();
         }
 
         private void enterPanel(object sender, EventArgs e)
@@ -453,10 +440,10 @@ namespace RT.Util.Lingo
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, _lastFocusedPanel);
             if (index < 0) return;
             if (index > 0)
-                _pnlRight.ScrollControlIntoView(_currentlyVisibleTranslationPanels[index - 1]);
+                _pnlRightOuter.ScrollControlIntoView(_currentlyVisibleTranslationPanels[index - 1]);
             if (index < _currentlyVisibleTranslationPanels.Length - 1)
-                _pnlRight.ScrollControlIntoView(_currentlyVisibleTranslationPanels[index + 1]);
-            _pnlRight.ScrollControlIntoView(_lastFocusedPanel);
+                _pnlRightOuter.ScrollControlIntoView(_currentlyVisibleTranslationPanels[index + 1]);
+            _pnlRightOuter.ScrollControlIntoView(_lastFocusedPanel);
         }
 
         private class TranslationTreeNode : TreeNode
@@ -467,6 +454,24 @@ namespace RT.Util.Lingo
 
         private abstract class TranslationPanel : TableLayoutPanel
         {
+            public event EventHandler ChangeMade;
+            public event EventHandler EnterPanel;
+            public event EventHandler CtrlUp;
+            public event EventHandler CtrlDown;
+            public event EventHandler PageUp;
+            public event EventHandler PageDown;
+            public event EventHandler CtrlHome;
+            public event EventHandler CtrlEnd;
+
+            protected void fireChangeMade() { if (ChangeMade != null) ChangeMade(this, new EventArgs()); }
+            protected void fireEnterPanel() { if (EnterPanel != null) EnterPanel(this, new EventArgs()); }
+            protected void fireCtrlUp() { if (CtrlUp != null) CtrlUp(this, new EventArgs()); }
+            protected void fireCtrlDown() { if (CtrlDown != null) CtrlDown(this, new EventArgs()); }
+            protected void firePageUp() { if (PageUp != null) PageUp(this, new EventArgs()); }
+            protected void firePageDown() { if (PageDown != null) PageDown(this, new EventArgs()); }
+            protected void fireCtrlHome() { if (CtrlHome != null) CtrlHome(this, new EventArgs()); }
+            protected void fireCtrlEnd() { if (CtrlEnd != null) CtrlEnd(this, new EventArgs()); }
+
             protected static readonly int margin = 3;
 
             private TranslationTreeNode _treeNode;
@@ -554,7 +559,7 @@ namespace RT.Util.Lingo
 
                 // assign events
                 Click += new EventHandler(focusTranslationBox);
-                _btnAccept.Enter += (s, e) => { AnythingFocused = true; fireEnterPanel(e); };
+                _btnAccept.Enter += (s, e) => { AnythingFocused = true; fireEnterPanel(); };
                 _btnAccept.Leave += (s, e) => { AnythingFocused = false; };
                 _btnAccept.Click += new EventHandler(acceptTranslation);
 
@@ -579,7 +584,8 @@ namespace RT.Util.Lingo
             protected static Color upToDateOldFocus = Color.FromArgb(0xcc, 0xcc, 0xcc);
 
             public abstract bool Contains(string substring, bool inOriginal, bool inTranslation);
-            public abstract void FocusTranslationBox();
+            public abstract void FocusFirstTranslationBox();
+            public abstract void FocusLastTranslationBox();
             public virtual void SetFont(Font font, Size f)
             {
                 _lblStringCode.Font = new Font(font, FontStyle.Bold);
@@ -588,8 +594,7 @@ namespace RT.Util.Lingo
                 _btnAccept.Size = f;
             }
 
-            protected abstract void fireEnterPanel(EventArgs e);
-            protected virtual void focusTranslationBox(object sender, EventArgs e) { FocusTranslationBox(); }
+            protected virtual void focusTranslationBox(object sender, EventArgs e) { FocusFirstTranslationBox(); }
             protected virtual void setBackColor() { BackColor = _anythingFocused ? (_outOfDate ? outOfDateFocus : upToDateFocus) : (_outOfDate ? outOfDateNormal : upToDateNormal); }
             protected virtual void acceptTranslation(object sender, EventArgs e)
             {
@@ -602,22 +607,10 @@ namespace RT.Util.Lingo
 
         private class TranslationPanelTrString : TranslationPanel
         {
-            public event EventHandler ChangeMade;
-            public event EventHandler EnterPanel;
-            public event EventHandler CtrlUp;
-            public event EventHandler CtrlDown;
-            public event EventHandler PageUp;
-            public event EventHandler PageDown;
-            public event EventHandler CtrlHome;
-            public event EventHandler CtrlEnd;
-
-            #region X
             private TrString _translation;
             private TrString _original;
-
             private TextBoxAutoHeight _txtTranslation;
             private Label _lblOldEnglish;
-            #endregion
 
             public TranslationPanelTrString(string notes, TrString orig, TrString trans, string fieldname, TranslationTreeNode tn)
                 : base(tn, notes, fieldname,
@@ -630,7 +623,6 @@ namespace RT.Util.Lingo
                 _translation = trans;
                 _original = orig;
 
-                // Create the textbox a bit early so that we can assign the events which focus it
                 _txtTranslation = new TextBoxAutoHeight()
                 {
                     Text = trans.Translation,
@@ -662,13 +654,8 @@ namespace RT.Util.Lingo
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
 
-                _txtTranslation.TextChanged += (s, e) =>
-                {
-                    OutOfDate = true;
-                    if (ChangeMade != null)
-                        ChangeMade(s, e);
-                };
-                _txtTranslation.Enter += (s, e) => { AnythingFocused = true; fireEnterPanel(e); };
+                _txtTranslation.TextChanged += (s, e) => { OutOfDate = true; fireChangeMade(); };
+                _txtTranslation.Enter += (s, e) => { AnythingFocused = true; fireEnterPanel(); };
                 _txtTranslation.Leave += (s, e) => { AnythingFocused = false; };
                 _txtTranslation.Tag = this;
                 _txtTranslation.KeyDown += new KeyEventHandler(keyDown);
@@ -685,43 +672,41 @@ namespace RT.Util.Lingo
                 _translation.OldEnglish = _original.Translation;
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.Visible = false;
-                if (ChangeMade != null)
-                    ChangeMade(this, e);
-                if (CtrlDown != null)
-                    CtrlDown(this, e);
+                fireChangeMade();
+                fireCtrlDown();
                 ResumeLayout(true);
             }
 
             private void keyDown(object sender, KeyEventArgs e)
             {
-                if (e.KeyCode == Keys.Up && e.Control && !e.Alt && !e.Shift && CtrlUp != null)
+                if (e.KeyCode == Keys.Up && e.Control && !e.Alt && !e.Shift)
                 {
-                    CtrlUp(this, e);
+                    fireCtrlUp();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.Down && e.Control && !e.Alt && !e.Shift && CtrlDown != null)
+                else if (e.KeyCode == Keys.Down && e.Control && !e.Alt && !e.Shift)
                 {
-                    CtrlDown(this, e);
+                    fireCtrlDown();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.Home && e.Control && !e.Alt && !e.Shift && CtrlHome != null)
+                else if (e.KeyCode == Keys.Home && e.Control && !e.Alt && !e.Shift)
                 {
-                    CtrlHome(this, e);
+                    fireCtrlHome();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.End && e.Control && !e.Alt && !e.Shift && CtrlEnd != null)
+                else if (e.KeyCode == Keys.End && e.Control && !e.Alt && !e.Shift)
                 {
-                    CtrlEnd(this, e);
+                    fireCtrlEnd();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.PageUp && !e.Control && !e.Alt && !e.Shift && PageUp != null)
+                else if (e.KeyCode == Keys.PageUp && !e.Control && !e.Alt && !e.Shift)
                 {
-                    PageUp(this, e);
+                    firePageUp();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.PageDown && !e.Control && !e.Alt && !e.Shift && PageDown != null)
+                else if (e.KeyCode == Keys.PageDown && !e.Control && !e.Alt && !e.Shift)
                 {
-                    PageDown(this, e);
+                    firePageDown();
                     e.Handled = true;
                 }
                 else if (e.KeyCode == Keys.A && e.Control && !e.Alt && !e.Shift && sender is TextBoxAutoHeight)
@@ -736,7 +721,13 @@ namespace RT.Util.Lingo
                 return (inOriginal && _original.Translation.Contains(substring)) || (inTranslation && _translation.Translation.Contains(substring));
             }
 
-            public override void FocusTranslationBox()
+            public override void FocusFirstTranslationBox()
+            {
+                _txtTranslation.Focus();
+                _txtTranslation.SelectAll();
+            }
+
+            public override void FocusLastTranslationBox()
             {
                 _txtTranslation.Focus();
                 _txtTranslation.SelectAll();
@@ -748,11 +739,255 @@ namespace RT.Util.Lingo
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.BackColor = _anythingFocused ? (OutOfDate ? outOfDateOldFocus : upToDateOldFocus) : (OutOfDate ? outOfDateOldNormal : upToDateOldNormal);
             }
+        }
 
-            protected override void fireEnterPanel(EventArgs e)
+        private class TranslationPanelTrStringNumbers : TranslationPanel
+        {
+            private TrStringNumbers _original;
+            private TrStringNumbers _translation;
+            private Panel _pnlOldEnglish;
+            private TextBoxAutoHeight[] _txtTranslation;
+            private NumberSystem _origNumberSystem;
+            private NumberSystem _transNumberSystem;
+            private int _lastFocusedTextbox;
+            private List<Label> _smallLabels = new List<Label>();
+
+            public TranslationPanelTrStringNumbers(string notes, TrStringNumbers orig, TrStringNumbers trans, string fieldname, TranslationTreeNode tn, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
+                : base(tn, notes, fieldname,
+                    // outOfDate
+                    trans.OldEnglish == null || !trans.OldEnglish.SequenceEqual(orig.Translations),
+                    // needOldRow
+                    trans.OldEnglish != null && !trans.OldEnglish.SequenceEqual(orig.Translations)
+                )
             {
-                if (EnterPanel != null)
-                    EnterPanel(this, e);
+                int nn = trans.IsNumber.Where(b => b).Count();
+                int rowsOrig = (int) Math.Pow(origNumberSystem.NumStrings, nn);
+                int rowsTrans = (int) Math.Pow(transNumberSystem.NumStrings, nn);
+
+                _translation = trans;
+                _original = orig;
+                _origNumberSystem = origNumberSystem;
+                _transNumberSystem = transNumberSystem;
+
+                Panel pnlTranslation = createTablePanel(trans, trans.Translations, transNumberSystem, true, nn, rowsTrans);
+                pnlTranslation.TabIndex = 0;
+
+                int currow = 1;
+                if (!string.IsNullOrEmpty(notes))
+                    currow++;
+                if (trans.OldEnglish != null && !trans.OldEnglish.SequenceEqual(orig.Translations))
+                {
+                    _pnlOldEnglish = createTablePanel(orig, trans.OldEnglish, origNumberSystem, false, nn, rowsOrig);
+                    Controls.Add(_pnlOldEnglish, 1, currow);
+                    SetColumnSpan(_pnlOldEnglish, 2);
+                    setBackColor();
+                    currow++;
+                }
+                Panel pnlNewEnglish = createTablePanel(orig, orig.Translations, origNumberSystem, false, nn, rowsOrig);
+                Controls.Add(pnlNewEnglish, 1, currow);
+                SetColumnSpan(pnlNewEnglish, 2);
+                currow++;
+                Controls.Add(pnlTranslation, 1, currow);
+
+                _btnAccept.KeyDown += new KeyEventHandler(keyDown);
+                _btnAccept.TabIndex = 1;
+            }
+
+            private Panel createTablePanel(TrStringNumbers str, string[] display, NumberSystem ns, bool textBoxes, int nn, int rows)
+            {
+                if (textBoxes)
+                    _txtTranslation = new TextBoxAutoHeight[rows];
+
+                TableLayoutPanel pnlTranslations = new TableLayoutPanel
+                {
+                    AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 1 + nn,
+                    RowCount = 1 + rows
+                };
+                pnlTranslations.Click += new EventHandler(focusTranslationBox);
+                for (int i = 0; i < nn; i++)
+                    pnlTranslations.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                pnlTranslations.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+                for (int i = 0; i <= rows; i++)
+                    pnlTranslations.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                int column = 0;
+                for (int i = 0; i < str.IsNumber.Length; i++)
+                {
+                    if (str.IsNumber[i])
+                    {
+                        Label lbl = new Label
+                        {
+                            Anchor = AnchorStyles.Left,
+                            AutoSize = true,
+                            Margin = new Padding(margin),
+                            Text = "{" + i + "}",
+                            //Font = new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular)
+                        };
+                        lbl.Click += new EventHandler(focusTranslationBox);
+                        pnlTranslations.Controls.Add(lbl, column, 0);
+                        //_smallLabels.Add(lbl);
+                        column++;
+                    }
+                }
+                for (int row = 0; row < rows; row++)
+                {
+                    int col = 0;
+                    int r = row;
+                    for (int i = 0; i < str.IsNumber.Length; i++)
+                    {
+                        if (str.IsNumber[i])
+                        {
+                            Label lbl = new Label
+                            {
+                                Anchor = AnchorStyles.Left,
+                                AutoSize = true,
+                                Margin = new Padding(margin),
+                                Text = _transNumberSystem.GetDescription(r % _transNumberSystem.NumStrings),
+                                Font = new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular)
+                            };
+                            lbl.Click += new EventHandler(focusTranslationBox);
+                            pnlTranslations.Controls.Add(lbl, col, row + 1);
+                            _smallLabels.Add(lbl);
+                            col++;
+                            r /= _transNumberSystem.NumStrings;
+                        }
+                    }
+                    if (textBoxes)
+                    {
+                        TextBoxAutoHeight tba = new TextBoxAutoHeight
+                        {
+                            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                            Margin = new Padding(margin),
+                            Text = (display != null && row < display.Length) ? display[row] : "",
+                            Multiline = true,
+                            WordWrap = true,
+                            AcceptsReturn = true,
+                            AcceptsTab = false,
+                            ShortcutsEnabled = true
+                        };
+                        tba.TextChanged += (s, e) => { OutOfDate = true; fireChangeMade(); };
+                        tba.Enter += new EventHandler(textBoxEnter);
+                        tba.Leave += (s, e) => { AnythingFocused = false; };
+                        tba.Tag = this;
+                        tba.KeyDown += new KeyEventHandler(keyDown);
+                        _txtTranslation[row] = tba;
+                        pnlTranslations.Controls.Add(tba, col, row + 1);
+                    }
+                    else
+                    {
+                        Label lbl = new Label
+                        {
+                            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                            Margin = new Padding(margin),
+                            Text = (display != null && row < display.Length) ? display[row].Replace("&", "&&") : "",
+                            AutoSize = true
+                        };
+                        lbl.Click += new EventHandler(focusTranslationBox);
+                        pnlTranslations.Controls.Add(lbl, col, row + 1);
+                    }
+                }
+                return pnlTranslations;
+            }
+
+            private void textBoxEnter(object sender, EventArgs e)
+            {
+                AnythingFocused = true;
+                fireEnterPanel();
+                _lastFocusedTextbox = Array.IndexOf(_txtTranslation, sender);
+            }
+
+            protected override void acceptTranslation(object sender, EventArgs e)
+            {
+                SuspendLayout();
+                base.acceptTranslation(sender, e);
+                _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
+                _translation.OldEnglish = _original.Translations;
+                if (_pnlOldEnglish != null)
+                    _pnlOldEnglish.Visible = false;
+                fireChangeMade();
+                fireCtrlDown();
+                ResumeLayout(true);
+            }
+
+            private void keyDown(object sender, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Up && e.Control && !e.Alt && !e.Shift)
+                {
+                    if (_lastFocusedTextbox > 0)
+                        _txtTranslation[_lastFocusedTextbox - 1].Focus();
+                    else
+                        fireCtrlUp();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Down && e.Control && !e.Alt && !e.Shift)
+                {
+                    if (_lastFocusedTextbox < _txtTranslation.Length - 1)
+                        _txtTranslation[_lastFocusedTextbox + 1].Focus();
+                    else
+                        fireCtrlDown();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Home && e.Control && !e.Alt && !e.Shift)
+                {
+                    fireCtrlHome();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.End && e.Control && !e.Alt && !e.Shift)
+                {
+                    fireCtrlEnd();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.PageUp && !e.Control && !e.Alt && !e.Shift)
+                {
+                    firePageUp();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.PageDown && !e.Control && !e.Alt && !e.Shift)
+                {
+                    firePageDown();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.A && e.Control && !e.Alt && !e.Shift && sender is TextBoxAutoHeight)
+                {
+                    ((TextBoxAutoHeight) sender).SelectAll();
+                    e.Handled = true;
+                }
+            }
+
+            public override bool Contains(string substring, bool inOriginal, bool inTranslation)
+            {
+                return
+                    (inOriginal && _original.Translations.Any(t => t.Contains(substring))) ||
+                    (inTranslation && _translation.Translations.Any(t => t.Contains(substring)));
+            }
+
+            public override void FocusFirstTranslationBox()
+            {
+                _txtTranslation[0].Focus();
+                _txtTranslation[0].SelectAll();
+            }
+
+            public override void FocusLastTranslationBox()
+            {
+                _txtTranslation[_txtTranslation.Length - 1].Focus();
+                _txtTranslation[_txtTranslation.Length - 1].SelectAll();
+            }
+
+            protected override void setBackColor()
+            {
+                base.setBackColor();
+                if (_pnlOldEnglish != null)
+                    _pnlOldEnglish.BackColor = _anythingFocused ? (OutOfDate ? outOfDateOldFocus : upToDateOldFocus) : (OutOfDate ? outOfDateOldNormal : upToDateOldNormal);
+            }
+
+            public override void SetFont(Font font, Size f)
+            {
+                base.SetFont(font, f);
+                foreach (var l in _smallLabels)
+                    l.Font = new Font(font.Name, font.Size * 0.8f, FontStyle.Regular);
             }
         }
     }
