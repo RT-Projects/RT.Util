@@ -217,9 +217,9 @@ namespace RT.Util.Xml
                             var valueAttr = itemTag.Attribute("value");
                             try
                             {
-                                value = objectType == typeof(bool) || objectType == typeof(DateTime) || isIntegerType(objectType) || isDecimalType(objectType)
-                                    ? RConvert.Exact(objectType, valueAttr.Value)
-                                    : objectType.IsEnum ? Enum.Parse(objectType, valueAttr.Value) : valueAttr.Value;
+                                value = valueType == typeof(bool) || valueType == typeof(DateTime) || isIntegerType(valueType) || isDecimalType(valueType)
+                                    ? RConvert.Exact(valueType, valueAttr.Value)
+                                    : objectType.IsEnum ? Enum.Parse(valueType, valueAttr.Value) : valueAttr.Value;
                             }
                             catch { value = valueType.IsValueType ? valueType.GetConstructor(new Type[] { }).Invoke(new object[] { }) : null; }
                         }
