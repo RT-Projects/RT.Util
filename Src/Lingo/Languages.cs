@@ -423,7 +423,7 @@ namespace RT.Util.Lingo
         [LanguageInfo("ro", "Romanian", "Română", typeof(RomanianNumberSystem))]
         Romanian,
         /// <summary>Represents the Russian language (ru).</summary>
-        [LanguageInfo("ru", "Russian", "Русский Язык", typeof(SlavicNumberSystem1))]
+        [LanguageInfo("ru", "Russian", "Русский", typeof(SlavicNumberSystem1))]
         Russian,
         /// <summary>Represents the Kinyarwanda language (rw).</summary>
         [LanguageInfo("rw", "Kinyarwanda", "Ikinyarwanda", typeof(NumberSystem))]
