@@ -12,7 +12,7 @@ namespace RT.Util
     {
         static void Main(string[] args)
         {
-            foreach (var ty in Assembly.GetExecutingAssembly().GetExportedTypes().Where(t => t.GetCustomAttributes(typeof(TestFixtureAttribute), true).Any()))
+            foreach (var ty in Assembly.GetExecutingAssembly().GetExportedTypes().Where(t => t.GetCustomAttributes(typeof(TestFixtureAttribute), true).Any()).OrderBy(t => t.Name))
             {
                 Console.WriteLine("Testing type: " + ty);
                 var sts = Activator.CreateInstance(ty);

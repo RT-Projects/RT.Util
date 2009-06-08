@@ -19,7 +19,7 @@ namespace RT.Util.Collections
         /// <summary>
         /// This is where the set is stored internally.
         /// </summary>
-        protected List<T> L = new List<T>();
+        protected List<T> _list = new List<T>();
 
         /// <summary>
         /// Set[item] returns the specified item from the set. Returns null if
@@ -30,7 +30,7 @@ namespace RT.Util.Collections
         {
             get
             {
-                foreach (T n in L)
+                foreach (T n in _list)
                     if (item.Equals(n))
                         return n;
                 return default(T);
@@ -53,9 +53,11 @@ namespace RT.Util.Collections
         /// </summary>
         public void Intersect(Set<T> set)
         {
-            foreach (T item in L)
-                if (!set.L.Contains(item))
-                    L.Remove(item);
+            var newList = new List<T>();
+            foreach (T item in _list)
+                if (set._list.Contains(item))
+                    newList.Add(item);
+            _list = newList;
         }
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace RT.Util.Collections
         /// </summary>
         public Set<T> GetUnion(Set<T> set)
         {
-            Set<T> res = (Set<T>)Clone();
+            Set<T> res = (Set<T>) Clone();
             res.Union(set);
             return res;
         }
@@ -85,7 +87,7 @@ namespace RT.Util.Collections
         /// </summary>
         public Set<T> GetIntersect(Set<T> set)
         {
-            Set<T> res = (Set<T>)Clone();
+            Set<T> res = (Set<T>) Clone();
             res.Intersect(set);
             return res;
         }
@@ -95,7 +97,7 @@ namespace RT.Util.Collections
         /// </summary>
         public Set<T> GetSubtract(Set<T> set)
         {
-            Set<T> res = (Set<T>)Clone();
+            Set<T> res = (Set<T>) Clone();
             res.Subtract(set);
             return res;
         }
@@ -105,7 +107,7 @@ namespace RT.Util.Collections
         /// </summary>
         public bool IsEmpty
         {
-            get { return L.Count == 0; }
+            get { return _list.Count == 0; }
         }
 
 
@@ -127,14 +129,14 @@ namespace RT.Util.Collections
         /// <param name="item">Item to add if it is unique.</param>
         public void Add(T item)
         {
-            if (!L.Contains(item))
-                L.Add(item);
+            if (!_list.Contains(item))
+                _list.Add(item);
         }
 
         /// <summary>Empties the Set.</summary>
         public void Clear()
         {
-            L.Clear();
+            _list.Clear();
         }
 
         /// <summary>Determined whether the specified item is in the current Set.</summary>
@@ -142,7 +144,7 @@ namespace RT.Util.Collections
         /// <returns>True if the current Set contains the specified item.</returns>
         public bool Contains(T item)
         {
-            return L.Contains(item);
+            return _list.Contains(item);
         }
 
         /// <summary>Copies the contents of the current Set to the specified Array.</summary>
@@ -150,13 +152,13 @@ namespace RT.Util.Collections
         /// <param name="arrayIndex">Index in array at which copying begins.</param>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            L.CopyTo(array, arrayIndex);
+            _list.CopyTo(array, arrayIndex);
         }
 
         /// <summary>Determines the number of elements in this set.</summary>
         public int Count
         {
-            get { return L.Count; }
+            get { return _list.Count; }
         }
 
         /// <summary>Returns false.</summary>
@@ -170,7 +172,7 @@ namespace RT.Util.Collections
         /// <returns>True if the item was contained in this Set.</returns>
         public bool Remove(T item)
         {
-            return L.Remove(item);
+            return _list.Remove(item);
         }
 
         #endregion
@@ -181,7 +183,7 @@ namespace RT.Util.Collections
         /// <returns>An IEnumerator&lt;T&gt; to iterate over the elements in this Set.</returns>
         public IEnumerator<T> GetEnumerator()
         {
-            return L.GetEnumerator();
+            return _list.GetEnumerator();
         }
 
         #endregion
@@ -192,7 +194,7 @@ namespace RT.Util.Collections
         /// <returns>An IEnumerator to iterate over the elements in this Set.</returns>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            return L.GetEnumerator();
+            return _list.GetEnumerator();
         }
 
         #endregion
@@ -204,7 +206,7 @@ namespace RT.Util.Collections
         public object Clone()
         {
             Set<T> set = new Set<T>();
-            set.L.AddRange(this.L);
+            set._list.AddRange(this._list);
             return set;
         }
 
@@ -214,7 +216,7 @@ namespace RT.Util.Collections
         /// <param name="comparison">Comparison to use when sorting.</param>
         public void Sort(Comparison<T> comparison)
         {
-            L.Sort(comparison);
+            _list.Sort(comparison);
         }
     }
 }

@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="Collections\ListSortedTests.cs" />
     <Compile Include="Collections\RVariantTests.cs" />
+    <Compile Include="Collections\SetTests.cs" />
     <Compile Include="Collections\TupleTests.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
