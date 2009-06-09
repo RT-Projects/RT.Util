@@ -25,16 +25,16 @@ namespace RT.Util.Lingo
         public static implicit operator string(TrString translatable) { return translatable.Translation; }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object[])"/>.</summary>
-        public string Fmt(params object[] args) { return string.Format(Translation, args); }
+        public string Fmt(params object[] args) { try { return string.Format(Translation, args); } catch { return Translation; } }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object)"/>.</summary>
-        public string Fmt(object arg0) { return string.Format(Translation, arg0); }
+        public string Fmt(object arg0) { try { return string.Format(Translation, arg0); } catch { return Translation; } }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object, object)"/>.</summary>
-        public string Fmt(object arg0, object arg1) { return string.Format(Translation, arg0, arg1); }
+        public string Fmt(object arg0, object arg1) { try { return string.Format(Translation, arg0, arg1); } catch { return Translation; } }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object, object, object)"/>.</summary>
-        public string Fmt(object arg0, object arg1, object arg2) { return string.Format(Translation, arg0, arg1, arg2); }
+        public string Fmt(object arg0, object arg1, object arg2) { try { return string.Format(Translation, arg0, arg1, arg2); } catch { return Translation; } }
 
         /// <summary>Returns the translation.</summary>
         /// <returns>The translation.</returns>
@@ -74,19 +74,26 @@ namespace RT.Util.Lingo
         /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
         public string Fmt(NumberSystem ns, params object[] args)
         {
-            int n = 0;
-            int m = 1;
-            for (int i = 0; i < IsNumber.Length; i++)
+            try
             {
-                if (IsNumber[i])
+                int n = 0;
+                int m = 1;
+                for (int i = 0; i < IsNumber.Length; i++)
                 {
-                    if (!(args[i] is int))
-                        throw new ArgumentException("Argument #{0} was expected to be an integer, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
-                    n += ns.GetString((int) args[i]) * m;
-                    m *= ns.NumStrings;
+                    if (IsNumber[i])
+                    {
+                        if (!(args[i] is int))
+                            throw new ArgumentException("Argument #{0} was expected to be an integer, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
+                        n += ns.GetString((int) args[i]) * m;
+                        m *= ns.NumStrings;
+                    }
                 }
+                return Translations[n].Fmt(args);
             }
-            return Translations[n].Fmt(args);
+            catch
+            {
+                return Translations[0];
+            }
         }
     }
 }

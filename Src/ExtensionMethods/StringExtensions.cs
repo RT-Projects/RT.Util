@@ -436,5 +436,12 @@ namespace RT.Util.ExtensionMethods
                 }
             }
         }
+
+        /// <summary>Attempts to detect Unix-style and Mac-style line endings and converts them to Windows (\r\n).</summary>
+        public static string UnifyLineEndings(this string input)
+        {
+            string[] lines = Regex.Split(input, @"\r\n|\r|\n");
+            return lines.JoinString("\r\n");
+        }
     }
 }

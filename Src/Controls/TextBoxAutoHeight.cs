@@ -17,7 +17,7 @@ namespace RT.Util.Controls
         {
             if (Multiline && WordWrap)
             {
-                Size s = SizeFromClientSize(TextRenderer.MeasureText(Text.Length > 0 ? Text : "Wg", Font, new Size(width, height), TextFormatFlags.WordBreak));
+                Size s = SizeFromClientSize(TextRenderer.MeasureText(Text.Length > 0 ? Text : "Wg", Font, new Size(width - Margin.Horizontal - Padding.Horizontal, height), TextFormatFlags.WordBreak));
                 base.SetBoundsCore(x, y, width, s.Height + Margin.Vertical, BoundsSpecified.All);
             }
             else

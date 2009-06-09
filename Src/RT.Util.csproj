@@ -138,6 +138,9 @@
     <Compile Include="Lingo\LingoAttributes.cs" />
     <Compile Include="Lingo\NumberSystem.cs" />
     <Compile Include="Lingo\TranslationBase.cs" />
+    <Compile Include="Lingo\TranslationCreateForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Lingo\TranslationForm.cs">
       <SubType>Form</SubType>
     </Compile>

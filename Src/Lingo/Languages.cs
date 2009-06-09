@@ -336,7 +336,7 @@ namespace RT.Util.Lingo
         [LanguageInfo("mr", "Marathi", "मराठी", typeof(NumberSystem))]
         Marathi,
         /// <summary>Represents the Malay language (ms).</summary>
-        [LanguageInfo("ms", "Malay", "Bahasa Melayu", typeof(NumberSystem))]
+        [LanguageInfo("ms", "Malay", "Bahasa Melayu", typeof(OneStringNumberSystem))]
         Malay,
         /// <summary>Represents the Maltese language (mt).</summary>
         [LanguageInfo("mt", "Maltese", "Malti", typeof(NumberSystem))]
@@ -594,7 +594,7 @@ namespace RT.Util.Lingo
         [LanguageInfo("zu", "Zulu", "IsiZulu", typeof(NumberSystem))]
         Zulu,
         /// <summary>Represents the Klingon language (tlh).</summary>
-        [LanguageInfo("tlh", "Klingon", "tlhIngan Hol", typeof(NumberSystem))]
+        [LanguageInfo("tlh", "Klingon", "tlhIngan Hol", typeof(Singular1PluralNumberSystem))]
         Klingon,
         /// <summary>Represents the Lojban language (jbo).</summary>
         [LanguageInfo("jbo", "Lojban", "lojban", typeof(NumberSystem))]

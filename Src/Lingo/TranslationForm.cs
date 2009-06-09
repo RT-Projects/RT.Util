@@ -14,7 +14,7 @@ namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
     /// <typeparam name="T">The type containing the <see cref="TrString"/> and <see cref="TrStringNumbers"/> fields to be translated.</typeparam>
-    public partial class TranslationForm<T> : ManagedForm where T : TranslationBase, new()
+    public class TranslationForm<T> : ManagedForm where T : TranslationBase, new()
     {
         /// <summary>Used to fire <see cref="AcceptChanges"/>.</summary>
         public delegate void TranslationChangesEventHandler();
@@ -73,6 +73,7 @@ namespace RT.Util.Lingo
 
             // some defaults
             Text = "Translating";
+            Width = Screen.PrimaryScreen.WorkingArea.Width / 2;
             Height = Screen.PrimaryScreen.WorkingArea.Height * 9 / 10;
 
             // Start creating all the controls
@@ -87,7 +88,7 @@ namespace RT.Util.Lingo
             pnlSplit.Panel1.Controls.Add(_ctTreeView);
             var lstPanels = new List<TranslationPanel>();
             T orig = new T();
-            _origNumberSystem = orig.NumberSystem;
+            _origNumberSystem = orig.Language.GetNumberSystem();
             _ctTreeView.Nodes.Add(createNodeWithPanels(typeof(T), orig, _translation, lstPanels));
             _allTranslationPanels = lstPanels.ToArray();
             _ctTreeView.ExpandAll();
@@ -174,7 +175,8 @@ namespace RT.Util.Lingo
                     _mnuFindNext = new ToolStripMenuItem("F&ind next", null, new EventHandler(findNext)) { ShortcutKeys = Keys.F3, Enabled = _settings.LastFindQuery != null },
                     _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, new EventHandler(findPrev)) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
                     new ToolStripMenuItem("Go to &next out-of-date string", null, new EventHandler(nextOutOfDate)) { ShortcutKeys = Keys.Control | Keys.N },
-                    new ToolStripMenuItem("Fon&t...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T }
+                    new ToolStripMenuItem("Fon&t...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T },
+                    new ToolStripMenuItem("&Mark all strings as up to date", null, new EventHandler(markAllUpToDate))
                 )
             ) { Dock = DockStyle.Top };
 
@@ -182,8 +184,17 @@ namespace RT.Util.Lingo
             Controls.Add(pnlBottom);
             Controls.Add(ts);
 
-            if (_settings.FontName != null)
-                setFont(new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular));
+            setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : Font);
+        }
+
+        private void markAllUpToDate(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
+                "Mark all as up to date", MessageBoxButtons.YesNo) == DialogResult.No)
+                return;
+            foreach (var p in _allTranslationPanels)
+                p.SetUpToDate();
+            _anyChanges = true;
         }
 
         private void setButtonSizes()
@@ -235,6 +246,8 @@ namespace RT.Util.Lingo
                 ff.AutoSizeMode = AutoSizeMode.GrowAndShrink;
                 ff.Text = "Find";
                 ff.FormBorderStyle = FormBorderStyle.FixedDialog;
+                ff.MinimizeBox = false;
+                ff.MaximizeBox = false;
                 TableLayoutPanel tp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 5, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(5) };
                 tp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
                 tp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -374,7 +387,7 @@ namespace RT.Util.Lingo
         {
             TranslationPanel pnl = (orig is TrString)
                 ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname, tn)
-                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNumbers) orig, (TrStringNumbers) trans, fieldname, tn, _origNumberSystem, _translation.NumberSystem);
+                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNumbers) orig, (TrStringNumbers) trans, fieldname, tn, _origNumberSystem, _translation.Language.GetNumberSystem());
 
             pnl.ChangeMade += (s, e) => { _anyChanges = true; };
             pnl.EnterPanel += new EventHandler(enterPanel);
@@ -488,7 +501,7 @@ namespace RT.Util.Lingo
             public bool OutOfDate
             {
                 get { return _outOfDate; }
-                set { _outOfDate = value; setBackColor(); }
+                protected set { _outOfDate = value; setBackColor(); }
             }
 
             protected bool _anythingFocused;
@@ -587,6 +600,7 @@ namespace RT.Util.Lingo
             public abstract bool Contains(string substring, bool inOriginal, bool inTranslation);
             public abstract void FocusFirstTranslationBox();
             public abstract void FocusLastTranslationBox();
+            public abstract void SetUpToDate();
             public virtual void SetFont(Font font, Size f)
             {
                 _lblStringCode.Font = new Font(font, FontStyle.Bold);
@@ -626,7 +640,7 @@ namespace RT.Util.Lingo
 
                 _txtTranslation = new TextBoxAutoHeight()
                 {
-                    Text = trans.Translation,
+                    Text = trans.Translation.UnifyLineEndings(),
                     Margin = new Padding(margin),
                     Anchor = AnchorStyles.Left | AnchorStyles.Right,
                     Multiline = true,
@@ -656,7 +670,7 @@ namespace RT.Util.Lingo
                 Controls.Add(_txtTranslation, 1, currow);
 
                 _txtTranslation.TextChanged += (s, e) => { OutOfDate = true; fireChangeMade(); };
-                _txtTranslation.Enter += (s, e) => { AnythingFocused = true; fireEnterPanel(); };
+                _txtTranslation.Enter += (s, e) => { _txtTranslation.SelectAll(); AnythingFocused = true; fireEnterPanel(); };
                 _txtTranslation.Leave += (s, e) => { AnythingFocused = false; };
                 _txtTranslation.Tag = this;
                 _txtTranslation.KeyDown += new KeyEventHandler(keyDown);
@@ -734,6 +748,17 @@ namespace RT.Util.Lingo
             {
                 _txtTranslation.Focus();
                 _txtTranslation.SelectAll();
+            }
+
+            public override void SetUpToDate()
+            {
+                SuspendLayout();
+                _translation.Translation = _txtTranslation.Text;
+                _translation.OldEnglish = _original.Translation;
+                if (_lblOldEnglish != null)
+                    _lblOldEnglish.Visible = false;
+                OutOfDate = false;
+                ResumeLayout(true);
             }
 
             protected override void setBackColor()
@@ -864,7 +889,7 @@ namespace RT.Util.Lingo
                         {
                             Anchor = AnchorStyles.Left | AnchorStyles.Right,
                             Margin = new Padding(margin),
-                            Text = (display != null && row < display.Length) ? display[row] : "",
+                            Text = (display != null && row < display.Length) ? display[row].UnifyLineEndings() : "",
                             Multiline = true,
                             WordWrap = true,
                             AcceptsReturn = true,
@@ -897,6 +922,7 @@ namespace RT.Util.Lingo
 
             private void textBoxEnter(object sender, EventArgs e)
             {
+                ((TextBoxAutoHeight) sender).SelectAll();
                 AnythingFocused = true;
                 fireEnterPanel();
                 _lastFocusedTextbox = Array.IndexOf(_txtTranslation, sender);
@@ -978,6 +1004,17 @@ namespace RT.Util.Lingo
             {
                 _txtTranslation[_txtTranslation.Length - 1].Focus();
                 _txtTranslation[_txtTranslation.Length - 1].SelectAll();
+            }
+
+            public override void SetUpToDate()
+            {
+                SuspendLayout();
+                _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
+                _translation.OldEnglish = _original.Translations;
+                if (_pnlOldEnglish != null)
+                    _pnlOldEnglish.Visible = false;
+                OutOfDate = false;
+                ResumeLayout(true);
             }
 
             protected override void setBackColor()

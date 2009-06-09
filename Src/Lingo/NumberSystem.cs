@@ -60,15 +60,15 @@ namespace RT.Util.Lingo
         public override string GetDescription(int n) { return n == 0 ? "sglr" : n == 1 ? "plrl" : "0"; }
     }
 
-    /// <summary>Number system for Irish: one string for 1, one for 2, one for all other numbers.</summary>
+    /// <summary>Number system for Irish: one string for numbers ending in 1-6, one for numbers ending in 7-9, one for numbers ending in 0.</summary>
     public class IrishNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
         /// <summary>Determines which string (numbered from 0) should be used for the number <paramref name="n"/>.</summary>
-        public override int GetString(int n) { return n == 1 ? 0 : n == 2 ? 1 : 2; }
+        public override int GetString(int n) { return n % 10 >= 1 && n % 10 <= 6 ? 0 : n % 10 > 7 ? 1 : 2; }
         /// <summary>Gets a short textual representation of the <paramref name="n"/>th string (e.g. sglr, plrl).</summary>
-        public override string GetDescription(int n) { return n == 0 ? "sglr" : n == 1 ? "2" : "plrl"; }
+        public override string GetDescription(int n) { return n == 0 ? "1-6" : n == 1 ? "7-9" : "0"; }
     }
 
     /// <summary>Number system for Romanian: one string for 1; one for 0 and for all numbers ending in something between 01 and 19; and one for all other numbers.</summary>
