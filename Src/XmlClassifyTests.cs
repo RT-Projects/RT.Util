@@ -274,7 +274,7 @@ namespace RT.Util.Xml
         [Test]
         public void TestPartialLoad()
         {
-            var elem = new XElement("item", new XAttribute("AULong", "987654"));
+            var elem = new XElement("item", new XElement("AULong", "987654"));
             var loaded = XmlClassify.ObjectFromXElement<basicClass>(elem);
 
             Assert.AreEqual(-123, loaded.AnInt);

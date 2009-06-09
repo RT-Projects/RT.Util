@@ -53,10 +53,15 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, string baseDir, object parentNode) where T : new()
         {
+            return (T) loadObjectFromXmlFile(typeof(T), filename, baseDir, parentNode);
+        }
+
+        private static object loadObjectFromXmlFile(Type type, string filename, string baseDir, object parentNode)
+        {
             var strRead = new StreamReader(filename, Encoding.UTF8);
             XElement elem = XElement.Load(strRead);
             strRead.Close();
-            return ObjectFromXElement<T>(elem, baseDir, parentNode);
+            return objectFromXElement(type, elem, baseDir, parentNode);
         }
 
         /// <summary>
@@ -67,7 +72,20 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T ObjectFromXElement<T>(XElement elem) where T : new()
         {
-            return ObjectFromXElement<T>(elem, null, null);
+            return (T) objectFromXElement(typeof(T), elem, null, null);
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree.
+        /// </summary>
+        /// <typeparam name="T">Type of object to reconstruct.</typeparam>
+        /// <param name="elem">XML tree to reconstruct object from.</param>
+        /// <param name="baseDir">The base directory from which to locate additional XML files
+        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static T ObjectFromXElement<T>(XElement elem, string baseDir) where T : new()
+        {
+            return (T) objectFromXElement(typeof(T), elem, baseDir, null);
         }
 
         /// <summary>
@@ -82,164 +100,135 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T ObjectFromXElement<T>(XElement elem, string baseDir, object parentNode) where T : new()
         {
-            T ret = new T();
-
-            foreach (var field in typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                string rFieldName = field.Name.TrimStart('_');
-                var attribs = field.GetCustomAttributes(false);
-
-                // [XmlIgnore]
-                if (attribs.Any(x => x is XmlIgnoreAttribute))
-                    continue;
-
-                // [XmlParent]
-                else if (attribs.Any(x => x is XmlParentAttribute))
-                    field.SetValue(ret, parentNode);
-
-                // [XmlFollowId]
-                else if (attribs.Any(x => x is XmlFollowIdAttribute))
-                {
-                    if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                        throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(typeof(T).FullName, field.Name));
-
-                    Type innerType = field.FieldType.GetGenericArguments()[0];
-                    var attr = elem.Attribute(rFieldName);
-                    if (attr != null)
-                    {
-                        string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
-                        field.SetValue(ret,
-                            // new XmlDeferredObject<InnerType>(Attr.Value, XmlClassify.LoadObjectFromXmlFile<InnerType>(NewFile, BaseDir, t))
-                            typeof(XmlDeferredObject<>).MakeGenericType(innerType)
-                                .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
-                                .Invoke(new object[] {
-                                    attr.Value,
-                                    // XmlClassify.LoadObjectFromXmlFile<InnerType>(NewFile, BaseDir, t)
-                                    typeof(XmlClassify).GetMethod("LoadObjectFromXmlFile", new Type[] { typeof(string), typeof(string), typeof(object) })
-                                        .MakeGenericMethod(innerType),
-                                    null,
-                                    new object[] { newFile, baseDir, ret }
-                                })
-                        );
-                    }
-                }
-                // Primitive types
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(bool) || isIntegerType(field.FieldType) || isDecimalType(field.FieldType) || field.FieldType == typeof(DateTime) || field.FieldType.IsEnum)
-                {
-                    var attr = elem.Attribute(rFieldName);
-                    if (attr == null)
-                        continue;
-                    Type t = field.FieldType;
-                    if (t == typeof(string))
-                        field.SetValue(ret, attr.Value);
-                    else if (t.IsEnum)
-                        try { field.SetValue(ret, Enum.Parse(t, attr.Value)); }
-                        catch { continue; }
-                    else    // bool, DateTime, integer types, decimal types
-                        try { field.SetValue(ret, RConvert.Exact(t, attr.Value)); }
-                        catch { continue; }
-                }
-                else
-                {
-                    var subtags = elem.Elements(rFieldName);
-                    if (!subtags.Any()) continue;
-                    var retObj = builtinFromXElement(field.FieldType, subtags.First(), rFieldName, baseDir, typeof(T).FullName + "." + field.Name, field.GetValue(ret));
-                    if (retObj != null)
-                        field.SetValue(ret, retObj);
-                }
-            }
-            return ret;
+            return (T) objectFromXElement(typeof(T), elem, baseDir, parentNode);
         }
 
-        private static object builtinFromXElement(Type objectType, XElement elem, string rFieldName, string baseDir, string debugType, object curValue)
+        private static object objectFromXElement(Type type, XElement elem, string baseDir, object parentNode)
         {
-            if (objectType == typeof(XElement))
+            if (elem.Attribute("null") != null)
+                return null;
+            else if (type == typeof(XElement))
                 return elem.Elements().FirstOrDefault();
-
-            // Check if it's an array, collection or dictionary
-            Type keyType = null, valueType = null;
-            Type[] typeParameters = null;
-
-            if (objectType.IsArray)
-                valueType = objectType.GetElementType();
-            else if (objectType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+            else if (type == typeof(DateTime))
             {
-                keyType = typeParameters[0];
-                valueType = typeParameters[1];
+                DateTime result;
+                RConvert.Exact(elem.Value, out result);
+                return result;
             }
-            else if (objectType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
-                valueType = typeParameters[0];
-
-            if (valueType == null)
-            {
-                var xmlMethod = typeof(XmlClassify).GetMethod("ObjectFromXElement", new Type[] { typeof(XElement), typeof(string), typeof(object) });
-                return xmlMethod.MakeGenericMethod(objectType).Invoke(null, new object[] { elem, baseDir, null });
-            }
+            else if (isDecimalType(type) || type == typeof(bool) || isIntegerType(type))
+                return type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(string) }, null).Invoke(null, new object[] { elem.Value });
+            else if (type.IsEnum)
+                return Enum.Parse(type, elem.Value);
+            else if (type == typeof(string))
+                return elem.Value;
             else
             {
-                if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
-                    throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string and integer types are supported.".Fmt(debugType, keyType));
+                // Check if it's an array, collection or dictionary
+                Type keyType = null, valueType = null;
+                Type[] typeParameters;
 
-                object outputList;
-                if (objectType.IsArray)
-                    outputList = objectType.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { elem.Elements("item").Count() });
+                if (type.IsArray)
+                    valueType = type.GetElementType();
+                else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+                {
+                    keyType = typeParameters[0];
+                    valueType = typeParameters[1];
+                }
+                else if (type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                    valueType = typeParameters[0];
+
+                if (valueType != null)
+                {
+                    if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
+                        throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(elem.Name, keyType));
+
+                    object outputList;
+                    if (type.IsArray)
+                        outputList = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { elem.Elements("item").Count() });
+                    else
+                        outputList = type.GetConstructor(new Type[] { }).Invoke(new object[] { });
+
+                    var addMethod = type.IsArray
+                        ? type.GetMethod("Set", new Type[] { typeof(int), valueType })
+                        : keyType == null
+                            ? type.GetMethod("Add", new Type[] { valueType })
+                            : type.GetMethod("Add", new Type[] { keyType, valueType });
+
+                    int i = 0;
+                    foreach (var itemTag in elem.Elements("item"))
+                    {
+                        object key = null, value = null;
+                        if (keyType != null)
+                        {
+                            var keyAttr = itemTag.Attribute("key");
+                            try { key = isIntegerType(keyType) ? RConvert.Exact(keyType, keyAttr.Value) : keyType.IsEnum ? Enum.Parse(keyType, keyAttr.Value) : keyAttr.Value; }
+                            catch { continue; }
+                        }
+                        var nullAttr = itemTag.Attribute("null");
+                        if (nullAttr == null)
+                            value = objectFromXElement(valueType, itemTag, baseDir, parentNode);
+                        if (type.IsArray)
+                            addMethod.Invoke(outputList, new object[] { i++, value });
+                        else if (keyType == null)
+                            addMethod.Invoke(outputList, new object[] { value });
+                        else
+                            addMethod.Invoke(outputList, new object[] { key, value });
+                    }
+                    return outputList;
+                }
                 else
                 {
-                    outputList = curValue;
-                    if (outputList == null)
-                        outputList = objectType.GetConstructor(new Type[] { }).Invoke(new object[] { });
-                    else
-                        objectType.GetMethod("Clear", new Type[] { }).Invoke(outputList, new object[] { });
-                }
+                    object ret = Activator.CreateInstance(type);
 
-                var addMethod = objectType.IsArray
-                    ? objectType.GetMethod("Set", new Type[] { typeof(int), valueType })
-                    : keyType == null
-                        ? objectType.GetMethod("Add", new Type[] { valueType })
-                        : objectType.GetMethod("Add", new Type[] { keyType, valueType });
+                    foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                    {
+                        string rFieldName = field.Name.TrimStart('_');
+                        var attribs = field.GetCustomAttributes(false);
 
-                int i = 0;
-                foreach (var itemTag in elem.Elements("item"))
-                {
-                    object key = null, value = null;
-                    if (keyType != null)
-                    {
-                        var keyAttr = itemTag.Attribute("key");
-                        try { key = isIntegerType(keyType) ? RConvert.Exact(keyType, keyAttr.Value) : keyAttr.Value; }
-                        catch { continue; }
-                    }
-                    var nullAttr = itemTag.Attribute("null");
-                    if (nullAttr == null)
-                    {
-                        if (valueType.IsEnum || valueType == typeof(string) || isIntegerType(valueType) || isDecimalType(valueType) ||
-                            valueType == typeof(bool) || valueType == typeof(DateTime))
+                        // [XmlIgnore]
+                        if (attribs.Any(x => x is XmlIgnoreAttribute))
+                            continue;
+
+                        // [XmlParent]
+                        else if (attribs.Any(x => x is XmlParentAttribute))
+                            field.SetValue(ret, parentNode);
+
+                        // [XmlFollowId]
+                        else if (attribs.Any(x => x is XmlFollowIdAttribute))
                         {
-                            var valueAttr = itemTag.Attribute("value");
-                            try
+                            if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
+                                throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
+
+                            Type innerType = field.FieldType.GetGenericArguments()[0];
+                            var attr = elem.Attribute(rFieldName);
+                            if (attr != null)
                             {
-                                value = valueType == typeof(bool) || valueType == typeof(DateTime) || isIntegerType(valueType) || isDecimalType(valueType)
-                                    ? RConvert.Exact(valueType, valueAttr.Value)
-                                    : objectType.IsEnum ? Enum.Parse(valueType, valueAttr.Value) : valueAttr.Value;
+                                string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
+                                field.SetValue(ret,
+                                    // new XmlDeferredObject<InnerType>(attr.Value, method loadObjectFromXmlFile, new[] { innerType, newFile, baseDir, ret })
+                                    typeof(XmlDeferredObject<>).MakeGenericType(innerType)
+                                        .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
+                                        .Invoke(new object[] {
+                                            attr.Value,
+                                            typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }),
+                                            null,
+                                            new object[] { innerType, newFile, baseDir, ret }
+                                        })
+                                );
                             }
-                            catch { value = valueType.IsValueType ? valueType.GetConstructor(new Type[] { }).Invoke(new object[] { }) : null; }
                         }
-                        else if (valueType == typeof(XElement))
-                            value = itemTag.Elements().FirstOrDefault();
+
+                        // Fields with no special [Xml...] attributes
                         else
                         {
-                            MethodInfo xmlMethod = typeof(XmlClassify).GetMethod("builtinFromXElement", BindingFlags.NonPublic | BindingFlags.Static, null,
-                                new Type[] { typeof(Type), typeof(XElement), typeof(string), typeof(string), typeof(string), typeof(object) }, null);
-                            value = xmlMethod.Invoke(null, new object[] { valueType, itemTag, "item", baseDir, debugType + ".<Value>", null });
+                            var tag = elem.Elements(rFieldName);
+                            if (tag.Any())
+                                try { field.SetValue(ret, objectFromXElement(field.FieldType, tag.First(), baseDir, ret)); }
+                                catch { }
                         }
                     }
-                    if (objectType.IsArray)
-                        addMethod.Invoke(outputList, new object[] { i++, value });
-                    else if (keyType == null)
-                        addMethod.Invoke(outputList, new object[] { value });
-                    else
-                        addMethod.Invoke(outputList, new object[] { key, value });
+                    return ret;
                 }
-                return outputList;
             }
         }
 
@@ -253,7 +242,7 @@ namespace RT.Util.Xml
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename)
         {
             string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            SaveObjectToXmlFile(saveObject, filename, baseDir);
+            saveObjectToXmlFile(typeof(T), saveObject, filename, baseDir);
         }
 
         /// <summary>
@@ -267,7 +256,12 @@ namespace RT.Util.Xml
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir)
         {
-            var x = ObjectToXElement(saveObject, baseDir, "item");
+            saveObjectToXmlFile(typeof(T), saveObject, filename, baseDir);
+        }
+
+        private static void saveObjectToXmlFile(Type saveType, object saveObject, string filename, string baseDir)
+        {
+            var x = objectToXElement(saveType, saveObject, baseDir, "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -280,7 +274,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject)
         {
-            return ObjectToXElement(saveObject, null, "item");
+            return objectToXElement(typeof(T), saveObject, null, "item");
         }
 
         /// <summary>
@@ -293,7 +287,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir)
         {
-            return ObjectToXElement(saveObject, baseDir, "item");
+            return objectToXElement(typeof(T), saveObject, baseDir, "item");
         }
 
         /// <summary>
@@ -308,136 +302,101 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir, string tagName)
         {
+            return objectToXElement(typeof(T), saveObject, baseDir, tagName);
+        }
+
+        private static XElement objectToXElement(Type saveType, object saveObject, string baseDir, string tagName)
+        {
             XElement elem = new XElement(tagName);
 
-            if (typeof(T) == typeof(XElement))
-            {
+            if (saveObject == null)
+                elem.Add(new XAttribute("null", 1));
+            else if (saveType == typeof(XElement))
                 elem.Add(new XElement(saveObject as XElement));
-                return elem;
-            }
-
-            foreach (var field in typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                string rFieldName = field.Name.TrimStart('_');
-                var attribs = field.GetCustomAttributes(false);
-
-                // [XmlIgnore]
-                if (attribs.Any(x => x is XmlIgnoreAttribute))
-                    continue;
-
-                // [XmlParent]
-                else if (attribs.Any(x => x is XmlParentAttribute))
-                    continue;
-
-                // [XmlFollowId]
-                else if (attribs.Any(x => x is XmlFollowIdAttribute))
-                {
-                    if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                        throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
-
-                    Type innerType = field.FieldType.GetGenericArguments()[0];
-                    Type xmlType = typeof(XmlDeferredObject<>).MakeGenericType(innerType);
-                    string id = (string) xmlType.GetProperty("Id").GetValue(field.GetValue(saveObject), null);
-                    elem.SetAttributeValue(rFieldName, id);
-
-                    if ((bool) xmlType.GetProperty("Evaluated").GetValue(field.GetValue(saveObject), null))
-                        typeof(XmlClassify).GetMethods()
-                            .Where(mi => mi.Name == "SaveObjectToXmlFile" && mi.GetParameters().Count() == 3)
-                            .First().MakeGenericMethod(innerType).Invoke(null, new object[] {
-                                xmlType.GetProperty("Value").GetValue(field.GetValue(saveObject), null),
-                                Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"),
-                                baseDir
-                            });
-                }
-
-                else if (field.GetValue(saveObject) != null)
-                {
-                    // Primitive types
-                    if (field.FieldType.IsEnum || field.FieldType == typeof(string) || field.FieldType == typeof(bool) || field.FieldType == typeof(DateTime) || isIntegerType(field.FieldType) || isDecimalType(field.FieldType))
-                        elem.SetAttributeValue(rFieldName, safeToString(field.FieldType, field.GetValue(saveObject)));
-                    else
-                        elem.Add(complexObjectToXElement(field.FieldType, field.GetValue(saveObject), baseDir, rFieldName, typeof(T).FullName + "." + field.Name));
-                }
-            }
-
-            return elem;
-        }
-
-        private static XElement complexObjectToXElement(Type objectType, object theObject, string baseDir, string rFieldName, string debugFieldName)
-        {
-            Type keyType = null, valueType = null;
-            Type[] typeParameters = null;
-
-            if (objectType.IsArray)
-                valueType = objectType.GetElementType();
-            else if (objectType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
-            {
-                keyType = typeParameters[0];
-                valueType = typeParameters[1];
-            }
-            else if (objectType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
-                valueType = typeParameters[0];
-
-            if (valueType == null)
-            {
-                var xmlMethod = typeof(XmlClassify).GetMethods().Where(mi => mi.Name == "ObjectToXElement" && mi.GetParameters().Count() == 3).First();
-                // objectType is not an array or collection or dictionary; use recursion to store the object
-                return (XElement) xmlMethod.MakeGenericMethod(objectType).Invoke(null, new object[] { theObject, baseDir, rFieldName });
-            }
-            else
-            {
-                if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType))
-                    throw new Exception("The field {0} is a dictionary whose key type is {1}, but only string and integer types are supported.".Fmt(debugFieldName, keyType.FullName));
-                var enumerator = objectType.GetMethod("GetEnumerator", new Type[] { }).Invoke(theObject, new object[] { }) as IEnumerator;
-                Type kvpType = keyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType);
-                var collectionTag = new XElement(rFieldName);
-                while (enumerator.MoveNext())
-                {
-                    object key = null;
-                    if (keyType != null)
-                        key = kvpType.GetProperty("Key").GetValue(enumerator.Current, null);
-                    var value = keyType == null ? enumerator.Current : kvpType.GetProperty("Value").GetValue(enumerator.Current, null);
-                    XElement subtag;
-                    if (value == null)
-                    {
-                        subtag = new XElement("item");
-                        if (key != null) subtag.SetAttributeValue("key", key);
-                        subtag.SetAttributeValue("null", 1);
-                    }
-                    else if (valueType.IsEnum || valueType == typeof(bool) || isIntegerType(valueType) || isDecimalType(valueType) || valueType == typeof(string) || valueType == typeof(DateTime))
-                    {
-                        subtag = new XElement("item");
-                        if (key != null) subtag.SetAttributeValue("key", key);
-                        subtag.SetAttributeValue("value", safeToString(valueType, value));
-                    }
-                    else
-                    {
-                        var xmlMethod = typeof(XmlClassify).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(mi => mi.Name == "complexObjectToXElement" && mi.GetParameters().Count() == 5).First();
-                        subtag = (XElement) xmlMethod.Invoke(null, new object[] { valueType, value, baseDir, "item", debugFieldName + ".<Value>" });
-                        if (key != null) subtag.SetAttributeValue("key", key);
-                    }
-                    collectionTag.Add(subtag);
-                }
-                return collectionTag;
-            }
-        }
-
-        private static string safeToString(Type type, object obj)
-        {
-            if (type == typeof(DateTime))
+            else if (saveType == typeof(DateTime))
             {
                 string result;
-                RConvert.Exact((DateTime) obj, out result);
-                return result;
+                RConvert.Exact(saveObject, out result);
+                elem.Add(result);
             }
-
-            if (isDecimalType(type))
+            else if (isDecimalType(saveType))
             {
-                var met = type.GetMethods().Where(m => m.Name == "ToString" && !m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
-                return (string) met.Invoke(obj, new object[] { "R" });
+                var met = saveType.GetMethods().Where(m => m.Name == "ToString" && !m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
+                elem.Add(met.Invoke(saveObject, new object[] { "R" }));
             }
+            else if (saveType == typeof(string))
+                elem.Add(saveObject);
+            else if (saveType.IsEnum || saveType == typeof(bool) || isIntegerType(saveType))
+                elem.Add(saveObject.ToString());
+            else
+            {
+                Type keyType = null, valueType = null;
+                Type[] typeParameters;
 
-            return obj.ToString();
+                if (saveType.IsArray)
+                    valueType = saveType.GetElementType();
+                else if (saveType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+                {
+                    keyType = typeParameters[0];
+                    valueType = typeParameters[1];
+                }
+                else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                    valueType = typeParameters[0];
+
+                if (valueType != null)
+                {
+                    if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
+                        throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(tagName, keyType.FullName));
+
+                    var enumerator = saveType.GetMethod("GetEnumerator", new Type[] { }).Invoke(saveObject, new object[] { }) as IEnumerator;
+                    Type kvpType = keyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType);
+                    while (enumerator.MoveNext())
+                    {
+                        object key = null;
+                        var value = keyType == null ? enumerator.Current : kvpType.GetProperty("Value").GetValue(enumerator.Current, null);
+                        var tag = objectToXElement(valueType, value, baseDir, "item");
+                        if (keyType != null)
+                        {
+                            key = kvpType.GetProperty("Key").GetValue(enumerator.Current, null);
+                            tag.Add(new XAttribute("key", key.ToString()));
+                        }
+                        elem.Add(tag);
+                    }
+                }
+                else
+                {
+                    foreach (var field in saveType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                    {
+                        string rFieldName = field.Name.TrimStart('_');
+                        var attribs = field.GetCustomAttributes(false);
+
+                        // [XmlIgnore], [XmlParent]
+                        if (attribs.Any(x => x is XmlIgnoreAttribute || x is XmlParentAttribute))
+                            continue;
+
+                        // [XmlFollowId]
+                        else if (attribs.Any(x => x is XmlFollowIdAttribute))
+                        {
+                            object saveValue = field.GetValue(saveObject);
+
+                            if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
+                                throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
+
+                            Type innerType = field.FieldType.GetGenericArguments()[0];
+                            string id = (string) field.FieldType.GetProperty("Id").GetValue(saveValue, null);
+                            elem.Add(new XElement(rFieldName, new XAttribute("id", id)));
+
+                            if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
+                                saveObjectToXmlFile(innerType, field.FieldType.GetProperty("Value").GetValue(saveValue, null), Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
+                        }
+
+                        // Fields with no special [Xml...] attributes
+                        else
+                            elem.Add(objectToXElement(field.FieldType, field.GetValue(saveObject), baseDir, rFieldName));
+                    }
+                }
+            }
+            return elem;
         }
 
         private static bool isIntegerType(Type t)
@@ -529,9 +488,7 @@ namespace RT.Util.Xml
                 {
                     _cached = _generator();
                     // Update any field in the class that has an [XmlId] attribute and is of type string.
-                    foreach (var field in _cached.GetType().GetFields()
-                        .Where(fld => fld.FieldType == typeof(string) &&
-                                      fld.GetCustomAttributes(false).Any(attr => attr is XmlIdAttribute)))
+                    foreach (var field in _cached.GetType().GetFields().Where(fld => fld.FieldType == typeof(string) && fld.GetCustomAttributes(false).Any(attr => attr is XmlIdAttribute)))
                         field.SetValue(_cached, _id);
                     _haveCache = true;
                 }
