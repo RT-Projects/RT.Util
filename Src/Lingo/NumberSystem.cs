@@ -12,6 +12,8 @@ namespace RT.Util.Lingo
         public abstract int NumStrings { get; }
         /// <summary>Determines which string (numbered from 0) should be used for the number <paramref name="n"/>.</summary>
         public abstract int GetString(int n);
+        /// <summary>Determines which string (numbered from 0) should be used for the fractional number <paramref name="n"/>.</summary>
+        public virtual int GetString(double n) { return NumStrings - 1; }
         /// <summary>Gets a short textual representation of the <paramref name="n"/>th string (e.g. sglr, plrl).</summary>
         public abstract string GetDescription(int n);
     }
@@ -35,7 +37,7 @@ namespace RT.Util.Lingo
         /// <summary>Determines which string (numbered from 0) should be used for the number <paramref name="n"/>.</summary>
         public override int GetString(int n) { return n != 1 ? 1 : 0; }
         /// <summary>Gets a short textual representation of the <paramref name="n"/>th string (e.g. sglr, plrl).</summary>
-        public override string GetDescription(int n) { return n == 1 ? "plrl" : "sglr"; }
+        public override string GetDescription(int n) { return n == 0 ? "sglr" : "plrl"; }
     }
 
     /// <summary>Number system with a string for 0 and 1 and another for all other numbers (e.g. French, Brazilian Portuguese).</summary>
@@ -46,7 +48,7 @@ namespace RT.Util.Lingo
         /// <summary>Determines which string (numbered from 0) should be used for the number <paramref name="n"/>.</summary>
         public override int GetString(int n) { return n > 1 ? 1 : 0; }
         /// <summary>Gets a short textual representation of the <paramref name="n"/>th string (e.g. sglr, plrl).</summary>
-        public override string GetDescription(int n) { return n == 1 ? "plrl" : "sglr"; }
+        public override string GetDescription(int n) { return n == 0 ? "sglr" : "plrl"; }
     }
 
     /// <summary>Number system for Latvian: one string for numbers ending in 1 but not 11; one for everything else but 0; and one for 0.</summary>
@@ -100,6 +102,8 @@ namespace RT.Util.Lingo
         public override int NumStrings { get { return 3; } }
         /// <summary>Determines which string (numbered from 0) should be used for the number <paramref name="n"/>.</summary>
         public override int GetString(int n) { return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2; }
+        /// <summary>Determines which string (numbered from 0) should be used for the fractional number <paramref name="n"/>.</summary>
+        public override int GetString(double n) { return 1; }
         /// <summary>Gets a short textual representation of the <paramref name="n"/>th string (e.g. sglr, plrl).</summary>
         public override string GetDescription(int n) { return n == 0 ? "1" : n == 1 ? "2-4" : "rest"; }
     }

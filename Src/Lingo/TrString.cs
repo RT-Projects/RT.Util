@@ -82,9 +82,28 @@ namespace RT.Util.Lingo
                 {
                     if (IsNumber[i])
                     {
-                        if (!(args[i] is int))
-                            throw new ArgumentException("Argument #{0} was expected to be an integer, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
-                        n += ns.GetString((int) args[i]) * m;
+                        double numD = 0;
+                        int numI;
+                        bool isInteger;
+                        if (args[i] is double || args[i] is float || args[i] is decimal)
+                        {
+                            numD = RConvert.ExactToDouble(args[i]);
+                            numI = unchecked((int) numD);
+                            isInteger = numD == (double) numI;
+                        }
+                        else if (args[i] is int || args[i] is short || args[i] is ushort || args[i] is byte || args[i] is sbyte)
+                        {
+                            numI = RConvert.ExactToInt(args[i]);
+                            isInteger = true;
+                        }
+                        else
+                            throw new ArgumentException("Argument #{0} was expected to be a number (except for uint, long and ulong), but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
+
+                        if (isInteger)
+                            n += ns.GetString(numI) * m;
+                        else
+                            n += ns.GetString(numD) * m;
+
                         m *= ns.NumStrings;
                     }
                 }
@@ -92,7 +111,10 @@ namespace RT.Util.Lingo
             }
             catch
             {
-                return Translations[0];
+                if (Translations != null && Translations.Length > 0)
+                    return Translations[0];
+                else
+                    return "<NO STRING>";
             }
         }
     }
