@@ -404,8 +404,8 @@ namespace RT.Util.Lingo
             pnl.EnterPanel += new EventHandler(enterPanel);
             pnl.CtrlUp += new EventHandler(ctrlUp);
             pnl.CtrlDown += new EventHandler(ctrlDown);
-            pnl.CtrlHome += new EventHandler(ctrlHome);
-            pnl.CtrlEnd += new EventHandler(ctrlEnd);
+            pnl.CtrlPageUp += new EventHandler(ctrlPageUp);
+            pnl.CtrlPageDown += new EventHandler(ctrlPageDown);
             pnl.PageUp += new EventHandler(pageUp);
             pnl.PageDown += new EventHandler(pageDown);
             return pnl;
@@ -427,7 +427,7 @@ namespace RT.Util.Lingo
                 _currentlyVisibleTranslationPanels[index + 1].FocusFirstTranslationBox();
         }
 
-        private void ctrlHome(object sender, EventArgs e)
+        private void ctrlPageUp(object sender, EventArgs e)
         {
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
@@ -435,7 +435,7 @@ namespace RT.Util.Lingo
                 _currentlyVisibleTranslationPanels[0].FocusFirstTranslationBox();
         }
 
-        private void ctrlEnd(object sender, EventArgs e)
+        private void ctrlPageDown(object sender, EventArgs e)
         {
             TranslationPanel pnl = (TranslationPanel) sender;
             int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
@@ -485,8 +485,8 @@ namespace RT.Util.Lingo
             public event EventHandler CtrlDown;
             public event EventHandler PageUp;
             public event EventHandler PageDown;
-            public event EventHandler CtrlHome;
-            public event EventHandler CtrlEnd;
+            public event EventHandler CtrlPageUp;
+            public event EventHandler CtrlPageDown;
 
             protected void fireChangeMade() { if (ChangeMade != null) ChangeMade(this, new EventArgs()); }
             protected void fireEnterPanel() { if (EnterPanel != null) EnterPanel(this, new EventArgs()); }
@@ -494,8 +494,8 @@ namespace RT.Util.Lingo
             protected void fireCtrlDown() { if (CtrlDown != null) CtrlDown(this, new EventArgs()); }
             protected void firePageUp() { if (PageUp != null) PageUp(this, new EventArgs()); }
             protected void firePageDown() { if (PageDown != null) PageDown(this, new EventArgs()); }
-            protected void fireCtrlHome() { if (CtrlHome != null) CtrlHome(this, new EventArgs()); }
-            protected void fireCtrlEnd() { if (CtrlEnd != null) CtrlEnd(this, new EventArgs()); }
+            protected void fireCtrlPageUp() { if (CtrlPageUp != null) CtrlPageUp(this, new EventArgs()); }
+            protected void fireCtrlPageDown() { if (CtrlPageDown != null) CtrlPageDown(this, new EventArgs()); }
 
             protected static readonly int margin = 3;
 
@@ -681,6 +681,7 @@ namespace RT.Util.Lingo
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
 
+                //_txtTranslation.AcceptsReturn = false;
                 _txtTranslation.TextChanged += (s, e) => { OutOfDate = true; fireChangeMade(); };
                 _txtTranslation.Enter += (s, e) => { _txtTranslation.SelectAll(); AnythingFocused = true; fireEnterPanel(); };
                 _txtTranslation.Leave += (s, e) => { AnythingFocused = false; };
@@ -716,14 +717,14 @@ namespace RT.Util.Lingo
                     fireCtrlDown();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.Home && e.Control && !e.Alt && !e.Shift)
+                else if (e.KeyCode == Keys.PageUp && e.Control && !e.Alt && !e.Shift)
                 {
-                    fireCtrlHome();
+                    fireCtrlPageUp();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.End && e.Control && !e.Alt && !e.Shift)
+                else if (e.KeyCode == Keys.PageDown && e.Control && !e.Alt && !e.Shift)
                 {
-                    fireCtrlEnd();
+                    fireCtrlPageDown();
                     e.Handled = true;
                 }
                 else if (e.KeyCode == Keys.PageUp && !e.Control && !e.Alt && !e.Shift)
@@ -740,6 +741,12 @@ namespace RT.Util.Lingo
                 {
                     ((TextBoxAutoHeight) sender).SelectAll();
                     e.Handled = true;
+                }
+                else if ((e.KeyCode == Keys.Return || e.KeyCode == Keys.Enter) && !e.Control && !e.Alt && !e.Shift && sender is TextBoxAutoHeight)
+                {
+                    acceptTranslation(_btnAccept, e);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
                 }
             }
 
@@ -982,14 +989,14 @@ namespace RT.Util.Lingo
                         fireCtrlDown();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.Home && e.Control && !e.Alt && !e.Shift)
+                else if (e.KeyCode == Keys.PageUp && e.Control && !e.Alt && !e.Shift)
                 {
-                    fireCtrlHome();
+                    fireCtrlPageUp();
                     e.Handled = true;
                 }
-                else if (e.KeyCode == Keys.End && e.Control && !e.Alt && !e.Shift)
+                else if (e.KeyCode == Keys.PageDown && e.Control && !e.Alt && !e.Shift)
                 {
-                    fireCtrlEnd();
+                    fireCtrlPageDown();
                     e.Handled = true;
                 }
                 else if (e.KeyCode == Keys.PageUp && !e.Control && !e.Alt && !e.Shift)
