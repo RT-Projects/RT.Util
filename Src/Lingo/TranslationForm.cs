@@ -176,7 +176,8 @@ namespace RT.Util.Lingo
                     _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, new EventHandler(findPrev)) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
                     new ToolStripMenuItem("Go to &next out-of-date string", null, new EventHandler(nextOutOfDate)) { ShortcutKeys = Keys.Control | Keys.N },
                     new ToolStripMenuItem("Fon&t...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T },
-                    new ToolStripMenuItem("&Mark all strings as up to date", null, new EventHandler(markAllUpToDate))
+                    new ToolStripMenuItem("&Mark all strings as up to date", null, new EventHandler(markAllUpToDate)),
+                    new ToolStripMenuItem("M&ark all strings as out of date", null, new EventHandler(markAllOutOfDate))
                 )
             ) { Dock = DockStyle.Top };
 
@@ -194,6 +195,16 @@ namespace RT.Util.Lingo
                 return;
             foreach (var p in _allTranslationPanels)
                 p.SetUpToDate();
+            _anyChanges = true;
+        }
+
+        private void markAllOutOfDate(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
+                "Mark all as out of date", MessageBoxButtons.YesNo) == DialogResult.No)
+                return;
+            foreach (var p in _allTranslationPanels)
+                p.SetOutOfDate();
             _anyChanges = true;
         }
 
@@ -601,6 +612,7 @@ namespace RT.Util.Lingo
             public abstract void FocusFirstTranslationBox();
             public abstract void FocusLastTranslationBox();
             public abstract void SetUpToDate();
+            public abstract void SetOutOfDate();
             public virtual void SetFont(Font font, Size f)
             {
                 _lblStringCode.Font = new Font(font, FontStyle.Bold);
@@ -758,6 +770,17 @@ namespace RT.Util.Lingo
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.Visible = false;
                 OutOfDate = false;
+                ResumeLayout(true);
+            }
+
+            public override void SetOutOfDate()
+            {
+                SuspendLayout();
+                _translation.Translation = _txtTranslation.Text;
+                _translation.Old = null;
+                if (_lblOldEnglish != null)
+                    _lblOldEnglish.Visible = false;
+                OutOfDate = true;
                 ResumeLayout(true);
             }
 
@@ -1014,6 +1037,17 @@ namespace RT.Util.Lingo
                 if (_pnlOldEnglish != null)
                     _pnlOldEnglish.Visible = false;
                 OutOfDate = false;
+                ResumeLayout(true);
+            }
+
+            public override void SetOutOfDate()
+            {
+                SuspendLayout();
+                _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
+                _translation.Old = null;
+                if (_pnlOldEnglish != null)
+                    _pnlOldEnglish.Visible = false;
+                OutOfDate = true;
                 ResumeLayout(true);
             }
 

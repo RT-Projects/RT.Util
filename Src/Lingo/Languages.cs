@@ -15,7 +15,7 @@ namespace RT.Util.Lingo
         [LanguageInfo("ae", "Avestan", "Avesta", typeof(NumberSystem))]
         Avestan,
         /// <summary>Represents the Afrikaans language (af).</summary>
-        [LanguageInfo("af", "Afrikaans", "Afrikaans", typeof(NumberSystem))]
+        [LanguageInfo("af", "Afrikaans", "Afrikaans", typeof(Singular1PluralNumberSystem))]
         Afrikaans,
         /// <summary>Represents the Akan language (ak).</summary>
         [LanguageInfo("ak", "Akan", "Akan", typeof(NumberSystem))]

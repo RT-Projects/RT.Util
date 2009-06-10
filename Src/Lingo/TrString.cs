@@ -114,7 +114,7 @@ namespace RT.Util.Lingo
                 if (Translations != null && Translations.Length > 0)
                     return Translations[0];
                 else
-                    return "<NO STRING>";
+                    return "(NO STRING)";
             }
         }
     }

@@ -17,43 +17,46 @@ namespace RT.Util.Lingo
     public static class Lingo
     {
         /// <summary>
-        /// Attempts to load the translation for the specified module and language. The translation must exist
-        /// in the application executable directory under a subdirectory called "Translations". See remarks for
-        /// more info.
+        /// Attempts to load the translation for the specified module and language. The translation must exist in the application 
+        /// executable directory under a subdirectory called "Translations". See remarks for more info.
         /// </summary>
         /// <remarks>
-        /// If the translation can be loaded successfully, this function will return true and will store the translation
-        /// in the specified variable. Otherwise, the variable will be unmodified. In DEBUG mode, any exception when
-        /// loading the translation will be propagated, but in release mode the function will simply behave as if the
-        /// file didn't exist.
+        /// <para>If the translation can be loaded successfully, this function will store the translation in <paramref name="translation"/>.
+        /// Otherwise, <paramref name="translation"/> will be set to the <typeparamref name="TTranslation"/> default instance,
+        /// and <paramref name="language"/> will be set to null.</para>
+        /// <para>In DEBUG mode, any exception raised while loading the translation will be propagated, but in release mode the
+        /// function will simply behave as if the file didn't exist.</para>
         /// </remarks>
         /// <typeparam name="TTranslation">The type of the translation class to load the translation into.</typeparam>
         /// <param name="module">The name of the module whose translation is being loaded.</param>
-        /// <param name="language">The language code of the language to be loaded.</param>
-        /// <param name="translation">Upon success, the translation will be stored here. On failure, this will not be modified.</param>
-        /// <returns>True if the translation has been loaded and stored in "translation"; false otherwise.</returns>
-        public static bool TryLoadTranslation<TTranslation>(string module, string language, ref TTranslation translation) where TTranslation : new()
+        /// <param name="language">The language code of the language to be loaded. Will be set to null if the language cannot be loaded.</param>
+        /// <returns>The loaded or default translation.</returns>
+        public static TTranslation LoadTranslation<TTranslation>(string module, ref string language) where TTranslation : TranslationBase, new()
         {
             string path = PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language + ".xml");
             if (language == null || !File.Exists(path))
-                return false;
+            {
+                language = null;
+                return new TTranslation();
+            }
             try
             {
-                translation = XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
+                return XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
             }
 #if DEBUG
             catch (Exception e)
             {
+                language = null;
                 throw new RTException(@"Could not load translation for module ""{0}"", language ""{1}"", from file ""{2}""".Fmt(module, language, path), e);
             }
 #else
             catch
             {
                 string dummy = "{0}".Fmt(""); // Crappy solution for the IDE thinking that .Fmt is not used when in Release mode.
-                return false;
+                language = null;
+                return new TTranslation();
             }
 #endif
-            return true;
         }
 
         /// <summary>
