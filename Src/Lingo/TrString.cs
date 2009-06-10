@@ -42,7 +42,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Represents a translatable string.</summary>
-    public class TrStringNumbers
+    public class TrStringNum
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
         public bool[] IsNumber;
@@ -54,7 +54,7 @@ namespace RT.Util.Lingo
         public string[] Old = null;
 
         /// <summary>Default constructor (required for XmlClassify).</summary>
-        public TrStringNumbers() { Translations = new string[0]; IsNumber = new[] { true }; }
+        public TrStringNum() { Translations = new string[0]; IsNumber = new[] { true }; }
 
         /// <summary>Constructs a new translatable string with the specified translations.</summary>
         /// <param name="translations">Specifies the translations for this string. The number of elements is expected to be equal to the number
@@ -66,10 +66,10 @@ namespace RT.Util.Lingo
         /// TrStringNumbers MyString = new TrStringNumbers(new[] { "The file {0} contains {1} byte.", "The file {0} contains {1} bytes." }, new[] { false, true });
         /// </code>
         /// </example>
-        public TrStringNumbers(string[] translations, bool[] isNumber) { Translations = translations; IsNumber = isNumber; }
+        public TrStringNum(string[] translations, bool[] isNumber) { Translations = translations; IsNumber = isNumber; }
 
         /// <summary>Constructs a new translatable string with one interpolated integer and no other interpolated arguments, and the specified translations.</summary>
-        public TrStringNumbers(params string[] translations) { Translations = translations; IsNumber = new[] { true }; }
+        public TrStringNum(params string[] translations) { Translations = translations; IsNumber = new[] { true }; }
 
         /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
         public string Fmt(NumberSystem ns, params object[] args)

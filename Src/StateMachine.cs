@@ -257,21 +257,30 @@ namespace RT.Util.FSM
     {
     }
 
+    /// <summary>
+    /// Represents an event that occurs at a specified real time, and holds an
+    /// associated piece of data of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">Type of the data associated with this real time event.</typeparam>
     public class RealTimeEvent<T> : IComparable<DateTime>
     {
         private DateTime _timestamp;
         private T _data;
 
+        /// <summary>Creates a new real time event at the specified time.</summary>
         public RealTimeEvent(DateTime timestamp, T data)
         {
             _timestamp = timestamp;
             _data = data;
         }
 
+        /// <summary>Gets the time at which the specified event occurs.</summary>
         public DateTime Timestamp { get { return _timestamp; } }
 
+        /// <summary>Gets the data associated with this event.</summary>
         public T Data { get { return _data; } }
 
+        /// <summary>Compares the times of two real time events.</summary>
         public int CompareTo(DateTime other)
         {
             return _timestamp.CompareTo(other);

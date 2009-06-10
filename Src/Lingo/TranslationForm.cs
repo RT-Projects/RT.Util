@@ -372,13 +372,13 @@ namespace RT.Util.Lingo
             LingoGroupAttribute lga = (LingoGroupAttribute) attrs.First();
             var tn = new TranslationTreeNode { Text = lga.Label, Notes = lga.Description };
             tn.TranslationPanels = type.GetFields()
-                .Where(f => f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNumbers))
+                .Where(f => f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
                 .Select(f => createTranslationPanel(
                     f.GetCustomAttributes(typeof(LingoNotesAttribute), false).Select(a => ((LingoNotesAttribute) a).Notes).Where(s => s != null).JoinString("\n"),
                     f.GetValue(original), f.GetValue(translation), f.Name, tn))
                 .ToArray();
             lstPanels.AddRange(tn.TranslationPanels);
-            foreach (var f in type.GetFields().Where(f => f.FieldType != typeof(TrString) && f.FieldType != typeof(TrStringNumbers) && f.Name != "Language"))
+            foreach (var f in type.GetFields().Where(f => f.FieldType != typeof(TrString) && f.FieldType != typeof(TrStringNum) && f.Name != "Language"))
                 tn.Nodes.Add(createNodeWithPanels(f.FieldType, f.GetValue(original), f.GetValue(translation), lstPanels));
             return tn;
         }
@@ -387,7 +387,7 @@ namespace RT.Util.Lingo
         {
             TranslationPanel pnl = (orig is TrString)
                 ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname, tn)
-                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNumbers) orig, (TrStringNumbers) trans, fieldname, tn, _origNumberSystem, _translation.Language.GetNumberSystem());
+                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNum) orig, (TrStringNum) trans, fieldname, tn, _origNumberSystem, _translation.Language.GetNumberSystem());
 
             pnl.ChangeMade += (s, e) => { _anyChanges = true; };
             pnl.EnterPanel += new EventHandler(enterPanel);
@@ -771,8 +771,8 @@ namespace RT.Util.Lingo
 
         private class TranslationPanelTrStringNumbers : TranslationPanel
         {
-            private TrStringNumbers _original;
-            private TrStringNumbers _translation;
+            private TrStringNum _original;
+            private TrStringNum _translation;
             private Panel _pnlOldEnglish;
             private TextBoxAutoHeight[] _txtTranslation;
             private NumberSystem _origNumberSystem;
@@ -780,7 +780,7 @@ namespace RT.Util.Lingo
             private int _lastFocusedTextbox;
             private List<Label> _smallLabels = new List<Label>();
 
-            public TranslationPanelTrStringNumbers(string notes, TrStringNumbers orig, TrStringNumbers trans, string fieldname, TranslationTreeNode tn, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
+            public TranslationPanelTrStringNumbers(string notes, TrStringNum orig, TrStringNum trans, string fieldname, TranslationTreeNode tn, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
                 : base(tn, notes, fieldname,
                     // outOfDate
                     trans.Old == null || !trans.Old.SequenceEqual(orig.Translations),
@@ -821,7 +821,7 @@ namespace RT.Util.Lingo
                 _btnAccept.TabIndex = 1;
             }
 
-            private Panel createTablePanel(TrStringNumbers str, string[] display, NumberSystem ns, bool textBoxes, int nn, int rows)
+            private Panel createTablePanel(TrStringNum str, string[] display, NumberSystem ns, bool textBoxes, int nn, int rows)
             {
                 if (textBoxes)
                     _txtTranslation = new TextBoxAutoHeight[rows];
