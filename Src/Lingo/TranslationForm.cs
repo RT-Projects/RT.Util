@@ -630,9 +630,9 @@ namespace RT.Util.Lingo
             public TranslationPanelTrString(string notes, TrString orig, TrString trans, string fieldname, TranslationTreeNode tn)
                 : base(tn, notes, fieldname,
                     // outOfDate
-                    string.IsNullOrEmpty(trans.OldEnglish) || trans.OldEnglish != orig.Translation,
+                    string.IsNullOrEmpty(trans.Old) || trans.Old != orig.Translation,
                     // needOldRow
-                    !string.IsNullOrEmpty(trans.OldEnglish) && trans.OldEnglish != orig.Translation
+                    !string.IsNullOrEmpty(trans.Old) && trans.Old != orig.Translation
                 )
             {
                 _translation = trans;
@@ -653,9 +653,9 @@ namespace RT.Util.Lingo
                 int currow = 1;
                 if (!string.IsNullOrEmpty(notes))
                     currow++;
-                if (!string.IsNullOrEmpty(trans.OldEnglish) && trans.OldEnglish != orig.Translation)
+                if (!string.IsNullOrEmpty(trans.Old) && trans.Old != orig.Translation)
                 {
-                    _lblOldEnglish = new Label { Text = trans.OldEnglish.Replace("&", "&&"), AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
+                    _lblOldEnglish = new Label { Text = trans.Old.Replace("&", "&&"), AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
                     _lblOldEnglish.Click += new EventHandler(focusTranslationBox);
                     Controls.Add(_lblOldEnglish, 1, currow);
                     SetColumnSpan(_lblOldEnglish, 2);
@@ -684,7 +684,7 @@ namespace RT.Util.Lingo
                 SuspendLayout();
                 base.acceptTranslation(sender, e);
                 _translation.Translation = _txtTranslation.Text;
-                _translation.OldEnglish = _original.Translation;
+                _translation.Old = _original.Translation;
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.Visible = false;
                 fireChangeMade();
@@ -754,7 +754,7 @@ namespace RT.Util.Lingo
             {
                 SuspendLayout();
                 _translation.Translation = _txtTranslation.Text;
-                _translation.OldEnglish = _original.Translation;
+                _translation.Old = _original.Translation;
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.Visible = false;
                 OutOfDate = false;
@@ -783,9 +783,9 @@ namespace RT.Util.Lingo
             public TranslationPanelTrStringNumbers(string notes, TrStringNumbers orig, TrStringNumbers trans, string fieldname, TranslationTreeNode tn, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
                 : base(tn, notes, fieldname,
                     // outOfDate
-                    trans.OldEnglish == null || !trans.OldEnglish.SequenceEqual(orig.Translations),
+                    trans.Old == null || !trans.Old.SequenceEqual(orig.Translations),
                     // needOldRow
-                    trans.OldEnglish != null && !trans.OldEnglish.SequenceEqual(orig.Translations)
+                    trans.Old != null && !trans.Old.SequenceEqual(orig.Translations)
                 )
             {
                 int nn = trans.IsNumber.Where(b => b).Count();
@@ -803,9 +803,9 @@ namespace RT.Util.Lingo
                 int currow = 1;
                 if (!string.IsNullOrEmpty(notes))
                     currow++;
-                if (trans.OldEnglish != null && !trans.OldEnglish.SequenceEqual(orig.Translations))
+                if (trans.Old != null && !trans.Old.SequenceEqual(orig.Translations))
                 {
-                    _pnlOldEnglish = createTablePanel(orig, trans.OldEnglish, origNumberSystem, false, nn, rowsOrig);
+                    _pnlOldEnglish = createTablePanel(orig, trans.Old, origNumberSystem, false, nn, rowsOrig);
                     Controls.Add(_pnlOldEnglish, 1, currow);
                     SetColumnSpan(_pnlOldEnglish, 2);
                     setBackColor();
@@ -933,7 +933,7 @@ namespace RT.Util.Lingo
                 SuspendLayout();
                 base.acceptTranslation(sender, e);
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
-                _translation.OldEnglish = _original.Translations;
+                _translation.Old = _original.Translations;
                 if (_pnlOldEnglish != null)
                     _pnlOldEnglish.Visible = false;
                 fireChangeMade();
@@ -1010,7 +1010,7 @@ namespace RT.Util.Lingo
             {
                 SuspendLayout();
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
-                _translation.OldEnglish = _original.Translations;
+                _translation.Old = _original.Translations;
                 if (_pnlOldEnglish != null)
                     _pnlOldEnglish.Visible = false;
                 OutOfDate = false;

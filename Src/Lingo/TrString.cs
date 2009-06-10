@@ -10,8 +10,8 @@ namespace RT.Util.Lingo
         /// <summary>Contains the current translation of this string, or for the original language, the current original text.</summary>
         public string Translation;
 
-        /// <summary>Contains the original text this string was last translated from, or for the original language, the empty string.</summary>
-        public string OldEnglish = "";
+        /// <summary>Contains the original text this string was last translated from, or for the original language, null.</summary>
+        public string Old = null;
 
         /// <summary>Default constructor (required for XmlClassify).</summary>
         public TrString() { }
@@ -51,7 +51,7 @@ namespace RT.Util.Lingo
         public string[] Translations;
 
         /// <summary>Contains the original text this string was last translated from. Null for the original language.</summary>
-        public string[] OldEnglish = null;
+        public string[] Old = null;
 
         /// <summary>Default constructor (required for XmlClassify).</summary>
         public TrStringNumbers() { Translations = new string[0]; IsNumber = new[] { true }; }
