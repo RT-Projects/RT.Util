@@ -115,8 +115,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// This does the same as .Order(), but it uses HeapSort instead of QuickSort.
-        /// This is faster if you intend to extract only the first few items using .Take().
+        /// This does the same as .Order(), but it is much faster if you intend to extract only the first few items using .Take().
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
@@ -143,18 +142,25 @@ namespace RT.Util.ExtensionMethods
             return quickSort(arr, map, 0, arr.Length - 1, comparer);
         }
 
+        private static int compareForStableSort<T>(T elem1, int elem1Index, T elem2, int elem2Index, IComparer<T> comparer)
+        {
+            int r = comparer.Compare(elem1, elem2);
+            return r != 0 ? r : elem1Index.CompareTo(elem2Index);
+        }
+
         private static IEnumerable<T> quickSort<T>(T[] items, int[] map, int left, int right, IComparer<T> comparer)
         {
             while (left < right)
             {
                 int curleft = left;
                 int curright = right;
-                T pivot = items[map[curleft + ((curright - curleft) >> 1)]];
+                int pivotIndex = map[curleft + ((curright - curleft) >> 1)];
+                T pivot = items[pivotIndex];
                 do
                 {
-                    while ((curleft < map.Length) && (comparer.Compare(pivot, items[map[curleft]]) > 0))
+                    while ((curleft < map.Length) && compareForStableSort(pivot, pivotIndex, items[map[curleft]], map[curleft], comparer) > 0)
                         curleft++;
-                    while ((curright >= 0) && (comparer.Compare(pivot, items[map[curright]]) < 0))
+                    while ((curright >= 0) && compareForStableSort(pivot, pivotIndex, items[map[curright]], map[curright], comparer) < 0)
                         curright--;
                     if (curleft > curright)
                         break;
