@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -54,6 +55,49 @@ namespace RT.Util.ExtensionMethods
             List<string> s = new List<string>() { "some", "blah", "stuff", "apple" };
             List<string> sSorted = new List<string>(s.Order());
             Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "stuff" }));
+        }
+
+        public class StringIntTupleComparer : IComparer<Tuple<string, int>>
+        {
+            public int Compare(Tuple<string, int> x, Tuple<string, int> y)
+            {
+                return x.E1.CompareTo(y.E1);
+            }
+        }
+
+        [Test]
+        public void TestOrderTake()
+        {
+            Random rnd = new Random();
+            for (int i = 0; i < 100; i++)
+            {
+                var lst = new List<Tuple<string, int>>();
+                lst.Add(new Tuple<string, int>("one", 1));
+                lst.Add(new Tuple<string, int>("two", 1));
+                lst.Add(new Tuple<string, int>("three", 1));
+                for (int j = 2; j <= 100; j++)
+                {
+                    int r = rnd.Next(1, 4);
+                    lst.Add(new Tuple<string, int>(i == 1 ? "one" : i == 2 ? "two" : "three", j));
+                }
+                var lstSorted = lst.OrderTake(new StringIntTupleComparer());
+                string lastString = null;
+                int lastInt = 0;
+                foreach (var a in lstSorted)
+                {
+                    if (a.E1 != lastString)
+                    {
+                        Assert.IsTrue((lastString == null && a.E1 == "one") || (lastString == "one" && a.E1 == "three") || (lastString == "three" && a.E1 == "two"));
+                        lastString = a.E1;
+                        lastInt = a.E2;
+                    }
+                    else
+                    {
+                        Assert.IsTrue(a.E2 > lastInt);
+                        lastInt = a.E2;
+                    }
+                }
+            }
         }
     }
 }
