@@ -228,8 +228,10 @@ namespace RT.Util.Lingo
             if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
                 "Mark all as up to date", MessageBoxButtons.YesNo) == DialogResult.No)
                 return;
+            _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
                 p.SetUpToDate();
+            _pnlRightInner.ResumeLayout(true);
             _anyChanges = true;
         }
 
@@ -238,8 +240,10 @@ namespace RT.Util.Lingo
             if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
                 "Mark all as out of date", MessageBoxButtons.YesNo) == DialogResult.No)
                 return;
+            _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
                 p.SetOutOfDate();
+            _pnlRightInner.ResumeLayout(true);
             _anyChanges = true;
         }
 
@@ -812,6 +816,7 @@ namespace RT.Util.Lingo
             public override void SetUpToDate()
             {
                 SuspendLayout();
+                base.acceptTranslation(this, new EventArgs());
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = _original.Translation;
                 if (_lblOldEnglish != null)
@@ -823,6 +828,7 @@ namespace RT.Util.Lingo
             public override void SetOutOfDate()
             {
                 SuspendLayout();
+                base.acceptTranslation(this, new EventArgs());
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = null;
                 if (_lblOldEnglish != null)

@@ -480,7 +480,7 @@ namespace RT.Util.Lingo
         [LanguageInfo("su", "Sundanese", "Basa Sunda", typeof(NumberSystem))]
         Sundanese,
         /// <summary>Represents the Swedish language (sv).</summary>
-        [LanguageInfo("sv", "Swedish", "svenska", typeof(Singular1PluralNumberSystem))]
+        [LanguageInfo("sv", "Swedish", "Svenska", typeof(Singular1PluralNumberSystem))]
         Swedish,
         /// <summary>Represents the Swahili language (sw).</summary>
         [LanguageInfo("sw", "Swahili", "Kiswahili", typeof(NumberSystem))]
