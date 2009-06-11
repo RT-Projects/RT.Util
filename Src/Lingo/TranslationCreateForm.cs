@@ -13,7 +13,6 @@ using System.Diagnostics;
 namespace RT.Util.Lingo
 {
     /// <summary>Provides a dialog in which the user can create a new translation of the software.</summary>
-    /// <typeparam name="T">The type containing the translatable strings.</typeparam>
     public class TranslationCreateForm : Form
     {
         private class LanguageListItem
@@ -26,6 +25,8 @@ namespace RT.Util.Lingo
             }
         }
         private ComboBox _lstLanguages;
+
+        /// <summary>Gets the language selected by the user.</summary>
         public Language SelectedLanguage { get { return ((LanguageListItem) _lstLanguages.SelectedItem).Language; } }
 
         /// <summary>Presents the user with a dialog to select a language from, and (if they click "OK") creates a new XML file for the new translation.</summary>

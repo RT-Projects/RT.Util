@@ -2,37 +2,57 @@
 
 namespace RT.Util.Lingo
 {
-    /// <summary>
-    /// Use this attribute on a field for a translatable string to specify notes to the translator, detailing the purpose, context, or format of a translatable string.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    /// <summary>Specifies notes to the translator, detailing the purpose, context, or format of a translatable string.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
     public sealed class LingoNotesAttribute : Attribute
     {
+        private readonly string _notes;
+
         /// <summary>Constructor for a <see cref="LingoNotesAttribute"/> attribute.</summary>
         /// <param name="notes">Specifies notes to the translator, detailing the purpose, context, or format of a translatable string.</param>
         public LingoNotesAttribute(string notes) { _notes = notes; }
 
-        /// <summary>Specifies notes to the translator, detailing the purpose, context, or format of a translatable string.</summary>
+        /// <summary>Gets the associated notes to the translator, detailing the purpose, context, or format of a translatable string.</summary>
         public string Notes { get { return _notes; } }
-        private string _notes;
     }
 
-    /// <summary>Use this attribute on a class containing translatable strings. Otherwise that class will not appear in the translation interface.</summary>
+    /// <summary>Specifies that a translatable string is in a particular group.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    public sealed class LingoInGroupAttribute : Attribute
+    {
+        private readonly object _group;
+        /// <summary>Constructor for a <see cref="LingoInGroupAttribute"/> attribute.</summary>
+        /// <param name="group">Specifies that a translatable string is in a particular group.</param>
+        public LingoInGroupAttribute(object group) { _group = group; }
+
+        /// <summary>Gets the group a translatable string is in.</summary>
+        public object Group { get { return _group; } }
+    }
+
+    /// <summary>Specifies that a class is a class containing translatable strings.</summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class LingoStringClassAttribute : Attribute { }
+
+    /// <summary>Specifies information about a group of translatable strings. Use this on a field in an enum type which enumerates the available groups of strings.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
     public sealed class LingoGroupAttribute : Attribute
     {
-        /// <summary>Constructor for a <see cref="LingoGroupAttribute"/> attribute.</summary>
-        /// <param name="label">Provides a label for the tree node that represents this translation strings class.</param>
-        /// <param name="description">Describes the strings contained in this translation strings class.</param>
-        public LingoGroupAttribute(string label, string description) { _label = label; _description = description; }
+        private readonly string _name;
+        private readonly string _description;
 
-        /// <summary>Provides a label for the tree node that represents this translation strings class.</summary>
-        public string Label { get { return _label; } }
-        /// <summary>Describes the strings contained in this translation strings class.</summary>
+        /// <summary>Constructor.</summary>
+        /// <param name="name">Specifies a short name for the group, to be used in the listbox in the translation window.</param>
+        /// <param name="description">Specifies a long description for the group, to be displayed above the list of string codes while the group is selected.</param>
+        public LingoGroupAttribute(string name, string description)
+        {
+            _name = name;
+            _description = description;
+        }
+
+        /// <summary>Specifies a short name for the group, to be used in the listbox in the translation window.</summary>
+        public string Name { get { return _name; } }
+        /// <summary>Specifies a long description for the group, to be displayed above the list of string codes while the group is selected.</summary>
         public string Description { get { return _description; } }
-
-        private string _label;
-        private string _description;
     }
 
 #if DEBUG
@@ -42,10 +62,14 @@ namespace RT.Util.Lingo
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class LingoDebugAttribute : Attribute
     {
-        /// <summary>
-        /// Specifies the relative path from the compiled assembly to the source file of the translation type.
-        /// </summary>
-        public string RelativePath { get; set; }
+        private readonly string _relativePath;
+
+        /// <summary>Constructor.</summary>
+        /// <param name="relativePath">Specifies the relative path from the compiled assembly to the source file of the translation type.</param>
+        public LingoDebugAttribute(string relativePath) { _relativePath = relativePath; }
+
+        /// <summary>Specifies the relative path from the compiled assembly to the source file of the translation type.</summary>
+        public string RelativePath { get { return _relativePath; } }
     }
 #endif
 

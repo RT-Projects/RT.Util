@@ -3,17 +3,19 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Util.Controls;
+using RT.Util.Collections;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 using RT.Util.Xml;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 
 namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
-    /// <typeparam name="T">The type containing the <see cref="TrString"/> and <see cref="TrStringNumbers"/> fields to be translated.</typeparam>
+    /// <typeparam name="T">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
     public class TranslationForm<T> : ManagedForm where T : TranslationBase, new()
     {
         /// <summary>Used to fire <see cref="AcceptChanges"/>.</summary>
@@ -27,7 +29,7 @@ namespace RT.Util.Lingo
         private TableLayoutPanel _pnlRightInner;
         private ToolStripMenuItem _mnuFindNext;
         private ToolStripMenuItem _mnuFindPrev;
-        private TreeView _ctTreeView;
+        private ListBox _lstGroups;
         private Label _lblGroupInfo;
         private Button _btnOK;
         private Button _btnCancel;
@@ -84,14 +86,42 @@ namespace RT.Util.Lingo
                 Orientation = Orientation.Vertical,
             };
 
-            _ctTreeView = new TreeView { Dock = DockStyle.Fill, HideSelection = false };
-            pnlSplit.Panel1.Controls.Add(_ctTreeView);
-            var lstPanels = new List<TranslationPanel>();
+            _lstGroups = new ListBox { Dock = DockStyle.Fill };
+            pnlSplit.Panel1.Controls.Add(_lstGroups);
+
             T orig = new T();
             _origNumberSystem = orig.Language.GetNumberSystem();
-            _ctTreeView.Nodes.Add(createNodeWithPanels(typeof(T), orig, _translation, lstPanels));
-            _allTranslationPanels = lstPanels.ToArray();
-            _ctTreeView.ExpandAll();
+
+            // Create all the translation panels
+            var dicPanels = new Dictionary<object, List<TranslationPanel>>();
+            var lstAllPanels = new List<TranslationPanel>();
+            var lstUngroupedPanels = new List<TranslationPanel>();
+            createPanelsForType(typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels);
+
+            // Discover all the group types, their enum values, and then their attributes
+            Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
+            foreach (var type in dicPanels.Select(kvp => kvp.Key.GetType()).Distinct())
+                foreach (var f in type.GetFields(BindingFlags.Static | BindingFlags.Public))
+                    foreach (var attr in f.GetCustomAttributes(typeof(LingoGroupAttribute), false))
+                        dic.Add(f.GetValue(null), new Tuple<string, string>(((LingoGroupAttribute) attr).Name, ((LingoGroupAttribute) attr).Description));
+
+            // Create all the list items
+            foreach (var kvp in dic)
+                if (dicPanels.ContainsKey(kvp.Key))
+                {
+                    var li = new TranslationListItem { Label = kvp.Value.E1, Notes = kvp.Value.E2, TranslationPanels = dicPanels[kvp.Key].ToArray() };
+                    _lstGroups.Items.Add(li);
+                    foreach (var tp in dicPanels[kvp.Key])
+                        tp.ListItems.Add(li);
+                }
+            if (lstUngroupedPanels.Count > 0)
+            {
+                var li = new TranslationListItem { Label = "Ungrouped strings", Notes = "This group contains strings not found in any other group.", TranslationPanels = lstUngroupedPanels.ToArray() };
+                _lstGroups.Items.Add(li);
+                foreach (var tp in lstUngroupedPanels)
+                    tp.ListItems.Add(li);
+            }
+            _allTranslationPanels = lstAllPanels.ToArray();
 
             _pnlRightInner = new TableLayoutPanel
             {
@@ -145,21 +175,26 @@ namespace RT.Util.Lingo
             _btnCancel.Click += new EventHandler(btnClick);
             _btnApply.Click += new EventHandler(btnClick);
 
-            _ctTreeView.AfterSelect += (s, e) =>
+            _lstGroups.SelectedValueChanged += (s, e) =>
             {
-                _pnlRightOuter.VerticalScroll.Value = 0;
-                _pnlRightInner.SuspendLayout();
-                _pnlRightInner.Controls.Clear();
-                TranslationTreeNode tn = _ctTreeView.SelectedNode as TranslationTreeNode;
-                if (tn == null)
-                    return;
-                _currentlyVisibleTranslationPanels = tn.TranslationPanels;
-                _pnlRightInner.Controls.AddRange(_currentlyVisibleTranslationPanels);
-                _pnlRightInner.ResumeLayout(true);
-                if (_currentlyVisibleTranslationPanels.Length > 0)
-                    _lastFocusedPanel = _currentlyVisibleTranslationPanels[0];
-                _lblGroupInfo.Text = tn.Notes;
+                if (_lstGroups.Tag == null || (int) _lstGroups.Tag != _lstGroups.SelectedIndex)
+                {
+                    _pnlRightOuter.VerticalScroll.Value = 0;
+                    _pnlRightInner.SuspendLayout();
+                    _pnlRightInner.Controls.Clear();
+                    TranslationListItem tn = _lstGroups.SelectedItem as TranslationListItem;
+                    if (tn == null)
+                        return;
+                    _lblGroupInfo.Text = tn.Notes;
+                    _currentlyVisibleTranslationPanels = tn.TranslationPanels;
+                    _pnlRightInner.Controls.AddRange(_currentlyVisibleTranslationPanels);
+                    _pnlRightInner.ResumeLayout(true);
+                    if (_currentlyVisibleTranslationPanels.Length > 0)
+                        _lastFocusedPanel = _currentlyVisibleTranslationPanels[0];
+                }
+                _lstGroups.Tag = _lstGroups.SelectedIndex;
             };
+            _lstGroups.SelectedIndex = 0;
 
             Load += (s, e) => { pnlSplit.SplitterDistance = settings.SplitterDistance; setButtonSizes(); };
             FormClosing += (s, e) =>
@@ -313,7 +348,7 @@ namespace RT.Util.Lingo
             {
                 if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
                 {
-                    _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
+                    _lstGroups.SelectedItem = _allTranslationPanels[i].ListItems.First();
                     _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
@@ -334,7 +369,7 @@ namespace RT.Util.Lingo
             {
                 if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
                 {
-                    _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
+                    _lstGroups.SelectedItem = _allTranslationPanels[i].ListItems.First();
                     _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
@@ -350,7 +385,7 @@ namespace RT.Util.Lingo
             {
                 if (_allTranslationPanels[i].OutOfDate)
                 {
-                    _ctTreeView.SelectedNode = _allTranslationPanels[i].TreeNode;
+                    _lstGroups.SelectedItem = _allTranslationPanels[i].ListItems.First();
                     _allTranslationPanels[i].FocusFirstTranslationBox();
                     return;
                 }
@@ -375,30 +410,36 @@ namespace RT.Util.Lingo
                 Close();
         }
 
-        private TranslationTreeNode createNodeWithPanels(Type type, object original, object translation, List<TranslationPanel> lstPanels)
+        private void createPanelsForType(Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels)
         {
-            var attrs = type.GetCustomAttributes(typeof(LingoGroupAttribute), true);
+            var attrs = type.GetCustomAttributes(typeof(LingoStringClassAttribute), true);
             if (!attrs.Any())
-                throw new ArgumentException("Classes with translatable strings are not allowed to contain any fields other than fields of type TrString, TrStringNumbers, and types with the [LingoGroup] attribute.", "type");
-            LingoGroupAttribute lga = (LingoGroupAttribute) attrs.First();
-            var tn = new TranslationTreeNode { Text = lga.Label, Notes = lga.Description };
-            tn.TranslationPanels = type.GetFields()
-                .Where(f => f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
-                .Select(f => createTranslationPanel(
-                    f.GetCustomAttributes(typeof(LingoNotesAttribute), false).Select(a => ((LingoNotesAttribute) a).Notes).Where(s => s != null).JoinString("\n"),
-                    f.GetValue(original), f.GetValue(translation), f.Name, tn))
-                .ToArray();
-            lstPanels.AddRange(tn.TranslationPanels);
-            foreach (var f in type.GetFields().Where(f => f.FieldType != typeof(TrString) && f.FieldType != typeof(TrStringNum) && f.Name != "Language"))
-                tn.Nodes.Add(createNodeWithPanels(f.FieldType, f.GetValue(original), f.GetValue(translation), lstPanels));
-            return tn;
+                throw new ArgumentException("Classes with translatable strings are not allowed to contain any fields other than fields of type TrString, TrStringNumbers, and types with the [LingoStringClass] attribute.", "type");
+
+            foreach (var f in type.GetFields())
+            {
+                if (f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
+                {
+                    string notes = f.GetCustomAttributes(typeof(LingoNotesAttribute), true).Cast<LingoNotesAttribute>().Select(lna => lna.Notes).FirstOrDefault();
+                    var pnl = createTranslationPanel(notes, f.GetValue(original), f.GetValue(translation), f.Name);
+                    lstAllPanels.Add(pnl);
+                    var groups = f.GetCustomAttributes(typeof(LingoInGroupAttribute), true).Cast<LingoInGroupAttribute>().Select(liga => liga.Group);
+                    if (groups.Any())
+                        foreach (var group in groups)
+                            dicPanels.AddSafe(group, pnl);
+                    else
+                        lstUngroupedPanels.Add(pnl);
+                }
+                else if (f.Name != "Language")
+                    createPanelsForType(f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels);
+            }
         }
 
-        private TranslationPanel createTranslationPanel(string notes, object orig, object trans, string fieldname, TranslationTreeNode tn)
+        private TranslationPanel createTranslationPanel(string notes, object orig, object trans, string fieldname)
         {
             TranslationPanel pnl = (orig is TrString)
-                ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname, tn)
-                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNum) orig, (TrStringNum) trans, fieldname, tn, _origNumberSystem, _translation.Language.GetNumberSystem());
+                ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname)
+                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNum) orig, (TrStringNum) trans, fieldname, _origNumberSystem, _translation.Language.GetNumberSystem());
 
             pnl.ChangeMade += (s, e) => { _anyChanges = true; };
             pnl.EnterPanel += new EventHandler(enterPanel);
@@ -471,10 +512,12 @@ namespace RT.Util.Lingo
             _pnlRightOuter.ScrollControlIntoView(_lastFocusedPanel);
         }
 
-        private class TranslationTreeNode : TreeNode
+        private class TranslationListItem
         {
             public TranslationPanel[] TranslationPanels;
+            public string Label;
             public string Notes;
+            public override string ToString() { return Label; }
         }
 
         private abstract class TranslationPanel : TableLayoutPanel
@@ -499,8 +542,7 @@ namespace RT.Util.Lingo
 
             protected static readonly int margin = 3;
 
-            private TranslationTreeNode _treeNode;
-            public TranslationTreeNode TreeNode { get { return _treeNode; } }
+            public List<TranslationListItem> ListItems = new List<TranslationListItem>();
 
             protected Button _btnAccept;
             private Label _lblOldEnglishLbl;
@@ -522,11 +564,9 @@ namespace RT.Util.Lingo
                 set { _anythingFocused = value; setBackColor(); }
             }
 
-            public TranslationPanel(TranslationTreeNode tn, string notes, string fieldname, bool outOfDate, bool needOldRow)
+            public TranslationPanel(string notes, string fieldname, bool outOfDate, bool needOldRow)
                 : base()
             {
-                _treeNode = tn;
-
                 // Calculate number of rows
                 int rows = 3;
                 if (!string.IsNullOrEmpty(notes)) rows++;
@@ -639,8 +679,8 @@ namespace RT.Util.Lingo
             private TextBoxAutoHeight _txtTranslation;
             private Label _lblOldEnglish;
 
-            public TranslationPanelTrString(string notes, TrString orig, TrString trans, string fieldname, TranslationTreeNode tn)
-                : base(tn, notes, fieldname,
+            public TranslationPanelTrString(string notes, TrString orig, TrString trans, string fieldname)
+                : base(notes, fieldname,
                     // outOfDate
                     string.IsNullOrEmpty(trans.Old) || trans.Old != orig.Translation,
                     // needOldRow
@@ -810,8 +850,8 @@ namespace RT.Util.Lingo
             private int _lastFocusedTextbox;
             private List<Label> _smallLabels = new List<Label>();
 
-            public TranslationPanelTrStringNumbers(string notes, TrStringNum orig, TrStringNum trans, string fieldname, TranslationTreeNode tn, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
-                : base(tn, notes, fieldname,
+            public TranslationPanelTrStringNumbers(string notes, TrStringNum orig, TrStringNum trans, string fieldname, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
+                : base(notes, fieldname,
                     // outOfDate
                     trans.Old == null || !trans.Old.SequenceEqual(orig.Translations),
                     // needOldRow
