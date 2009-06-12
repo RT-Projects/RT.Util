@@ -587,9 +587,12 @@ namespace RT.Util.Lingo
         /// <summary>Represents the Zhuang language (za).</summary>
         [LanguageInfo("za", "Zhuang", "Saɯ cueŋƅ", typeof(NumberSystem))]
         Zhuang,
-        /// <summary>Represents the Chinese language (zh).</summary>
-        [LanguageInfo("zh", "Chinese", "中文", typeof(NumberSystem))]
-        Chinese,
+        /// <summary>Represents the Chinese language (zh), written with traditional characters.</summary>
+        [LanguageInfo("zh_tw", "Chinese (Traditional)", "中文（繁體）", typeof(OneStringNumberSystem))]
+        ChineseTraditional,
+        /// <summary>Represents the Chinese language (zh), written with simplified characters.</summary>
+        [LanguageInfo("zh_cn", "Chinese (Simplified)", "中文（简体）", typeof(OneStringNumberSystem))]
+        ChineseSimplified,
         /// <summary>Represents the Zulu language (zu).</summary>
         [LanguageInfo("zu", "Zulu", "IsiZulu", typeof(NumberSystem))]
         Zulu,
