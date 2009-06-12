@@ -474,18 +474,24 @@ namespace RT.Util.Lingo
 
         private void ctrlPageUp(object sender, EventArgs e)
         {
-            TranslationPanel pnl = (TranslationPanel) sender;
-            int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
-            if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
+            int selIndex = _lstGroups.SelectedIndex;
+            if (selIndex > 0)
+                _lstGroups.SelectedIndex = selIndex - 1;
+            else
+                _lstGroups.SelectedIndex = _lstGroups.Items.Count - 1;
+            if (_currentlyVisibleTranslationPanels.Length > 0)
                 _currentlyVisibleTranslationPanels[0].FocusFirstTranslationBox();
         }
 
         private void ctrlPageDown(object sender, EventArgs e)
         {
-            TranslationPanel pnl = (TranslationPanel) sender;
-            int index = Array.IndexOf(_currentlyVisibleTranslationPanels, pnl);
-            if (index >= 0 && _currentlyVisibleTranslationPanels.Length > 0)
-                _currentlyVisibleTranslationPanels[_currentlyVisibleTranslationPanels.Length - 1].FocusLastTranslationBox();
+            int selIndex = _lstGroups.SelectedIndex;
+            if (selIndex < _lstGroups.Items.Count - 1)
+                _lstGroups.SelectedIndex = selIndex + 1;
+            else
+                _lstGroups.SelectedIndex = 0;
+            if (_currentlyVisibleTranslationPanels.Length > 0)
+                _currentlyVisibleTranslationPanels[0].FocusFirstTranslationBox();
         }
 
         private void pageUp(object sender, EventArgs e)
@@ -1059,6 +1065,15 @@ namespace RT.Util.Lingo
                 {
                     ((TextBoxAutoHeight) sender).SelectAll();
                     e.Handled = true;
+                }
+                else if ((e.KeyCode == Keys.Return || e.KeyCode == Keys.Enter) && !e.Control && !e.Alt && !e.Shift && sender is TextBoxAutoHeight)
+                {
+                    if (sender == _txtTranslation[_txtTranslation.Length - 1])
+                        acceptTranslation(_btnAccept, e);
+                    else
+                        _txtTranslation[Array.IndexOf(_txtTranslation, sender) + 1].Focus();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
                 }
             }
 
