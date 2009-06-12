@@ -5,6 +5,8 @@ using System.Text;
 using RT.Util.ExtensionMethods;
 using System.Reflection;
 using NUnit.Framework;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace RT.Util
 {
@@ -12,33 +14,209 @@ namespace RT.Util
     {
         static void Main(string[] args)
         {
-            foreach (var ty in Assembly.GetExecutingAssembly().GetExportedTypes().Where(t => t.GetCustomAttributes(typeof(TestFixtureAttribute), true).Any()).OrderBy(t => t.Name))
+            if (false)
             {
-                Console.WriteLine("Testing type: " + ty);
-                var sts = Activator.CreateInstance(ty);
-
-                foreach (var meth in ty.GetMethods().Where(m => m.GetCustomAttributes(typeof(TestFixtureSetUpAttribute), false).Any()))
-                {
-                    Console.WriteLine("-- Running setup: " + meth.Name);
-                    meth.Invoke(sts, new object[] { });
-                }
-
-                foreach (var meth in ty.GetMethods().Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any()))
-                {
-                    Console.WriteLine("-- Running test: " + meth.Name);
-                    meth.Invoke(sts, new object[] { });
-                }
-
-                foreach (var meth in ty.GetMethods().Where(m => m.GetCustomAttributes(typeof(TestFixtureTearDownAttribute), false).Any()))
-                {
-                    Console.WriteLine("-- Running teardown: " + meth.Name);
-                    meth.Invoke(sts, new object[] { });
-                }
+                Testing.GenerateTestingCode(@"..\..\main\common\Util\UtilTests.cs", "Run Tests", Assembly.GetExecutingAssembly().GetExportedTypes(),
+                    typeof(TestFixtureAttribute), typeof(TestFixtureSetUpAttribute), typeof(TestAttribute), typeof(TestFixtureTearDownAttribute));
             }
+            else
+            {
+                #region Run Tests
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.ExtensionMethods.CollectionExtensionsTests");
+                var test1 = new RT.Util.ExtensionMethods.CollectionExtensionsTests();
+                Console.WriteLine("-- Running test: TestBinarySearch");
+                test1.TestBinarySearch();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.ExtensionMethods.DateTimeExtensionsTests");
+                var test2 = new RT.Util.ExtensionMethods.DateTimeExtensionsTests();
+                Console.WriteLine("-- Running test: TestGetNanoseconds");
+                test2.TestGetNanoseconds();
+                Console.WriteLine("-- Running test: TestToIsoStringUtc");
+                test2.TestToIsoStringUtc();
+                Console.WriteLine("-- Running test: TestToIsoStringUnspecified");
+                test2.TestToIsoStringUnspecified();
+                Console.WriteLine("-- Running test: TestToIsoStringLocal");
+                test2.TestToIsoStringLocal();
+                Console.WriteLine("-- Running test: TestTryParseIsoUtc");
+                test2.TestTryParseIsoUtc();
+                Console.WriteLine("-- Running test: TestTryParseIsoUnspecified");
+                test2.TestTryParseIsoUnspecified();
+                Console.WriteLine("-- Running test: TestTryParseIsoLocal");
+                test2.TestTryParseIsoLocal();
+                Console.WriteLine("-- Running test: TestTruncated");
+                test2.TestTruncated();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Geometry.GeomUtTests");
+                var test3 = new RT.Util.Geometry.GeomUtTests();
+                Console.WriteLine("-- Running test: TestNormalizedAngle");
+                test3.TestNormalizedAngle();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.ExtensionMethods.IEnumerableExtensionsTests");
+                var test4 = new RT.Util.ExtensionMethods.IEnumerableExtensionsTests();
+                Console.WriteLine("-- Running test: TestJoin");
+                test4.TestJoin();
+                Console.WriteLine("-- Running test: TestUniquePairs");
+                test4.TestUniquePairs();
+                Console.WriteLine("-- Running test: TestSorted");
+                test4.TestSorted();
+                Console.WriteLine("-- Running test: TestOrderTake");
+                test4.TestOrderTake();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Geometry.IntersectTests");
+                var test5 = new RT.Util.Geometry.IntersectTests();
+                Console.WriteLine("-- Running test: LineWithCircle");
+                test5.LineWithCircle();
+                Console.WriteLine("-- Running test: RayWithCircle");
+                test5.RayWithCircle();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Collections.ListSortedTests");
+                var test6 = new RT.Util.Collections.ListSortedTests();
+                Console.WriteLine("-- Running test: TestA");
+                test6.TestA();
+                Console.WriteLine("-- Running test: TestB");
+                test6.TestB();
+                Console.WriteLine("-- Running test: TestC");
+                test6.TestC();
+                Console.WriteLine("-- Running test: TestD");
+                test6.TestD();
+                Console.WriteLine("-- Running test: TestF");
+                test6.TestF();
+                Console.WriteLine("-- Running test: TestG");
+                test6.TestG();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.RConvertTests");
+                var test7 = new RT.Util.RConvertTests();
+                Console.WriteLine("-- Running test: TestExactToByte");
+                test7.TestExactToByte();
+                Console.WriteLine("-- Running test: TestExactToUShort");
+                test7.TestExactToUShort();
+                Console.WriteLine("-- Running test: TestExactToUInt");
+                test7.TestExactToUInt();
+                Console.WriteLine("-- Running test: TestExactToULong");
+                test7.TestExactToULong();
+                Console.WriteLine("-- Running test: TestExactToSByte");
+                test7.TestExactToSByte();
+                Console.WriteLine("-- Running test: TestExactToShort");
+                test7.TestExactToShort();
+                Console.WriteLine("-- Running test: TestExactToInt");
+                test7.TestExactToInt();
+                Console.WriteLine("-- Running test: TestExactToLong");
+                test7.TestExactToLong();
+                Console.WriteLine("-- Running test: TestExactToBool");
+                test7.TestExactToBool();
+                Console.WriteLine("-- Running test: TestExactToChar");
+                test7.TestExactToChar();
+                Console.WriteLine("-- Running test: TestExactToDateTime");
+                test7.TestExactToDateTime();
+                Console.WriteLine("-- Running test: TestExactToFloat");
+                test7.TestExactToFloat();
+                Console.WriteLine("-- Running test: TestExactToDouble");
+                test7.TestExactToDouble();
+                Console.WriteLine("-- Running test: TestExactToDecimal");
+                test7.TestExactToDecimal();
+                Console.WriteLine("-- Running test: TestExactToStringAndRoundtrip");
+                test7.TestExactToStringAndRoundtrip();
+                Console.WriteLine("-- Running test: QuickTestExactToType");
+                test7.QuickTestExactToType();
+                Console.WriteLine("-- Running test: TestNullable");
+                test7.TestNullable();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Collections.RVariantTests");
+                var test8 = new RT.Util.Collections.RVariantTests();
+                Console.WriteLine("-- Running setup: InitAll");
+                test8.InitAll();
+                Console.WriteLine("-- Running test: TestStub");
+                test8.TestStub();
+                Console.WriteLine("-- Running test: TestBasicValue");
+                test8.TestBasicValue();
+                Console.WriteLine("-- Running test: TestOneLevelDict");
+                test8.TestOneLevelDict();
+                Console.WriteLine("-- Running test: TestOneLevelList");
+                test8.TestOneLevelList();
+                Console.WriteLine("-- Running test: TestComplexAndCopying");
+                test8.TestComplexAndCopying();
+                Console.WriteLine("-- Running test: TestImplicitCastAndEquality");
+                test8.TestImplicitCastAndEquality();
+                Console.WriteLine("-- Running test: TestXmlAndComplexEquality");
+                test8.TestXmlAndComplexEquality();
+                Console.WriteLine("-- Running test: TestDefaultTo");
+                test8.TestDefaultTo();
+                Console.WriteLine("-- Running test: TestExceptions");
+                test8.TestExceptions();
+                Console.WriteLine("-- Running test: RealLifeTest");
+                test8.RealLifeTest();
+                Console.WriteLine("-- Running test: TestExists");
+                test8.TestExists();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Collections.SetTests");
+                var test9 = new RT.Util.Collections.SetTests();
+                Console.WriteLine("-- Running test: SetTests1");
+                test9.SetTests1();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.ExtensionMethods.StringExtensionsTests");
+                var test10 = new RT.Util.ExtensionMethods.StringExtensionsTests();
+                Console.WriteLine("-- Running test: TestJoin");
+                test10.TestJoin();
+                Console.WriteLine("-- Running test: TestRepeat");
+                test10.TestRepeat();
+                Console.WriteLine("-- Running test: TestEscape");
+                test10.TestEscape();
+                Console.WriteLine("-- Running test: TestTrivial");
+                test10.TestTrivial();
+                Console.WriteLine("-- Running test: TestSingleNoIndentation");
+                test10.TestSingleNoIndentation();
+                Console.WriteLine("-- Running test: TestMultiIndentedParagraphs");
+                test10.TestMultiIndentedParagraphs();
+                Console.WriteLine("-- Running test: TestBase64Url");
+                test10.TestBase64Url();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Collections.TupleTests");
+                var test11 = new RT.Util.Collections.TupleTests();
+                Console.WriteLine("-- Running test: TestComparison");
+                test11.TestComparison();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.Xml.XmlClassifyTests");
+                var test12 = new RT.Util.Xml.XmlClassifyTests();
+                Console.WriteLine("-- Running test: TestBlankClass");
+                test12.TestBlankClass();
+                Console.WriteLine("-- Running test: TestBasicClass");
+                test12.TestBasicClass();
+                Console.WriteLine("-- Running test: TestStringNull");
+                test12.TestStringNull();
+                Console.WriteLine("-- Running test: TestClassWithList");
+                test12.TestClassWithList();
+                Console.WriteLine("-- Running test: TestClassWithDict");
+                test12.TestClassWithDict();
+                Console.WriteLine("-- Running test: TestDictSubclass");
+                test12.TestDictSubclass();
+                Console.WriteLine("-- Running test: TestClassWithXml");
+                test12.TestClassWithXml();
+                Console.WriteLine("-- Running test: TestNestedClass");
+                test12.TestNestedClass();
+                Console.WriteLine("-- Running test: TestPartialLoad");
+                test12.TestPartialLoad();
+                Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.ExtensionMethods.XmlLinqExtensionsTests");
+                var test13 = new RT.Util.ExtensionMethods.XmlLinqExtensionsTests();
+                Console.WriteLine("-- Running setup: Setup");
+                test13.Setup();
+                Console.WriteLine("-- Running test: TestElementPath");
+                test13.TestElementPath();
+                Console.WriteLine("-- Running test: TestAttributePath");
+                test13.TestAttributePath();
+                Console.WriteLine("-- Running test: TestChkElement");
+                test13.TestChkElement();
+                Console.WriteLine("-- Running test: TestChkAttribute");
+                test13.TestChkAttribute();
+                Console.WriteLine("-- Running test: TestAsDouble");
+                test13.TestAsDouble();
+                #endregion
 
-            Console.WriteLine("");
-            Console.WriteLine("Tests passed; press Enter to exit.");
-            Console.ReadLine();
+                Console.WriteLine("");
+                Console.WriteLine("Tests passed; press Enter to exit.");
+                Console.ReadLine();
+            }
         }
     }
 }

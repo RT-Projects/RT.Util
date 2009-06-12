@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using RT.Util.ExtensionMethods;
+using System.Globalization;
 
 namespace RT.Util
 {
@@ -155,31 +156,31 @@ namespace RT.Util
 
             // Values will default to false unless set to true explicitly
 
-            IsIntegerType = new bool[max+1];
-            IsIntegerType[(int)TypeCode.Byte] = true;
-            IsIntegerType[(int)TypeCode.SByte] = true;
-            IsIntegerType[(int)TypeCode.Int16] = true;
-            IsIntegerType[(int)TypeCode.Int32] = true;
-            IsIntegerType[(int)TypeCode.Int64] = true;
-            IsIntegerType[(int)TypeCode.UInt16] = true;
-            IsIntegerType[(int)TypeCode.UInt32] = true;
-            IsIntegerType[(int)TypeCode.UInt64] = true;
-            IsIntegerType[(int)TypeCode.Boolean] = true;
-            IsIntegerType[(int)TypeCode.Char] = true;
-            IsIntegerType[(int)TypeCode.DateTime] = true;
+            IsIntegerType = new bool[max + 1];
+            IsIntegerType[(int) TypeCode.Byte] = true;
+            IsIntegerType[(int) TypeCode.SByte] = true;
+            IsIntegerType[(int) TypeCode.Int16] = true;
+            IsIntegerType[(int) TypeCode.Int32] = true;
+            IsIntegerType[(int) TypeCode.Int64] = true;
+            IsIntegerType[(int) TypeCode.UInt16] = true;
+            IsIntegerType[(int) TypeCode.UInt32] = true;
+            IsIntegerType[(int) TypeCode.UInt64] = true;
+            IsIntegerType[(int) TypeCode.Boolean] = true;
+            IsIntegerType[(int) TypeCode.Char] = true;
+            IsIntegerType[(int) TypeCode.DateTime] = true;
 
-            IsUnsignedType = new bool[max+1];
-            IsUnsignedType[(int)TypeCode.Byte] = true;
-            IsUnsignedType[(int)TypeCode.UInt16] = true;
-            IsUnsignedType[(int)TypeCode.UInt32] = true;
-            IsUnsignedType[(int)TypeCode.UInt64] = true;
-            IsUnsignedType[(int)TypeCode.Boolean] = true;
-            IsUnsignedType[(int)TypeCode.Char] = true;
+            IsUnsignedType = new bool[max + 1];
+            IsUnsignedType[(int) TypeCode.Byte] = true;
+            IsUnsignedType[(int) TypeCode.UInt16] = true;
+            IsUnsignedType[(int) TypeCode.UInt32] = true;
+            IsUnsignedType[(int) TypeCode.UInt64] = true;
+            IsUnsignedType[(int) TypeCode.Boolean] = true;
+            IsUnsignedType[(int) TypeCode.Char] = true;
 
-            IsUnsupportedType = new bool[max+1];
-            IsUnsupportedType[(int)TypeCode.DBNull] = true;
-            IsUnsupportedType[(int)TypeCode.Empty] = true;
-            IsUnsupportedType[(int)TypeCode.Object] = true;
+            IsUnsupportedType = new bool[max + 1];
+            IsUnsupportedType[(int) TypeCode.DBNull] = true;
+            IsUnsupportedType[(int) TypeCode.Empty] = true;
+            IsUnsupportedType[(int) TypeCode.Object] = true;
         }
 
         /// <summary>
@@ -210,30 +211,31 @@ namespace RT.Util
             switch (typeCode)
             {
                 case TypeCode.Byte:
-                    return (byte)integer;
+                    return (byte) integer;
                 case TypeCode.SByte:
-                    return (sbyte)integer;
+                    return (sbyte) integer;
                 case TypeCode.Int16:
-                    return (short)integer;
+                    return (short) integer;
                 case TypeCode.UInt16:
-                    return (ushort)integer;
+                    return (ushort) integer;
                 case TypeCode.Int32:
-                    return (int)integer;
+                    return (int) integer;
                 case TypeCode.UInt32:
-                    return (uint)integer;
+                    return (uint) integer;
                 case TypeCode.Int64:
-                    return (long)integer;
+                    return (long) integer;
                 case TypeCode.Boolean:
-                    return (bool)integer ? 1 : 0;
+                    return (bool) integer ? 1 : 0;
                 case TypeCode.Char:
-                    return (char)integer;
+                    return (char) integer;
                 case TypeCode.DateTime:
-                    switch (((DateTime)integer).Kind)
+                    switch (((DateTime) integer).Kind)
                     {
-                        case DateTimeKind.Utc: case DateTimeKind.Unspecified:
-                            return ((DateTime)integer).Ticks;
+                        case DateTimeKind.Utc:
+                        case DateTimeKind.Unspecified:
+                            return ((DateTime) integer).Ticks;
                         case DateTimeKind.Local:
-                            return ((DateTime)integer).ToUniversalTime().Ticks;
+                            return ((DateTime) integer).ToUniversalTime().Ticks;
                         default:
                             throw new ArgumentException("Unexpected DateTime.Kind while unboxing it to a long.");
                     }
@@ -310,29 +312,29 @@ namespace RT.Util
 
             if (code == TypeCode.Byte) // fast track if it's already the right type
             {
-                result = (byte)value;
+                result = (byte) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return byte.TryParse((string)value, out result);
+                return byte.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)byte.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) byte.MaxValue)
                 {
-                    result = (byte)val;
+                    result = (byte) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)byte.MinValue && val <= (long)byte.MaxValue)
+                if (val >= (long) byte.MinValue && val <= (long) byte.MaxValue)
                 {
-                    result = (byte)val;
+                    result = (byte) val;
                     return true;
                 }
             }
@@ -354,29 +356,29 @@ namespace RT.Util
 
             if (code == TypeCode.UInt16) // fast track if it's already the right type
             {
-                result = (ushort)value;
+                result = (ushort) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return ushort.TryParse((string)value, out result);
+                return ushort.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)ushort.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) ushort.MaxValue)
                 {
-                    result = (ushort)val;
+                    result = (ushort) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)ushort.MinValue && val <= (long)ushort.MaxValue)
+                if (val >= (long) ushort.MinValue && val <= (long) ushort.MaxValue)
                 {
-                    result = (ushort)val;
+                    result = (ushort) val;
                     return true;
                 }
             }
@@ -398,29 +400,29 @@ namespace RT.Util
 
             if (code == TypeCode.UInt32) // fast track if it's already the right type
             {
-                result = (uint)value;
+                result = (uint) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return uint.TryParse((string)value, out result);
+                return uint.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)uint.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) uint.MaxValue)
                 {
-                    result = (uint)val;
+                    result = (uint) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)uint.MinValue && val <= (long)uint.MaxValue)
+                if (val >= (long) uint.MinValue && val <= (long) uint.MaxValue)
                 {
-                    result = (uint)val;
+                    result = (uint) val;
                     return true;
                 }
             }
@@ -442,19 +444,19 @@ namespace RT.Util
 
             if (code == TypeCode.UInt64) // fast track if it's already the right type
             {
-                result = (ulong)value;
+                result = (ulong) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return ulong.TryParse((string)value, out result);
+                return ulong.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)ulong.MinValue) // note no upper limit here because ulong is special
+                if (val >= (long) ulong.MinValue) // note no upper limit here because ulong is special
                 {
-                    result = (ulong)val;
+                    result = (ulong) val;
                     return true;
                 }
             }
@@ -480,29 +482,29 @@ namespace RT.Util
 
             if (code == TypeCode.SByte) // fast track if it's already the right type
             {
-                result = (sbyte)value;
+                result = (sbyte) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return sbyte.TryParse((string)value, out result);
+                return sbyte.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)sbyte.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) sbyte.MaxValue)
                 {
-                    result = (sbyte)val;
+                    result = (sbyte) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)sbyte.MinValue && val <= (long)sbyte.MaxValue)
+                if (val >= (long) sbyte.MinValue && val <= (long) sbyte.MaxValue)
                 {
-                    result = (sbyte)val;
+                    result = (sbyte) val;
                     return true;
                 }
             }
@@ -524,29 +526,29 @@ namespace RT.Util
 
             if (code == TypeCode.Int16) // fast track if it's already the right type
             {
-                result = (short)value;
+                result = (short) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return short.TryParse((string)value, out result);
+                return short.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)short.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) short.MaxValue)
                 {
-                    result = (short)val;
+                    result = (short) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)short.MinValue && val <= (long)short.MaxValue)
+                if (val >= (long) short.MinValue && val <= (long) short.MaxValue)
                 {
-                    result = (short)val;
+                    result = (short) val;
                     return true;
                 }
             }
@@ -568,29 +570,29 @@ namespace RT.Util
 
             if (code == TypeCode.Int32) // fast track if it's already the right type
             {
-                result = (int)value;
+                result = (int) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return int.TryParse((string)value, out result);
+                return int.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)int.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) int.MaxValue)
                 {
-                    result = (int)val;
+                    result = (int) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)int.MinValue && val <= (long)int.MaxValue)
+                if (val >= (long) int.MinValue && val <= (long) int.MaxValue)
                 {
-                    result = (int)val;
+                    result = (int) val;
                     return true;
                 }
             }
@@ -612,24 +614,24 @@ namespace RT.Util
 
             if (code == TypeCode.Int64) // fast track if it's already the right type
             {
-                result = (long)value;
+                result = (long) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
-                return long.TryParse((string)value, out result);
+                return long.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)long.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) long.MaxValue)
                 {
-                    result = (long)val;
+                    result = (long) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(long)code])
+            else if (IsIntegerType[(long) code])
             {   // special case: no limit test is necessary since all other types fit
                 result = UnboxIntegerToLong(value, code);
                 return true;
@@ -663,13 +665,13 @@ namespace RT.Util
 
             if (code == TypeCode.Boolean) // fast track if it's already the right type
             {
-                result = (bool)value;
+                result = (bool) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
             {
-                string val = (string)value;
+                string val = (string) value;
                 result = false;
                 if (string.Equals(val, "True", StringComparison.InvariantCultureIgnoreCase))
                     result = true; // result = true, return true
@@ -680,16 +682,16 @@ namespace RT.Util
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
+                ulong val = (ulong) value;
                 result = false;
                 if (val == 1)
                     result = true;
                 else if (val != 0)
-                    return false;;
+                    return false; ;
                 return true;
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 result = false;
@@ -721,35 +723,35 @@ namespace RT.Util
 
             if (code == TypeCode.Char) // fast track if it's already the right type
             {
-                result = (char)value;
+                result = (char) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
             {
-                if (((string)value).Length == 1)
+                if (((string) value).Length == 1)
                 {
-                    result = ((string)value)[0];
+                    result = ((string) value)[0];
                     return true;
                 }
             }
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)char.MaxValue)
+                ulong val = (ulong) value;
+                if (val <= (ulong) char.MaxValue)
                 {
-                    result = (char)val;
+                    result = (char) val;
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long)char.MinValue && val <= (long)char.MaxValue)
+                if (val >= (long) char.MinValue && val <= (long) char.MaxValue)
                 {
-                    result = (char)val;
+                    result = (char) val;
                     return true;
                 }
             }
@@ -778,26 +780,26 @@ namespace RT.Util
 
             if (code == TypeCode.DateTime) // fast track if it's already the right type
             {
-                result = (DateTime)value;
+                result = (DateTime) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
             {
-                return DateTimeExtensions.TryParseIso((string)value, out result);
+                return DateTimeExtensions.TryParseIso((string) value, out result);
             }
 
             else if (code == TypeCode.UInt64)
             {
-                ulong val = (ulong)value;
-                if (val <= (ulong)DateTime.MaxValue.Ticks)
+                ulong val = (ulong) value;
+                if (val <= (ulong) DateTime.MaxValue.Ticks)
                 {
-                    result = new DateTime((long)val, DateTimeKind.Utc);
+                    result = new DateTime((long) val, DateTimeKind.Utc);
                     return true;
                 }
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= DateTime.MinValue.Ticks && val <= DateTime.MaxValue.Ticks)
@@ -828,45 +830,45 @@ namespace RT.Util
 
             if (code == TypeCode.Single) // fast track if it's already the right type
             {
-                result = (float)value;
+                result = (float) value;
                 return true;
             }
             else if (code == TypeCode.Double)
             {
-                result = (float)(double)value;
+                result = (float) (double) value;
                 return true;
             }
             else if (code == TypeCode.Decimal)
             {
-                result = (float)(decimal)value;
+                result = (float) (decimal) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
             {
                 result = 0;
-                if (string.Compare((string)value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (string.Compare((string) value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = float.PositiveInfinity;
-                else if (string.Compare((string)value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = float.NegativeInfinity;
-                else if (string.Compare((string)value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = float.NaN;
 
                 if (result == 0)
-                    return float.TryParse((string)value, out result);
+                    return float.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
                 else
                     return true;
             }
 
             else if (code == TypeCode.UInt64)
             {
-                result = (float)(ulong)value; // unbox as ulong, convert to float
+                result = (float) (ulong) value; // unbox as ulong, convert to float
                 return true;
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
-                result = (float)UnboxIntegerToLong(value, code); // unbox as long, convert to float
+                result = (float) UnboxIntegerToLong(value, code); // unbox as long, convert to float
                 return true;
             }
 
@@ -887,45 +889,45 @@ namespace RT.Util
 
             if (code == TypeCode.Double) // fast track if it's already the right type
             {
-                result = (double)value;
+                result = (double) value;
                 return true;
             }
             else if (code == TypeCode.Single)
             {
-                result = (double)(float)value;
+                result = (double) (float) value;
                 return true;
             }
             else if (code == TypeCode.Decimal)
             {
-                result = (double)(decimal)value;
+                result = (double) (decimal) value;
                 return true;
             }
 
             else if (code == TypeCode.String)
             {
                 result = 0;
-                if (string.Compare((string)value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (string.Compare((string) value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = double.PositiveInfinity;
-                else if (string.Compare((string)value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = double.NegativeInfinity;
-                else if (string.Compare((string)value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
                     result = double.NaN;
 
                 if (result == 0)
-                    return double.TryParse((string)value, out result);
+                    return double.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
                 else
                     return true;
             }
 
             else if (code == TypeCode.UInt64)
             {
-                result = (double)(ulong)value; // unbox as ulong, convert to double
+                result = (double) (ulong) value; // unbox as ulong, convert to double
                 return true;
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
-                result = (double)UnboxIntegerToLong(value, code); // unbox as long, convert to double
+                result = (double) UnboxIntegerToLong(value, code); // unbox as long, convert to double
                 return true;
             }
 
@@ -946,40 +948,40 @@ namespace RT.Util
 
             if (code == TypeCode.Decimal) // fast track if it's already the right type
             {
-                result = (decimal)value;
+                result = (decimal) value;
                 return true;
             }
             else if (code == TypeCode.Single)
             {
-                float val = (float)value;
-                if (val >= (float)decimal.MinValue && val <= (float)decimal.MaxValue)
+                float val = (float) value;
+                if (val >= (float) decimal.MinValue && val <= (float) decimal.MaxValue)
                 {
-                    result = (decimal)val;
+                    result = (decimal) val;
                     return true;
                 }
             }
             else if (code == TypeCode.Double)
             {
-                double val = (double)value;
-                if (val >= (double)decimal.MinValue && val <= (double)decimal.MaxValue)
+                double val = (double) value;
+                if (val >= (double) decimal.MinValue && val <= (double) decimal.MaxValue)
                 {
-                    result = (decimal)val;
+                    result = (decimal) val;
                     return true;
                 }
             }
 
             else if (code == TypeCode.String)
-                return decimal.TryParse((string)value, out result);
+                return decimal.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
-                result = (decimal)(ulong)value; // unbox as ulong, convert to decimal
+                result = (decimal) (ulong) value; // unbox as ulong, convert to decimal
                 return true;
             }
 
-            else if (IsIntegerType[(int)code])
+            else if (IsIntegerType[(int) code])
             {
-                result = (decimal)UnboxIntegerToLong(value, code); // unbox as long, convert to decimal
+                result = (decimal) UnboxIntegerToLong(value, code); // unbox as long, convert to decimal
                 return true;
             }
 
@@ -1009,12 +1011,12 @@ namespace RT.Util
 
             if (code == TypeCode.String) // fast track if it's already the right type
             {
-                result = (string)value;
+                result = (string) value;
                 return true;
             }
             else if (code == TypeCode.Single)
             {
-                float val = (float)value;
+                float val = (float) value;
                 if (float.IsPositiveInfinity(val))
                     result = "Inf";
                 else if (float.IsNegativeInfinity(val))
@@ -1022,12 +1024,17 @@ namespace RT.Util
                 else if (float.IsNaN(val))
                     result = "NaN";
                 else
-                    result = val.ToString("R");
+                    result = val.ToString("R", CultureInfo.InvariantCulture);
+                return true;
+            }
+            else if (code == TypeCode.Decimal)
+            {
+                result = ((decimal) value).ToString(CultureInfo.InvariantCulture);
                 return true;
             }
             else if (code == TypeCode.Double)
             {
-                double val = (double)value;
+                double val = (double) value;
                 if (double.IsPositiveInfinity(val))
                     result = "Inf";
                 else if (double.IsNegativeInfinity(val))
@@ -1035,20 +1042,20 @@ namespace RT.Util
                 else if (double.IsNaN(val))
                     result = "NaN";
                 else
-                    result = val.ToString("R");
+                    result = val.ToString("R", CultureInfo.InvariantCulture);
                 return true;
             }
             else if (code == TypeCode.Boolean)
             {
-                result = (bool)value ? "True" : "False";
+                result = (bool) value ? "True" : "False";
                 return true;
             }
             else if (code == TypeCode.DateTime)
             {
-                result = ((DateTime)value).ToIsoStringOptimal();
+                result = ((DateTime) value).ToIsoStringOptimal();
                 return true;
             }
-            else if (!IsUnsupportedType[(int)code])
+            else if (!IsUnsupportedType[(int) code])
             {
                 result = value.ToString();
                 return true;
@@ -1439,35 +1446,35 @@ namespace RT.Util
             switch (code)
             {
                 case TypeCode.Boolean:
-                    return (T)(object)ExactToBool(value);
+                    return (T) (object) ExactToBool(value);
                 case TypeCode.Byte:
-                    return (T)(object)ExactToByte(value);
+                    return (T) (object) ExactToByte(value);
                 case TypeCode.SByte:
-                    return (T)(object)ExactToSByte(value);
+                    return (T) (object) ExactToSByte(value);
                 case TypeCode.Int16:
-                    return (T)(object)ExactToShort(value);
+                    return (T) (object) ExactToShort(value);
                 case TypeCode.UInt16:
-                    return (T)(object)ExactToUShort(value);
+                    return (T) (object) ExactToUShort(value);
                 case TypeCode.Int32:
-                    return (T)(object)ExactToInt(value);
+                    return (T) (object) ExactToInt(value);
                 case TypeCode.UInt32:
-                    return (T)(object)ExactToUInt(value);
+                    return (T) (object) ExactToUInt(value);
                 case TypeCode.Int64:
-                    return (T)(object)ExactToLong(value);
+                    return (T) (object) ExactToLong(value);
                 case TypeCode.UInt64:
-                    return (T)(object)ExactToULong(value);
+                    return (T) (object) ExactToULong(value);
                 case TypeCode.Single:
-                    return (T)(object)ExactToFloat(value);
+                    return (T) (object) ExactToFloat(value);
                 case TypeCode.Double:
-                    return (T)(object)ExactToDouble(value);
+                    return (T) (object) ExactToDouble(value);
                 case TypeCode.Decimal:
-                    return (T)(object)ExactToDecimal(value);
+                    return (T) (object) ExactToDecimal(value);
                 case TypeCode.DateTime:
-                    return (T)(object)ExactToDateTime(value);
+                    return (T) (object) ExactToDateTime(value);
                 case TypeCode.Char:
-                    return (T)(object)ExactToChar(value);
+                    return (T) (object) ExactToChar(value);
                 case TypeCode.String:
-                    return (T)(object)ExactToString(value);
+                    return (T) (object) ExactToString(value);
                 default:
                     throw new RConvertException(value, typeof(T));
             }

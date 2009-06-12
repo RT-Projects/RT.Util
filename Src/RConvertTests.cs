@@ -41,19 +41,19 @@ namespace RT.Util
                 switch (R)
                 {
                     case 0: // byte
-                        objs[i] = (byte)(rnd.NextDouble() * ((double)byte.MaxValue - byte.MinValue) + byte.MinValue);
+                        objs[i] = (byte) (rnd.NextDouble() * ((double) byte.MaxValue - byte.MinValue) + byte.MinValue);
                         break;
                     case 1: // sbyte
-                        objs[i] = (sbyte)(rnd.NextDouble() * ((double)sbyte.MaxValue - sbyte.MinValue) + sbyte.MinValue);
+                        objs[i] = (sbyte) (rnd.NextDouble() * ((double) sbyte.MaxValue - sbyte.MinValue) + sbyte.MinValue);
                         break;
                     case 2: // int
-                        objs[i] = (int)(rnd.NextDouble() * ((double)int.MaxValue - int.MinValue) + int.MinValue);
+                        objs[i] = (int) (rnd.NextDouble() * ((double) int.MaxValue - int.MinValue) + int.MinValue);
                         break;
                     case 3: // float
-                        objs[i] = (float)(rnd.NextDouble() * ((double)float.MaxValue - float.MinValue) + float.MinValue);
+                        objs[i] = (float) (rnd.NextDouble() * ((double) float.MaxValue - float.MinValue) + float.MinValue);
                         break;
                     case 4: // decimal
-                        objs[i] = (decimal)(rnd.NextDouble() * ((double)decimal.MaxValue - (double)decimal.MinValue) + (double)decimal.MinValue);
+                        objs[i] = (decimal) (rnd.NextDouble() * ((double) decimal.MaxValue - (double) decimal.MinValue) + (double) decimal.MinValue);
                         break;
                     case 5:
                         objs[i] = (rnd.NextDouble() * 1000).ToString("R");
@@ -62,7 +62,7 @@ namespace RT.Util
                         objs[i] = rnd.Next(0, int.MaxValue).ToString();
                         break;
                     case 7:
-                        objs[i] = (bool)(rnd.NextDouble() > 0.5);
+                        objs[i] = (bool) (rnd.NextDouble() > 0.5);
                         break;
                 }
             }
@@ -73,7 +73,7 @@ namespace RT.Util
                 {
                     byte result;
                     if (RConvert.ExactTry(objs[i], out result))
-                        total += (int)result;
+                        total += (int) result;
                 }
             }
             Console.WriteLine(total);
@@ -116,24 +116,24 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)147, out result)); Assert.AreEqual(147, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); Assert.AreEqual(118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)149, out result)); Assert.AreEqual(149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)150, out result)); Assert.AreEqual(150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)151, out result)); Assert.AreEqual(151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)152, out result)); Assert.AreEqual(152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)153, out result)); Assert.AreEqual(153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)154, out result)); Assert.AreEqual(154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 147, out result)); Assert.AreEqual(147, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); Assert.AreEqual(118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 149, out result)); Assert.AreEqual(149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 150, out result)); Assert.AreEqual(150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 151, out result)); Assert.AreEqual(151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 152, out result)); Assert.AreEqual(152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 153, out result)); Assert.AreEqual(153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 154, out result)); Assert.AreEqual(154, result);
             Assert.IsTrue(RConvert.ExactTry('A', out result)); Assert.AreEqual(65, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(156), out result)); Assert.AreEqual(156, result);
             Assert.IsTrue(RConvert.ExactTry("157", out result)); Assert.AreEqual(157, result);
             // Out-of-range from all integer types
             //impossible: Assert.IsFalse(RConvert.Exact((byte)217, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-115018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ushort) 15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 115018, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-11111111111115018L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(11111111111115018UL, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(failValue, result);
@@ -187,26 +187,26 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); Assert.AreEqual(118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)21149, out result)); Assert.AreEqual(21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)41151, out result)); Assert.AreEqual(41151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)41152, out result)); Assert.AreEqual(41152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)41153, out result)); Assert.AreEqual(41153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)41154, out result)); Assert.AreEqual(41154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); Assert.AreEqual(118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 21149, out result)); Assert.AreEqual(21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 41151, out result)); Assert.AreEqual(41151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 41152, out result)); Assert.AreEqual(41152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 41153, out result)); Assert.AreEqual(41153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 41154, out result)); Assert.AreEqual(41154, result);
             Assert.IsTrue(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(0x4747, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(41156), out result)); Assert.AreEqual(41156, result);
             Assert.IsTrue(RConvert.ExactTry("41157", out result)); Assert.AreEqual(41157, result);
             // Out-of-range from all integer types
             //impossible: Assert.IsFalse(RConvert.Exact((byte)218, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)91118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)91152, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((long)91153, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ulong)91154, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) 91118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 91152, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((long) 91153, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ulong) 91154, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact('\u4747', out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(new DateTime(91155), out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry("91156", out result)); Assert.AreEqual(failValue, result);
@@ -258,14 +258,14 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); Assert.AreEqual(118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)21149, out result)); Assert.AreEqual(21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)311111151, out result)); Assert.AreEqual(311111151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)4111111152, out result)); Assert.AreEqual(4111111152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)4111111153, out result)); Assert.AreEqual(4111111153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)4111111154, out result)); Assert.AreEqual(4111111154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); Assert.AreEqual(118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 21149, out result)); Assert.AreEqual(21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 311111151, out result)); Assert.AreEqual(311111151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 4111111152, out result)); Assert.AreEqual(4111111152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 4111111153, out result)); Assert.AreEqual(4111111153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 4111111154, out result)); Assert.AreEqual(4111111154, result);
             Assert.IsTrue(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(0x4747, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(311111156), out result)); Assert.AreEqual(311111156, result);
             Assert.IsTrue(RConvert.ExactTry("4111111157", out result)); Assert.AreEqual(4111111157, result);
@@ -274,7 +274,7 @@ namespace RT.Util
             //impossible: Assert.IsFalse(RConvert.Exact((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((short)-15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -115018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((uint)4111111152, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-91111111111153L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(91111111111154UL, out result)); Assert.AreEqual(failValue, result);
@@ -329,12 +329,12 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(DateTime.MaxValue.Ticks, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); Assert.AreEqual(118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)21149, out result)); Assert.AreEqual(21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)311111151, out result)); Assert.AreEqual(311111151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)4111111152, out result)); Assert.AreEqual(4111111152, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); Assert.AreEqual(118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 21149, out result)); Assert.AreEqual(21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 311111151, out result)); Assert.AreEqual(311111151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 4111111152, out result)); Assert.AreEqual(4111111152, result);
             Assert.IsTrue(RConvert.ExactTry(9111111111111111153L, out result)); Assert.AreEqual(9111111111111111153L, result);
             Assert.IsTrue(RConvert.ExactTry(9911111111111111154UL, out result)); Assert.AreEqual(9911111111111111154UL, result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(0xA747, result);
@@ -342,10 +342,10 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry("9911111111111111157", out result)); Assert.AreEqual(9911111111111111157UL, result);
             // Out-of-range from all integer types
             //impossible: Assert.IsFalse(RConvert.Exact((byte)218, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -115018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((uint)4111111152, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-91111111111153L, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact(91111111111154UL, out result)); Assert.AreEqual(failValue, result);
@@ -404,24 +404,24 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)47, out result)); Assert.AreEqual(47, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)48, out result)); Assert.AreEqual(48, result);
-            Assert.IsTrue(RConvert.ExactTry((short)49, out result)); Assert.AreEqual(49, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)50, out result)); Assert.AreEqual(50, result);
-            Assert.IsTrue(RConvert.ExactTry((int)51, out result)); Assert.AreEqual(51, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)52, out result)); Assert.AreEqual(52, result);
-            Assert.IsTrue(RConvert.ExactTry((long)53, out result)); Assert.AreEqual(53, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)54, out result)); Assert.AreEqual(54, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 47, out result)); Assert.AreEqual(47, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 48, out result)); Assert.AreEqual(48, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 49, out result)); Assert.AreEqual(49, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 50, out result)); Assert.AreEqual(50, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 51, out result)); Assert.AreEqual(51, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 52, out result)); Assert.AreEqual(52, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 53, out result)); Assert.AreEqual(53, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 54, out result)); Assert.AreEqual(54, result);
             Assert.IsTrue(RConvert.ExactTry('A', out result)); Assert.AreEqual(65, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(56), out result)); Assert.AreEqual(56, result);
             Assert.IsTrue(RConvert.ExactTry("57", out result)); Assert.AreEqual(57, result);
             // Out-of-range from all integer types
-            Assert.IsFalse(RConvert.ExactTry((byte)218, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((byte) 218, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-115018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ushort) 15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 115018, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-11111111111115018L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(11111111111115018UL, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(failValue, result);
@@ -475,14 +475,14 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)31150, out result)); Assert.AreEqual(31150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-31151, out result)); Assert.AreEqual(-31151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)31152, out result)); Assert.AreEqual(31152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)-31153, out result)); Assert.AreEqual(-31153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)31154, out result)); Assert.AreEqual(31154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 31150, out result)); Assert.AreEqual(31150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -31151, out result)); Assert.AreEqual(-31151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 31152, out result)); Assert.AreEqual(31152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) -31153, out result)); Assert.AreEqual(-31153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 31154, out result)); Assert.AreEqual(31154, result);
             Assert.IsTrue(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(0x4747, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(31156), out result)); Assert.AreEqual(31156, result);
             Assert.IsTrue(RConvert.ExactTry("-31157", out result)); Assert.AreEqual(-31157, result);
@@ -490,9 +490,9 @@ namespace RT.Util
             //impossible: Assert.IsFalse(RConvert.Exact((byte)218, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((short)-15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ushort)45051, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-2111115052, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)4111111152, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ushort) 45051, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -2111115052, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 4111111152, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-91111111111153L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(91111111111154UL, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(failValue, result);
@@ -546,14 +546,14 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-311111151, out result)); Assert.AreEqual(-311111151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); Assert.AreEqual(311111152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)-311111153, out result)); Assert.AreEqual(-311111153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)311111154, out result)); Assert.AreEqual(311111154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -311111151, out result)); Assert.AreEqual(-311111151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); Assert.AreEqual(311111152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) -311111153, out result)); Assert.AreEqual(-311111153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 311111154, out result)); Assert.AreEqual(311111154, result);
             Assert.IsTrue(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(0x4747, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(311111156), out result)); Assert.AreEqual(311111156, result);
             Assert.IsTrue(RConvert.ExactTry("311111157", out result)); Assert.AreEqual(311111157, result);
@@ -563,7 +563,7 @@ namespace RT.Util
             //impossible: Assert.IsFalse(RConvert.Exact((short)-15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((int)-115018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)4111111152, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 4111111152, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(-91111111111153L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(91111111111154UL, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact('\u4747', out result)); Assert.AreEqual(failValue, result);
@@ -617,12 +617,12 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(DateTime.MaxValue.Ticks, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-311111151, out result)); Assert.AreEqual(-311111151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); Assert.AreEqual(311111152, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -311111151, out result)); Assert.AreEqual(-311111151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); Assert.AreEqual(311111152, result);
             Assert.IsTrue(RConvert.ExactTry(-9111111111111111153L, out result)); Assert.AreEqual(-9111111111111111153L, result);
             Assert.IsTrue(RConvert.ExactTry(9111111111111111154UL, out result)); Assert.AreEqual(9111111111111111154UL, result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(0xA747, result);
@@ -669,22 +669,22 @@ namespace RT.Util
             bool/**/ result;
             bool/**/ failValue = default(bool/**/);
             // In-range from all integer types, for both values
-            Assert.IsTrue(RConvert.ExactTry((byte)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((byte)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((short)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((short)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((int)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((int)1, out result)); Assert.AreEqual(true, result);
-            Assert.IsTrue(RConvert.ExactTry((long)0, out result)); Assert.AreEqual(false, result);
-            Assert.IsTrue(RConvert.ExactTry((long)1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 1, out result)); Assert.AreEqual(true, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 0, out result)); Assert.AreEqual(false, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 1, out result)); Assert.AreEqual(true, result);
             Assert.IsTrue(RConvert.ExactTry(false, out result)); Assert.AreEqual(false, result);
             Assert.IsTrue(RConvert.ExactTry(true, out result)); Assert.AreEqual(true, result);
             Assert.IsTrue(RConvert.ExactTry('\u0000', out result)); Assert.AreEqual(false, result);
@@ -692,14 +692,14 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry("fAlse", out result)); Assert.AreEqual(false, result);
             Assert.IsTrue(RConvert.ExactTry("trUe", out result)); Assert.AreEqual(true, result);
             // Out-of-range from all integer types
-            Assert.IsFalse(RConvert.ExactTry((byte)2, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ushort)2, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)2, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ulong)2, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-1, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-1, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)-1, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((long)-1, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((byte) 2, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ushort) 2, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 2, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ulong) 2, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -1, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -1, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -1, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((long) -1, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry('\u0002', out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry("2", out result)); Assert.AreEqual(failValue, result);
             // Invalid strings
@@ -758,26 +758,26 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsFalse(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); Assert.AreEqual(118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)21149, out result)); Assert.AreEqual(21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)41151, out result)); Assert.AreEqual(41151, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)41152, out result)); Assert.AreEqual(41152, result);
-            Assert.IsTrue(RConvert.ExactTry((long)41153, out result)); Assert.AreEqual(41153, result);
-            Assert.IsTrue(RConvert.ExactTry((ulong)41154, out result)); Assert.AreEqual(41154, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); Assert.AreEqual(118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) 21149, out result)); Assert.AreEqual(21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) 41151, out result)); Assert.AreEqual(41151, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 41152, out result)); Assert.AreEqual(41152, result);
+            Assert.IsTrue(RConvert.ExactTry((long) 41153, out result)); Assert.AreEqual(41153, result);
+            Assert.IsTrue(RConvert.ExactTry((ulong) 41154, out result)); Assert.AreEqual(41154, result);
             Assert.IsTrue(RConvert.ExactTry('\u4747', out result)); Assert.AreEqual(0x4747, result);
             Assert.IsTrue(RConvert.ExactTry(new DateTime(41156), out result)); Assert.AreEqual(41156, result);
             Assert.IsTrue(RConvert.ExactTry("á", out result)); Assert.AreEqual('á', result);
             // Out-of-range from all integer types
             //impossible: Assert.IsFalse(RConvert.Exact((byte)218, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((int)91118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((uint)91152, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((long)91153, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((ulong)91154, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) 91118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((uint) 91152, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((long) 91153, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((ulong) 91154, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact('\u4747', out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(new DateTime(91155), out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry("91156", out result)); Assert.AreEqual(failValue, result);
@@ -846,12 +846,12 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(DateTime.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue.Ticks, out result)); Assert.AreEqual(DateTime.MaxValue, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); AssertDateTimeUtcAndTicks(247, ref result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)118, out result)); AssertDateTimeUtcAndTicks(118, ref result);
-            Assert.IsTrue(RConvert.ExactTry((short)21149, out result)); AssertDateTimeUtcAndTicks(21149, ref result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); AssertDateTimeUtcAndTicks(51150, ref result);
-            Assert.IsTrue(RConvert.ExactTry((int)311111151, out result)); AssertDateTimeUtcAndTicks(311111151, ref result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); AssertDateTimeUtcAndTicks(311111152, ref result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); AssertDateTimeUtcAndTicks(247, ref result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) 118, out result)); AssertDateTimeUtcAndTicks(118, ref result);
+            Assert.IsTrue(RConvert.ExactTry((short) 21149, out result)); AssertDateTimeUtcAndTicks(21149, ref result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); AssertDateTimeUtcAndTicks(51150, ref result);
+            Assert.IsTrue(RConvert.ExactTry((int) 311111151, out result)); AssertDateTimeUtcAndTicks(311111151, ref result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); AssertDateTimeUtcAndTicks(311111152, ref result);
             Assert.IsTrue(RConvert.ExactTry(3155378975999999999L, out result)); AssertDateTimeUtcAndTicks(3155378975999999999L, ref result);
             Assert.IsTrue(RConvert.ExactTry(3155378975999999999UL, out result)); AssertDateTimeUtcAndTicks(3155378975999999999UL, ref result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); AssertDateTimeUtcAndTicks(0xA747, ref result);
@@ -859,10 +859,10 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(new DateTime(91111111111111156L), out result)); Assert.AreEqual(new DateTime(91111111111111156L), result);
             // Out-of-range from all integer types
             //impossible: Assert.IsFalse(RConvert.Exact((byte)218, out result)); AssertDateTimeUtcAndTicks(failValue, ref result);
-            Assert.IsFalse(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(RConvert.ExactTry((short)-15018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((short) -15018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((ushort)15018, out result)); AssertDateTimeUtcAndTicks(failValue, ref result);
-            Assert.IsFalse(RConvert.ExactTry((int)-115018, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(RConvert.ExactTry((int) -115018, out result)); Assert.AreEqual(failValue, result);
             //impossible: Assert.IsFalse(RConvert.Exact((uint)4111111152, out result)); AssertDateTimeUtcAndTicks(failValue, ref result);
             Assert.IsFalse(RConvert.ExactTry(-91111111111153L, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry(9911111111111111154UL, out result)); Assert.AreEqual(failValue, result);
@@ -913,29 +913,29 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(ushort.MinValue, out result)); Assert.AreEqual(ushort.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(ushort.MaxValue, out result)); Assert.AreEqual(ushort.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(uint.MinValue, out result)); Assert.AreEqual(uint.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(uint.MaxValue, out result)); Assert.AreEqual((float/**/)uint.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(ulong.MinValue, out result)); Assert.AreEqual((float/**/)ulong.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(ulong.MaxValue, out result)); Assert.AreEqual((float/**/)ulong.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float)char.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float)char.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(uint.MaxValue, out result)); Assert.AreEqual((float/**/) uint.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(ulong.MinValue, out result)); Assert.AreEqual((float/**/) ulong.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(ulong.MaxValue, out result)); Assert.AreEqual((float/**/) ulong.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float) char.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float) char.MaxValue, result);
             // Extremes of signed integers
             Assert.IsTrue(RConvert.ExactTry(sbyte.MinValue, out result)); Assert.AreEqual(sbyte.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(sbyte.MaxValue, out result)); Assert.AreEqual(sbyte.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(short.MinValue, out result)); Assert.AreEqual(short.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(short.MaxValue, out result)); Assert.AreEqual(short.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(int.MinValue, out result)); Assert.AreEqual((float/**/)int.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(int.MaxValue, out result)); Assert.AreEqual((float/**/)int.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(long.MinValue, out result)); Assert.AreEqual((float/**/)long.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(long.MaxValue, out result)); Assert.AreEqual((float/**/)long.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(int.MinValue, out result)); Assert.AreEqual((float/**/) int.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(int.MaxValue, out result)); Assert.AreEqual((float/**/) int.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(long.MinValue, out result)); Assert.AreEqual((float/**/) long.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(long.MaxValue, out result)); Assert.AreEqual((float/**/) long.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
-            Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual((float/**/)DateTime.MaxValue.Ticks, result);
+            Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual((float/**/) DateTime.MaxValue.Ticks, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-311111151, out result)); Assert.AreEqual(-311111151f, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); Assert.AreEqual(311111152f, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -311111151, out result)); Assert.AreEqual(-311111151f, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); Assert.AreEqual(311111152f, result);
             Assert.IsTrue(RConvert.ExactTry(-9111111111111111153L, out result)); Assert.AreEqual(-9111111111111111153f, result);
             Assert.IsTrue(RConvert.ExactTry(9111111111111111154UL, out result)); Assert.AreEqual(9111111111111111154f, result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(0xA747, result);
@@ -998,8 +998,8 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(uint.MaxValue, out result)); Assert.AreEqual(uint.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(ulong.MinValue, out result)); Assert.AreEqual(ulong.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(ulong.MaxValue, out result)); Assert.AreEqual(ulong.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float)char.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float)char.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float) char.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float) char.MaxValue, result);
             // Extremes of signed integers
             Assert.IsTrue(RConvert.ExactTry(sbyte.MinValue, out result)); Assert.AreEqual(sbyte.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(sbyte.MaxValue, out result)); Assert.AreEqual(sbyte.MaxValue, result);
@@ -1012,12 +1012,12 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(DateTime.MaxValue.Ticks, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-311111151, out result)); Assert.AreEqual(-311111151d, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); Assert.AreEqual(311111152d, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -311111151, out result)); Assert.AreEqual(-311111151d, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); Assert.AreEqual(311111152d, result);
             Assert.IsTrue(RConvert.ExactTry(-9111111111111111153L, out result)); Assert.AreEqual(-9111111111111111153d, result);
             Assert.IsTrue(RConvert.ExactTry(9111111111111111154UL, out result)); Assert.AreEqual(9111111111111111154d, result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(0xA747, result);
@@ -1038,7 +1038,7 @@ namespace RT.Util
             Assert.IsFalse(RConvert.ExactTry("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(RConvert.ExactTry("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional - float
-            Assert.IsTrue(RConvert.ExactTry(3.141592f, out result)); Assert.AreEqual((double)3.141592f, result);
+            Assert.IsTrue(RConvert.ExactTry(3.141592f, out result)); Assert.AreEqual((double) 3.141592f, result);
             Assert.IsTrue(RConvert.ExactTry(float.MinValue, out result)); Assert.AreEqual(float.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(float.MaxValue, out result)); Assert.AreEqual(float.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(float.Epsilon, out result)); Assert.AreEqual(float.Epsilon, result);
@@ -1080,8 +1080,8 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(uint.MaxValue, out result)); Assert.AreEqual(uint.MaxValue, result);
             Assert.IsTrue(RConvert.ExactTry(ulong.MinValue, out result)); Assert.AreEqual(ulong.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(ulong.MaxValue, out result)); Assert.AreEqual(ulong.MaxValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float)char.MinValue, result);
-            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float)char.MaxValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MinValue, out result)); Assert.AreEqual((float) char.MinValue, result);
+            Assert.IsTrue(RConvert.ExactTry(char.MaxValue, out result)); Assert.AreEqual((float) char.MaxValue, result);
             // Extremes of signed integers
             Assert.IsTrue(RConvert.ExactTry(sbyte.MinValue, out result)); Assert.AreEqual(sbyte.MinValue, result);
             Assert.IsTrue(RConvert.ExactTry(sbyte.MaxValue, out result)); Assert.AreEqual(sbyte.MaxValue, result);
@@ -1094,12 +1094,12 @@ namespace RT.Util
             Assert.IsTrue(RConvert.ExactTry(DateTime.MinValue, out result)); Assert.AreEqual(DateTime.MinValue.Ticks, result);
             Assert.IsTrue(RConvert.ExactTry(DateTime.MaxValue, out result)); Assert.AreEqual(DateTime.MaxValue.Ticks, result);
             // In-range from all integer types
-            Assert.IsTrue(RConvert.ExactTry((byte)247, out result)); Assert.AreEqual(247, result);
-            Assert.IsTrue(RConvert.ExactTry((sbyte)-118, out result)); Assert.AreEqual(-118, result);
-            Assert.IsTrue(RConvert.ExactTry((short)-21149, out result)); Assert.AreEqual(-21149, result);
-            Assert.IsTrue(RConvert.ExactTry((ushort)51150, out result)); Assert.AreEqual(51150, result);
-            Assert.IsTrue(RConvert.ExactTry((int)-311111151, out result)); Assert.AreEqual(-311111151d, result);
-            Assert.IsTrue(RConvert.ExactTry((uint)311111152, out result)); Assert.AreEqual(311111152d, result);
+            Assert.IsTrue(RConvert.ExactTry((byte) 247, out result)); Assert.AreEqual(247, result);
+            Assert.IsTrue(RConvert.ExactTry((sbyte) -118, out result)); Assert.AreEqual(-118, result);
+            Assert.IsTrue(RConvert.ExactTry((short) -21149, out result)); Assert.AreEqual(-21149, result);
+            Assert.IsTrue(RConvert.ExactTry((ushort) 51150, out result)); Assert.AreEqual(51150, result);
+            Assert.IsTrue(RConvert.ExactTry((int) -311111151, out result)); Assert.AreEqual(-311111151d, result);
+            Assert.IsTrue(RConvert.ExactTry((uint) 311111152, out result)); Assert.AreEqual(311111152d, result);
             Assert.IsTrue(RConvert.ExactTry(-9111111111111111153L, out result)); Assert.AreEqual(-9111111111111111153d, result);
             Assert.IsTrue(RConvert.ExactTry(9111111111111111154UL, out result)); Assert.AreEqual(9111111111111111154d, result);
             Assert.IsTrue(RConvert.ExactTry('\uA747', out result)); Assert.AreEqual(0xA747, result);
@@ -1186,14 +1186,14 @@ namespace RT.Util
             CheckRoundtrip(double.Epsilon);
 
             // Roundtrip a few random values
-            CheckRoundtrip((byte)179);
-            CheckRoundtrip((sbyte)-79);
-            CheckRoundtrip((short)-13279);
-            CheckRoundtrip((ushort)53279);
-            CheckRoundtrip((int)-279473972);
-            CheckRoundtrip((uint)279473972);
-            CheckRoundtrip((long)-24729379473972);
-            CheckRoundtrip((ulong)27947334897972);
+            CheckRoundtrip((byte) 179);
+            CheckRoundtrip((sbyte) -79);
+            CheckRoundtrip((short) -13279);
+            CheckRoundtrip((ushort) 53279);
+            CheckRoundtrip((int) -279473972);
+            CheckRoundtrip((uint) 279473972);
+            CheckRoundtrip((long) -24729379473972);
+            CheckRoundtrip((ulong) 27947334897972);
             CheckRoundtrip('\u1234');
             CheckRoundtrip(DateTime.Now);
             CheckRoundtrip(-24729379473972000f);
@@ -1379,7 +1379,7 @@ namespace RT.Util
             catch (RConvertException) { }
 
             Assert.AreEqual(314159268283.198273987213m, RConvert.ExactToDecimal("314159268283.198273987213"));
-            try { RConvert.ExactToDecimal("1.276e+10"); Assert.Fail(); }
+            try { RConvert.ExactToDecimal("79228162514264337593543950336"); Assert.Fail(); }
             catch (RConvertException) { }
 
             Assert.AreEqual(new DateTime(0), RConvert.ExactToDateTime("0001-01-01"));
