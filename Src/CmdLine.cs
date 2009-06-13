@@ -397,7 +397,7 @@ namespace RT.Util
 
             // Version
             try { _printer.PrintLine("Version: " + assembly.GetName().Version.ToString()); }
-            catch (Exception E) { _printer.PrintLine(E.Message); }
+            catch { }
 
             // Copyright
             try { _printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
