@@ -476,7 +476,10 @@ namespace RT.Util
             // Print the one-line summary
             //
             _printer.Print("    ");
-            _printer.Print(Assembly.GetEntryAssembly().ManifestModule.Name);
+            var entryAssembly = Assembly.GetEntryAssembly();
+            var manifestModule = entryAssembly.ManifestModule;
+            var moduleName = manifestModule.Name;
+            _printer.Print(moduleName);
             foreach (string token in requiredSwitches)
                 _printer.Print(" " + token);
             foreach (string token in optionalSwitches)
