@@ -51,16 +51,8 @@ namespace RT.Util
         /// <summary>Only the options which had a non-null long name specified.</summary>
         private Dictionary<string, option> _byLongName = new Dictionary<string, option>();
 
-        /// <summary>
-        /// <para>This points to either byTinyName or byLongName. By default it points to
-        /// byLongName, but the user of this class can call a method to change this to
-        /// byTinyName.</para>
-        /// 
-        /// <para>The public methods used to access parse results use this variable to
-        /// look up option names. Hence this basically determines whether the user
-        /// accesses options by their full names or their tiny names.</para>
-        /// </summary>
-        private Dictionary<string, option> _byPreferredName;
+        /// <summary>Contains the union of <see cref="_byTinyName"/> and <see cref="_byLongName"/>.</summary>
+        private Dictionary<string, option> _byEitherName = new Dictionary<string, option>();
 
         /// <summary>
         /// Holds all positional arguments, that is, all arguments which do not look like
@@ -140,9 +132,15 @@ namespace RT.Util
 
             _byDefineOrder.Add(opt);
             if (tinyName != null)
+            {
                 _byTinyName.Add(tinyName, opt);
+                _byEitherName.Add(tinyName, opt);
+            }
             if (longName != null)
+            {
                 _byLongName.Add(longName, opt);
+                _byEitherName.Add(longName, opt);
+            }
         }
 
         /// <summary>
@@ -207,8 +205,7 @@ namespace RT.Util
             if (_parsed)
                 throw new RTException("Parse results must be cleared using ClearResults before calling Parse again.");
 
-            // Reset the preferred access name to long name
-            _byPreferredName = _byLongName;
+            List<option> ignoreReq = new List<option>();
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -244,7 +241,10 @@ namespace RT.Util
 
                     case CmdOptionType.Value:
                         if (i == args.Length - 1)
+                        {
                             _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                            ignoreReq.Add(opt);
+                        }
                         else if (opt.Value != null)
                             _errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
                         else
@@ -257,7 +257,10 @@ namespace RT.Util
 
                     case CmdOptionType.List:
                         if (i == args.Length - 1)
+                        {
                             _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
+                            ignoreReq.Add(opt);
+                        }
                         else
                         {
                             if (opt.Value == null)
@@ -272,7 +275,7 @@ namespace RT.Util
             // Verify that all required options have been specified.
             foreach (option opt in _byDefineOrder)
             {
-                if ((opt.Flags & CmdOptionFlags.Required) != 0 && opt.Value == null)
+                if (!ignoreReq.Contains(opt) && (opt.Flags & CmdOptionFlags.Required) != 0 && opt.Value == null)
                     _errors.Add(string.Format("Option \"{0}\" is a required option and must not be omitted.", opt.NiceName));
             }
 
@@ -449,16 +452,10 @@ namespace RT.Util
                     : optionalSwitches;
 
                 // The switch itself
-                string switchName = "-" + option.TinyName;
-                if (switchName == null)
-                    switchName = "--" + option.LongName;
-                if (switchName == null)
-                    continue; // the DefineOption function is supposed to ensure that this never happens
+                string switchName = option.TinyName == null ? "--" + option.LongName : "-" + option.TinyName;
 
                 // Argument(s)
-                string argName = option.LongName;
-                if (argName == null)
-                    argName = "value";
+                string argName = option.LongName ?? "value";
 
                 // Build the string
                 switch (option.Type)
@@ -538,27 +535,6 @@ namespace RT.Util
         #region Option retrieval
 
         /// <summary>
-        /// Call this function to change the behaviour of <see cref="OptValue(string)"/>
-        /// and <see cref="OptList"/> functions so that they look up option values
-        /// by the tiny name rather than by long name (which is the default).
-        /// </summary>
-        public void GetOptionsByTinyName()
-        {
-            _byPreferredName = _byTinyName;
-        }
-
-        /// <summary>
-        /// Call this function to change the behaviour of <see cref="OptValue(string)"/>
-        /// and <see cref="OptList"/> functions so that they look up option values
-        /// by the long name. Since this is the default after calling <see cref="Parse"/>
-        /// anyway it's not necessary to do this.
-        /// </summary>
-        public void GetOptionsByLongName()
-        {
-            _byPreferredName = _byLongName;
-        }
-
-        /// <summary>
         /// Gets a list of all options which did not look like named options (did not start
         /// with a minus) and were not arguments to known named options.
         /// </summary>
@@ -581,7 +557,7 @@ namespace RT.Util
             if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            return _byPreferredName[name].Value != null;
+            return _byEitherName.ContainsKey(name) && _byEitherName[name].Value != null;
         }
 
         /// <summary>
@@ -592,9 +568,6 @@ namespace RT.Util
         /// </summary>
         public string OptValue(string name)
         {
-            if (!_parsed)
-                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
             return OptValue(name, null);
         }
 
@@ -607,7 +580,7 @@ namespace RT.Util
             if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            return _byPreferredName[name].Value == null ? defaultIfUnspecified : _byPreferredName[name].Value[0];
+            return !_byEitherName.ContainsKey(name) || _byEitherName[name].Value == null ? defaultIfUnspecified : _byEitherName[name].Value[0];
         }
 
         /// <summary>
@@ -620,10 +593,10 @@ namespace RT.Util
             if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
 
-            if (_byPreferredName[name].Value == null)
+            if (!_byEitherName.ContainsKey(name) || _byEitherName[name].Value == null)
                 return new List<string>();
             else
-                return _byPreferredName[name].Value;
+                return _byEitherName[name].Value;
         }
 
         /// <summary>
@@ -642,13 +615,15 @@ namespace RT.Util
             {
                 if (!_parsed)
                     throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+                if (!_byEitherName.ContainsKey(name))
+                    return null;
 
-                switch (_byPreferredName[name].Type)
+                switch (_byEitherName[name].Type)
                 {
                     case CmdOptionType.Switch:
-                        return _byPreferredName[name].Value == null ? null : "true";
+                        return _byEitherName[name].Value == null ? null : "true";
                     case CmdOptionType.Value:
-                        return _byPreferredName[name].Value == null ? null : _byPreferredName[name].Value[0];
+                        return _byEitherName[name].Value == null ? null : _byEitherName[name].Value[0];
                     case CmdOptionType.List:
                         throw new InvalidOperationException("Cannot access a List-type command line option using the indexer.");
                     default:
