@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdLineTests.cs" />
     <Compile Include="Collections\ListSortedTests.cs" />
     <Compile Include="Collections\RVariantTests.cs" />
     <Compile Include="Collections\SetTests.cs" />
