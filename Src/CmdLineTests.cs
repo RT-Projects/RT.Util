@@ -114,7 +114,7 @@ namespace RT.Util
             clp.PrintHelp();
             clp.PrintCommit(true);
             // Do this regex match without Singleline mode so that .* only matches within a line.
-            Assert.IsTrue(Regex.IsMatch(cltp.Output, @"^(.*\nVersion: .*\nCopyright ©.*\n\n)?Usage:\n\n    (.*\.exe|<programname>) -q -v <value> \[--switch\] \[\[-l <list 1> \[\.\.\. -l <list N>\]\]\]\n\nAvailable options:\n\n         --switch           If specified, switches sides\.\r\n    -q   --requiredswitch   Specify this, whether you want to or not\.\r\n    -v   --value            Defines the value of life\.\r\n    -l   --list             Stores the specified items as a shopping list\.\r\n\n$"), "m: " + cltp.Output);
+            Assert.IsTrue(Regex.IsMatch(cltp.Output, @"^(.*\nVersion: .*\nCopyright ©.*\n)?\nUsage:\n\n    (.*\.exe|<programname>) -q -v <value> \[--switch\] \[\[-l <list 1> \[\.\.\. -l <list N>\]\]\]\n\nAvailable options:\n\n         --switch           If specified, switches sides\.\r\n    -q   --requiredswitch   Specify this, whether you want to or not\.\r\n    -v   --value            Defines the value of life\.\r\n    -l   --list             Stores the specified items as a shopping list\.\r\n\n$"), "m: " + cltp.Output);
 
             var oldOutput = cltp.Output;
             clp.PrintProgramInfo();
