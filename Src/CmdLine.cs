@@ -477,9 +477,7 @@ namespace RT.Util
             //
             _printer.Print("    ");
             var entryAssembly = Assembly.GetEntryAssembly();
-            var manifestModule = entryAssembly.ManifestModule;
-            var moduleName = manifestModule.Name;
-            _printer.Print(moduleName);
+            _printer.Print(entryAssembly == null ? "<programname>" : entryAssembly.ManifestModule.Name);
             foreach (string token in requiredSwitches)
                 _printer.Print(" " + token);
             foreach (string token in optionalSwitches)
