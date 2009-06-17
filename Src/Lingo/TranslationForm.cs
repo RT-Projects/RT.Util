@@ -579,6 +579,7 @@ namespace RT.Util.Lingo
             private Label _lblStringCode;
             private Label _lblNotes;
             private Label _lblOtherGroups;
+            private TableLayoutPanel _pnlTopRow;
 
             private bool _outOfDate;
             public bool OutOfDate
@@ -608,7 +609,7 @@ namespace RT.Util.Lingo
                 AutoSize = true;
                 AutoSizeMode = AutoSizeMode.GrowAndShrink;
                 BorderStyle = BorderStyle.Fixed3D;
-                ColumnCount = 4;
+                ColumnCount = 3;
                 Height = 1;
                 Margin = new Padding(1);
                 Padding = new Padding(0);
@@ -618,7 +619,7 @@ namespace RT.Util.Lingo
                 _lblStringCode = new Label { Text = fieldname, UseMnemonic = false, Font = new Font(Font, FontStyle.Bold), AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
                 _lblStringCode.Click += new EventHandler(focusTranslationBox);
                 Controls.Add(_lblStringCode, 0, 0);
-                SetColumnSpan(_lblStringCode, 2);
+                SetColumnSpan(_lblStringCode, 3);
                 RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
                 int currow = 1;
@@ -627,7 +628,7 @@ namespace RT.Util.Lingo
                     _lblNotes = new Label { Text = notes, UseMnemonic = false, AutoSize = true, Font = new Font(Font, FontStyle.Italic), Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
                     _lblNotes.Click += new EventHandler(focusTranslationBox);
                     Controls.Add(_lblNotes, 0, currow);
-                    SetColumnSpan(_lblNotes, 4);
+                    SetColumnSpan(_lblNotes, 3);
                     RowStyles.Add(new RowStyle(SizeType.AutoSize));
                     currow++;
                 }
@@ -658,9 +659,8 @@ namespace RT.Util.Lingo
                 _btnAccept.Leave += (s, e) => { AnythingFocused = false; };
                 _btnAccept.Click += new EventHandler(acceptTranslation);
 
-                Controls.Add(_btnAccept, 3, currow);
+                Controls.Add(_btnAccept, 2, currow);
                 RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
                 ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
                 ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
                 ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -706,28 +706,45 @@ namespace RT.Util.Lingo
             {
                 if (ListItems.Count < 2)
                 {
-                    if (_lblOtherGroups != null)
+                    if (_pnlTopRow != null)
                     {
-                        Controls.Remove(_lblOtherGroups);
-                        _lblOtherGroups = null;
+                        _pnlTopRow.Controls.Remove(_lblStringCode);
+                        Controls.Remove(_pnlTopRow);
+                        _pnlTopRow = null;
+                        _lblStringCode.Margin = new Padding(margin);
+                        Controls.Add(_lblStringCode, 0, 0);
+                        SetColumnSpan(_lblStringCode, 3);
                     }
                     return;
                 }
 
-                if (_lblOtherGroups != null)
-                    Controls.Remove(_lblOtherGroups);
+                if (_pnlTopRow != null)
+                    Controls.Remove(_pnlTopRow);
+
+                _pnlTopRow = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    ColumnCount = 2,
+                    RowCount = 1,
+                    Margin = new Padding(margin)
+                };
+                _pnlTopRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                _pnlTopRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+                _pnlTopRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
                 _lblOtherGroups = new Label
                 {
                     AutoSize = true,
-                    Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                    Anchor = AnchorStyles.Right,
                     TextAlign = ContentAlignment.MiddleRight,
                     ForeColor = Color.Navy,
                     Font = new Font(Font.Name, Font.Size * 0.8f, FontStyle.Underline),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0),
                 };
-                Controls.Add(_lblOtherGroups, 2, 0);
-                SetColumnSpan(_lblOtherGroups, 2);
+                _lblStringCode.Margin = new Padding(0);
 
                 if (ListItems.Count == 2)
                 {
@@ -746,6 +763,12 @@ namespace RT.Util.Lingo
                         dropDownMenu.Show(_lblOtherGroups, new Point(_lblOtherGroups.Width, _lblOtherGroups.Height), ToolStripDropDownDirection.BelowLeft);
                     };
                 }
+
+                _pnlTopRow.Controls.Add(_lblStringCode, 0, 0);
+                _pnlTopRow.SetColumnSpan(_lblStringCode, 1);
+                _pnlTopRow.Controls.Add(_lblOtherGroups, 1, 0);
+                Controls.Add(_pnlTopRow, 0, 0);
+                SetColumnSpan(_pnlTopRow, 3);
             }
 
             private void fireGroupSwitch(TranslationListItem listItem)
@@ -793,17 +816,16 @@ namespace RT.Util.Lingo
                     _lblOldEnglish = new Label { Text = trans.Old, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
                     _lblOldEnglish.Click += new EventHandler(focusTranslationBox);
                     Controls.Add(_lblOldEnglish, 1, currow);
-                    SetColumnSpan(_lblOldEnglish, 3);
+                    SetColumnSpan(_lblOldEnglish, 2);
                     setBackColor();
                     currow++;
                 }
                 Label lblNewEnglish = new Label { Text = orig.Translation, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
                 lblNewEnglish.Click += new EventHandler(focusTranslationBox);
                 Controls.Add(lblNewEnglish, 1, currow);
-                SetColumnSpan(lblNewEnglish, 3);
+                SetColumnSpan(lblNewEnglish, 2);
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
-                SetColumnSpan(_txtTranslation, 2);
 
                 //_txtTranslation.AcceptsReturn = false;
                 _txtTranslation.TextChanged += (s, e) => { OutOfDate = true; fireChangeMade(); };
