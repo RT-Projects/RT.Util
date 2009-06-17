@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace RT.Util.Controls
 {
@@ -12,6 +13,9 @@ namespace RT.Util.Controls
     /// </summary>
     public class TextBoxAutoHeight : TextBox
     {
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        static extern IntPtr SendMessage(IntPtr hWnd, Int32 Msg, IntPtr wParam, IntPtr lParam);
+
         /// <summary>Sets the specified bounds of the System.Windows.Forms.TextBoxBase control.</summary>
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
@@ -22,6 +26,16 @@ namespace RT.Util.Controls
             }
             else
                 base.SetBoundsCore(x, y, width, height, specified);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            // You won't need to scroll the textbox if its height is automatically set to accommodate all the text.
+            // Therefore, catch mouse-scroll-wheel messages and passes them on to the parent.
+            if (m.Msg == 0x20a)
+                SendMessage(Parent.Handle, m.Msg, m.WParam, m.LParam);
+            else
+                base.WndProc(ref m);
         }
 
         /// <summary></summary>

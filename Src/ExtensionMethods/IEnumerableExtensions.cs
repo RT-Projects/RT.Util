@@ -235,5 +235,25 @@ namespace RT.Util.ExtensionMethods
                 yield return Enumerable.Empty<T>();
             }
         }
+
+        public static T FirstOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
+        {
+            using (var e = source.GetEnumerator())
+            {
+                if (!e.MoveNext())
+                    return @default;
+                return e.Current;
+            }
+        }
+
+        public static TResult FirstOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, Func<TSource, TResult> resultSelector, TResult @default)
+        {
+            using (var e = source.GetEnumerator())
+            {
+                if (!e.MoveNext())
+                    return @default;
+                return resultSelector(e.Current);
+            }
+        }
     }
 }

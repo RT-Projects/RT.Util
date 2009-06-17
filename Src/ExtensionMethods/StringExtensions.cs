@@ -164,7 +164,17 @@ namespace RT.Util.ExtensionMethods
         /// <returns>JavaScript-compatible representation of the input string.</returns>
         public static string JsEscape(this string input)
         {
-            return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n") + "\"";
+            return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("</", "<\"+\"/") + "\"";
+        }
+
+        /// <summary>
+        /// Returns an SQL-compatible representation of the string in single-quotes with the appropriate characters escaped.
+        /// </summary>
+        /// <param name="input">String to escape.</param>
+        /// <returns>SQL-compatible representation of the input string.</returns>
+        public static string SqlEscape(this string input)
+        {
+            return "'" + input.Replace("'", "''") + "'";
         }
 
         /// <summary>
