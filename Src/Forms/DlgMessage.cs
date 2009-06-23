@@ -302,20 +302,23 @@ namespace RT.Util.Dialogs
 
             // --- Ding
 
-            switch (Type)
+            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
             {
-                case DlgType.Info:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
-                    break;
-                case DlgType.Question:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
-                    break;
-                case DlgType.Warning:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
-                    break;
-                case DlgType.Error:
-                    WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
-                    break;
+                switch (Type)
+                {
+                    case DlgType.Info:
+                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
+                        break;
+                    case DlgType.Question:
+                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
+                        break;
+                    case DlgType.Warning:
+                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
+                        break;
+                    case DlgType.Error:
+                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
+                        break;
+                }
             }
 
             // --- Show
