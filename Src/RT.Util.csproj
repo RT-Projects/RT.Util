@@ -173,7 +173,6 @@
     <Compile Include="Text\CsvTable.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="TimeOut.cs" />
-    <Compile Include="Ut\Clone.cs" />
     <Compile Include="Ut\Diff.cs" />
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
