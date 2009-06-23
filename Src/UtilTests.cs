@@ -52,6 +52,15 @@ namespace RT.Util
                 Console.WriteLine("-- Running test: TestTruncated");
                 doDateTimeExtensionsTests.TestTruncated();
                 Console.WriteLine("");
+                Console.WriteLine("Testing type: RT.Util.UtTests.DiffTests");
+                var doDiffTests = new RT.Util.UtTests.DiffTests();
+                Console.WriteLine("-- Running test: DiffTest");
+                doDiffTests.DiffTest();
+                Console.WriteLine("-- Running test: DiffTestPredicate");
+                doDiffTests.DiffTestPredicate();
+                Console.WriteLine("-- Running test: DiffTestPostprocessor");
+                doDiffTests.DiffTestPostprocessor();
+                Console.WriteLine("");
                 Console.WriteLine("Testing type: RT.Util.Geometry.GeomUtTests");
                 var doGeomUtTests = new RT.Util.Geometry.GeomUtTests();
                 Console.WriteLine("-- Running test: TestNormalizedAngle");

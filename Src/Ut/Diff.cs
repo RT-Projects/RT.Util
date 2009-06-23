@@ -38,6 +38,11 @@ namespace RT.Util
         /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new, DiffOptions<T> options)
         {
+            if (old == null)
+                throw new ArgumentNullException("old");
+            if (@new == null)
+                throw new ArgumentNullException("new");
+
             IEqualityComparer<T> comparer = options == null || options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
 
             var olda = old.ToArray();
@@ -83,7 +88,7 @@ namespace RT.Util
                     yield return new Tuple<T, DiffOp>(x, DiffOp.None);
         }
 
-        private class seqLink { public int x; public int y; public seqLink prev; }
+        private class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
         private static IEnumerable<Tuple<T, DiffOp>> diff<T>(T[] olda, T[] newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor)
         {
             var newhash = new Dictionary<T, List<int>>();
@@ -91,7 +96,7 @@ namespace RT.Util
                 if (predicate == null || predicate(newa[i]))
                     newhash.AddSafe(newa[i], i);
 
-            Dictionary<int, seqLink> sequences = new Dictionary<int, seqLink> { { 0, new seqLink { y = -1 } } };
+            Dictionary<int, diffSeqLink> sequences = new Dictionary<int, diffSeqLink> { { 0, new diffSeqLink { y = -1 } } };
             for (int xindex = 0; xindex < olda.Length; xindex++)
             {
                 var xpiece = olda[xindex];
@@ -99,7 +104,7 @@ namespace RT.Util
                     continue;
 
                 int k = 0;
-                Dictionary<int, seqLink> newSequences = new Dictionary<int, seqLink>(sequences); // creates a copy
+                Dictionary<int, diffSeqLink> newSequences = new Dictionary<int, diffSeqLink>(sequences); // creates a copy
                 int maxk = sequences.Count - 1;
 
                 foreach (var yindex in newhash[xpiece])
@@ -111,9 +116,9 @@ namespace RT.Util
                     {
                         k++;
                         if (k > 1)
-                            newSequences[k] = new seqLink { x = xindex, y = yindex, prev = sequences[k - 1] };
+                            newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = sequences[k - 1] };
                         else
-                            newSequences[k] = new seqLink { x = xindex, y = yindex, prev = null };
+                            newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = null };
 
                         if (k > maxk)
                             break;
@@ -122,12 +127,12 @@ namespace RT.Util
                 sequences = newSequences;
             }
 
-            seqLink origSequenceRev = new seqLink { x = olda.Length, y = newa.Length, prev = sequences.Count > 1 ? sequences[sequences.Count - 1] : null };
+            diffSeqLink origSequenceRev = new diffSeqLink { x = olda.Length, y = newa.Length, prev = sequences.Count > 1 ? sequences[sequences.Count - 1] : null };
 
             var length = 0;
             for (var sequenceRev = origSequenceRev; sequenceRev != null; sequenceRev = sequenceRev.prev)
                 length++;
-            seqLink[] sequence = new seqLink[length];
+            diffSeqLink[] sequence = new diffSeqLink[length];
             var index = 0;
             for (var sequenceRev = origSequenceRev; sequenceRev != null; sequenceRev = sequenceRev.prev)
                 sequence[length - 1 - (index++)] = sequenceRev;

@@ -70,6 +70,7 @@
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />
     <Compile Include="UtilTests.cs" />
+    <Compile Include="Ut\DiffTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>
