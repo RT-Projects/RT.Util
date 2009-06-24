@@ -832,7 +832,6 @@ namespace RT.Util.Lingo
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
 
-                //_txtTranslation.AcceptsReturn = false;
                 _txtTranslation.TextChanged += (s, e) => { if (State != TranslationPanelState.Unsaved) { State = TranslationPanelState.Unsaved; fireChangeMade(); } };
                 _txtTranslation.Enter += (s, e) => { _txtTranslation.SelectAll(); AnythingFocused = true; fireEnterPanel(); };
                 _txtTranslation.Leave += (s, e) => { AnythingFocused = false; };
@@ -1048,11 +1047,9 @@ namespace RT.Util.Lingo
                             AutoSize = true,
                             Margin = new Padding(margin),
                             Text = "{" + i + "}",
-                            //Font = new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular)
                         };
                         lbl.Click += new EventHandler(focusTranslationBox);
                         pnlTranslations.Controls.Add(lbl, column, 0);
-                        //_smallLabels.Add(lbl);
                         column++;
                     }
                 }
@@ -1069,14 +1066,14 @@ namespace RT.Util.Lingo
                                 Anchor = AnchorStyles.Left,
                                 AutoSize = true,
                                 Margin = new Padding(margin),
-                                Text = _transNumberSystem.GetDescription(r % _transNumberSystem.NumStrings),
+                                Text = ns.GetDescription(r % ns.NumStrings),
                                 Font = new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular)
                             };
                             lbl.Click += new EventHandler(focusTranslationBox);
                             pnlTranslations.Controls.Add(lbl, col, row + 1);
                             _smallLabels.Add(lbl);
                             col++;
-                            r /= _transNumberSystem.NumStrings;
+                            r /= ns.NumStrings;
                         }
                     }
                     if (textBoxes)
