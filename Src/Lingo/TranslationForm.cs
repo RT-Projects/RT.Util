@@ -427,7 +427,7 @@ namespace RT.Util.Lingo
         {
             TranslationPanel pnl = (orig is TrString)
                 ? (TranslationPanel) new TranslationPanelTrString(notes, (TrString) orig, (TrString) trans, fieldname)
-                : (TranslationPanel) new TranslationPanelTrStringNumbers(notes, (TrStringNum) orig, (TrStringNum) trans, fieldname, _origNumberSystem, _translation.Language.GetNumberSystem());
+                : (TranslationPanel) new TranslationPanelTrStringNum(notes, (TrStringNum) orig, (TrStringNum) trans, fieldname, _origNumberSystem, _translation.Language.GetNumberSystem());
 
             pnl.ChangeMade += new EventHandler(changeMade);
             pnl.EnterPanel += new EventHandler(enterPanel);
@@ -964,7 +964,7 @@ namespace RT.Util.Lingo
             }
         }
 
-        private class TranslationPanelTrStringNumbers : TranslationPanel
+        private class TranslationPanelTrStringNum : TranslationPanel
         {
             private TrStringNum _original;
             private TrStringNum _translation;
@@ -975,7 +975,7 @@ namespace RT.Util.Lingo
             private int _lastFocusedTextbox;
             private List<Label> _smallLabels = new List<Label>();
 
-            public TranslationPanelTrStringNumbers(string notes, TrStringNum orig, TrStringNum trans, string fieldname, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
+            public TranslationPanelTrStringNum(string notes, TrStringNum orig, TrStringNum trans, string fieldname, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
                 : base(notes, fieldname,
                     // outOfDate
                     trans.Old == null || !trans.Old.SequenceEqual(orig.Translations),
