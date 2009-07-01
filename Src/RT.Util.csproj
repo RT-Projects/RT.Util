@@ -59,7 +59,6 @@
     <Compile Include="Collections\RVariant.cs" />
     <Compile Include="Collections\Set.cs" />
     <Compile Include="Collections\Tuple.cs" />
-    <Compile Include="Collections\Virtual2DArray.cs" />
     <Compile Include="ConsoleUtil.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
