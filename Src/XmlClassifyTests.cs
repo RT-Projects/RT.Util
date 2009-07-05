@@ -22,6 +22,8 @@ namespace RT.Util.Xml
             public double ADouble = 3.14;
             public DateTime ADateTime;
             public int key = 25; // to test Dictionary keys
+            public double? nullable1 = null;
+            public double? nullable2 = 58.47;
 
             public void AssertEqual(basicClass actual)
             {
@@ -33,6 +35,8 @@ namespace RT.Util.Xml
                 Assert.AreEqual(ADouble, actual.ADouble);
                 Assert.AreEqual(ADateTime, actual.ADateTime);
                 Assert.AreEqual(key, actual.key);
+                Assert.AreEqual(nullable1, actual.nullable1);
+                Assert.AreEqual(nullable2, actual.nullable2);
             }
         }
 
@@ -117,6 +121,8 @@ namespace RT.Util.Xml
                 AULong = 9999999999999999999,
                 ADouble = Math.PI,
                 ADateTime = DateTime.UtcNow,
+                nullable1 = null,
+                nullable2 = 47.48,
             };
             var xel = XmlClassify.ObjectToXElement(clsEx);
             var clsAc = XmlClassify.ObjectFromXElement<basicClass>(xel);
@@ -129,6 +135,11 @@ namespace RT.Util.Xml
             Assert.AreEqual(clsEx.AString, clsAc.AString);
             Assert.AreEqual(clsEx.ABool, clsAc.ABool);
             Assert.AreEqual(clsEx.AULong, clsAc.AULong);
+            Assert.IsTrue(clsEx.nullable1 == null);
+            Assert.IsTrue(clsAc.nullable1 == null);
+            Assert.IsFalse(clsEx.nullable2 == null);
+            Assert.IsFalse(clsAc.nullable2 == null);
+            Assert.AreEqual(clsEx.nullable2.Value, clsAc.nullable2.Value);
         }
 
         [Test]
