@@ -72,6 +72,31 @@ namespace RT.Util.Xml
             public XElement Xml;
         }
 
+        private class classWithPrivateCtor
+        {
+            private classWithPrivateCtor()
+            {
+                Field = 9867;
+            }
+
+            public int Field = 7462;
+        }
+
+        private class classWithNoCtor
+        {
+            private classWithNoCtor(int dummy)
+            {
+            }
+        }
+
+        private class classWithThrowingCtor
+        {
+            private classWithThrowingCtor()
+            {
+                throw new Exception("Test exception");
+            }
+        }
+
         [Test]
         public void TestBlankClass()
         {
@@ -282,6 +307,29 @@ namespace RT.Util.Xml
             Assert.AreEqual("str", loaded.AString);
             Assert.AreEqual(987654L, loaded.AULong);
             Assert.AreEqual(3.14, loaded.ADouble);
+        }
+
+        [Test]
+        public void TestConstructors()
+        {
+            var elem = new XElement("item");
+            var loaded1 = XmlClassify.ObjectFromXElement<classWithPrivateCtor>(elem);
+            Assert.AreEqual(9867, loaded1.Field);
+
+            try
+            {
+                var loaded2 = XmlClassify.ObjectFromXElement<classWithThrowingCtor>(elem);
+                Assert.Fail("Expected exception");
+            }
+            catch (Exception) { }
+
+            try
+            {
+                var loaded3 = XmlClassify.ObjectFromXElement<classWithNoCtor>(elem);
+                Assert.Fail("Expected exception");
+            }
+            catch (MissingMethodException) { }
+            catch (Exception) { Assert.Fail("Expected MissingMethodException"); }
         }
     }
 }

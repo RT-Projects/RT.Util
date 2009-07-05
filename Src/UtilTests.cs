@@ -210,6 +210,8 @@ namespace RT.Util
                 doXmlClassifyTests.TestNestedClass();
                 Console.WriteLine("-- Running test: TestPartialLoad");
                 doXmlClassifyTests.TestPartialLoad();
+                Console.WriteLine("-- Running test: TestConstructors");
+                doXmlClassifyTests.TestConstructors();
                 Console.WriteLine("");
                 Console.WriteLine("Testing type: RT.Util.ExtensionMethods.XmlLinqExtensionsTests");
                 var doXmlLinqExtensionsTests = new RT.Util.ExtensionMethods.XmlLinqExtensionsTests();

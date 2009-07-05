@@ -70,7 +70,7 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="elem">XML tree to reconstruct object from.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem) where T : new()
+        public static T ObjectFromXElement<T>(XElement elem)
         {
             return (T) objectFromXElement(typeof(T), elem, null, null);
         }
@@ -83,7 +83,7 @@ namespace RT.Util.Xml
         /// <param name="baseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, string baseDir) where T : new()
+        public static T ObjectFromXElement<T>(XElement elem, string baseDir)
         {
             return (T) objectFromXElement(typeof(T), elem, baseDir, null);
         }
@@ -98,7 +98,7 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it will receive the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, string baseDir, object parentNode) where T : new()
+        public static T ObjectFromXElement<T>(XElement elem, string baseDir, object parentNode)
         {
             return (T) objectFromXElement(typeof(T), elem, baseDir, parentNode);
         }
@@ -178,7 +178,13 @@ namespace RT.Util.Xml
                 }
                 else
                 {
-                    object ret = Activator.CreateInstance(type);
+                    object ret;
+
+                    var constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
+                    if (constructor == null)
+                        throw new MissingMethodException("The type {0} has no parameterless constructor.".Fmt(type.FullName));
+                    try { ret = constructor.Invoke(Type.EmptyTypes); }
+                    catch (Exception e) { throw new Exception("The parameterless constructor of the type {0} threw an exception.".Fmt(type.FullName), e); }
 
                     foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                     {
@@ -223,8 +229,7 @@ namespace RT.Util.Xml
                         {
                             var tag = elem.Elements(rFieldName);
                             if (tag.Any())
-                                try { field.SetValue(ret, objectFromXElement(field.FieldType, tag.First(), baseDir, ret)); }
-                                catch { }
+                                field.SetValue(ret, objectFromXElement(field.FieldType, tag.First(), baseDir, ret));
                         }
                     }
                     return ret;
