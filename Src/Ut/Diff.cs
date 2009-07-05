@@ -21,7 +21,7 @@ namespace RT.Util
         /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new)
         {
-            return Diff(old, @new, null);
+            return Diff(old, @new, new DiffOptions<T>());
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace RT.Util
             if (@new == null)
                 throw new ArgumentNullException("new");
 
-            IEqualityComparer<T> comparer = options == null || options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
+            IEqualityComparer<T> comparer = options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
 
             var olda = old.ToArray();
             var newa = @new.ToArray();
@@ -74,7 +74,7 @@ namespace RT.Util
             }
 
             if (olda.Length > 0 && newa.Length > 0)
-                foreach (var x in diff(olda, newa, comparer, options == null ? null : options.Predicate, options == null ? null : options.PostProcessor))
+                foreach (var x in diff(olda, newa, comparer, options.Predicate, options.PostProcessor))
                     yield return x;
             else if (olda.Length > 0)
                 foreach (var x in olda)
@@ -177,7 +177,7 @@ namespace RT.Util
     /// This class cannot be inherited.
     /// </summary>
     /// <typeparam name="T">The type of elements in the sequences to compare.</typeparam>
-    public sealed class DiffOptions<T>
+    public struct DiffOptions<T>
     {
         /// <summary>The equality comparer to use to compare items in the two sequences.</summary>
         public IEqualityComparer<T> Comparer;
