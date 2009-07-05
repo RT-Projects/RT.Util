@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -189,6 +190,48 @@ namespace RT.Util.ExtensionMethods
             T[] result = new T[length];
             Array.Copy(array, startIndex, result, 0, length);
             return result;
+        }
+
+        /// <summary>
+        /// Creates and returns a read-only wrapper around this collection.
+        /// Note: a new wrapper is created on every call. Consider caching it.
+        /// </summary>
+        public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll)
+        {
+            return new ReadOnlyCollection<T>(coll);
+        }
+
+        /// <summary>
+        /// Gets a read-only wrapper around this collection. If <paramref name="cache"/> is already
+        /// a wrapper for this collection returns that, otherwise creates a new wrapper, stores it
+        /// in <paramref name="cache"/>, and returns that.
+        /// </summary>
+        public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll, ref ReadOnlyCollection<T> cache)
+        {
+            if (cache == null || !cache.IsWrapperFor(coll))
+                cache = new ReadOnlyCollection<T>(coll);
+            return cache;
+        }
+
+        /// <summary>
+        /// Creates and returns a read-only wrapper around this dictionary.
+        /// Note: a new wrapper is created on every call. Consider caching it.
+        /// </summary>
+        public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict)
+        {
+            return new ReadOnlyDictionary<TK, TV>(dict);
+        }
+
+        /// <summary>
+        /// Gets a read-only wrapper around this dictionary. If <paramref name="cache"/> is already
+        /// a wrapper for this dictionary returns that, otherwise creates a new wrapper, stores it
+        /// in <paramref name="cache"/>, and returns that.
+        /// </summary>
+        public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict, ref ReadOnlyDictionary<TK, TV> cache)
+        {
+            if (cache == null || !cache.IsWrapperFor(dict))
+                cache = new ReadOnlyDictionary<TK, TV>(dict);
+            return cache;
         }
     }
 }
