@@ -63,7 +63,7 @@ namespace RT.Util
             {
                 try
                 {
-                    settings = XmlClassify.LoadObjectFromXmlFile<TSettings>(appName);
+                    settings = XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
                 }
                 catch
                 {
@@ -93,11 +93,12 @@ namespace RT.Util
             }
             else
             {
-                do
+                while (true)
                 {
                     try
                     {
                         XmlClassify.SaveObjectToXmlFile(settings, filename);
+                        break;
                     }
                     catch (Exception e)
                     {
@@ -110,7 +111,7 @@ namespace RT.Util
                         if (choice == 2)
                             throw new CancelException();
                     }
-                } while (true);
+                };
             }
         }
     }
