@@ -123,10 +123,14 @@ namespace RT.Util.Xml
                 return elem.Value;
             else
             {
-                // Check if it's an array, collection or dictionary
-                Type keyType = null, valueType = null;
                 Type[] typeParameters;
 
+                // If it's a nullable type, just determine the inner type and start again
+                if (type.TryGetInterfaceGenericParameters(typeof(Nullable<>), out typeParameters))
+                    return objectFromXElement(typeParameters[0], elem, baseDir, parentNode);
+
+                // Check if it's an array, collection or dictionary
+                Type keyType = null, valueType = null;
                 if (type.IsArray)
                     valueType = type.GetElementType();
                 else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
@@ -247,7 +251,7 @@ namespace RT.Util.Xml
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename)
         {
             string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            saveObjectToXmlFile(typeof(T), saveObject, filename, baseDir);
+            saveObjectToXmlFile(saveObject, filename, baseDir);
         }
 
         /// <summary>
@@ -261,12 +265,12 @@ namespace RT.Util.Xml
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir)
         {
-            saveObjectToXmlFile(typeof(T), saveObject, filename, baseDir);
+            saveObjectToXmlFile(saveObject, filename, baseDir);
         }
 
-        private static void saveObjectToXmlFile(Type saveType, object saveObject, string filename, string baseDir)
+        private static void saveObjectToXmlFile(object saveObject, string filename, string baseDir)
         {
-            var x = objectToXElement(saveType, saveObject, baseDir, "item");
+            var x = objectToXElement(saveObject, baseDir, "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -279,7 +283,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject)
         {
-            return objectToXElement(typeof(T), saveObject, null, "item");
+            return objectToXElement(saveObject, null, "item");
         }
 
         /// <summary>
@@ -292,7 +296,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir)
         {
-            return objectToXElement(typeof(T), saveObject, baseDir, "item");
+            return objectToXElement(saveObject, baseDir, "item");
         }
 
         /// <summary>
@@ -307,16 +311,21 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir, string tagName)
         {
-            return objectToXElement(typeof(T), saveObject, baseDir, tagName);
+            return objectToXElement(saveObject, baseDir, tagName);
         }
 
-        private static XElement objectToXElement(Type saveType, object saveObject, string baseDir, string tagName)
+        private static XElement objectToXElement(object saveObject, string baseDir, string tagName)
         {
             XElement elem = new XElement(tagName);
 
             if (saveObject == null)
+            {
                 elem.Add(new XAttribute("null", 1));
-            else if (saveType == typeof(XElement))
+                return elem;
+            }
+
+            Type saveType = saveObject.GetType();
+            if (saveType == typeof(XElement))
                 elem.Add(new XElement(saveObject as XElement));
             else if (saveType == typeof(DateTime))
             {
@@ -359,7 +368,7 @@ namespace RT.Util.Xml
                     {
                         object key = null;
                         var value = keyType == null ? enumerator.Current : kvpType.GetProperty("Value").GetValue(enumerator.Current, null);
-                        var tag = objectToXElement(valueType, value, baseDir, "item");
+                        var tag = objectToXElement(value, baseDir, "item");
                         if (keyType != null)
                         {
                             key = kvpType.GetProperty("Key").GetValue(enumerator.Current, null);
@@ -392,12 +401,12 @@ namespace RT.Util.Xml
                             elem.Add(new XElement(rFieldName, new XAttribute("id", id)));
 
                             if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
-                                saveObjectToXmlFile(innerType, field.FieldType.GetProperty("Value").GetValue(saveValue, null), Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
+                                saveObjectToXmlFile(field.FieldType.GetProperty("Value").GetValue(saveValue, null), Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
                         }
 
                         // Fields with no special [Xml...] attributes
                         else
-                            elem.Add(objectToXElement(field.FieldType, field.GetValue(saveObject), baseDir, rFieldName));
+                            elem.Add(objectToXElement(field.GetValue(saveObject), baseDir, rFieldName));
                     }
                 }
             }
