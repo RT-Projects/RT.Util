@@ -109,18 +109,12 @@ namespace RT.Util.Xml
                 return null;
             else if (type == typeof(XElement))
                 return elem.Elements().FirstOrDefault();
-            else if (type == typeof(DateTime))
-            {
-                DateTime result;
-                RConvert.Exact(elem.Value, out result);
-                return result;
-            }
-            else if (isDecimalType(type) || type == typeof(bool) || isIntegerType(type))
-                return type.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(string) }, null).Invoke(null, new object[] { elem.Value });
             else if (type.IsEnum)
                 return Enum.Parse(type, elem.Value);
             else if (type == typeof(string))
                 return elem.Value;
+            else if (RConvert.IsSupportedType(type))
+                return RConvert.Exact(type, elem.Value);
             else
             {
                 Type[] typeParameters;
@@ -327,21 +321,16 @@ namespace RT.Util.Xml
             Type saveType = saveObject.GetType();
             if (saveType == typeof(XElement))
                 elem.Add(new XElement(saveObject as XElement));
-            else if (saveType == typeof(DateTime))
+            else if (saveType == typeof(string))
+                elem.Add(saveObject);
+            else if (saveType.IsEnum)
+                elem.Add(saveObject.ToString());
+            else if (RConvert.IsSupportedType(saveType))
             {
                 string result;
                 RConvert.Exact(saveObject, out result);
                 elem.Add(result);
             }
-            else if (isDecimalType(saveType))
-            {
-                var met = saveType.GetMethods().Where(m => m.Name == "ToString" && !m.IsStatic && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string)).First();
-                elem.Add(met.Invoke(saveObject, new object[] { "R" }));
-            }
-            else if (saveType == typeof(string))
-                elem.Add(saveObject);
-            else if (saveType.IsEnum || saveType == typeof(bool) || isIntegerType(saveType))
-                elem.Add(saveObject.ToString());
             else
             {
                 Type keyType = null, valueType = null;
@@ -416,11 +405,6 @@ namespace RT.Util.Xml
         private static bool isIntegerType(Type t)
         {
             return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
-        }
-
-        private static bool isDecimalType(Type t)
-        {
-            return t == typeof(float) || t == typeof(double) || t == typeof(decimal);
         }
     }
 

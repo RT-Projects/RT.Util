@@ -367,7 +367,7 @@ namespace RT.Util.Collections
                     return false;
 
                 case RVariantKind.Value:
-                    if (RConvert.IsUnsupportedType[(int)code])
+                    if (!RConvert.IsSupportedType(code))
                         return false;
                     else
                         return RConvert.ExactToString(this._value) == RConvert.ExactToString(other);

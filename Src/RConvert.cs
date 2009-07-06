@@ -141,7 +141,7 @@ namespace RT.Util
     {
         private static readonly bool[] IsIntegerType;
         private static readonly bool[] IsUnsignedType;
-        internal static readonly bool[] IsUnsupportedType;
+        private static readonly bool[] IsUnsupportedType;
 
         /// <summary>
         /// Initialises the internally-used lookup tables for determining what kind
@@ -265,6 +265,24 @@ namespace RT.Util
                 return TypeCode.Empty;
             else
                 return Type.GetTypeCode(value.GetType());
+        }
+
+        /// <summary>
+        /// Returns true if the specified type is a supported type for converting to other
+        /// types supported by <see cref="RConvert"/>.
+        /// </summary>
+        public static bool IsSupportedType(Type type)
+        {
+            return !RConvert.IsUnsupportedType[(int) Type.GetTypeCode(type)];
+        }
+
+        /// <summary>
+        /// Returns true if the specified type code is that of a supported type for converting to
+        /// other types supported by <see cref="RConvert"/>.
+        /// </summary>
+        public static bool IsSupportedType(TypeCode typeCode)
+        {
+            return !RConvert.IsUnsupportedType[(int) typeCode];
         }
 
         #region ExactTry - the main implementation of EXACT with all the business code

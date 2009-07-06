@@ -20,6 +20,7 @@ namespace RT.Util.Xml
             public bool ABool;
             public ulong AULong;
             public double ADouble = 3.14;
+            public decimal ADecimal = 3.1415m;
             public DateTime ADateTime;
             public int key = 25; // to test Dictionary keys
             public double? nullable1 = null;
@@ -33,6 +34,7 @@ namespace RT.Util.Xml
                 Assert.AreEqual(ABool, actual.ABool);
                 Assert.AreEqual(AULong, actual.AULong);
                 Assert.AreEqual(ADouble, actual.ADouble);
+                Assert.AreEqual(ADecimal, actual.ADecimal);
                 Assert.AreEqual(ADateTime, actual.ADateTime);
                 Assert.AreEqual(key, actual.key);
                 Assert.AreEqual(nullable1, actual.nullable1);
@@ -120,6 +122,7 @@ namespace RT.Util.Xml
                 ABool = true,
                 AULong = 9999999999999999999,
                 ADouble = Math.PI,
+                ADecimal = 123456.789123456m,
                 ADateTime = DateTime.UtcNow,
                 nullable1 = null,
                 nullable2 = 47.48,
@@ -135,6 +138,7 @@ namespace RT.Util.Xml
             Assert.AreEqual(clsEx.AString, clsAc.AString);
             Assert.AreEqual(clsEx.ABool, clsAc.ABool);
             Assert.AreEqual(clsEx.AULong, clsAc.AULong);
+            Assert.AreEqual(clsEx.ADecimal, clsAc.ADecimal);
             Assert.IsTrue(clsEx.nullable1 == null);
             Assert.IsTrue(clsAc.nullable1 == null);
             Assert.IsFalse(clsEx.nullable2 == null);
@@ -318,6 +322,7 @@ namespace RT.Util.Xml
             Assert.AreEqual("str", loaded.AString);
             Assert.AreEqual(987654L, loaded.AULong);
             Assert.AreEqual(3.14, loaded.ADouble);
+            Assert.AreEqual(3.1415m, loaded.ADecimal);
         }
 
         [Test]
