@@ -28,6 +28,8 @@ namespace RT.Util.Controls
                 base.SetBoundsCore(x, y, width, height, specified);
         }
 
+        /// <summary>Overrides the base class's WndProc message to capture mouse-wheel messages and pass them on to the GUI parent instead.</summary>
+        /// <param name="m">A Windows Message object.</param>
         protected override void WndProc(ref Message m)
         {
             // You won't need to scroll the textbox if its height is automatically set to accommodate all the text.

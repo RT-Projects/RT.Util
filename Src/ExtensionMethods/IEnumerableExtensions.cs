@@ -73,7 +73,6 @@ namespace RT.Util.ExtensionMethods
         /// <typeparam name="T">Type of object to repeat.</typeparam>
         /// <param name="repeatWhat">Object or struct to repeat.</param>
         /// <param name="numberOfTimes">Number of times to repeat the object or struct.</param>
-        /// <returns></returns>
         public static IEnumerable<T> Repeat<T>(this T repeatWhat, int numberOfTimes)
         {
             while (numberOfTimes > 0)
@@ -112,6 +111,18 @@ namespace RT.Util.ExtensionMethods
             foreach (var e in input)
                 yield return e;
             yield return element;
+        }
+
+        /// <summary>
+        /// Adds a single element to the start of an IEnumerable.
+        /// </summary>
+        /// <typeparam name="T">Type of enumerable to return.</typeparam>
+        /// <returns>IEnumerable containing the specified additional element, followed by all the input elements.</returns>
+        public static IEnumerable<T> Prepend<T>(this IEnumerable<T> input, T element)
+        {
+            yield return element;
+            foreach (var e in input)
+                yield return e;
         }
 
         /// <summary>
@@ -236,6 +247,15 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>
+        /// Returns the first element of a sequence, or a default value if the sequence contains no elements.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable&lt;T&gt;"/> to return the first element of.</param>
+        /// <param name="predicate">A function to test each element for a condition.</param>
+        /// <param name="default">The default value to return if the sequence contains no elements.</param>
+        /// <returns><paramref name="default"/> if <paramref name="source"/> is empty or if no element passes the test specified by <paramref name="predicate"/>;
+        /// otherwise, the first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static T FirstOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
         {
             using (var e = source.GetEnumerator())
@@ -246,6 +266,17 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>
+        /// Returns the first element of a sequence, or a default value if the sequence contains no elements.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult">The type of the resulting value.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable&lt;T&gt;"/> to return the first element of.</param>
+        /// <param name="predicate">A function to test each element for a condition.</param>
+        /// <param name="resultSelector">A function to transform the first element into the result value. Will only be called if the sequence contains an element that passes the test specified by <paramref name="predicate"/>.</param>
+        /// <param name="default">The default value to return if the sequence contains no elements.</param>
+        /// <returns><paramref name="default"/> if <paramref name="source"/> is empty or if no element passes the test specified by <paramref name="predicate"/>;
+        /// otherwise, the transformed first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static TResult FirstOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, Func<TSource, TResult> resultSelector, TResult @default)
         {
             using (var e = source.GetEnumerator())

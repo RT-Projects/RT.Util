@@ -149,6 +149,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
+    <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
