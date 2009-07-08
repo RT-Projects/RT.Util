@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RT.Util.Collections;
+using System.Collections;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -232,6 +233,18 @@ namespace RT.Util.ExtensionMethods
             if (cache == null || !cache.IsWrapperFor(dict))
                 cache = new ReadOnlyDictionary<TK, TV>(dict);
             return cache;
+        }
+
+        /// <summary>
+        /// Creates a new dictionary containing the union of the key/value pairs contained in the specified dictionaries.
+        /// Keys in <paramref name="second"/> overwrite keys in <paramref name="first"/>.
+        /// </summary>
+        public static IDictionary<TKey, TValue> CopyMerge<TKey, TValue>(this IDictionary<TKey, TValue> first, IDictionary<TKey, TValue> second)
+        {
+            Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>(first);
+            foreach (var kvp in second)
+                dict.Add(kvp.Key, kvp.Value);
+            return dict;
         }
     }
 }
