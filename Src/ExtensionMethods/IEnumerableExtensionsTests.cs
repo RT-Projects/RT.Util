@@ -66,7 +66,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestOrderTake()
+        public void TestOrderLazy()
         {
             Random rnd = new Random();
             for (int i = 0; i < 100; i++)
@@ -80,7 +80,7 @@ namespace RT.Util.ExtensionMethods
                     int r = rnd.Next(1, 4);
                     lst.Add(new Tuple<string, int>(i == 1 ? "one" : i == 2 ? "two" : "three", j));
                 }
-                var lstSorted = lst.OrderTake(new StringIntTupleComparer());
+                var lstSorted = lst.OrderLazy(new StringIntTupleComparer());
                 string lastString = null;
                 int lastInt = 0;
                 foreach (var a in lstSorted)

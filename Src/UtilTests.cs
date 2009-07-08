@@ -74,8 +74,8 @@ namespace RT.Util
                 doIEnumerableExtensionsTests.TestUniquePairs();
                 Console.WriteLine("-- Running test: TestSorted");
                 doIEnumerableExtensionsTests.TestSorted();
-                Console.WriteLine("-- Running test: TestOrderTake");
-                doIEnumerableExtensionsTests.TestOrderTake();
+                Console.WriteLine("-- Running test: TestOrderLazy");
+                doIEnumerableExtensionsTests.TestOrderLazy();
                 Console.WriteLine("");
                 Console.WriteLine("Testing type: RT.Util.Geometry.IntersectTests");
                 var doIntersectTests = new RT.Util.Geometry.IntersectTests();

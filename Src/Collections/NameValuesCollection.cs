@@ -7,12 +7,16 @@ namespace RT.Util.Collections
 {
     /// <summary>
     /// Encapsulates a collection that maps keys to collections of values.
-    /// 
-    /// Auto-vivification:
-    /// myNameValues["non-existent"].Count == 0
-    /// myNameValues["non-existent"].Add("blah");
+    /// Provides the ability to make the collection fully read-only, cheaply.
+    /// Provides a sort of auto-vivification for convenience. Example:
+    /// <code>
+    ///     // initially myNameValue does not contain the key "fruits"
+    ///     int c = myNameValues["fruits"].Count;  // c == 0
+    ///     myNameValues["fruits"].Add("orange");
+    ///     // myNameValue now contains the key "fruits", with one value associated.
+    /// </code>
     /// </summary>
-    /// <typeparam name="TValue"></typeparam>
+    /// <typeparam name="TValue">The type of the values to be associated with each key.</typeparam>
     public class NameValuesCollection<TValue> : IDictionary<string, ValuesCollection<TValue>>
     {
         private Dictionary<string, List<TValue>> _items;

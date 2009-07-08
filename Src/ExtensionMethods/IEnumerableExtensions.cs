@@ -130,9 +130,9 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
-        public static IEnumerable<T> OrderTake<T>(this IEnumerable<T> source)
+        public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source)
         {
-            return OrderTake(source, Comparer<T>.Default);
+            return OrderLazy(source, Comparer<T>.Default);
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="source">The sequence to be sorted.</param>
         /// <param name="comparer">An instance of <see cref="IComparer&lt;T&gt;"/> specifying the comparison to use on the items.</param>
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
-        public static IEnumerable<T> OrderTake<T>(this IEnumerable<T> source, IComparer<T> comparer)
+        public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
             var arr = source.ToArray();
             if (arr.Length < 2)
