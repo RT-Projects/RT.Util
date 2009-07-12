@@ -42,8 +42,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns the smaller of the two IComparable values. If the values are
-        /// equal, returns the first one.
+        /// Returns the smaller of the three IComparable values. If two values are
+        /// equal, returns the earlier one.
         /// </summary>
         public static T Min<T>(T val1, T val2, T val3) where T : IComparable<T>
         {
@@ -70,8 +70,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns the larger of the two IComparable values. If the values are
-        /// equal, returns the first one.
+        /// Returns the larger of the three IComparable values. If two values are
+        /// equal, returns the earlier one.
         /// </summary>
         public static T Max<T>(T val1, T val2, T val3) where T : IComparable<T>
         {
