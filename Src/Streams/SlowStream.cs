@@ -1,15 +1,19 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 
 namespace RT.Util.Streams
 {
     /// <summary>
-    /// Provides methods to read from a stream in small chunks at a time.
+    /// Provides methods to read from a stream in small chunks at a time. Optionally suspends
+    /// the thread for a specified interval on every chunk.
     /// </summary>
     public class SlowStream : Stream
     {
         /// <summary>Gets or sets the current chunk size (number of bytes read at a time).</summary>
         public int ChunkSize { get; set; }
+        /// <summary>Gets or sets the current interval, in ms, for which the reading thread is suspended on every chunk. Defaults to 0, which means no delay.</summary>
+        public int SleepInterval { get; set; }
 
         private Stream _stream;
 
@@ -90,6 +94,7 @@ namespace RT.Util.Streams
         /// <returns>Number of bytes read.</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
+            if (SleepInterval > 0) Thread.Sleep(SleepInterval);
             return _stream.Read(buffer, offset, Math.Min(count, ChunkSize));
         }
     }
