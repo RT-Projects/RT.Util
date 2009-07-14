@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
+using System.Linq;
 
 namespace RT.Util.Collections
 {
@@ -14,6 +15,8 @@ namespace RT.Util.Collections
     /// </summary>
     /// <typeparam name="T">The type of the items to be stored.</typeparam>
     [Serializable]
+    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerTypeProxy(typeof(Set<>.SetDebugView))]
     public class Set<T> : IEnumerable<T>, ICollection<T>, ICloneable, IEquatable<Set<T>>
     {
         /// <summary>
@@ -217,6 +220,19 @@ namespace RT.Util.Collections
         public void Sort(Comparison<T> comparison)
         {
             _list.Sort(comparison);
+        }
+
+        private sealed class SetDebugView
+        {
+            private IEnumerable<T> _set;
+
+            public SetDebugView(Set<T> set)
+            {
+                _set = set;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public T[] Items { get { return _set.ToArray(); } }
         }
     }
 }

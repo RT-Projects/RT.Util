@@ -32,6 +32,11 @@ namespace RT.Util
             try { result = (T) Enum.Parse(typeof(T), value, ignoreCase); return true; }
             catch { result = default(T); return false; }
         }
+
+        public static T[] GetValues<T>()
+        {
+            return (T[]) Enum.GetValues(typeof(T));
+        }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }
