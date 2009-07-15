@@ -37,7 +37,7 @@ namespace RT.Util.Controls
             }
         }
 
-        /// <summary>Initialises a <see cref="MenuRadioItem&lt;ValueType&gt;"/> instance.</summary>
+        /// <summary>Initialises a <see cref="MenuRadioItem&lt;T&gt;"/> instance.</summary>
         public MenuRadioItem()
             : base()
         {

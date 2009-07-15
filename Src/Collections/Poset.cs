@@ -181,7 +181,10 @@ namespace RT.Util.Collections
                     if (links_del == null) links_del = new List<PosetNode<T>>();
                     links_del.Add(linkto);
                     if (linkfrom != null)
+                    {
                         (upwards ? toadd._smallers : toadd._largers).Add(linkfrom);
+                        (upwards ? linkto._smallers : linkto._largers).Remove(linkfrom);
+                    }
                     (upwards ? toadd._largers : toadd._smallers).Add(linkto);
                     (upwards ? linkto._smallers : linkto._largers).Add(toadd);
                 }
