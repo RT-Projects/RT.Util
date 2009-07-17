@@ -23,11 +23,18 @@ namespace RT.Util.Collections
         private bool _isReadOnly = false;
         private NameValuesCollection<TValue> _asReadOnly = null;
 
+        /// <summary>
+        /// Creates an empty collection.
+        /// </summary>
         public NameValuesCollection()
         {
             _items = new Dictionary<string, List<TValue>>();
         }
 
+        /// <summary>
+        /// Creates an empty collection.
+        /// </summary>
+        /// <param name="capacity">Initial capacity, in terms of keys.</param>
         public NameValuesCollection(int capacity)
         {
             _items = new Dictionary<string, List<TValue>>(capacity);
@@ -39,6 +46,12 @@ namespace RT.Util.Collections
             _isReadOnly = isReadOnly;
         }
 
+        /// <summary>
+        /// Returns a read-only version of this collection. The returned collection could be the
+        /// same as this one, if it's already read-only, or it could be a wrapper created around
+        /// the items in this collection. If the original collection gets modified, the read-only
+        /// version will reflect the changes instantly.
+        /// </summary>
         public NameValuesCollection<TValue> AsReadOnly()
         {
             if (_isReadOnly)
@@ -53,6 +66,13 @@ namespace RT.Util.Collections
             throw new InvalidOperationException("Cannot execute method because the collection is read-only");
         }
 
+        /// <summary>
+        /// Adds all items from the specified value collection, associating them with
+        /// the specified key. Throws an exception if the specified key already has items
+        /// associated with it.
+        /// </summary>
+        /// <param name="key">Key to associate the items with.</param>
+        /// <param name="value">Collection containing the values to add.</param>
         public void Add(string key, ValuesCollection<TValue> value)
         {
             if (_isReadOnly) throwNonWritable();
@@ -62,16 +82,26 @@ namespace RT.Util.Collections
                 _items.Add(key, new List<TValue>(value));
         }
 
+        /// <summary>
+        /// Returns true iff this collection has at least one value associated with the specified key.
+        /// </summary>
         public bool ContainsKey(string key)
         {
             return _items.ContainsKey(key) && _items[key].Count > 0;
         }
 
+        /// <summary>
+        /// Gets a collection of the keys that have at least one value associated with them. This
+        /// method is not particularly cheap.
+        /// </summary>
         public ICollection<string> Keys
         {
             get { return _items.Keys.Where(key => _items[key].Count > 0).ToArray(); }
         }
 
+        /// <summary>
+        /// Removes all items associated with the specified key. Returns true iff any items were removed.
+        /// </summary>
         public bool Remove(string key)
         {
             if (_isReadOnly) throwNonWritable();
@@ -83,6 +113,10 @@ namespace RT.Util.Collections
             return found;
         }
 
+        /// <summary>
+        /// Gets the collection of values associated with the specified key, or an empty collection
+        /// if no such items exist. Returns true iff any items are associated with the key.
+        /// </summary>
         public bool TryGetValue(string key, out ValuesCollection<TValue> value)
         {
             if (_items.ContainsKey(key) && _items[key].Count > 0)
@@ -97,6 +131,9 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Gets the collection of all value collections. This method is not particularly cheap.
+        /// </summary>
         public ICollection<ValuesCollection<TValue>> Values
         {
             get
@@ -108,6 +145,9 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Gets or sets a collection of values associated with the specified key.
+        /// </summary>
         public ValuesCollection<TValue> this[string key]
         {
             get
@@ -140,43 +180,67 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Adds the specified key and value collection.
+        /// </summary>
         public void Add(KeyValuePair<string, ValuesCollection<TValue>> item)
         {
             Add(item.Key, item.Value);
         }
 
+        /// <summary>
+        /// Clears all items from this collection.
+        /// </summary>
         public void Clear()
         {
             if (_isReadOnly) throwNonWritable();
             _items.Clear();
         }
 
+        /// <summary>
+        /// Not implemented.
+        /// </summary>
         public bool Contains(KeyValuePair<string, ValuesCollection<TValue>> item)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Copies all key/value-collection pairs to the specified array.
+        /// </summary>
         public void CopyTo(KeyValuePair<string, ValuesCollection<TValue>>[] array, int arrayIndex)
         {
             ((ICollection<KeyValuePair<string, ValuesCollection<TValue>>>) _items).CopyTo(array, arrayIndex);
         }
 
+        /// <summary>
+        /// Gets the number of keys in this collection which have at least one value associated with them.
+        /// </summary>
         public int Count
         {
             get { return _items.Values.Count(list => list.Count > 0); }
         }
 
+        /// <summary>
+        /// Returns true iff this collection is read-only (cannot be modified).
+        /// </summary>
         public bool IsReadOnly
         {
             get { return _isReadOnly; }
         }
 
+        /// <summary>
+        /// Not implemented.
+        /// </summary>
         public bool Remove(KeyValuePair<string, ValuesCollection<TValue>> item)
         {
             if (_isReadOnly) throwNonWritable();
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets an enumerator to iterate over all key/value-collection pairs in this collection.
+        /// </summary>
         public IEnumerator<KeyValuePair<string, ValuesCollection<TValue>>> GetEnumerator()
         {
             foreach (var kvp in _items)
@@ -190,12 +254,23 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Gets an enumerator to iterate over all key/value-collection pairs in this collection.
+        /// </summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
     }
 
+    /// <summary>
+    /// Represents a collection of values associated with a single key inside a <see cref="NameValuesCollection&lt;T&gt;"/>.
+    /// </summary>
+    /// <remarks>
+    /// Implemented as a wrapper for a List which can be read-only or read-write as desired. Creation should
+    /// be cheap compared to instantiating a <see cref="ReadOnlyCollection&lt;T&gt;"/>.
+    /// </remarks>
+    /// <typeparam name="TValue">The type of the values stored in this collection.</typeparam>
     public struct ValuesCollection<TValue> : IList<TValue>
     {
         /// <summary>The collection being wrapped. Both "null" and an empty list may stand for empty.</summary>
@@ -225,23 +300,36 @@ namespace RT.Util.Collections
             throw new InvalidOperationException("Cannot execute method because the collection is read-only");
         }
 
+        /// <summary>
+        /// Returns the index of the specified item in this collection, or -1 if not found.
+        /// </summary>
+        /// <param name="item">Item to be searched for.</param>
         public int IndexOf(TValue item)
         {
             return _values == null ? -1 : _values.IndexOf(item);
         }
 
+        /// <summary>
+        /// Inserts the item at the specified position.
+        /// </summary>
         public void Insert(int index, TValue item)
         {
             if (!_isWritable) throwNonWritable();
             _values.Insert(index, item);
         }
 
+        /// <summary>
+        /// Removes the item at the specified position from the collection.
+        /// </summary>
         public void RemoveAt(int index)
         {
             if (!_isWritable) throwNonWritable();
             _values.RemoveAt(index);
         }
 
+        /// <summary>
+        /// Gets or sets the value at the specified index.
+        /// </summary>
         public TValue this[int index]
         {
             get
@@ -268,55 +356,85 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Adds the specified value to the collection.
+        /// </summary>
         public void Add(TValue item)
         {
             if (!_isWritable) throwNonWritable();
             _values.Add(item);
         }
 
+        /// <summary>
+        /// Clears all items from the collection.
+        /// </summary>
         public void Clear()
         {
             if (!_isWritable) throwNonWritable();
             _values.Clear();
         }
 
+        /// <summary>
+        /// Returns true iff the collection contains the specified item.
+        /// </summary>
         public bool Contains(TValue item)
         {
             return _values == null ? false : _values.Contains(item);
         }
 
+        /// <summary>
+        /// Copies all items in this collection to the specified array.
+        /// </summary>
         public void CopyTo(TValue[] array, int arrayIndex)
         {
             if (_values != null)
                 _values.CopyTo(array, arrayIndex);
         }
 
+        /// <summary>
+        /// Gets the count of items stored in this collection.
+        /// </summary>
         public int Count
         {
             get { return _values == null ? 0 : _values.Count; }
         }
 
+        /// <summary>
+        /// Returns true iff this collection is read-only (cannot be modified).
+        /// </summary>
         public bool IsReadOnly
         {
             get { return !_isWritable; }
         }
 
+        /// <summary>
+        /// Removes the specified item from the collection. Returns true iff an item was removed.
+        /// </summary>
         public bool Remove(TValue item)
         {
             if (!_isWritable) throwNonWritable();
             return _values.Remove(item);
         }
 
+        /// <summary>
+        /// Returns an enumerator to iterate over all items in this collection.
+        /// </summary>
         public IEnumerator<TValue> GetEnumerator()
         {
             return _values == null ? ((IEnumerable<TValue>) new TValue[0]).GetEnumerator() : _values.GetEnumerator();
         }
 
+        /// <summary>
+        /// Returns an enumerator to iterate over all items in this collection.
+        /// </summary>
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return _values == null ? new TValue[0].GetEnumerator() : _values.GetEnumerator();
         }
 
+        /// <summary>
+        /// Returns a string listing all values in the collection, comma-separated, inside square brackets.
+        /// </summary>
         public override string ToString()
         {
 
