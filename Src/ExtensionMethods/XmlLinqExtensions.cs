@@ -89,7 +89,7 @@ namespace RT.Util.ExtensionMethods
                 return defaultValue;
             else
                 try { return RConvert.Exact<T>(el.Value); }
-                catch (RConvertException E) { throw new RTException(("Element \"{0}\", when present, must contain a value convertible to a certain type: " + E.Message).Fmt(element.Path())); }
+                catch (RConvertException E) { throw new RTException(("Element \"{0}/{1}\", when present, must contain a value convertible to a certain type: " + E.Message).Fmt(element.Path(), name)); }
         }
     }
 }
