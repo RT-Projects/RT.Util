@@ -29,6 +29,26 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;.
+        /// If the specified key does not exist in the current Dictionary, a new List is created.
+        /// </summary>
+        /// <typeparam name="K1">Type of the key of the first-level Dictionary.</typeparam>
+        /// <typeparam name="K2">Type of the key of the second-level Dictionary.</typeparam>
+        /// <typeparam name="V">Type of the values in the Lists.</typeparam>
+        /// <param name="dic">Dictionary to operate on.</param>
+        /// <param name="key1">Key at which the second-level Dictionary is located in the first-level Dictionary.</param>
+        /// <param name="key2">Key at which the list is located in the second-level Dictionary.</param>
+        /// <param name="value">Value to add to the List located at the specified Keys.</param>
+        public static void AddSafe<K1, K2, V>(this Dictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
+        {
+            if (!dic.ContainsKey(key1))
+                dic[key1] = new Dictionary<K2, List<V>>();
+            if (!dic[key1].ContainsKey(key2))
+                dic[key1][key2] = new List<V>();
+            dic[key1][key2].Add(value);
+        }
+
+        /// <summary>
         /// Increments an integer in a <see cref="Dictionary&lt;K, V&gt;"/> by 1. If the specified key does
         /// not exist in the current dictionary, the value 1 is inserted.
         /// </summary>
