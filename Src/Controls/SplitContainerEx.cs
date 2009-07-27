@@ -21,32 +21,33 @@ namespace RT.Util.Controls
             InitializeComponent();
 
             Paint += new PaintEventHandler(SplitContainerEx_Paint);
+            SplitterMoved += new SplitterEventHandler(SplitContainerEx_SplitterMoved);
         }
 
-        private bool FPaintSplitter = true;
+        private bool _paintSplitter = true;
 
         /// <summary>
         /// Specifies whether the splitter should be painted.
         /// </summary>
         public bool PaintSplitter
         {
-            get { return FPaintSplitter; }
+            get { return _paintSplitter; }
             set
             {
-                FPaintSplitter = value;
+                _paintSplitter = value;
                 Invalidate();
             }
         }
 
         void SplitContainerEx_Paint(object sender, PaintEventArgs e)
         {
-            if (!FPaintSplitter)
+            if (!_paintSplitter)
                 return;
 
             int mid = SplitterDistance + SplitterWidth / 2;
 
             var Highlight = new Pen(Color.FromKnownColor(KnownColor.ButtonHighlight), 1);
-            var Face = new Pen(Color.FromKnownColor(KnownColor.ButtonFace), 1);
+            var Face = new Pen(Color.FromKnownColor(KnownColor.ControlDark), 1);
 
             if (Orientation == Orientation.Horizontal)
             {
@@ -63,6 +64,36 @@ namespace RT.Util.Controls
                 e.Graphics.DrawLine(Face, mid - 1, 0, mid - 1, ClientRectangle.Height);
                 e.Graphics.DrawLine(Highlight, mid, 0, mid, ClientRectangle.Height);
                 e.Graphics.DrawLine(Face, mid + 1, 0, mid + 1, ClientRectangle.Height);
+            }
+        }
+
+        void SplitContainerEx_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            if (_settings != null)
+                _settings.Position = SplitterDistance;
+        }
+
+        /// <summary>Holds the settings of the <see cref="SplitContainerEx"/>.</summary>
+        public class Settings
+        {
+            /// <summary>Holds the position of the splitter, or null if not stored yet.</summary>
+            public int? Position;
+        }
+
+        private Settings _settings;
+
+        /// <summary>
+        /// Stores a reference to the specified settings class, or null to disable the saving of settings.
+        /// Loads the settings from the specified instance and applies them to the control.
+        /// Must be called in form's Load event or later to have an effect!
+        /// </summary>
+        public void SetSettings(Settings settings)
+        {
+            _settings = settings;
+            if (_settings != null)
+            {
+                if (_settings.Position != null)
+                    SplitterDistance = _settings.Position.Value;
             }
         }
     }

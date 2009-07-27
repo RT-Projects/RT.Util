@@ -24,6 +24,8 @@ namespace RT.Util.Forms
         /// <param name="settings">An object of type <see cref="ManagedForm.Settings"/> from which the position and size of the form are retrieved, and in which they will be stored.</param>
         public ManagedForm(Settings settings)
         {
+            if (settings == null) throw new ArgumentNullException("settings");
+
             // Since the constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
             // we need to apply the settings later. Use the Load event for this
             Load += (sender, e) =>
