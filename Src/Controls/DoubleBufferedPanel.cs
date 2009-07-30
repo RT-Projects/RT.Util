@@ -28,22 +28,30 @@ namespace RT.Util.Controls
         /// </summary>
         protected Bitmap Buffer;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the panel should automatically refresh
+        /// its contents (i.e. call the PaintBuffer event) every time it is resized.
+        /// </summary>
+        public bool RefreshOnResize { get; set; }
+
         /// <summary>Constructor.</summary>
         public DoubleBufferedPanel()
         {
             this.SetStyle(
-                ControlStyles.AllPaintingInWmPaint | 
-                ControlStyles.UserPaint | 
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.UserPaint |
                 ControlStyles.DoubleBuffer, true
             );
 
+            RefreshOnResize = true;
             this.Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
             this.Resize += new EventHandler(DoubleBufferedPanel_Resize);
         }
 
         private void DoubleBufferedPanel_Resize(object sender, EventArgs e)
         {
-            Refresh();
+            if (RefreshOnResize)
+                Refresh();
         }
 
         /// <summary>
