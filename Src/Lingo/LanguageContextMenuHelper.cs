@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using RT.Util.Dialogs;
 
 namespace RT.Util.Lingo
 {
@@ -25,6 +26,7 @@ namespace RT.Util.Lingo
 
         /// <summary>
         /// Gets or sets a value indicating whether the menu items to edit or create a language should be displayed.
+        /// This defaults to false for release builds and true for debug builds.
         /// </summary>
         public bool TranslationEditingEnabled { get; set; }
 
@@ -36,7 +38,7 @@ namespace RT.Util.Lingo
         /// <param name="defaultLanguage">The language of the default translation (this translation cannot be edited as it's compiled into the program).</param>
         /// <param name="trFormSettings">Translation window settings, such as window position/size.</param>
         /// <param name="trFormIcon">The icon to use on the translation window.</param>
-        /// <param name="setLanguage">A callback to invoke in order to change the program language. See <see cref="LingoSetLanguage&lt;T&gt;"/> for more details.</param>
+        /// <param name="setLanguage">A callback to invoke in order to change the program language. See <see cref="SetLanguage&lt;T&gt;"/> for more details.</param>
         public LanguageContextMenuHelper(string programTitle, string moduleName, Language defaultLanguage,
             TranslationForm<TTranslation>.Settings trFormSettings, System.Drawing.Icon trFormIcon, SetLanguage<TTranslation> setLanguage)
         {
@@ -51,6 +53,9 @@ namespace RT.Util.Lingo
             _trFormSettings = trFormSettings;
             _trFormIcon = trFormIcon;
             _setLanguage = setLanguage;
+#if DEBUG
+            TranslationEditingEnabled = true;
+#endif
         }
 
         /// <summary>
@@ -67,8 +72,8 @@ namespace RT.Util.Lingo
             if (TranslationEditingEnabled)
             {
                 _menu.MenuItems.Add(new MenuItem("-"));
-                _menu.MenuItems.Add(miEdit = new MenuItem("&Edit current language", new EventHandler(editCurrentLanguage)));
-                _menu.MenuItems.Add(new MenuItem("&Create new language", new EventHandler(createNewLanguage)));
+                _menu.MenuItems.Add(miEdit = new MenuItem("&Edit current translation", new EventHandler(editCurrentLanguage)));
+                _menu.MenuItems.Add(new MenuItem("&Create new translation", new EventHandler(createNewLanguage)));
             }
             // Disable most items if a translation dialog is currently visible
             if (_translationDialog != null)
@@ -85,7 +90,7 @@ namespace RT.Util.Lingo
         {
             if (_currentLanguage == _defaultLanguage)
             {
-                MessageBox.Show("The currently selected language is the native language of this application and cannot be edited.", "Edit current language");
+                DlgMessage.ShowInfo("The currently selected language is the native language of this application and cannot be edited.");
                 return;
             }
             if (_translationDialog == null)
@@ -98,9 +103,12 @@ namespace RT.Util.Lingo
 
         private void createNewLanguage(object sender, EventArgs e)
         {
-            var newTranslation = TranslationCreateForm.CreateTranslation<TTranslation>("ProcessTraffic", _setLanguage);
+            var newTranslation = TranslationCreateForm.CreateTranslation<TTranslation>(_moduleName, _setLanguage);
             if (newTranslation != null)
+            {
+                _currentLanguage = newTranslation.Language;
                 editCurrentLanguage(sender, e);
+            }
         }
     }
 }

@@ -230,8 +230,24 @@ namespace RT.Util.Lingo
             match = Regex.Match(afterRegion, @"^(\s*)#endregion", RegexOptions.Multiline);
             if (!match.Success)
                 return;
-            var newSource = beforeRegion + afterRegion.Substring(0, match.Index) + match.Groups[1].Value + "public TrString " + key + " = \"" + origText + "\";\n" + afterRegion.Substring(match.Index);
+            var newSource = beforeRegion + afterRegion.Substring(0, match.Index) + match.Groups[1].Value + "public TrString " + key + " = \"" + origText.CsharpEscape() + "\";\n" + afterRegion.Substring(match.Index);
             File.WriteAllText(path, newSource);
+        }
+
+        private static string CsharpEscape(this string str)
+        {
+            return str
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\"", "\\\"")
+                .Replace("\0", "\\0")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\a", "\\a")
+                .Replace("\b", "\\b")
+                .Replace("\f", "\\f")
+                .Replace("\t", "\\t")
+                .Replace("\v", "\\v");
         }
 #endif
     }

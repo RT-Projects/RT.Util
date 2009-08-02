@@ -118,6 +118,7 @@ namespace RT.Util.Lingo
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             ShowInTaskbar = false;
+            Font = SystemFonts.MessageBoxFont;
 
             Load += (s, v) =>
             {

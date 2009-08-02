@@ -63,7 +63,6 @@ namespace RT.Util.Controls
         {
             _closeButton.Size = new Size(ClientSize.Height, ClientSize.Height);
             _closeButton.Location = new Point(ClientSize.Width - _closeButton.Width, 0);
-            // MessageBox.Show("" + _closeButton.Size.ToString() + " -/- " + _closeButton.Location.ToString());
             Refresh();
         }
     }

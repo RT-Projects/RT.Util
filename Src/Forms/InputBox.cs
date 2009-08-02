@@ -18,6 +18,7 @@ namespace RT.Util.Dialogs
         public InputBox()
         {
             InitializeComponent();
+            Font = SystemFonts.MessageBoxFont;
         }
 
         /// <summary>Prompts the user for input.</summary>

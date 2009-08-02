@@ -154,7 +154,7 @@ namespace RT.Util.Dialogs
         public Bitmap Image;    // null acceptable as final value
         /// <summary>
         /// Specifies a font to be used for the message text (but not the buttons). Defaults to
-        /// null, which means use the font configured in the <see cref="DlgMessageForm"/> class (probably the system font).
+        /// null, which means the default system font should be used.
         /// </summary>
         public Font Font;       // null acceptable as final value
         /// <summary>
@@ -267,6 +267,7 @@ namespace RT.Util.Dialogs
         {
             DlgMessageForm Form = new DlgMessageForm();
 
+            Form.Font = SystemFonts.MessageBoxFont;
             if (Font != null)
                 Form.Message.Font = Font;
 
@@ -323,7 +324,7 @@ namespace RT.Util.Dialogs
 
             // --- Show
 
-            Form.Message.MaximumSize = new Size(Screen.PrimaryScreen.WorkingArea.Width * 3 / 4, Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
+            Form.Message.MaximumSize = new Size(Math.Min(600, Screen.PrimaryScreen.WorkingArea.Width * 3 / 4), Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
 
             var result = Form.ShowDialog();
             Form.Dispose();

@@ -60,7 +60,7 @@ namespace RT.Util.Lingo
         /// <param name="programTitle">Title of the program. Used in the title bar.</param>
         /// <param name="moduleName">Used for locating the translation file to be edited under the Translations directory.</param>
         /// <param name="language">The language to be edited.</param>
-        /// <param name="setLanguage">The callback invoked by the translation form in order to modify the language of the program. See <see cref="LingoSetLanguage&lt;T&gt;"/> for details.</param>
+        /// <param name="setLanguage">The callback invoked by the translation form in order to modify the language of the program. See <see cref="SetLanguage&lt;T&gt;"/> for details.</param>
         public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language, SetLanguage<T> setLanguage)
             : base(settings)
         {
@@ -205,8 +205,8 @@ namespace RT.Util.Lingo
 
         private void markAllUpToDate(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
-                "Mark all as up to date", MessageBoxButtons.YesNo) == DialogResult.No)
+            if (DlgMessage.ShowQuestion("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
+                "&Yes", "&Cancel") == 1)
                 return;
             _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
@@ -217,8 +217,8 @@ namespace RT.Util.Lingo
 
         private void markAllOutOfDate(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
-                "Mark all as out of date", MessageBoxButtons.YesNo) == DialogResult.No)
+            if (DlgMessage.ShowQuestion("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
+                "&Yes", "&Cancel") == 1)
                 return;
             _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
@@ -277,6 +277,8 @@ namespace RT.Util.Lingo
                 ff.FormBorderStyle = FormBorderStyle.FixedDialog;
                 ff.MinimizeBox = false;
                 ff.MaximizeBox = false;
+                ff.ShowInTaskbar = false;
+                ff.Font = Font;
                 TableLayoutPanel tp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 5, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(5) };
                 tp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
                 tp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -322,7 +324,7 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                MessageBox.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search");
+                DlgMessage.ShowWarning("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.");
                 return;
             }
             int start = _lastFocusedPanel == null ? 0 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) + 1;
@@ -336,14 +338,14 @@ namespace RT.Util.Lingo
                     return;
                 }
             }
-            MessageBox.Show("No matching strings found.", "Find");
+            DlgMessage.ShowInfo("No matching strings found.");
         }
 
         private void findPrev(object sender, EventArgs e)
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                MessageBox.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search");
+                DlgMessage.ShowWarning("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.");
                 return;
             }
             int start = _lastFocusedPanel == null ? _allTranslationPanels.Length - 1 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) - 1;
@@ -357,7 +359,7 @@ namespace RT.Util.Lingo
                     return;
                 }
             }
-            MessageBox.Show("No matching strings found.", "Find");
+            DlgMessage.ShowInfo("No matching strings found.");
         }
 
         private void nextOutOfDate(object sender, EventArgs e)
@@ -375,9 +377,9 @@ namespace RT.Util.Lingo
                 }
             }
             if (_lastFocusedPanel != null && _lastFocusedPanel.State != TranslationPanelState.UpToDateAndSaved)
-                MessageBox.Show("All other strings are up to date.", "Next out-of-date string");
+                DlgMessage.ShowInfo("All other strings are up to date.");
             else
-                MessageBox.Show("All strings are up to date.", "Next out-of-date string");
+                DlgMessage.ShowInfo("All strings are up to date.");
         }
 
         private void btnClick(object sender, EventArgs e)
