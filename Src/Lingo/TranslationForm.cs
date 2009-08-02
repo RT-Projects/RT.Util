@@ -35,7 +35,7 @@ namespace RT.Util.Lingo
         private bool _anyChanges;
         private Settings _settings;
         private NumberSystem _origNumberSystem;
-        private LingoSetLanguage<T> _setLanguage;
+        private SetLanguage<T> _setLanguage;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
         public new class Settings : ManagedForm.Settings
@@ -61,7 +61,7 @@ namespace RT.Util.Lingo
         /// <param name="moduleName">Used for locating the translation file to be edited under the Translations directory.</param>
         /// <param name="language">The language to be edited.</param>
         /// <param name="setLanguage">The callback invoked by the translation form in order to modify the language of the program. See <see cref="LingoSetLanguage&lt;T&gt;"/> for details.</param>
-        public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language, LingoSetLanguage<T> setLanguage)
+        public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language, SetLanguage<T> setLanguage)
             : base(settings)
         {
             if (icon != null)
@@ -404,7 +404,7 @@ namespace RT.Util.Lingo
                 if (chkName == null)
                     throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.Name), "type");
                 else
-                    throw new ArgumentException(@"Field ""{0}"" of type ""{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkName, chkType.FullName), "type");
+                    throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkType.FullName, chkName), "type");
             }
 
             foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))

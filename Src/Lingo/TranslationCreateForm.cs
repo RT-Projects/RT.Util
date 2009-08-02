@@ -34,7 +34,7 @@ namespace RT.Util.Lingo
         /// <param name="moduleName">Name of the module being translated (forms part of the translation's XML file).</param>
         /// <param name="setLanguage">Callback invoked by this method to change the language used by the program.</param>
         /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
-        public static T CreateTranslation<T>(string moduleName, LingoSetLanguage<T> setLanguage) where T : TranslationBase, new()
+        public static T CreateTranslation<T>(string moduleName, SetLanguage<T> setLanguage) where T : TranslationBase, new()
         {
             using (TranslationCreateForm tcf = new TranslationCreateForm())
             {

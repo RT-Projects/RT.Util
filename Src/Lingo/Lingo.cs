@@ -17,7 +17,7 @@ namespace RT.Util.Lingo
     /// </summary>
     /// <typeparam name="T">The type of the translation class.</typeparam>
     /// <param name="translation">The new translation to be used by the program.</param>
-    public delegate void LingoSetLanguage<T>(T translation) where T : TranslationBase;
+    public delegate void SetLanguage<T>(T translation) where T : TranslationBase;
 
     /// <summary>
     /// Static class with helper methods to support multi-language applications.
@@ -77,7 +77,7 @@ namespace RT.Util.Lingo
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
         /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="MenuItem"/>[] containing the generated menu items.</returns>
-        public static MenuItem[] LanguageMenuItems<TTranslation>(string moduleName, LingoSetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
+        public static MenuItem[] LanguageMenuItems<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             MenuItem selected = null;
             var arr = languageMenuItems<TTranslation>(moduleName)
@@ -102,7 +102,7 @@ namespace RT.Util.Lingo
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
         /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="ToolStripMenuItem"/>[] containing the generated menu items.</returns>
-        public static ToolStripMenuItem[] LanguageToolStripMenuItems<TTranslation>(string moduleName, LingoSetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
+        public static ToolStripMenuItem[] LanguageToolStripMenuItems<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             ToolStripMenuItem selected = null;
             var arr = languageMenuItems<TTranslation>(moduleName)
@@ -126,7 +126,7 @@ namespace RT.Util.Lingo
                 yield break;
             foreach (var file in new DirectoryInfo(path).GetFiles(moduleName + ".*.xml"))
             {
-                Match match = Regex.Match(file.Name, "^" + moduleName + @"\.(.*)\.xml$");
+                Match match = Regex.Match(file.Name, "^" + Regex.Escape( moduleName )+ @"\.(.*)\.xml$");
                 if (!match.Success) continue;
                 TTranslation transl;
                 try { transl = XmlClassify.LoadObjectFromXmlFile<TTranslation>(file.FullName); }
