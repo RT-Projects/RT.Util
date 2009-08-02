@@ -16,7 +16,7 @@ namespace RT.Util.Lingo
         private Language _defaultLanguage;
         private TranslationForm<TTranslation>.Settings _trFormSettings;
         private Icon _trFormIcon;
-        private LingoSetLanguage<TTranslation> _setLanguage;
+        private SetLanguage<TTranslation> _setLanguage;
 
         private Language _currentLanguage;
 
@@ -38,7 +38,7 @@ namespace RT.Util.Lingo
         /// <param name="trFormIcon">The icon to use on the translation window.</param>
         /// <param name="setLanguage">A callback to invoke in order to change the program language. See <see cref="LingoSetLanguage&lt;T&gt;"/> for more details.</param>
         public LanguageContextMenuHelper(string programTitle, string moduleName, Language defaultLanguage,
-            TranslationForm<TTranslation>.Settings trFormSettings, System.Drawing.Icon trFormIcon, LingoSetLanguage<TTranslation> setLanguage)
+            TranslationForm<TTranslation>.Settings trFormSettings, System.Drawing.Icon trFormIcon, SetLanguage<TTranslation> setLanguage)
         {
             if (programTitle == null) throw new ArgumentNullException("programTitle");
             if (moduleName == null) throw new ArgumentNullException("moduleName");
