@@ -344,6 +344,69 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Formats the specified objects into the format string. The result is an enumerable collection
+        /// which enumerates parts of the format string interspersed with the arguments as appropriate.
+        /// </summary>
+        public static IEnumerable<object> FmtEnumerable(this string formatString, params object[] args)
+        {
+            if (formatString == null) throw new ArgumentNullException("formatString");
+
+            StringBuilder sb = new StringBuilder(formatString.Length);
+            int i = 0;
+            while (i < formatString.Length)
+            {
+                if (formatString[i] == '{')
+                {
+                    i++;
+                    if (i >= formatString.Length)
+                        throw new ArgumentException("Unexpected end of format string in the middle of a format specifier.");
+                    if (formatString[i] == '{')
+                    {
+                        sb.Append('{');
+                    }
+                    else
+                    {
+                        // Only support single digit references
+                        if (!(formatString[i] >= '0' && formatString[i] <= '9'))
+                            throw new ArgumentException("Format specifier must contain a single digit after the opening curly bracket.");
+                        int argNumber = (int) (formatString[i] - '0');
+                        i++;
+                        if (i >= formatString.Length)
+                            throw new ArgumentException("Unexpected end of format string in the middle of a format specifier.");
+                        if (formatString[i] != '}')
+                            throw new ArgumentException("Format specifier did not end with a closing curly bracket immediately after the single digit group number.");
+                        i++;
+                        // Return the stuff we have!
+                        if (argNumber >= args.Length)
+                            throw new ArgumentException("Format specifier refers to argument index {{{0}}}, but only {1} argument(s) were supplied.".Fmt(argNumber, args.Length));
+                        if (sb.Length > 0)
+                            yield return sb.ToString();
+                        yield return args[argNumber];
+                        // Reset the buffer
+                        sb = new StringBuilder(formatString.Length);
+                    }
+                }
+                else if (formatString[i] == '}')
+                {
+                    i++;
+                    if (i >= formatString.Length)
+                        throw new ArgumentException("Unexpected end of format string with a single closing curly bracket.");
+                    if (formatString[i] == '}')
+                        sb.Append('}');
+                    else
+                        throw new ArgumentException("Unescaped closing curly bracket in format string which is not part of a valid format specifier.");
+                }
+                else
+                {
+                    sb.Append(formatString[i]);
+                    i++;
+                }
+            }
+            if (sb.Length > 0)
+                yield return sb.ToString();
+        }
+
+        /// <summary>
         /// Word-wraps the current string to a specified width. Supports unix-style
         /// newlines and indented paragraphs.
         /// </summary>

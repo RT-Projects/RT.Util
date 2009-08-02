@@ -144,6 +144,7 @@ namespace RT.Util.Dialogs
             this.MinimizeBox = false;
             this.Name = "InputBox";
             this.Padding = new System.Windows.Forms.Padding(10);
+            this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "InputBox";
             this.tableLayoutPanel1.ResumeLayout(false);
