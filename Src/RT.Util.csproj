@@ -135,6 +135,7 @@
     <Compile Include="Forms\InputBox.Designer.cs">
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Lingo\LanguageContextMenuHelper.cs" />
     <Compile Include="Lingo\Languages.cs" />
     <Compile Include="Lingo\Lingo.cs" />
     <Compile Include="Lingo\LingoAttributes.cs" />

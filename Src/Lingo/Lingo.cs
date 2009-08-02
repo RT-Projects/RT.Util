@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
 
@@ -126,7 +125,7 @@ namespace RT.Util.Lingo
                 yield break;
             foreach (var file in new DirectoryInfo(path).GetFiles(moduleName + ".*.xml"))
             {
-                Match match = Regex.Match(file.Name, "^" + Regex.Escape( moduleName )+ @"\.(.*)\.xml$");
+                Match match = Regex.Match(file.Name, "^" + Regex.Escape(moduleName) + @"\.(.*)\.xml$");
                 if (!match.Success) continue;
                 TTranslation transl;
                 try { transl = XmlClassify.LoadObjectFromXmlFile<TTranslation>(file.FullName); }

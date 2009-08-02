@@ -605,6 +605,9 @@ namespace RT.Util.Lingo
         Lojban
     }
 
+    /// <summary>
+    /// Extension methods for the <see cref="Language"/> enum.
+    /// </summary>
     public static class LanguageMethods
     {
         /// <summary>Gets the number system associated with the specified language.</summary>

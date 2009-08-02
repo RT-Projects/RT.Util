@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Drawing;
-using RT.Util.Xml;
-using RT.Util.Collections;
-using System.IO;
-using RT.Util.Dialogs;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+using RT.Util.Dialogs;
+using RT.Util.Xml;
 
 namespace RT.Util.Lingo
 {
@@ -120,6 +117,7 @@ namespace RT.Util.Lingo
             MaximizeBox = false;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            ShowInTaskbar = false;
 
             Load += (s, v) =>
             {
