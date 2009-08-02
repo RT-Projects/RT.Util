@@ -33,6 +33,10 @@ namespace RT.Util.Lingo
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class LingoStringClassAttribute : Attribute { }
 
+    /// <summary>Marks a field in a translation class as one that does not represent a translatable string or a set of such strings.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+    public sealed class LingoIgnoreAttribute : Attribute { }
+
     /// <summary>Specifies information about a group of translatable strings. Use this on a field in an enum type which enumerates the available groups of strings.</summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
     public sealed class LingoGroupAttribute : Attribute

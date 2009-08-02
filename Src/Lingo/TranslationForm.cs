@@ -18,11 +18,6 @@ namespace RT.Util.Lingo
     /// <typeparam name="T">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
     public class TranslationForm<T> : ManagedForm where T : TranslationBase, new()
     {
-        /// <summary>Used to fire <see cref="AcceptChanges"/>.</summary>
-        public delegate void TranslationChangesEventHandler();
-        /// <summary>Fires when the user clicks "Save &amp; Close" or "Apply changes".</summary>
-        public event TranslationChangesEventHandler AcceptChanges;
-
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;
         private Panel _pnlRightOuter;
@@ -40,6 +35,7 @@ namespace RT.Util.Lingo
         private bool _anyChanges;
         private Settings _settings;
         private NumberSystem _origNumberSystem;
+        private LingoSetLanguage<T> _setLanguage;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
         public new class Settings : ManagedForm.Settings
@@ -59,26 +55,29 @@ namespace RT.Util.Lingo
         }
 
         /// <summary>Main constructor.</summary>
-        /// <param name="translationFile">Path and filename to the translation to be edited.</param>
         /// <param name="settings">Settings of the <see cref="TranslationForm&lt;T&gt;"/>.</param>
         /// <param name="icon">Application icon to use.</param>
-        /// <param name="programName">Name of the program. Used in the title bar.</param>
-        public TranslationForm(string translationFile, Settings settings, Icon icon, string programName)
+        /// <param name="programTitle">Title of the program. Used in the title bar.</param>
+        /// <param name="moduleName">Used for locating the translation file to be edited under the Translations directory.</param>
+        /// <param name="language">The language to be edited.</param>
+        /// <param name="setLanguage">The callback invoked by the translation form in order to modify the language of the program. See <see cref="LingoSetLanguage&lt;T&gt;"/> for details.</param>
+        public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language, LingoSetLanguage<T> setLanguage)
             : base(settings)
         {
             if (icon != null)
                 Icon = icon;
 
             _settings = settings;
-            _translationFile = translationFile;
-            _translation = XmlClassify.LoadObjectFromXmlFile<T>(translationFile);
+            _setLanguage = setLanguage;
+            _translationFile = PathUtil.Combine(PathUtil.AppPath, "Translations", moduleName + "." + language.GetIsoLanguageCode() + ".xml");
+            _translation = XmlClassify.LoadObjectFromXmlFile<T>(_translationFile);
             _anyChanges = false;
 
             if (_settings.FontName != null)
                 Font = new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular);
 
             // some defaults
-            Text = "Translating " + programName;
+            Text = "Translating " + programTitle;
             Width = Screen.PrimaryScreen.WorkingArea.Width / 2;
             Height = Screen.PrimaryScreen.WorkingArea.Height * 9 / 10;
 
@@ -100,7 +99,7 @@ namespace RT.Util.Lingo
             var dicPanels = new Dictionary<object, List<TranslationPanel>>();
             var lstAllPanels = new List<TranslationPanel>();
             var lstUngroupedPanels = new List<TranslationPanel>();
-            createPanelsForType(typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels);
+            createPanelsForType(null, typeof(T), typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels);
 
             // Discover all the group types, their enum values, and then their attributes
             Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
@@ -389,8 +388,7 @@ namespace RT.Util.Lingo
             if (sender != _btnCancel && _anyChanges)
             {
                 XmlClassify.SaveObjectToXmlFile(_translation, _translationFile);
-                if (AcceptChanges != null)
-                    AcceptChanges();
+                _setLanguage(XmlClassify.LoadObjectFromXmlFile<T>(_translationFile));
             }
             _anyChanges = false;
 
@@ -398,13 +396,18 @@ namespace RT.Util.Lingo
                 Close();
         }
 
-        private void createPanelsForType(Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels)
+        private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels)
         {
             var attrs = type.GetCustomAttributes(typeof(LingoStringClassAttribute), true);
             if (!attrs.Any())
-                throw new ArgumentException("Classes with translatable strings are not allowed to contain any fields other than fields of type TrString, TrStringNumbers, and types with the [LingoStringClass] attribute.", "type");
+            {
+                if (chkName == null)
+                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.Name), "type");
+                else
+                    throw new ArgumentException(@"Field ""{0}"" of type ""{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkName, chkType.FullName), "type");
+            }
 
-            foreach (var f in type.GetFields())
+            foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
                 {
@@ -418,8 +421,8 @@ namespace RT.Util.Lingo
                     else
                         lstUngroupedPanels.Add(pnl);
                 }
-                else if (f.Name != "Language")
-                    createPanelsForType(f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels);
+                else if (!f.GetCustomAttributes(typeof(LingoIgnoreAttribute), true).Any())
+                    createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels);
             }
         }
 

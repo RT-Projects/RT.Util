@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace RT.Util.Lingo
 {
@@ -602,5 +603,52 @@ namespace RT.Util.Lingo
         /// <summary>Represents the Lojban language (jbo).</summary>
         [LanguageInfo("jbo", "Lojban", "lojban", typeof(NumberSystem))]
         Lojban
+    }
+
+    public static class LanguageMethods
+    {
+        /// <summary>Gets the number system associated with the specified language.</summary>
+        public static NumberSystem GetNumberSystem(this Language language)
+        {
+            var t = typeof(Language);
+            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
+                if ((Language) f.GetValue(null) == language)
+                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
+                        return ((LanguageInfoAttribute) a).NumberSystem;
+            return null;
+        }
+
+        /// <summary>Gets the native name of the specified language.</summary>
+        public static string GetNativeName(this Language language)
+        {
+            var t = typeof(Language);
+            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
+                if ((Language) f.GetValue(null) == language)
+                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
+                        return ((LanguageInfoAttribute) a).NativeName;
+            return null;
+        }
+
+        /// <summary>Gets the English name of the specified language.</summary>
+        public static string GetEnglishName(this Language language)
+        {
+            var t = typeof(Language);
+            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
+                if ((Language) f.GetValue(null) == language)
+                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
+                        return ((LanguageInfoAttribute) a).EnglishName;
+            return null;
+        }
+
+        /// <summary>Gets the ISO language code of the specified language.</summary>
+        public static string GetIsoLanguageCode(this Language language)
+        {
+            var t = typeof(Language);
+            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
+                if ((Language) f.GetValue(null) == language)
+                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
+                        return ((LanguageInfoAttribute) a).LanguageCode;
+            return null;
+        }
     }
 }

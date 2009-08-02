@@ -31,9 +31,10 @@ namespace RT.Util.Lingo
 
         /// <summary>Presents the user with a dialog to select a language from, and (if they click "OK") creates a new XML file for the new translation.</summary>
         /// <typeparam name="T">Class containing the translatable strings.</typeparam>
-        /// <param name="programName">Name of the program (forms part of the translation's XML file).</param>
-        /// <returns>If the user clicked OK, creates a new XML file and returns the language code. If the user clicked Cancel, returns null.</returns>
-        public static Tuple<T, string> CreateTranslation<T>(string programName) where T : TranslationBase, new()
+        /// <param name="moduleName">Name of the module being translated (forms part of the translation's XML file).</param>
+        /// <param name="setLanguage">Callback invoked by this method to change the language used by the program.</param>
+        /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
+        public static T CreateTranslation<T>(string moduleName, LingoSetLanguage<T> setLanguage) where T : TranslationBase, new()
         {
             using (TranslationCreateForm tcf = new TranslationCreateForm())
             {
@@ -41,11 +42,12 @@ namespace RT.Util.Lingo
                 {
                     T trans = new T { Language = tcf.SelectedLanguage };
                     string iso = trans.Language.GetIsoLanguageCode();
-                    string xmlFile = PathUtil.AppPathCombine("Translations", programName + "." + iso + ".xml");
+                    string xmlFile = PathUtil.AppPathCombine("Translations", moduleName + "." + iso + ".xml");
                     if (!File.Exists(xmlFile))
                     {
                         XmlClassify.SaveObjectToXmlFile(trans, xmlFile);
-                        return new Tuple<T, string>(trans, iso);
+                        setLanguage(trans);
+                        return trans;
                     }
                     int result = DlgMessage.Show("A translation into the selected language already exists. If you wish to start this translation afresh, please delete the translation file first.\n\nThe translation file is: " + xmlFile,
                         "Error creating translation", DlgType.Error, "&Go to containing folder", "Cancel");
@@ -53,7 +55,7 @@ namespace RT.Util.Lingo
                         Process.Start(Path.GetDirectoryName(xmlFile));
                 }
             }
-            return new Tuple<T, string>(null, null);
+            return null;
         }
 
         /// <summary>Main constructor.</summary>

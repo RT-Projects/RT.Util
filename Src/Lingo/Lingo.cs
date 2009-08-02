@@ -12,6 +12,14 @@ using RT.Util.Xml;
 namespace RT.Util.Lingo
 {
     /// <summary>
+    /// Used by any function which may change the language of the program. The program must
+    /// change the UI language in this callback and remember to use that language after restarting.
+    /// </summary>
+    /// <typeparam name="T">The type of the translation class.</typeparam>
+    /// <param name="translation">The new translation to be used by the program.</param>
+    public delegate void LingoSetLanguage<T>(T translation) where T : TranslationBase;
+
+    /// <summary>
     /// Static class with helper methods to support multi-language applications.
     /// </summary>
     public static class Lingo
@@ -29,15 +37,16 @@ namespace RT.Util.Lingo
         /// </remarks>
         /// <typeparam name="TTranslation">The type of the translation class to load the translation into.</typeparam>
         /// <param name="module">The name of the module whose translation is being loaded.</param>
-        /// <param name="language">The language code of the language to be loaded. Will be set to null if the language cannot be loaded.</param>
+        /// <param name="language">The language code of the language to be loaded. Will be set to the default language if the specified language cannot be loaded.</param>
         /// <returns>The loaded or default translation.</returns>
-        public static TTranslation LoadTranslation<TTranslation>(string module, ref string language) where TTranslation : TranslationBase, new()
+        public static TTranslation LoadTranslation<TTranslation>(string module, ref Language language) where TTranslation : TranslationBase, new()
         {
-            string path = PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language + ".xml");
-            if (language == null || !File.Exists(path))
+            string path = PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
+            if (!File.Exists(path))
             {
-                language = null;
-                return new TTranslation();
+                var trn = new TTranslation();
+                language = trn.Language;
+                return trn;
             }
             try
             {
@@ -46,15 +55,15 @@ namespace RT.Util.Lingo
 #if DEBUG
             catch (Exception e)
             {
-                language = null;
                 throw new RTException(@"Could not load translation for module ""{0}"", language ""{1}"", from file ""{2}""".Fmt(module, language, path), e);
             }
 #else
             catch
             {
                 string dummy = "{0}".Fmt(""); // Crappy solution for the IDE thinking that .Fmt is not used when in Release mode.
-                language = null;
-                return new TTranslation();
+                var trn = new TTranslation();
+                language = trn.Language;
+                return trn;
             }
 #endif
         }
@@ -63,25 +72,24 @@ namespace RT.Util.Lingo
         /// Generates a list of <see cref="MenuItem"/>s for the user to select a language from. The list is generated from the set of available XML files in the application's directory.
         /// </summary>
         /// <typeparam name="TTranslation">The type in which translations are stored.</typeparam>
-        /// <param name="programName">The name of the program. XML files considered valid translation files are those that match programName+".&lt;languagecode&gt;.xml".</param>
+        /// <param name="moduleName">The name of the module. XML files considered valid translation files are those that match moduleName+".&lt;languagecode&gt;.xml".</param>
         /// <param name="setLanguage">A callback function to call when the user clicks on a menu item. The first parameter to the callback function is the <typeparamref name="TTranslation"/>
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
-        /// <param name="curLanguage">The string that identifies the currently-selected language. (The relevant menu item is automatically checked.)</param>
+        /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="MenuItem"/>[] containing the generated menu items.</returns>
-        public static MenuItem[] LanguageMenuItems<TTranslation>(string programName, Action<TTranslation, string> setLanguage, string curLanguage) where TTranslation : TranslationBase, new()
+        public static MenuItem[] LanguageMenuItems<TTranslation>(string moduleName, LingoSetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             MenuItem selected = null;
-            var arr = languageMenuItems<TTranslation>(programName)
-                .OrderBy(tup => tup.E1.Language.GetNativeName())
-                .Select(tup => new MenuItem(tup.E1.Language.GetNativeName(), new EventHandler((snd, ev) =>
+            var arr = languageMenuItems<TTranslation>(moduleName)
+                .OrderBy(trn => trn.Language.GetNativeName())
+                .Select(trn => new MenuItem(trn.Language.GetNativeName(), new EventHandler((snd, ev) =>
                 {
                     if (selected != null) selected.Checked = false;
                     selected = (MenuItem) snd;
                     selected.Checked = true;
-                    var t = (Tuple<TTranslation, string>) ((MenuItem) snd).Tag;
-                    setLanguage(t.E1, t.E2);
-                })) { Tag = tup, Checked = tup.E2 == curLanguage }).ToArray();
-            selected = arr.FirstOrDefault(m => ((Tuple<TTranslation, string>) m.Tag).E2 == curLanguage);
+                    setLanguage((TTranslation) ((MenuItem) snd).Tag);
+                })) { Tag = trn, Checked = trn.Language == curLanguage }).ToArray();
+            selected = arr.FirstOrDefault(m => ((TTranslation) m.Tag).Language == curLanguage);
             return arr;
         }
 
@@ -89,42 +97,41 @@ namespace RT.Util.Lingo
         /// Generates a list of <see cref="ToolStripMenuItem"/>s for the user to select a language from. The list is generated from the set of available XML files in the application's directory.
         /// </summary>
         /// <typeparam name="TTranslation">The type in which translations are stored.</typeparam>
-        /// <param name="programName">The name of the program. XML files considered valid translation files are those that match programName+".&lt;languagecode&gt;.xml".</param>
+        /// <param name="moduleName">The name of the program. XML files considered valid translation files are those that match moduleName+".&lt;languagecode&gt;.xml".</param>
         /// <param name="setLanguage">A callback function to call when the user clicks on a menu item. The first parameter to the callback function is the <typeparamref name="TTranslation"/>
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
-        /// <param name="curLanguage">The string that identifies the currently-selected language. (The relevant menu item is automatically checked.)</param>
+        /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="ToolStripMenuItem"/>[] containing the generated menu items.</returns>
-        public static ToolStripMenuItem[] LanguageToolStripMenuItems<TTranslation>(string programName, Action<TTranslation, string> setLanguage, string curLanguage) where TTranslation : TranslationBase, new()
+        public static ToolStripMenuItem[] LanguageToolStripMenuItems<TTranslation>(string moduleName, LingoSetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             ToolStripMenuItem selected = null;
-            var arr = languageMenuItems<TTranslation>(programName)
-                .OrderBy(tup => tup.E1.Language.GetNativeName())
-                .Select(tup => new ToolStripMenuItem(tup.E1.Language.GetNativeName(), null, new EventHandler((snd, ev) =>
+            var arr = languageMenuItems<TTranslation>(moduleName)
+                .OrderBy(trn => trn.Language.GetNativeName())
+                .Select(trn => new ToolStripMenuItem(trn.Language.GetNativeName(), null, new EventHandler((snd, ev) =>
                 {
                     if (selected != null) selected.Checked = false;
                     selected = (ToolStripMenuItem) snd;
                     selected.Checked = true;
-                    var t = (Tuple<TTranslation, string>) ((ToolStripMenuItem) snd).Tag;
-                    setLanguage(t.E1, t.E2);
-                })) { Tag = tup, Checked = tup.E2 == curLanguage }).ToArray();
-            selected = arr.FirstOrDefault(m => ((Tuple<TTranslation, string>) m.Tag).E2 == curLanguage);
+                    setLanguage((TTranslation) ((ToolStripMenuItem) snd).Tag);
+                })) { Tag = trn, Checked = trn.Language == curLanguage }).ToArray();
+            selected = arr.FirstOrDefault(m => ((TTranslation) m.Tag).Language == curLanguage);
             return arr;
         }
 
-        private static IEnumerable<Tuple<TTranslation, string>> languageMenuItems<TTranslation>(string programName) where TTranslation : TranslationBase, new()
+        private static IEnumerable<TTranslation> languageMenuItems<TTranslation>(string moduleName) where TTranslation : TranslationBase, new()
         {
-            yield return new Tuple<TTranslation, string>(new TTranslation(), null);
+            yield return new TTranslation();
             var path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations");
             if (!Directory.Exists(path))
                 yield break;
-            foreach (var file in new DirectoryInfo(path).GetFiles(programName + ".*.xml"))
+            foreach (var file in new DirectoryInfo(path).GetFiles(moduleName + ".*.xml"))
             {
-                Match match = Regex.Match(file.Name, "^" + programName + @"\.(.*)\.xml$");
+                Match match = Regex.Match(file.Name, "^" + moduleName + @"\.(.*)\.xml$");
                 if (!match.Success) continue;
                 TTranslation transl;
                 try { transl = XmlClassify.LoadObjectFromXmlFile<TTranslation>(file.FullName); }
                 catch { continue; }
-                yield return new Tuple<TTranslation, string>(transl, match.Groups[1].Value);
+                yield return transl;
             }
         }
 
@@ -228,49 +235,5 @@ namespace RT.Util.Lingo
             File.WriteAllText(path, newSource);
         }
 #endif
-
-        /// <summary>Gets the number system associated with the specified language.</summary>
-        public static NumberSystem GetNumberSystem(this Language language)
-        {
-            var t = typeof(Language);
-            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
-                if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).NumberSystem;
-            return null;
-        }
-
-        /// <summary>Gets the native name of the specified language.</summary>
-        public static string GetNativeName(this Language language)
-        {
-            var t = typeof(Language);
-            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
-                if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).NativeName;
-            return null;
-        }
-
-        /// <summary>Gets the English name of the specified language.</summary>
-        public static string GetEnglishName(this Language language)
-        {
-            var t = typeof(Language);
-            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
-                if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).EnglishName;
-            return null;
-        }
-
-        /// <summary>Gets the ISO language code of the specified language.</summary>
-        public static string GetIsoLanguageCode(this Language language)
-        {
-            var t = typeof(Language);
-            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
-                if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).LanguageCode;
-            return null;
-        }
     }
 }

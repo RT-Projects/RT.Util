@@ -10,6 +10,7 @@ namespace RT.Util.Lingo
     public abstract class TranslationBase
     {
         /// <summary>Language of this translation.</summary>
+        [LingoIgnore]
         public Language Language;
 
         /// <summary>Constructor.</summary>
