@@ -35,7 +35,6 @@ namespace RT.Util.Lingo
         private bool _anyChanges;
         private Settings _settings;
         private NumberSystem _origNumberSystem;
-        private SetLanguage<T> _setLanguage;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
         public new class Settings : ManagedForm.Settings
@@ -54,21 +53,24 @@ namespace RT.Util.Lingo
             public float FontSize;
         }
 
+        /// <summary>
+        /// Fires every time the translation is updated on the disk (i.e. when the user clicks either "Save &amp; Close" or "Apply changes").
+        /// </summary>
+        public event SetLanguage<T> TranslationChanged;
+
         /// <summary>Main constructor.</summary>
         /// <param name="settings">Settings of the <see cref="TranslationForm&lt;T&gt;"/>.</param>
         /// <param name="icon">Application icon to use.</param>
         /// <param name="programTitle">Title of the program. Used in the title bar.</param>
         /// <param name="moduleName">Used for locating the translation file to be edited under the Translations directory.</param>
         /// <param name="language">The language to be edited.</param>
-        /// <param name="setLanguage">The callback invoked by the translation form in order to modify the language of the program. See <see cref="SetLanguage&lt;T&gt;"/> for details.</param>
-        public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language, SetLanguage<T> setLanguage)
+        public TranslationForm(Settings settings, Icon icon, string programTitle, string moduleName, Language language)
             : base(settings)
         {
             if (icon != null)
                 Icon = icon;
 
             _settings = settings;
-            _setLanguage = setLanguage;
             _translationFile = PathUtil.Combine(PathUtil.AppPath, "Translations", moduleName + "." + language.GetIsoLanguageCode() + ".xml");
             _translation = XmlClassify.LoadObjectFromXmlFile<T>(_translationFile);
             _anyChanges = false;
@@ -205,8 +207,8 @@ namespace RT.Util.Lingo
 
         private void markAllUpToDate(object sender, EventArgs e)
         {
-            if (DlgMessage.ShowQuestion("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
-                "&Yes", "&Cancel") == 1)
+            if (DlgMessage.Show("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
+                "Mark all as up to date", DlgType.Question, "&Yes", "&Cancel") == 1)
                 return;
             _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
@@ -217,8 +219,8 @@ namespace RT.Util.Lingo
 
         private void markAllOutOfDate(object sender, EventArgs e)
         {
-            if (DlgMessage.ShowQuestion("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
-                "&Yes", "&Cancel") == 1)
+            if (DlgMessage.Show("Are you absolutely sure that you want to mark all strings as out of date? This will mean that you will need to attend to all strings again before the translation can be considered up to date again.",
+                "Mark all as out of date", DlgType.Question, "&Yes", "&Cancel") == 1)
                 return;
             _pnlRightInner.SuspendLayout();
             foreach (var p in _allTranslationPanels)
@@ -324,7 +326,7 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.ShowWarning("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.");
+                DlgMessage.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
             int start = _lastFocusedPanel == null ? 0 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) + 1;
@@ -338,14 +340,14 @@ namespace RT.Util.Lingo
                     return;
                 }
             }
-            DlgMessage.ShowInfo("No matching strings found.");
+            DlgMessage.Show("No matching strings found.", "Find", DlgType.Info);
         }
 
         private void findPrev(object sender, EventArgs e)
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.ShowWarning("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.");
+                DlgMessage.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
             int start = _lastFocusedPanel == null ? _allTranslationPanels.Length - 1 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) - 1;
@@ -359,7 +361,7 @@ namespace RT.Util.Lingo
                     return;
                 }
             }
-            DlgMessage.ShowInfo("No matching strings found.");
+            DlgMessage.Show("No matching strings found.", "Find", DlgType.Info);
         }
 
         private void nextOutOfDate(object sender, EventArgs e)
@@ -377,9 +379,9 @@ namespace RT.Util.Lingo
                 }
             }
             if (_lastFocusedPanel != null && _lastFocusedPanel.State != TranslationPanelState.UpToDateAndSaved)
-                DlgMessage.ShowInfo("All other strings are up to date.");
+                DlgMessage.Show("All other strings are up to date.", "Next out-of-date string", DlgType.Info);
             else
-                DlgMessage.ShowInfo("All strings are up to date.");
+                DlgMessage.Show("All strings are up to date.", "Next out-of-date string", DlgType.Info);
         }
 
         private void btnClick(object sender, EventArgs e)
@@ -390,7 +392,18 @@ namespace RT.Util.Lingo
             if (sender != _btnCancel && _anyChanges)
             {
                 XmlClassify.SaveObjectToXmlFile(_translation, _translationFile);
-                _setLanguage(XmlClassify.LoadObjectFromXmlFile<T>(_translationFile));
+                if (TranslationChanged != null)
+                {
+                    try
+                    {
+                        var loadAgain = XmlClassify.LoadObjectFromXmlFile<T>(_translationFile);
+                        TranslationChanged(loadAgain);
+                    }
+                    catch (Exception x)
+                    {
+                        DlgMessage.Show("Saving and re-loading the translation failed for the following reason:\n\n" + x.Message + "\n\nPlease ensure that the file is writable and readable and try again.", "Save translation failed", DlgType.Error);
+                    }
+                }
             }
             _anyChanges = false;
 

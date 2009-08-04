@@ -90,12 +90,13 @@ namespace RT.Util.Lingo
         {
             if (_currentLanguage == _defaultLanguage)
             {
-                DlgMessage.ShowInfo("The currently selected language is the native language of this application and cannot be edited.");
+                DlgMessage.Show("The currently selected language is the native language of this application and cannot be edited.", "Edit current language", DlgType.Info);
                 return;
             }
             if (_translationDialog == null)
             {
-                _translationDialog = new TranslationForm<TTranslation>(_trFormSettings, _trFormIcon, _programTitle, _moduleName, _currentLanguage, _setLanguage);
+                _translationDialog = new TranslationForm<TTranslation>(_trFormSettings, _trFormIcon, _programTitle, _moduleName, _currentLanguage);
+                _translationDialog.TranslationChanged += _setLanguage;
                 _translationDialog.FormClosed += (s, v) => { _translationDialog = null; };
             }
             _translationDialog.Show();
