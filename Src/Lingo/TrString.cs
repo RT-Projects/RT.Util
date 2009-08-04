@@ -36,7 +36,7 @@ namespace RT.Util.Lingo
         /// <summary>Formats a string using <see cref="string.Format(string, object, object, object)"/>.</summary>
         public string Fmt(object arg0, object arg1, object arg2) { try { return string.Format(Translation, arg0, arg1, arg2); } catch { return Translation; } }
 
-        /// <summary>Formats a string using <see cref="StringExtensions.FmtEnumerable"/></summary>
+        /// <summary>Formats a string using <see cref="StringExtensions.FmtEnumerable"/>.</summary>
         public IEnumerable<object> FmtEnumerable(params object[] args) { return Translation.FmtEnumerable(args); }
 
         /// <summary>Returns the translation.</summary>
