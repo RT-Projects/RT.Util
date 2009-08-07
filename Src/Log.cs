@@ -303,6 +303,8 @@ namespace RT.Util
                         first = false;
                         consoleStream.WriteLine(line);
                     }
+                    if (first)
+                        consoleStream.WriteLine(fmtInfo); // don't completely skip blank messages
                 }
             }
         }

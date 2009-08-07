@@ -108,10 +108,10 @@ namespace RT.Util
         /// Defines and describes a command-line argument.
         /// </summary>
         /// <param name="tinyName">Ideally a single character. Accessed with a single minus,
-        /// e.g. an option named "c" here can be specified as "-c" on the command line.</param>
+        /// e.g. an option named "c" here can be specified as "-c" on the command line. Null to omit.</param>
         /// <param name="longName">Ideally a fairly descriptive name. Accessed with a double minus,
         /// e.g. an option named "connection-string" can be specified as "--connection-string"
-        /// on the command line.</param>
+        /// on the command line. Null to omit.</param>
         /// <param name="type">Specifies whether an option is an on/off, a string value or a list of values.</param>
         /// <param name="flags">Selects the behaviour of this option.</param>
         /// <param name="description">A human-readable description of what the option does. This
