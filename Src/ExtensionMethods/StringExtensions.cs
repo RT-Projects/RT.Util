@@ -516,5 +516,14 @@ namespace RT.Util.ExtensionMethods
             string[] lines = Regex.Split(input, @"\r\n|\r|\n");
             return lines.JoinString("\r\n");
         }
+
+        /// <summary>
+        /// Determines whether the specified URL starts with the specified URL path.
+        /// For example, the URL "/directory/file" starts with "/directory" but not with "/dir".
+        /// </summary>
+        public static bool UrlStartsWith(this string url, string path)
+        {
+            return (url == path) || url.StartsWith(path + "/") || url.StartsWith(path + "?");
+        }
     }
 }
