@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -33,6 +34,18 @@ namespace RT.Util.ExtensionMethods
 
             typeParameters = implements.GetGenericArguments();
             return true;
+        }
+
+        /// <summary>
+        /// Returns all fields contained in the specified type, including private fields inherited from base classes.
+        /// </summary>
+        /// <param name="type">The type to return all fields of.</param>
+        /// <returns>An <see cref="IEnumerable&lt;FieldInfo&gt;"/> containing all fields contained in this type, including private fields inherited from base classes.</returns>
+        public static IEnumerable<FieldInfo> GetAllFields(this Type type)
+        {
+            IEnumerable<FieldInfo> fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var baseType = type.BaseType;
+            return (baseType == null) ? fields : GetAllFields(baseType).Concat(fields);
         }
     }
 }

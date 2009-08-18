@@ -78,6 +78,17 @@ namespace RT.Util.Xml
         /// <summary>
         /// Reconstructs an object of the specified type from the specified XML tree.
         /// </summary>
+        /// <param name="type">Type of the object to reconstruct.</param>
+        /// <param name="elem">XML tree to reconstruct object from.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static object ObjectFromXElement(Type type, XElement elem)
+        {
+            return objectFromXElement(type, elem, null, null);
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree.
+        /// </summary>
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="elem">XML tree to reconstruct object from.</param>
         /// <param name="baseDir">The base directory from which to locate additional XML files
@@ -184,7 +195,7 @@ namespace RT.Util.Xml
                     try { ret = constructor.Invoke(Type.EmptyTypes); }
                     catch (Exception e) { throw new Exception("The parameterless constructor of the type {0} threw an exception.".Fmt(type.FullName), e); }
 
-                    foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                    foreach (var field in type.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
                         var attribs = field.GetCustomAttributes(false);
@@ -368,7 +379,7 @@ namespace RT.Util.Xml
                 }
                 else
                 {
-                    foreach (var field in saveType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                    foreach (var field in saveType.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
                         var attribs = field.GetCustomAttributes(false);
@@ -486,7 +497,7 @@ namespace RT.Util.Xml
                 {
                     _cached = _generator();
                     // Update any field in the class that has an [XmlId] attribute and is of type string.
-                    foreach (var field in _cached.GetType().GetFields().Where(fld => fld.FieldType == typeof(string) && fld.GetCustomAttributes(false).Any(attr => attr is XmlIdAttribute)))
+                    foreach (var field in _cached.GetType().GetAllFields().Where(fld => fld.FieldType == typeof(string) && fld.GetCustomAttributes(false).Any(attr => attr is XmlIdAttribute)))
                         field.SetValue(_cached, _id);
                     _haveCache = true;
                 }
