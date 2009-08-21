@@ -485,7 +485,7 @@ namespace RT.Util.Drawing
             bool horz = true;
             var gp = new GraphicsPath();
             var prevpair = new Tuple<double, double>(lengths.Last(), lengths.First());
-            foreach (var pair in lengths.ConseqPairsClosed())
+            foreach (var pair in lengths.ConsecutivePairsClosed())
             {
                 double radp = Math.Min(Math.Min(Math.Abs(prevpair.E1), Math.Abs(prevpair.E2)) / 2, radius);
                 double radf = Math.Min(Math.Min(Math.Abs(pair.E1), Math.Abs(pair.E2)) / 2, radius);

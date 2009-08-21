@@ -20,7 +20,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of Tuple&lt;T, U&gt;s containing all ordered pairs of elements from the two source IEnumerables.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, U&gt;"/>s containing all ordered pairs of elements from the two source IEnumerables.
         /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
         /// </summary>
         public static IEnumerable<Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
@@ -31,7 +31,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of Tuple&lt;T, T&gt;s containing all unique pairs of distinct elements from the source IEnumerable.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all unique pairs of distinct elements from the source IEnumerable.
         /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
         /// </summary>
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
@@ -52,11 +52,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of Tuple&lt;T, T&gt;s containing all consecutive pairs of the elements, including
+        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all consecutive pairs of the elements, including
         /// a pair containing the last and the first element (hence "closed"). For example, if the source collection
         /// contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4), (4, 1) }.
         /// </summary>
-        public static IEnumerable<Tuple<T, T>> ConseqPairsClosed<T>(this IEnumerable<T> enumerable)
+        public static IEnumerable<Tuple<T, T>> ConsecutivePairsClosed<T>(this IEnumerable<T> enumerable)
         {
             var enumer = enumerable.GetEnumerator();
             bool any = enumer.MoveNext();
