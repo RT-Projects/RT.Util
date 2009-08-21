@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Linq;
+using RT.Util.Collections;
+using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
 namespace RT.Util.Drawing
@@ -405,10 +407,19 @@ namespace RT.Util.Drawing
         /// Draws text using the specified font and brush. The text's bounding box is centered on
         /// the specified point.
         /// </summary>
-        public void DrawText(string text, Font font, Brush brush, double centerX, double centerY)
+        public void DrawText(string text, Brush brush, Font font, double centerX, double centerY)
         {
             SizeF size = Graphics.MeasureString(text, font);
             Graphics.DrawString(text, font, brush, SX(centerX) - size.Width / 2, SY(centerY) - size.Height / 2);
+        }
+
+        /// <summary>
+        /// Draws text using the specified font and brush. The text's bounding box is centered on
+        /// the specified point.
+        /// </summary>
+        public void DrawText(string text, Brush brush, Font font, PointD center)
+        {
+            DrawText(text, brush, font, center.X, center.Y);
         }
 
         /// <summary>
@@ -417,9 +428,112 @@ namespace RT.Util.Drawing
         /// </summary>
         public void DrawText(string text, Brush brush, double centerX, double centerY)
         {
-            DrawText(text, DefaultFont, brush, centerX, centerY);
+            DrawText(text, brush, DefaultFont, centerX, centerY);
+        }
+
+        public void DrawTextOutline(string text, Pen pen, Font font, double centerX, double centerY)
+        {
+            SizeF size = Graphics.MeasureString(text, font);
+            var gp = new GraphicsPath();
+            gp.AddString(text, font.FontFamily, (int) font.Style, font.Size * Graphics.DpiX / 72f, new PointF(SX(centerX) - size.Width / 2, SY(centerY) - size.Height / 2), StringFormat.GenericDefault);
+            Graphics.DrawPath(pen, gp);
+        }
+
+        public void DrawTextOutline(string text, Pen pen, Font font, PointD center)
+        {
+            DrawTextOutline(text, pen, font, center.X, center.Y);
+        }
+
+        public void DrawTextOutlineSim(string text, Brush brush, Font font, double shift, PointD center)
+        {
+            var ss = shift;
+            var sd = shift * 0.70710678;
+            DrawText(text, brush, font, center.X + ss, center.Y);
+            DrawText(text, brush, font, center.X + sd, center.Y + sd);
+            DrawText(text, brush, font, center.X, center.Y + ss);
+            DrawText(text, brush, font, center.X - sd, center.Y + sd);
+            DrawText(text, brush, font, center.X - ss, center.Y);
+            DrawText(text, brush, font, center.X - sd, center.Y - sd);
+            DrawText(text, brush, font, center.X, center.Y - ss);
+            DrawText(text, brush, font, center.X + sd, center.Y - sd);
+        }
+
+        /// <summary>
+        /// Draws a GraphicsPath using the specified pen.
+        /// </summary>
+        public void DrawPath(Pen pen, GraphicsPath path)
+        {
+            Graphics.DrawPath(pen, path);
+        }
+
+        /// <summary>
+        /// Fills a GraphicsPath using the specified brush.
+        /// </summary>
+        public void FillPath(Brush brush, GraphicsPath path)
+        {
+            Graphics.FillPath(brush, path);
         }
 
         #endregion
+
+        #region Helper functions
+
+        public GraphicsPath MakeRoundedHorzVertPath(PointD position, double radius, IEnumerable<double> lengths)
+        {
+            double x = position.X;
+            double y = position.Y;
+            bool horz = true;
+            var gp = new GraphicsPath();
+            var prevpair = new Tuple<double, double>(lengths.Last(), lengths.First());
+            foreach (var pair in lengths.ConseqPairsClosed())
+            {
+                double radp = Math.Min(Math.Min(Math.Abs(prevpair.E1), Math.Abs(prevpair.E2)) / 2, radius);
+                double radf = Math.Min(Math.Min(Math.Abs(pair.E1), Math.Abs(pair.E2)) / 2, radius);
+                if (horz && pair.E1 > 0)
+                {
+                    gp.AddLine(SX(x + radp), SY(y), SX(x + pair.E1 - radf), SY(y));
+                    gp.AddArc(SX(x + pair.E1 - 2 * radf), SY(y - (pair.E2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 270f : 90f, pair.E2 > 0 ? 90f : -90f);
+                }
+                else if (horz && pair.E1 < 0)
+                {
+                    gp.AddLine(SX(x - radp), SY(y), SX(x + pair.E1 + radf), SY(y));
+                    gp.AddArc(SX(x + pair.E1), SY(y - (pair.E2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 270f : 90f, pair.E2 > 0 ? -90f : 90f);
+                }
+                else if (!horz && pair.E1 > 0)
+                {
+                    gp.AddLine(SX(x), SY(y + radp), SX(x), SY(y + pair.E1 - radf));
+                    gp.AddArc(SX(x - (pair.E2 > 0 ? 0 : 2 * radf)), SY(y + pair.E1 - 2 * radf), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 180f : 0f, pair.E2 > 0 ? -90f : 90f);
+                }
+                else if (!horz && pair.E1 < 0)
+                {
+                    gp.AddLine(SX(x), SY(y - radp), SX(x), SY(y + pair.E1 + radf));
+                    gp.AddArc(SX(x - (pair.E2 > 0 ? 0 : 2 * radf)), SY(y + pair.E1), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 180f : 0f, pair.E2 > 0 ? 90f : -90f);
+                }
+                if (horz) x += pair.E1;
+                else y += pair.E1;
+                prevpair = pair;
+                horz = !horz;
+            }
+            gp.CloseFigure();
+            return gp;
+        }
+
+        #endregion
+
+        public void SetViewportHorz(double worldLeft, double worldRight, float screenLeft, float screenRight, bool maintainAspect)
+        {
+            _scaleX = (screenRight - screenLeft) / (worldRight - worldLeft);
+            _offsetX = screenLeft - worldLeft * _scaleX;
+            if (maintainAspect)
+                _scaleY = _scaleX;
+        }
+
+        public void SetViewportVert(double worldY, float screenY)
+        {
+            if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
+                _offsetY = screenY + worldY * _scaleY;
+            else
+                _offsetY = screenY - worldY * _scaleY;
+        }
     }
 }

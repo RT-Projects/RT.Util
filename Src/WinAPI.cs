@@ -73,6 +73,12 @@ namespace RT.Util
         public const int SWP_NOSIZE = 1;
         public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE;
 
+        public const uint MAPVK_VK_TO_VSC = 0x00;
+        public const uint MAPVK_VSC_TO_VK = 0x01;
+        public const uint MAPVK_VK_TO_CHAR = 0x02;
+        public const uint MAPVK_VSC_TO_VK_EX = 0x03;
+        public const uint MAPVK_VK_TO_VSC_EX = 0x04;
+
         // GetStdHandle constants
         public const int STD_INPUT_HANDLE = -10;
         public const int STD_OUTPUT_HANDLE = -11;
@@ -166,7 +172,16 @@ namespace RT.Util
         public static extern int UnhookWindowsHookEx(int hHook);
 
         [DllImport("user32.dll")]
-        public static extern int GetAsyncKeyState(int vKey);
+        public static extern short GetKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetKeyboardState(byte[] lpKeyState);
+
+        [DllImport("user32.dll")]
+        public static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
         [DllImport("user32.dll")]
         public static extern int GetLastError();

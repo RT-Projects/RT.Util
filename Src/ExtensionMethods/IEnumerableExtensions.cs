@@ -52,6 +52,26 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Returns an enumeration of Tuple&lt;T, T&gt;s containing all consecutive pairs of the elements, including
+        /// a pair containing the last and the first element (hence "closed"). For example, if the source collection
+        /// contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4), (4, 1) }.
+        /// </summary>
+        public static IEnumerable<Tuple<T, T>> ConseqPairsClosed<T>(this IEnumerable<T> enumerable)
+        {
+            var enumer = enumerable.GetEnumerator();
+            bool any = enumer.MoveNext();
+            if (!any) yield break;
+            T first = enumer.Current;
+            T last = enumer.Current;
+            while (enumer.MoveNext())
+            {
+                yield return new Tuple<T, T>(last, enumer.Current);
+                last = enumer.Current;
+            }
+            yield return new Tuple<T, T>(last, first);
+        }
+
+        /// <summary>
         /// Returns an enumeration of the specified enumerable in sorted order.
         /// </summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
