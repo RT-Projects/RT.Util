@@ -46,9 +46,9 @@ namespace RT.Util.Collections
                 if (index >= _length || index < 0)
                     throw new ArgumentOutOfRangeException("index", "Attempting to access bit outside the array");
                 if (value)
-                    _booleans[index/32] |= (byte)(1 << (index % 32));
+                    _booleans[index/32] |= (1u << (index % 32));
                 else
-                    _booleans[index/32] &= (byte)(~(1 << (index % 32)));
+                    _booleans[index/32] &= ~(1u << (index % 32));
             }
         }
 
