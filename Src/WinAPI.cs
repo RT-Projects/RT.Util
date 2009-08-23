@@ -205,6 +205,12 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern bool GetKeyboardLayoutName([Out] StringBuilder pwszKLID);
 
+        [DllImport("user32.dll")]
+        public static extern uint GetKeyboardLayoutList(int nBuff, [Out] IntPtr[] lpList);
+
+        [DllImport("user32.dll")]
+        public static extern int ActivateKeyboardLayout(IntPtr nkl, uint Flags);
+
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
 
