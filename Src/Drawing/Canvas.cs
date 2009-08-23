@@ -528,6 +528,24 @@ namespace RT.Util.Drawing
                 _scaleY = _scaleX;
         }
 
+        public void SetViewportVert(double worldTop, double worldBottom, float screenTop, float screenBottom, bool maintainAspect)
+        {
+            if (CoordinateAxesDirection == CoordinateAxesDirection.RightDown)
+            {
+                _scaleY = (screenBottom - screenTop) / (worldBottom - worldTop);
+                _offsetY = screenTop - worldTop * _scaleY;
+                if (maintainAspect)
+                    _scaleX = _scaleY;
+            }
+            else
+                throw new NotImplementedException();
+        }
+
+        public void SetViewportHorz(double worldX, float screenX)
+        {
+            _offsetX = screenX - worldX * _scaleX;
+        }
+
         public void SetViewportVert(double worldY, float screenY)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace RT.Util
 {
@@ -89,6 +90,12 @@ namespace RT.Util
         public const int FILE_TYPE_DISK = 0x0001;
         public const int FILE_TYPE_CHAR = 0x0002;
         public const int FILE_TYPE_PIPE = 0x0003;
+
+        public const uint LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
+        public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
+        public const uint LOAD_WITH_ALTERED_SEARCH_PATH = 0x00000008;
+        public const uint LOAD_IGNORE_CODE_AUTHZ_LEVEL = 0x00000010;
+        public const uint LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE = 0x00000040;
 
         #endregion
 
@@ -191,6 +198,21 @@ namespace RT.Util
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GetStdHandle(int nStdHandle);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetKeyboardLayoutName([Out] StringBuilder pwszKLID);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern int LoadString(IntPtr hInstance, uint uID, StringBuilder lpBuffer, int nBufferMax);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool FreeLibrary(IntPtr hModule);
 
         /// <summary>
         /// Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null
