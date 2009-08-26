@@ -12,10 +12,15 @@ namespace RT.Util
     public class GlobalKeyboardListener
     {
         /// <summary>
-        /// The collections of keys to watch for
+        /// The collections of keys to watch for. This is ignored if <see cref="HookAllKeys"/> is set to true.
         /// </summary>
         public List<Keys> HookedKeys { get { return _hookedKeys; } }
         private List<Keys> _hookedKeys = new List<Keys>();
+
+        /// <summary>
+        /// Gets or sets a value indicating whether all keys are listened for. If this is set to true, <see cref="HookedKeys"/> is ignored.
+        /// </summary>
+        public bool HookAllKeys { get; set; }
 
         /// <summary>
         /// Handle to the hook, need this to unhook and call the next hook
@@ -58,7 +63,7 @@ namespace RT.Util
         /// <summary>
         /// Installs the global hook
         /// </summary>
-        public void hook()
+        private void hook()
         {
             IntPtr hInstance = WinAPI.LoadLibrary("User32");
             hookDelegate = new WinAPI.KeyboardHookProc(hookProc);
@@ -68,7 +73,7 @@ namespace RT.Util
         /// <summary>
         /// Uninstalls the global hook
         /// </summary>
-        public void unhook()
+        private void unhook()
         {
             WinAPI.UnhookWindowsHookEx(hhook);
         }
@@ -80,13 +85,13 @@ namespace RT.Util
         /// <param name="wParam">The event type</param>
         /// <param name="lParam">The keyhook event information</param>
         /// <returns></returns>
-        public int hookProc(int code, int wParam, ref WinAPI.KeyboardHookStruct lParam)
+        private int hookProc(int code, int wParam, ref WinAPI.KeyboardHookStruct lParam)
         {
             if (code >= 0)
             {
                 Keys key = (Keys) lParam.vkCode;
 
-                if (HookedKeys.Contains(key))
+                if (HookAllKeys || _hookedKeys.Contains(key))
                 {
                     KeyEventArgs kea = new KeyEventArgs(key);
                     if ((wParam == WinAPI.WM_KEYDOWN || wParam == WinAPI.WM_SYSKEYDOWN) && (KeyDown != null))

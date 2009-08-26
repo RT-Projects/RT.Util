@@ -22,7 +22,7 @@ namespace RT.Util
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-        #region Enums / flags / consts
+        #region Enums / flags
 
         /// <summary>Specifies a sound to be played back when displaying a message dialog.</summary>
         public enum MessageBeepType
@@ -53,6 +53,10 @@ namespace RT.Util
             All = 0x0000001F
         }
 
+        #endregion
+
+        #region Constants
+
         public static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
         // Low-Level Keyboard Constants
@@ -61,18 +65,29 @@ namespace RT.Util
         public const int LLKHF_INJECTED = 0x10;
         public const int LLKHF_ALTDOWN = 0x20;
         public const int LLKHF_UP = 0x80;
-
         public const int WH_KEYBOARD_LL = 13;
+
+        public const int WM_ACTIVATE = 0x0006;
+        public const int WM_MOUSEACTIVATE = 0x0021;
         public const int WM_KEYDOWN = 0x100;
         public const int WM_KEYUP = 0x101;
+        public const int WM_CHAR = 0x102;
         public const int WM_SYSKEYDOWN = 0x104;
         public const int WM_SYSKEYUP = 0x105;
 
         public const int HWND_TOPMOST = -1;
         public const int HWND_NOTOPMOST = -2;
-        public const int SWP_NOMOVE = 2;
-        public const int SWP_NOSIZE = 1;
-        public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE;
+        public const int MA_NOACTIVATE = 3;
+
+        // SetWindowPos constants
+        public const int SWP_NOSIZE = 0x0001;
+        public const int SWP_NOMOVE = 0x0002;
+        public const int SWP_NOZORDER = 0x0004;
+        public const int SWP_NOACTIVATE = 0x0010;
+        public const int SWP_SHOWWINDOW = 0x0040;
+        public const int SWP_HIDEWINDOW = 0x0080;
+        public const int SWP_ASYNCWINDOWPOS = 0x4000;
+        public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE; // ?!
 
         public const uint MAPVK_VK_TO_VSC = 0x00;
         public const uint MAPVK_VSC_TO_VK = 0x01;
@@ -90,6 +105,15 @@ namespace RT.Util
         public const int FILE_TYPE_DISK = 0x0001;
         public const int FILE_TYPE_CHAR = 0x0002;
         public const int FILE_TYPE_PIPE = 0x0003;
+
+        // For keybd_event
+        public const int KEYEVENTF_KEYUP = 0x2;
+        public const int KEYEVENTF_UNICODE = 0x4;
+
+        // For the 'type' field in the INPUT struct
+        public const int INPUT_MOUSE = 0;
+        public const int INPUT_KEYBOARD = 1;
+        public const int INPUT_HARDWARE = 2;
 
         public const uint LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
         public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
@@ -136,6 +160,58 @@ namespace RT.Util
             public int flags;
             public int time;
             public int dwExtraInfo;
+        }
+
+        public struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        public struct KEYBDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        public struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct MOUSEKEYBDHARDWAREINPUT
+        {
+            [FieldOffset(0)]
+            public MOUSEINPUT mi;
+            [FieldOffset(0)]
+            public KEYBDINPUT ki;
+            [FieldOffset(0)]
+            public HARDWAREINPUT hi;
+        }
+
+        public struct INPUT
+        {
+            public int type;
+            public MOUSEKEYBDHARDWAREINPUT mkhi;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
         }
 
         #endregion
@@ -267,9 +343,57 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetFocus();
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);
+
+        [DllImport("user32.dll")]
+        public static extern bool AttachThreadInput(IntPtr idAttach, IntPtr idAttachTo, bool fAttach);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+
+        /// <summary>
+        /// Retrieves the window handle of the focused control in the currently active window.
+        /// </summary>
+        /// <param name="ownHandle">The handle to one of your own windows.</param>
+        public static IntPtr GetFocusedControlInActiveWindow(IntPtr ownHandle)
+        {
+            IntPtr activeWindowHandle = GetForegroundWindow();
+
+            IntPtr activeWindowThread = GetWindowThreadProcessId(activeWindowHandle, IntPtr.Zero);
+            IntPtr thisWindowThread = GetWindowThreadProcessId(ownHandle, IntPtr.Zero);
+
+            AttachThreadInput(activeWindowThread, thisWindowThread, true);
+            IntPtr focusedControlHandle = GetFocus();
+            AttachThreadInput(activeWindowThread, thisWindowThread, false);
+
+            return focusedControlHandle;
+        }
 
     }
 

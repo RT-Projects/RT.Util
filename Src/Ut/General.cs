@@ -1,8 +1,8 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using RT.Util.Collections;
-using RT.Util.ExtensionMethods;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace RT.Util
 {
@@ -86,6 +86,67 @@ namespace RT.Util
         public static T Max<T>(params T[] args) where T : IComparable<T>
         {
             return args.Max();
+        }
+
+        /// <summary>
+        /// Sends the specified sequence of key strokes to the active application.
+        /// </summary>
+        /// <param name="keys">A collection of objects of type <see cref="Keys"/> or <see cref="char"/>.</param>
+        /// <exception cref="ArgumentException">
+        ///     <list type="bullet">
+        ///         <item><description><paramref name="keys"/> was null.</description></item>
+        ///         <item><description><paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/> and <see cref="char"/> are accepted.</description></item>
+        ///     </list>
+        /// </exception>
+        public static void SendKeystrokes(IEnumerable<object> keys)
+        {
+            if (keys == null)
+                throw new ArgumentException(@"The input collection cannot be null.", "keys");
+            var arr = keys.ToArray();
+            if (arr.Length < 1)
+                return;
+
+            var inputArr = new WinAPI.INPUT[arr.Length * 2];
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (!(arr[i] is Keys || arr[i] is char))
+                    throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys or char.", "keys");
+                var keyDown = new WinAPI.INPUT
+                {
+                    type = WinAPI.INPUT_KEYBOARD,
+                    mkhi = new WinAPI.MOUSEKEYBDHARDWAREINPUT
+                    {
+                        ki = (arr[i] is Keys)
+                            ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) arr[i] }
+                            : new WinAPI.KEYBDINPUT { wScan = (ushort) (char) arr[i], dwFlags = WinAPI.KEYEVENTF_UNICODE }
+                    }
+                };
+                var keyUp = keyDown;
+                keyUp.mkhi.ki.dwFlags = WinAPI.KEYEVENTF_KEYUP;
+                inputArr[2 * i] = keyDown;
+                inputArr[2 * i + 1] = keyUp;
+            }
+            WinAPI.SendInput((uint) (2 * arr.Length), inputArr, Marshal.SizeOf(inputArr[0]));
+        }
+
+        /// <summary>
+        /// Sends the specified key the specified number of times.
+        /// </summary>
+        /// <param name="key">Key stroke to send.</param>
+        /// <param name="times">Number of times to send the <paramref name="key"/>.</param>
+        public static void SendKeystrokes(Keys key, int times)
+        {
+            if (times > 0)
+                SendKeystrokes(Enumerable.Repeat((object) key, times));
+        }
+
+        /// <summary>
+        /// Sends key strokes equivalent to typing the specified text.
+        /// </summary>
+        public static void SendKeystrokesForText(string text)
+        {
+            if (!string.IsNullOrEmpty(text))
+                SendKeystrokes(text.Cast<object>());
         }
     }
 }
