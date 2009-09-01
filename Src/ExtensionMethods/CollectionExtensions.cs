@@ -88,7 +88,7 @@ namespace RT.Util.ExtensionMethods
         {
             for (int j = list.Count; j >= 1; j--)
             {
-                int item = Ut.RndInt(0, j);
+                int item = Rnd.Next(0, j);
                 if (item < j - 1)
                 {
                     var t = list[item];

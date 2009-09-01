@@ -175,7 +175,7 @@
     <Compile Include="Ut\Diff.cs" />
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
-    <Compile Include="Ut\Random.cs" />
+    <Compile Include="Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
