@@ -300,5 +300,45 @@ namespace RT.Util.ExtensionMethods
                 return resultSelector(e.Current);
             }
         }
+
+        /// <summary>
+        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
+        /// index. Uses default values for the shorter sequence if necessary.
+        /// For example, [1, 2, 3, 4].ZipLongest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
+        /// </summary>
+        public static IEnumerable<Tuple<T1, T2>> ZipLongest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
+            var enum1 = @this.GetEnumerator();
+            var enum2 = other.GetEnumerator();
+            bool more1 = enum1.MoveNext();
+            bool more2 = enum2.MoveNext();
+            while (more1 || more2)
+            {
+                yield return new Tuple<T1, T2>(more1 ? enum1.Current : default(T1), more2 ? enum2.Current : default(T2));
+                if (more1)
+                    more1 = enum1.MoveNext();
+                if (more2)
+                    more2 = enum2.MoveNext();
+            }
+        }
+
+        /// <summary>
+        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
+        /// index. Only enumerates as many pairs as the shorter sequence contains.
+        /// For example, [1, 2, 3, 4].ZipShortest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
+        /// </summary>
+        public static IEnumerable<Tuple<T1, T2>> ZipShortest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
+            var enum1 = @this.GetEnumerator();
+            var enum2 = other.GetEnumerator();
+            bool more1 = enum1.MoveNext();
+            bool more2 = enum2.MoveNext();
+            while (more1 && more2)
+            {
+                yield return new Tuple<T1, T2>(enum1.Current, enum2.Current);
+                more1 = enum1.MoveNext();
+                more2 = enum2.MoveNext();
+            }
+        }
     }
 }

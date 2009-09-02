@@ -42,6 +42,7 @@ namespace RT.Util.Drawing
     /// </summary>
     public sealed class Canvas
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         /// <summary>
         /// The underlying Graphics. All the actual drawing is done onto this instance.
         /// </summary>
@@ -553,5 +554,6 @@ namespace RT.Util.Drawing
             else
                 _offsetY = screenY - worldY * _scaleY;
         }
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }
