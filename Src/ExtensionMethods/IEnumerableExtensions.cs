@@ -120,7 +120,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing all the input elements, followed by the specified additional element.</returns>
-        public static IEnumerable<T> Add<T>(this IEnumerable<T> input, T element)
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> input, T element)
         {
             foreach (var e in input)
                 yield return e;
@@ -132,10 +132,10 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing the specified additional element, followed by all the input elements.</returns>
-        public static IEnumerable<T> Prepend<T>(this IEnumerable<T> input, T element)
+        public static IEnumerable<T> Concat<T>(this T head, IEnumerable<T> tail)
         {
-            yield return element;
-            foreach (var e in input)
+            yield return head;
+            foreach (var e in tail)
                 yield return e;
         }
 
