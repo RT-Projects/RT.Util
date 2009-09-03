@@ -303,8 +303,8 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. Uses default values for the shorter sequence if necessary.
-        /// For example, [1, 2, 3, 4].ZipLongest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
+        /// index. The shorter sequence will be padded with its type's default value to match the longer sequence's length.
+        /// For example, [1, 2, 3, 4].ZipLongest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
         /// </summary>
         public static IEnumerable<Tuple<T1, T2>> ZipLongest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
@@ -324,8 +324,8 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. Only enumerates as many pairs as the shorter sequence contains.
-        /// For example, [1, 2, 3, 4].ZipShortest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
+        /// index. The longer sequence will be truncated to match the shorter sequence's length.
+        /// For example, [1, 2, 3, 4].ZipShortest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
         /// </summary>
         public static IEnumerable<Tuple<T1, T2>> ZipShortest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
