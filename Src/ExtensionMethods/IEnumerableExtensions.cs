@@ -303,10 +303,10 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. The shorter sequence will be padded with its type's default value to match the longer sequence's length.
-        /// For example, [1, 2, 3, 4].ZipLongest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
+        /// index. The shorter sequence is padded with its type's default value to match the length of the longer sequence.
+        /// For example, [1, 2, 3, 4].ZipPad(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
         /// </summary>
-        public static IEnumerable<Tuple<T1, T2>> ZipLongest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        public static IEnumerable<Tuple<T1, T2>> ZipPad<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
@@ -324,10 +324,10 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. The longer sequence will be truncated to match the shorter sequence's length.
-        /// For example, [1, 2, 3, 4].ZipShortest(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
+        /// index. The longer sequence is truncated to match the length of the shorter sequence.
+        /// For example, [1, 2, 3, 4].ZipTruncate(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
         /// </summary>
-        public static IEnumerable<Tuple<T1, T2>> ZipShortest<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        public static IEnumerable<Tuple<T1, T2>> ZipTruncate<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
@@ -338,6 +338,21 @@ namespace RT.Util.ExtensionMethods
                 yield return new Tuple<T1, T2>(enum1.Current, enum2.Current);
                 more1 = enum1.MoveNext();
                 more2 = enum2.MoveNext();
+            }
+        }
+
+        /// <summary>
+        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
+        /// index. The second sequence is either padded or truncated to match the first sequence's length.
+        /// </summary>
+        public static IEnumerable<Tuple<T1, T2>> Zip<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
+            var enum1 = @this.GetEnumerator();
+            var enum2 = other.GetEnumerator();
+            while (enum1.MoveNext())
+            {
+                T2 elem = enum2.MoveNext() ? enum2.Current : default(T2);
+                yield return new Tuple<T1, T2>(enum1.Current, elem);
             }
         }
     }
