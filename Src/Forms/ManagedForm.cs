@@ -47,8 +47,8 @@ namespace RT.Util.Forms
 
                     if (dimensions == null)
                     {
-                        Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
-                        Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
+                        Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
+                        Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
                         _normalWidth = Width;
                         _normalHeight = Height;
                     }
