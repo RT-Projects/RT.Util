@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text;
+using System;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -36,6 +37,23 @@ namespace RT.Util.ExtensionMethods
         {
             var txt = encoding.GetString(stream.ReadAllBytes());
             return txt;
+        }
+
+        /// <summary>
+        /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
+        /// before the end of the stream, a shorter array is returned.
+        /// </summary>
+        /// <param name="length">Number of bytes to read from the stream.</param>
+        public static byte[] Read(this Stream stream, int length)
+        {
+            byte[] buf = new byte[length];
+            var bytesRead = stream.Read(buf, 0, length);
+            if (bytesRead == length)
+                return buf;
+            byte[] result = new byte[bytesRead];
+            if (bytesRead > 0)
+                Array.Copy(buf, result, bytesRead);
+            return result;
         }
 
         #region Optim write
@@ -145,18 +163,18 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static int ReadInt32Optim(this Stream stream)
         {
-            byte b = (byte)stream.ReadByte();
+            byte b = (byte) stream.ReadByte();
             int shifts = 0;
             int res = 0;
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
+                b = (byte) (b & 127);
                 res = res | (b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
-                b = (byte)stream.ReadByte();
+                b = (byte) stream.ReadByte();
             }
             // Sign-extend
             if (shifts >= 32)
@@ -170,18 +188,18 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static int ReadUInt32Optim(this Stream stream)
         {
-            byte b = (byte)stream.ReadByte();
+            byte b = (byte) stream.ReadByte();
             int shifts = 0;
             int res = 0;
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
+                b = (byte) (b & 127);
                 res = res | (b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
-                b = (byte)stream.ReadByte();
+                b = (byte) stream.ReadByte();
             }
             return res;
         }
@@ -191,18 +209,18 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static long ReadInt64Optim(this Stream stream)
         {
-            byte b = (byte)stream.ReadByte();
+            byte b = (byte) stream.ReadByte();
             int shifts = 0;
             long res = 0;
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
-                res = res | ((long)b << shifts);
+                b = (byte) (b & 127);
+                res = res | ((long) b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
-                b = (byte)stream.ReadByte();
+                b = (byte) stream.ReadByte();
             }
             // Sign-extend
             if (shifts >= 64)
@@ -216,18 +234,18 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ulong ReadUInt64Optim(this Stream stream)
         {
-            byte b = (byte)stream.ReadByte();
+            byte b = (byte) stream.ReadByte();
             int shifts = 0;
             ulong res = 0;
             while (true)
             {
                 bool havemore = (b & 128) != 0;
-                b = (byte)(b & 127);
-                res = res | ((ulong)b << shifts);
+                b = (byte) (b & 127);
+                res = res | ((ulong) b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
-                b = (byte)stream.ReadByte();
+                b = (byte) stream.ReadByte();
             }
             return res;
         }
