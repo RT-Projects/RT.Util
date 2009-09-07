@@ -230,7 +230,7 @@ namespace RT.Util.Collections
             _set.Sort(comparison);
         }
 
-        private sealed class SetDebugView
+        internal sealed class SetDebugView
         {
             private IEnumerable<T> _set;
 
