@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 using RT.Util.Collections;
 
@@ -175,6 +177,37 @@ namespace RT.Util
         public static Tuple<T1, T2, T3, T4> Tuple<T1, T2, T3, T4>(T1 value1, T2 value2, T3 value3, T4 value4)
         {
             return new Tuple<T1, T2, T3, T4>(value1, value2, value3, value4);
+        }
+
+        /// <summary>
+        /// Reads the specified file and computes the SHA1 hash function from its contents.
+        /// </summary>
+        /// <param name="path">Path to the file to compute SHA1 hash function from.</param>
+        /// <returns>Result of the SHA1 hash function as raw bytes.</returns>
+        public static byte[] Sha1(string path)
+        {
+            var s = SHA1.Create();
+            using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                return s.ComputeHash(f);
+        }
+
+        /// <summary>
+        /// Reads the specified file and computes the SHA1 hash function from its contents.
+        /// </summary>
+        /// <param name="path">Path to the file to compute SHA1 hash function from.</param>
+        /// <returns>Result of the SHA1 hash function as a hexadecimal representation.</returns>
+        public static string Sha1Hex(string path)
+        {
+            var sha1Raw = Sha1(path);
+            char[] charArr = new char[sha1Raw.Length * 2];
+            for (int i = 0; i < sha1Raw.Length; i++)
+            {
+                byte b = (byte) (sha1Raw[i] >> 4);
+                charArr[2 * i] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
+                b = (byte) (sha1Raw[i] & 0xf);
+                charArr[2 * i + 1] = (char) (b < 10 ? '0' + b : 'W' + b);
+            }
+            return new string(charArr);
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
@@ -77,6 +78,23 @@ namespace RT.Util
                 return int.MaxValue;
             try { return Console.WindowWidth; }
             catch { return int.MaxValue; }
+        }
+
+        /// <summary>
+        /// Outputs the specified message to the console window, word-wrapping to the console window's width if possible.
+        /// </summary>
+        public static void WriteLine(string message)
+        {
+            try
+            {
+                int width = Console.BufferWidth;
+                foreach (var line in message.WordWrap(width - 1))
+                    Console.WriteLine(line);
+            }
+            catch
+            {
+                Console.WriteLine(message);
+            }
         }
     }
 }

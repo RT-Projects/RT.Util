@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
-using System;
 
 namespace RT.Util.ExtensionMethods
 {
