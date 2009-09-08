@@ -43,6 +43,7 @@ namespace RT.Util.ExtensionMethods
         /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
         /// before the end of the stream, a shorter array is returned.
         /// </summary>
+        /// <param name="stream">Stream to read from.</param>
         /// <param name="length">Number of bytes to read from the stream.</param>
         public static byte[] Read(this Stream stream, int length)
         {
