@@ -158,6 +158,16 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Converts the specified byte array to a string where each byte turns into an ASCII character. Bytes greater than 0x7F are replaced with question marks ('?').
+        /// </summary>
+        /// <param name="input">Byte array to convert to a string.</param>
+        /// <returns>The specified byte array, converted to a string with non-ASCII characters replaced with question marks ('?').</returns>
+        public static string FromAscii(this byte[] input)
+        {
+            return Encoding.ASCII.GetString(input);
+        }
+
+        /// <summary>
         /// Returns a JavaScript-compatible representation of the string in double-quotes with the appropriate characters escaped.
         /// </summary>
         /// <param name="input">String to escape.</param>
