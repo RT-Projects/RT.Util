@@ -56,5 +56,98 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual(index1, i1);
             Assert.AreEqual(index2, i2);
         }
+
+        private class GenericParameter
+        {
+            public string SomeString;
+        }
+
+        [Test]
+        public void TestAddSafe1()
+        {
+            var dic = new Dictionary<string, List<GenericParameter>>();
+
+            Assert.AreEqual(0, dic.Count);
+            try
+            {
+                var x = dic["someKey"];
+                Assert.Fail();
+            }
+            catch (KeyNotFoundException) { }
+
+            dic.AddSafe("someKey", new GenericParameter { SomeString = "someValue" });
+            Assert.AreEqual(1, dic.Count);
+            var x2 = dic["someKey"];
+            Assert.AreEqual(1, x2.Count);
+
+            dic.AddSafe("someKey", new GenericParameter { SomeString = "someOtherValue" });
+            Assert.AreEqual(1, dic.Count);
+            Assert.AreEqual(2, x2.Count);
+
+            Assert.IsTrue(x2.Select(g => g.SomeString).SequenceEqual(new string[] { "someValue", "someOtherValue" }));
+        }
+
+        [Test]
+        public void TestAddSafe2()
+        {
+            var dic = new Dictionary<string, Dictionary<string, List<GenericParameter>>>();
+
+            Assert.AreEqual(0, dic.Count);
+            try
+            {
+                var x = dic["someKey"];
+                Assert.Fail();
+            }
+            catch (KeyNotFoundException) { }
+
+            dic.AddSafe("someKey", "someOtherKey", new GenericParameter { SomeString = "someValue" });
+            Assert.AreEqual(1, dic.Count);
+            var x2 = dic["someKey"];
+            Assert.AreEqual(1, x2.Count);
+            var x3 = dic["someKey"]["someOtherKey"];
+            Assert.AreEqual(1, x3.Count);
+
+            dic.AddSafe("someKey", "someOtherKey", new GenericParameter { SomeString = "someOtherValue" });
+            Assert.AreEqual(1, dic.Count);
+            Assert.AreEqual(1, x2.Count);
+            Assert.AreEqual(2, x3.Count);
+
+            Assert.IsTrue(x3.Select(g => g.SomeString).SequenceEqual(new string[] { "someValue", "someOtherValue" }));
+        }
+
+        [Test]
+        public void TestIncSafe()
+        {
+            var dic = new Dictionary<string, int>();
+            Assert.AreEqual(0, dic.Count);
+            try
+            {
+                var x = dic["someKey"];
+                Assert.Fail();
+            }
+            catch (KeyNotFoundException) { }
+
+            dic.IncSafe("someKey");
+            Assert.AreEqual(1, dic.Count);
+            DoVoid(dic["someKey"]);
+            Assert.AreEqual(1, dic["someKey"]);
+
+            dic.IncSafe("someKey", 47);
+            Assert.AreEqual(1, dic.Count);
+            DoVoid(dic["someKey"]);
+            Assert.AreEqual(48, dic["someKey"]);
+
+            dic.IncSafe("someOtherKey", 47);
+            Assert.AreEqual(2, dic.Count);
+            DoVoid(dic["someOtherKey"]);
+            Assert.AreEqual(47, dic["someOtherKey"]);
+
+            dic.IncSafe("someOtherKey");
+            Assert.AreEqual(2, dic.Count);
+            DoVoid(dic["someOtherKey"]);
+            Assert.AreEqual(48, dic["someOtherKey"]);
+        }
+
+        public void DoVoid(params object[] parameters) { }
     }
 }

@@ -32,6 +32,12 @@ namespace RT.Util
                 var doCollectionExtensionsTests = new RT.Util.ExtensionMethods.CollectionExtensionsTests();
                 Console.WriteLine("-- Running test: TestBinarySearch");
                 doCollectionExtensionsTests.TestBinarySearch();
+                Console.WriteLine("-- Running test: TestAddSafe1");
+                doCollectionExtensionsTests.TestAddSafe1();
+                Console.WriteLine("-- Running test: TestAddSafe2");
+                doCollectionExtensionsTests.TestAddSafe2();
+                Console.WriteLine("-- Running test: TestIncSafe");
+                doCollectionExtensionsTests.TestIncSafe();
                 Console.WriteLine("");
                 Console.WriteLine("Testing type: RT.Util.ExtensionMethods.DateTimeExtensionsTests");
                 var doDateTimeExtensionsTests = new RT.Util.ExtensionMethods.DateTimeExtensionsTests();
