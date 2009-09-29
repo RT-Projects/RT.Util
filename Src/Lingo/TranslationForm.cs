@@ -101,7 +101,7 @@ namespace RT.Util.Lingo
             var dicPanels = new Dictionary<object, List<TranslationPanel>>();
             var lstAllPanels = new List<TranslationPanel>();
             var lstUngroupedPanels = new List<TranslationPanel>();
-            createPanelsForType(null, typeof(T), typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels);
+            createPanelsForType(null, typeof(T), typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null);
 
             // Discover all the group types, their enum values, and then their attributes
             Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
@@ -411,33 +411,36 @@ namespace RT.Util.Lingo
                 Close();
         }
 
-        private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels)
+        private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups)
         {
-            var attrs = type.GetCustomAttributes(typeof(LingoStringClassAttribute), true);
-            if (!attrs.Any())
+            if (!type.GetCustomAttributes(typeof(LingoStringClassAttribute), true).Any())
             {
                 if (chkName == null)
-                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.Name), "type");
+                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.FullName), "type");
                 else
                     throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkType.FullName, chkName), "type");
             }
+
+            var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
+            if (classGroups != null)
+                thisClassGroups = thisClassGroups.Concat(classGroups);
 
             foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
                 {
-                    string notes = f.GetCustomAttributes(typeof(LingoNotesAttribute), true).Cast<LingoNotesAttribute>().Select(lna => lna.Notes).FirstOrDefault();
+                    string notes = f.GetCustomAttributes(true).OfType<LingoNotesAttribute>().Select(lna => lna.Notes).FirstOrDefault();
                     var pnl = createTranslationPanel(notes, f.GetValue(original), f.GetValue(translation), f.Name);
                     lstAllPanels.Add(pnl);
-                    var groups = f.GetCustomAttributes(typeof(LingoInGroupAttribute), true).Cast<LingoInGroupAttribute>().Select(liga => liga.Group);
-                    if (groups.Any())
+                    var groups = f.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group).Concat(thisClassGroups);
+                    if (!groups.Any())
+                        lstUngroupedPanels.Add(pnl);
+                    else
                         foreach (var group in groups)
                             dicPanels.AddSafe(group, pnl);
-                    else
-                        lstUngroupedPanels.Add(pnl);
                 }
                 else if (!f.GetCustomAttributes(typeof(LingoIgnoreAttribute), true).Any())
-                    createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels);
+                    createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups);
             }
         }
 

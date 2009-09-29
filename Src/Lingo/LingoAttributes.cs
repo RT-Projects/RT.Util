@@ -17,7 +17,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Specifies that a translatable string is in a particular group.</summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class LingoInGroupAttribute : Attribute
     {
         private readonly object _group;
