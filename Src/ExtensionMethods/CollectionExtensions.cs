@@ -266,5 +266,24 @@ namespace RT.Util.ExtensionMethods
                 dict.Add(kvp.Key, kvp.Value);
             return dict;
         }
+
+        /// <summary>
+        /// Generates a representation of the specified byte array as hexadecimal numbers ("hexdump").
+        /// </summary>
+        public static string ToHex(this byte[] byteArray)
+        {
+            char[] charArr = new char[byteArray.Length * 2];
+            var j = 0;
+            for (int i = 0; i < byteArray.Length; i++)
+            {
+                byte b = (byte) (byteArray[i] >> 4);
+                charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
+                j++;
+                b = (byte) (byteArray[i] & 0xf);
+                charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);
+                j++;
+            }
+            return new string(charArr);
+        }
     }
 }
