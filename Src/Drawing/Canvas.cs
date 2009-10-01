@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
-namespace RT.Util.Drawing
+namespace R.Util.Drawing
 {
     /// <summary>
     /// Encodes axes direction mode for <see cref="Canvas"/>.

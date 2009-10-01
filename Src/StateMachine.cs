@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using RT.Util.Collections;
 
-namespace RT.Util.FSM
+namespace R.Util.FSM
 {
     /// <summary>
     /// Represents a finite state machine. Terse overview: each state is represented by a static class

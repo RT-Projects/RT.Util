@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace RT.Util.Web
+namespace R.Util.Web
 {
     /// <summary>
     /// Allows PmWiki pages to be retrieved and edited.

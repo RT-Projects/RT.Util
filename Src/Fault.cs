@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
-namespace RT.Util
+namespace R.Util
 {
     /// <summary>
     /// This class can be used to keep track of non-fatal problems which are not reported

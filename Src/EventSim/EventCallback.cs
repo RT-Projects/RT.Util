@@ -1,5 +1,5 @@
 
-namespace RT.Util.EventSim
+namespace R.Util.EventSim
 {
     /// <summary>
     /// Invoked whenever an event is "due", i.e. whenever the simulation

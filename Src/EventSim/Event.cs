@@ -1,5 +1,5 @@
 
-namespace RT.Util.EventSim
+namespace R.Util.EventSim
 {
     /// <summary>
     /// Represents an Event that will occur at a certain time in the simulation.

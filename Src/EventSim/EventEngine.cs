@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RT.Util.EventSim
+namespace R.Util.EventSim
 {
     /// <summary>
     /// Implements an event-driven time-based simulation.
