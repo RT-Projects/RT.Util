@@ -10,6 +10,14 @@ namespace RT.Util
         private static Random _rnd = new Random();
 
         /// <summary>
+        /// Resets the random number generator using the specified seed.
+        /// </summary>
+        public static void Reset(int seed)
+        {
+            _rnd = new Random(seed);
+        }
+
+        /// <summary>
         /// Returns a random double between 0.0 and 1.0.
         /// </summary>
         public static double NextDouble()
