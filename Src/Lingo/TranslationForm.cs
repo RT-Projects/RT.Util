@@ -413,7 +413,7 @@ namespace RT.Util.Lingo
 
         private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups)
         {
-            if (!type.GetCustomAttributes(typeof(LingoStringClassAttribute), true).Any())
+            if (!type.IsDefined(typeof(LingoStringClassAttribute), true))
             {
                 if (chkName == null)
                     throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.FullName), "type");
@@ -439,7 +439,7 @@ namespace RT.Util.Lingo
                         foreach (var group in groups)
                             dicPanels.AddSafe(group, pnl);
                 }
-                else if (!f.GetCustomAttributes(typeof(LingoIgnoreAttribute), true).Any())
+                else if (!f.IsDefined(typeof(LingoIgnoreAttribute), true))
                     createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups);
             }
         }
