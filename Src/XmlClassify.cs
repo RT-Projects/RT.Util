@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
+using System.Text.RegularExpressions;
 
 namespace RT.Util.Xml
 {
@@ -382,14 +383,26 @@ namespace RT.Util.Xml
                     foreach (var field in saveType.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
-                        var attribs = field.GetCustomAttributes(false);
+                        MemberInfo getAttrsFrom = field;
+
+                        // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
+                        var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
+                        if (m.Success)
+                        {
+                            var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                            if (prop != null)
+                            {
+                                rFieldName = m.Groups[1].Value;
+                                getAttrsFrom = prop;
+                            }
+                        }
 
                         // [XmlIgnore], [XmlParent]
-                        if (attribs.Any(x => x is XmlIgnoreAttribute || x is XmlParentAttribute))
+                        if (getAttrsFrom.IsDefined<XmlIgnoreAttribute>() || getAttrsFrom.IsDefined<XmlParentAttribute>())
                             continue;
 
                         // [XmlFollowId]
-                        else if (attribs.Any(x => x is XmlFollowIdAttribute))
+                        else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
                         {
                             object saveValue = field.GetValue(saveObject);
 
@@ -427,13 +440,13 @@ namespace RT.Util.Xml
     /// to retrieve the Id used to reference the object. You can also capture the ID into the class T by using the
     /// <see cref="XmlIdAttribute"/> attribute within that class.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field, it is ignored by XmlClassify. Data stored in this field is not persisted.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIgnoreAttribute : Attribute { }
 
     /// <summary>
@@ -441,7 +454,7 @@ namespace RT.Util.Xml
     /// in the XML tree. If the field is of the wrong type, a runtime exception will occur. If there was
     /// no parent node, the field will be set to null.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlParentAttribute : Attribute { }
 
     /// <summary>
@@ -449,7 +462,7 @@ namespace RT.Util.Xml
     /// that stores this object. See <see cref="XmlFollowIdAttribute"/>. The field must
     /// be of type <see langword="string"/>.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIdAttribute : Attribute { }
 
     /// <summary>

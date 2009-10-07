@@ -49,6 +49,18 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Returns all properties contained in the specified type, including private properties inherited from base classes.
+        /// </summary>
+        /// <param name="type">The type to return all properties of.</param>
+        /// <returns>An <see cref="IEnumerable&lt;PropertyInfo&gt;"/> containing all properties contained in this type, including private properties inherited from base classes.</returns>
+        public static IEnumerable<PropertyInfo> GetAllProperties(this Type type)
+        {
+            IEnumerable<PropertyInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var baseType = type.BaseType;
+            return (baseType == null) ? properties : GetAllProperties(baseType).Concat(properties);
+        }
+
+        /// <summary>
         /// Returns a proper statically-typed collection of the custom attributes on the current member.
         /// </summary>
         /// <param name="member">Member whose custom attributes to return.</param>
