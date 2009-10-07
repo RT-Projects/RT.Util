@@ -215,11 +215,11 @@ namespace RT.Util.Lingo
         private static void setMissingTranslation(object translation, string key, string origText)
         {
             var translationType = translation.GetType();
-            var attributes = translationType.GetCustomAttributes(typeof(LingoDebugAttribute), false);
+            var attributes = translationType.GetCustomAttributes<LingoDebugAttribute>();
             if (!attributes.Any())
                 throw new Exception("Your translation type must have a [LingoDebug(...)] attribute which specifies the relative path from the compiled assembly to the source of that translation type.");
 
-            var translationDebugAttribute = (LingoDebugAttribute) attributes.First();
+            var translationDebugAttribute = attributes.First();
             var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), translationDebugAttribute.RelativePath);
             string source = File.ReadAllText(path);
             var match = Regex.Match(source, @"^\s*#region " + translationType.Name + @"\s*$", RegexOptions.Multiline);

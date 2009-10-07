@@ -47,5 +47,26 @@ namespace RT.Util.ExtensionMethods
             var baseType = type.BaseType;
             return (baseType == null) ? fields : GetAllFields(baseType).Concat(fields);
         }
+
+        /// <summary>
+        /// Returns a proper statically-typed collection of the custom attributes on the current member.
+        /// </summary>
+        /// <param name="member">Member whose custom attributes to return.</param>
+        /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
+        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo member)
+        {
+            return member.GetCustomAttributes(typeof(T), false).Cast<T>();
+        }
+
+        /// <summary>
+        /// Returns a proper statically-typed collection of the custom attributes on the current member.
+        /// </summary>
+        /// <param name="member">Member whose custom attributes to return.</param>
+        /// <param name="inherit">Specifies whether to search this member's inheritance chain to find the attributes.</param>
+        /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
+        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo member, bool inherit)
+        {
+            return member.GetCustomAttributes(typeof(T), inherit).Cast<T>();
+        }
     }
 }

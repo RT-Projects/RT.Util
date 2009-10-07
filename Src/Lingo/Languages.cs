@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Lingo
 {
@@ -616,8 +617,8 @@ namespace RT.Util.Lingo
             var t = typeof(Language);
             foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
                 if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).NumberSystem;
+                    foreach (var a in f.GetCustomAttributes<LanguageInfoAttribute>())
+                        return a.NumberSystem;
             return null;
         }
 
@@ -627,8 +628,8 @@ namespace RT.Util.Lingo
             var t = typeof(Language);
             foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
                 if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).NativeName;
+                    foreach (var a in f.GetCustomAttributes<LanguageInfoAttribute>())
+                        return a.NativeName;
             return null;
         }
 
@@ -638,8 +639,8 @@ namespace RT.Util.Lingo
             var t = typeof(Language);
             foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
                 if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).EnglishName;
+                    foreach (var a in f.GetCustomAttributes<LanguageInfoAttribute>())
+                        return a.EnglishName;
             return null;
         }
 
@@ -649,8 +650,8 @@ namespace RT.Util.Lingo
             var t = typeof(Language);
             foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static))
                 if ((Language) f.GetValue(null) == language)
-                    foreach (var a in f.GetCustomAttributes(typeof(LanguageInfoAttribute), false))
-                        return ((LanguageInfoAttribute) a).LanguageCode;
+                    foreach (var a in f.GetCustomAttributes<LanguageInfoAttribute>())
+                        return a.LanguageCode;
             return null;
         }
     }

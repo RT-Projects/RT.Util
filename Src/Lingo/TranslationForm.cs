@@ -107,8 +107,8 @@ namespace RT.Util.Lingo
             Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
             foreach (var type in dicPanels.Select(kvp => kvp.Key.GetType()).Distinct())
                 foreach (var f in type.GetFields(BindingFlags.Static | BindingFlags.Public))
-                    foreach (var attr in f.GetCustomAttributes(typeof(LingoGroupAttribute), false))
-                        dic.Add(f.GetValue(null), new Tuple<string, string>(((LingoGroupAttribute) attr).Name, ((LingoGroupAttribute) attr).Description));
+                    foreach (var attr in f.GetCustomAttributes<LingoGroupAttribute>())
+                        dic.Add(f.GetValue(null), new Tuple<string, string>(attr.Name, attr.Description));
 
             // Create all the list items
             foreach (var kvp in dic)
