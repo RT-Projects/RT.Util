@@ -199,18 +199,30 @@ namespace RT.Util.Xml
                     foreach (var field in type.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
-                        var attribs = field.GetCustomAttributes(false);
+                        MemberInfo getAttrsFrom = field;
+
+                        // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
+                        var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
+                        if (m.Success)
+                        {
+                            var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                            if (prop != null)
+                            {
+                                rFieldName = m.Groups[1].Value;
+                                getAttrsFrom = prop;
+                            }
+                        }
 
                         // [XmlIgnore]
-                        if (attribs.Any(x => x is XmlIgnoreAttribute))
+                        if (getAttrsFrom.IsDefined<XmlIgnoreAttribute>())
                             continue;
 
                         // [XmlParent]
-                        else if (attribs.Any(x => x is XmlParentAttribute))
+                        else if (getAttrsFrom.IsDefined<XmlParentAttribute>())
                             field.SetValue(ret, parentNode);
 
                         // [XmlFollowId]
-                        else if (attribs.Any(x => x is XmlFollowIdAttribute))
+                        else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
                         {
                             if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
                                 throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
