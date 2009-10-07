@@ -68,5 +68,36 @@ namespace RT.Util.ExtensionMethods
         {
             return member.GetCustomAttributes(typeof(T), inherit).Cast<T>();
         }
+
+        /// <summary>
+        /// Returns a proper statically-typed collection of the custom attributes on the current assembly.
+        /// </summary>
+        /// <param name="member">Assembly whose custom attributes to return.</param>
+        /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
+        public static IEnumerable<T> GetCustomAttributes<T>(this Assembly assembly)
+        {
+            return assembly.GetCustomAttributes(typeof(T), false).Cast<T>();
+        }
+
+        /// <summary>
+        /// Indicates whether one or more instance of the specified attribute type is applied to this member.
+        /// </summary>
+        /// <typeparam name="T">The type of attribute to search for.</typeparam>
+        /// <param name="member">Member whose custom attributes to search.</param>
+        public static bool IsDefined<T>(this MemberInfo member)
+        {
+            return member.IsDefined(typeof(T), false);
+        }
+
+        /// <summary>
+        /// Indicates whether one or more instance of the specified attribute type is applied to this member.
+        /// </summary>
+        /// <typeparam name="T">The type of attribute to search for.</typeparam>
+        /// <param name="member">Member whose custom attributes to search.</param>
+        /// <param name="inherit">Specifies whether to search this member's inheritance chain to find the attributes.</param>
+        public static bool IsDefined<T>(this MemberInfo member, bool inherit)
+        {
+            return member.IsDefined(typeof(T), inherit);
+        }
     }
 }

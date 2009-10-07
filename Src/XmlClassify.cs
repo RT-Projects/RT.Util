@@ -497,7 +497,7 @@ namespace RT.Util.Xml
                 {
                     _cached = _generator();
                     // Update any field in the class that has an [XmlId] attribute and is of type string.
-                    foreach (var field in _cached.GetType().GetAllFields().Where(fld => fld.FieldType == typeof(string) && fld.IsDefined(typeof(XmlIdAttribute), false)))
+                    foreach (var field in _cached.GetType().GetAllFields().Where(fld => fld.FieldType == typeof(string) && fld.IsDefined<XmlIdAttribute>()))
                         field.SetValue(_cached, _id);
                     _haveCache = true;
                 }

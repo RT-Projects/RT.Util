@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Permissions;
@@ -392,7 +393,7 @@ namespace RT.Util
             Assembly assembly = Assembly.GetEntryAssembly();
 
             // Title
-            try { _printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0] as AssemblyTitleAttribute).Title); }
+            try { _printer.PrintLine(assembly.GetCustomAttributes<AssemblyTitleAttribute>().First().Title); }
             catch { }
 
             // Version
@@ -400,7 +401,7 @@ namespace RT.Util
             catch { }
 
             // Copyright
-            try { _printer.PrintLine((assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0] as AssemblyCopyrightAttribute).Copyright); }
+            try { _printer.PrintLine(assembly.GetCustomAttributes<AssemblyCopyrightAttribute>().First().Copyright); }
             catch { }
 
             _printer.PrintLine("");
