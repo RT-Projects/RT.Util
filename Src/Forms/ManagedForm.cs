@@ -26,15 +26,15 @@ namespace RT.Util.Forms
         {
             if (settings == null) throw new ArgumentNullException("settings");
 
-            // Just leaving the form font at the default uses the wrong font - the one
-            // returned by SystemFonts.DefaultFont, which is not one configured through the Desktop Properties dialog.
-            // Fix this.
-            Font = System.Drawing.SystemFonts.MessageBoxFont;
-
             // Since the constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
             // we need to apply the settings later. Use the Load event for this
             Load += (sender, e) =>
             {
+                // Just leaving the form font at the default uses the wrong font - the one
+                // returned by SystemFonts.DefaultFont, which is not one configured through the Desktop Properties dialog.
+                // Fix this.
+                Font = System.Drawing.SystemFonts.MessageBoxFont;
+
                 _settings = settings;
                 try
                 {
