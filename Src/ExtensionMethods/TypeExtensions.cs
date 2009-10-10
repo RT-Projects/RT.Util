@@ -84,7 +84,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns a proper statically-typed collection of the custom attributes on the current assembly.
         /// </summary>
-        /// <param name="member">Assembly whose custom attributes to return.</param>
+        /// <param name="assembly">Assembly whose custom attributes to return.</param>
         /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
         public static IEnumerable<T> GetCustomAttributes<T>(this Assembly assembly)
         {
