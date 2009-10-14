@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Conversions.cs" />
     <Compile Include="Drawing\Canvas.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="EventSim\EventTask.cs" />
     <Compile Include="Fault.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
+    <Compile Include="Regex2.cs" />
     <Compile Include="StateMachine.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />
