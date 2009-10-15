@@ -124,7 +124,17 @@ namespace RT.Util.Xml
             else if (type.IsEnum)
                 return Enum.Parse(type, elem.Value);
             else if (type == typeof(string))
+            {
+                if (elem.Attribute("encoding") != null && elem.Attribute("encoding").Value == "base64")
+                    return elem.Value.Base64UrlDecode().FromUtf8();
                 return elem.Value;
+            }
+            else if (type == typeof(char))
+            {
+                if (elem.Attribute("encoding") != null && elem.Attribute("encoding").Value == "codepoint")
+                    return (char) int.Parse(elem.Value);
+                return elem.Value[0];
+            }
             else if (RConvert.IsSupportedType(type))
                 return RConvert.Exact(type, elem.Value);
             else
@@ -190,13 +200,32 @@ namespace RT.Util.Xml
                 {
                     object ret;
 
-                    var constructor = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
-                    if (constructor == null)
-                        throw new MissingMethodException("The type {0} has no parameterless constructor.".Fmt(type.FullName));
-                    try { ret = constructor.Invoke(Type.EmptyTypes); }
-                    catch (Exception e) { throw new Exception("The parameterless constructor of the type {0} threw an exception.".Fmt(type.FullName), e); }
+                    Type realType = type;
+                    var typeAttr = elem.Attribute("type");
+                    if (typeAttr != null)
+                    {
+                        var candidates = type.Assembly.GetTypes().Where(t => !t.IsGenericType && !t.IsNested && ((t.Namespace == type.Namespace && t.Name == typeAttr.Value) || t.FullName == typeAttr.Value)).ToArray();
+                        if (candidates.Any())
+                            realType = candidates.First();
+                    }
+                    else
+                    {
+                        typeAttr = elem.Attribute("fulltype");
+                        var t = typeAttr != null ? Type.GetType(typeAttr.Value) : null;
+                        if (t != null)
+                            realType = t;
+                    }
 
-                    foreach (var field in type.GetAllFields())
+                    try
+                    {
+                        ret = Activator.CreateInstance(realType);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
+                    }
+
+                    foreach (var field in realType.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
                         MemberInfo getAttrsFrom = field;
@@ -205,7 +234,7 @@ namespace RT.Util.Xml
                         var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
                         if (m.Success)
                         {
-                            var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                            var prop = realType.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
                             if (prop != null)
                             {
                                 rFieldName = m.Groups[1].Value;
@@ -225,7 +254,7 @@ namespace RT.Util.Xml
                         else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
                         {
                             if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                                throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
+                                throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(realType.FullName, field.Name));
 
                             Type innerType = field.FieldType.GetGenericArguments()[0];
                             var attr = elem.Attribute(rFieldName);
@@ -269,7 +298,7 @@ namespace RT.Util.Xml
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename)
         {
             string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            saveObjectToXmlFile(saveObject, filename, baseDir);
+            saveObjectToXmlFile(saveObject, typeof(T), filename, baseDir);
         }
 
         /// <summary>
@@ -283,12 +312,12 @@ namespace RT.Util.Xml
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir)
         {
-            saveObjectToXmlFile(saveObject, filename, baseDir);
+            saveObjectToXmlFile(saveObject, typeof(T), filename, baseDir);
         }
 
-        private static void saveObjectToXmlFile(object saveObject, string filename, string baseDir)
+        private static void saveObjectToXmlFile(object saveObject, Type declaredType, string filename, string baseDir)
         {
-            var x = objectToXElement(saveObject, baseDir, "item");
+            var x = objectToXElement(saveObject, declaredType, baseDir, "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -301,7 +330,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject)
         {
-            return objectToXElement(saveObject, null, "item");
+            return objectToXElement(saveObject, typeof(T), null, "item");
         }
 
         /// <summary>
@@ -314,7 +343,7 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir)
         {
-            return objectToXElement(saveObject, baseDir, "item");
+            return objectToXElement(saveObject, typeof(T), baseDir, "item");
         }
 
         /// <summary>
@@ -329,10 +358,10 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir, string tagName)
         {
-            return objectToXElement(saveObject, baseDir, tagName);
+            return objectToXElement(saveObject, typeof(T), baseDir, tagName);
         }
 
-        private static XElement objectToXElement(object saveObject, string baseDir, string tagName)
+        private static XElement objectToXElement(object saveObject, Type declaredType, string baseDir, string tagName)
         {
             XElement elem = new XElement(tagName);
 
@@ -343,10 +372,31 @@ namespace RT.Util.Xml
             }
 
             Type saveType = saveObject.GetType();
+
             if (saveType == typeof(XElement))
                 elem.Add(new XElement(saveObject as XElement));
             else if (saveType == typeof(string))
-                elem.Add(saveObject);
+            {
+                string str = (string) saveObject;
+                if (str.Any(ch => ch < ' '))
+                {
+                    elem.Add(new XAttribute("encoding", "base64"));
+                    elem.Add(str.ToUtf8().Base64UrlEncode());
+                }
+                else
+                    elem.Add(str);
+            }
+            else if (saveType == typeof(char))
+            {
+                char ch = (char) saveObject;
+                if (ch <= ' ')
+                {
+                    elem.Add(new XAttribute("encoding", "codepoint"));
+                    elem.Add((int) ch);
+                }
+                else
+                    elem.Add(ch.ToString());
+            }
             else if (saveType.IsEnum)
                 elem.Add(saveObject.ToString());
             else if (RConvert.IsSupportedType(saveType))
@@ -381,7 +431,7 @@ namespace RT.Util.Xml
                     {
                         object key = null;
                         var value = keyType == null ? enumerator.Current : kvpType.GetProperty("Value").GetValue(enumerator.Current, null);
-                        var tag = objectToXElement(value, baseDir, "item");
+                        var tag = objectToXElement(value, valueType, baseDir, "item");
                         if (keyType != null)
                         {
                             key = kvpType.GetProperty("Key").GetValue(enumerator.Current, null);
@@ -392,13 +442,16 @@ namespace RT.Util.Xml
                 }
                 else
                 {
+                    bool ignoreIfDefault = saveType.IsDefined<XmlIgnoreIfDefaultAttribute>(true);
+                    bool ignoreIfEmpty = saveType.IsDefined<XmlIgnoreIfEmptyAttribute>(true);
+
                     foreach (var field in saveType.GetAllFields())
                     {
                         string rFieldName = field.Name.TrimStart('_');
                         MemberInfo getAttrsFrom = field;
 
                         // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                        var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
+                        var m = Regex.Match(field.Name, @"^<(.*)>k__BackingField$");
                         if (m.Success)
                         {
                             var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
@@ -413,28 +466,57 @@ namespace RT.Util.Xml
                         if (getAttrsFrom.IsDefined<XmlIgnoreAttribute>() || getAttrsFrom.IsDefined<XmlParentAttribute>())
                             continue;
 
-                        // [XmlFollowId]
-                        else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
+                        else
                         {
                             object saveValue = field.GetValue(saveObject);
 
-                            if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                                throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
+                            if ((ignoreIfDefault || getAttrsFrom.IsDefined<XmlIgnoreIfDefaultAttribute>(true)) && (saveValue == null || (saveValue.GetType().IsValueType && saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))))
+                                continue;
 
-                            Type innerType = field.FieldType.GetGenericArguments()[0];
-                            string id = (string) field.FieldType.GetProperty("Id").GetValue(saveValue, null);
-                            elem.Add(new XElement(rFieldName, new XAttribute("id", id)));
+                            var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true);
+                            if (def.Any() && saveValue.Equals(def.First().Value))
+                                continue;
 
-                            if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
-                                saveObjectToXmlFile(field.FieldType.GetProperty("Value").GetValue(saveValue, null), Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
+                            // [XmlFollowId]
+                            if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
+                            {
+                                if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
+                                    throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
+
+                                Type innerType = field.FieldType.GetGenericArguments()[0];
+                                string id = (string) field.FieldType.GetProperty("Id").GetValue(saveValue, null);
+                                elem.Add(new XElement(rFieldName, new XAttribute("id", id)));
+
+                                if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
+                                {
+                                    var prop = field.FieldType.GetProperty("Value");
+                                    saveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
+                                }
+                            }
+                            else
+                            {
+                                var subElem = objectToXElement(saveValue, field.FieldType, baseDir, rFieldName);
+                                if (!subElem.IsEmpty || subElem.HasAttributes || !ignoreIfEmpty)
+                                    elem.Add(subElem);
+                            }
                         }
+                    }
 
-                        // Fields with no special [Xml...] attributes
+                    if (!saveType.Equals(declaredType))
+                    {
+                        if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                        {
+                            if (saveType.Namespace.Equals(declaredType.Namespace))
+                                elem.Add(new XAttribute("type", saveType.Name));
+                            else
+                                elem.Add(new XAttribute("type", saveType.FullName));
+                        }
                         else
-                            elem.Add(objectToXElement(field.GetValue(saveObject), baseDir, rFieldName));
+                            elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                     }
                 }
             }
+
             return elem;
         }
 
@@ -460,6 +542,36 @@ namespace RT.Util.Xml
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIgnoreAttribute : Attribute { }
+
+    /// <summary>
+    /// If this attribute is used on a field, XmlClassify does not generate a tag if the field's value is null, 0, or false.
+    /// If it is used on a class, it applies to all fields in the class.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+    public class XmlIgnoreIfDefaultAttribute : Attribute { }
+
+    /// <summary>
+    /// If this attribute is used on a field of a collection type, XmlClassify does not generate a tag if the collection is empty.
+    /// Notice that using this together with [XmlIgnoreIfNull] will cause the distinction between null and an empty collection to be lost.
+    /// However, a collection containing only null elements is still persisted accordingly.
+    /// If it is used on a class, it applies to all collection-type fields in the class.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+    public class XmlIgnoreIfEmptyAttribute : Attribute { }
+
+    /// <summary>
+    /// If this attribute is used on a field, XmlClassify does not generate a tag if the field's value is equal to the specified value.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public class XmlIgnoreIfAttribute : Attribute
+    {
+        private object _value;
+        /// <summary>Constructs an <see cref="XmlIgnoreIfAttribute"/> instance.</summary>
+        /// <param name="value"></param>
+        public XmlIgnoreIfAttribute(object value) { _value = value; }
+        /// <summary>Retrieves the value which causes a field to be ignored.</summary>
+        public object Value { get { return _value; } }
+    }
 
     /// <summary>
     /// A field with this attribute set will receive a reference to the object which was its parent node
