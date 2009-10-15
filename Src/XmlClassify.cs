@@ -218,7 +218,7 @@ namespace RT.Util.Xml
 
                     try
                     {
-                        ret = Activator.CreateInstance(realType);
+                        ret = Activator.CreateInstance(realType, true);
                     }
                     catch (Exception e)
                     {
