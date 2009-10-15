@@ -10,15 +10,15 @@ namespace RT.Util.Streams
     /// </summary>
     public class MD5Stream : Stream
     {
-        private Stream stream = null;
-        private System.Security.Cryptography.MD5 md5;
-        private byte[] result;
+        private Stream _stream = null;
+        private System.Security.Cryptography.MD5 _md5;
+        private byte[] _result;
 
         /// <summary>
         /// This is the underlying stream. All reads/writes and most other operations
         /// on this class are performed on this underlying stream.
         /// </summary>
-        public virtual Stream BaseStream { get { return stream; } }
+        public virtual Stream BaseStream { get { return _stream; } }
 
         private MD5Stream() { }
 
@@ -28,22 +28,22 @@ namespace RT.Util.Streams
         /// </summary>
         public MD5Stream(Stream stream)
         {
-            this.stream = stream;
-            md5 = System.Security.Cryptography.MD5.Create("MD5");
-            result = null;
+            _stream = stream;
+            _md5 = System.Security.Cryptography.MD5.Create("MD5");
+            _result = null;
         }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        public override bool CanRead { get { return stream.CanRead; } }
-        public override bool CanSeek { get { return stream.CanSeek; } }
-        public override bool CanWrite { get { return stream.CanWrite; } }
-        public override void Flush() { stream.Flush(); }
-        public override long Length { get { return stream.Length; } }
+        public override bool CanRead { get { return _stream.CanRead; } }
+        public override bool CanSeek { get { return _stream.CanSeek; } }
+        public override bool CanWrite { get { return _stream.CanWrite; } }
+        public override void Flush() { _stream.Flush(); }
+        public override long Length { get { return _stream.Length; } }
 
         public override long Position
         {
-            get { return stream.Position; }
-            set { stream.Position = value; }
+            get { return _stream.Position; }
+            set { _stream.Position = value; }
         }
 
         /// <summary>
@@ -52,12 +52,12 @@ namespace RT.Util.Streams
         /// </summary>
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return stream.Seek(offset, origin);
+            return _stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            stream.SetLength(value);
+            _stream.SetLength(value);
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
@@ -66,11 +66,11 @@ namespace RT.Util.Streams
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (md5 == null)
+            if (_md5 == null)
                 throw new InvalidOperationException("MD5 stream cannot hash further data since the value of the hash has been read already.");
 
-            int numread = stream.Read(buffer, offset, count);
-            md5.TransformBlock(buffer, offset, numread, buffer, offset);
+            int numread = _stream.Read(buffer, offset, count);
+            _md5.TransformBlock(buffer, offset, numread, buffer, offset);
 
             return numread;
         }
@@ -80,11 +80,11 @@ namespace RT.Util.Streams
         /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (md5 == null)
+            if (_md5 == null)
                 throw new InvalidOperationException("MD5 stream cannot hash further data since the value of the hash has been read already.");
 
-            stream.Write(buffer, offset, count);
-            md5.TransformBlock(buffer, offset, count, buffer, offset);
+            _stream.Write(buffer, offset, count);
+            _md5.TransformBlock(buffer, offset, count, buffer, offset);
         }
 
         /// <summary>
@@ -97,13 +97,13 @@ namespace RT.Util.Streams
         {
             get
             {
-                if (md5 != null)
+                if (_md5 != null)
                 {
-                    md5.TransformFinalBlock(new byte[] { }, 0, 0);
-                    result = md5.Hash;
+                    _md5.TransformFinalBlock(new byte[] { }, 0, 0);
+                    _result = _md5.Hash;
                 }
 
-                return result;
+                return _result;
             }
         }
     }

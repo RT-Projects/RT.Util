@@ -45,17 +45,17 @@ namespace RT.Util.Dialogs
         /// Workaround: use form's resources, because these are not mangled up by VS. But it's
         /// not that easy (of course not!) because the form's resources don't come with a
         /// strongly typed resource manager...
-        private static ResourceManager RM;
-        private static ResourceManager ResourceMgr
+        private static ResourceManager _resourceManagerCache;
+        private static ResourceManager _resourceManager
         {
             get
             {
-                if (RM == null)
-                    RM = new ResourceManager(typeof(DlgMessageForm));
+                if (_resourceManagerCache == null)
+                    _resourceManagerCache = new ResourceManager(typeof(DlgMessageForm));
                 // Instead of the above, which works perfectly, the autogenerator produces
                 // something more like the following (note the string!):
                 // RM = new ResourceManager("RT.Util.Dialogs.DlgMessage", typeof(DlgMessage).Assembly);
-                return RM;
+                return _resourceManagerCache;
             }
         }
 
@@ -65,10 +65,10 @@ namespace RT.Util.Dialogs
         /// ARGH 2: and the bloody names are deduced based on which class is declared first
         /// in this source file, which is just absolutely un-fucking-believable. So merely
         /// declaring a new empty class at the start of this file breaks the fucking resources.
-        private static Bitmap bmpInfo = (Bitmap) ResourceMgr.GetObject("info.Image");
-        private static Bitmap bmpQuestion = (Bitmap) ResourceMgr.GetObject("question.Image");
-        private static Bitmap bmpWarning = (Bitmap) ResourceMgr.GetObject("warning.Image");
-        private static Bitmap bmpError = (Bitmap) ResourceMgr.GetObject("error.Image");
+        private static Bitmap _bmpInfo = (Bitmap) _resourceManager.GetObject("info.Image");
+        private static Bitmap _bmpQuestion = (Bitmap) _resourceManager.GetObject("question.Image");
+        private static Bitmap _bmpWarning = (Bitmap) _resourceManager.GetObject("warning.Image");
+        private static Bitmap _bmpError = (Bitmap) _resourceManager.GetObject("error.Image");
 
         #endregion
 
@@ -84,7 +84,7 @@ namespace RT.Util.Dialogs
         /// Change this variable to i18n'ize the default images
         /// </summary>
         internal static Bitmap[] DefaultImage = new Bitmap[] {
-            bmpInfo, bmpQuestion, bmpWarning, bmpError, null
+            _bmpInfo, _bmpQuestion, _bmpWarning, _bmpError, null
         };
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace RT.Util.Dialogs
             InitializeComponent();
         }
 
-        private bool ButtonPressed = false;
+        private bool _buttonPressed = false;
 
         /// <summary>
         /// This takes care of the user closing the dialog. This is equivalent to pressing
@@ -106,13 +106,13 @@ namespace RT.Util.Dialogs
         /// </summary>
         private void DlgMessage_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (!ButtonPressed)
+            if (!_buttonPressed)
                 DialogResult = CancelButton.DialogResult;
         }
 
         private void Btn_Click(object sender, EventArgs e)
         {
-            ButtonPressed = true;
+            _buttonPressed = true;
         }
     }
 

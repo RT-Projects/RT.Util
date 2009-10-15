@@ -1290,9 +1290,9 @@ namespace RT.Util.Lingo
 
         private class TranslationGroupListBox : ListBox
         {
-            private const int vertMargin = 3;
-            private const int horizMargin = 5;
-            private const int indent = 10;
+            private const int VERTICAL_MARGIN = 3;
+            private const int HORIZONTAL_MARGIN = 5;
+            private const int INDENTATION = 10;
 
             public TranslationGroupListBox()
             {
@@ -1336,16 +1336,16 @@ namespace RT.Util.Lingo
                     return;
                 e.DrawBackground();
                 Color textColor = e.Index == SelectedIndex ? SystemColors.HighlightText : SystemColors.WindowText;
-                e.Graphics.DrawString(tgli.Label, new Font(Font, FontStyle.Bold), new SolidBrush(textColor), new PointF(e.Bounds.Left + horizMargin, e.Bounds.Top + vertMargin));
+                e.Graphics.DrawString(tgli.Label, new Font(Font, FontStyle.Bold), new SolidBrush(textColor), new PointF(e.Bounds.Left + HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN));
                 if (tgli.Notes != null)
                 {
-                    int h = (int) e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold)).Height + 2 * vertMargin;
-                    e.Graphics.DrawString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), new SolidBrush(textColor), new RectangleF(e.Bounds.Left + horizMargin + indent, e.Bounds.Top + h, /*e.Bounds.Width*/ClientSize.Width - indent - 2 * horizMargin, e.Bounds.Height - h - vertMargin));
+                    int h = (int) e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold)).Height + 2 * VERTICAL_MARGIN;
+                    e.Graphics.DrawString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), new SolidBrush(textColor), new RectangleF(e.Bounds.Left + HORIZONTAL_MARGIN + INDENTATION, e.Bounds.Top + h, /*e.Bounds.Width*/ClientSize.Width - INDENTATION - 2 * HORIZONTAL_MARGIN, e.Bounds.Height - h - VERTICAL_MARGIN));
                 }
                 if (tgli.TranslationPanels.Any(t => t.State != TranslationPanelState.UpToDateAndSaved))
                 {
                     Color red = Color.FromArgb((textColor.R + 256) / 2, textColor.G / 2, textColor.B / 2);
-                    e.Graphics.DrawString("!", new Font(Font, FontStyle.Bold), new SolidBrush(red), new PointF(e.Bounds.Right - horizMargin, e.Bounds.Top + vertMargin), new StringFormat { Alignment = StringAlignment.Far });
+                    e.Graphics.DrawString("!", new Font(Font, FontStyle.Bold), new SolidBrush(red), new PointF(e.Bounds.Right - HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN), new StringFormat { Alignment = StringAlignment.Far });
                 }
                 if (e.Index == SelectedIndex)
                     e.DrawFocusRectangle();
@@ -1358,9 +1358,9 @@ namespace RT.Util.Lingo
                 TranslationGroupListItem tgli = Items[e.Index] as TranslationGroupListItem;
                 if (tgli == null)
                     return;
-                int h = (int) e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold)).Height + 2 * vertMargin;
+                int h = (int) e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold)).Height + 2 * VERTICAL_MARGIN;
                 if (tgli.Notes != null)
-                    h += (int) e.Graphics.MeasureString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), ClientSize.Width - 2 * horizMargin - indent).Height + vertMargin;
+                    h += (int) e.Graphics.MeasureString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), ClientSize.Width - 2 * HORIZONTAL_MARGIN - INDENTATION).Height + VERTICAL_MARGIN;
                 e.ItemHeight = h;
             }
         }

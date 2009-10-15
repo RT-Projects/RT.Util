@@ -10,13 +10,13 @@ namespace RT.Util.Streams
     /// </summary>
     public class RSyncChecksumCalculator
     {
-        private uint windowSize;
-        private byte[] window;
-        private bool windowFull;
-        private int windowHead;
-        private int windowTail; // not used until window is full
+        private uint _windowSize;
+        private byte[] _window;
+        private bool _windowFull;
+        private int _windowHead;
+        private int _windowTail; // not used until window is full
 
-        private uint a, b;
+        private uint _a, _b;
 
         /// <summary>
         /// Initialises the checksum calculator. Window Size determines the number of bytes
@@ -24,13 +24,13 @@ namespace RT.Util.Streams
         /// </summary>
         public RSyncChecksumCalculator(int windowSize)
         {
-            this.windowSize = (uint) windowSize;
+            _windowSize = (uint) windowSize;
 
-            window = new byte[windowSize];
-            windowFull = false;
-            windowHead = -1;
+            _window = new byte[windowSize];
+            _windowFull = false;
+            _windowHead = -1;
 
-            a = b = 0;
+            _a = _b = 0;
         }
 
         /// <summary>
@@ -50,21 +50,21 @@ namespace RT.Util.Streams
             if (endoffset > buffer.Length || offset < 0)
                 throw new ArgumentOutOfRangeException("The arguments to ProcessBytes() point outside the array.");
 
-            if (!windowFull)
+            if (!_windowFull)
             {
                 for (; offset < endoffset; offset++)
                 {
-                    windowHead++;
-                    window[windowHead] = buffer[offset];
+                    _windowHead++;
+                    _window[_windowHead] = buffer[offset];
 
-                    a += buffer[offset];
-                    b += buffer[offset] * (windowSize - (uint) windowHead);
+                    _a += buffer[offset];
+                    _b += buffer[offset] * (_windowSize - (uint) _windowHead);
 
-                    if (windowHead == windowSize - 1)
+                    if (_windowHead == _windowSize - 1)
                     {
                         offset++;
-                        windowTail = 0;
-                        windowFull = true;
+                        _windowTail = 0;
+                        _windowFull = true;
                         break;
                     }
                 }
@@ -72,12 +72,12 @@ namespace RT.Util.Streams
 
             for (; offset < endoffset; offset++)
             {
-                a += (uint) (buffer[offset] - window[windowTail]);
-                b += a - window[windowTail] * windowSize;
+                _a += (uint) (buffer[offset] - _window[_windowTail]);
+                _b += _a - _window[_windowTail] * _windowSize;
 
-                if (windowHead < windowSize - 1) windowHead++; else windowHead = 0;
-                if (windowTail < windowSize - 1) windowTail++; else windowTail = 0;
-                window[windowHead] = buffer[offset];
+                if (_windowHead < _windowSize - 1) _windowHead++; else _windowHead = 0;
+                if (_windowTail < _windowSize - 1) _windowTail++; else _windowTail = 0;
+                _window[_windowHead] = buffer[offset];
             }
 
         }
@@ -89,7 +89,7 @@ namespace RT.Util.Streams
         {
             get
             {
-                return (b << 16) | (a & 0xFFFF);
+                return (_b << 16) | (_a & 0xFFFF);
             }
         }
 
@@ -113,18 +113,18 @@ namespace RT.Util.Streams
     public class RSyncChecksumCalculatorTimwi
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        private uint windowSize;
-        private Queue<byte> window;
+        private uint _windowSize;
+        private Queue<byte> _window;
 
-        private uint a, b;
+        private uint _a, _b;
 
         public RSyncChecksumCalculatorTimwi(int windowSize)
         {
-            this.windowSize = (uint)windowSize;
+            _windowSize = (uint)windowSize;
 
-            window = new Queue<byte>(windowSize + 1);
+            _window = new Queue<byte>(windowSize + 1);
 
-            a = b = 0;
+            _a = _b = 0;
         }
 
         public void ProcessBytes(byte[] buffer)
@@ -140,16 +140,16 @@ namespace RT.Util.Streams
 
             for (uint i = (uint)offset; i < endoffset; i++)
             {
-                window.Enqueue(buffer[i]);
-                a += buffer[i];
-                if (window.Count > windowSize)
+                _window.Enqueue(buffer[i]);
+                _a += buffer[i];
+                if (_window.Count > _windowSize)
                 {
-                    byte by = window.Dequeue();
-                    a -= by;
-                    b += a - windowSize*by;
+                    byte by = _window.Dequeue();
+                    _a -= by;
+                    _b += _a - _windowSize*by;
                 }
                 else
-                    b += (windowSize - i) * buffer[i];
+                    _b += (_windowSize - i) * buffer[i];
             }
         }
 
@@ -157,7 +157,7 @@ namespace RT.Util.Streams
         {
             get
             {
-                return (b << 16) | (a & 0xFFFF);
+                return (_b << 16) | (_a & 0xFFFF);
             }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
@@ -168,14 +168,14 @@ namespace RT.Util.Streams
     /// </summary>
     public class RSyncChecksumStream : Stream
     {
-        private Stream stream = null;
-        private RSyncChecksumCalculator calc;
+        private Stream _stream = null;
+        private RSyncChecksumCalculator _calc;
 
         /// <summary>
         /// This is the underlying stream. All reads/writes and most other operations
         /// on this class are performed on this underlying stream.
         /// </summary>
-        public virtual Stream BaseStream { get { return stream; } }
+        public virtual Stream BaseStream { get { return _stream; } }
 
         private RSyncChecksumStream() { }
 
@@ -185,21 +185,21 @@ namespace RT.Util.Streams
         /// </summary>
         public RSyncChecksumStream(Stream stream, int window)
         {
-            this.stream = stream;
-            calc = new RSyncChecksumCalculator(window);
+            _stream = stream;
+            _calc = new RSyncChecksumCalculator(window);
         }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        public override bool CanRead { get { return stream.CanRead; } }
-        public override bool CanSeek { get { return stream.CanSeek; } }
-        public override bool CanWrite { get { return stream.CanWrite; } }
-        public override void Flush() { stream.Flush(); }
-        public override long Length { get { return stream.Length; } }
+        public override bool CanRead { get { return _stream.CanRead; } }
+        public override bool CanSeek { get { return _stream.CanSeek; } }
+        public override bool CanWrite { get { return _stream.CanWrite; } }
+        public override void Flush() { _stream.Flush(); }
+        public override long Length { get { return _stream.Length; } }
         
         public override long Position
         {
-            get { return stream.Position; }
-            set { stream.Position = value; }
+            get { return _stream.Position; }
+            set { _stream.Position = value; }
         }
 
         /// <summary>
@@ -208,12 +208,12 @@ namespace RT.Util.Streams
         /// </summary>
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return stream.Seek(offset, origin);
+            return _stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            stream.SetLength(value);
+            _stream.SetLength(value);
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
@@ -222,8 +222,8 @@ namespace RT.Util.Streams
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int numread = stream.Read(buffer, offset, count);
-            calc.ProcessBytes(buffer, offset, numread);
+            int numread = _stream.Read(buffer, offset, count);
+            _calc.ProcessBytes(buffer, offset, numread);
 
             return numread;
         }
@@ -233,8 +233,8 @@ namespace RT.Util.Streams
         /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            stream.Write(buffer, offset, count);
-            calc.ProcessBytes(buffer, offset, count);
+            _stream.Write(buffer, offset, count);
+            _calc.ProcessBytes(buffer, offset, count);
         }
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace RT.Util.Streams
         {
             get
             {
-                return calc.CurrentChecksum;
+                return _calc.CurrentChecksum;
             }
         }
 
@@ -255,7 +255,7 @@ namespace RT.Util.Streams
         {
             get
             {
-                return calc.CurrentChecksumBytes;
+                return _calc.CurrentChecksumBytes;
             }
         }
 

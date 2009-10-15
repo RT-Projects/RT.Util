@@ -25,7 +25,7 @@ namespace RT.Util
         /// <summary>
         /// Handle to the hook, need this to unhook and call the next hook
         /// </summary>
-        private IntPtr hhook = IntPtr.Zero;
+        private IntPtr _hHook = IntPtr.Zero;
 
         #region Events
         /// <summary>
@@ -57,7 +57,7 @@ namespace RT.Util
         }
         #endregion
 
-        private WinAPI.KeyboardHookProc hookDelegate;
+        private WinAPI.KeyboardHookProc _hook;
 
         #region Public Methods
         /// <summary>
@@ -66,8 +66,8 @@ namespace RT.Util
         private void hook()
         {
             IntPtr hInstance = WinAPI.LoadLibrary("User32");
-            hookDelegate = new WinAPI.KeyboardHookProc(hookProc);
-            hhook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, hookDelegate, hInstance, 0);
+            _hook = new WinAPI.KeyboardHookProc(hookProc);
+            _hHook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, _hook, hInstance, 0);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace RT.Util
         /// </summary>
         private void unhook()
         {
-            WinAPI.UnhookWindowsHookEx(hhook);
+            WinAPI.UnhookWindowsHookEx(_hHook);
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace RT.Util
                         return 1;
                 }
             }
-            return WinAPI.CallNextHookEx(hhook, code, wParam, ref lParam);
+            return WinAPI.CallNextHookEx(_hHook, code, wParam, ref lParam);
         }
         #endregion
     }

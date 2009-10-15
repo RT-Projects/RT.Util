@@ -102,7 +102,7 @@ namespace RT.Util
         public CmdLineParser(CmdLinePrinterBase printer)
             : this()
         {
-            this._printer = printer;
+            _printer = printer;
         }
 
         /// <summary>
@@ -758,45 +758,45 @@ namespace RT.Util
     public class CmdLineMessageboxPrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        private StringBuilder buffer = new StringBuilder();
-        private int maxWidth = 80;
+        private StringBuilder _buffer = new StringBuilder();
+        private int _maxWidth = 80;
 
         public CmdLineMessageboxPrinter() { }
 
         public CmdLineMessageboxPrinter(int maxWidth)
         {
-            this.maxWidth = maxWidth;
+            _maxWidth = maxWidth;
         }
 
         public override void Print(string text)
         {
-            buffer.Append(text);
+            _buffer.Append(text);
         }
 
         public override void PrintLine(string text)
         {
-            buffer.Append(text);
-            buffer.Append("\r\n");
+            _buffer.Append(text);
+            _buffer.Append("\r\n");
         }
 
         public override void Commit(bool success)
         {
-            if (buffer.Length == 0)
+            if (_buffer.Length == 0)
                 return;
 
             new DlgMessage
             {
                 Type = success ? DlgType.Info : DlgType.Warning,
-                Message = buffer.ToString(),
+                Message = _buffer.ToString(),
                 Font = new System.Drawing.Font("Consolas", 9)
             }.Show();
 
-            buffer.Remove(0, buffer.Length);
+            _buffer.Remove(0, _buffer.Length);
         }
 
         public override int MaxWidth
         {
-            get { return maxWidth; }
+            get { return _maxWidth; }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }

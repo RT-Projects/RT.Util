@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace RT.Util.Controls
 {
@@ -10,13 +11,25 @@ namespace RT.Util.Controls
     /// </summary>
     public partial class Separator : UserControl
     {
-        /// <summary></summary>
+        private GroupBox _groupBox;
+
+        /// <summary>Constructor.</summary>
         public Separator()
         {
-            InitializeComponent();
-            this.SetStyle(ControlStyles.Selectable, false);
-            GB.Text = ""; // because the designer will only store a value for the Text
-            // property if it is not "", i.e. the Text property must default to "".
+            SuspendLayout();
+            _groupBox = new GroupBox()
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Location = new Point(-8, 1),
+                Name = "_groupBox",
+                Text = ""
+            };
+            Controls.Add(_groupBox);
+            AutoScaleDimensions = new SizeF(6F, 13F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Name = "Separator";
+            ResumeLayout(false);
+            SetStyle(ControlStyles.Selectable, false);
         }
 
         /// <summary>
@@ -27,8 +40,8 @@ namespace RT.Util.Controls
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public override string Text
         {
-            get { return GB.Text; }
-            set { GB.Text = value; }
+            get { return _groupBox.Text; }
+            set { _groupBox.Text = value; }
         }
     }
 }

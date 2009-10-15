@@ -139,9 +139,9 @@ namespace RT.Util
     /// </summary>
     public static class RConvert
     {
-        private static readonly bool[] IsIntegerType;
-        private static readonly bool[] IsUnsignedType;
-        private static readonly bool[] IsUnsupportedType;
+        private static readonly bool[] _isIntegerType;
+        private static readonly bool[] _isUnsignedType;
+        private static readonly bool[] _isUnsupportedType;
 
         /// <summary>
         /// Initialises the internally-used lookup tables for determining what kind
@@ -156,31 +156,31 @@ namespace RT.Util
 
             // Values will default to false unless set to true explicitly
 
-            IsIntegerType = new bool[max + 1];
-            IsIntegerType[(int) TypeCode.Byte] = true;
-            IsIntegerType[(int) TypeCode.SByte] = true;
-            IsIntegerType[(int) TypeCode.Int16] = true;
-            IsIntegerType[(int) TypeCode.Int32] = true;
-            IsIntegerType[(int) TypeCode.Int64] = true;
-            IsIntegerType[(int) TypeCode.UInt16] = true;
-            IsIntegerType[(int) TypeCode.UInt32] = true;
-            IsIntegerType[(int) TypeCode.UInt64] = true;
-            IsIntegerType[(int) TypeCode.Boolean] = true;
-            IsIntegerType[(int) TypeCode.Char] = true;
-            IsIntegerType[(int) TypeCode.DateTime] = true;
+            _isIntegerType = new bool[max + 1];
+            _isIntegerType[(int) TypeCode.Byte] = true;
+            _isIntegerType[(int) TypeCode.SByte] = true;
+            _isIntegerType[(int) TypeCode.Int16] = true;
+            _isIntegerType[(int) TypeCode.Int32] = true;
+            _isIntegerType[(int) TypeCode.Int64] = true;
+            _isIntegerType[(int) TypeCode.UInt16] = true;
+            _isIntegerType[(int) TypeCode.UInt32] = true;
+            _isIntegerType[(int) TypeCode.UInt64] = true;
+            _isIntegerType[(int) TypeCode.Boolean] = true;
+            _isIntegerType[(int) TypeCode.Char] = true;
+            _isIntegerType[(int) TypeCode.DateTime] = true;
 
-            IsUnsignedType = new bool[max + 1];
-            IsUnsignedType[(int) TypeCode.Byte] = true;
-            IsUnsignedType[(int) TypeCode.UInt16] = true;
-            IsUnsignedType[(int) TypeCode.UInt32] = true;
-            IsUnsignedType[(int) TypeCode.UInt64] = true;
-            IsUnsignedType[(int) TypeCode.Boolean] = true;
-            IsUnsignedType[(int) TypeCode.Char] = true;
+            _isUnsignedType = new bool[max + 1];
+            _isUnsignedType[(int) TypeCode.Byte] = true;
+            _isUnsignedType[(int) TypeCode.UInt16] = true;
+            _isUnsignedType[(int) TypeCode.UInt32] = true;
+            _isUnsignedType[(int) TypeCode.UInt64] = true;
+            _isUnsignedType[(int) TypeCode.Boolean] = true;
+            _isUnsignedType[(int) TypeCode.Char] = true;
 
-            IsUnsupportedType = new bool[max + 1];
-            IsUnsupportedType[(int) TypeCode.DBNull] = true;
-            IsUnsupportedType[(int) TypeCode.Empty] = true;
-            IsUnsupportedType[(int) TypeCode.Object] = true;
+            _isUnsupportedType = new bool[max + 1];
+            _isUnsupportedType[(int) TypeCode.DBNull] = true;
+            _isUnsupportedType[(int) TypeCode.Empty] = true;
+            _isUnsupportedType[(int) TypeCode.Object] = true;
         }
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace RT.Util
         /// </summary>
         public static bool IsSupportedType(Type type)
         {
-            return !RConvert.IsUnsupportedType[(int) Type.GetTypeCode(type)];
+            return !RConvert._isUnsupportedType[(int) Type.GetTypeCode(type)];
         }
 
         /// <summary>
@@ -282,7 +282,7 @@ namespace RT.Util
         /// </summary>
         public static bool IsSupportedType(TypeCode typeCode)
         {
-            return !RConvert.IsUnsupportedType[(int) typeCode];
+            return !RConvert._isUnsupportedType[(int) typeCode];
         }
 
         #region ExactTry - the main implementation of EXACT with all the business code
@@ -347,7 +347,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) byte.MinValue && val <= (long) byte.MaxValue)
@@ -391,7 +391,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) ushort.MinValue && val <= (long) ushort.MaxValue)
@@ -435,7 +435,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) uint.MinValue && val <= (long) uint.MaxValue)
@@ -469,7 +469,7 @@ namespace RT.Util
             else if (code == TypeCode.String)
                 return ulong.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) ulong.MinValue) // note no upper limit here because ulong is special
@@ -517,7 +517,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) sbyte.MinValue && val <= (long) sbyte.MaxValue)
@@ -561,7 +561,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) short.MinValue && val <= (long) short.MaxValue)
@@ -605,7 +605,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) int.MinValue && val <= (long) int.MaxValue)
@@ -649,7 +649,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(long) code])
+            else if (_isIntegerType[(long) code])
             {   // special case: no limit test is necessary since all other types fit
                 result = UnboxIntegerToLong(value, code);
                 return true;
@@ -709,7 +709,7 @@ namespace RT.Util
                 return true;
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 result = false;
@@ -764,7 +764,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= (long) char.MinValue && val <= (long) char.MaxValue)
@@ -817,7 +817,7 @@ namespace RT.Util
                 }
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
                 if (val >= DateTime.MinValue.Ticks && val <= DateTime.MaxValue.Ticks)
@@ -884,7 +884,7 @@ namespace RT.Util
                 return true;
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 result = (float) UnboxIntegerToLong(value, code); // unbox as long, convert to float
                 return true;
@@ -943,7 +943,7 @@ namespace RT.Util
                 return true;
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 result = (double) UnboxIntegerToLong(value, code); // unbox as long, convert to double
                 return true;
@@ -997,7 +997,7 @@ namespace RT.Util
                 return true;
             }
 
-            else if (IsIntegerType[(int) code])
+            else if (_isIntegerType[(int) code])
             {
                 result = (decimal) UnboxIntegerToLong(value, code); // unbox as long, convert to decimal
                 return true;
@@ -1073,7 +1073,7 @@ namespace RT.Util
                 result = ((DateTime) value).ToIsoStringOptimal();
                 return true;
             }
-            else if (!IsUnsupportedType[(int) code])
+            else if (!_isUnsupportedType[(int) code])
             {
                 result = value.ToString();
                 return true;

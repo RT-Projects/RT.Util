@@ -28,108 +28,108 @@ namespace RT.Util.ExtensionMethods
         /// datetime to a DateTime structure. The first three formats are also used for converting
         /// the other way.
         /// </summary>
-        private static readonly string[] datetimeFormatsUtc =
-            {
-                // The most likely formats should be near the top for speed reasons
-                "yyyy-MM-dd HH:mm:ss.fffffffZ", // also used for to-full & to-optimal
-                "yyyy-MM-dd HH:mm:ssZ",         // also used for to-optimal
-                "yyyy-MM-ddZ",                  // also used for to-optimal
-                // The following strings are only here to enable conversion from
-                // the many possible formats defined in the ISO.
-                "yyyy-MM-dd HH:mm:ss.ffffffZ",
-                "yyyy-MM-dd HH:mm:ss.fffffZ",
-                "yyyy-MM-dd HH:mm:ss.ffffZ",
-                "yyyy-MM-dd HH:mm:ss.fffZ",
-                "yyyy-MM-dd HH:mm:ss.ffZ",
-                "yyyy-MM-dd HH:mm:ss.fZ",
-                "yyyyMMddTHHmmss.fffffffZ",
-                "yyyyMMddTHHmmss.ffffffZ",
-                "yyyyMMddTHHmmss.fffffZ",
-                "yyyyMMddTHHmmss.ffffZ",
-                "yyyyMMddTHHmmss.fffZ",
-                "yyyyMMddTHHmmss.ffZ",
-                "yyyyMMddTHHmmss.fZ",
-                "yyyyMMddTHHmmssZ",
-                "yyyyMMddZ",
-                // The even less common strings: their presense does not
-                // affect the speed at which the common strings get parsed.
-                "yyyy-MM-dd HH:mmZ",
-                "yyyy-MM-dd HHZ",
-                "yyyyMMddTHHmmZ",
-                "yyyyMMddTHHZ",
-            };
+        private static readonly string[] _datetimeFormatsUtc =
+        {
+            // The most likely formats should be near the top for speed reasons
+            "yyyy-MM-dd HH:mm:ss.fffffffZ", // also used for to-full & to-optimal
+            "yyyy-MM-dd HH:mm:ssZ",         // also used for to-optimal
+            "yyyy-MM-ddZ",                  // also used for to-optimal
+            // The following strings are only here to enable conversion from
+            // the many possible formats defined in the ISO.
+            "yyyy-MM-dd HH:mm:ss.ffffffZ",
+            "yyyy-MM-dd HH:mm:ss.fffffZ",
+            "yyyy-MM-dd HH:mm:ss.ffffZ",
+            "yyyy-MM-dd HH:mm:ss.fffZ",
+            "yyyy-MM-dd HH:mm:ss.ffZ",
+            "yyyy-MM-dd HH:mm:ss.fZ",
+            "yyyyMMddTHHmmss.fffffffZ",
+            "yyyyMMddTHHmmss.ffffffZ",
+            "yyyyMMddTHHmmss.fffffZ",
+            "yyyyMMddTHHmmss.ffffZ",
+            "yyyyMMddTHHmmss.fffZ",
+            "yyyyMMddTHHmmss.ffZ",
+            "yyyyMMddTHHmmss.fZ",
+            "yyyyMMddTHHmmssZ",
+            "yyyyMMddZ",
+            // The even less common strings: their presense does not
+            // affect the speed at which the common strings get parsed.
+            "yyyy-MM-dd HH:mmZ",
+            "yyyy-MM-dd HHZ",
+            "yyyyMMddTHHmmZ",
+            "yyyyMMddTHHZ",
+        };
 
         /// <summary>
         /// Lists all the datetime formats acceptable when converting a string containing a Local
         /// datetime to a DateTime structure. The first three formats are also used for converting
         /// the other way.
         /// </summary>
-        private static string[] datetimeFormatsLocal =
-            {
-                // The most likely formats should be near the top for speed reasons
-                "yyyy-MM-dd HH:mm:ss.fffffffzzz", // also used for to-full & to-optimal
-                "yyyy-MM-dd HH:mm:sszzz",         // also used for to-optimal
-                "yyyy-MM-ddzzz",                  // also used for to-optimal
-                // The following strings are only here to enable conversion from
-                // the many possible formats defined in the ISO.
-                "yyyy-MM-dd HH:mm:ss.ffffffzzz",
-                "yyyy-MM-dd HH:mm:ss.fffffzzz",
-                "yyyy-MM-dd HH:mm:ss.ffffzzz",
-                "yyyy-MM-dd HH:mm:ss.fffzzz",
-                "yyyy-MM-dd HH:mm:ss.ffzzz",
-                "yyyy-MM-dd HH:mm:ss.fzzz",
-                "yyyyMMddTHHmmss.fffffffzzz",
-                "yyyyMMddTHHmmss.ffffffzzz",
-                "yyyyMMddTHHmmss.fffffzzz",
-                "yyyyMMddTHHmmss.ffffzzz",
-                "yyyyMMddTHHmmss.fffzzz",
-                "yyyyMMddTHHmmss.ffzzz",
-                "yyyyMMddTHHmmss.fzzz",
-                "yyyyMMddTHHmmsszzz",
-                "yyyyMMddzzz",
-                // The even less common strings: their presense does not
-                // affect the speed at which the common strings get parsed.
-                "yyyyMMddTHHmmzzz",
-                "yyyyMMddTHHzzz",
-                "yyyy-MM-dd HH:mmzzz",
-                "yyyy-MM-dd HHzzz",
-            };
+        private static string[] _datetimeFormatsLocal =
+        {
+            // The most likely formats should be near the top for speed reasons
+            "yyyy-MM-dd HH:mm:ss.fffffffzzz", // also used for to-full & to-optimal
+            "yyyy-MM-dd HH:mm:sszzz",         // also used for to-optimal
+            "yyyy-MM-ddzzz",                  // also used for to-optimal
+            // The following strings are only here to enable conversion from
+            // the many possible formats defined in the ISO.
+            "yyyy-MM-dd HH:mm:ss.ffffffzzz",
+            "yyyy-MM-dd HH:mm:ss.fffffzzz",
+            "yyyy-MM-dd HH:mm:ss.ffffzzz",
+            "yyyy-MM-dd HH:mm:ss.fffzzz",
+            "yyyy-MM-dd HH:mm:ss.ffzzz",
+            "yyyy-MM-dd HH:mm:ss.fzzz",
+            "yyyyMMddTHHmmss.fffffffzzz",
+            "yyyyMMddTHHmmss.ffffffzzz",
+            "yyyyMMddTHHmmss.fffffzzz",
+            "yyyyMMddTHHmmss.ffffzzz",
+            "yyyyMMddTHHmmss.fffzzz",
+            "yyyyMMddTHHmmss.ffzzz",
+            "yyyyMMddTHHmmss.fzzz",
+            "yyyyMMddTHHmmsszzz",
+            "yyyyMMddzzz",
+            // The even less common strings: their presense does not
+            // affect the speed at which the common strings get parsed.
+            "yyyyMMddTHHmmzzz",
+            "yyyyMMddTHHzzz",
+            "yyyy-MM-dd HH:mmzzz",
+            "yyyy-MM-dd HHzzz",
+        };
 
         /// <summary>
         /// Lists all the datetime formats acceptable when converting a string containing an Unspecified
         /// datetime to a DateTime structure. The first three formats are also used for converting
         /// the other way.
         /// </summary>
-        private static string[] datetimeFormatsUnspecified =
-            {
-                // The most likely formats should be near the top for speed reasons
-                "yyyy-MM-dd HH:mm:ss.fffffff", // also used for to-full & to-optimal
-                "yyyy-MM-dd HH:mm:ss",         // also used for to-optimal
-                "yyyy-MM-dd",                  // also used for to-optimal
-                // The following strings are only here to enable conversion from
-                // the many possible formats defined in the ISO.
-                "yyyy-MM-dd HH:mm:ss.ffffff",
-                "yyyy-MM-dd HH:mm:ss.fffff",
-                "yyyy-MM-dd HH:mm:ss.ffff",
-                "yyyy-MM-dd HH:mm:ss.fff",
-                "yyyy-MM-dd HH:mm:ss.ff",
-                "yyyy-MM-dd HH:mm:ss.f",
-                "yyyyMMddTHHmmss.fffffff",
-                "yyyyMMddTHHmmss.ffffff",
-                "yyyyMMddTHHmmss.fffff",
-                "yyyyMMddTHHmmss.ffff",
-                "yyyyMMddTHHmmss.fff",
-                "yyyyMMddTHHmmss.ff",
-                "yyyyMMddTHHmmss.f",
-                "yyyyMMddTHHmmss",
-                "yyyyMMdd",
-                // The even less common strings: their presense does not
-                // affect the speed at which the common strings get parsed.
-                "yyyy-MM-dd HH:mm",
-                "yyyy-MM-dd HH",
-                "yyyyMMddTHHmm",
-                "yyyyMMddTHH",
-            };
+        private static string[] _datetimeFormatsUnspecified =
+        {
+            // The most likely formats should be near the top for speed reasons
+            "yyyy-MM-dd HH:mm:ss.fffffff", // also used for to-full & to-optimal
+            "yyyy-MM-dd HH:mm:ss",         // also used for to-optimal
+            "yyyy-MM-dd",                  // also used for to-optimal
+            // The following strings are only here to enable conversion from
+            // the many possible formats defined in the ISO.
+            "yyyy-MM-dd HH:mm:ss.ffffff",
+            "yyyy-MM-dd HH:mm:ss.fffff",
+            "yyyy-MM-dd HH:mm:ss.ffff",
+            "yyyy-MM-dd HH:mm:ss.fff",
+            "yyyy-MM-dd HH:mm:ss.ff",
+            "yyyy-MM-dd HH:mm:ss.f",
+            "yyyyMMddTHHmmss.fffffff",
+            "yyyyMMddTHHmmss.ffffff",
+            "yyyyMMddTHHmmss.fffff",
+            "yyyyMMddTHHmmss.ffff",
+            "yyyyMMddTHHmmss.fff",
+            "yyyyMMddTHHmmss.ff",
+            "yyyyMMddTHHmmss.f",
+            "yyyyMMddTHHmmss",
+            "yyyyMMdd",
+            // The even less common strings: their presense does not
+            // affect the speed at which the common strings get parsed.
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd HH",
+            "yyyyMMddTHHmm",
+            "yyyyMMddTHH",
+        };
 
         /// <summary>
         /// Converts the specified DateTime to a string representing the datetime in
@@ -143,11 +143,11 @@ namespace RT.Util.ExtensionMethods
             switch (datetime.Kind)
             {
                 case DateTimeKind.Utc:
-                    return datetime.ToString(datetimeFormatsUtc[0]);
+                    return datetime.ToString(_datetimeFormatsUtc[0]);
                 case DateTimeKind.Local:
-                    return datetime.ToString(datetimeFormatsLocal[0]);
+                    return datetime.ToString(_datetimeFormatsLocal[0]);
                 case DateTimeKind.Unspecified:
-                    return datetime.ToString(datetimeFormatsUnspecified[0]);
+                    return datetime.ToString(_datetimeFormatsUnspecified[0]);
                 default:
                     // to keep the compiler happy
                     throw new Exception("Unexpected DateTime.Kind");
@@ -178,11 +178,11 @@ namespace RT.Util.ExtensionMethods
             switch (datetime.Kind)
             {
                 case DateTimeKind.Utc:
-                    return datetime.ToString(datetimeFormatsUtc[formatIndex]);
+                    return datetime.ToString(_datetimeFormatsUtc[formatIndex]);
                 case DateTimeKind.Local:
-                    return datetime.ToString(datetimeFormatsLocal[formatIndex]);
+                    return datetime.ToString(_datetimeFormatsLocal[formatIndex]);
                 case DateTimeKind.Unspecified:
-                    return datetime.ToString(datetimeFormatsUnspecified[formatIndex]);
+                    return datetime.ToString(_datetimeFormatsUnspecified[formatIndex]);
                 default:
                     // to keep the compiler happy
                     throw new Exception("Unexpected DateTime.Kind");
@@ -208,11 +208,11 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static bool TryParseIso(string str, out DateTime result)
         {
-            if (DateTime.TryParseExact(str, datetimeFormatsUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
+            if (DateTime.TryParseExact(str, _datetimeFormatsUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
                 return true;
-            else if (DateTime.TryParseExact(str, datetimeFormatsLocal, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
+            else if (DateTime.TryParseExact(str, _datetimeFormatsLocal, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
                 return true;
-            else if (DateTime.TryParseExact(str, datetimeFormatsUnspecified, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
+            else if (DateTime.TryParseExact(str, _datetimeFormatsUnspecified, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
                 return true;
             else
                 return false;

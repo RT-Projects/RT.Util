@@ -13,8 +13,45 @@ namespace RT.Util.Xml
 {
     /// <summary>
     /// Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again.
-    /// The functionality is similar to XmlSerializer, but uses the newer C# XML API and is also more full-featured.
+    /// See the remarks section for features and limitations.
     /// </summary>
+    /// <remarks>
+    /// <para>By default, XmlClassify persists the value of all instance fields, including private, inherited and compiler-generated ones. It does not persist static members or the result of property getters.
+    ///    Each field is persisted in an XML tag whose name is the field's name minus any leading underscores. Compiler-generated fields for automatically-implemented properties are
+    ///    instead persisted in an XML tag whose name is the automatically-implemented property's name minus any leading underscores.</para>
+    /// <para>Features:</para>
+    /// <list type="bullet">
+    /// <item><description>XmlClassify fully supports all the built-in types which are keywords in C# except 'object'. It also supports DateTime.</description></item>
+    /// <item><description>XmlClassify fully supports classes and structs that contain only fields of the above types as well as fields whose type is itself such a class or struct.</description></item>
+    /// <item><description>XmlClassify has special handling for classes that implement IDictionary&lt;K, V&gt;, where V must be a type also supported by XmlClassify. K must be string, an integer type, or an enum type.
+    ///    If the field is of a concrete type, that type is maintained.
+    ///    If the field is of the interface type IDictionary&lt;K, V&gt; itself, the type Dictionary&lt;K, V&gt; is used to reconstruct the object.</description></item>
+    /// <item><description>XmlClassify has special handling for classes that implement ICollection&lt;T&gt;, where T must be a type also supported by XmlClassify.
+    ///    If the field is of a concrete type, that type is maintained.
+    ///    If the field is of the interface type ICollection&lt;T&gt; itself, the type List&lt;T&gt; is used to reconstruct the object.
+    ///    If the type also implements IDictionary&lt;K, V&gt;, the special handling for that takes precedence.</description></item>
+    /// <item><description>For classes that don't implement any of the above-mentioned interfaces, XmlClassify supports polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
+    /// <item><description>XmlClassify supports auto-generated properties. The XML tag's name is the name of the property rather than the hidden auto-generated field, although the field's value is persisted.
+    ///    All other properties are ignored.</description></item>
+    /// <item><description>XmlClassify ignores the order of XML tags (except when handling collections and dictionaries). It uses tag names to identify which tag belongs to which field.</description></item>
+    /// <item><description>XmlClassify silently discards unrecognised XML tags instead of throwing errors. This is by design because it enables the programmer to remove a field from a class without invalidating previously-saved XML files.</description></item>
+    /// <item><description>XmlClassify silently ignores missing XML tags. A field whose XML tag is missing retains the value assigned to it by the parameterless constructor.
+    ///    This is by design because it enables the programmer to add a new field to a class (and specifying a default initialisation value for it) without invalidating previously-saved XML files.</description></item>
+    /// <item><description>The following custom attributes can be used to alter XmlClassify's behaviour. See the custom attribute class's documentation for more information:
+    ///    <see cref="XmlFollowIdAttribute"/>, <see cref="XmlIdAttribute"/>, <see cref="XmlIgnoreAttribute"/>, <see cref="XmlIgnoreIfAttribute"/>,
+    ///    <see cref="XmlIgnoreIfDefaultAttribute"/>, <see cref="XmlIgnoreIfEmptyAttribute"/>, <see cref="XmlParentAttribute"/>. If an attribute can be used on a field, it can equally well be used on an auto-generated property,
+    ///    but not on any other properties.
+    /// </description></item>
+    /// </list>
+    /// <para>Limitations:</para>
+    /// <list type="bullet">
+    /// <item><description>XmlClassify requires that the type have a parameterless constructor, although it need not be public. This parameterless constructor is executed with all its side-effects before the object is reconstructed.</description></item>
+    /// <item><description>XmlClassify does not handle cycles in the object graph (this causes a stack overflow).</description></item>
+    /// <item><description>If the object graph is an acyclic graph but not a tree, object identity is lost. The reconstructed graph contains multiple copies of the objects that are referenced multiple times.</description></item>
+    /// <item><description>If a field is of type ICollection&lt;T&gt;, IDictionary&lt;K, V&gt;, or any class that implements either of these, polymorphism is not supported, and nor is any information stored in those classes.
+    ///    In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A comparer assigned by the class's parameterless constructor is also not used.</description></item>
+    /// </list>
+    /// </remarks>
     public static class XmlClassify
     {
         /// <summary>
@@ -34,7 +71,7 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it will receive the object passed in here as its value. Default is null.</param>
+        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, object parentNode) where T : new()
         {
@@ -50,7 +87,7 @@ namespace RT.Util.Xml
         /// <param name="baseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it will receive the object passed in here as its value. Default is null.</param>
+        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, string baseDir, object parentNode) where T : new()
         {
@@ -108,7 +145,7 @@ namespace RT.Util.Xml
         /// <param name="baseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it will receive the object passed in here as its value. Default is null.</param>
+        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T ObjectFromXElement<T>(XElement elem, string baseDir, object parentNode)
         {
@@ -165,8 +202,12 @@ namespace RT.Util.Xml
                     object outputList;
                     if (type.IsArray)
                         outputList = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { elem.Elements("item").Count() });
+                    else if (type.GetGenericTypeDefinition() == typeof(ICollection<>))
+                        outputList = Activator.CreateInstance(typeof(List<>).MakeGenericType(valueType));
+                    else if (type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                        outputList = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
                     else
-                        outputList = type.GetConstructor(new Type[] { }).Invoke(new object[] { });
+                        outputList = Activator.CreateInstance(type);
 
                     var addMethod = type.IsArray
                         ? type.GetMethod("Set", new Type[] { typeof(int), valueType })
@@ -293,8 +334,7 @@ namespace RT.Util.Xml
         /// </summary>
         /// <typeparam name="T">Type of the object to store.</typeparam>
         /// <param name="saveObject">Object to store in an XML file.</param>
-        /// <param name="filename">Path and filename of the XML file to be created.
-        /// If the file already exists, it will be overwritten.</param>
+        /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename)
         {
             string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
@@ -306,8 +346,7 @@ namespace RT.Util.Xml
         /// </summary>
         /// <typeparam name="T">Type of the object to store.</typeparam>
         /// <param name="saveObject">Object to store in an XML file.</param>
-        /// <param name="filename">Path and filename of the XML file to be created.
-        /// If the file already exists, it will be overwritten.</param>
+        /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="baseDir">The base directory from which to construct the paths for
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir)
@@ -527,41 +566,41 @@ namespace RT.Util.Xml
     }
 
     /// <summary>
-    /// If this attribute is used on a field, the XML tag attribute will contain an ID that points to another, separate
-    /// XML file which in turn contains the actual object for this field. This is only allowed on fields of type
-    /// <see cref="XmlDeferredObject&lt;T&gt;"/> for some class type T. Use <see cref="XmlDeferredObject&lt;T&gt;.Value"/>
-    /// to retrieve the object. This retrieval is deferred until first use. Use <see cref="XmlDeferredObject&lt;T&gt;.Id"/>
-    /// to retrieve the Id used to reference the object. You can also capture the ID into the class T by using the
-    /// <see cref="XmlIdAttribute"/> attribute within that class.
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> stores an ID in the corresponding XML tag that points to another, separate 
+    /// XML file which in turn contains the actual object for this field or automatically-implemented property. This is only allowed on fields or automatically-implemented properties of type 
+    /// <see cref="XmlDeferredObject&lt;T&gt;"/> for some type T. Use <see cref="XmlDeferredObject&lt;T&gt;.Value"/> to retrieve the object. This retrieval is deferred until first use. 
+    /// Use <see cref="XmlDeferredObject&lt;T&gt;.Id"/> to retrieve the ID used to reference the object. You can also capture the ID into the class or struct T by using the 
+    /// <see cref="XmlIdAttribute"/> attribute within that class or struct.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field, it is ignored by XmlClassify. Data stored in this field is not persisted.
+    /// If this attribute is used on a field or automatically-implemented property, it is ignored by <see cref="XmlClassify"/>.
+    /// Data stored in this field or automatically-implemented property is not persisted.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIgnoreAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field, XmlClassify does not generate a tag if the field's value is null, 0, or false.
-    /// If it is used on a class, it applies to all fields in the class.
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the value is null, 0, or false.
+    /// If it is used on a class or struct, it applies to all fields and automatically-implemented properties in the class or struct.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public class XmlIgnoreIfDefaultAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field of a collection type, XmlClassify does not generate a tag if the collection is empty.
-    /// Notice that using this together with [XmlIgnoreIfDefault] will cause the distinction between null and an empty collection to be lost.
-    /// However, a collection containing only null elements is still persisted accordingly.
-    /// If it is used on a class, it applies to all collection-type fields in the class.
+    /// If this attribute is used on a field or automatically-implemented property of a collection or dictionary type, <see cref="XmlClassify"/> does not generate a tag if the collection 
+    /// or dictionary is empty. Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty collection or 
+    /// dictionary to be lost. However, a collection or dictionary containing only null elements is persisted correctly.
+    /// If it is used on a class or struct, it applies to all collection-type fields in the class or struct.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public class XmlIgnoreIfEmptyAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field, XmlClassify does not generate a tag if the field's value is equal to the specified value.
-    /// Notice that using this together with [XmlIgnoreIfDefault] will cause the distinction between the type's default value and the specified value to be lost.
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the field's or property's value is equal to the specified value.
+    /// Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type's default value and the specified value to be lost.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIgnoreIfAttribute : Attribute
@@ -570,28 +609,27 @@ namespace RT.Util.Xml
         /// <summary>Constructs an <see cref="XmlIgnoreIfAttribute"/> instance.</summary>
         /// <param name="value"></param>
         public XmlIgnoreIfAttribute(object value) { _value = value; }
-        /// <summary>Retrieves the value which causes a field to be ignored.</summary>
+        /// <summary>Retrieves the value which causes a field or automatically-implemented property to be ignored.</summary>
         public object Value { get { return _value; } }
     }
 
     /// <summary>
-    /// A field with this attribute set will receive a reference to the object which was its parent node
-    /// in the XML tree. If the field is of the wrong type, a runtime exception will occur. If there was
-    /// no parent node, the field will be set to null.
+    /// When reconstructing persisted objects using <see cref="XmlClassify"/>, a field or automatically-implemented property with this attribute receives a reference to the object which was
+    /// its parent node in the XML tree. If the field or automatically-implemented property is of an incompatible type, a run-time exception occurs. If there was no parent node, the field or 
+    /// automatically-implemented property is set to null. When persisting objects, fields and automatically-implemented properties with this attribute are skipped.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlParentAttribute : Attribute { }
 
     /// <summary>
-    /// A field with this attribute set will receive the Id that was used to refer to the XML file
-    /// that stores this object. See <see cref="XmlFollowIdAttribute"/>. The field must
-    /// be of type <see langword="string"/>.
+    /// When reconstructing persisted objects using <see cref="XmlClassify"/>, a field or automatically-implemented property with this attribute receives the ID that was used to refer to the
+    /// XML file that stores this object.  See <see cref="XmlFollowIdAttribute"/> for more information. The field or automatically-implemented property must be of type string.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIdAttribute : Attribute { }
 
     /// <summary>
-    /// Provides mechanisms to hold an object that has an Id and gets evaluated at first use.
+    /// Provides mechanisms to hold an object that has an ID and gets evaluated at first use.
     /// </summary>
     /// <typeparam name="T">The type of the contained object.</typeparam>
     public class XmlDeferredObject<T>
@@ -599,7 +637,7 @@ namespace RT.Util.Xml
         /// <summary>Initialises a deferred object using a delegate or lambda expression.</summary>
         /// <param name="id">Id that refers to the object to be generated.</param>
         /// <param name="generator">Function to generate the object.</param>
-        public XmlDeferredObject(string id, Func<T> generator) { _id = id; this._generator = generator; }
+        public XmlDeferredObject(string id, Func<T> generator) { _id = id; _generator = generator; }
 
         /// <summary>Initialises a deferred object using an actual object. Evaluation is not deferred.</summary>
         /// <param name="id">Id that refers to the object.</param>
@@ -607,14 +645,14 @@ namespace RT.Util.Xml
         public XmlDeferredObject(string id, T value) { _id = id; _cached = value; _haveCache = true; }
 
         /// <summary>Initialises a deferred object using a method reference and an array of parameters.</summary>
-        /// <param name="id">Id that refers to the object to be generated.</param>
-        /// <param name="generatorMethod">Reference to the method that will return the computed object.</param>
+        /// <param name="id">ID that refers to the object to be generated.</param>
+        /// <param name="generatorMethod">Reference to a method that generates the object.</param>
         /// <param name="generatorObject">Object on which the method should be invoked. Use null for static methods.</param>
         /// <param name="generatorParams">Set of parameters for the method invocation.</param>
         public XmlDeferredObject(string id, MethodInfo generatorMethod, object generatorObject, object[] generatorParams)
         {
             _id = id;
-            this._generator = () => (T) generatorMethod.Invoke(generatorObject, generatorParams);
+            _generator = () => (T) generatorMethod.Invoke(generatorObject, generatorParams);
         }
 
         private Func<T> _generator;
@@ -623,9 +661,8 @@ namespace RT.Util.Xml
         private string _id;
 
         /// <summary>
-        /// Gets or sets the object stored in this <see cref="XmlDeferredObject&lt;T&gt;"/>. The property getter will
-        /// cause the object to be evaluated when called. The setter will override the object with a pre-computed
-        /// object whose evaluation is not deferred.
+        /// Gets or sets the object stored in this <see cref="XmlDeferredObject&lt;T&gt;"/>. The property getter causes the object to be evaluated when called. 
+        /// The setter overrides the object with a pre-computed object whose evaluation is not deferred.
         /// </summary>
         public T Value
         {

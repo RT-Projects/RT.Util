@@ -217,7 +217,7 @@ namespace RT.Util.Collections
         public object Clone()
         {
             Set<T> set = new Set<T>();
-            set._set.AddRange(this._set);
+            set._set.AddRange(_set);
             return set;
         }
 

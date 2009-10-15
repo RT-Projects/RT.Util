@@ -370,7 +370,7 @@ namespace RT.Util.Collections
                     if (!RConvert.IsSupportedType(code))
                         return false;
                     else
-                        return RConvert.ExactToString(this._value) == RConvert.ExactToString(other);
+                        return RConvert.ExactToString(_value) == RConvert.ExactToString(other);
 
                 default:
                     return false;
@@ -397,20 +397,20 @@ namespace RT.Util.Collections
                     return true;
 
                 case RVariantKind.Value:
-                    return RConvert.ExactToString(this._value) == RConvert.ExactToString(other._value);
+                    return RConvert.ExactToString(_value) == RConvert.ExactToString(other._value);
 
                 case RVariantKind.List:
-                    if (this._list.Count != other._list.Count)
+                    if (_list.Count != other._list.Count)
                         return false;
                     for (int i = 0; i < _list.Count; i++)
-                        if (!this._list[i].Equals(other._list[i]))
+                        if (!_list[i].Equals(other._list[i]))
                             return false;
                     return true;
 
                 case RVariantKind.Dict:
-                    if (this._dict.Count != other._dict.Count)
+                    if (_dict.Count != other._dict.Count)
                         return false;
-                    foreach (KeyValuePair<string, RVariant> kvp in this._dict)
+                    foreach (KeyValuePair<string, RVariant> kvp in _dict)
                     {
                         if (!other._dict.ContainsKey(kvp.Key))
                             return false;

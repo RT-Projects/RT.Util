@@ -58,7 +58,7 @@ namespace RT.Util.Streams
 
         public CRC32Stream(Stream stream)
         {
-            this._stream = stream;
+            _stream = stream;
             _crc = 0xFFFFFFFF;
         }
 

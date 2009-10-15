@@ -10,20 +10,20 @@ namespace RT.Util.Controls
     /// </summary>
     public class HotkeyEdit: TextBox
     {
-        private bool LastNone;
-        private bool LastCtrl;
-        private bool LastAlt;
-        private bool LastShift;
-        private Keys LastKey;
-        private bool FOneKeyOnly;
+        private bool _lastNone;
+        private bool _lastCtrl;
+        private bool _lastAlt;
+        private bool _lastShift;
+        private Keys _lastKey;
+        private bool _oneKeyOnly;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         public HotkeyEdit()
         {
-            LastNone = true;
-            FOneKeyOnly = false;
+            _lastNone = true;
+            _oneKeyOnly = false;
         }
 
         /// <summary>
@@ -32,8 +32,8 @@ namespace RT.Util.Controls
         /// </summary>
         public bool OneKeyOnly
         {
-            get { return FOneKeyOnly; }
-            set { FOneKeyOnly = value; }
+            get { return _oneKeyOnly; }
+            set { _oneKeyOnly = value; }
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace RT.Util.Controls
         /// </summary>
         public bool ShortcutNone
         {
-            get { return LastNone; }
+            get { return _lastNone; }
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace RT.Util.Controls
         /// </summary>
         public bool ShortcutCtrl
         {
-            get { return LastCtrl; }
+            get { return _lastCtrl; }
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace RT.Util.Controls
         /// </summary>
         public bool ShortcutAlt
         {
-            get { return LastAlt; }
+            get { return _lastAlt; }
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace RT.Util.Controls
         /// </summary>
         public bool ShortcutShift
         {
-            get { return LastShift; }
+            get { return _lastShift; }
         }
 
         /// <summary>
@@ -74,24 +74,24 @@ namespace RT.Util.Controls
         /// </summary>
         public Keys ShortcutKey
         {
-            get { return LastKey; }
+            get { return _lastKey; }
         }
 
         private void SetText()
         {
-            if (LastNone && !LastShift && !LastCtrl && !LastAlt) {
+            if (_lastNone && !_lastShift && !_lastCtrl && !_lastAlt) {
                 Text = "(none)";
                 return;
             }
 
             string s = "";
-            if (LastCtrl) s += "Ctrl + ";
-            if (LastAlt) s += "Alt + ";
-            if (LastShift) s += "Shift + ";
+            if (_lastCtrl) s += "Ctrl + ";
+            if (_lastAlt) s += "Alt + ";
+            if (_lastShift) s += "Shift + ";
 
 
-            if (!LastNone) {
-                switch (LastKey) {
+            if (!_lastNone) {
+                switch (_lastKey) {
                     case Keys.D0: s+="0"; break;
                     case Keys.D1: s+="1"; break;
                     case Keys.D2: s+="2"; break;
@@ -106,7 +106,7 @@ namespace RT.Util.Controls
                     case Keys.ControlKey: s+="Control"; break;
                     case Keys.Menu: s+="Alt"; break;
                     default:
-                        s += LastKey.ToString();
+                        s += _lastKey.ToString();
                         break;
                 }
             }
@@ -118,22 +118,22 @@ namespace RT.Util.Controls
         /// <summary>Captures key presses and updates the control's state accordingly.</summary>
         protected override void OnKeyDown(KeyEventArgs e)
         {
-            if (((e.KeyCode == Keys.ShiftKey) || (e.KeyCode == Keys.ControlKey) || (e.KeyCode == Keys.Menu)) && (!FOneKeyOnly)) {
+            if (((e.KeyCode == Keys.ShiftKey) || (e.KeyCode == Keys.ControlKey) || (e.KeyCode == Keys.Menu)) && (!_oneKeyOnly)) {
                 // If it's a modifier then reset the key
-                LastNone = true;
+                _lastNone = true;
             } else {
                 // Otherwise set the key
-                LastNone = false;
-                LastKey = e.KeyCode;
+                _lastNone = false;
+                _lastKey = e.KeyCode;
             }
 
             // Update current modifiers state
-            if (FOneKeyOnly) {
-                LastCtrl = LastAlt = LastShift = false;
+            if (_oneKeyOnly) {
+                _lastCtrl = _lastAlt = _lastShift = false;
             } else {
-                LastCtrl = e.Control;
-                LastAlt = e.Alt;
-                LastShift = e.Shift;
+                _lastCtrl = e.Control;
+                _lastAlt = e.Alt;
+                _lastShift = e.Shift;
             }
 
             // Update display etc
@@ -145,10 +145,10 @@ namespace RT.Util.Controls
         protected override void OnKeyUp(KeyEventArgs e)
         {
             // Update current modifiers state
-            if (LastNone & !FOneKeyOnly) {
-                LastCtrl = e.Control;
-                LastAlt = e.Alt;
-                LastShift = e.Shift;
+            if (_lastNone & !_oneKeyOnly) {
+                _lastCtrl = e.Control;
+                _lastAlt = e.Alt;
+                _lastShift = e.Shift;
             }
 
             // Update display etc

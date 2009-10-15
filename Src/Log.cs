@@ -317,8 +317,8 @@ namespace RT.Util
     [Serializable]
     public class StreamLogger : LoggerBase
     {
-        private Stream underlyingStream = null;
-        private StreamWriter textStream;
+        private Stream _underlyingStream = null;
+        private StreamWriter _streamWriter;
 
         /// <summary>Creates a new instance.</summary>
         public StreamLogger()
@@ -336,12 +336,12 @@ namespace RT.Util
         /// </summary>
         public Stream Stream
         {
-            get { return underlyingStream; }
+            get { return _underlyingStream; }
             set
             {
-                underlyingStream = value;
-                textStream = new StreamWriter(underlyingStream);
-                textStream.AutoFlush = true;
+                _underlyingStream = value;
+                _streamWriter = new StreamWriter(_underlyingStream);
+                _streamWriter.AutoFlush = true;
             }
         }
 
@@ -352,7 +352,7 @@ namespace RT.Util
         /// </summary>
         public StreamWriter StreamWriter
         {
-            get { return textStream; }
+            get { return _streamWriter; }
         }
 
         /// <summary>Logs a message to the underlying stream.</summary>
@@ -360,14 +360,14 @@ namespace RT.Util
         {
             lock (_lock_log)
             {
-                if (VerbosityLimit[type] < verbosity || textStream == null)
+                if (VerbosityLimit[type] < verbosity || _streamWriter == null)
                     return;
 
                 string fmtInfo, fmtText;
                 GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
 
-                textStream.Write(fmtInfo);
-                textStream.WriteLine(fmtText);
+                _streamWriter.Write(fmtInfo);
+                _streamWriter.WriteLine(fmtText);
             }
         }
     }

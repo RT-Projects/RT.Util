@@ -76,9 +76,6 @@
     <Compile Include="Controls\Separator.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Separator.Designer.cs">
-      <DependentUpon>Separator.cs</DependentUpon>
-    </Compile>
     <Compile Include="Controls\SplitContainerEx.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -171,10 +168,6 @@
     <Compile Include="XmlClassify.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Controls\Separator.resx">
-      <DependentUpon>Separator.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Forms\DlgMessage.resx">
       <DependentUpon>DlgMessage.cs</DependentUpon>
       <SubType>Designer</SubType>

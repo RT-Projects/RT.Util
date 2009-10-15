@@ -99,7 +99,7 @@ namespace RT.Util.Collections
         /// </summary>
         public PartialComparisonResult PartialCompareTo(PosetNode<T> other)
         {
-            return this._elements[0].PartialCompareTo(other._elements[0]);
+            return _elements[0].PartialCompareTo(other._elements[0]);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace RT.Util.Collections
         /// </summary>
         public PartialComparisonResult PartialCompareTo(T other)
         {
-            return this._elements[0].PartialCompareTo(other);
+            return _elements[0].PartialCompareTo(other);
         }
     }
 
