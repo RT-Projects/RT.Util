@@ -552,7 +552,7 @@ namespace RT.Util.Xml
 
     /// <summary>
     /// If this attribute is used on a field of a collection type, XmlClassify does not generate a tag if the collection is empty.
-    /// Notice that using this together with [XmlIgnoreIfNull] will cause the distinction between null and an empty collection to be lost.
+    /// Notice that using this together with [XmlIgnoreIfDefault] will cause the distinction between null and an empty collection to be lost.
     /// However, a collection containing only null elements is still persisted accordingly.
     /// If it is used on a class, it applies to all collection-type fields in the class.
     /// </summary>
@@ -561,6 +561,7 @@ namespace RT.Util.Xml
 
     /// <summary>
     /// If this attribute is used on a field, XmlClassify does not generate a tag if the field's value is equal to the specified value.
+    /// Notice that using this together with [XmlIgnoreIfDefault] will cause the distinction between the type's default value and the specified value to be lost.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class XmlIgnoreIfAttribute : Attribute
