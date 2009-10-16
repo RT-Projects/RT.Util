@@ -7,14 +7,14 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Dialogs
 {
     /// <summary>
-    /// Selects the type of DlgMessage dialog. This specifies the sound and, unless
+    /// Selects the type of dialog for <see cref="DlgMessage"/> to show. This specifies the sound and, unless
     /// explicitly overridden, the image and caption used to show the dialog.
     /// </summary>
     public enum DlgType
     {
         /// <summary>Displays an information dialog.</summary>
         Info,
-        /// <summary>Displays a questiondialog.</summary>
+        /// <summary>Displays a question dialog.</summary>
         Question,
         /// <summary>Displays a warning dialog.</summary>
         Warning,
