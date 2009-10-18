@@ -25,6 +25,7 @@ namespace RT.Util.Forms
         public ManagedForm(Settings settings)
         {
             if (settings == null) throw new ArgumentNullException("settings");
+            _settings = settings;
 
             // Since the constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
             // we need to apply the settings later. Use the Load event for this
@@ -35,7 +36,6 @@ namespace RT.Util.Forms
                 // Fix this.
                 Font = System.Drawing.SystemFonts.MessageBoxFont;
 
-                _settings = settings;
                 try
                 {
                     var vs = SystemInformation.VirtualScreen;

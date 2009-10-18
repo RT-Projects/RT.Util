@@ -84,6 +84,10 @@ namespace RT.Util.Collections
             }
         }
 
+        /// <summary>
+        /// Gets the current capacity of the queue (that is, the maximum number of items it can store before
+        /// the internal store needs to be resized).
+        /// </summary>
         public int Capacity
         {
             get
