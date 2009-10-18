@@ -228,10 +228,20 @@ namespace RT.Util.Forms
         {
             /// <summary>Holds form dimensions for each screen resolution.</summary>
             public Dictionary<string, FormDimensions> DimensionsByRes = new Dictionary<string, FormDimensions>();
+
+            /// <summary>Returns a deep clone of this class.</summary>
+            public virtual object Clone()
+            {
+                var result = (Settings) MemberwiseClone();
+                result.DimensionsByRes = new Dictionary<string, FormDimensions>(DimensionsByRes.Count);
+                foreach (var kvp in DimensionsByRes)
+                    result.DimensionsByRes[kvp.Key] = kvp.Value.Clone();
+                return result;
+            }
         }
 
         /// <summary>Stores the size, position and maximized state of the form.</summary>
-        public class FormDimensions
+        public sealed class FormDimensions
         {
             /// <summary>Stores the left (X) coordinate of the form when not maximized.</summary>
             public int Left;
@@ -243,6 +253,12 @@ namespace RT.Util.Forms
             public int Height;
             /// <summary>Stores whether the form is maximized.</summary>
             public bool Maximized;
+
+            /// <summary>Returns a deep clone of this class.</summary>
+            public FormDimensions Clone()
+            {
+                return (FormDimensions) MemberwiseClone();
+            }
         }
 
         private void saveSettings(object sender, FormClosedEventArgs e)

@@ -355,5 +355,21 @@ namespace RT.Util.ExtensionMethods
                 yield return new Tuple<T1, T2>(enum1.Current, elem);
             }
         }
+
+        /// <summary>
+        /// Returns the index of the first element in this <paramref name="enumerable"/> satisfying
+        /// the specified <paramref name="condition"/>. If no such elements are found, returns -1.
+        /// </summary>
+        public static int IndexOf<T>(this IEnumerable<T> enumerable, Func<T, bool> condition)
+        {
+            int index = 0;
+            foreach (var v in enumerable)
+            {
+                if (condition(v))
+                    return index;
+                index++;
+            }
+            return -1;
+        }
     }
 }

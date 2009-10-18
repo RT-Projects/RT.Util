@@ -84,6 +84,14 @@ namespace RT.Util.Collections
             }
         }
 
+        public int Capacity
+        {
+            get
+            {
+                return _data.Length;
+            }
+        }
+
         private void growCapacity()
         {
             T[] newdata = new T[_data.Length == 0 ? 8 : _data.Length * 2];

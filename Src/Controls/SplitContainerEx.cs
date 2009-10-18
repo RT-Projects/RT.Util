@@ -69,15 +69,15 @@ namespace RT.Util.Controls
 
         void SplitContainerEx_SplitterMoved(object sender, SplitterEventArgs e)
         {
-            if (_settings != null)
-                _settings.Position = SplitterDistance;
+            if (_settings != null && Visible)
+                _settings.PositionPercent = (double) SplitterDistance / Width;
         }
 
         /// <summary>Holds the settings of the <see cref="SplitContainerEx"/>.</summary>
         public class Settings
         {
             /// <summary>Holds the position of the splitter, or null if not stored yet.</summary>
-            public int? Position;
+            public double? PositionPercent;
         }
 
         private Settings _settings;
@@ -92,8 +92,8 @@ namespace RT.Util.Controls
             _settings = settings;
             if (_settings != null)
             {
-                if (_settings.Position != null)
-                    SplitterDistance = _settings.Position.Value;
+                if (_settings.PositionPercent != null)
+                    SplitterDistance = (int) (_settings.PositionPercent.Value * Width);
             }
         }
     }
