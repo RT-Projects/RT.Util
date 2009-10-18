@@ -15,8 +15,8 @@ using System.Reflection;
 namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
-    /// <typeparam name="T">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
-    public class TranslationForm<T> : ManagedForm where T : TranslationBase, new()
+    /// <typeparam name="TTranslation">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
+    public class TranslationForm<TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
     {
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;
@@ -31,7 +31,7 @@ namespace RT.Util.Lingo
 
         private TranslationPanel _lastFocusedPanel;
         private string _translationFile;
-        private T _translation;
+        private TTranslation _translation;
         private bool _anyChanges;
         private Settings _settings;
         private NumberSystem _origNumberSystem;
@@ -56,7 +56,7 @@ namespace RT.Util.Lingo
         /// <summary>
         /// Fires every time the translation is updated on the disk (i.e. when the user clicks either "Save &amp; Close" or "Apply changes").
         /// </summary>
-        public event SetLanguage<T> TranslationChanged;
+        public event SetLanguage<TTranslation> TranslationChanged;
 
         /// <summary>Main constructor.</summary>
         /// <param name="settings">Settings of the <see cref="TranslationForm&lt;T&gt;"/>.</param>
@@ -72,7 +72,7 @@ namespace RT.Util.Lingo
 
             _settings = settings;
             _translationFile = PathUtil.Combine(PathUtil.AppPath, "Translations", moduleName + "." + language.GetIsoLanguageCode() + ".xml");
-            _translation = XmlClassify.LoadObjectFromXmlFile<T>(_translationFile);
+            _translation = XmlClassify.LoadObjectFromXmlFile<TTranslation>(_translationFile);
             _anyChanges = false;
 
             if (_settings.FontName != null)
@@ -94,14 +94,14 @@ namespace RT.Util.Lingo
             _lstGroups = new TranslationGroupListBox { Dock = DockStyle.Fill };
             pnlSplit.Panel1.Controls.Add(_lstGroups);
 
-            T orig = new T();
+            TTranslation orig = new TTranslation();
             _origNumberSystem = orig.Language.GetNumberSystem();
 
             // Create all the translation panels
             var dicPanels = new Dictionary<object, List<TranslationPanel>>();
             var lstAllPanels = new List<TranslationPanel>();
             var lstUngroupedPanels = new List<TranslationPanel>();
-            createPanelsForType(null, typeof(T), typeof(T), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null);
+            createPanelsForType(null, typeof(TTranslation), typeof(TTranslation), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null);
 
             // Discover all the group types, their enum values, and then their attributes
             Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
@@ -396,7 +396,7 @@ namespace RT.Util.Lingo
                 {
                     try
                     {
-                        var loadAgain = XmlClassify.LoadObjectFromXmlFile<T>(_translationFile);
+                        var loadAgain = XmlClassify.LoadObjectFromXmlFile<TTranslation>(_translationFile);
                         TranslationChanged(loadAgain);
                     }
                     catch (Exception x)

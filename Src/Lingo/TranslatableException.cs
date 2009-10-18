@@ -8,6 +8,7 @@ namespace RT.Util.Lingo
     /// <summary>
     /// Provides a means for an application to throw exceptions containing translatable messages without the need to pass a <see cref="TranslationBase"/>-derived object to all methods that could throw exceptions.
     /// </summary>
+    /// <typeparam name="TTranslation">The type containing the translatable strings.</typeparam>
     [Serializable]
     public class TranslatableException<TTranslation> : RTException where TTranslation : TranslationBase, new()
     {

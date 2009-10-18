@@ -14,9 +14,9 @@ namespace RT.Util.Lingo
     /// Used by any function which may change the language of the program. The program must
     /// change the UI language in this callback and remember to use that language after restarting.
     /// </summary>
-    /// <typeparam name="T">The type of the translation class.</typeparam>
+    /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
     /// <param name="translation">The new translation to be used by the program.</param>
-    public delegate void SetLanguage<T>(T translation) where T : TranslationBase;
+    public delegate void SetLanguage<TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
 
     /// <summary>
     /// Static class with helper methods to support multi-language applications.
