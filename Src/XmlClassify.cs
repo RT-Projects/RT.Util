@@ -307,8 +307,13 @@ namespace RT.Util.Xml
                                     string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
                                     field.SetValue(ret,
                                          typeof(XmlDeferredObject<>).MakeGenericType(innerType)
-                                             .GetConstructor(new Type[] { typeof(string), typeof(Func<>).MakeGenericType(innerType) })
-                                             .Invoke(new object[] { attr.Value, new Func<object>(() => loadObjectFromXmlFile(innerType, newFile, baseDir, ret)) })
+                                             .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
+                                             .Invoke(new object[] { 
+                                                 attr.Value,
+                                                 typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }, null),
+                                                 null,
+                                                 new object[] { innerType, newFile, baseDir, ret }
+                                            })
                                      );
                                 }
                             }
