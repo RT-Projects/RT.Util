@@ -298,21 +298,19 @@ namespace RT.Util.Xml
                                 throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(realType.FullName, field.Name));
 
                             Type innerType = field.FieldType.GetGenericArguments()[0];
-                            var attr = elem.Attribute(rFieldName);
-                            if (attr != null)
+                            var subElem = elem.Element(rFieldName);
+                            if (subElem != null)
                             {
-                                string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
-                                field.SetValue(ret,
-                                    // new XmlDeferredObject<InnerType>(attr.Value, method loadObjectFromXmlFile, new[] { innerType, newFile, baseDir, ret })
-                                    typeof(XmlDeferredObject<>).MakeGenericType(innerType)
-                                        .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
-                                        .Invoke(new object[] {
-                                            attr.Value,
-                                            typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }),
-                                            null,
-                                            new object[] { innerType, newFile, baseDir, ret }
-                                        })
-                                );
+                                var attr = subElem.Attribute("id");
+                                if (attr != null)
+                                {
+                                    string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
+                                    field.SetValue(ret,
+                                         typeof(XmlDeferredObject<>).MakeGenericType(innerType)
+                                             .GetConstructor(new Type[] { typeof(string), typeof(Func<>).MakeGenericType(innerType) })
+                                             .Invoke(new object[] { attr.Value, new Func<object>(() => loadObjectFromXmlFile(innerType, newFile, baseDir, ret)) })
+                                     );
+                                }
                             }
                         }
 
