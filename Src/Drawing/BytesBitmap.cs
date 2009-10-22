@@ -24,7 +24,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public byte[] Bits
         {
-            get { return _bytes._bits; }
+            get { return _bytes.Bytes; }
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace RT.Util.Drawing
         /// </summary>
         public IntPtr BitPtr
         {
-            get { return _bytes._bitPtr; }
+            get { return _bytes.Address; }
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace RT.Util.Drawing
             int padding = _stride % 4;
             _stride += (padding == 0) ? 0 : 4 - padding;
             _bytes = new SharedPinnedByteArray(_stride * height);
-            _bitmap = new Bitmap(width, height, _stride, format, _bytes._bitPtr);
+            _bitmap = new Bitmap(width, height, _stride, format, _bytes.Address);
         }
 
         #region Dispose stuff
@@ -111,7 +111,7 @@ namespace RT.Util.Drawing
                 return;
 
             _bitmap.Dispose();
-            _bytes.releaseReference();
+            _bytes.ReleaseReference();
             _disposed = true;
 
             if (disposing)
@@ -136,39 +136,69 @@ namespace RT.Util.Drawing
     /// </summary>
     internal class SharedPinnedByteArray
     {
-        internal byte[] _bits;
-        internal GCHandle _handle;
-        internal IntPtr _bitPtr;
-
+        private GCHandle _handle;
         private int _refCount;
         private bool _destroyed;
 
+        /// <summary>
+        /// Gets the allocated byte array. This can be modified as desired.
+        /// </summary>
+        public byte[] Bytes { get; private set; }
+
+        /// <summary>
+        /// Gets an unmanaged address of the first (index 0) byte of the byte array.
+        /// </summary>
+        public IntPtr Address { get; private set; }
+
+        /// <summary>
+        /// Returns an unmanaged address of the specified byte in the byte array.
+        /// </summary>
+        public IntPtr AddressOf(int index)
+        {
+            return Marshal.UnsafeAddrOfPinnedArrayElement(Bytes, index);
+        }
+
+        /// <summary>
+        /// Creates a new pinned array of the specified size, that can be accessed through <see cref="Bits"/>.
+        /// One reference is automatically added; call <see cref="ReleaseReference"/> when finished using this array.
+        /// </summary>
+        /// <param name="length">The number of bytes that the pinned array should contain</param>
         public SharedPinnedByteArray(int length)
         {
-            _bits = new byte[length];
-            _handle = GCHandle.Alloc(_bits, GCHandleType.Pinned);
-            _bitPtr = Marshal.UnsafeAddrOfPinnedArrayElement(_bits, 0);
+            Bytes = new byte[length];
+            _handle = GCHandle.Alloc(Bytes, GCHandleType.Pinned);
+            Address = Marshal.UnsafeAddrOfPinnedArrayElement(Bytes, 0);
             _refCount++;
         }
 
-        internal void addReference()
+        /// <summary>
+        /// Adds a reference to this array. One reference is counted when the array is created. It is deleted when
+        /// all references are released using <see cref="ReleaseReference"/>.
+        /// </summary>
+        public void AddReference()
         {
             _refCount++;
         }
 
-        internal void releaseReference()
+        /// <summary>
+        /// Releases a reference to this array. When there are none left, the array is unpinned and can get garbage-collected.
+        /// </summary>
+        public void ReleaseReference()
         {
             _refCount--;
             if (_refCount <= 0)
                 destroy();
         }
 
+        /// <summary>Gets the length of the byte array.</summary>
+        public int Length { get { return Bytes.Length; } }
+
         private void destroy()
         {
             if (!_destroyed)
             {
                 _handle.Free();
-                _bits = null;
+                Bytes = null;
                 _destroyed = true;
             }
         }
