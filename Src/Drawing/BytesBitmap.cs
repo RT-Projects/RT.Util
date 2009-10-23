@@ -159,7 +159,7 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Creates a new pinned array of the specified size, that can be accessed through <see cref="Bits"/>.
+        /// Creates a new pinned array of the specified size, that can be accessed through <see cref="Bytes"/>.
         /// One reference is automatically added; call <see cref="ReleaseReference"/> when finished using this array.
         /// </summary>
         /// <param name="length">The number of bytes that the pinned array should contain</param>
