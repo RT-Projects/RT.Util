@@ -82,21 +82,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns a collection containing numberOfTimes references/copies of the specified object/struct.
-        /// </summary>
-        /// <typeparam name="T">Type of object to repeat.</typeparam>
-        /// <param name="repeatWhat">Object or struct to repeat.</param>
-        /// <param name="numberOfTimes">Number of times to repeat the object or struct.</param>
-        public static IEnumerable<T> Repeat<T>(this T repeatWhat, int numberOfTimes)
-        {
-            while (numberOfTimes > 0)
-            {
-                yield return repeatWhat;
-                numberOfTimes--;
-            }
-        }
-
-        /// <summary>
         /// Splits the specified IEnumerable at every element that satisfies a specified predicate and returns
         /// a collection containing each sequence of elements in between each pair of such elements.
         /// The elements satisfying the predicate are not included.

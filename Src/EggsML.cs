@@ -7,10 +7,14 @@ using System.Xml.Linq;
 
 namespace RT.Util
 {
+    /// <summary>Implements a parser for the minimalist text mark-up language EggsML.</summary>
     public static class EggsML
     {
         internal static char[] specialChars = new char[] { '~', '@', '#', '$', '%', '^', '&', '*', '_', '=', '+', '/', '\\', '[', ']', '{', '}', '<', '>', '|', '`', '"' };
 
+        /// <summary>Parses the specified EggsML input.</summary>
+        /// <param name="input">The EggsML text to parse.</param>
+        /// <returns>The resulting parse-tree.</returns>
         public static EggsNode Parse(string input)
         {
             if (input == null || input.Contains('\0'))
@@ -123,18 +127,33 @@ namespace RT.Util
         private static bool alwaysCloses(char p) { return p == ']' || p == '>' || p == '}'; }
     }
 
+    /// <summary>Contains a node in the EggsML parse tree.</summary>
     public abstract class EggsNode
     {
+        /// <summary>Allows implicit conversion from a string to an <see cref="EggsText"/> node.</summary>
         public static implicit operator EggsNode(string text) { return new EggsText(text); }
+        /// <summary>Returns the EggsML parse tree as XML.</summary>
         public abstract object ToXml();
     }
+
+    /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag.</summary>
     public class EggsTag : EggsNode
     {
+        /// <summary>The character used to open the tag (e.g. '[').</summary>
         public char Tag;
+        /// <summary>The index in the original string where this tag was opened.</summary>
         public int Index;
+        /// <summary>The children of this node. The first level corresponds to the usage of the '|' character in EggsML.</summary>
         public List<List<EggsNode>> Children = new List<List<EggsNode>> { new List<EggsNode>() };
+        /// <summary>Constructs a new EggsML parse-tree node that represents an EggsML tag.</summary>
+        /// <param name="tag">The character used to open the tag (e.g. '[').</param>
+        /// <param name="index">The index in the original string where this tag was opened.</param>
         public EggsTag(char tag, int index) { Tag = tag; Index = index; }
+        /// <summary>Adds a new child node to the last set of children of this tag.</summary>
+        /// <param name="node">The child node to add.</param>
         public void Add(EggsNode node) { Children[Children.Count - 1].Add(node); }
+        /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
+        /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
         {
             if (Children == null || Children.Count == 0)
@@ -190,6 +209,7 @@ namespace RT.Util
             }
             return sb.ToString();
         }
+        /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml()
         {
             string tagName;
@@ -218,24 +238,40 @@ namespace RT.Util
             return new XElement(tagName, Children.Count == 1 ? (object) Children[0].Select(ch => ch.ToXml()) : Children.Select(chlist => new XElement("item", chlist.Select(ch => ch.ToXml()))));
         }
     }
+    /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
     public class EggsText : EggsNode
     {
+        /// <summary>The text contained in this node.</summary>
         public string Text = string.Empty;
+        /// <summary>Constructs a new EggsML text node.</summary>
+        /// <param name="text">The text for this node to contain.</param>
         public EggsText(string text) { Text = text; }
+        /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
+        /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
         {
             if (Text.Where(ch => EggsML.specialChars.Contains(ch) && ch != '"').Take(3).Count() >= 3)
                 return string.Concat("\"", Text.Replace("\"", "\"\""), "\"");
             return new string(Text.SelectMany(ch => EggsML.specialChars.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
         }
+        /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml() { return Text; }
     }
 
+    /// <summary>Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>
     [Serializable]
     public class EggsMLParseException : Exception
     {
+        /// <summary>The character index into the original string where the error occurred.</summary>
         public int Index { get; private set; }
+        /// <summary>Constructor.</summary>
+        /// <param name="message">Message.</param>
+        /// <param name="index">The character index into the original string where the error occurred.</param>
         public EggsMLParseException(string message, int index) : base(message) { Index = index; }
+        /// <summary>Constructor.</summary>
+        /// <param name="message">Message.</param>
+        /// <param name="index">The character index into the original string where the error occurred.</param>
+        /// <param name="inner">An inner exception to pass to the base Exception class.</param>
         public EggsMLParseException(string message, int index, Exception inner) : base(message, inner) { Index = index; }
     }
 }

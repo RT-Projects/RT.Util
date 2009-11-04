@@ -416,29 +416,36 @@ namespace RT.Util.ExtensionMethods
                 yield return sb.ToString();
         }
 
-        /// <summary>
-        /// Word-wraps the current string to a specified width. Supports unix-style
-        /// newlines and indented paragraphs.
-        /// </summary>
+        /// <summary>Word-wraps the current string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
         /// <remarks>
-        /// <para>
-        /// The supplied text will be split into "paragraphs" on the newline characters.
-        /// Every paragraph will begin on a new line in the word-wrapped output, indented
-        /// by the same number of spaces as in the input. All subsequent lines belonging
-        /// to that paragraph will also be indented by the same amount.</para>
-        /// <para>
-        /// All multiple contiguous spaces will be replaced with a single space
-        /// (except for the indentation).</para>
+        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
+        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
+        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
         /// </remarks>
         /// <param name="text">Text to be word-wrapped.</param>
-        /// <param name="maxWidth">The maximum number of characters permitted
-        /// on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
         public static IEnumerable<string> WordWrap(this string text, int maxWidth)
+        {
+            return WordWrap(text, maxWidth, 0);
+        }
+
+        /// <summary>Word-wraps the current string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
+        /// <remarks>
+        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
+        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
+        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
+        /// </remarks>
+        /// <param name="text">Text to be word-wrapped.</param>
+        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
+        public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent)
         {
             if (text == null || text == "")
                 yield break;
             if (maxWidth < 1)
-                throw new ArgumentOutOfRangeException("maxWidth cannot be less than 1");
+                throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
+            if (hangingIndent < 0)
+                throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
 
             Regex regexSplitOnWindowsNewline = new Regex(@"\r\n", RegexOptions.Compiled);
             Regex regexSplitOnUnixMacNewline = new Regex(@"[\r\n]", RegexOptions.Compiled);
@@ -458,8 +465,8 @@ namespace RT.Util.ExtensionMethods
                     string[] words = regexKillDoubleSpaces.Replace(paragraph.Substring(indentLen), " ").Split(' ');
 
                     StringBuilder curLine = new StringBuilder();
-                    string indent = new string(' ', indentLen);
-                    string space = indent;
+                    string indent = new string(' ', indentLen + hangingIndent);
+                    string space = new string(' ', indentLen);
 
                     for (int i = 0; i < words.Length; i++)
                     {
