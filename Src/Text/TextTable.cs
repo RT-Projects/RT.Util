@@ -1,421 +1,470 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using RT.Util.ExtensionMethods;
-using System.Linq;
 
 namespace RT.Util.Text
 {
     /// <summary>
-    /// Holds a table of strings. Provides methods to print the table to text
-    /// assuming a fixed-width font. Will wrap the cell contents as necessary.
-    /// Supports automatic resizing of columns to fit the required width.
+    /// Produces a table in a fixed-width character environment.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Will not necessarily lay out the table optimally in cases where
-    /// there are multiple auto-size columns and one of the following
-    /// is true:</para>
-    /// <list type="bullet">
-    /// <item>there are multiple paragraphs in some cells</item>
-    /// <item>length of the contents of the cells in the same column
-    ///     vary a lot, e.g. most cells are tiny but one is really
-    ///     really long.</item>
-    /// </list>
-    /// </remarks>
     public class TextTable
     {
-        /// <summary>
-        /// Defines what kind of text alignment to use within the cells of the TextTable.
-        /// </summary>
+        /// <summary>Provides values to change the horizontal alignment of text within cells.</summary>
         public enum Alignment
         {
-            /// <summary>Left-align the text</summary>
+            /// <summary>Specifies alignment to the left edge of each cell.</summary>
             Left,
-            /// <summary>Right-align the text</summary>
-            Right,
-            /// <summary>Center the text</summary>
+            /// <summary>Specifies horizontally centered alignment.</summary>
             Center,
+            /// <summary>Specifies alignment to the right edge of each cell.</summary>
+            Right
+        };
+
+        /// <summary>Gets or sets the number of characters to space each column apart from the next.</summary>
+        public int ColumnSpacing { get; set; }
+        /// <summary>Gets or sets the number of characters to space each row apart from the next.</summary>
+        public int RowSpacing { get; set; }
+        /// <summary>Gets or sets the maximum width of the table, including all column spacing. If <see cref="UseFullWidth"/> is false, the table may be narrower.</summary>
+        public int MaxWidth { get; set; }
+        /// <summary>Gets or sets a value indicating whether horizontal rules are rendered between rows. The horizontal rules are rendered only if <see cref="RowSpacing"/> is greater than zero.</summary>
+        public bool HorizontalRules { get; set; }
+        /// <summary>Gets or sets a value indicating whether vertical rules are rendered between columns. The vertical rules are rendered only if <see cref="ColumnSpacing"/> is greater than zero.</summary>
+        public bool VerticalRules { get; set; }
+        /// <summary>Gets or sets a value indicating the number of rows from the top that are considered table headers. The only effect of this is that the horizontal rule (if any) after the header rows is rendered using '=' characters instead of '-'.</summary>
+        public int HeaderRows { get; set; }
+        /// <summary>If true, the table will be expanded to fill the <see cref="Width"/>. If false, the table will fill the whole width only if any cells need to be word-wrapped.</summary>
+        public bool UseFullWidth { get; set; }
+        /// <summary>Specifies the default alignment to use for cells where the alignment is not explicitly set. Default is <see cref="Alignment.Left"/>.</summary>
+        public Alignment DefaultAlignment { get; set; }
+        /// <summary>Gets or sets a value indicating the number of spaces to add left of the table. This does not count towards the <see cref="MaxWidth"/>.</summary>
+        public int LeftMargin { get; set; }
+
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        public void SetCell(int col, int row, string content)
+        {
+            setCell(col, row, content, 1, 1, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        public void SetCell(int col, int row, string content, bool noWrap)
+        {
+            setCell(col, row, content, 1, 1, noWrap, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        public void SetCell(int col, int row, string content, int colSpan, int rowSpan)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
         }
 
-        private class TextColumn
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, string content, Alignment alignment)
         {
-            private readonly List<string> _rows = new List<string>();
-            private readonly List<int> _maxParaLength = new List<int>();
+            setCell(col, row, content, 1, 1, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, string content, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, 1, 1, noWrap, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
+        }
 
-            /// <summary>
-            /// Gets/sets the text associated with the specified row index.
-            /// The behaviour is as if the column had an infinite number of
-            /// rows all initially set to "". Storing null results in the
-            /// empty string being stored.
-            /// </summary>
-            public string this[int row]
+        private void setCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment)
+        {
+            if (col < 0)
+                throw new ArgumentOutOfRangeException("col", col, @"""col"" cannot be negative.");
+            if (row < 0)
+                throw new ArgumentOutOfRangeException("row", row, @"""row"" cannot be negative.");
+            if (colSpan < 1)
+                throw new ArgumentOutOfRangeException("colSpan", colSpan, @"""colSpan"" cannot be less than 1.");
+            if (rowSpan < 1)
+                throw new ArgumentOutOfRangeException("rowSpan", rowSpan, @"""rowSpan"" cannot be less than 1.");
+            if (content == null)
+                throw new ArgumentNullException("content");
+
+            // Complain if setting this cell would overlap with another cell due to its colspan or rowspan
+            if (row >= _cells.Count || col >= _cells[row].Count || _cells[row][col] == null || _cells[row][col] is surrogateCell)
             {
-                get
-                {
-                    if (row < _rows.Count)
-                        return _rows[row];
-                    else
-                        return "";
-                }
-
-                set
-                {
-                    if (row < _rows.Count && _maxParaLength[row] == _maxWidth)
-                        _maxWidthNeedsRecalc = true; // removing a longest element
-
-                    // Grow the list as necessary
-                    while (row >= _rows.Count)
-                    {
-                        _rows.Add("");
-                        _maxParaLength.Add(0);
-                    }
-
-                    _rows[row] = value == null ? "" : value;
-                    _maxParaLength[row] = getMaxParaLength(_rows[row]);
-
-                    if (_maxWidth < _maxParaLength[row])
-                    {
-                        _maxWidth = _maxParaLength[row];
-                        _maxWidthNeedsRecalc = false; // adding THE longest element
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Recalculates max width by going through every value.
-            /// </summary>
-            private void UpdateMaxWidth()
-            {
-                _maxWidth = 0;
-                for (int row = 0; row < _rows.Count; row++)
-                {
-                    _maxParaLength[row] = getMaxParaLength(_rows[row]);
-                    if (_maxWidth < _maxParaLength[row])
-                        _maxWidth = _maxParaLength[row];
-                }
-
-                _maxWidthNeedsRecalc = false;
-            }
-
-            /// <summary>
-            /// Returns the length of the longest paragraph in the string.
-            /// Paragraphs are separated by \n.
-            /// </summary>
-            private int getMaxParaLength(string str)
-            {
-                string[] para = str.Split('\n');
-                int max = 0;
-
-                foreach (string p in para)
-                    if (max < p.Length)
-                        max = p.Length;
-
-                return max;
-            }
-
-            /// <summary>
-            /// Keeps track of the longest string found so far.
-            /// </summary>
-            private int _maxWidth = 0;
-
-            /// <summary>
-            /// This is set to true whenever we're unsure if maxWidth is
-            /// correct, and reset to false whenever that's certain.
-            /// </summary>
-            private bool _maxWidthNeedsRecalc = false;
-
-            /// <summary>
-            /// Returns the width of the widest row currently in this column.
-            /// 
-            /// The max width is evaluated in a cool semi-lazy fashion, keeping
-            /// the max width up-to-date only when it's cheap or when it's
-            /// truly necessary.
-            /// </summary>
-            public int MaxWidth
-            {
-                get
-                {
-                    if (_maxWidthNeedsRecalc)
-                        UpdateMaxWidth();
-                    return _maxWidth;
-                }
-            }
-
-            /// <summary>
-            /// The desired width for the column is stored here by the outer class.
-            /// </summary>
-            public double CalculatedWidth;
-
-            /// <summary>
-            /// Used by the outer class to keep track of whether this column is
-            /// automatically sized or not.
-            /// </summary>
-            public bool AutoSize;
-
-            /// <summary>
-            /// Specifies whether the values in this column are left-aligned, right-aligned or centered.
-            /// </summary>
-            public Alignment Alignment;
-
-            public TextColumn(bool defaultAutoSize, Alignment defaultAlignment)
-            {
-                AutoSize = defaultAutoSize;
-                Alignment = defaultAlignment;
-            }
-        }
-
-        /// <summary>
-        /// Constructs a TextTable in which all columns initially have AutoSize set to false.
-        /// Use <see cref="SetAutoSize"/> to set AutoSize for individual columns to true.
-        /// </summary>
-        public TextTable()
-        {
-            _defaultAutoSize = false;
-
-        }
-
-        /// <summary>
-        /// Constructs a TextTable in which all columns initially have the specified AutoSize setting.
-        /// Use <see cref="SetAutoSize"/> to change the AutoSize setting for individual columns.
-        /// </summary>
-        public TextTable(bool defaultAutoSize)
-        {
-            _defaultAutoSize = defaultAutoSize;
-        }
-
-        /// <summary>
-        /// Constructs a TextTable in which all columns initially have the specified AutoSize and
-        /// Alignment setting.
-        /// Use <see cref="SetAutoSize"/> to change the AutoSize setting for individual columns.
-        /// Use <see cref="SetAlignment"/> to change the Alignment setting for individual columns.
-        /// </summary>
-        public TextTable(bool defaultAutoSize, Alignment defaultAlignment)
-        {
-            _defaultAutoSize = defaultAutoSize;
-            _defaultAlignment = defaultAlignment;
-        }
-
-        /// <summary>Remembers the default AutoSize setting for new columns.</summary>
-        private readonly bool _defaultAutoSize;
-
-        /// <summary>Remembers the default Alignment setting for new columns.</summary>
-        private readonly Alignment _defaultAlignment;
-
-        /// <summary>Holds a list of every column in the table.</summary>
-        private readonly List<TextColumn> _cols = new List<TextColumn>();
-
-        /// <summary>
-        /// This is updated to hold the number of rows deduced from the
-        /// furthest row to ever be assigned a value.
-        /// </summary>
-        private int _numRows = 0;
-
-        /// <summary>
-        /// Makes the <see cref="_cols"/> member long enough to be able to
-        /// access the specified column.
-        /// </summary>
-        private void growAsNecessary(int columnIndex)
-        {
-            while (columnIndex >= _cols.Count)
-                _cols.Add(new TextColumn(_defaultAutoSize, _defaultAlignment));
-        }
-
-        /// <summary>
-        /// Gets/sets the value of the specified cell. Behaves as
-        /// if the table was infinite in both rows and columns. Will
-        /// allocate storage as required upon a "set". Will return ""
-        /// when accessing anything that hasn't been set before.
-        /// </summary>
-        public string this[int rowIndex, int columnIndex]
-        {
-            get
-            {
-                if (columnIndex < _cols.Count)
-                    return _cols[columnIndex][rowIndex];
-                else
-                    return "";
-            }
-
-            set
-            {
-                growAsNecessary(columnIndex);
-
-                _cols[columnIndex][rowIndex] = value;
-
-                if (_numRows <= rowIndex)
-                    _numRows = rowIndex + 1;
-            }
-        }
-
-        /// <summary>
-        /// Configures the auto-sizing of the specified column.
-        /// </summary>
-        public void SetAutoSize(int columnIndex, bool autoSize)
-        {
-            if (columnIndex < 0) throw new ArgumentException("Column index must not be negative");
-
-            growAsNecessary(columnIndex);
-            _cols[columnIndex].AutoSize = autoSize;
-
-        }
-
-        /// <summary>
-        /// Configures the alignment of the specified column.
-        /// </summary>
-        public void SetAlignment(int columnIndex, Alignment alignment)
-        {
-            if (columnIndex < 0) throw new ArgumentException("Column index must not be negative");
-
-            growAsNecessary(columnIndex);
-            _cols[columnIndex].Alignment = alignment;
-
-        }
-
-        /// <summary>
-        /// Generates text for the table using the specified settings.
-        /// </summary>
-        /// <param name="leftIndent">The amount of indent to add on the left.
-        /// This is NOT counted as part of the maxTableWidth value.</param>
-        /// <param name="maxTableWidth">The maximum width the entire table
-        /// is allowed to be. Note that it may not actually be possible to
-        /// accommodate this width because non-auto-size columns and the
-        /// intra-column indent cannot be resized.</param>
-        /// <param name="intraColumnIndent">The number of spaces to place
-        /// between every column.</param>
-        /// <param name="nullIfTooWide">If true, the function will return null
-        /// whenever the table could not be fitted into the specified width.
-        /// Otherwise returns the wider table in such cases.</param>
-        public string GetText(int leftIndent, int maxTableWidth, int intraColumnIndent, bool nullIfTooWide)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            bool fits = autoSizeColumns(intraColumnIndent, maxTableWidth);
-
-            if (nullIfTooWide && !fits)
-                return null;
-
-            for (int r = 0; r < _numRows; r++)
-            {
-                string[][] wwrap = new string[_cols.Count][];
-                int maxSubrowCount = 0;
-
-                // Iterate over columns to determine number of sub-rows
-                for (int c = 0; c < _cols.Count; c++)
-                {
-                    wwrap[c] = this[r, c].WordWrap((int) _cols[c].CalculatedWidth).ToArray();
-                    if (maxSubrowCount < wwrap[c].Length)
-                        maxSubrowCount = wwrap[c].Length;
-                }
-
-                // Iterate over the sub-rows
-                for (int subRow = 0; subRow < maxSubrowCount; subRow++)
-                {
-                    sb.Append(' ', leftIndent);
-
-                    // Render this sub-row in each column
-                    for (int c = 0; c < _cols.Count; c++)
-                    {
-                        string s = wwrap[c].Length <= subRow ? "" : wwrap[c][subRow];
-                        int leftpad, rightpad;
-                        if (_cols[c].Alignment == Alignment.Left)
+                for (int x = 0; x < colSpan; x++)
+                    for (int y = 0; y < rowSpan; y++)
+                        if (row + y < _cells.Count && col + x < _cells[row + y].Count && _cells[row + y][col + x] is surrogateCell)
                         {
-                            leftpad = 0;
-                            rightpad = (int) _cols[c].CalculatedWidth - s.Length;
+                            var sur = (surrogateCell) _cells[row][col];
+                            var real = (trueCell) _cells[sur.RealRow][sur.RealCol];
+                            throw new InvalidOperationException(@"The cell at row {0}, column {1} is already occupied because the cell at row {2}, column {3} has rowspan {4} and colspan {5}.".Fmt(row, col, sur.RealRow, sur.RealCol, real.RowSpan, real.ColSpan));
                         }
-                        else if (_cols[c].Alignment == Alignment.Right)
-                        {
-                            leftpad = (int)_cols[c].CalculatedWidth - s.Length;
-                            rightpad = 0;
-                        }
-                        else
-                        {
-                            leftpad = (int) (_cols[c].CalculatedWidth - s.Length) / 2;
-                            rightpad = (int)(_cols[c].CalculatedWidth - s.Length + 1) / 2;
-                        }
-                        sb.Append(' ', leftpad);
-                        sb.Append(s);
-                        if (c < _cols.Count - 1)
-                            sb.Append(' ', (int) rightpad + intraColumnIndent);
-                    }
-
-                    sb.AppendLine();
-                }
             }
 
-            return sb.ToString();
+            ensureCell(col, row);
+
+            // If the cell contains a true cell, remove it with all its surrogates
+            if (_cells[row][col] is trueCell)
+            {
+                var tr = (trueCell) _cells[row][col];
+                for (int x = 0; x < tr.ColSpan; x++)
+                    for (int y = 0; y < tr.RowSpan; y++)
+                        _cells[row + y][col + x] = null;
+            }
+
+            // Insert the cell in the right place
+            var tru = new trueCell
+            {
+                ColSpan = colSpan,
+                RowSpan = rowSpan,
+                Value = content,
+                NoWrap = noWrap,
+                Alignment = alignment,
+                LongestWord = content.Split(' ').Max(s => s.Length),
+                LongestPara = getLongestParagraph(content)
+            };
+            tru.MinWidth = noWrap ? tru.LongestPara : tru.LongestWord;
+            _cells[row][col] = tru;
+
+            // For cells with span, insert the appropriate surrogate cells.
+            for (int x = 0; x < colSpan; x++)
+                for (int y = x == 0 ? 1 : 0; y < rowSpan; y++)
+                {
+                    ensureCell(col + x, row + y);
+                    _cells[row + y][col + x] = new surrogateCell { RealCol = col, RealRow = row };
+                }
         }
 
-        /// <summary>
-        /// Calculates the actual sizes of the auto-size columns based on the
-        /// requested settings. Returns true if the table fits into the specified
-        /// maximum width.
-        /// </summary>
-        private bool autoSizeColumns(int intraColumnIndent, int maxTableWidth)
+        /// <summary>Generates the table.</summary>
+        /// <returns>The complete rendered table as a single string.</returns>
+        public override string ToString()
         {
-            int[] min = new int[_cols.Count];
-            int[] cur = new int[_cols.Count];
-            bool[] auto = new bool[_cols.Count];
+            int rows = _cells.Count;
+            if (rows == 0)
+                return string.Empty;
+            int cols = _cells.Max(row => row.Count);
 
-            int mintot_auto = 0, curtot_auto = 0, curtot_fix = 0;
-
-            // Pass 1: fill in the arrays and calculate the totals
-            for (int i = 0; i < _cols.Count; i++)
+            // Create a lookup array which, for each column, and for each possible value of colspan, tells you which cells in that column have this colspan and end in this column
+            var cellsByColspan = new SortedDictionary<int, List<int>>[cols];
+            for (var col = 0; col < cols; col++)
             {
-                cur[i] = _cols[i].MaxWidth;
-                auto[i] = _cols[i].AutoSize;
-
-                if (i != 0)
-                    curtot_fix += intraColumnIndent;
-
-                if (auto[i])
+                var cellsInThisColumn = new SortedDictionary<int, List<int>>();
+                for (int row = 0; row < rows; row++)
                 {
-                    min[i] = 2;
-                    curtot_auto += cur[i];
-                    mintot_auto += min[i];
-                }
-                else
-                {
-                    min[i] = _cols[i].MaxWidth;
-                    curtot_fix += cur[i];
-                }
-            }
-
-            // Pass 2 (and more): adjust the width of the columns which are still sizable.
-            // Keep marking those that have reached their minimum width as "fixed" and trying
-            // again until either the table is narrow enough or all columns are "fixed".
-            while (curtot_auto > mintot_auto && curtot_auto + curtot_fix > maxTableWidth)
-            {
-                double ratio = (double) (maxTableWidth - curtot_fix) / curtot_auto;
-                for (int i = 0; i < _cols.Count; i++)
-                {
-                    if (!auto[i])
+                    if (col >= _cells[row].Count)
                         continue;
+                    var cel = _cells[row][col];
+                    if (cel == null)
+                        continue;
+                    if (cel is surrogateCell && ((surrogateCell) cel).RealRow != row)
+                        continue;
+                    int realCol = cel is surrogateCell ? ((surrogateCell) cel).RealCol : col;
+                    var realCell = (trueCell) _cells[row][realCol];
+                    if (realCol + realCell.ColSpan - 1 != col)
+                        continue;
+                    cellsInThisColumn.AddSafe(realCell.ColSpan, row);
+                }
+                cellsByColspan[col] = cellsInThisColumn;
+            }
 
-                    curtot_auto -= cur[i];
+            // Find out the width that each column would have if the text wasn't wrapped.
+            // If this fits into the total width, then we want each column to be at least this wide.
+            var columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.LongestPara));
+            var unwrapped = true;
 
-                    cur[i] = (int) (_cols[i].MaxWidth * ratio);
-                    if (cur[i] > _cols[i].MaxWidth)
-                        cur[i] = _cols[i].MaxWidth;
+            // If the table is now too wide, use the length of the longest word, or longest paragraph if nowrap
+            if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
+            {
+                columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.MinWidth));
+                unwrapped = false;
+            }
 
-                    if (cur[i] < min[i])
-                    {
-                        cur[i] = min[i];
-                        curtot_fix += cur[i];
-                    }
-                    else
-                    {
-                        curtot_auto += cur[i];
-                    }
+            // If the table is still too wide, use the length of the longest paragraph if nowrap, otherwise 0
+            if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
+                columnWidths = generateColumnWidths(cols, cellsByColspan, c => c.NoWrap ? Math.Max(1, c.LongestPara) : 1);
+
+            // If the table is still too wide, we will have to wrap like crazy.
+            if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
+            {
+                columnWidths = new int[cols];
+                for (int i = 0; i < cols; i++) columnWidths[i] = 1;
+            }
+
+            // If the table is STILL too wide, all bets are off.
+            if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
+                throw new InvalidOperationException(@"The specified table width is too narrow. It is not possible to fit the {0} columns and the column spacing of {1} per column into a total width of {2} characters.".Fmt(cols, ColumnSpacing, MaxWidth));
+
+            // If we have any extra width to spare...
+            var missingTotalWidth = MaxWidth - columnWidths.Sum() - (cols - 1) * ColumnSpacing;
+            if (missingTotalWidth > 0 && (UseFullWidth || !unwrapped))
+            {
+                // Use the length of the longest paragraph in each column to calculate a proportion by which to enlarge each column
+                var widthProportionByCol = new int[cols];
+                for (var col = 0; col < cols; col++)
+                    foreach (var kvp in cellsByColspan[col])
+                        distributeEvenly(
+                            widthProportionByCol,
+                            col,
+                            kvp.Key,
+                            kvp.Value.Max(row => getLongestParagraph(((trueCell) _cells[row][col - kvp.Key + 1]).Value)) - widthProportionByCol.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum() - (unwrapped ? 0 : columnWidths.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum())
+                        );
+                var widthProportionTotal = widthProportionByCol.Sum();
+
+                // Adjust the width of the columns according to the calculated proportions so that they fill the missing width.
+                // We do this in two steps. Step one: enlarge the column widths by the integer part of the calculated portion (round down).
+                // After this the width remaining will be smaller than the number of column, so each column is missing at most 1 character.
+                var widthRemaining = missingTotalWidth;
+                var fractionalParts = new double[cols];
+                for (int col = 0; col < cols; col++)
+                {
+                    var widthToAdd = (float) (widthProportionByCol[col] * missingTotalWidth) / widthProportionTotal;
+                    var integerPart = (int) widthToAdd;
+                    columnWidths[col] += integerPart;
+                    fractionalParts[col] = widthToAdd - integerPart;
+                    widthRemaining -= integerPart;
+                }
+
+                // Step two: enlarge a few more columns by 1 character so that we reach the desired width.
+                // The columns with the largest fractional parts here are the furthest from what we ideally want, so we favour those.
+                foreach (var elem in fractionalParts.Select((frac, col) => new { Value = frac, Col = col }).OrderByDescending(e => e.Value))
+                {
+                    if (widthRemaining < 1) break;
+                    columnWidths[elem.Col]++;
+                    widthRemaining--;
                 }
             }
 
-            // Store the results
-            for (int i = 0; i < _cols.Count; i++)
-                _cols[i].CalculatedWidth = cur[i];
+            // Word-wrap all the contents of all the cells
+            foreach (var row in _cells)
+                for (int col = 0; col < row.Count; col++)
+                    if (row[col] is trueCell)
+                    {
+                        var cel = (trueCell) row[col];
+                        cel.WordwrappedValue = cel.Value.WordWrap(columnWidths.Skip(col).Take(cel.ColSpan).Sum() + (cel.ColSpan - 1) * ColumnSpacing).ToArray();
+                        cel.WordwrappedIndex = 0;
+                    }
 
-            // Return true if the table fits in the specified limits
-            return curtot_auto + curtot_fix <= maxTableWidth;
+            // Calculate the string index for each column
+            var strIndexByCol = new int[cols + 1];
+            for (var i = 0; i < cols; i++)
+                strIndexByCol[i + 1] = strIndexByCol[i] + columnWidths[i] + ColumnSpacing;
+            var realWidth = strIndexByCol[cols] - ColumnSpacing;
+
+            // Make sure we don't render rules if we can't
+            bool verticalRules = VerticalRules && ColumnSpacing > 0;
+            bool horizontalRules = HorizontalRules && RowSpacing > 0;
+
+            // If we do render vertical rules, where (at which string offset) within the column spacing should it be
+            var vertRuleOffset = 1 + (ColumnSpacing - 1) / 2;
+
+            // Finally, render the entire output
+            StringBuilder currentLine = null;
+            var output = new StringBuilder();
+            for (int row = 0; row < _cells.Count; row++)
+            {
+                var rowList = _cells[row];
+                var extraRows = RowSpacing + 1;
+                var isFirstIteration = true;
+                bool anyMoreContentInThisRow;
+                do
+                {
+                    var previousLine = currentLine == null ? null : currentLine.ToString();
+                    currentLine = new StringBuilder();
+                    anyMoreContentInThisRow = false;
+                    for (int col = 0; col < rowList.Count; col++)
+                    {
+                        var cel = rowList[col];
+
+                        // For cells with colspan, consider only the first cell they're spanning and skip the rest
+                        if (cel is surrogateCell && ((surrogateCell) cel).RealCol != col)
+                            continue;
+
+                        // If the cell has rowspan, what row did this cell start in?
+                        var valueRow = cel is surrogateCell ? ((surrogateCell) cel).RealRow : row;
+
+                        // Retrieve the data for the cell
+                        var realCell = (trueCell) _cells[valueRow][col];
+                        var colspan = realCell == null ? 1 : realCell.ColSpan;
+                        var rowspan = realCell == null ? 1 : realCell.RowSpan;
+
+                        // Does this cell end in this row?
+                        var isLastRow = valueRow + rowspan == row + 1;
+
+                        // If we are going to render a horizontal rule, where does it start and end?
+                        var horizRuleStart = col > 0 ? strIndexByCol[col] - vertRuleOffset + 1 : 0;
+                        var horizRuleEnd = (col + colspan < cols) ? strIndexByCol[col + colspan] - vertRuleOffset + (verticalRules ? 0 : 1) : realWidth;
+
+                        // If we are inside the cell, render one line of the contents of the cell
+                        if (realCell != null && realCell.WordwrappedValue.Length > realCell.WordwrappedIndex)
+                        {
+                            var align = realCell.Alignment ?? DefaultAlignment;
+                            int spaces = strIndexByCol[col] - currentLine.Length;
+                            string text = realCell.WordwrappedValue[realCell.WordwrappedIndex];
+                            if (align == Alignment.Center)
+                                spaces += (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2;
+                            else if (align == Alignment.Right)
+                                spaces += strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length;
+                            currentLine.Append(new string(' ', spaces));
+                            currentLine.Append(text);
+                            realCell.WordwrappedIndex++;
+                        }
+
+                        // If we are at the end of a row, render horizontal rules
+                        if (horizontalRules && isLastRow && extraRows == 1)
+                        {
+                            currentLine.Append(new string(' ', horizRuleStart - currentLine.Length));
+                            currentLine.Append(new string((row == HeaderRows - 1) ? '=' : '-', horizRuleEnd - horizRuleStart));
+                        }
+
+                        // If we are at the beginning of a row, render the horizontal rules for the row above by modifying the previous line.
+                        // We want to do this because it may have an unwanted vertical rule if this is a cell with colspan and there are
+                        // multiple cells with smaller colspans above it.
+                        if (isFirstIteration && horizontalRules && row > 0 && cel is trueCell)
+                            previousLine = string.Concat(previousLine.Substring(0, horizRuleStart), new string((row == HeaderRows) ? '=' : '-', horizRuleEnd - horizRuleStart), previousLine.Substring(horizRuleEnd));
+
+                        // Render vertical rules
+                        if (verticalRules && (col + colspan < cols))
+                        {
+                            currentLine.Append(new string(' ', strIndexByCol[col + colspan] - vertRuleOffset - currentLine.Length));
+                            currentLine.Append('|');
+                        }
+
+                        // Does this cell still contain any more content that needs to be output before this row can be finished?
+                        anyMoreContentInThisRow = anyMoreContentInThisRow || (realCell != null && isLastRow && realCell.WordwrappedValue.Length > realCell.WordwrappedIndex);
+                    }
+
+                    if (previousLine != null)
+                    {
+                        if (LeftMargin > 0)
+                            output.Append(' ', LeftMargin);
+                        output.Append(previousLine);
+                        output.Append('\n');
+                    }
+
+                    isFirstIteration = false;
+
+                    // If none of the cells in this row contain any more content, start counting down the row spacing
+                    if (!anyMoreContentInThisRow)
+                        extraRows--;
+                }
+                while (anyMoreContentInThisRow || (extraRows > 0 && row < rows - 1));
+            }
+
+            // Output the last line
+            if (LeftMargin > 0)
+                output.Append(' ', LeftMargin);
+            output.Append(currentLine);
+            output.Append('\n');
+
+            return output.ToString();
+        }
+
+        private abstract class cell { }
+        private class surrogateCell : cell
+        {
+            public int RealRow, RealCol;
+            public override string ToString() { return "{" + RealCol + ", " + RealRow + "}"; }
+        }
+        private class trueCell : cell
+        {
+            public string Value;
+            public string[] WordwrappedValue;
+            public int WordwrappedIndex, ColSpan, RowSpan, LongestPara, LongestWord, MinWidth;
+            public bool NoWrap;
+            public Alignment? Alignment; // if null, use TextTable.DefaultAlignment
+            public override string ToString() { return Value; }
+        }
+        private List<List<cell>> _cells = new List<List<cell>>();
+
+        private void ensureCell(int col, int row)
+        {
+            while (row >= _cells.Count)
+                _cells.Add(new List<cell>());
+            while (col >= _cells[row].Count)
+                _cells[row].Add(null);
+        }
+
+        private int getLongestParagraph(string str)
+        {
+            return str.Split('\n').Max(a => a.Length);
+        }
+
+        // Distributes 'width' evenly over the columns from 'col' - 'colspan' + 1 to 'col'.
+        private void distributeEvenly(int[] colWidths, int col, int colSpan, int width)
+        {
+            if (width <= 0) return;
+            var each = width / colSpan;
+            for (var i = 0; i < colSpan; i++)
+                colWidths[col - i] += each;
+            var gap = width - (colSpan * each);
+            for (var i = 0; i < gap; i++)
+                colWidths[col - (i * colSpan / gap)]++;
+        }
+
+        private int[] generateColumnWidths(int cols, SortedDictionary<int, List<int>>[] cellsByColspan, Func<trueCell, int> getMinWidth)
+        {
+            var columnWidths = new int[cols];
+            for (int col = 0; col < cols; col++)
+                foreach (var kvp in cellsByColspan[col])
+                    distributeEvenly(
+                        columnWidths,
+                        col,
+                        kvp.Key,
+                        kvp.Value.Select(row => (trueCell) _cells[row][col - kvp.Key + 1]).Max(getMinWidth) - columnWidths.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum() - (kvp.Key - 1) * ColumnSpacing
+                    );
+            return columnWidths;
         }
     }
 }

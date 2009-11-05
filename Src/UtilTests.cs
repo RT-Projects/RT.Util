@@ -23,11 +23,6 @@ namespace RT.Util
             {
                 #region Run Tests
                 Console.WriteLine("");
-                Console.WriteLine("Testing type: RT.Util.CmdLineTests");
-                var doCmdLineTests = new RT.Util.CmdLineTests();
-                Console.WriteLine("-- Running test: TestCmdLineParser");
-                doCmdLineTests.TestCmdLineParser();
-                Console.WriteLine("");
                 Console.WriteLine("Testing type: RT.Util.ExtensionMethods.CollectionExtensionsTests");
                 var doCollectionExtensionsTests = new RT.Util.ExtensionMethods.CollectionExtensionsTests();
                 Console.WriteLine("-- Running test: TestBinarySearch");

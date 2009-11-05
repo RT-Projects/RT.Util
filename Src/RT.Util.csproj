@@ -138,6 +138,7 @@
     </Compile>
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Obsolete\CmdLine.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="PowerfulRegex.cs" />

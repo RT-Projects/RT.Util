@@ -12,7 +12,8 @@
     <AssemblyName>RT.UtilTests</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <StartupObject></StartupObject>
+    <StartupObject>
+    </StartupObject>
     <OutputPath>..\Builds\$(Configuration)</OutputPath>
     <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</IntermediateOutputPath>
     <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
@@ -51,7 +52,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CmdLineTests.cs" />
     <Compile Include="Collections\ListSortedTests.cs" />
     <Compile Include="Collections\RVariantTests.cs" />
     <Compile Include="Collections\SetTests.cs" />

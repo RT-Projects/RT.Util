@@ -1,804 +1,801 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Security.Permissions;
+using System.Linq;
 using System.Text;
-using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
+using System.Reflection;
+using RT.Util.Lingo;
+using System.IO;
 using RT.Util.Text;
+using System.Text.RegularExpressions;
 
-namespace RT.Util
+namespace RT.Util.CommandLine
 {
-    /// <summary>
-    /// A class which aids parsing command-line arguments.
-    /// 
-    /// <remarks>Requires the UnmanagedCode security permission due to the use
-    /// of Environment.Exit function.</remarks>
-    /// </summary>
-    [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
-    public class CmdLineParser
+    /// <summary>Implements a command-line parser that can turn the commands and options specified by the user on the command line into a strongly-typed instance of a specific class. See remarks for more details.</summary>
+    /// <remarks><para>The following conditions must be met by the class wishing to receive the options and parameters:</para>
+    /// <list type="bullet">
+    /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
+    /// <item><description>Each field in the class must be a string, a bool, an enum, or another class with the <see cref="CommandGroupAttribute"/>.</description></item>
+    /// <item><description>A field of an enum type can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not. If it is neither positional nor mandatory (see below), it must have a <see cref="DefaultValueAttribute"/>.</description></item>
+    /// <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is optional, or a <see cref="CommandNameAttribute"/> if it is positional. Every enum value must also have a <see cref="DocumentationAttribute"/> or <see cref="DocumentationLiteralAttribute"/>.</description></item>
+    /// <item><description>A field of type bool must have an <see cref="OptionAttribute"/> and cannot be positional.</description></item>
+    /// <item><description>A field of type string can be positional or optional. If it is optional, it must have an <see cref="OptionAttribute"/>.</description></item>
+    /// <item><description>A field of any other type must be the last one, must be marked positional, and must be an abstract class with a <see cref="CommandGroupAttribute"/>. This class must have at least two derived classes with a <see cref="CommandNameAttribute"/>.</description></item>
+    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute is required, several such attributes are allowed.</description></item>
+    /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
+    /// </list>
+    /// </remarks>
+    public static class CommandLineParser
     {
-        /// <summary>
-        /// Describes a single option.
-        /// </summary>
-        private class option
+        /// <summary>Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
+        /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
+        /// <param name="args">The command-line arguments to be parsed.</param>
+        /// <param name="applicationTr">The application's translation class which the translatable documentation in the command-line syntax defining class expects.
+        /// Pass null for non-internationalised (single-language) applications that use only <see cref="DocumentationLiteralAttribute"/> and no <see cref="DocumentationAttribute"/>.</param>
+        /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
+        public static T ParseCommandLine<T>(string[] args, TranslationBase applicationTr)
         {
-            public string TinyName;
-            public string LongName;
-            public string Description;
-
-            public string NiceName;
-
-            public CmdOptionType Type;
-            public CmdOptionFlags Flags;
-
-            public List<string> Value;
+            return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
         }
 
-        /// <summary>
-        /// Describes a blank line used to separate options when printing help.
-        /// </summary>
-        private class separator : option
+        private class positionalParameterInfo
         {
+            public Action Process;
+            public Action ThrowIfPrematureEnd;
         }
 
-        /// <summary>All options that the user has defined, including separators.</summary>
-        private List<option> _byDefineOrder = new List<option>();
-
-        /// <summary>Only the options which had a non-null tiny name specified.</summary>
-        private Dictionary<string, option> _byTinyName = new Dictionary<string, option>();
-
-        /// <summary>Only the options which had a non-null long name specified.</summary>
-        private Dictionary<string, option> _byLongName = new Dictionary<string, option>();
-
-        /// <summary>Contains the union of <see cref="_byTinyName"/> and <see cref="_byLongName"/>.</summary>
-        private Dictionary<string, option> _byEitherName = new Dictionary<string, option>();
-
-        /// <summary>
-        /// Holds all positional arguments, that is, all arguments which do not look like
-        /// named options and are not arguments to known named options.
-        /// </summary>
-        private List<string> _unmatchedArgs;
-
-        /// <summary>
-        /// Holds all parse errors that occurred. Will be an empty (non-null) list when there
-        /// are no errors.
-        /// </summary>
-        private List<string> _errors;
-
-        /// <summary>
-        /// Set to true when a help option is encountered during parsing. False otherwise.
-        /// </summary>
-        private bool _help;
-
-        /// <summary>
-        /// Holds a class providing an interface to the user, such as printing messages
-        /// on the command line or displaying message boxes. Defaults to a console printer.
-        /// </summary>
-        private CmdLinePrinterBase _printer = new CmdLineConsolePrinter();
-
-        /// <summary>
-        /// Keeps track of whether Parse() has ever been called.
-        /// </summary>
-        private bool _parsed = false;
-
-        /// <summary>
-        /// Keeps track of whether PrintProgramInfo() has been called.
-        /// </summary>
-        private bool _programInfoPrinted = false;
-
-        /// <summary>
-        /// Constructs a command line parser.
-        /// </summary>
-        public CmdLineParser()
+        private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
-            ClearResults();
-        }
+            var ret = type.GetConstructor(Type.EmptyTypes).Invoke(null);
+            var options = new Dictionary<string, Action>();
+            var positionals = new List<positionalParameterInfo>();
+            var missingMandatories = new List<FieldInfo>();
+            FieldInfo swallowingField = null;
 
-        /// <summary>
-        /// Constructs a command line parser which will use the specified printer class.
-        /// </summary>
-        public CmdLineParser(CmdLinePrinterBase printer)
-            : this()
-        {
-            _printer = printer;
-        }
-
-        /// <summary>
-        /// Defines and describes a command-line argument.
-        /// </summary>
-        /// <param name="tinyName">Ideally a single character. Accessed with a single minus,
-        /// e.g. an option named "c" here can be specified as "-c" on the command line. Null to omit.</param>
-        /// <param name="longName">Ideally a fairly descriptive name. Accessed with a double minus,
-        /// e.g. an option named "connection-string" can be specified as "--connection-string"
-        /// on the command line. Null to omit.</param>
-        /// <param name="type">Specifies whether an option is an on/off, a string value or a list of values.</param>
-        /// <param name="flags">Selects the behaviour of this option.</param>
-        /// <param name="description">A human-readable description of what the option does. This
-        /// text is used when printing help. Note that the help text gets automatically wrapped,
-        /// so this string can be long and may include line breaks and indented examples.</param>
-        public void DefineOption(string tinyName, string longName, CmdOptionType type, CmdOptionFlags flags, string description)
-        {
-            if (tinyName == null && longName == null)
-                throw new ArgumentException("Both the tiny and the long switch names are null. The user won't be able to specify it.");
-
-            option opt = new option();
-            opt.TinyName = tinyName;
-            opt.LongName = longName;
-            opt.Type = type;
-            opt.Flags = flags;
-            opt.Description = description;
-            opt.NiceName = tinyName == null ? ("--" + longName) : longName == null ? ("-" + tinyName) : string.Format("-{0}/--{1}", tinyName, longName);
-
-            _byDefineOrder.Add(opt);
-            if (tinyName != null)
+            foreach (var fieldForeachVariable in type.GetFields())
             {
-                _byTinyName.Add(tinyName, opt);
-                _byEitherName.Add(tinyName, opt);
-            }
-            if (longName != null)
-            {
-                _byLongName.Add(longName, opt);
-                _byEitherName.Add(longName, opt);
-            }
-        }
+                var field = fieldForeachVariable; // This is necessary for the lambda expressions to work
+                var positional = field.IsDefined<IsPositionalAttribute>();
+                var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
+                var defaultValue = defaultAttr == null ? null : defaultAttr.DefaultValue;
 
-        /// <summary>
-        /// When printing help, the options are printed in the order in which they were
-        /// defined. Calling this function adds a single blank line separator in the help
-        /// output between the option defined by the last call to <see cref="DefineOption"/>
-        /// and the one defined by the next one. Multiple calls will result in multiple
-        /// blank lines.
-        /// </summary>
-        public void DefineHelpSeparator()
-        {
-            _byDefineOrder.Add(new separator());
-        }
+                if (field.IsDefined<IsMandatoryAttribute>())
+                    missingMandatories.Add(field);
 
-        /// <summary>
-        /// Defines standard help options. These options are marked with the IsHelp
-        /// option flag, which means that:
-        ///
-        /// <list>
-        /// <item>The options won't be printed when printing help.</item>
-        /// <item>Specifying one of these options causes the program to print help
-        ///       and terminate (at the time of the parsing).</item>
-        /// </list>
-        ///
-        /// <para>Default help options comprise: -?, --help, --usage.</para>
-        ///
-        /// <para>For more info see the <see cref="Parse"/> function</para>.
-        /// </summary>
-        public void DefineDefaultHelpOptions()
-        {
-            DefineOption("?", "help", CmdOptionType.Switch, CmdOptionFlags.IsHelp, null);
-            DefineOption(null, "usage", CmdOptionType.Switch, CmdOptionFlags.IsHelp, null);
-        }
-
-        /// <summary>
-        /// Clears all the results of the previous parse, effectively restoring the state of the
-        /// parser to before the Parse method was called, with all options still defined.
-        /// </summary>
-        public void ClearResults()
-        {
-            _parsed = false;
-            _errors = new List<string>();
-            _help = false;
-            _unmatchedArgs = new List<string>();
-            foreach (var option in _byDefineOrder)
-                option.Value = null;
-        }
-
-        /// <summary>
-        /// <para>Parses the specified command line arguments according to the options
-        /// defined (using the <see cref="DefineOption"/> etc functions).</para>
-        ///
-        /// <para>This method does not display the help message or errors when this is
-        /// necessary. It just makes fields/methods such as <see cref="Errors"/>,
-        /// <see cref="HadErrors"/>, <see cref="HadHelp"/> available for inspection and
-        /// processing. The method <see cref="ProcessHelpAndErrors"/> can be used
-        /// to print any information or messages as necessary and even terminate the
-        /// program if the parse is unsuccessful.</para>
-        /// </summary>
-        public void Parse(string[] args)
-        {
-            if (_parsed)
-                throw new RTException("Parse results must be cleared using ClearResults before calling Parse again.");
-
-            List<option> ignoreReq = new List<option>();
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                string arg = args[i];
-                option opt;
-
-                if (arg.StartsWith("--") && _byLongName.ContainsKey(arg.Substring(2)))
-                    opt = _byLongName[arg.Substring(2)];
-                else if (arg.StartsWith("-") && _byTinyName.ContainsKey(arg.Substring(1)))
-                    opt = _byTinyName[arg.Substring(1)];
-                else
+                if (field.FieldType.IsEnum && positional)
                 {
-                    if (arg.StartsWith("-"))
-                        _errors.Add(string.Format("Option \"{0}\" doesn't match any of the allowed options.", arg));
+                    positionals.Add(new positionalParameterInfo
+                    {
+                        Process = () =>
+                        {
+                            positionals.RemoveAt(0);
+                            foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                            {
+                                foreach (var cmd in e.GetCustomAttributes<CommandNameAttribute>().Where(cmdAttr => cmdAttr.Name.Equals(args[i])))
+                                {
+                                    field.SetValue(ret, e.GetValue(null));
+                                    i++;
+                                    return;
+                                }
+                            }
+                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
+                        },
+                        ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                    });
+                }
+                else if (field.FieldType.IsEnum)   // not positional
+                {
+                    foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(val => val != defaultValue))
+                        foreach (var a in e.GetCustomAttributes<OptionAttribute>())
+                            options[a.Name] = () => { field.SetValue(ret, e.GetValue(null)); i++; missingMandatories.Remove(field); };
+                }
+                else if (field.FieldType == typeof(bool))
+                {
+                    foreach (var a in field.GetCustomAttributes<OptionAttribute>())
+                        options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
+                }
+                else if (field.FieldType == typeof(string))
+                {
+                    if (positional)
+                        positionals.Add(new positionalParameterInfo
+                        {
+                            Process = () => { positionals.RemoveAt(0); field.SetValue(ret, args[i]); i++; },
+                            ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                        });
                     else
-                        _unmatchedArgs.Add(arg);
-                    continue;
-                }
-
-                // Is this a help option
-                if ((opt.Flags & CmdOptionFlags.IsHelp) != 0)
-                {
-                    _help = true;
-                    break;
-                }
-
-                // This option was matched
-                switch (opt.Type)
-                {
-                    case CmdOptionType.Switch:
-                        opt.Value = new List<string>();
-                        break;
-
-                    case CmdOptionType.Value:
-                        if (i == args.Length - 1)
+                        foreach (var eForeach in field.GetCustomAttributes<OptionAttribute>())
                         {
-                            _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
-                            ignoreReq.Add(opt);
+                            var e = eForeach;
+                            options[e.Name] = () =>
+                            {
+                                i++;
+                                if (i >= args.Length)
+                                    throw new IncompleteOptionException(e.Name, getHelpGenerator(type, applicationTr));
+                                field.SetValue(ret, args[i]);
+                                i++;
+                                missingMandatories.Remove(field);
+                            };
                         }
-                        else if (opt.Value != null)
-                            _errors.Add(string.Format("Option \"{0}\" cannot be specified more than once.", opt.NiceName));
-                        else
-                        {
-                            opt.Value = new List<string>();
-                            opt.Value.Add(args[i + 1]);
-                            i++;
-                        }
-                        break;
-
-                    case CmdOptionType.List:
-                        if (i == args.Length - 1)
-                        {
-                            _errors.Add(string.Format("Option \"{0}\" requires a value to be specified.", opt.NiceName));
-                            ignoreReq.Add(opt);
-                        }
-                        else
-                        {
-                            if (opt.Value == null)
-                                opt.Value = new List<string>();
-                            opt.Value.Add(args[i + 1]);
-                            i++;
-                        }
-                        break;
                 }
-            }
-
-            // Verify that all required options have been specified.
-            foreach (option opt in _byDefineOrder)
-            {
-                if (!ignoreReq.Contains(opt) && (opt.Flags & CmdOptionFlags.Required) != 0 && opt.Value == null)
-                    _errors.Add(string.Format("Option \"{0}\" is a required option and must not be omitted.", opt.NiceName));
-            }
-
-            _parsed = true;
-        }
-
-        /// <summary>
-        /// Intended to follow up a call to <see cref="Parse"/>, will print help and/or errors
-        /// and terminate the program, if necessary. Does nothing on a normal successful parse.
-        /// </summary>
-        public void ProcessHelpAndErrors()
-        {
-            if (_help)
-            {
-                PrintHelp();
-                PrintCommit(true);
-                ExitProgram(true);
-            }
-            else if (_errors.Count > 0)
-            {
-                PrintHelp();
-                PrintErrors();
-                PrintCommit(false);
-                ExitProgram(false);
-            }
-        }
-
-        /// <summary>
-        /// Prints usage help, then prints the specified error, then terminates the program.
-        /// </summary>
-        public void Error(string text)
-        {
-            _errors.Add(text);
-            PrintHelp();
-            PrintErrors();
-            PrintCommit(false);
-            ExitProgram(false);
-        }
-
-        /// <summary>
-        /// Reports an error using <see cref="Error"/> if the number of positional arguments is
-        /// not equal to "count". Lists all positional arguments in the error message.
-        /// </summary>
-        public void ErrorIfPositionalArgsCountNot(int count)
-        {
-            var arguments = OptPositional.Count == 0 ? "none" : ("\"" + OptPositional.JoinString("\", \"") + "\"");
-            if (count == 0 && OptPositional.Count > 0)
-                Error("No positional arguments are expected. Received arguments: {0}".Fmt(arguments));
-            else if (OptPositional.Count != count)
-                Error("Exactly {0} positional argument(s) expected. Received arguments: {1}".Fmt(count, arguments));
-        }
-
-        /// <summary>
-        /// Terminates the program. The exit code will be set to 0 or 1 according to
-        /// the "success" parameter.
-        /// </summary>
-        public void ExitProgram(bool success)
-        {
-            Environment.Exit(success ? 0 : 1);
-        }
-
-        #region Printing commands
-
-        /// <summary>
-        /// "Commits" the messages sent to the user. This is usually called when no further
-        /// messages are expected. For example, when using a <see cref="CmdLineMessageboxPrinter"/>
-        /// this causes the message box to be displayed.
-        /// </summary>
-        /// <param name="success">Indicates whether the message is a "success" or a "failure"-style message.</param>
-        public void PrintCommit(bool success)
-        {
-            _printer.Commit(success);
-        }
-
-        /// <summary>
-        /// Prints all the error messages. Does nothing if there are none.
-        /// </summary>
-        public void PrintErrors()
-        {
-            if (_errors.Count > 0)
-            {
-                _printer.PrintLine("Errors:");
-                _printer.PrintLine("");
-                foreach (var err in _errors)
+                else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
-                    foreach (var line in ("    " + err).WordWrap(_printer.MaxWidth - 5))
-                        _printer.PrintLine(line);
-                    _printer.PrintLine("");
+                    swallowingField = field;
+                    positionals.Add(new positionalParameterInfo
+                    {
+                        Process = () =>
+                        {
+                            positionals.RemoveAt(0);
+                            foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(field.FieldType)))
+                                foreach (var cmdName in subclass.GetCustomAttributes<CommandNameAttribute>().Where(c => c.Name.Equals(args[i])))
+                                {
+                                    field.SetValue(ret, parseCommandLine(args, subclass, i + 1, applicationTr));
+                                    i = args.Length;
+                                    return;
+                                }
+                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
+                        },
+                        ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                    });
                 }
-            }
-        }
-
-        /// <summary>
-        /// Prints a short summary of program information. The information is deduced
-        /// from the attributes of the Entry Assembly via reflection. The following
-        /// text will be printed:
-        ///
-        /// * [Assembly Title]
-        /// * Version: [Assembly Version]
-        /// * [Assembly Copyright]
-        /// * newline
-        ///
-        /// Any attributes that cannot be retrieved (e.g. they were not specified)
-        /// will be skipped silently.
-        ///
-        /// Calling this function multiple times won't have any effect - only the
-        /// first call causes the info to be printed.
-        /// </summary>
-        public void PrintProgramInfo()
-        {
-            if (_programInfoPrinted)
-                return;
-
-            Assembly assembly = Assembly.GetEntryAssembly();
-
-            // Title
-            try { _printer.PrintLine(assembly.GetCustomAttributes<AssemblyTitleAttribute>().First().Title); }
-            catch { }
-
-            // Version
-            try { _printer.PrintLine("Version: " + assembly.GetName().Version.ToString()); }
-            catch { }
-
-            // Copyright
-            try { _printer.PrintLine(assembly.GetCustomAttributes<AssemblyCopyrightAttribute>().First().Copyright); }
-            catch { }
-
-            _printer.PrintLine("");
-            _programInfoPrinted = true;
-        }
-
-        /// <summary>
-        /// Prints automatically generated usage information, consisting of program information,
-        /// brief usage summary and detailed description of every option.
-        /// </summary>
-        /// <remarks>
-        /// Prints automatically generated usage information. This consists of:
-        ///
-        /// 1. Program Info (unless already printed, see <see cref="PrintProgramInfo"/>.
-        /// 2. Brief usage summary
-        /// 3. Detailed description of every option.
-        ///
-        /// Brief usage summary shows all options on one line following the exe name,
-        /// either by tiny name or, if not available, by long name. Option flags and
-        /// type affect the formatting. E.g.:
-        ///
-        /// <code>testproj.exe -r &lt;required-option&gt; [--optional-switch]</code>
-        ///
-        /// Detailed summary is a table with one row per option. It shows the tiny
-        /// and long option name as well as a description. Long, multi-line descriptions
-        /// with indented paragraphs will be word-wrapped properly according to the
-        /// console window width.
-        /// </remarks>
-        public void PrintHelp()
-        {
-            PrintProgramInfo();
-
-            _printer.PrintLine("Usage:");
-            _printer.PrintLine("");
-
-            //
-            // Construct lists of tokens for the one line summary
-            //
-            List<string> requiredSwitches = new List<string>();
-            List<string> optionalSwitches = new List<string>();
-
-            foreach (option option in _byDefineOrder)
-            {
-                if ((option.Flags & CmdOptionFlags.IsHelp) != 0 || option is separator)
-                    continue;
-
-                List<string> switches = (option.Flags & CmdOptionFlags.Required) != 0
-                    ? requiredSwitches
-                    : optionalSwitches;
-
-                // The switch itself
-                string switchName = option.TinyName == null ? "--" + option.LongName : "-" + option.TinyName;
-
-                // Argument(s)
-                string argName = option.LongName ?? "value";
-
-                // Build the string
-                switch (option.Type)
-                {
-                    case CmdOptionType.Switch:
-                        switches.Add(switchName);
-                        break;
-                    case CmdOptionType.Value:
-                        switches.Add(string.Format("{0} <{1}>", switchName, argName));
-                        break;
-                    case CmdOptionType.List:
-                        switches.Add(string.Format("[{0} <{1} 1> [... {0} <{1} N>]]", switchName, argName));
-                        break;
-                }
+                else    // This only happens if there is no post-build check
+                    throw new UnrecognizedTypeException(type.FullName, field.Name, getHelpGenerator(type, applicationTr));
             }
 
-            //
-            // Print the one-line summary
-            //
-            _printer.Print("    ");
-            var entryAssembly = Assembly.GetEntryAssembly();
-            _printer.Print(entryAssembly == null ? "<programname>" : entryAssembly.ManifestModule.Name);
-            foreach (string token in requiredSwitches)
-                _printer.Print(" " + token);
-            foreach (string token in optionalSwitches)
-                _printer.Print(" [" + token + "]");
-            _printer.PrintLine("");
+            bool suppressOptions = false;
 
-            //
-            // Print a table of options and their descriptions
-            //
-            bool anyPrintableOptions = false;
-            TextTable table = new TextTable();
-            int row = 0;
-            for (int i = 0; i < _byDefineOrder.Count; i++)
+            while (i < args.Length)
             {
-                option option = _byDefineOrder[i];
-
-                // Skip help options
-                if ((option.Flags & CmdOptionFlags.IsHelp) != 0)
-                    continue;
-
-                if (option is separator)
+                if (args[i] == "--")
+                    suppressOptions = true;
+                else if (!suppressOptions && args[i][0] == '-')
                 {
-                    /* nothing - this will leave an empty row in the table */
+                    if (options.ContainsKey(args[i]))
+                        options[args[i]]();
+                    else
+                        throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                 }
                 else
                 {
-                    anyPrintableOptions = true;
-
-                    if (option.TinyName != null)
-                        table[row, 0] = "-" + option.TinyName;
-
-                    if (option.LongName != null)
-                        table[row, 1] = "--" + option.LongName;
-
-                    if (option.Description != null)
-                        table[row, 2] = option.Description;
+                    if (positionals.Count == 0)
+                        throw new UnexpectedParameterException(getHelpGenerator(type, applicationTr));
+                    positionals[0].Process();
                 }
-
-                row++;
             }
 
-            table.SetAutoSize(2, true);
+            if (positionals.Count > 0)
+                positionals[0].ThrowIfPrematureEnd();
 
-            _printer.PrintLine("");
-            if (anyPrintableOptions)
+            if (missingMandatories.Count > 0)
+                throw new MissingOptionException(missingMandatories[0], swallowingField, getHelpGenerator(type, applicationTr));
+
+            return ret;
+        }
+
+        private static Func<Translation, string> getHelpGenerator(Type type, TranslationBase applicationTr)
+        {
+            return tr =>
             {
-                _printer.PrintLine("Available options:");
-                _printer.PrintLine("");
+                var width = ConsoleUtil.WrapWidth();
+                if (width == int.MaxValue)
+                    width = 120;    // an arbitrary but sensible default value
 
-                _printer.PrintLine(table.GetText(4, _printer.MaxWidth - 5, 3, false));
-            }
-        }
+                width--;   // outputting character to the last column in the console causes a blank line, so need to keep the rightmost column clear
 
-        #endregion
+                int leftMargin = 3;
 
-        #region Option retrieval
+                var help = new StringBuilder(tr.Usage);
+                help.Append(' ');
+                string commandName = type.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderByDescending(c => c.Length).FirstOrDefault();
+                help.Append(commandName == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandName);
 
-        /// <summary>
-        /// Gets a list of all options which did not look like named options (did not start
-        /// with a minus) and were not arguments to known named options.
-        /// </summary>
-        public List<string> OptPositional
-        {
-            get
-            {
-                if (!_parsed)
-                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+                var optional = type.GetAllFields().Where(f => !f.IsDefined<IsPositionalAttribute>() && !f.IsDefined<IsMandatoryAttribute>()).ToArray();
+                var required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
 
-                return _unmatchedArgs;
-            }
-        }
-
-        /// <summary>
-        /// Returns true if the specified Switch-type option was set.
-        /// </summary>
-        public bool OptSwitch(string name)
-        {
-            if (!_parsed)
-                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
-            return _byEitherName.ContainsKey(name) && _byEitherName[name].Value != null;
-        }
-
-        /// <summary>
-        /// Returns the value specified for a Value-type option, or "null" if
-        /// the option was not specified.
-        ///
-        /// Identical to OptValue(name, null);
-        /// </summary>
-        public string OptValue(string name)
-        {
-            return OptValue(name, null);
-        }
-
-        /// <summary>
-        /// Returns the value specified for a Value-type option, or the
-        /// default value if it wasn't specified.
-        /// </summary>
-        public string OptValue(string name, string defaultIfUnspecified)
-        {
-            if (!_parsed)
-                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
-            return !_byEitherName.ContainsKey(name) || _byEitherName[name].Value == null ? defaultIfUnspecified : _byEitherName[name].Value[0];
-        }
-
-        /// <summary>
-        /// Returns a list of values specified for the given List-type option,
-        /// in the order in which they were specified. If there are none,
-        /// returns an empty list; never returns null.
-        /// </summary>
-        public List<string> OptList(string name)
-        {
-            if (!_parsed)
-                throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
-            if (!_byEitherName.ContainsKey(name) || _byEitherName[name].Value == null)
-                return new List<string>();
-            else
-                return _byEitherName[name].Value;
-        }
-
-        /// <summary>
-        /// Gets the value of the specified option.
-        ///
-        /// If the option is a value:
-        ///     returns the value or null for optional unspecified values.
-        /// If the option is a switch:
-        ///     returns the string "true" if specified or null if unspecified.
-        /// If the option is a list:
-        ///     throws an <see cref="InvalidOperationException"/>.
-        /// </summary>
-        public string this[string name]
-        {
-            get
-            {
-                if (!_parsed)
-                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-                if (!_byEitherName.ContainsKey(name))
-                    return null;
-
-                switch (_byEitherName[name].Type)
+                if (optional.Any())
                 {
-                    case CmdOptionType.Switch:
-                        return _byEitherName[name].Value == null ? null : "true";
-                    case CmdOptionType.Value:
-                        return _byEitherName[name].Value == null ? null : _byEitherName[name].Value[0];
-                    case CmdOptionType.List:
-                        throw new InvalidOperationException("Cannot access a List-type command line option using the indexer.");
-                    default:
-                        throw new Exception("Internal error");
+                    help.Append(' ');
+                    help.Append(tr.UsageOptions);
+                }
+
+                var requiredParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                int row = 0;
+
+                foreach (var f in required)
+                {
+                    if (!f.IsDefined<IsPositionalAttribute>())
+                    {
+                        var opts = f.GetCustomAttributes<OptionAttribute>().Select(opt => opt.Name).ToArray();
+                        if (opts.Length > 1)
+                            help.Append(" {" + opts.JoinString("|") + "}");
+                        else
+                            help.Append(" " + opts[0]);
+                    }
+
+                    help.Append(" <");
+                    help.Append(f.Name);
+                    help.Append('>');
+
+                    if (f.FieldType.IsDefined<CommandGroupAttribute>())
+                        help.Append(" ...");
+
+                    if (f.FieldType.IsDefined<CommandGroupAttribute>())
+                    {
+                        int origRow = row;
+                        foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract))
+                        {
+                            requiredParamsTable.SetCell(1, row, ty.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderBy(c => c.Length).JoinString("\n"), true);
+                            requiredParamsTable.SetCell(2, row, ty.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Translate(applicationTr)).Concat(ty.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => d.Text)).JoinString("\n\n"));
+                            row++;
+                        }
+                        requiredParamsTable.SetCell(0, origRow, "<" + f.Name + ">", 1, row - origRow, true);
+                    }
+                    else
+                    {
+#warning TODO: Enum fields
+                        requiredParamsTable.SetCell(0, row, "<" + f.Name + ">", true);
+                        requiredParamsTable.SetCell(1, row, f.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Translate(applicationTr)).Concat(f.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => d.Text)).JoinString("\n\n"), 2, 1);
+                        row++;
+                    }
+                }
+
+                var optionalParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                row = 0;
+
+                foreach (var f in optional)
+                {
+                    if (f.FieldType.IsEnum)
+                    {
+                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue)))
+                        {
+                            optionalParamsTable.SetCell(0, row, el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n"), true);
+                            optionalParamsTable.SetCell(1, row, el.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Translate(applicationTr)).Concat(el.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => d.Text)).JoinString("\n\n"), 2, 1);
+                            row++;
+                        }
+                    }
+                    else
+                    {
+                        optionalParamsTable.SetCell(0, row, f.GetCustomAttributes<OptionAttribute>().Select(o => o.Name + (f.FieldType == typeof(bool) ? string.Empty : " <" + f.Name + ">")).OrderBy(c => c.Length).JoinString("\n"), true);
+                        optionalParamsTable.SetCell(1, row, f.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Translate(applicationTr)).Concat(f.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => d.Text)).JoinString("\n\n"), 2, 1);
+                        row++;
+                    }
+                }
+
+                var helpString = new StringBuilder();
+                foreach (var line in help.ToString().WordWrap(width, 8))
+                    helpString.AppendLine(line);
+                if (required.Any())
+                {
+                    helpString.AppendLine();
+                    helpString.AppendLine(tr.ParametersHeader);
+                    helpString.AppendLine();
+                    helpString.AppendLine(requiredParamsTable.ToString());
+                }
+                if (optional.Any())
+                {
+                    helpString.AppendLine();
+                    helpString.AppendLine(tr.OptionsHeader);
+                    helpString.AppendLine();
+                    helpString.AppendLine(optionalParamsTable.ToString());
+                }
+
+                return helpString.ToString();
+            };
+        }
+
+        /// <summary>If compiled in DEBUG mode, this method performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
+        /// Run this method as a post-build step to ensure reliability of execution. In non-DEBUG mode, this method is a no-op.</summary>
+        /// <param name="type">A reference to the class containing the command-line syntax which would be passed to <see cref="ParseCommandLine"/>.</param>
+        public static void PostBuildStep(Type type)
+        {
+#if DEBUG
+            if (!type.IsClass)
+                throw new PostBuildException(@"{0} is not a class.".Fmt(type.FullName));
+
+            if (type.GetConstructor(Type.EmptyTypes) == null)
+                throw new PostBuildException(@"{0} does not have a default constructor.".Fmt(type.FullName));
+
+            var optionTaken = new Dictionary<string, MemberInfo>();
+            FieldInfo lastField = null;
+
+            foreach (var field in type.GetFields())
+            {
+                if (lastField != null)
+                    throw new PostBuildException(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name));
+                var positional = field.IsDefined<IsPositionalAttribute>();
+
+                // (1) if it's a field of type enum:
+                if (field.FieldType.IsEnum)
+                {
+                    var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
+                    var commandsTaken = new Dictionary<string, FieldInfo>();
+
+                    // (i) check that it is either positional OR has a DefaultAttribute, but not both
+                    if (positional && defaultAttr != null)
+                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(type.FullName, field.Name));
+                    if (!positional && defaultAttr == null)
+                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(type.FullName, field.Name));
+
+                    foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                    {
+                        if (!positional && enumField.GetValue(null).Equals(defaultAttr.DefaultValue))
+                            continue;
+
+                        // (ii) check that the enum values all have documentation
+                        checkDocumentation(enumField);
+
+                        if (positional)
+                        {
+                            // (iii) check that the enum values all have at least one CommandName, and they do not clash
+                            var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
+                            if (!cmdNames.Any())
+                                throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
+                            checkCommandNamesUnique(cmdNames, commandsTaken, type, field, enumField);
+                        }
+                        else
+                        {
+                            // (iii) check that the non-default enum values' Options are present and do not clash
+                            var options = enumField.GetCustomAttributes<OptionAttribute>();
+                            if (!options.Any())
+                                throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
+                            checkOptionsUnique(options, optionTaken, type, field, enumField);
+                        }
+                    }
+                }
+                else if (field.FieldType == typeof(bool))
+                {
+                    if (positional)
+                        throw new PostBuildException(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(type.FullName, field.Name));
+
+                    var options = field.GetCustomAttributes<OptionAttribute>();
+                    if (!options.Any())
+                        throw new PostBuildException(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+
+                    checkOptionsUnique(options, optionTaken, type, field);
+                    checkDocumentation(field);
+                }
+                else if (field.FieldType == typeof(string))
+                {
+                    var options = field.GetCustomAttributes<OptionAttribute>();
+                    if (!options.Any() && !positional)
+                        throw new PostBuildException(@"{0}.{1}: String field must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+
+                    checkOptionsUnique(options, optionTaken, type, field);
+                    checkDocumentation(field);
+                }
+                else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
+                {
+                    // Class-type fields must be positional parameters
+                    if (!positional)
+                        throw new PostBuildException(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(type.FullName, field.Name));
+
+                    // The class must have at least two subclasses with a [CommandName] attribute
+                    var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>());
+                    if (subclasses.Count() < 2)
+                        throw new PostBuildException(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(type.FullName, field.Name));
+
+                    var commandsTaken = new Dictionary<string, Type>();
+
+                    foreach (var subclass in subclasses)
+                    {
+                        checkDocumentation(subclass);
+                        checkCommandNamesUnique(subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass);
+
+                        // Recursively check this class
+                        PostBuildStep(subclass);
+                    }
+
+                    lastField = field;
+                }
+                else
+                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
+            }
+#endif
+        }
+
+#if DEBUG
+        private static void checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
+        {
+            foreach (var option in options)
+            {
+                if (optionTaken.ContainsKey(option.Name))
+                    throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Option ""{4}"" is already taken by {5}.{6}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
+                optionTaken[option.Name] = enumField;
+            }
+        }
+
+        private static void checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
+        {
+            foreach (var option in options)
+            {
+                if (optionTaken.ContainsKey(option.Name))
+                    throw new PostBuildException(@"{0}.{1}: Option ""{2}"" is already taken by {3}.{4}.".Fmt(type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
+                optionTaken[option.Name] = field;
+            }
+        }
+
+        private static void checkCommandNamesUnique(IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
+        {
+            foreach (var cmd in commands)
+            {
+                if (commandsTaken.ContainsKey(cmd.Name))
+                    throw new PostBuildException(@"{0}: CommandName ""{1}"" is already taken by {2}.".Fmt(subclass.FullName, cmd.Name, commandsTaken[cmd.Name].FullName));
+                commandsTaken[cmd.Name] = subclass;
+            }
+        }
+
+        private static void checkCommandNamesUnique(IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
+        {
+            foreach (var cmd in cmdNames)
+            {
+                if (commandsTaken.ContainsKey(cmd.Name))
+                    throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value's CommandName ""{4}"" is already taken by {5}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, cmd.Name, commandsTaken[cmd.Name].Name));
+                commandsTaken[cmd.Name] = enumField;
+            }
+        }
+
+        private static void checkDocumentation(MemberInfo member)
+        {
+            // This automatically executes the constructor of the relevant DocumentationAttribute, which in turn will throw an exception if it is invalid.
+            var docAttrs = member.GetCustomAttributes<DocumentationAttribute>();
+            if (!docAttrs.Any())
+            {
+                var docLiteralAttrs = member.GetCustomAttributes<DocumentationLiteralAttribute>();
+                if (!docLiteralAttrs.Any())
+                    throw new PostBuildException(@"{0}.{1}: Field does not have any documentation. Use the [Documentation] or [DocumentationLiteral] attribute to specify documentation for a command-line option or parameter.".Fmt(member.DeclaringType.FullName, member.Name));
+            }
+        }
+#endif
+    }
+
+    /// <summary>Groups the translatable strings in the <see cref="Translation"/> class into categories.</summary>
+    public enum TranslationGroup
+    {
+        /// <summary>Error messages produced by the command-line parser.</summary>
+        [LingoGroup("Command-line errors", "Contains messages informing the user of invalid command-line syntax.")]
+        CommandLineError,
+        /// <summary>Messages used by the command-line parser to produce help pages.</summary>
+        [LingoGroup("Command-line help", "Contains messages used to construct help pages for command-line options and parameters.")]
+        CommandLineHelp
+    }
+
+    /// <summary>Contains translatable strings pertaining to the command-line parser, including error messages and usage help.</summary>
+    public class Translation : TranslationBase
+    {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        public Translation() : base(Language.EnglishUS) { }
+
+        [LingoInGroup(TranslationGroup.CommandLineError)]
+        public TrString
+            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
+            UnrecognizedType = @"{0}.{1} is not of a recognized type.",
+            IncompleteOption = @"The ""{0}"" option must be followed by an additional parameter.",
+            UnexpectedParameter = @"Unexpected parameter.",
+            MissingParameter = @"The ""{0}"" parameter is missing.",
+            MissingOption = @"The option ""{0}"" is mandatory and must be specified.",
+            MissingOptionBefore = @"The option ""{0}"" is mandatory and must be specified before the ""{1}"" parameter.";
+
+        [LingoInGroup(TranslationGroup.CommandLineHelp)]
+        public TrString
+            Usage = @"Usage:",
+            UsageOptions = @"[<options>]",
+            ParametersHeader = @"Required parameters:",
+            OptionsHeader = @"Options:";
+
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+    }
+
+    /// <summary>Use this on an abstract class to specify that its subclasses represent various commands.</summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class CommandGroupAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public CommandGroupAttribute() { }
+    }
+
+    /// <summary>
+    /// Use this on a sub-class of an abstract class to specify the command the user must use to invoke that class.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    public sealed class CommandNameAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="name">The command the user can specify to invoke this class.</param>
+        public CommandNameAttribute(string name) { Name = name; }
+        /// <summary>The command the user can specify to invoke this class.</summary>
+        public string Name { get; private set; }
+    }
+
+    /// <summary>Use this to specify that a command-line parameter is mandatory.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class IsMandatoryAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public IsMandatoryAttribute() { }
+    }
+
+    /// <summary>
+    /// Use this to specify that a command-line parameter is positional, i.e. is not invoked by an option that starts with "-".
+    /// This automatically implies that the parameter is mandatory, so <see cref="IsMandatoryAttribute"/> is not necessary.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class IsPositionalAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public IsPositionalAttribute() { }
+    }
+
+    /// <summary>Use this on a command-line option of an enum type to specify the default value in case the option is not specified.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class DefaultValueAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="defaultValue">The default value to be assigned to the field in case the command-line option is not specified.</param>
+        public DefaultValueAttribute(object defaultValue) { DefaultValue = defaultValue; }
+        /// <summary>The default value to be assigned to the field in case the command-line option is not specified.</summary>
+        public object DefaultValue { get; private set; }
+    }
+
+    /// <summary>
+    /// Specifies whether an option is a "short" option (e.g. "-a") or a "long" option (e.g. "--argument").
+    /// </summary>
+    public enum OptionType
+    {
+        /// <summary>Specifies a short option (e.g. "-a" or "-rw").</summary>
+        Short,
+        /// <summary>Specifies a long option (e.g. "--argument" or "--read-write").</summary>
+        Long
+    }
+
+    /// <summary>
+    /// Use this to specify that a field in a class can be specified on the command line using an option, for example "-a" or "--option-name".
+    /// The option name MUST begin with a "-".
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    public sealed class OptionAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="type">The type of option (short or long).</param>
+        /// <param name="name">The name of the option.</param>
+        public OptionAttribute(OptionType type, string name) { Type = type; Name = name; }
+        /// <summary>The type of option (short or long).</summary>
+        public OptionType Type { get; private set; }
+        /// <summary>The name of the option.</summary>
+        public string Name { get; private set; }
+    }
+
+    /// <summary>
+    /// Use this to specify that an enum type is used to identify documentation text in an internationalized (multi-language) application.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Enum, Inherited = false, AllowMultiple = true)]
+    public sealed class DocumentationCodesAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="staticMethods">Points to a static class containing static methods which provide translations for the documentation strings. Those methods must be marked with the <see cref="DocumentationTranslationAttribute"/>.</param>
+        public DocumentationCodesAttribute(Type staticMethods) { Type = staticMethods; }
+        /// <summary>Returns the static class containing static methods which provide translations for the documentation strings.</summary>
+        public Type Type { get; private set; }
+    }
+
+    /// <summary>
+    /// Use this attribute on each static method that provides a translation for a documentation string.
+    /// These static methods must all be in a static class which is pointed to by the <see cref="DocumentationCodesAttribute"/> on an enum type.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    public class DocumentationTranslationAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="code">A code that identifies the translation. This must be a value from an enum type with the <see cref="DocumentationCodesAttribute"/>.</param>
+        public DocumentationTranslationAttribute(object code) { Code = code; }
+        /// <summary>The enum value that represents the documentation text.</summary>
+        public object Code { get; private set; }
+    }
+
+    /// <summary>Use this attribute in a non-internationalized (single-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    public sealed class DocumentationLiteralAttribute : Attribute
+    {
+        /// <summary>Retrieves the documentation for the corresponding member.</summary>
+        public string Text { get; private set; }
+        /// <summary>Constructor.</summary>
+        /// <param name="text">Provides the documentation for the corresponding member.</param>
+        public DocumentationLiteralAttribute(string text) { Text = text; }
+    }
+
+    /// <summary>Use this attribute in an internationalized (multi-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    public class DocumentationAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="code">A code that identifies the translation. This must be a value from an enum type with the <see cref="DocumentationCodesAttribute"/>.</param>
+        public DocumentationAttribute(object code)
+        {
+            var t = code.GetType();
+            var attrs = t.GetCustomAttributes<DocumentationCodesAttribute>();
+            if (!t.IsEnum || !attrs.Any())
+            {
+#if DEBUG
+                throw new PostBuildException("The type parameter to DocumentationAttribute must be an enum type; {0} was passed instead. Additionally, the enum type must have a [DocumentationCodes] attribute.".Fmt(t.FullName));
+#else
+                return;
+#endif
+            }
+
+            foreach (var meth in attrs.First().Type.GetMethods(BindingFlags.Static | BindingFlags.Public))
+            {
+                if (meth.ReturnType != typeof(string))
+                    continue;
+                var p = meth.GetParameters();
+                if (p.Length != 1 || !typeof(TranslationBase).IsAssignableFrom(p[0].ParameterType))
+                    continue;
+                foreach (var attr in meth.GetCustomAttributes<DocumentationTranslationAttribute>().Where(a => a.Code.Equals(code)))
+                {
+#if DEBUG
+                    if (_translate == null)
+                        _translate = meth;
+                    else
+                        throw new PostBuildException(@"The documentation code ""{0}"" has more than one documentation method: {1}, {2}".Fmt(code, _translate.Name, meth.Name));
+#else
+                    _translate = meth;
+                    return;
+#endif
                 }
             }
+#if DEBUG
+            if (_translate == null)
+                throw new PostBuildException(@"Documentation method for documentation code ""{0}"" not found.".Fmt(code));
+#endif
         }
+        private MethodInfo _translate = null;
+        /// <summary>Returns the translated documentation text identified by this attribute.</summary>
+        /// <param name="tr">The translation class containing the translated text.</param>
+        public string Translate(TranslationBase tr) { return _translate == null ? null : (string) _translate.Invoke(null, new object[] { tr }); }
+    }
 
-        #endregion
+    /// <summary>Represents any error encountered while parsing a command line.</summary>
+    [Serializable]
+    public abstract class CommandLineParseException : TranslatableException<Translation>
+    {
+        /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null as the parameter.</summary>
+        public Func<Translation, string> GenerateHelp { get; private set; }
+        /// <summary>Constructor.</summary>
+        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, string> helpGenerator) : this(getMessage, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, string> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelp = helpGenerator; }
+    }
 
-        #region Other parse results
-
-        /// <summary>
-        /// Gets the list of parse errors found. Can only be called after 
-        /// </summary>
-        public List<string> Errors
+    /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
+    [Serializable]
+    public class UnrecognizedCommandOrOptionException : CommandLineParseException
+    {
+        /// <summary>The unrecognized command name or option name.</summary>
+        public string CommandOrOptionName { get; private set; }
+        /// <summary>Constructor.</summary>
+        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, string> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, string> helpGenerator, Exception inner)
+            : base(tr => tr.UnrecognizedCommandOrOption.Fmt(commandOrOptionName), helpGenerator, inner)
         {
-            get
-            {
-                if (!_parsed)
-                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
+            CommandOrOptionName = commandOrOptionName;
+        }
+    }
 
-                return _errors;
+    /// <summary>Specifies that the command-line parser encountered an unsupported type in the class definition.</summary>
+    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser.PostBuildStep(Type)"/></remarks>
+    [Serializable]
+    public class UnrecognizedTypeException : CommandLineParseException
+    {
+        /// <summary>The full name of the unsupported type that was encountered.</summary>
+        public string TypeName { get; private set; }
+        /// <summary>The name of the field that has the unsupported type.</summary>
+        public string FieldName { get; private set; }
+        /// <summary>Constructor.</summary>
+        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, string> helpGenerator) : this(typeName, fieldName, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, string> helpGenerator, Exception inner)
+            : base(tr => tr.UnrecognizedType.Fmt(typeName, fieldName), helpGenerator, inner)
+        {
+            TypeName = typeName;
+            FieldName = fieldName;
+        }
+    }
+
+    /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected a parameter to an option.</summary>
+    [Serializable]
+    public class IncompleteOptionException : CommandLineParseException
+    {
+        /// <summary>The name of the option that was missing a parameter.</summary>
+        public string OptionName { get; private set; }
+        /// <summary>Constructor.</summary>
+        public IncompleteOptionException(string optionName, Func<Translation, string> helpGenerator) : this(optionName, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public IncompleteOptionException(string optionName, Func<Translation, string> helpGenerator, Exception inner)
+            : base(tr => tr.IncompleteOption.Fmt(optionName), helpGenerator, inner)
+        {
+            OptionName = optionName;
+        }
+    }
+
+    /// <summary>Specifies that the command-line parser encountered additional command-line parameters when it expected the end of the command line.</summary>
+    [Serializable]
+    public class UnexpectedParameterException : CommandLineParseException
+    {
+        /// <summary>Constructor.</summary>
+        public UnexpectedParameterException(Func<Translation, string> helpGenerator) : this(helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public UnexpectedParameterException(Func<Translation, string> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { }
+    }
+
+    /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional positional parameters.</summary>
+    [Serializable]
+    public class MissingParameterException : CommandLineParseException
+    {
+        /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
+        public string FieldName { get; private set; }
+        /// <summary>Constructor.</summary>
+        public MissingParameterException(string fieldName, Func<Translation, string> helpGenerator) : this(fieldName, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public MissingParameterException(string fieldName, Func<Translation, string> helpGenerator, Exception inner) : base(tr => tr.MissingParameter.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
+    }
+
+    /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional mandatory options.</summary>
+    [Serializable]
+    public class MissingOptionException : CommandLineParseException
+    {
+        /// <summary>Contains the field pertaining to the parameter that was missing.</summary>
+        public FieldInfo Field { get; private set; }
+        /// <summary>Contains an optional reference to a field which the missing parameter must precede.</summary>
+        public FieldInfo BeforeField { get; private set; }
+        /// <summary>Constructor.</summary>
+        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, string> helpGenerator) : this(field, beforeField, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, string> helpGenerator, Exception inner)
+            : base(tr => getMessage(tr, field, beforeField), helpGenerator, inner) { Field = field; BeforeField = beforeField; }
+
+        private static string getMessage(Translation tr, FieldInfo field, FieldInfo beforeField)
+        {
+            string fieldFormat;
+            if (field.FieldType.IsEnum)
+                fieldFormat = "{" + field.FieldType.GetFields().SelectMany(f => f.GetCustomAttributes<OptionAttribute>().Select(o => o.Name)).JoinString("|") + "}";
+            else
+            {
+                var options = field.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).ToArray();
+                if (options.Length > 1)
+                    fieldFormat = "{" + options.JoinString("|") + "}";
+                else
+                    fieldFormat = options[0];
+                fieldFormat += " <" + field.Name + ">";
             }
+
+            return beforeField == null ? tr.MissingOption.Fmt(fieldFormat) : tr.MissingOptionBefore.Fmt(fieldFormat, "<" + beforeField.Name + ">");
         }
-
-        /// <summary>
-        /// Returns true if the parse resulted in errors. Errors can be retrieved using <see cref="Errors"/>.
-        /// The user can be informed of these errors automatically by calling <see cref="ProcessHelpAndErrors"/>.
-        /// </summary>
-        public bool HadErrors
-        {
-            get
-            {
-                if (!_parsed)
-                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
-                return _errors.Count > 0;
-            }
-        }
-
-        /// <summary>
-        /// Returns true if a help option was specified. It can be processed manually by calling <see cref="PrintHelp"/>,
-        /// or automatically using <see cref="ProcessHelpAndErrors"/>.
-        /// </summary>
-        public bool HadHelp
-        {
-            get
-            {
-                if (!_parsed)
-                    throw new InvalidOperationException("The Parse() method must be called before this method can be used.");
-
-                return _help;
-            }
-        }
-
-        #endregion
     }
 
-    /// <summary>Enumerates the possible command line option types.</summary>
-    public enum CmdOptionType
+#if DEBUG
+    /// <summary>Specifies that the post-build check (<see cref="CommandLineParser.PostBuildStep(Type)"/>) discovered an error.</summary>
+    [Serializable]
+    public class PostBuildException : RTException
     {
-        /// <summary>This option can either be set or not set, and does not allow a value to be specified.</summary>
-        Switch,
-        /// <summary>This option takes a value which must be specified immediately following the option.</summary>
-        Value,
-        /// <summary>Like Value but can be specified multiple times, allowing to specify a list of values.</summary>
-        List
+        /// <summary>Constructor.</summary>
+        public PostBuildException(string message) : this(message, null) { }
+        /// <summary>Constructor.</summary>
+        public PostBuildException(string message, Exception inner) : base(message, inner) { }
     }
 
-    /// <summary>Lists flags that determine the behaviour of an option.</summary>
-    [Flags]
-    public enum CmdOptionFlags
+    static class CommandLineParsingReflectionExtensions
     {
-        /// <summary>This option must be specified on the command line, otherwise parse will fail.</summary>
-        Required = 1,
-        /// <summary>This option may or may not be specified.</summary>
-        Optional = 0,
-        /// <summary>If specified, this option causes help to be displayed. It is NOT listed on the help screen.</summary>
-        IsHelp = 2,
+        public static string GetNamespace(this MemberInfo member)
+        {
+            if (member is Type)
+                return ((Type) member).Namespace;
+            return member.DeclaringType.Namespace;
+        }
+
+        public static string GetTypeName(this MemberInfo member)
+        {
+            if (member is Type)
+                return ((Type) member).Name;
+            return member.DeclaringType.Name;
+        }
     }
-
-    /// <summary>
-    /// Abstract base class for a command line parser output printer. Provides an interface
-    /// through which <see cref="CmdLineParser"/> provides information to the user.
-    /// </summary>
-    public abstract class CmdLinePrinterBase
-    {
-        /// <summary>Prints the specified text</summary>
-        public abstract void Print(string text);
-        /// <summary>Prints the specified text, followed by an end of line</summary>
-        public abstract void PrintLine(string text);
-        /// <summary>"Commits" the text printed so far, for printers that can only show information in chunks.</summary>
-        public abstract void Commit(bool success);
-        /// <summary>Returns the maximum width that the messages printed to this printer can have.
-        /// Any longer messages will be automatically wrapped by the parser before printing them.</summary>
-        public abstract int MaxWidth { get; }
-    }
-
-    /// <summary>
-    /// Prints <see cref="CmdLineParser"/> messages to the console.
-    /// </summary>
-    public class CmdLineConsolePrinter : CmdLinePrinterBase
-    {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        public override void Print(string text)
-        {
-            Console.Write(text);
-        }
-
-        public override void PrintLine(string text)
-        {
-            Console.WriteLine(text);
-        }
-
-        public override void Commit(bool success)
-        {
-        }
-
-        public override int MaxWidth
-        {
-            get { return ConsoleUtil.WrapWidth(); }
-        }
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
-    }
-
-    /// <summary>
-    /// Prints <see cref="CmdLineParser"/> messages using message boxes.
-    /// </summary>
-    public class CmdLineMessageboxPrinter : CmdLinePrinterBase
-    {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        private StringBuilder _buffer = new StringBuilder();
-        private int _maxWidth = 80;
-
-        public CmdLineMessageboxPrinter() { }
-
-        public CmdLineMessageboxPrinter(int maxWidth)
-        {
-            _maxWidth = maxWidth;
-        }
-
-        public override void Print(string text)
-        {
-            _buffer.Append(text);
-        }
-
-        public override void PrintLine(string text)
-        {
-            _buffer.Append(text);
-            _buffer.Append("\r\n");
-        }
-
-        public override void Commit(bool success)
-        {
-            if (_buffer.Length == 0)
-                return;
-
-            new DlgMessage
-            {
-                Type = success ? DlgType.Info : DlgType.Warning,
-                Message = _buffer.ToString(),
-                Font = new System.Drawing.Font("Consolas", 9)
-            }.Show();
-
-            _buffer.Remove(0, _buffer.Length);
-        }
-
-        public override int MaxWidth
-        {
-            get { return _maxWidth; }
-        }
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
-    }
-
+#endif
 }
