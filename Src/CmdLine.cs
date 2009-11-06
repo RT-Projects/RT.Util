@@ -17,12 +17,13 @@ namespace RT.Util.CommandLine
     /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
     /// <item><description>Each field in the class must be a string, a bool, an enum, or another class with the <see cref="CommandGroupAttribute"/>.</description></item>
     /// <item><description>A field of an enum type can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not. If it is neither positional nor mandatory (see below), it must have a <see cref="DefaultValueAttribute"/>.</description></item>
-    /// <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is optional, or a <see cref="CommandNameAttribute"/> if it is positional. Every enum value must also have a <see cref="DocumentationAttribute"/> or <see cref="DocumentationLiteralAttribute"/>.</description></item>
+    /// <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is optional, or a <see cref="CommandNameAttribute"/> if it is positional.</description></item>
     /// <item><description>A field of type bool must have an <see cref="OptionAttribute"/> and cannot be positional.</description></item>
     /// <item><description>A field of type string can be positional or optional. If it is optional, it must have an <see cref="OptionAttribute"/>.</description></item>
     /// <item><description>A field of any other type must be the last one, must be marked positional, and must be an abstract class with a <see cref="CommandGroupAttribute"/>. This class must have at least two derived classes with a <see cref="CommandNameAttribute"/>.</description></item>
-    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute is required, several such attributes are allowed.</description></item>
+    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required, several such attributes are allowed.</description></item>
     /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
+    /// <item><description>Every field must have a <see cref="DocumentationAttribute"/> or <see cref="DocumentationLiteralAttribute"/>, except for enum-typed fields, where the enum values must have those attributes instead.</description></item>
     /// </list>
     /// </remarks>
     public static class CommandLineParser
@@ -30,8 +31,8 @@ namespace RT.Util.CommandLine
         /// <summary>Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
         /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">The command-line arguments to be parsed.</param>
-        /// <param name="applicationTr">The application's translation class which the translatable documentation in the command-line syntax defining class expects.
-        /// Pass null for non-internationalised (single-language) applications that use only <see cref="DocumentationLiteralAttribute"/> and no <see cref="DocumentationAttribute"/>.</param>
+        /// <param name="applicationTr">The application's translation class which contains the localised strings for the <see cref="DocumentationAttribute"/>s in the command-line syntax-defining class.
+        /// Pass null for non-internationalised (single-language) applications that use only <see cref="DocumentationLiteralAttribute"/> instead.</param>
         /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
         public static T ParseCommandLine<T>(string[] args, TranslationBase applicationTr)
         {

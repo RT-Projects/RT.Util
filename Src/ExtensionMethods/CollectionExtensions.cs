@@ -8,7 +8,7 @@ using System.Collections;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Provides extension methods on the <see cref="Dictionary&lt;TKey,TValue&gt;"/> type.
+    /// Provides extension methods on various collection types or interfaces in the System.Collections.Generic namespace such as <see cref="Dictionary&lt;K,V&gt;"/> and on arrays.
     /// </summary>
     public static class CollectionExtensions
     {

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Extension methods for Windows Forms controls.
+    /// Provides extension methods for Windows Forms controls.
     /// </summary>
     public static class ControlExtensions
     {

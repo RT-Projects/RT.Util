@@ -7,9 +7,8 @@ using RT.Util.Collections;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Contains extension methods for the Process class, as well as utility methods
-    /// which are logically static extensions on the Process class but have to be
-    /// invoked as static methods of this class.
+    /// Provides extension methods on the <see cref="Process"/> type, as well as utility methods which are logically 
+    /// static extensions on the Process type but have to be invoked as static methods of this class.
     /// </summary>
     public static class ProcessExtensions
     {

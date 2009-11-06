@@ -7,7 +7,7 @@ using System.Xml.Linq;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Extension methods for the classes belonging to the LINQ XML API.
+    /// Provides extension methods on the classes belonging to the LINQ XML API (<see cref="XElement"/>, <see cref="XContainer"/>, and <see cref="XAttribute"/>).
     /// </summary>
     public static class XmlLinqExtensions
     {

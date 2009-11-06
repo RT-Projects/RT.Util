@@ -25,8 +25,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the
-        /// specified equality comparer.
+        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the specified options.
         /// </summary>
         /// <typeparam name="T">The type of items to compare.</typeparam>
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>

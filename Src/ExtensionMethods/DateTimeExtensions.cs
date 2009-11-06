@@ -18,7 +18,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static int Nanosecond(this DateTime datetime)
         {
-            return ((int)(datetime.Ticks % 10000000)) * 100;
+            return ((int) (datetime.Ticks % 10000000)) * 100;
         }
 
         #region ISO 8601 conversion
@@ -159,14 +159,18 @@ namespace RT.Util.ExtensionMethods
         /// ISO format. The resulting string holds all the information necessary to
         /// convert back to the original DateTime, but unlike <see cref="ToIsoStringFull"/>,
         /// some of the redundant zeros are omitted (as permitted by the ISO format).
-        /// 
-        /// Example 1: "2007-12-31 21:00:00Z" - the nanoseconds are all 0
-        /// Example 2: "2007-12-31Z" - the hours, minutes, seconds, nanoseconds are all 0
-        /// 
+        /// </summary>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item><description>Example 1: "2007-12-31 21:00:00Z" - the nanoseconds are all 0</description></item>
+        /// <item><description>Example 2: "2007-12-31Z" - the hours, minutes, seconds, nanoseconds are all 0</description></item>
+        /// </list>
+        /// <para>
         /// Note that in the first example the ISO format allows the minutes and seconds
         /// to be skipped as well - this is not implemented at the moment because the
         /// resulting string looks too ambiguous and hard to interpret.
-        /// </summary>
+        /// </para>
+        /// </remarks>
         public static string ToIsoStringOptimal(this DateTime datetime)
         {
             int formatIndex = 2;
@@ -190,22 +194,23 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Attempts to parse the specified string as an ISO-formatted DateTime. Note
-        /// that only a subset of string formats defined by the ISO 8601 is supported,
-        /// specifically (by example):
-        /// 
-        /// 2008-12-31 22:15:56.1234567         20081231T221556.1234567
-        /// ...
-        /// 2008-12-31 22:15:56.1               20081231T221556.1
-        /// 2008-12-31 22:15:56                 20081231T221556
-        /// 2008-12-31 22:15                    20081231T2215
-        /// 2008-12-31 22                       20081231T22
-        /// 2008-12-31                          20081231
-        /// 
-        /// plus all of the above with the suffix "Z" (to signify UTC time) or a suffix
-        /// like "+01:30" (to signify a local time at the specified offset from UTC time).
-        /// Without the suffix a string is parsed into a DateTimeKind.Unspecified kind of date.
+        /// Attempts to parse the specified string as an ISO-formatted DateTime. Only a subset of string formats defined by ISO 8601 is supported.
         /// </summary>
+        /// <remarks>
+        /// <para>The following string formats defined by ISO 8601 are supported:</para>
+        /// <list type="bullet">
+        /// <item><description>2008-12-31 22:15:56.1234567</description></item><item><description>20081231T221556.1234567</description></item>
+        /// <item><description>2008-12-31 22:15:56.1</description></item><item><description>20081231T221556.1</description></item>
+        /// <item><description>2008-12-31 22:15:56</description></item><item><description>20081231T221556</description></item>
+        /// <item><description>2008-12-31 22:15</description></item><item><description>20081231T2215</description></item>
+        /// <item><description>2008-12-31 22</description></item><item><description>20081231T22</description></item>
+        /// <item><description>2008-12-31</description></item><item><description>20081231</description></item>
+        /// </list>
+        /// <para>
+        /// plus all of the above with the suffix "Z" (to signify UTC time) or a suffix like "+01:30" (to signify a local time at the specified offset from UTC time).
+        /// Without the suffix a string is parsed into a DateTimeKind.Unspecified kind of date.
+        /// </para>
+        /// </remarks>
         public static bool TryParseIso(string str, out DateTime result)
         {
             if (DateTime.TryParseExact(str, _datetimeFormatsUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
@@ -237,6 +242,5 @@ namespace RT.Util.ExtensionMethods
         {
             return new DateTime(datetime.Ticks - datetime.Ticks % 864000000000, datetime.Kind);
         }
-
     }
 }

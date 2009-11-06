@@ -11,6 +11,8 @@ namespace RT.Util
     /// Offers various types of conversion routines from an "object"-typed variable
     /// holding one of the supported types to another one of the supported types.
     /// </para>
+    /// </summary>
+    /// <remarks>
     /// <code>
     /// SUPPORTED TYPES
     /// 
@@ -136,7 +138,7 @@ namespace RT.Util
     ///   * Inf
     ///   * NaN
     /// </code>
-    /// </summary>
+    /// </remarks>
     public static class RConvert
     {
         private static readonly bool[] _isIntegerType;

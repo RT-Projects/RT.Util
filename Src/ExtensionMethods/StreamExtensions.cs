@@ -5,7 +5,7 @@ using System.Text;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Contains extension methods for Stream classes.
+    /// Provides extension methods on the <see cref="Stream"/> type.
     /// </summary>
     public static class StreamExtensions
     {
