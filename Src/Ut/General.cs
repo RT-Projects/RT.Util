@@ -126,7 +126,7 @@ namespace RT.Util
                     }
                 };
                 var keyUp = keyDown;
-                keyUp.mkhi.ki.dwFlags = WinAPI.KEYEVENTF_KEYUP;
+                keyUp.mkhi.ki.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
                 inputArr[2 * i] = keyDown;
                 inputArr[2 * i + 1] = keyUp;
             }
