@@ -236,9 +236,21 @@ namespace RT.Util.CommandLine
                         }
                         requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
                     }
+                    else if (f.FieldType.IsEnum)
+                    {
+                        var positional = f.IsDefined<IsPositionalAttribute>();
+                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                        {
+                            var str = positional
+                                ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
+                                : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
+                            requiredParamsTable.SetCell(0, row, new ConsoleColoredString(str, ConsoleColor.White), true);
+                            requiredParamsTable.SetCell(1, row, getDocumentation(el, applicationTr), 2, 1);
+                            row++;
+                        }
+                    }
                     else
                     {
-#warning TODO: Enum fields
                         requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), true);
                         requiredParamsTable.SetCell(1, row, getDocumentation(f, applicationTr), 2, 1);
                         row++;

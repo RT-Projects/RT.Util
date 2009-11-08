@@ -34,7 +34,7 @@ namespace RT.Util.Text
         public bool VerticalRules { get; set; }
         /// <summary>Gets or sets a value indicating the number of rows from the top that are considered table headers. The only effect of this is that the horizontal rule (if any) after the header rows is rendered using '=' characters instead of '-'.</summary>
         public int HeaderRows { get; set; }
-        /// <summary>If true, the table will be expanded to fill the <see cref="Width"/>. If false, the table will fill the whole width only if any cells need to be word-wrapped.</summary>
+        /// <summary>If true, the table will be expanded to fill the <see cref="MaxWidth"/>. If false, the table will fill the whole width only if any cells need to be word-wrapped.</summary>
         public bool UseFullWidth { get; set; }
         /// <summary>Specifies the default alignment to use for cells where the alignment is not explicitly set. Default is <see cref="Alignment.Left"/>.</summary>
         public Alignment DefaultAlignment { get; set; }
@@ -608,12 +608,11 @@ namespace RT.Util.Text
         private class trueCell : cell
         {
             public object Value;                               // either string, ConsoleColoredString, or EggsNode
-            public string CachedStringValue;
             public object[] WordwrappedValue;    // either string[] or ConsoleColoredString[]
             public int WordwrappedIndex, ColSpan, RowSpan;
             public bool NoWrap;
             public Alignment? Alignment; // if null, use TextTable.DefaultAlignment
-            public override string ToString() { return CachedStringValue; }
+            public override string ToString() { return Value.ToString(); }
 
             private int? _cachedLongestWord = null;
             private int? _cachedLongestPara = null;
