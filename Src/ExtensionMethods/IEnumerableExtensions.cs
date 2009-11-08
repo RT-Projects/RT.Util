@@ -135,8 +135,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// This does the same as .Order(), but it uses HeapSort instead of QuickSort.
-        /// This is faster if you intend to extract only the first few items using .Take().
+        /// This does the same as .Order(), but it is much faster if you intend to extract only the first few items using .Take().
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
         /// <param name="comparer">An instance of <see cref="IComparer&lt;T&gt;"/> specifying the comparison to use on the items.</param>
@@ -355,6 +354,28 @@ namespace RT.Util.ExtensionMethods
                 index++;
             }
             return -1;
+        }
+
+        /// <summary>Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
+        public static T MinElement<T>(this IEnumerable<T> source, Func<T, int> valueSelector)
+        {
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                    throw new InvalidOperationException("source contains no elements.");
+                T minElem = enumerator.Current;
+                int minValue = valueSelector(minElem);
+                while (enumerator.MoveNext())
+                {
+                    int value = valueSelector(enumerator.Current);
+                    if (value < minValue)
+                    {
+                        minValue = value;
+                        minElem = enumerator.Current;
+                    }
+                }
+                return minElem;
+            }
         }
     }
 }

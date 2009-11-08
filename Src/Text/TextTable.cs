@@ -126,8 +126,180 @@ namespace RT.Util.Text
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
         }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
 
-        private void setCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment)
+        public void SetCell(int col, int row, ConsoleColoredString content)
+        {
+            setCell(col, row, content, 1, 1, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, bool noWrap)
+        {
+            setCell(col, row, content, 1, 1, noWrap, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, bool noWrap)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
+        }
+
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, Alignment alignment)
+        {
+            setCell(col, row, content, 1, 1, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, 1, 1, noWrap, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
+        }
+
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        public void SetCell(int col, int row, EggsNode content)
+        {
+            setCell(col, row, content, 1, 1, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        public void SetCell(int col, int row, EggsNode content, bool noWrap)
+        {
+            setCell(col, row, content, 1, 1, noWrap, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, null);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, bool noWrap)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
+        }
+
+        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, EggsNode content, Alignment alignment)
+        {
+            setCell(col, row, content, 1, 1, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, EggsNode content, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, 1, 1, noWrap, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, false, alignment);
+        }
+        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
+        /// <param name="col">Column where to place the content.</param>
+        /// <param name="row">Row where to place the content.</param>
+        /// <param name="content">The content to place.</param>
+        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
+        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
+        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">How to align the contents within the cell.</param>
+        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
+        {
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
+        }
+
+        private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment)
         {
             if (col < 0)
                 throw new ArgumentOutOfRangeException("col", col, @"""col"" cannot be negative.");
@@ -171,11 +343,8 @@ namespace RT.Util.Text
                 RowSpan = rowSpan,
                 Value = content,
                 NoWrap = noWrap,
-                Alignment = alignment,
-                LongestWord = content.Split(' ').Max(s => s.Length),
-                LongestPara = getLongestParagraph(content)
+                Alignment = alignment
             };
-            tru.MinWidth = noWrap ? tru.LongestPara : tru.LongestWord;
             _cells[row][col] = tru;
 
             // For cells with span, insert the appropriate surrogate cells.
@@ -191,9 +360,31 @@ namespace RT.Util.Text
         /// <returns>The complete rendered table as a single string.</returns>
         public override string ToString()
         {
+            var result = new StringBuilder();
+            toString(s => result.Append(s), s => result.Append(s.ToString()));
+            return result.ToString();
+        }
+
+        /// <summary>Generates the table.</summary>
+        /// <returns>The complete rendered table as a single <see cref="ConsoleColoredString"/>.</returns>
+        public ConsoleColoredString ToColoredString()
+        {
+            var result = new List<ConsoleColoredString>();
+            toString(s => result.Add(s), s => result.Add(s));
+            return new ConsoleColoredString(result.ToArray());
+        }
+
+        /// <summary>Outputs the entire table to the console.</summary>
+        public void WriteToConsole()
+        {
+            toString(s => Console.Write(s), s => ConsoleUtil.Write(s));
+        }
+
+        private void toString(Action<string> outputString, Action<ConsoleColoredString> outputColouredString)
+        {
             int rows = _cells.Count;
             if (rows == 0)
-                return string.Empty;
+                return;
             int cols = _cells.Max(row => row.Count);
 
             // Create a lookup array which, for each column, and for each possible value of colspan, tells you which cells in that column have this colspan and end in this column
@@ -221,19 +412,19 @@ namespace RT.Util.Text
 
             // Find out the width that each column would have if the text wasn't wrapped.
             // If this fits into the total width, then we want each column to be at least this wide.
-            var columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.LongestPara));
+            var columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.LongestParagraph()));
             var unwrapped = true;
 
             // If the table is now too wide, use the length of the longest word, or longest paragraph if nowrap
             if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
             {
-                columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.MinWidth));
+                columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.MinWidth()));
                 unwrapped = false;
             }
 
             // If the table is still too wide, use the length of the longest paragraph if nowrap, otherwise 0
             if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
-                columnWidths = generateColumnWidths(cols, cellsByColspan, c => c.NoWrap ? Math.Max(1, c.LongestPara) : 1);
+                columnWidths = generateColumnWidths(cols, cellsByColspan, c => c.NoWrap ? Math.Max(1, c.LongestParagraph()) : 1);
 
             // If the table is still too wide, we will have to wrap like crazy.
             if (columnWidths.Sum() > MaxWidth - (cols - 1) * ColumnSpacing)
@@ -258,7 +449,7 @@ namespace RT.Util.Text
                             widthProportionByCol,
                             col,
                             kvp.Key,
-                            kvp.Value.Max(row => getLongestParagraph(((trueCell) _cells[row][col - kvp.Key + 1]).Value)) - widthProportionByCol.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum() - (unwrapped ? 0 : columnWidths.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum())
+                            kvp.Value.Max(row => ((trueCell) _cells[row][col - kvp.Key + 1]).LongestParagraph()) - widthProportionByCol.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum() - (unwrapped ? 0 : columnWidths.Skip(col - kvp.Key + 1).Take(kvp.Key).Sum())
                         );
                 var widthProportionTotal = widthProportionByCol.Sum();
 
@@ -292,8 +483,7 @@ namespace RT.Util.Text
                     if (row[col] is trueCell)
                     {
                         var cel = (trueCell) row[col];
-                        cel.WordwrappedValue = cel.Value.WordWrap(columnWidths.Skip(col).Take(cel.ColSpan).Sum() + (cel.ColSpan - 1) * ColumnSpacing).ToArray();
-                        cel.WordwrappedIndex = 0;
+                        cel.Wordwrap(columnWidths.Skip(col).Take(cel.ColSpan).Sum() + (cel.ColSpan - 1) * ColumnSpacing);
                     }
 
             // Calculate the string index for each column
@@ -310,8 +500,7 @@ namespace RT.Util.Text
             var vertRuleOffset = 1 + (ColumnSpacing - 1) / 2;
 
             // Finally, render the entire output
-            StringBuilder currentLine = null;
-            var output = new StringBuilder();
+            List<ConsoleColoredString> currentLine = null;
             for (int row = 0; row < _cells.Count; row++)
             {
                 var rowList = _cells[row];
@@ -320,8 +509,8 @@ namespace RT.Util.Text
                 bool anyMoreContentInThisRow;
                 do
                 {
-                    var previousLine = currentLine == null ? null : currentLine.ToString();
-                    currentLine = new StringBuilder();
+                    ConsoleColoredString previousLine = currentLine == null ? null : new ConsoleColoredString(currentLine.ToArray());
+                    currentLine = new List<ConsoleColoredString>();
                     anyMoreContentInThisRow = false;
                     for (int col = 0; col < rowList.Count; col++)
                     {
@@ -350,35 +539,36 @@ namespace RT.Util.Text
                         if (realCell != null && realCell.WordwrappedValue.Length > realCell.WordwrappedIndex)
                         {
                             var align = realCell.Alignment ?? DefaultAlignment;
-                            int spaces = strIndexByCol[col] - currentLine.Length;
-                            string text = realCell.WordwrappedValue[realCell.WordwrappedIndex];
+                            int spaces = strIndexByCol[col] - currentLine.Sum(c => c.Length);
+                            object textRaw = realCell.WordwrappedValue[realCell.WordwrappedIndex];
+                            ConsoleColoredString text = textRaw is ConsoleColoredString ? (ConsoleColoredString) textRaw : (string) textRaw;  // implicit conversion to ConsoleColoredString
                             if (align == Alignment.Center)
                                 spaces += (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2;
                             else if (align == Alignment.Right)
                                 spaces += strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length;
-                            currentLine.Append(new string(' ', spaces));
-                            currentLine.Append(text);
+                            currentLine.Add(new string(' ', spaces));
+                            currentLine.Add(text);
                             realCell.WordwrappedIndex++;
                         }
 
                         // If we are at the end of a row, render horizontal rules
                         if (horizontalRules && isLastRow && extraRows == 1)
                         {
-                            currentLine.Append(new string(' ', horizRuleStart - currentLine.Length));
-                            currentLine.Append(new string((row == HeaderRows - 1) ? '=' : '-', horizRuleEnd - horizRuleStart));
+                            currentLine.Add(new string(' ', horizRuleStart - currentLine.Sum(c => c.Length)));
+                            currentLine.Add(new string((row == HeaderRows - 1) ? '=' : '-', horizRuleEnd - horizRuleStart));
                         }
 
                         // If we are at the beginning of a row, render the horizontal rules for the row above by modifying the previous line.
                         // We want to do this because it may have an unwanted vertical rule if this is a cell with colspan and there are
                         // multiple cells with smaller colspans above it.
                         if (isFirstIteration && horizontalRules && row > 0 && cel is trueCell)
-                            previousLine = string.Concat(previousLine.Substring(0, horizRuleStart), new string((row == HeaderRows) ? '=' : '-', horizRuleEnd - horizRuleStart), previousLine.Substring(horizRuleEnd));
+                            previousLine = new ConsoleColoredString(previousLine.Substring(0, horizRuleStart), new string((row == HeaderRows) ? '=' : '-', horizRuleEnd - horizRuleStart), previousLine.Substring(horizRuleEnd));
 
                         // Render vertical rules
                         if (verticalRules && (col + colspan < cols))
                         {
-                            currentLine.Append(new string(' ', strIndexByCol[col + colspan] - vertRuleOffset - currentLine.Length));
-                            currentLine.Append('|');
+                            currentLine.Add(new string(' ', strIndexByCol[col + colspan] - vertRuleOffset - currentLine.Sum(c => c.Length)));
+                            currentLine.Add("|");
                         }
 
                         // Does this cell still contain any more content that needs to be output before this row can be finished?
@@ -388,9 +578,9 @@ namespace RT.Util.Text
                     if (previousLine != null)
                     {
                         if (LeftMargin > 0)
-                            output.Append(' ', LeftMargin);
-                        output.Append(previousLine);
-                        output.Append('\n');
+                            outputString(new string(' ', LeftMargin));
+                        outputColouredString(previousLine);
+                        outputString(Environment.NewLine);
                     }
 
                     isFirstIteration = false;
@@ -404,11 +594,9 @@ namespace RT.Util.Text
 
             // Output the last line
             if (LeftMargin > 0)
-                output.Append(' ', LeftMargin);
-            output.Append(currentLine);
-            output.Append('\n');
-
-            return output.ToString();
+                outputString(new string(' ', LeftMargin));
+            outputColouredString(new ConsoleColoredString(currentLine.ToArray()));
+            outputString(Environment.NewLine);
         }
 
         private abstract class cell { }
@@ -419,12 +607,89 @@ namespace RT.Util.Text
         }
         private class trueCell : cell
         {
-            public string Value;
-            public string[] WordwrappedValue;
-            public int WordwrappedIndex, ColSpan, RowSpan, LongestPara, LongestWord, MinWidth;
+            public object Value;                               // either string, ConsoleColoredString, or EggsNode
+            public string CachedStringValue;
+            public object[] WordwrappedValue;    // either string[] or ConsoleColoredString[]
+            public int WordwrappedIndex, ColSpan, RowSpan;
             public bool NoWrap;
             public Alignment? Alignment; // if null, use TextTable.DefaultAlignment
-            public override string ToString() { return Value; }
+            public override string ToString() { return CachedStringValue; }
+
+            private int? _cachedLongestWord = null;
+            private int? _cachedLongestPara = null;
+            public int LongestWord()
+            {
+                return getLongest(' ', false, ref _cachedLongestWord);
+            }
+            public int LongestParagraph()
+            {
+                return getLongest('\n', true, ref _cachedLongestPara);
+            }
+            public int MinWidth()
+            {
+                return NoWrap ? LongestParagraph() : LongestWord();
+            }
+            private int getLongest(char sep, bool para, ref int? cache)
+            {
+                if (cache == null)
+                {
+                    if (Value is string || Value is ConsoleColoredString)
+                        cache = Value.ToString().Split(sep).Max(s => s.Length);
+                    else
+                    {
+                        int longestSoFar = 0;
+                        int curLength = 0;
+                        longestEggWalk((EggsNode) Value, ref longestSoFar, ref curLength, false, para);
+                        cache = longestSoFar;
+                    }
+                }
+                return cache.Value;
+            }
+            private void longestEggWalk(EggsNode node, ref int longestSoFar, ref int curLength, bool curNowrap, bool para)
+            {
+                if (node is EggsText && curNowrap && !para)
+                {
+                    curLength += ((EggsText) node).Text.Length;
+                    if (curLength > longestSoFar)
+                        longestSoFar = curLength;
+                    return;
+                }
+                else if (node is EggsText)
+                {
+                    var i = 0;
+                    var txt = ((EggsText) node).Text;
+                    while (i < txt.Length)
+                    {
+                        if (!para && char.IsWhiteSpace(txt, i))
+                            curLength = 0;
+                        else if (para && txt[i] == '\n')
+                            curLength = 0;
+                        else
+                        {
+                            curLength++;
+                            if (curLength > longestSoFar)
+                                longestSoFar = curLength;
+                        }
+                        i += char.IsSurrogate(txt, i) ? 2 : 1;
+                    }
+                    return;
+                }
+                var tag = (EggsTag) node;
+                foreach (var childList in tag.Children)
+                    foreach (var child in childList)
+                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
+            }
+
+            public void Wordwrap(int wrapWidth)
+            {
+                if (Value is string)
+                    WordwrappedValue = ((string) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
+                else if (Value is ConsoleColoredString)
+                    WordwrappedValue = ((ConsoleColoredString) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
+                else     // assume EggsNode
+                    WordwrappedValue = ConsoleColoredString.FromEggsNodeWordWrap((EggsNode) Value, wrapWidth).Cast<object>().ToArray();
+                WordwrappedIndex = 0;
+            }
         }
         private List<List<cell>> _cells = new List<List<cell>>();
 
@@ -434,11 +699,6 @@ namespace RT.Util.Text
                 _cells.Add(new List<cell>());
             while (col >= _cells[row].Count)
                 _cells[row].Add(null);
-        }
-
-        private int getLongestParagraph(string str)
-        {
-            return str.Split('\n').Max(a => a.Length);
         }
 
         // Distributes 'width' evenly over the columns from 'col' - 'colspan' + 1 to 'col'.

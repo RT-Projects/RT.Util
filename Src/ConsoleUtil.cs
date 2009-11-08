@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RT.Util.ExtensionMethods;
+using System.Text.RegularExpressions;
 
 namespace RT.Util
 {
@@ -95,6 +96,391 @@ namespace RT.Util
             {
                 Console.WriteLine(message);
             }
+        }
+
+        public static void Write(ConsoleColoredString value)
+        {
+            value.WriteToConsole();
+        }
+
+        public static void WriteLine(ConsoleColoredString value)
+        {
+            value.WriteToConsole();
+            Console.WriteLine();
+        }
+    }
+
+    public class ConsoleColoredString
+    {
+        private string _text;
+        private ConsoleColor[] _colors;
+
+        public static implicit operator ConsoleColoredString(string input)
+        {
+            return new ConsoleColoredString(input, ConsoleColor.Gray);
+        }
+
+        public ConsoleColoredString(string input, ConsoleColor color)
+        {
+            _text = input;
+            _colors = new ConsoleColor[input.Length];
+            if (color != default(ConsoleColor))
+                for (int i = 0; i < _colors.Length; i++)
+                    _colors[i] = color;
+        }
+
+        public ConsoleColoredString(string input, ConsoleColor[] characterColors)
+        {
+            if (input.Length != characterColors.Length)
+                throw new InvalidOperationException("The number of characters must match the number of colours.");
+            _text = input;
+            _colors = characterColors;
+        }
+
+        public ConsoleColoredString(params ConsoleColoredString[] strings)
+        {
+            _text = strings.Select(s => s._text).JoinString();
+            _colors = new ConsoleColor[strings.Select(s => s.Length).Sum()];
+            var index = 0;
+            for (int i = 0; i < strings.Length; i++)
+            {
+                Array.Copy(strings[i]._colors, 0, _colors, index, strings[i]._colors.Length);
+                index += strings[i]._colors.Length;
+            }
+        }
+
+        public int Length { get { return _text.Length; } }
+        public override string ToString() { return _text; }
+
+        public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2)
+        {
+            return new ConsoleColoredString(string1, string2);
+        }
+
+        public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
+        {
+            if (string1 == null || string1.Length == 0)
+                return string2;    // implicit conversion
+            if (string.IsNullOrEmpty(string2))
+                return string1;
+
+            var colors = new ConsoleColor[string1._colors.Length + string2.Length];
+            Array.Copy(string1._colors, colors, string1._colors.Length);
+            var lastCol = string1._colors[string1._colors.Length - 1];
+            for (int i = string1.Length; i < string1.Length + string2.Length; i++)
+                colors[i] = lastCol;
+            return new ConsoleColoredString(string1._text + string2, colors);
+        }
+
+        public static ConsoleColoredString FromEggsNode(EggsNode node)
+        {
+            StringBuilder text = new StringBuilder();
+            List<ConsoleColor> colours = new List<ConsoleColor>();
+            List<int> colourLengths = new List<int>();
+
+            eggWalk(node, text, colours, colourLengths, ConsoleColor.Gray, false);
+
+            var colArr = new ConsoleColor[colourLengths.Sum()];
+            var index = 0;
+            for (int i = 0; i < colours.Count; i++)
+            {
+                var col = colours[i];
+                for (int j = 0; j < colourLengths[i]; j++)
+                {
+                    colArr[index] = col;
+                    index++;
+                }
+            }
+
+            return new ConsoleColoredString(text.ToString(), colArr);
+        }
+
+        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colours, List<int> colourLengths, ConsoleColor curColour, bool curLight)
+        {
+            if (node is EggsText)
+            {
+                var txt = (EggsText) node;
+                text.Append(txt.Text);
+                colours.Add(curColour);
+                colourLengths.Add(txt.Text.Length);
+            }
+            else
+            {
+                var tag = (EggsTag) node;
+                switch (tag.Tag)
+                {
+                    case '~': curColour = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                    case '/': curColour = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                    case '$': curColour = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                    case '&': curColour = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                    case '_': curColour = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                    case '%': curColour = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                    case '^': curColour = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '*': if (!curLight) curColour = (ConsoleColor) ((int) curColour + 8); curLight = true; break;
+                }
+                foreach (var childList in tag.Children)
+                    foreach (var child in childList)
+                        eggWalk(child, text, colours, colourLengths, curColour, curLight);
+            }
+        }
+
+        private class eggWalkWordWrapData
+        {
+            public ConsoleColoredString Line;
+            public StringBuilder WordText;
+            public List<ConsoleColor> WordColours;
+        }
+
+        public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth)
+        {
+            var data = new eggWalkWordWrapData
+            {
+                Line = null,
+                WordText = new StringBuilder(),
+                WordColours = new List<ConsoleColor>()
+            };
+
+            foreach (var ret in eggWalkWordWrap(node, wrapWidth, data, ConsoleColor.Gray, false, false))
+                yield return ret;
+
+            if (data.WordText.Length > 0)
+            {
+                if (data.Line == null || data.Line.Length == 0)
+                    data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                else
+                    data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+            }
+            if (data.Line != null && data.Line.Length > 0)
+                yield return data.Line;
+        }
+
+        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, eggWalkWordWrapData data, ConsoleColor curColour, bool curLight, bool curNowrap)
+        {
+            if (node is EggsText)
+            {
+                var txt = ((EggsText) node).Text;
+                for (int i = 0; i < txt.Length; i++)
+                {
+                    if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
+                    {
+                        if ((data.Line == null || data.Line.Length == 0) && data.WordText.Length >= wrapWidth)
+                        {
+                            yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                            data.WordText = new StringBuilder();
+                            data.WordColours = new List<ConsoleColor>();
+                        }
+                        else if (data.Line != null && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
+                        {
+                            yield return data.Line;
+                            data.Line = null;
+                        }
+                        data.WordText.Append(txt[i]);
+                        data.WordColours.Add(curColour);
+                    }
+                    else
+                    {
+                        if (data.WordText != null && data.WordText.Length > 0)
+                        {
+                            if (data.Line == null || data.Line.Length == 0)
+                                data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                            else
+                                data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                        }
+                        data.WordText = new StringBuilder();
+                        data.WordColours = new List<ConsoleColor>();
+                    }
+                    if (txt[i] == '\n')
+                    {
+                        yield return data.Line ?? new ConsoleColoredString(string.Empty);
+                        data.Line = null;
+                    }
+                }
+            }
+            else
+            {
+                var tag = (EggsTag) node;
+                switch (tag.Tag)
+                {
+                    case '~': curColour = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                    case '/': curColour = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                    case '$': curColour = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                    case '&': curColour = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                    case '_': curColour = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                    case '%': curColour = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                    case '^': curColour = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '*': if (!curLight) curColour = (ConsoleColor) ((int) curColour + 8); curLight = true; break;
+                    case '+': curNowrap = true; break;
+                }
+                foreach (var childList in tag.Children)
+                    foreach (var child in childList)
+                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColour, curLight, curNowrap))
+                            yield return ret;
+            }
+        }
+
+        public char CharAt(int index)
+        {
+            if (index < 0 || index >= _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index must be greater or equal to 0 and smaller than the length of the ConsoleColoredString.");
+            return _text[index];
+        }
+
+        /// <summary>Word-wraps the current console-coloured string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
+        /// <remarks>
+        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
+        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
+        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
+        /// </remarks>
+        /// <param name="text">Text to be word-wrapped.</param>
+        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth)
+        {
+            return WordWrap(maxWidth, 0);
+        }
+
+        /// <summary>Word-wraps the current string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
+        /// <remarks>
+        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
+        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
+        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
+        /// </remarks>
+        /// <param name="text">Text to be word-wrapped.</param>
+        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
+        public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth, int hangingIndent)
+        {
+            if (_text.Length == 0)
+                yield break;
+            if (maxWidth < 1)
+                throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
+            if (hangingIndent < 0)
+                throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
+
+            // Split into "paragraphs"
+            foreach (ConsoleColoredString paragraph in split(new string[] { "\r\n", "\r", "\n" }, null, StringSplitOptions.None))
+            {
+                // Count the number of spaces at the start of the paragraph
+                int indentLen = 0;
+                while (indentLen < paragraph.Length && paragraph.CharAt(indentLen) == ' ')
+                    indentLen++;
+
+                var curLine = new List<ConsoleColoredString>();
+                var indent = new string(' ', indentLen + hangingIndent);
+                var space = new string(' ', indentLen);
+
+                // Get a list of words
+                foreach (var wordForeach in paragraph.Substring(indentLen).split(new string[] { " " }, null, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var word = wordForeach;
+                    if (curLine.Sum(c => c.Length) + space.Length + word.Length > maxWidth)
+                    {
+                        // Need to wrap
+                        if (word.Length > maxWidth)
+                        {
+                            // This is a very long word
+                            // Leave part of the word on the current line but only if at least 2 chars fit
+                            if (curLine.Sum(c => c.Length) + space.Length + 2 <= maxWidth)
+                            {
+                                int length = maxWidth - curLine.Sum(c => c.Length) - space.Length;
+                                curLine.Add(space);
+                                curLine.Add(word.Substring(0, length));
+                                word = word.Substring(length);
+                            }
+                            // Commit the current line
+                            yield return new ConsoleColoredString(curLine.ToArray());
+
+                            // Now append full lines' worth of text until we're left with less than a full line
+                            while (indent.Length + word.Length > maxWidth)
+                            {
+                                yield return new ConsoleColoredString(indent, word.Substring(0, maxWidth - indent.Length));
+                                word = word.Substring(maxWidth - indent.Length);
+                            }
+
+                            // Start a new line with whatever is left
+                            curLine = new List<ConsoleColoredString>();
+                            curLine.Add(indent);
+                            curLine.Add(word);
+                        }
+                        else
+                        {
+                            // This word is not very long and it doesn't fit so just wrap it to the next line
+                            yield return new ConsoleColoredString(curLine.ToArray());
+
+                            // Start a new line
+                            curLine = new List<ConsoleColoredString>();
+                            curLine.Add(indent);
+                            curLine.Add(word);
+                        }
+                    }
+                    else
+                    {
+                        // No need to wrap yet
+                        curLine.Add(space);
+                        curLine.Add(word);
+                    }
+
+                    space = " ";
+                }
+
+                yield return new ConsoleColoredString(curLine.ToArray());
+            }
+        }
+
+        public int IndexOf(char value) { return _text.IndexOf(value); }
+        public int IndexOf(string value) { return _text.IndexOf(value); }
+        public int IndexOf(char value, int startIndex) { return _text.IndexOf(value, startIndex); }
+        public int IndexOf(string value, int startIndex) { return _text.IndexOf(value, startIndex); }
+        public int IndexOf(string value, StringComparison comparisonType) { return _text.IndexOf(value, comparisonType); }
+        public int IndexOf(char value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
+        public int IndexOf(string value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
+        public int IndexOf(string value, int startIndex, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, comparisonType); }
+        public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
+
+        public IEnumerable<ConsoleColoredString> Split(string[] separator) { return split(separator, null, StringSplitOptions.None); }
+        public IEnumerable<ConsoleColoredString> Split(string[] separator, StringSplitOptions options) { return split(separator, null, options); }
+        public IEnumerable<ConsoleColoredString> Split(string[] separator, int count, StringSplitOptions options) { return split(separator, count, options); }
+
+        private IEnumerable<ConsoleColoredString> split(string[] separator, int? count, StringSplitOptions options)
+        {
+            var index = 0;
+            while (true)
+            {
+                var candidates = separator.Select(sep => new { Separator = sep, MatchIndex = _text.IndexOf(sep, index) }).Where(sep => sep.MatchIndex != -1).ToArray();
+                if (!candidates.Any())
+                {
+                    if (index < _text.Length || (options & StringSplitOptions.RemoveEmptyEntries) == 0)
+                        yield return Substring(index);
+                    yield break;
+                }
+                var min = candidates.MinElement(a => a.MatchIndex);
+                if (min.MatchIndex != index || (options & StringSplitOptions.RemoveEmptyEntries) == 0)
+                    yield return Substring(index, min.MatchIndex - index);
+                if (count != null)
+                {
+                    count = count.Value - 1;
+                    if (count.Value == 0)
+                        yield break;
+                }
+                index = min.MatchIndex + min.Separator.Length;
+            }
+        }
+
+        public ConsoleColoredString Substring(int startIndex) { return new ConsoleColoredString(_text.Substring(startIndex), _colors.Subarray(startIndex)); }
+        public ConsoleColoredString Substring(int startIndex, int length) { return new ConsoleColoredString(_text.Substring(startIndex, length), _colors.Subarray(startIndex, length)); }
+
+        public void WriteToConsole()
+        {
+            int index = 0;
+            while (index < _text.Length)
+            {
+                ConsoleColor cc = _colors[index];
+                Console.ForegroundColor = cc;
+                var origIndex = index;
+                while (index < _text.Length && _colors[index] == cc)
+                    index++;
+                Console.Write(_text.Substring(origIndex, index - origIndex));
+            }
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }
