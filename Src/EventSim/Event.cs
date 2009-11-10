@@ -1,5 +1,5 @@
 
-namespace R.Util.EventSim
+namespace RT.KitchenSink.EventSim
 {
     /// <summary>
     /// Represents an Event that will occur at a certain time in the simulation.

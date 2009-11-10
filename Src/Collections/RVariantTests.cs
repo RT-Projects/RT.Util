@@ -4,8 +4,9 @@ using System.Text;
 using NUnit.Framework;
 using System.Xml;
 using System.IO;
+using RT.Util;
 
-namespace RT.Util.Collections
+namespace RT.KitchenSink.Collections.Tests
 {
     /// <summary>
     /// Overview of RVariant testing: the idea is that we first bootstrap the

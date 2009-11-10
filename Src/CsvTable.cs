@@ -2,8 +2,9 @@
 using System.IO;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
+using RT.KitchenSink.Collections;
 
-namespace RT.Util.Text
+namespace RT.KitchenSink
 {
     /// <summary>
     /// Holds a table of RVariant values, which can be saved to a file in CSV format.

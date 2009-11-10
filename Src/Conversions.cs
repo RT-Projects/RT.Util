@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace R.Util
+namespace RT.KitchenSink
 {
     public static class Conversions
     {

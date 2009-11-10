@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace R.Util.EventSim
+namespace RT.KitchenSink.EventSim
 {
     /// <summary>
     /// Base class for implementing a Task (which is a piece of C# code) with

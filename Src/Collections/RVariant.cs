@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using RT.Util.ExtensionMethods;
+using RT.Util;
 
 // TODO: possible areas of improvement
 //
@@ -14,7 +15,7 @@ using RT.Util.ExtensionMethods;
 // - add various IList/IDictionary methods
 // - track if element/subelement has been used; avoid saving unused ones (must be pretty smart about this and behave as if they're not there at all)
 
-namespace RT.Util.Collections
+namespace RT.KitchenSink.Collections
 {
     /// <summary>
     /// Determines what kind of an RVariant we're dealing with. See documentation

@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using RT.Util.Collections;
+using RT.Util.Geometry;
 
-namespace RT.Util.Geometry
+namespace RT.KitchenSink.Geometry
 {
     /// <summary>
     /// Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], SizeF, VoronoiDiagramFlags)"/> method.

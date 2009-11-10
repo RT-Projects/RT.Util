@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace R.Util
+namespace RT.KitchenSink
 {
     public class Regex2
     {

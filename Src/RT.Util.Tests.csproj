@@ -53,8 +53,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ListSortedTests.cs" />
-    <Compile Include="Collections\RVariantTests.cs" />
-    <Compile Include="Collections\SetTests.cs" />
     <Compile Include="Collections\TupleTests.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
@@ -66,7 +64,6 @@
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="RConvertTests.cs" />
     <Compile Include="UtilTests.cs" />
-    <Compile Include="Ut\DiffTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>

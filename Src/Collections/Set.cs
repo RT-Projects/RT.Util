@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using RT.Util.ExtensionMethods;
+using RT.Util.Collections;
 
-namespace RT.Util.Collections
+namespace RT.KitchenSink.Collections
 {
     /// <summary>
     /// A set of objects is a collection of objects where all objects are

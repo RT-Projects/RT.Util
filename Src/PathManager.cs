@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using RT.Util;
 
-namespace RT.Util.Paths
+namespace RT.KitchenSink.Paths
 {
     /// <summary>
     /// PathManager builds a list of paths via calls to <see cref="AddIncludePath"/> and

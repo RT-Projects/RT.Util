@@ -5,16 +5,16 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{EA7E9C00-DD8B-43DC-84F6-AE2F9F41ED30}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>R.Util</RootNamespace>
-    <AssemblyName>R.Util</AssemblyName>
+    <RootNamespace>KitchenSinkTests</RootNamespace>
+    <AssemblyName>KitchenSinkTests</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <OutputPath>..\Builds\$(Configuration)</OutputPath>
-    <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
     <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,12 +32,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework, Version=2.4.6.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RT.NUnitDirect\ThirdParty\NUnit-2.4.6\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -48,29 +50,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collections\Poset.cs" />
-    <Compile Include="Collections\RVariant.cs" />
-    <Compile Include="Collections\Set.cs" />
-    <Compile Include="Conversions.cs" />
-    <Compile Include="CsvTable.cs" />
-    <Compile Include="Diff.cs" />
-    <Compile Include="Drawing\Canvas.cs" />
-    <Compile Include="EventSim\Event.cs" />
-    <Compile Include="EventSim\EventCallback.cs" />
-    <Compile Include="EventSim\EventEngine.cs" />
-    <Compile Include="EventSim\EventTask.cs" />
-    <Compile Include="PathManager.cs" />
-    <Compile Include="PowerfulRegex.cs" />
-    <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
-    <Compile Include="Regex2.cs" />
-    <Compile Include="VoronoiDiagram.cs" />
-    <Compile Include="Web\Http.cs" />
-    <Compile Include="Web\PmWiki.cs" />
+    <Compile Include="Collections\RVariantTests.cs" />
+    <Compile Include="Collections\SetTests.cs" />
+    <Compile Include="DiffTests.cs" />
+    <Compile Include="KitchenSinkTests.cs" />
+    <Compile Include="Properties\KitchenSink\KitchenSinkTestsAssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
       <Name>Util</Name>
+    </ProjectReference>
+    <ProjectReference Include="RT.KitchenSink.csproj">
+      <Project>{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}</Project>
+      <Name>KitchenSink</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

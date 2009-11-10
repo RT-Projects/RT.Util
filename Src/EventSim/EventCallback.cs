@@ -1,5 +1,5 @@
 
-namespace R.Util.EventSim
+namespace RT.KitchenSink.EventSim
 {
     /// <summary>
     /// Invoked whenever an event is "due", i.e. whenever the simulation

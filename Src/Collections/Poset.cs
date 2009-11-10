@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using RT.Util.ExtensionMethods;
+using RT.Util.Collections;
+using RT.Util;
 
-namespace RT.Util.Collections
+namespace RT.KitchenSink.Collections
 {
     /// <summary>
     /// Represents the result of a partial comparison.

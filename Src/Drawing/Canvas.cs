@@ -8,7 +8,7 @@ using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
-namespace R.Util.Drawing
+namespace RT.KitchenSink.Drawing
 {
     /// <summary>
     /// Encodes axes direction mode for <see cref="Canvas"/>.

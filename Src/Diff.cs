@@ -4,9 +4,9 @@ using System.Linq;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util
+namespace RT.KitchenSink
 {
-    public static partial class Ut
+    public static partial class KitchenSinkUt
     {
         /// <summary>
         /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the

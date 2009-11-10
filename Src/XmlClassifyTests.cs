@@ -344,7 +344,7 @@ namespace RT.Util.Xml
                 var loaded3 = XmlClassify.ObjectFromXElement<classWithNoCtor>(elem);
                 Assert.Fail("Expected System.Exception");
             }
-            catch (Exception e) { }
+            catch { }
         }
     }
 }

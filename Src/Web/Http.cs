@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Web;
 
-namespace R.Util.Web
+namespace RT.KitchenSink.Web
 {
     /// <summary>
     /// Helper class for interacting with a web site via HTTP.

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace R.Util.EventSim
+namespace RT.KitchenSink.EventSim
 {
     /// <summary>
     /// Implements an event-driven time-based simulation.

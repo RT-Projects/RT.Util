@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace RT.Util.Collections
+namespace RT.KitchenSink.Collections.Tests
 {
     [TestFixture]
     public class SetTests

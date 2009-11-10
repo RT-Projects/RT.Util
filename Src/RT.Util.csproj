@@ -50,11 +50,8 @@
     <Compile Include="CmdLine.cs" />
     <Compile Include="Collections\ListSorted.cs" />
     <Compile Include="Collections\NameValuesCollection.cs" />
-    <Compile Include="Collections\Poset.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\ReadOnlyCollections.cs" />
-    <Compile Include="Collections\RVariant.cs" />
-    <Compile Include="Collections\Set.cs" />
     <Compile Include="Collections\Tuple.cs" />
     <Compile Include="ConsoleUtil.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
@@ -84,7 +81,6 @@
     <Compile Include="Controls\TextBoxAutoHeight.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Delegates.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\GraphicsUtil.cs" />
     <Compile Include="EggsML.cs" />
@@ -138,9 +134,7 @@
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Obsolete\CmdLine.cs" />
-    <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
-    <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
@@ -157,15 +151,12 @@
     <Compile Include="Streams\VoidStream.cs" />
     <Compile Include="EnumStrong.cs" />
     <Compile Include="Testing.cs" />
-    <Compile Include="Text\CsvTable.cs" />
     <Compile Include="Text\TextTable.cs" />
     <Compile Include="TimeOut.cs" />
-    <Compile Include="Ut\Diff.cs" />
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
     <Compile Include="Random.cs" />
     <Compile Include="Ut\TicToc.cs" />
-    <Compile Include="Geometry\VoronoiDiagram.cs" />
     <Compile Include="WinAPI.cs" />
     <Compile Include="XmlClassify.cs" />
   </ItemGroup>
