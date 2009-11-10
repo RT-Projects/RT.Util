@@ -50,7 +50,6 @@
     <Compile Include="CmdLine.cs" />
     <Compile Include="Collections\ListSorted.cs" />
     <Compile Include="Collections\NameValuesCollection.cs" />
-    <Compile Include="Collections\PackedBooleans.cs" />
     <Compile Include="Collections\Poset.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\ReadOnlyCollections.cs" />
