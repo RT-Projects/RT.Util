@@ -60,7 +60,7 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename) where T : new()
+        public static T LoadObjectFromXmlFile<T>(string filename)
         {
             return LoadObjectFromXmlFile<T>(filename, null);
         }
@@ -73,7 +73,7 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, object parentNode) where T : new()
+        public static T LoadObjectFromXmlFile<T>(string filename, object parentNode)
         {
             string BaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             return LoadObjectFromXmlFile<T>(filename, BaseDir, parentNode);
@@ -89,7 +89,7 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir, object parentNode) where T : new()
+        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir, object parentNode)
         {
             return (T) loadObjectFromXmlFile(typeof(T), filename, baseDir, parentNode);
         }
@@ -342,6 +342,18 @@ namespace RT.Util.Xml
         {
             string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             saveObjectToXmlFile(saveObject, typeof(T), filename, baseDir);
+        }
+
+        /// <summary>
+        /// Stores the specified object in an XML file with the given path and filename.
+        /// </summary>
+        /// <param name="saveObject">Object to store in an XML file.</param>
+        /// <param name="saveType">Type of the object to store.</param>
+        /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
+        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename)
+        {
+            string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
+            saveObjectToXmlFile(saveObject, saveType, filename, baseDir);
         }
 
         /// <summary>
