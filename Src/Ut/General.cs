@@ -154,33 +154,6 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Creates and returns a new <see cref="Tuple&lt;T1, T2&gt;"/> containing the provided values.
-        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
-        /// </summary>
-        public static Tuple<T1, T2> Tuple<T1, T2>(T1 value1, T2 value2)
-        {
-            return new Tuple<T1, T2>(value1, value2);
-        }
-
-        /// <summary>
-        /// Creates and returns a new <see cref="Tuple&lt;T1, T2, T3&gt;"/> containing the provided values.
-        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
-        /// </summary>
-        public static Tuple<T1, T2, T3> Tuple<T1, T2, T3>(T1 value1, T2 value2, T3 value3)
-        {
-            return new Tuple<T1, T2, T3>(value1, value2, value3);
-        }
-
-        /// <summary>
-        /// Creates and returns a new <see cref="Tuple&lt;T1, T2, T3, T4&gt;"/> containing the provided values.
-        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
-        /// </summary>
-        public static Tuple<T1, T2, T3, T4> Tuple<T1, T2, T3, T4>(T1 value1, T2 value2, T3 value3, T4 value4)
-        {
-            return new Tuple<T1, T2, T3, T4>(value1, value2, value3, value4);
-        }
-
-        /// <summary>
         /// Reads the specified file and computes the SHA1 hash function from its contents.
         /// </summary>
         /// <param name="path">Path to the file to compute SHA1 hash function from.</param>

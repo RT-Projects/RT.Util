@@ -5,6 +5,39 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Collections
 {
     /// <summary>
+    /// A static class with some tuple-related helper methods.
+    /// </summary>
+    public static class Tuple
+    {
+        /// <summary>
+        /// Creates and returns a new <see cref="Tuple&lt;T1, T2&gt;"/> containing the provided values.
+        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
+        /// </summary>
+        public static Tuple<T1, T2> New<T1, T2>(T1 element1, T2 element2)
+        {
+            return new Tuple<T1, T2>(element1, element2);
+        }
+
+        /// <summary>
+        /// Creates and returns a new <see cref="Tuple&lt;T1, T2, T3&gt;"/> containing the provided values.
+        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
+        /// </summary>
+        public static Tuple<T1, T2, T3> New<T1, T2, T3>(T1 element1, T2 element2, T3 element3)
+        {
+            return new Tuple<T1, T2, T3>(element1, element2, element3);
+        }
+
+        /// <summary>
+        /// Creates and returns a new <see cref="Tuple&lt;T1, T2, T3, T4&gt;"/> containing the provided values.
+        /// Use this method instead of the Tuple constructor in order to be able to skip the type parameters.
+        /// </summary>
+        public static Tuple<T1, T2, T3, T4> New<T1, T2, T3, T4>(T1 element1, T2 element2, T3 element3, T4 element4)
+        {
+            return new Tuple<T1, T2, T3, T4>(element1, element2, element3, element4);
+        }
+    }
+
+    /// <summary>
     /// A tuple of two values of specified types.
     /// </summary>
     [Serializable]
