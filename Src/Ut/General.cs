@@ -171,7 +171,7 @@ namespace RT.Util
         public static string VersionOfExe()
         {
             var v = Assembly.GetEntryAssembly().GetName().Version;
-            return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Revision, v.Build);
+            return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Build, v.Revision); // in our use: v.Build is build#, v.Revision is p4 changelist
         }
     }
 }
