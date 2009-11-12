@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Windows.Forms;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -163,6 +163,15 @@ namespace RT.Util
             var s = SHA1.Create();
             using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 return s.ComputeHash(f).ToHex();
+        }
+
+        /// <summary>
+        /// Returns the version of the entry assembly (the .exe file) in a standard format.
+        /// </summary>
+        public static string VersionOfExe()
+        {
+            var v = Assembly.GetEntryAssembly().GetName().Version;
+            return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Revision, v.Build);
         }
     }
 }
