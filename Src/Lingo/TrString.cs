@@ -94,13 +94,13 @@ namespace RT.Util.Lingo
                             numI = unchecked((int) numD);
                             isInteger = numD == (double) numI;
                         }
-                        else if (args[i] is int || args[i] is short || args[i] is ushort || args[i] is byte || args[i] is sbyte)
+                        else if (args[i] is int || args[i] is uint || args[i] is long || args[i] is ulong || args[i] is short || args[i] is ushort || args[i] is byte || args[i] is sbyte)
                         {
                             numI = RConvert.ExactToInt(args[i]);
                             isInteger = true;
                         }
                         else
-                            throw new ArgumentException("Argument #{0} was expected to be a number (except for uint, long and ulong), but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
+                            throw new ArgumentException("Argument #{0} was expected to be a number, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
 
                         if (isInteger)
                             n += ns.GetString(numI) * m;

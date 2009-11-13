@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 using RT.Util.Dialogs;
 
 namespace RT.Util.Lingo
 {
     /// <summary>
-    /// Helps an application using Lingo display a language selection context menu.
+    /// Helps an application using Lingo to display language selection UI in the main menu.
     /// </summary>
     /// <typeparam name="TTranslation">The type of the class holding the program's translation.</typeparam>
-    public class LanguageContextMenuHelper<TTranslation> where TTranslation : TranslationBase, new()
+    public class LanguageMainMenuHelper<TTranslation> where TTranslation : TranslationBase, new()
     {
         private string _programTitle;
         private string _moduleName;
         private Language _defaultLanguage;
+        private Language _currentLanguage;
         private TranslationForm<TTranslation>.Settings _trFormSettings;
         private Icon _trFormIcon;
         private SetLanguage<TTranslation> _setLanguage;
+        private ToolStripMenuItem _languageMenu;
+        private Func<Language> _getCurrentLanguage;
 
-        private Language _currentLanguage;
-
-        private ContextMenu _menu;
         private TranslationForm<TTranslation> _translationDialog;
 
         /// <summary>
@@ -39,8 +38,10 @@ namespace RT.Util.Lingo
         /// <param name="trFormSettings">Translation window settings, such as window position/size.</param>
         /// <param name="trFormIcon">The icon to use on the translation window.</param>
         /// <param name="setLanguage">A callback to invoke in order to change the program language. See <see cref="SetLanguage&lt;T&gt;"/> for more details.</param>
-        public LanguageContextMenuHelper(string programTitle, string moduleName, Language defaultLanguage,
-            TranslationForm<TTranslation>.Settings trFormSettings, Icon trFormIcon, SetLanguage<TTranslation> setLanguage)
+        /// <param name="languageMenu">The menu item which, when opened, will display the list of languages.</param>
+        /// <param name="getCurrentLanguage">A callback that returns the currently active language whenever called.</param>
+        public LanguageMainMenuHelper(string programTitle, string moduleName, Language defaultLanguage,
+            TranslationForm<TTranslation>.Settings trFormSettings, Icon trFormIcon, SetLanguage<TTranslation> setLanguage, ToolStripMenuItem languageMenu, Func<Language> getCurrentLanguage)
         {
             if (programTitle == null) throw new ArgumentNullException("programTitle");
             if (moduleName == null) throw new ArgumentNullException("moduleName");
@@ -53,37 +54,34 @@ namespace RT.Util.Lingo
             _trFormSettings = trFormSettings;
             _trFormIcon = trFormIcon;
             _setLanguage = setLanguage;
+            _languageMenu = languageMenu;
+            _getCurrentLanguage = getCurrentLanguage;
 #if DEBUG
             TranslationEditingEnabled = true;
 #endif
+
+            _languageMenu.DropDownOpening += new EventHandler(_languageMenu_DropDownOpening);
         }
 
-        /// <summary>
-        /// Displays a context menu listing all available languages, and optionally controls to edit the translations.
-        /// </summary>
-        /// <param name="curLanguage">The language currently in use by the program.</param>
-        /// <param name="positionControl">The menu's position is specified relative to this control.</param>
-        /// <param name="position">The menu's desired position relative to <paramref name="positionControl"/>.</param>
-        public void ShowContextMenu(Language curLanguage, Control positionControl, Point position)
+        void _languageMenu_DropDownOpening(object sender, EventArgs e)
         {
-            _currentLanguage = curLanguage;
-            _menu = new ContextMenu(Lingo.LanguageMenuItems<TTranslation>(_moduleName, _setLanguage, curLanguage).ToArray());
-            MenuItem miEdit = null;
+            _currentLanguage = _getCurrentLanguage();
+            _languageMenu.DropDownItems.Clear();
+            _languageMenu.DropDownItems.AddRange(Lingo.LanguageToolStripMenuItems<TTranslation>(_moduleName, _setLanguage, _currentLanguage));
+            ToolStripItem miEdit = null;
             if (TranslationEditingEnabled)
             {
-                _menu.MenuItems.Add(new MenuItem("-"));
-                _menu.MenuItems.Add(miEdit = new MenuItem("&Edit current translation", new EventHandler(editCurrentLanguage)));
-                _menu.MenuItems.Add(new MenuItem("&Create new translation", new EventHandler(createNewLanguage)));
+                _languageMenu.DropDownItems.Add(new ToolStripSeparator());
+                _languageMenu.DropDownItems.Add(miEdit = new ToolStripMenuItem("&Edit current language", null, new EventHandler(editCurrentLanguage)));
+                _languageMenu.DropDownItems.Add(new ToolStripMenuItem("&Create new language", null, new EventHandler(createNewLanguage)));
             }
             // Disable most items if a translation dialog is currently visible
             if (_translationDialog != null)
             {
-                foreach (MenuItem mi in _menu.MenuItems)
+                foreach (ToolStripItem mi in _languageMenu.DropDownItems)
                     if (mi != miEdit)
                         mi.Enabled = false;
             }
-
-            _menu.Show(positionControl, position);
         }
 
         private void editCurrentLanguage(object sender, EventArgs e)

@@ -22,6 +22,7 @@ namespace RT.Util.Controls
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Location = new Point(-8, 1),
                 Name = "_groupBox",
+                Tag = "notranslate",
                 Text = ""
             };
             Controls.Add(_groupBox);

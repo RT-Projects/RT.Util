@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
-using RT.Util.Controls;
 using RT.Util.Collections;
+using RT.Util.Controls;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 using RT.Util.Xml;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
 
 namespace RT.Util.Lingo
 {
@@ -75,8 +75,7 @@ namespace RT.Util.Lingo
             _translation = XmlClassify.LoadObjectFromXmlFile<TTranslation>(_translationFile);
             _anyChanges = false;
 
-            if (_settings.FontName != null)
-                Font = new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular);
+            AutoScaleMode = AutoScaleMode.Font;
 
             // some defaults
             Text = "Translating " + programTitle;
@@ -178,7 +177,12 @@ namespace RT.Util.Lingo
             };
             _lstGroups.SelectedIndex = 0;
 
-            Load += (s, e) => { pnlSplit.SplitterDistance = settings.SplitterDistance; setButtonSizes(); };
+            Load += (s, e) =>
+            {
+                pnlSplit.SplitterDistance = settings.SplitterDistance; setButtonSizes();
+                if (_settings.FontName != null)
+                    Font = new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular);
+            };
             FormClosing += (s, e) =>
             {
                 settings.SplitterDistance = pnlSplit.SplitterDistance;
