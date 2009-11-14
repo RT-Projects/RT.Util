@@ -281,6 +281,90 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Escapes all characters in this string whose code is less than 32 using C/C#-compatible backslash escapes.
+        /// </summary>
+        public static string CLiteralEscape(this string value)
+        {
+            var result = new StringBuilder(value.Length + value.Length / 2);
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                switch (c)
+                {
+                    case '\0': result.Append(@"\0"); break;
+                    case '\a': result.Append(@"\a"); break;
+                    case '\b': result.Append(@"\b"); break;
+                    case '\t': result.Append(@"\t"); break;
+                    case '\n': result.Append(@"\n"); break;
+                    case '\v': result.Append(@"\v"); break;
+                    case '\f': result.Append(@"\f"); break;
+                    case '\r': result.Append(@"\r"); break;
+                    case '\\': result.Append(@"\\"); break;
+                    default:
+                        if (c >= ' ')
+                            result.Append(c);
+                        else
+                            result.AppendFormat(@"\x{0:X2}", (int) c);
+                        break;
+                }
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Reverses the escaping done by <see cref="CLiteralEscape"/>. Note that unescaping is not fully C/C#-compatible
+        /// in the sense that not all strings that are valid string literals in C/C# can be correctly unescaped by this procedure.
+        /// </summary>
+        public static string CLiteralUnescape(this string value)
+        {
+            var result = new StringBuilder(value.Length);
+
+            int i = 0;
+            while (i < value.Length)
+            {
+                char c = value[i];
+                if (c != '\\')
+                    result.Append(c);
+                else
+                {
+                    if (i + 1 >= value.Length)
+                        throw new ArgumentException("String ends before the escape sequence at position {0} is complete".Fmt(i), "value");
+                    i++;
+                    c = value[i];
+                    switch (c)
+                    {
+                        case '0': result.Append('\0'); break;
+                        case 'a': result.Append('\a'); break;
+                        case 'b': result.Append('\b'); break;
+                        case 't': result.Append('\t'); break;
+                        case 'n': result.Append('\n'); break;
+                        case 'v': result.Append('\v'); break;
+                        case 'f': result.Append('\f'); break;
+                        case 'r': result.Append('\r'); break;
+                        case '\\': result.Append('\\'); break;
+                        case 'x':
+                            if (i + 2 >= value.Length)
+                                throw new ArgumentException("String ends before the escape sequence at position {0} is complete".Fmt(i - 1), "value");
+                            int code;
+                            if (!int.TryParse(value.Substring(i + 1, 2), NumberStyles.AllowHexSpecifier, null, out code))
+                                throw new ArgumentException(@"Cannot parse hex escape sequence ""\x{0}"" at position {1}".Fmt(value.Substring(i + 1, 2), i - 1), "value");
+                            result.Append((char) code);
+                            i += 2;
+                            break;
+                        default:
+                            throw new ArgumentException("Unrecognised escape sequence at position {0}: \\{1}".Fmt(i - 1, c), "value");
+                    }
+                }
+
+                i++;
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
         /// Joins all strings in the enumerable using the specified string as the separator.
         /// <example>
         ///     <code>

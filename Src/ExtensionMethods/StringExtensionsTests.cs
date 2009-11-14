@@ -57,6 +57,30 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
+        public void TestCLiteralEscape()
+        {
+            AssertCLiteralEscape("", @"");
+            AssertCLiteralEscape("test, прове́рка", @"test, прове́рка");
+            AssertCLiteralEscape("\0\a\b\t\n\v\f\r\\", @"\0\a\b\t\n\v\f\r\\");
+            AssertCLiteralEscape("test\r\n; \tstuff\x15\x1A", @"test\r\n; \tstuff\x15\x1A");
+            Assert.AreEqual("test\\x0D\\x0A; \\x09stuff\\x15\\x1A -- \\x41".CLiteralUnescape(), "test\\r\\n; \\tstuff\\x15\\x1A -- A".CLiteralUnescape());
+            try { @"test, \z stuff".CLiteralUnescape(); Assert.Fail(); }
+            catch (ArgumentException e) { Assert.IsTrue(e.Message.Contains("6")); Assert.IsTrue(e.Message.Contains(@"\z")); }
+            try { @"test, \".CLiteralUnescape(); Assert.Fail(); }
+            catch (ArgumentException) { }
+            try { @"test, \x".CLiteralUnescape(); Assert.Fail(); }
+            catch (ArgumentException) { }
+        }
+
+        private void AssertCLiteralEscape(string unescaped, string expectEscaped)
+        {
+            var actualEscaped = unescaped.CLiteralEscape();
+            var actualUnescaped = expectEscaped.CLiteralUnescape();
+            Assert.AreEqual(expectEscaped, actualEscaped);
+            Assert.AreEqual(unescaped, actualUnescaped);
+        }
+
+        [Test]
         public void TestTrivial()
         {
             var tww = "\n\n\n".WordWrap(40).ToArray();
