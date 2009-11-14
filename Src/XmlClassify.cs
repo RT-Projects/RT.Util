@@ -162,8 +162,15 @@ namespace RT.Util.Xml
                 return Enum.Parse(type, elem.Value);
             else if (type == typeof(string))
             {
-                if (elem.Attribute("encoding") != null && elem.Attribute("encoding").Value == "base64")
-                    return elem.Value.Base64UrlDecode().FromUtf8();
+                if (elem.Attribute("encoding") != null)
+                {
+                    if (elem.Attribute("encoding").Value == "c-literal")
+                        return elem.Value.CLiteralUnescape();
+                    else if (elem.Attribute("encoding").Value == "base64")
+                        return elem.Value.Base64UrlDecode().FromUtf8();
+                    else
+                        throw new InvalidDataException("Encoding \"{0}\" is not recognized for elements of type \"string\"".Fmt(elem.Attribute("encoding")));
+                }
                 return elem.Value;
             }
             else if (type == typeof(char))
@@ -434,8 +441,8 @@ namespace RT.Util.Xml
                 string str = (string) saveObject;
                 if (str.Any(ch => ch < ' '))
                 {
-                    elem.Add(new XAttribute("encoding", "base64"));
-                    elem.Add(str.ToUtf8().Base64UrlEncode());
+                    elem.Add(new XAttribute("encoding", "c-literal"));
+                    elem.Add(str.CLiteralEscape());
                 }
                 else
                     elem.Add(str);
