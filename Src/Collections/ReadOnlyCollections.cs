@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace RT.Util.Collections
 {
     /// <summary>
     /// Wraps an <see cref="IDictionary&lt;TKey,TValue&gt;"/> to allow reading values but prevent setting/removing them.
     /// </summary>
+    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerTypeProxy(typeof(ReadOnlyDictionary<,>.DebugView))]
     public class ReadOnlyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private IDictionary<TKey, TValue> _dict;
@@ -174,11 +176,26 @@ namespace RT.Util.Collections
         {
             return _dict.GetEnumerator();
         }
+
+        internal sealed class DebugView
+        {
+            private ReadOnlyDictionary<TKey, TValue> _dict;
+
+            public DebugView(ReadOnlyDictionary<TKey, TValue> dict)
+            {
+                _dict = dict;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public KeyValuePair<TKey, TValue>[] Items { get { return _dict.ToArray(); } }
+        }
     }
 
     /// <summary>
     /// Wraps an <see cref="ICollection&lt;T&gt;"/> to allow reading values but prevent setting/removing them.
     /// </summary>
+    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerTypeProxy(typeof(ReadOnlyCollection<>.DebugView))]
     public class ReadOnlyCollection<T> : ICollection<T>
     {
         private ICollection<T> _coll;
@@ -269,6 +286,19 @@ namespace RT.Util.Collections
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return _coll.GetEnumerator();
+        }
+
+        internal sealed class DebugView
+        {
+            private ReadOnlyCollection<T> _collection;
+
+            public DebugView(ReadOnlyCollection<T> collection)
+            {
+                _collection = collection;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public T[] Items { get { return _collection.ToArray(); } }
         }
     }
 }

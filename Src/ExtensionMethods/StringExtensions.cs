@@ -626,5 +626,38 @@ namespace RT.Util.ExtensionMethods
         {
             return (url == path) || url.StartsWith(path + "/") || url.StartsWith(path + "?");
         }
+
+        /// <summary>
+        /// Same as <see cref="string.Substring(int)"/> but does not throw exceptions when the start index
+        /// falls outside the boundaries of the string. Instead the result is truncated as appropriate.
+        /// </summary>
+        public static string SubstringSafe(this string source, int startIndex)
+        {
+            if (startIndex >= source.Length)
+                return "";
+            else if (startIndex < 0)
+                return source;
+            else
+                return source.Substring(startIndex);
+        }
+
+        /// <summary>
+        /// Same as <see cref="string.Substring(int, int)"/> but does not throw exceptions when the start index
+        /// or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
+        /// </summary>
+        public static string SubstringSafe(this string source, int startIndex, int length)
+        {
+            if (startIndex < 0)
+            {
+                length += startIndex;
+                startIndex = 0;
+            }
+            if (startIndex >= source.Length || length <= 0)
+                return "";
+            else if (startIndex + length > source.Length)
+                return source.Substring(startIndex);
+            else
+                return source.Substring(startIndex, length);
+        }
     }
 }
