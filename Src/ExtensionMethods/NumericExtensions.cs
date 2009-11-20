@@ -21,5 +21,17 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentException("Clip: minimumValue is greater than maximumValue");
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
+
+        /// <summary>
+        /// Attempts to parse this string as an int, returning null if the parse fails.
+        /// </summary>
+        public static int? TryParseAsInt(this string value)
+        {
+            int result;
+            if (int.TryParse(value, out result))
+                return result;
+            else
+                return null;
+        }
     }
 }
