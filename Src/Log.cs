@@ -235,6 +235,20 @@ namespace RT.Util
     }
 
     /// <summary>
+    /// Implements a logger which doesn't do anything with the log messages. Use this as the
+    /// default logger where no logging is wanted by default, to avoid checks for null in every log message.
+    /// </summary>
+    public class NullLogger : LoggerBase
+    {
+        /// <summary>
+        /// Does nothing.
+        /// </summary>
+        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        {
+        }
+    }
+
+    /// <summary>
     /// Implements a logger which outputs messages to the console, word-wrapping
     /// long messages. Can use different colors for the different message types.
     /// </summary>

@@ -235,7 +235,7 @@ namespace RT.Util
         /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>,
         /// and will cancel any pending earlier (older) saves.</para>
         /// </summary>
-        public void Save()
+        public virtual void Save()
         {
             // Save must not be interrupted or superseded by a SaveThreaded
             lock (_lock)
@@ -255,7 +255,7 @@ namespace RT.Util
         /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>,
         /// and will cancel any pending earlier (older) saves.</para>
         /// </summary>
-        public void SaveQuiet()
+        public virtual void SaveQuiet()
         {
             // SaveQuiet must not be interrupted or superseded by a SaveThreaded
             lock (_lock)
@@ -290,7 +290,7 @@ namespace RT.Util
         /// you call <see cref="SettingsBase.Save"/> when you want to guarantee a save, especially just before the
         /// program terminates.</para>
         /// </summary>
-        public void SaveThreaded()
+        public virtual void SaveThreaded()
         {
             lock (_lock)
             {
