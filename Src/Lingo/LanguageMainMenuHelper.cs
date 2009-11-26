@@ -93,7 +93,15 @@ namespace RT.Util.Lingo
             }
             if (_translationDialog == null)
             {
-                _translationDialog = new TranslationForm<TTranslation>(_trFormSettings, _trFormIcon, _programTitle, _moduleName, _currentLanguage);
+                try
+                {
+                    _translationDialog = new TranslationForm<TTranslation>(_trFormSettings, _trFormIcon, _programTitle, _moduleName, _currentLanguage);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Translation could not be loaded: " + ex.Message);
+                    return;
+                }
                 _translationDialog.TranslationChanged += _setLanguage;
                 _translationDialog.FormClosed += (s, v) => { _translationDialog = null; };
             }

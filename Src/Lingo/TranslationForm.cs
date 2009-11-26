@@ -30,7 +30,8 @@ namespace RT.Util.Lingo
         private Button _btnApply;
 
         private TranslationPanel _lastFocusedPanel;
-        private string _translationFile;
+        private string _moduleName;
+        private Language _language;
         private TTranslation _translation;
         private bool _anyChanges;
         private Settings _settings;
@@ -71,8 +72,9 @@ namespace RT.Util.Lingo
                 Icon = icon;
 
             _settings = settings;
-            _translationFile = PathUtil.Combine(PathUtil.AppPath, "Translations", moduleName + "." + language.GetIsoLanguageCode() + ".xml");
-            _translation = XmlClassify.LoadObjectFromXmlFile<TTranslation>(_translationFile);
+            _moduleName = moduleName;
+            _language = language;
+            _translation = Lingo.LoadTranslation<TTranslation>(moduleName, language);
             _anyChanges = false;
 
             AutoScaleMode = AutoScaleMode.Font;
@@ -395,18 +397,15 @@ namespace RT.Util.Lingo
 
             if (sender != _btnCancel && _anyChanges)
             {
-                XmlClassify.SaveObjectToXmlFile(_translation, _translationFile);
-                if (TranslationChanged != null)
+                try
                 {
-                    try
-                    {
-                        var loadAgain = XmlClassify.LoadObjectFromXmlFile<TTranslation>(_translationFile);
-                        TranslationChanged(loadAgain);
-                    }
-                    catch (Exception x)
-                    {
-                        DlgMessage.Show("Saving and re-loading the translation failed for the following reason:\n\n" + x.Message + "\n\nPlease ensure that the file is writable and readable and try again.", "Save translation failed", DlgType.Error);
-                    }
+                    Lingo.SaveTranslation(_moduleName, _translation);
+                    if (TranslationChanged != null)
+                        TranslationChanged(Lingo.LoadTranslation<TTranslation>(_moduleName, _language));
+                }
+                catch (Exception x)
+                {
+                    DlgMessage.Show("Saving and re-loading the translation failed for the following reason:\n\n" + x.Message + "\n\nPlease ensure that the file is writable and readable and try again.", "Save translation failed", DlgType.Error);
                 }
             }
             _anyChanges = false;
@@ -1343,8 +1342,9 @@ namespace RT.Util.Lingo
                 e.Graphics.DrawString(tgli.Label, new Font(Font, FontStyle.Bold), new SolidBrush(textColor), new PointF(e.Bounds.Left + HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN));
                 if (tgli.Notes != null)
                 {
-                    int h = (int) e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold)).Height + 2 * VERTICAL_MARGIN;
-                    e.Graphics.DrawString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), new SolidBrush(textColor), new RectangleF(e.Bounds.Left + HORIZONTAL_MARGIN + INDENTATION, e.Bounds.Top + h, /*e.Bounds.Width*/ClientSize.Width - INDENTATION - 2 * HORIZONTAL_MARGIN, e.Bounds.Height - h - VERTICAL_MARGIN));
+                    int h = (int) (e.Graphics.MeasureString(tgli.Label, new Font(Font, FontStyle.Bold))).Height + 2 * VERTICAL_MARGIN;
+                    e.Graphics.DrawString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), new SolidBrush(textColor),
+                        new RectangleF(e.Bounds.Left + HORIZONTAL_MARGIN + INDENTATION, e.Bounds.Top + h, ClientSize.Width - INDENTATION - 2 * HORIZONTAL_MARGIN, e.Bounds.Height - h));
                 }
                 if (tgli.TranslationPanels.Any(t => t.State != TranslationPanelState.UpToDateAndSaved))
                 {
