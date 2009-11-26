@@ -30,6 +30,27 @@ namespace RT.Util.Lingo
         public bool TranslationEditingEnabled { get; set; }
 
         /// <summary>
+        /// Returns true only if it's ok to close the application, by asking the user in case there are any unsaved changes.
+        /// </summary>
+        public bool MayExitApplication()
+        {
+            if (_translationDialog == null || !_translationDialog.AnyChanges)
+                return true;
+            return DlgMessage.Show("If you exit now, you will lose all your changes to the translation you are currently editing. Are you sure you wish to do this?\n\nTo save your changes, click \"Cancel\", then switch to the translation editor and click \"Save changes\" there.",
+                    "Exit Application", DlgType.Warning, "Exit anyway", "Cancel") == 0;
+        }
+
+        /// <summary>
+        /// Closes the translation dialog without any prompts in case of unsaved changes. Does nothing
+        /// if the dialog is not displayed.
+        /// </summary>
+        public void CloseWithoutPrompts()
+        {
+            if (_translationDialog != null)
+                _translationDialog.CloseWithoutPrompts();
+        }
+
+        /// <summary>
         /// Creates a new language selection context menu helper.
         /// </summary>
         /// <param name="programTitle">The title of the program - to be displayed in the translation UI.</param>

@@ -211,6 +211,23 @@ namespace RT.Util.Lingo
             setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : Font);
         }
 
+        /// <summary>
+        /// Returns true if the user has made any changes that are currently unsaved.
+        /// </summary>
+        public bool AnyChanges
+        {
+            get { return _anyChanges; }
+        }
+
+        /// <summary>
+        /// Closes the translation form without asking the user's confirmation when unsaved changes exist.
+        /// </summary>
+        public void CloseWithoutPrompts()
+        {
+            _anyChanges = false;
+            Close();
+        }
+
         private void markAllUpToDate(object sender, EventArgs e)
         {
             if (DlgMessage.Show("Are you absolutely sure that you want to mark all strings as up to date? If you have not translated all strings yet, this will cause you to lose track of which strings you have not yet translated.",
