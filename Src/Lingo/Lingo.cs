@@ -32,7 +32,7 @@ namespace RT.Util.Lingo
         /// <param name="module">The name of the module whose translation to load.</param>
         /// <param name="language">The language code of the language to load. This is set to the default language if the specified language cannot be loaded.</param>
         /// <returns>The loaded or default translation.</returns>
-        public static TTranslation LoadTranslation<TTranslation>(string module, ref Language language) where TTranslation : TranslationBase, new()
+        public static TTranslation LoadTranslationOrDefault<TTranslation>(string module, ref Language language) where TTranslation : TranslationBase, new()
         {
             try
             {
