@@ -29,30 +29,28 @@ namespace RT.Util.Lingo
         /// </summary>
         public bool TranslationEditingEnabled { get; set; }
 
-        /// <summary>
-        /// Returns true only if it's ok to close the application, by asking the user in case there are any unsaved changes.
-        /// </summary>
+        /// <summary>Returns a value indicating whether it is okay to close the application. The user is asked if there are any unsaved changes.</summary>
         public bool MayExitApplication()
         {
             if (_translationDialog == null || !_translationDialog.AnyChanges)
                 return true;
-            return DlgMessage.Show("If you exit now, you will lose all your changes to the translation you are currently editing. Are you sure you wish to do this?\n\nTo save your changes, click \"Cancel\", then switch to the translation editor and click \"Save changes\" there.",
-                    "Exit Application", DlgType.Warning, "Exit anyway", "Cancel") == 0;
+            var result = DlgMessage.Show("Would you like to save the changes to made to the translation you are currently editing?",
+                    "Exit Application", DlgType.Warning, "Save changes", "Discard changes", "Cancel");
+            if (result == 2)
+                return false;
+            if (result == 0)
+                _translationDialog.SaveChanges(false);
+            return true;
         }
 
-        /// <summary>
-        /// Closes the translation dialog without any prompts in case of unsaved changes. Does nothing
-        /// if the dialog is not displayed.
-        /// </summary>
+        /// <summary>Closes the translation dialog (if it is visible) without any prompts regarding unsaved changes.</summary>
         public void CloseWithoutPrompts()
         {
             if (_translationDialog != null)
                 _translationDialog.CloseWithoutPrompts();
         }
 
-        /// <summary>
-        /// Creates a new language selection context menu helper.
-        /// </summary>
+        /// <summary>Creates a new language selection menu helper.</summary>
         /// <param name="programTitle">The title of the program - to be displayed in the translation UI.</param>
         /// <param name="moduleName">Name of the module being translated - used to construct the filename for the translation file.</param>
         /// <param name="defaultLanguage">The language of the default translation (this translation cannot be edited as it's compiled into the program).</param>

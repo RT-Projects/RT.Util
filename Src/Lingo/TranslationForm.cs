@@ -188,8 +188,14 @@ namespace RT.Util.Lingo
             FormClosing += (s, e) =>
             {
                 settings.SplitterDistance = pnlSplit.SplitterDistance;
-                if (_anyChanges && DlgMessage.Show("Are you sure you wish to discard all unsaved changes you made to the translation?", "Discard changes", DlgType.Warning, "&Discard", "&Cancel") == 1)
-                    e.Cancel = true;
+                if (_anyChanges)
+                {
+                    var result = DlgMessage.Show("Do you wish to save the changes you made to the translation?", "Close translation", DlgType.Warning, "&Save changes", "&Discard changes", "&Cancel");
+                    if (result == 0)
+                        SaveChanges(true);
+                    if (result == 2)
+                        e.Cancel = true;
+                }
             };
 
             ToolStrip ts = new ToolStrip(
@@ -559,6 +565,19 @@ namespace RT.Util.Lingo
             if (index < _currentlyVisibleTranslationPanels.Length - 1)
                 _pnlRightOuter.ScrollControlIntoView(_currentlyVisibleTranslationPanels[index + 1]);
             _pnlRightOuter.ScrollControlIntoView(_lastFocusedPanel);
+        }
+
+        /// <summary>Saves the changes to the translation currently being edited.</summary>
+        /// <param name="fireTranslationChanged">If true, the <see cref="TranslationChanged"/> event is fired if any changes were made. If false, the event is not fired.</param>
+        public void SaveChanges(bool fireTranslationChanged)
+        {
+            if (_anyChanges)
+            {
+                Lingo.SaveTranslation(_moduleName, _translation);
+                if (fireTranslationChanged && TranslationChanged != null)
+                    TranslationChanged(Lingo.LoadTranslation<TTranslation>(_moduleName, _language));
+                _anyChanges = false;
+            }
         }
 
         private class GroupSwitchEventArgs : EventArgs
