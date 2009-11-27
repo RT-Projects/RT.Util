@@ -24,18 +24,17 @@ namespace RT.Util.Lingo
         private TableLayoutPanel _pnlRightInner;
         private ToolStripMenuItem _mnuFindNext;
         private ToolStripMenuItem _mnuFindPrev;
+        private ToolStripMenuItem _mnuApply;
         private TranslationGroupListBox _lstGroups;
-        private Button _btnOK;
-        private Button _btnCancel;
-        private Button _btnApply;
 
         private TranslationPanel _lastFocusedPanel;
         private string _moduleName;
+        private string _programTitle;
         private Language _language;
         private TTranslation _translation;
-        private bool _anyChanges;
         private Settings _settings;
         private NumberSystem _origNumberSystem;
+        private bool _anyChanges;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
         public new class Settings : ManagedForm.Settings
@@ -73,14 +72,12 @@ namespace RT.Util.Lingo
 
             _settings = settings;
             _moduleName = moduleName;
+            _programTitle = programTitle;
             _language = language;
             _translation = Lingo.LoadTranslation<TTranslation>(moduleName, language);
-            _anyChanges = false;
-
-            AutoScaleMode = AutoScaleMode.Font;
+            AnyChanges = false;
 
             // some defaults
-            Text = "Translating " + programTitle;
             Width = Screen.PrimaryScreen.WorkingArea.Width / 2;
             Height = Screen.PrimaryScreen.WorkingArea.Height * 9 / 10;
 
@@ -142,21 +139,6 @@ namespace RT.Util.Lingo
             _pnlRightOuter.Controls.Add(_pnlRightInner);
             pnlSplit.Panel2.Controls.Add(_pnlRightOuter);
 
-            TableLayoutPanel pnlBottom = new TableLayoutPanel { Dock = DockStyle.Bottom, ColumnCount = 4, RowCount = 1, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
-            _btnOK = new Button { Text = "&Save and close" };
-            _btnCancel = new Button { Text = "&Discard changes" };
-            _btnApply = new Button { Text = "&Apply changes" };
-            pnlBottom.Controls.Add(_btnOK, 1, 0);
-            pnlBottom.Controls.Add(_btnCancel, 2, 0);
-            pnlBottom.Controls.Add(_btnApply, 3, 0);
-            pnlBottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            pnlBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            pnlBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            pnlBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            _btnOK.Click += new EventHandler(btnClick);
-            _btnCancel.Click += new EventHandler(btnClick);
-            _btnApply.Click += new EventHandler(btnClick);
-
             _lstGroups.SelectedValueChanged += (s, e) =>
             {
                 if (_lstGroups.Tag == null || (int) _lstGroups.Tag != _lstGroups.SelectedIndex)
@@ -179,16 +161,41 @@ namespace RT.Util.Lingo
             };
             _lstGroups.SelectedIndex = 0;
 
+            ToolStrip ts = new ToolStrip(
+                new ToolStripMenuItem("&Translation", null,
+                    _mnuApply = new ToolStripMenuItem("&Save and apply", null, new EventHandler(saveAndApply)) { ShortcutKeys = Keys.Control | Keys.S },
+                    new ToolStripMenuItem("&Close", null, (s, e) => Close())
+                ),
+                new ToolStripMenuItem("&Edit", null,
+                    new ToolStripMenuItem("&Find...", null, new EventHandler(find)) { ShortcutKeys = Keys.Control | Keys.F },
+                    _mnuFindNext = new ToolStripMenuItem("F&ind next", null, new EventHandler(findNext)) { ShortcutKeys = Keys.F3, Enabled = _settings.LastFindQuery != null },
+                    _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, new EventHandler(findPrev)) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
+                    new ToolStripSeparator(),
+                    new ToolStripMenuItem("Go to &next out-of-date string", null, new EventHandler(nextOutOfDate)) { ShortcutKeys = Keys.Control | Keys.N },
+                    new ToolStripMenuItem("&Mark current string as out of date", null, new EventHandler(markOutOfDate)) { ShortcutKeys = Keys.Control | Keys.M },
+                    new ToolStripMenuItem("M&ark all strings as out of date", null, new EventHandler(markAllOutOfDate)),
+                    new ToolStripMenuItem("Ma&rk all strings as up to date", null, new EventHandler(markAllUpToDate))
+                ),
+                new ToolStripMenuItem("&View", null,
+                    new ToolStripMenuItem("&Font...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T }
+                )
+            ) { Dock = DockStyle.Top };
+
+            Controls.Add(pnlSplit);
+            Controls.Add(ts);
+
+            setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : Font);
+
             Load += (s, e) =>
             {
-                pnlSplit.SplitterDistance = settings.SplitterDistance; setButtonSizes();
+                pnlSplit.SplitterDistance = settings.SplitterDistance;
                 if (_settings.FontName != null)
                     Font = new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular);
             };
             FormClosing += (s, e) =>
             {
                 settings.SplitterDistance = pnlSplit.SplitterDistance;
-                if (_anyChanges)
+                if (AnyChanges)
                 {
                     var result = DlgMessage.Show("Do you wish to save the changes you made to the translation?", "Close translation", DlgType.Warning, "&Save changes", "&Discard changes", "&Cancel");
                     if (result == 0)
@@ -197,24 +204,6 @@ namespace RT.Util.Lingo
                         e.Cancel = true;
                 }
             };
-
-            ToolStrip ts = new ToolStrip(
-                new ToolStripMenuItem("&Translation", null,
-                    new ToolStripMenuItem("&Find...", null, new EventHandler(find)) { ShortcutKeys = Keys.Control | Keys.F },
-                    _mnuFindNext = new ToolStripMenuItem("F&ind next", null, new EventHandler(findNext)) { ShortcutKeys = Keys.F3, Enabled = _settings.LastFindQuery != null },
-                    _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, new EventHandler(findPrev)) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
-                    new ToolStripMenuItem("Go to &next out-of-date string", null, new EventHandler(nextOutOfDate)) { ShortcutKeys = Keys.Control | Keys.N },
-                    new ToolStripMenuItem("Fon&t...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T },
-                    new ToolStripMenuItem("&Mark all strings as up to date", null, new EventHandler(markAllUpToDate)),
-                    new ToolStripMenuItem("M&ark all strings as out of date", null, new EventHandler(markAllOutOfDate))
-                )
-            ) { Dock = DockStyle.Top };
-
-            Controls.Add(pnlSplit);
-            Controls.Add(pnlBottom);
-            Controls.Add(ts);
-
-            setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : Font);
         }
 
         /// <summary>
@@ -222,7 +211,15 @@ namespace RT.Util.Lingo
         /// </summary>
         public bool AnyChanges
         {
-            get { return _anyChanges; }
+            get
+            {
+                return _anyChanges;
+            }
+            private set
+            {
+                _anyChanges = value;
+                Text = "Translating " + _programTitle + (_anyChanges ? " •" : string.Empty);
+            }
         }
 
         /// <summary>
@@ -243,7 +240,7 @@ namespace RT.Util.Lingo
             foreach (var p in _allTranslationPanels)
                 p.SetUpToDate();
             _pnlRightInner.ResumeLayout(true);
-            _anyChanges = true;
+            AnyChanges = true;
         }
 
         private void markAllOutOfDate(object sender, EventArgs e)
@@ -255,17 +252,15 @@ namespace RT.Util.Lingo
             foreach (var p in _allTranslationPanels)
                 p.SetOutOfDate();
             _pnlRightInner.ResumeLayout(true);
-            _anyChanges = true;
+            AnyChanges = true;
         }
 
-        private void setButtonSizes()
+        private void markOutOfDate(object sender, EventArgs e)
         {
-            Size f = TextRenderer.MeasureText(_btnOK.Text, Font);
-            int w = f.Width;
-            w = Math.Max(w, TextRenderer.MeasureText(_btnCancel.Text, Font).Width);
-            w = Math.Max(w, TextRenderer.MeasureText(_btnApply.Text, Font).Width);
-            _btnOK.Width = _btnCancel.Width = _btnApply.Width = w + 20;
-            _btnOK.Height = _btnCancel.Height = _btnApply.Height = f.Height + 10;
+            if (_lastFocusedPanel == null)
+                return;
+            _lastFocusedPanel.SetOutOfDate();
+            AnyChanges = true;
         }
 
         private void setFont(object sender, EventArgs e)
@@ -290,7 +285,6 @@ namespace RT.Util.Lingo
                 pnl.SuspendLayout();
                 pnl.SetFont(font, f);
             }
-            setButtonSizes();
             foreach (var pnl in _allTranslationPanels)
                 pnl.ResumeLayout(true);
             _settings.FontName = font.Name;
@@ -413,12 +407,9 @@ namespace RT.Util.Lingo
                 DlgMessage.Show("All strings are up to date.", "Next out-of-date string", DlgType.Info);
         }
 
-        private void btnClick(object sender, EventArgs e)
+        private void saveAndApply(object sender, EventArgs e)
         {
-            if (sender == _btnCancel && _anyChanges && DlgMessage.Show("Are you sure you wish to discard all unsaved changes you made to the translation?", "Discard changes", DlgType.Warning, "&Discard", "&Cancel") == 1)
-                return;
-
-            if (sender != _btnCancel && _anyChanges)
+            if (AnyChanges)
             {
                 try
                 {
@@ -431,10 +422,7 @@ namespace RT.Util.Lingo
                     DlgMessage.Show("Saving and re-loading the translation failed for the following reason:\n\n" + x.Message + "\n\nPlease ensure that the file is writable and readable and try again.", "Save translation failed", DlgType.Error);
                 }
             }
-            _anyChanges = false;
-
-            if (sender != _btnApply)
-                Close();
+            AnyChanges = false;
         }
 
         private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups)
@@ -485,12 +473,13 @@ namespace RT.Util.Lingo
             pnl.PageUp += new EventHandler(pageUp);
             pnl.PageDown += new EventHandler(pageDown);
             pnl.GroupSwitch += new GroupSwitchEventHandler(groupSwitch);
+            pnl.ContextMenu = new ContextMenu(new MenuItem[] { new MenuItem("&Mark as out of date", (s, e) => { pnl.SetOutOfDate(); AnyChanges = true; }) });
             return pnl;
         }
 
         private void changeMade(object sender, EventArgs e)
         {
-            _anyChanges = true;
+            AnyChanges = true;
             _lstGroups.Invalidate();
         }
 
@@ -571,12 +560,12 @@ namespace RT.Util.Lingo
         /// <param name="fireTranslationChanged">If true, the <see cref="TranslationChanged"/> event is fired if any changes were made. If false, the event is not fired.</param>
         public void SaveChanges(bool fireTranslationChanged)
         {
-            if (_anyChanges)
+            if (AnyChanges)
             {
                 Lingo.SaveTranslation(_moduleName, _translation);
                 if (fireTranslationChanged && TranslationChanged != null)
                     TranslationChanged(Lingo.LoadTranslation<TTranslation>(_moduleName, _language));
-                _anyChanges = false;
+                AnyChanges = false;
             }
         }
 
