@@ -161,25 +161,24 @@ namespace RT.Util.Lingo
             };
             _lstGroups.SelectedIndex = 0;
 
-            ToolStrip ts = new ToolStrip(
-                new ToolStripMenuItem("&Translation", null,
-                    _mnuApply = new ToolStripMenuItem("&Save and apply", null, new EventHandler(saveAndApply)) { ShortcutKeys = Keys.Control | Keys.S },
-                    new ToolStripMenuItem("&Close", null, (s, e) => Close())
-                ),
-                new ToolStripMenuItem("&Edit", null,
-                    new ToolStripMenuItem("&Find...", null, new EventHandler(find)) { ShortcutKeys = Keys.Control | Keys.F },
-                    _mnuFindNext = new ToolStripMenuItem("F&ind next", null, new EventHandler(findNext)) { ShortcutKeys = Keys.F3, Enabled = _settings.LastFindQuery != null },
-                    _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, new EventHandler(findPrev)) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
-                    new ToolStripSeparator(),
-                    new ToolStripMenuItem("Go to &next out-of-date string", null, new EventHandler(nextOutOfDate)) { ShortcutKeys = Keys.Control | Keys.N },
-                    new ToolStripMenuItem("&Mark current string as out of date", null, new EventHandler(markOutOfDate)) { ShortcutKeys = Keys.Control | Keys.M },
-                    new ToolStripMenuItem("M&ark all strings as out of date", null, new EventHandler(markAllOutOfDate)),
-                    new ToolStripMenuItem("Ma&rk all strings as up to date", null, new EventHandler(markAllUpToDate))
-                ),
-                new ToolStripMenuItem("&View", null,
-                    new ToolStripMenuItem("&Font...", null, new EventHandler(setFont)) { ShortcutKeys = Keys.Control | Keys.T }
-                )
-            ) { Dock = DockStyle.Top };
+            ToolStrip ts = new MenuStrip { Dock = DockStyle.Top };
+            ts.Items.Add(new ToolStripMenuItem("&Translation", null,
+                _mnuApply = new ToolStripMenuItem("&Save and apply", null, saveAndApply) { ShortcutKeys = Keys.Control | Keys.S },
+                new ToolStripMenuItem("&Close", null, (s, e) => Close())
+            ));
+            ts.Items.Add(new ToolStripMenuItem("&Edit", null,
+                new ToolStripMenuItem("&Find...", null, find) { ShortcutKeys = Keys.Control | Keys.F },
+                _mnuFindNext = new ToolStripMenuItem("F&ind next", null, findNext) { ShortcutKeys = Keys.F3, Enabled = _settings.LastFindQuery != null },
+                _mnuFindPrev = new ToolStripMenuItem("Find &previous", null, findPrev) { ShortcutKeys = Keys.Shift | Keys.F3, Enabled = _settings.LastFindQuery != null },
+                new ToolStripSeparator(),
+                new ToolStripMenuItem("Go to &next out-of-date string", null, nextOutOfDate) { ShortcutKeys = Keys.Control | Keys.N },
+                new ToolStripMenuItem("&Mark current string as out of date", null, markOutOfDate) { ShortcutKeys = Keys.Control | Keys.M },
+                new ToolStripMenuItem("M&ark all strings as out of date", null, markAllOutOfDate),
+                new ToolStripMenuItem("Ma&rk all strings as up to date", null, markAllUpToDate)
+            ));
+            ts.Items.Add(new ToolStripMenuItem("&View", null,
+                new ToolStripMenuItem("&Font...", null, setFont) { ShortcutKeys = Keys.Control | Keys.T }
+            ));
 
             Controls.Add(pnlSplit);
             Controls.Add(ts);
@@ -240,6 +239,7 @@ namespace RT.Util.Lingo
             foreach (var p in _allTranslationPanels)
                 p.SetUpToDate();
             _pnlRightInner.ResumeLayout(true);
+            _lstGroups.Invalidate();
             AnyChanges = true;
         }
 
@@ -252,6 +252,7 @@ namespace RT.Util.Lingo
             foreach (var p in _allTranslationPanels)
                 p.SetOutOfDate();
             _pnlRightInner.ResumeLayout(true);
+            _lstGroups.Invalidate();
             AnyChanges = true;
         }
 
@@ -473,7 +474,8 @@ namespace RT.Util.Lingo
             pnl.PageUp += new EventHandler(pageUp);
             pnl.PageDown += new EventHandler(pageDown);
             pnl.GroupSwitch += new GroupSwitchEventHandler(groupSwitch);
-            pnl.ContextMenu = new ContextMenu(new MenuItem[] { new MenuItem("&Mark as out of date", (s, e) => { pnl.SetOutOfDate(); AnyChanges = true; }) });
+            pnl.ContextMenuStrip = new ContextMenuStrip();
+            pnl.ContextMenuStrip.Items.Add("&Mark as out of date", null, (s, e) => { pnl.SetOutOfDate(); AnyChanges = true; });
             return pnl;
         }
 
