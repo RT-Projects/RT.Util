@@ -673,10 +673,19 @@ namespace RT.Util.Text
                     }
                     return;
                 }
-                var tag = (EggsTag) node;
-                foreach (var childList in tag.Children)
-                    foreach (var child in childList)
-                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
+                else if (node is EggsGroup)
+                {
+                    foreach (var child in ((EggsGroup) node).Children)
+                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap, para);
+                    return;
+                }
+                else
+                {
+                    var tag = (EggsTag) node;
+                    foreach (var childList in tag.Children)
+                        foreach (var child in childList)
+                            longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
+                }
             }
 
             public void Wordwrap(int wrapWidth)

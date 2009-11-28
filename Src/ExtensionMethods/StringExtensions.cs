@@ -368,7 +368,7 @@ namespace RT.Util.ExtensionMethods
         /// Joins all strings in the enumerable using the specified string as the separator.
         /// <example>
         ///     <code>
-        ///         var a = (new[] { 'Paris', 'London', 'Tokyo' }).Join(", ");
+        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join(", ");
         ///         // a contains "Paris, London, Tokyo"
         ///     </code>
         /// </example>
@@ -392,7 +392,7 @@ namespace RT.Util.ExtensionMethods
         /// Joins all strings in the enumerable into a single string.
         /// <example>
         ///     <code>
-        ///         var a = (new[] { 'Paris', 'London', 'Tokyo' }).Join();
+        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join();
         ///         // a contains "ParisLondonTokyo"
         ///     </code>
         /// </example>

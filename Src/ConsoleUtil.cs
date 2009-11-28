@@ -243,6 +243,11 @@ namespace RT.Util
                 colours.Add(curColour);
                 colourLengths.Add(txt.Text.Length);
             }
+            else if (node is EggsGroup)
+            {
+                foreach (var child in ((EggsGroup) node).Children)
+                    eggWalk(child, text, colours, colourLengths, curColour, curLight);
+            }
             else
             {
                 var tag = (EggsTag) node;
@@ -352,6 +357,12 @@ namespace RT.Util
                         data.Line = null;
                     }
                 }
+            }
+            else if (node is EggsGroup)
+            {
+                foreach (var child in ((EggsGroup) node).Children)
+                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColour, curLight, curNowrap))
+                        yield return ret;
             }
             else
             {

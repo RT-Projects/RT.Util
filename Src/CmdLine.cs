@@ -39,8 +39,8 @@ namespace RT.Util.CommandLine
 
         private class positionalParameterInfo
         {
-            public Action Process;
-            public Action ThrowIfPrematureEnd;
+            public Action ProcessParameter;
+            public Action ProcessEndOfParameters;
         }
 
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
@@ -65,7 +65,7 @@ namespace RT.Util.CommandLine
                 {
                     positionals.Add(new positionalParameterInfo
                     {
-                        Process = () =>
+                        ProcessParameter = () =>
                         {
                             positionals.RemoveAt(0);
                             foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
@@ -79,7 +79,7 @@ namespace RT.Util.CommandLine
                             }
                             throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                         },
-                        ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                        ProcessEndOfParameters = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
                     });
                 }
                 else if (field.FieldType.IsEnum)   // not positional
@@ -96,12 +96,15 @@ namespace RT.Util.CommandLine
                 else if (field.FieldType == typeof(string))
                 {
                     if (positional)
+                    {
                         positionals.Add(new positionalParameterInfo
                         {
-                            Process = () => { positionals.RemoveAt(0); field.SetValue(ret, args[i]); i++; },
-                            ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                            ProcessParameter = () => { positionals.RemoveAt(0); field.SetValue(ret, args[i]); i++; },
+                            ProcessEndOfParameters = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
                         });
+                    }
                     else
+                    {
                         foreach (var eForeach in field.GetCustomAttributes<OptionAttribute>())
                         {
                             var e = eForeach;
@@ -115,13 +118,58 @@ namespace RT.Util.CommandLine
                                 missingMandatories.Remove(field);
                             };
                         }
+                    }
+                }
+                else if (field.FieldType == typeof(string[]))
+                {
+                    if (positional)
+                    {
+                        positionals.Add(new positionalParameterInfo
+                        {
+                            ProcessParameter = () =>
+                            {
+                                var prev = (string[]) field.GetValue(ret);
+                                if (prev == null || prev.Length == 0)
+                                    field.SetValue(ret, new string[] { args[i] });
+                                else
+                                    field.SetValue(ret, prev.Concat(args[i]).ToArray());
+                                i++;
+                            },
+                            ProcessEndOfParameters = () =>
+                            {
+                                if (field.GetValue(ret) == null)
+                                    field.SetValue(ret, new string[] { });
+                            }
+                        });
+                    }
+                    else
+                    {
+                        field.SetValue(ret, new string[] { });
+                        foreach (var eForeach in field.GetCustomAttributes<OptionAttribute>())
+                        {
+                            var e = eForeach;
+                            options[e.Name] = () =>
+                            {
+                                i++;
+                                if (i >= args.Length)
+                                    throw new IncompleteOptionException(e.Name, getHelpGenerator(type, applicationTr));
+                                var prev = (string[]) field.GetValue(ret);
+                                if (prev == null || prev.Length == 0)
+                                    field.SetValue(ret, new string[] { args[i] });
+                                else
+                                    field.SetValue(ret, prev.Concat(args[i]).ToArray());
+                                i++;
+                                missingMandatories.Remove(field);
+                            };
+                        }
+                    }
                 }
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
                     swallowingField = field;
                     positionals.Add(new positionalParameterInfo
                     {
-                        Process = () =>
+                        ProcessParameter = () =>
                         {
                             positionals.RemoveAt(0);
                             foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(field.FieldType)))
@@ -133,10 +181,10 @@ namespace RT.Util.CommandLine
                                 }
                             throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                         },
-                        ThrowIfPrematureEnd = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
+                        ProcessEndOfParameters = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type, applicationTr)); }
                     });
                 }
-                else    // This only happens if there is no post-build check
+                else    // This only happens if the post-build check didn't run
                     throw new UnrecognizedTypeException(type.FullName, field.Name, getHelpGenerator(type, applicationTr));
             }
 
@@ -157,12 +205,12 @@ namespace RT.Util.CommandLine
                 {
                     if (positionals.Count == 0)
                         throw new UnexpectedParameterException(args.Subarray(i), getHelpGenerator(type, applicationTr));
-                    positionals[0].Process();
+                    positionals[0].ProcessParameter();
                 }
             }
 
             if (positionals.Count > 0)
-                positionals[0].ThrowIfPrematureEnd();
+                positionals[0].ProcessEndOfParameters();
 
             if (missingMandatories.Count > 0)
                 throw new MissingOptionException(missingMandatories[0], swallowingField, getHelpGenerator(type, applicationTr));
@@ -176,6 +224,7 @@ namespace RT.Util.CommandLine
             {
                 if (tr == null)
                     tr = new Translation();
+
                 var width = ConsoleUtil.WrapWidth();
                 if (width == int.MaxValue)
                     width = 120;    // an arbitrary but sensible default value
@@ -185,24 +234,61 @@ namespace RT.Util.CommandLine
                 int leftMargin = 3;
 
                 var help = new List<ConsoleColoredString>();
-                help.Add(new ConsoleColoredString(tr.Usage + " ", ConsoleColor.Green));
                 string commandName = type.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderByDescending(c => c.Length).FirstOrDefault();
-                help.Add(commandName == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandName);
+                commandName = commandName == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandName;
+                var doc = getDocumentation(type, applicationTr);
+                if (doc != null)
+                {
+                    help.Add(new ConsoleColoredString(commandName + ": ", ConsoleColor.White));
+                    help.Add(ConsoleColoredString.FromEggsNode(doc));
+                    help.Add("\n\n");
+                }
+
+                help.Add(new ConsoleColoredString(tr.Usage + " ", ConsoleColor.Green));
+                help.Add(commandName);
 
                 var optional = type.GetAllFields().Where(f => !f.IsDefined<IsPositionalAttribute>() && !f.IsDefined<IsMandatoryAttribute>()).ToArray();
                 var required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
 
-                if (optional.Any())
+                foreach (var opt in optional)
                 {
-                    help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                    help.Add(new ConsoleColoredString("<" + tr.UsageOptions + ">", ConsoleColor.Cyan));
-                    help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
+                    IEnumerable<IEnumerable<OptionAttribute>> attrs;
+                    if (opt.FieldType.IsEnum)
+                    {
+                        var defAttr = opt.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
+                        if (defAttr == null)
+                            continue;
+                        attrs = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue)).Select(f => f.GetCustomAttributes<OptionAttribute>().Where(a => a.Type == OptionType.Short));
+                    }
+                    else
+                        attrs = new[] { opt.GetCustomAttributes<OptionAttribute>().Where(a => a.Type == OptionType.Short) };
+
+                    foreach (var attrGroup in attrs)
+                    {
+                        help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
+                        var c = new ConsoleColoredString(attrGroup.First().Name, ConsoleColor.Cyan);
+                        foreach (var attr in attrGroup.Skip(1))
+                        {
+                            c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
+                            c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
+                        }
+                        if (opt.FieldType == typeof(string) || opt.FieldType == typeof(string[]))
+                            c = c + new ConsoleColoredString(" <" + opt.Name + ">", ConsoleColor.Cyan);
+                        help.Add(c);
+                        if (opt.FieldType == typeof(string[]))
+                        {
+                            help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
+                            help.Add(c);
+                            help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
+                        }
+                        help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
+                    }
                 }
 
                 var requiredParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int row = 0;
 
-                foreach (var f in required)
+                foreach (var f in required.OrderBy(f => f.IsDefined<IsPositionalAttribute>()))
                 {
                     if (!f.IsDefined<IsPositionalAttribute>())
                     {
@@ -266,15 +352,17 @@ namespace RT.Util.CommandLine
                     {
                         foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue)))
                         {
-                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White), true);
-                            optionalParamsTable.SetCell(1, row, getDocumentation(el, applicationTr), 2, 1);
+                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Short).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Long).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(2, row, getDocumentation(el, applicationTr));
                             row++;
                         }
                     }
                     else
                     {
-                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Select(o => o.Name + (f.FieldType == typeof(bool) ? string.Empty : " <" + f.Name + ">")).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White), true);
-                        optionalParamsTable.SetCell(1, row, getDocumentation(f, applicationTr), 2, 1);
+                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Short).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Long).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(2, row, getDocumentation(f, applicationTr));
                         row++;
                     }
                 }
@@ -308,23 +396,13 @@ namespace RT.Util.CommandLine
 
         private static EggsNode getDocumentation(MemberInfo member, TranslationBase applicationTr)
         {
-            var children = new List<List<EggsNode>> { new List<EggsNode>() };
-            children[0].AddRange(
-                member.GetCustomAttributes<DocumentationAttribute>().SelectMany(
-                    d => new EggsNode[]
-                    {
-                        new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } },
-                        EggsML.Parse(d.Translate(applicationTr))
-                    })
-                .Concat(
-                member.GetCustomAttributes<DocumentationLiteralAttribute>().SelectMany(
-                    d => new EggsNode[]
-                    {
-                        new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } },
-                        EggsML.Parse(d.Text)
-                    }))
-                .Skip(1));
-            return new EggsTag('\0', 0) { Children = children };
+            if (member.IsDefined<DocumentationAttribute>())
+                return member.GetCustomAttributes<DocumentationAttribute>().Select(d => EggsML.Parse(d.Translate(applicationTr))).First();
+
+            if (member.IsDefined<DocumentationLiteralAttribute>())
+                return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
+
+            return null;
         }
 
         /// <summary>If compiled in DEBUG mode, this method performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
@@ -354,23 +432,27 @@ namespace RT.Util.CommandLine
                     var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                     var commandsTaken = new Dictionary<string, FieldInfo>();
 
-                    // (i) check that it is either positional OR has a DefaultAttribute, but not both
+                    // check that it is either positional OR has a DefaultAttribute, but not both
                     if (positional && defaultAttr != null)
                         throw new PostBuildException(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(type.FullName, field.Name));
                     if (!positional && defaultAttr == null)
                         throw new PostBuildException(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(type.FullName, field.Name));
+
+                    // check that it doesn't have an [Option] or [CommandName] attribute, because the enum values are supposed to have that instead
+                    if (field.GetCustomAttributes<OptionAttribute>().Any() || field.GetCustomAttributes<CommandNameAttribute>().Any())
+                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(type.FullName, field.Name));
 
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
                         if (!positional && enumField.GetValue(null).Equals(defaultAttr.DefaultValue))
                             continue;
 
-                        // (ii) check that the enum values all have documentation
+                        // check that the enum values all have documentation
                         checkDocumentation(enumField);
 
                         if (positional)
                         {
-                            // (iii) check that the enum values all have at least one CommandName, and they do not clash
+                            // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
                             if (!cmdNames.Any())
                                 throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
@@ -378,7 +460,7 @@ namespace RT.Util.CommandLine
                         }
                         else
                         {
-                            // (iii) check that the non-default enum values' Options are present and do not clash
+                            // check that the non-default enum values' Options are present and do not clash
                             var options = enumField.GetCustomAttributes<OptionAttribute>();
                             if (!options.Any())
                                 throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
@@ -398,11 +480,11 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
                 }
-                else if (field.FieldType == typeof(string))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
-                        throw new PostBuildException(@"{0}.{1}: String field must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+                        throw new PostBuildException(@"{0}.{1}: Field of type string or string[] must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
 
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
@@ -522,7 +604,6 @@ namespace RT.Util.CommandLine
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
         public TrString
             Usage = @"Usage:",
-            UsageOptions = @"options",
             ParametersHeader = @"Required parameters:",
             OptionsHeader = @"Options:";
 

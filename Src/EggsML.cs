@@ -17,15 +17,15 @@ namespace RT.Util
         /// <returns>The resulting parse-tree.</returns>
         public static EggsNode Parse(string input)
         {
-            if (input == null || input.Contains('\0'))
-                throw new ArgumentException("Argument cannot be null or contain null characters.", "input");
+            if (input == null)
+                throw new ArgumentNullException("input");
 
-            var curTag = new EggsTag('\0', 0);
+            EggsContainer curTag = new EggsGroup(0);
             if (input.Length == 0)
                 return curTag;
 
             var index = 0;
-            var stack = new Stack<EggsTag>();
+            var stack = new Stack<EggsContainer>();
 
             while (input.Length > 0)
             {
@@ -70,13 +70,15 @@ namespace RT.Util
                             if (pos == -1)
                                 throw new EggsMLParseException(@"Closing '""' missing", index + 1);
                         }
-                        curTag.Add(input.Substring(1, pos).Replace("\"\"", "\""));
+                        curTag.Add(input.Substring(1, pos - 1).Replace("\"\"", "\""));
                         input = input.Substring(pos + 1);
                         index += pos + 1;
                         continue;
 
                     case '|':
-                        curTag.Children.Add(new List<EggsNode>());
+                        if (!(curTag is EggsTag))
+                            throw new EggsMLParseException("Cannot use '|' at the top level (only allowed inside tags).", index);
+                        ((EggsTag) curTag).Children.Add(new List<EggsNode>());
                         input = input.Substring(1);
                         index++;
                         continue;
@@ -84,7 +86,7 @@ namespace RT.Util
                     default:
                         bool last = input.Length == 1;
                         // Are we opening a new tag?
-                        if ((alwaysOpens(input[0]) || input[0] != opposite(curTag.Tag) || (!last && input[1] == '|')) && !alwaysCloses(input[0]))
+                        if ((alwaysOpens(input[0]) || !(curTag is EggsTag) || input[0] != opposite(((EggsTag) curTag).Tag) || (!last && input[1] == '|')) && !alwaysCloses(input[0]))
                         {
                             stack.Push(curTag);
                             var i = (!last && input[1] == '|') ? 2 : 1;
@@ -94,7 +96,7 @@ namespace RT.Util
                             continue;
                         }
                         // Are we closing a tag?
-                        else if (input[0] == opposite(curTag.Tag))
+                        else if (curTag is EggsTag && input[0] == opposite(((EggsTag) curTag).Tag))
                         {
                             var prevTag = stack.Pop();
                             prevTag.Add(curTag);
@@ -110,9 +112,15 @@ namespace RT.Util
             }
 
             if (stack.Count > 0)
-                throw new EggsMLParseException(@"Closing '{0}' missing".Fmt(opposite(curTag.Tag)), curTag.Index);
+                throw new EggsMLParseException(@"Closing '{0}' missing".Fmt(opposite(((EggsTag) curTag).Tag)), curTag.Index);
 
             return curTag;
+        }
+
+        /// <summary>Escapes the input string such that it can be used in EggsML syntax.</summary>
+        public static string Escape(string input)
+        {
+            return @"""" + input.Replace(@"""", @"""""") + @"""";
         }
 
         internal static char opposite(char p)
@@ -134,15 +142,72 @@ namespace RT.Util
         public static implicit operator EggsNode(string text) { return new EggsText(text); }
         /// <summary>Returns the EggsML parse tree as XML.</summary>
         public abstract object ToXml();
+        /// <summary>The index in the original string where this tag was opened.</summary>
+        public int Index;
+
+        /// <summary>Turns a list of child nodes into EggsML mark-up.</summary>
+        /// <param name="childList">List of children to turn into mark-up.</param>
+        /// <param name="tag">If null, assumes we are not at the beginning of a tag. Otherwise, assumes we are at the beginning of a tag with the specified character, causing necessary escaping to be performed.</param>
+        /// <returns>EggsML mark-up representing the same tree structure as this node.</returns>
+        protected string stringifyList(List<EggsNode> childList, char? tag)
+        {
+            if (childList == null || childList.Count == 0)
+                return string.Empty;
+            var sb = new StringBuilder();
+            var prev = childList[0].ToString();
+            if (tag != null && childList[0] is EggsTag && ((EggsTag) childList[0]).Tag == tag.Value && !EggsML.alwaysOpens(tag.Value))
+            {
+                sb.Append(tag.Value);
+                sb.Append('|');
+                sb.Append(prev.Substring(1));
+            }
+            else
+                sb.Append(prev);
+            foreach (var child in childList.Skip(1))
+            {
+                var next = child.ToString();
+                if (tag != null && child is EggsTag && ((EggsTag) child).Tag == tag.Value && !EggsML.alwaysOpens(tag.Value))
+                    next = tag.Value.ToString() + "|" + next.Substring(1);
+                if (next.Length > 0 && next[0] == prev[prev.Length - 1])
+                    sb.Append('`');
+                sb.Append(next);
+                prev = next;
+            }
+            return sb.ToString();
+        }
+    }
+
+    /// <summary>Represents either an <see cref="EggsGroup"/> or an <see cref="EggsTag"/>.</summary>
+    public abstract class EggsContainer : EggsNode
+    {
+        /// <summary>Adds a new child node to this container.</summary>
+        /// <param name="child">The child node to add.</param>
+        public abstract void Add(EggsNode child);
+    }
+
+    /// <summary>Represents a node in the EggsML parse tree that simply contains child nodes, but has no semantic meaning of its own.</summary>
+    public class EggsGroup : EggsContainer
+    {
+        /// <summary>The children of this node.</summary>
+        public List<EggsNode> Children = new List<EggsNode>();
+        /// <summary>Constructs a new, empty EggsML parse-tree node.</summary>
+        /// <param name="index">The index in the original string where this tag was opened.</param>
+        public EggsGroup(int index) { Index = index; }
+        /// <summary>Adds a new child node to this group.</summary>
+        /// <param name="child">The child node to add.</param>
+        public override void Add(EggsNode child) { Children.Add(child); }
+        /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
+        /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
+        public override string ToString() { return stringifyList(Children, null); }
+        /// <summary>Returns an XML representation of this EggsML node.</summary>
+        public override object ToXml() { return new XElement("root", Children.Select(c => c.ToXml()).ToArray()); }
     }
 
     /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag.</summary>
-    public class EggsTag : EggsNode
+    public class EggsTag : EggsContainer
     {
         /// <summary>The character used to open the tag (e.g. '[').</summary>
         public char Tag;
-        /// <summary>The index in the original string where this tag was opened.</summary>
-        public int Index;
         /// <summary>The children of this node. The first level corresponds to the usage of the '|' character in EggsML.</summary>
         public List<List<EggsNode>> Children = new List<List<EggsNode>> { new List<EggsNode>() };
         /// <summary>Constructs a new EggsML parse-tree node that represents an EggsML tag.</summary>
@@ -150,8 +215,8 @@ namespace RT.Util
         /// <param name="index">The index in the original string where this tag was opened.</param>
         public EggsTag(char tag, int index) { Tag = tag; Index = index; }
         /// <summary>Adds a new child node to the last set of children of this tag.</summary>
-        /// <param name="node">The child node to add.</param>
-        public void Add(EggsNode node) { Children[Children.Count - 1].Add(node); }
+        /// <param name="child">The child node to add.</param>
+        public override void Add(EggsNode child) { Children[Children.Count - 1].Add(child); }
         /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
         /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
@@ -163,50 +228,22 @@ namespace RT.Util
                 return EggsML.alwaysOpens(Tag) ? Tag.ToString() + EggsML.opposite(Tag) : Tag.ToString() + '`' + Tag;
 
             var sb = new StringBuilder();
-            if (Tag != '\0')
-                sb.Append(Tag);
-            var firstChild = stringifyList(Children[0]);
+            sb.Append(Tag);
+            var firstChild = stringifyList(Children[0], Tag);
             if (firstChild.Length == 0 || firstChild[0] == Tag || firstChild[0] == '|')
                 sb.Append('`');
             sb.Append(firstChild);
             foreach (var childList in Children.Skip(1))
             {
                 sb.Append('|');
-                var nextChild = stringifyList(childList);
+                var nextChild = stringifyList(childList, Tag);
                 if (nextChild.StartsWith("|"))
                     sb.Append('`');
                 sb.Append(nextChild);
             }
             if (sb[sb.Length - 1] == Tag && sb[sb.Length - 2] != Tag)
                 sb.Append('`');
-            if (Tag != '\0')
-                sb.Append(EggsML.opposite(Tag));
-            return sb.ToString();
-        }
-        private string stringifyList(List<EggsNode> childList)
-        {
-            if (childList.Count == 0)
-                return string.Empty;
-            var sb = new StringBuilder();
-            var prev = childList[0].ToString();
-            if (childList[0] is EggsTag && ((EggsTag) childList[0]).Tag == Tag && !EggsML.alwaysOpens(Tag))
-            {
-                sb.Append(Tag);
-                sb.Append('|');
-                sb.Append(prev.Substring(1));
-            }
-            else
-                sb.Append(prev);
-            foreach (var child in childList.Skip(1))
-            {
-                var next = child.ToString();
-                if (child is EggsTag && ((EggsTag) child).Tag == Tag && !EggsML.alwaysOpens(Tag))
-                    next = Tag.ToString() + "|" + next.Substring(1);
-                if (next.Length > 0 && next[0] == prev[prev.Length - 1])
-                    sb.Append('`');
-                sb.Append(next);
-                prev = next;
-            }
+            sb.Append(EggsML.opposite(Tag));
             return sb.ToString();
         }
         /// <summary>Returns an XML representation of this EggsML node.</summary>
@@ -215,7 +252,6 @@ namespace RT.Util
             string tagName;
             switch (Tag)
             {
-                case '\0': tagName = "root"; break;
                 case '~': tagName = "tilde"; break;
                 case '@': tagName = "at"; break;
                 case '#': tagName = "hash"; break;
