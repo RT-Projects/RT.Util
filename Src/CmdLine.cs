@@ -252,22 +252,23 @@ namespace RT.Util.CommandLine
 
                 foreach (var opt in optional)
                 {
-                    IEnumerable<IEnumerable<OptionAttribute>> attrs;
+                    IEnumerable<IEnumerable<OptionAttribute>> attrGroups;
                     if (opt.FieldType.IsEnum)
                     {
                         var defAttr = opt.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                         if (defAttr == null)
                             continue;
-                        attrs = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue)).Select(f => f.GetCustomAttributes<OptionAttribute>().Where(a => a.Type == OptionType.Short));
+                        attrGroups = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue)).Select(f => f.GetCustomAttributes<OptionAttribute>());
                     }
                     else
-                        attrs = new[] { opt.GetCustomAttributes<OptionAttribute>().Where(a => a.Type == OptionType.Short) };
+                        attrGroups = new[] { opt.GetCustomAttributes<OptionAttribute>() };
 
-                    foreach (var attrGroup in attrs)
+                    foreach (var attrGroup in attrGroups)
                     {
                         help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                        var c = new ConsoleColoredString(attrGroup.First().Name, ConsoleColor.Cyan);
-                        foreach (var attr in attrGroup.Skip(1))
+                        var attrs = attrGroup.Any(a => !a.Name.StartsWith("--")) ? attrGroup.Where(a => !a.Name.StartsWith("--")) : attrGroup;
+                        var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
+                        foreach (var attr in attrs.Skip(1))
                         {
                             c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
                             c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
@@ -352,16 +353,16 @@ namespace RT.Util.CommandLine
                     {
                         foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue)))
                         {
-                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Short).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
-                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Long).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
                             optionalParamsTable.SetCell(2, row, getDocumentation(el, applicationTr));
                             row++;
                         }
                     }
                     else
                     {
-                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Short).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
-                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Type == OptionType.Long).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
                         optionalParamsTable.SetCell(2, row, getDocumentation(f, applicationTr));
                         row++;
                     }
@@ -662,17 +663,6 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>
-    /// Specifies whether an option is a "short" option (e.g. "-a") or a "long" option (e.g. "--argument").
-    /// </summary>
-    public enum OptionType
-    {
-        /// <summary>Specifies a short option (e.g. "-a" or "-rw").</summary>
-        Short,
-        /// <summary>Specifies a long option (e.g. "--argument" or "--read-write").</summary>
-        Long
-    }
-
-    /// <summary>
     /// Use this to specify that a field in a class can be specified on the command line using an option, for example "-a" or "--option-name".
     /// The option name MUST begin with a "-".
     /// </summary>
@@ -680,11 +670,8 @@ namespace RT.Util.CommandLine
     public sealed class OptionAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
-        /// <param name="type">The type of option (short or long).</param>
         /// <param name="name">The name of the option.</param>
-        public OptionAttribute(OptionType type, string name) { Type = type; Name = name; }
-        /// <summary>The type of option (short or long).</summary>
-        public OptionType Type { get; private set; }
+        public OptionAttribute(string name) { Name = name; }
         /// <summary>The name of the option.</summary>
         public string Name { get; private set; }
     }
