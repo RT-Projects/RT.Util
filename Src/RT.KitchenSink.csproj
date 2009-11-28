@@ -59,10 +59,14 @@
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
+    <Compile Include="ParseCs\Lexer.cs" />
+    <Compile Include="ParseCs\Parser.cs" />
+    <Compile Include="ParseCs\ParseTree.cs" />
     <Compile Include="PathManager.cs" />
     <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
     <Compile Include="Regex2.cs" />
+    <Compile Include="ParseCs\Token.cs" />
     <Compile Include="VoronoiDiagram.cs" />
     <Compile Include="Web\Http.cs" />
     <Compile Include="Web\PmWiki.cs" />
