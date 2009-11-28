@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using RT.Util.ExtensionMethods;
-using System.Reflection;
-using RT.Util.Lingo;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using RT.Util.ExtensionMethods;
+using RT.Util.Lingo;
 using RT.Util.Text;
-using System.Text.RegularExpressions;
 
 namespace RT.Util.CommandLine
 {
@@ -158,7 +156,7 @@ namespace RT.Util.CommandLine
                 else
                 {
                     if (positionals.Count == 0)
-                        throw new UnexpectedParameterException(getHelpGenerator(type, applicationTr));
+                        throw new UnexpectedParameterException(args.Subarray(i), getHelpGenerator(type, applicationTr));
                     positionals[0].Process();
                 }
             }
@@ -176,6 +174,8 @@ namespace RT.Util.CommandLine
         {
             return tr =>
             {
+                if (tr == null)
+                    tr = new Translation();
                 var width = ConsoleUtil.WrapWidth();
                 if (width == int.MaxValue)
                     width = 120;    // an arbitrary but sensible default value
@@ -310,8 +310,19 @@ namespace RT.Util.CommandLine
         {
             var children = new List<List<EggsNode>> { new List<EggsNode>() };
             children[0].AddRange(
-                member.GetCustomAttributes<DocumentationAttribute>().SelectMany(d => new EggsNode[] { new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } }, EggsML.Parse(d.Translate(applicationTr)) })
-                .Concat(member.GetCustomAttributes<DocumentationLiteralAttribute>().SelectMany(d => new EggsNode[] { new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } }, EggsML.Parse(d.Text) }))
+                member.GetCustomAttributes<DocumentationAttribute>().SelectMany(
+                    d => new EggsNode[]
+                    {
+                        new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } },
+                        EggsML.Parse(d.Translate(applicationTr))
+                    })
+                .Concat(
+                member.GetCustomAttributes<DocumentationLiteralAttribute>().SelectMany(
+                    d => new EggsNode[]
+                    {
+                        new EggsTag('\0', 0) { Children = new List<List<EggsNode>> { new List<EggsNode> { "\n\n" } } },
+                        EggsML.Parse(d.Text)
+                    }))
                 .Skip(1));
             return new EggsTag('\0', 0) { Children = children };
         }
@@ -753,10 +764,12 @@ namespace RT.Util.CommandLine
     [Serializable]
     public class UnexpectedParameterException : CommandLineParseException
     {
+        /// <summary>Contains the first unexpected parameter and all of the subsequent arguments.</summary>
+        public string[] UnexpectedParameters { get; private set; }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(Func<Translation, ConsoleColoredString> helpGenerator) : this(helpGenerator, null) { }
+        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { }
+        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { UnexpectedParameters = unexpectedParams; }
     }
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional positional parameters.</summary>
