@@ -56,6 +56,12 @@ namespace RT.Util
         public string MessageFormat = "{0} | {2}/{1,-5} | ";
 
         /// <summary>
+        /// When printing multi-line (e.g. wrapped) messages, the indent text will consist
+        /// of a number of spaces and end with this suffix.
+        /// </summary>
+        public string IndentFormatSuffix = "| ";
+
+        /// <summary>
         /// If true, the timestamps will be printed in UTC. Otherwise in local time.
         /// Defaults to false.
         /// </summary>
@@ -142,7 +148,7 @@ namespace RT.Util
         /// the <paramref name="fmtInfo"/> which is the message header and the
         /// <paramref name="fmtText"/> which is the actual message.
         /// </summary>
-        protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, uint verbosity, LogType type, string message, object[] args)
+        protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, out string indent, uint verbosity, LogType type, string message, object[] args)
         {
             string timestamp = (TimestampInUTC ? DateTime.Now.ToUniversalTime() : DateTime.Now).ToString(TimestampFormat);
             if (args.Length > 0)
@@ -151,6 +157,7 @@ namespace RT.Util
                 fmtText = message;
 
             fmtInfo = string.Format(MessageFormat, timestamp, MsgTypeString[type], verbosity);
+            indent = new string(' ', fmtInfo.Length - IndentFormatSuffix.Length) + IndentFormatSuffix;
         }
 
         /// <summary>
@@ -293,8 +300,8 @@ namespace RT.Util
                 if (VerbosityLimit[type] < verbosity)
                     return;
 
-                string fmtInfo, fmtText;
-                GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
+                string fmtInfo, fmtText, indent;
+                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
 
                 TextWriter consoleStream = Console.Out;
                 if (type == LogType.Error && ErrorsToStdErr)
@@ -302,24 +309,16 @@ namespace RT.Util
 
                 Console.ForegroundColor = MsgTypeColor[type];
 
-                if (!WordWrap)
+                int wrapWidth = WordWrap ? ConsoleUtil.WrapWidth() : int.MaxValue;
+                bool first = true;
+                foreach (var line in fmtText.WordWrap(wrapWidth - 1 - fmtInfo.Length))
                 {
-                    consoleStream.Write(fmtInfo);
-                    consoleStream.WriteLine(fmtText);
+                    consoleStream.Write(first ? fmtInfo : indent);
+                    first = false;
+                    consoleStream.WriteLine(line);
                 }
-                else
-                {
-                    string indent = new string(' ', fmtInfo.Length);
-                    bool first = true;
-                    foreach (var line in fmtText.WordWrap(ConsoleUtil.WrapWidth() - 1 - fmtInfo.Length))
-                    {
-                        consoleStream.Write(first ? fmtInfo : indent);
-                        first = false;
-                        consoleStream.WriteLine(line);
-                    }
-                    if (first)
-                        consoleStream.WriteLine(fmtInfo); // don't completely skip blank messages
-                }
+                if (first)
+                    consoleStream.WriteLine(fmtInfo); // don't completely skip blank messages
             }
         }
     }
@@ -377,11 +376,18 @@ namespace RT.Util
                 if (VerbosityLimit[type] < verbosity || _streamWriter == null)
                     return;
 
-                string fmtInfo, fmtText;
-                GetFormattedStrings(out fmtInfo, out fmtText, verbosity, type, message, args);
+                string fmtInfo, fmtText, indent;
+                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
 
-                _streamWriter.Write(fmtInfo);
-                _streamWriter.WriteLine(fmtText);
+                bool first = true;
+                foreach (var line in fmtText.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
+                {
+                    _streamWriter.Write(first ? fmtInfo : indent);
+                    first = false;
+                    _streamWriter.WriteLine(line);
+                }
+                if (first)
+                    _streamWriter.WriteLine(fmtInfo); // don't completely skip blank messages
             }
         }
     }
