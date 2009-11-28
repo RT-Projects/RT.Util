@@ -236,13 +236,6 @@ namespace RT.Util.CommandLine
                 var help = new List<ConsoleColoredString>();
                 string commandName = type.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderByDescending(c => c.Length).FirstOrDefault();
                 commandName = commandName == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandName;
-                var doc = getDocumentation(type, applicationTr);
-                if (doc != null)
-                {
-                    help.Add(new ConsoleColoredString(commandName + ": ", ConsoleColor.White));
-                    help.Add(ConsoleColoredString.FromEggsNode(doc));
-                    help.Add("\n\n");
-                }
 
                 help.Add(new ConsoleColoredString(tr.Usage + " ", ConsoleColor.Green));
                 help.Add(commandName);
@@ -366,6 +359,13 @@ namespace RT.Util.CommandLine
                         optionalParamsTable.SetCell(2, row, getDocumentation(f, applicationTr));
                         row++;
                     }
+                }
+
+                var doc = getDocumentation(type, applicationTr);
+                if (doc != null)
+                {
+                    help.Add("\n\n");
+                    help.Add(ConsoleColoredString.FromEggsNode(doc));
                 }
 
                 var helpString = new List<ConsoleColoredString>();
