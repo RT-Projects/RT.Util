@@ -4,9 +4,9 @@ using System.Linq;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 
-namespace RT.KitchenSink
+namespace RT.Util
 {
-    public static partial class KitchenSinkUt
+    public static partial class Ut
     {
         /// <summary>
         /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the
@@ -140,26 +140,46 @@ namespace RT.KitchenSink
             int curnew = 0;
             foreach (var match in sequence)
             {
-                if (match.x - curold == match.y - curnew &&
-                    olda.Skip(curold).Take(match.x - curold).SequenceEqual(newa.Skip(curnew).Take(match.y - curnew), comparer))
+                while (curold < match.x && curnew < match.y && comparer.Equals(olda[curold], newa[curnew]))
                 {
-                    for (; curold < match.x; curold++)
-                        yield return new Tuple<T, DiffOp>(olda[curold], DiffOp.None);
-                    curnew = match.y;
+                    yield return new Tuple<T, DiffOp>(olda[curold], DiffOp.None);
+                    curold++;
+                    curnew++;
                 }
-                else if (postProcessor != null && match.x > curold && match.y > curnew)
+
+                var mx = match.x - 1;
+                var my = match.y - 1;
+                while (mx > curold && my > curnew && comparer.Equals(olda[mx], newa[my]))
                 {
-                    foreach (var token in postProcessor(olda.Skip(curold).Take(match.x - curold), newa.Skip(curnew).Take(match.y - curnew)))
-                        yield return token;
-                    curold = match.x;
-                    curnew = match.y;
+                    mx--;
+                    my--;
                 }
-                else
+                mx++;
+                my++;
+
+                if (curold < mx || curnew < my)
                 {
-                    for (; curold < match.x; curold++)
-                        yield return new Tuple<T, DiffOp>(olda[curold], DiffOp.Del);
-                    for (; curnew < match.y; curnew++)
-                        yield return new Tuple<T, DiffOp>(newa[curnew], DiffOp.Ins);
+                    if (postProcessor != null)
+                    {
+                        foreach (var token in postProcessor(olda.Skip(curold).Take(mx - curold), newa.Skip(curnew).Take(my - curnew)))
+                            yield return token;
+                        curold = mx;
+                        curnew = my;
+                    }
+                    else
+                    {
+                        for (; curold < mx; curold++)
+                            yield return new Tuple<T, DiffOp>(olda[curold], DiffOp.Del);
+                        for (; curnew < my; curnew++)
+                            yield return new Tuple<T, DiffOp>(newa[curnew], DiffOp.Ins);
+                    }
+                }
+
+                while (curold < match.x && curnew < match.y)
+                {
+                    yield return new Tuple<T, DiffOp>(olda[curold], DiffOp.None);
+                    curold++;
+                    curnew++;
                 }
                 if (curold < olda.Length && curnew < newa.Length)
                 {
