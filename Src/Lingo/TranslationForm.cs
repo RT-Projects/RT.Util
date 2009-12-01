@@ -412,6 +412,10 @@ namespace RT.Util.Lingo
         {
             if (AnyChanges)
             {
+                foreach (var panel in _allTranslationPanels)
+                    if (panel.State == TranslationPanelState.Unsaved)
+                        panel.SetUpToDate();
+                _lstGroups.Invalidate();
                 try
                 {
                     Lingo.SaveTranslation(_moduleName, _translation);
@@ -724,7 +728,13 @@ namespace RT.Util.Lingo
             public abstract bool Contains(string substring, bool inOriginal, bool inTranslation);
             public abstract void FocusFirstTranslationBox();
             public abstract void FocusLastTranslationBox();
-            public abstract void SetUpToDate();
+            public virtual void SetUpToDate()
+            {
+                State = TranslationPanelState.UpToDateAndSaved;
+                if (_lblOldEnglishLbl != null)
+                    _lblOldEnglishLbl.Visible = false;
+                _lblNewEnglishLbl.Text = "English:";
+            }
             public abstract void SetOutOfDate();
             public virtual void SetFont(Font font, Size f)
             {
@@ -750,13 +760,7 @@ namespace RT.Util.Lingo
                         break;
                 }
             }
-            protected virtual void acceptTranslation(object sender, EventArgs e)
-            {
-                State = TranslationPanelState.UpToDateAndSaved;
-                if (_lblOldEnglishLbl != null)
-                    _lblOldEnglishLbl.Visible = false;
-                _lblNewEnglishLbl.Text = "English:";
-            }
+            protected abstract void acceptTranslation(object sender, EventArgs e);
 
             public void SwitchToGroup(TranslationGroupListItem li)
             {
@@ -895,15 +899,14 @@ namespace RT.Util.Lingo
 
             protected override void acceptTranslation(object sender, EventArgs e)
             {
-                SuspendLayout();
-                base.acceptTranslation(sender, e);
-                _translation.Translation = _txtTranslation.Text;
-                _translation.Old = _original.Translation;
-                if (_lblOldEnglish != null)
-                    _lblOldEnglish.Visible = false;
-                fireChangeMade();
+                if (State != TranslationPanelState.UpToDateAndSaved || !_translation.Translation.Equals(_txtTranslation.Text))
+                {
+                    _translation.Translation = _txtTranslation.Text;
+                    _translation.Old = _original.Translation;
+                    State = TranslationPanelState.Unsaved;
+                    fireChangeMade();
+                }
                 fireCtrlDown();
-                ResumeLayout(true);
             }
 
             private void keyDown(object sender, KeyEventArgs e)
@@ -973,25 +976,19 @@ namespace RT.Util.Lingo
             public override void SetUpToDate()
             {
                 SuspendLayout();
-                base.acceptTranslation(this, new EventArgs());
+                base.SetUpToDate();
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = _original.Translation;
                 if (_lblOldEnglish != null)
                     _lblOldEnglish.Visible = false;
-                State = TranslationPanelState.UpToDateAndSaved;
                 ResumeLayout(true);
             }
 
             public override void SetOutOfDate()
             {
-                SuspendLayout();
-                base.acceptTranslation(this, new EventArgs());
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = null;
-                if (_lblOldEnglish != null)
-                    _lblOldEnglish.Visible = false;
                 State = TranslationPanelState.OutOfDate;
-                ResumeLayout(true);
             }
 
             protected override void setBackColor()
@@ -1175,15 +1172,14 @@ namespace RT.Util.Lingo
 
             protected override void acceptTranslation(object sender, EventArgs e)
             {
-                SuspendLayout();
-                base.acceptTranslation(sender, e);
-                _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
-                _translation.Old = _original.Translations;
-                if (_pnlOldEnglish != null)
-                    _pnlOldEnglish.Visible = false;
-                fireChangeMade();
+                var newTrans = _txtTranslation.Select(t => t.Text).ToArray();
+                if (State != TranslationPanelState.UpToDateAndSaved || !_translation.Translations.SequenceEqual(newTrans))
+                {
+                    _translation.Translations = newTrans;
+                    _translation.Old = _original.Translations;
+                    fireChangeMade();
+                }
                 fireCtrlDown();
-                ResumeLayout(true);
             }
 
             private void keyDown(object sender, KeyEventArgs e)
@@ -1263,23 +1259,19 @@ namespace RT.Util.Lingo
             public override void SetUpToDate()
             {
                 SuspendLayout();
+                base.SetUpToDate();
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
                 _translation.Old = _original.Translations;
                 if (_pnlOldEnglish != null)
                     _pnlOldEnglish.Visible = false;
-                State = TranslationPanelState.UpToDateAndSaved;
                 ResumeLayout(true);
             }
 
             public override void SetOutOfDate()
             {
-                SuspendLayout();
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
                 _translation.Old = null;
-                if (_pnlOldEnglish != null)
-                    _pnlOldEnglish.Visible = false;
                 State = TranslationPanelState.OutOfDate;
-                ResumeLayout(true);
             }
 
             protected override void setBackColor()
