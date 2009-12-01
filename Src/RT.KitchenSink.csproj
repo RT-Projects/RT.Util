@@ -53,7 +53,6 @@
     <Compile Include="Collections\Set.cs" />
     <Compile Include="Conversions.cs" />
     <Compile Include="CsvTable.cs" />
-    <Compile Include="Diff.cs" />
     <Compile Include="Drawing\Canvas.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
