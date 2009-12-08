@@ -250,10 +250,10 @@ namespace RT.Util.CommandLine
                 help.Add(new ConsoleColoredString(tr.Usage + " ", ConsoleColor.Green));
                 help.Add(commandName);
 
-                var optional = type.GetAllFields().Where(f => !f.IsDefined<IsPositionalAttribute>() && !f.IsDefined<IsMandatoryAttribute>()).ToArray();
-                var required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
+                FieldInfo[] optional, required;
+                getOptionalRequiredFieldsForHelp(type, out optional, out required);
 
-                foreach (var opt in optional.Where(o => !o.IsDefined<UndocumentedAttribute>()))
+                foreach (var opt in optional)
                 {
                     IEnumerable<IEnumerable<OptionAttribute>> attrGroups;
                     if (opt.FieldType.IsEnum)
@@ -289,6 +289,7 @@ namespace RT.Util.CommandLine
                     }
                 }
 
+                var anyCommandsWithSuboptions = false;
                 var requiredParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int row = 0;
 
@@ -320,7 +321,15 @@ namespace RT.Util.CommandLine
                         int origRow = row;
                         foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract && !t.IsDefined<UndocumentedAttribute>()))
                         {
-                            requiredParamsTable.SetCell(1, row, new ConsoleColoredString(ty.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White), true);
+                            FieldInfo[] subOptional, subRequired;
+                            getOptionalRequiredFieldsForHelp(ty, out subOptional, out subRequired);
+                            var cell1 = new ConsoleColoredString(ty.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White);
+                            if (subOptional.Any() || subRequired.Any())
+                            {
+                                cell1 += new ConsoleColoredString("*", ConsoleColor.DarkYellow);
+                                anyCommandsWithSuboptions = true;
+                            }
+                            requiredParamsTable.SetCell(1, row, cell1, true);
                             requiredParamsTable.SetCell(2, row, getDocumentation(ty, applicationTr));
                             row++;
                         }
@@ -350,7 +359,7 @@ namespace RT.Util.CommandLine
                 var optionalParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 row = 0;
 
-                foreach (var f in optional.Where(o => !o.IsDefined<UndocumentedAttribute>()))
+                foreach (var f in optional)
                 {
                     if (f.FieldType.IsEnum)
                     {
@@ -401,9 +410,22 @@ namespace RT.Util.CommandLine
                     helpString.Add(Environment.NewLine);
                     helpString.Add(optionalParamsTable.ToColoredString());
                 }
+                if (anyCommandsWithSuboptions)
+                {
+                    helpString.Add(Environment.NewLine);
+                    helpString.Add(new ConsoleColoredString("* ", ConsoleColor.DarkYellow));
+                    helpString.Add(new ConsoleColoredString("accepts further arguments on the command line", ConsoleColor.Gray));
+                    helpString.Add(Environment.NewLine);
+                }
 
                 return new ConsoleColoredString(helpString.ToArray());
             };
+        }
+
+        private static void getOptionalRequiredFieldsForHelp(Type type, out FieldInfo[] optional, out FieldInfo[] required)
+        {
+            optional = type.GetAllFields().Where(f => !f.IsDefined<IsPositionalAttribute>() && !f.IsDefined<IsMandatoryAttribute>() && !f.IsDefined<UndocumentedAttribute>()).ToArray();
+            required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
         }
 
         private static EggsNode getDocumentation(MemberInfo member, TranslationBase applicationTr)
