@@ -29,12 +29,22 @@ namespace RT.Util.CommandLine
         /// <summary>Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
         /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">The command-line arguments to be parsed.</param>
-        /// <param name="applicationTr">The application's translation class which contains the localised strings for the <see cref="DocumentationAttribute"/>s in the command-line syntax-defining class.
-        /// Pass null for non-internationalised (single-language) applications that use only <see cref="DocumentationLiteralAttribute"/> instead.</param>
+        /// <param name="applicationTr">The application's translation class which contains the localised strings for the <see cref="DocumentationAttribute"/>s in the command-line syntax-defining class.</param>
         /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
-        public static T ParseCommandLine<T>(string[] args, TranslationBase applicationTr)
+        public static T Parse<T>(string[] args, TranslationBase applicationTr)
         {
+            if (applicationTr == null)
+                throw new ArgumentNullException("applicationTr");
             return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
+        }
+
+        /// <summary>Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
+        /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
+        /// <param name="args">The command-line arguments to be parsed.</param>
+        /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
+        public static T Parse<T>(string[] args)
+        {
+            return (T) parseCommandLine(args, typeof(T), 0, null);
         }
 
         private class positionalParameterInfo
@@ -251,7 +261,7 @@ namespace RT.Util.CommandLine
                         var defAttr = opt.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                         if (defAttr == null)
                             continue;
-                        attrGroups = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue)).Select(f => f.GetCustomAttributes<OptionAttribute>());
+                        attrGroups = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue) && !f.IsDefined<UndocumentedAttribute>()).Select(f => f.GetCustomAttributes<OptionAttribute>());
                     }
                     else
                         attrGroups = new[] { opt.GetCustomAttributes<OptionAttribute>() };
@@ -308,7 +318,7 @@ namespace RT.Util.CommandLine
                     {
                         help.Add(" ...");
                         int origRow = row;
-                        foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract))
+                        foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract && !t.IsDefined<UndocumentedAttribute>()))
                         {
                             requiredParamsTable.SetCell(1, row, new ConsoleColoredString(ty.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White), true);
                             requiredParamsTable.SetCell(2, row, getDocumentation(ty, applicationTr));
@@ -344,7 +354,7 @@ namespace RT.Util.CommandLine
                 {
                     if (f.FieldType.IsEnum)
                     {
-                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue)))
+                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
                         {
                             optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
                             optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
@@ -408,7 +418,7 @@ namespace RT.Util.CommandLine
 
         /// <summary>If compiled in DEBUG mode, this method performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
         /// Run this method as a post-build step to ensure reliability of execution. In non-DEBUG mode, this method is a no-op.</summary>
-        /// <param name="type">A reference to the class containing the command-line syntax which would be passed to <see cref="ParseCommandLine"/>.</param>
+        /// <param name="type">A reference to the class containing the command-line syntax which would be passed to <see cref="Parse(string[])"/>.</param>
         public static void PostBuildStep(Type type)
         {
 #if DEBUG
@@ -763,7 +773,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     public sealed class UndocumentedAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -775,11 +785,36 @@ namespace RT.Util.CommandLine
     public abstract class CommandLineParseException : TranslatableException<Translation>
     {
         /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null as the parameter.</summary>
-        public Func<Translation, ConsoleColoredString> GenerateHelp { get; private set; }
+        internal Func<Translation, ConsoleColoredString> GenerateHelpFunc { get; private set; }
+        /// <summary>Generates the help screen to be output to the user on the console.</summary>
+        public ConsoleColoredString GenerateHelp() { return GenerateHelpFunc(null); }
+        /// <summary>Generates the help screen to be output to the user on the console.</summary>
+        /// <param name="tr">The translation class containing the translated text.</param>
+        public ConsoleColoredString GenerateHelp(Translation tr) { return GenerateHelpFunc(tr); }
         /// <summary>Constructor.</summary>
         public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelp = helpGenerator; }
+        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelpFunc = helpGenerator; }
+        /// <summary>
+        /// Prints usage infofmation, followed by an error message describing to the user what it was that the parser didn't
+        /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
+        /// </summary>
+        public void WriteUsageInfoToConsole()
+        {
+            GenerateHelp().WriteToConsole();
+
+            var helps = new[] { "-?", "/?", "-h", "--help", "help" };
+            var unrecognized = this as UnrecognizedCommandOrOptionException;
+            bool requestedHelp =
+                (this is UnrecognizedCommandOrOptionException && helps.Contains((this as UnrecognizedCommandOrOptionException).CommandOrOptionName))
+                || (this is UnexpectedParameterException && helps.Contains((this as UnexpectedParameterException).UnexpectedParameters.FirstOrDefault()));
+
+            if (!requestedHelp)
+            {
+                Console.WriteLine();
+                (ConsoleColoredString.FromEggsNode(EggsML.Parse("*_Error:_* ")) + Message).WriteToConsole();
+            }
+        }
     }
 
     /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
