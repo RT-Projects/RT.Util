@@ -243,7 +243,7 @@ namespace RT.Util.CommandLine
                 var optional = type.GetAllFields().Where(f => !f.IsDefined<IsPositionalAttribute>() && !f.IsDefined<IsMandatoryAttribute>()).ToArray();
                 var required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
 
-                foreach (var opt in optional)
+                foreach (var opt in optional.Where(o => !o.IsDefined<UndocumentedAttribute>()))
                 {
                     IEnumerable<IEnumerable<OptionAttribute>> attrGroups;
                     if (opt.FieldType.IsEnum)
@@ -340,7 +340,7 @@ namespace RT.Util.CommandLine
                 var optionalParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 row = 0;
 
-                foreach (var f in optional)
+                foreach (var f in optional.Where(o => !o.IsDefined<UndocumentedAttribute>()))
                 {
                     if (f.FieldType.IsEnum)
                     {
@@ -426,6 +426,9 @@ namespace RT.Util.CommandLine
                 if (lastField != null)
                     throw new PostBuildException(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name));
                 var positional = field.IsDefined<IsPositionalAttribute>();
+
+                if ((positional || field.IsDefined<IsMandatoryAttribute>()) && field.IsDefined<UndocumentedAttribute>())
+                    throw new PostBuildException(@"{0}.{1}: Fields cannot simultaneously be mandatory/positional and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name));
 
                 // (1) if it's a field of type enum:
                 if (field.FieldType.IsEnum)
@@ -564,13 +567,8 @@ namespace RT.Util.CommandLine
         private static void checkDocumentation(MemberInfo member)
         {
             // This automatically executes the constructor of the relevant DocumentationAttribute, which in turn will throw an exception if it is invalid.
-            var docAttrs = member.GetCustomAttributes<DocumentationAttribute>();
-            if (!docAttrs.Any())
-            {
-                var docLiteralAttrs = member.GetCustomAttributes<DocumentationLiteralAttribute>();
-                if (!docLiteralAttrs.Any())
-                    throw new PostBuildException(@"{0}.{1}: Field does not have any documentation. Use the [Documentation] or [DocumentationLiteral] attribute to specify documentation for a command-line option or parameter.".Fmt(member.DeclaringType.FullName, member.Name));
-            }
+            if (!member.IsDefined<DocumentationAttribute>() && !member.IsDefined<DocumentationLiteralAttribute>() && !member.IsDefined<UndocumentedAttribute>())
+                throw new PostBuildException(@"{0}.{1}: Field does not have any documentation. Use the [Documentation] or [DocumentationLiteral] attribute to specify documentation for a command-line option or parameter. Use [Undocumented] to completely hide an option from the help screen.".Fmt(member.DeclaringType.FullName, member.Name));
         }
 #endif
     }
@@ -762,6 +760,14 @@ namespace RT.Util.CommandLine
         /// <summary>Returns the translated documentation text identified by this attribute.</summary>
         /// <param name="tr">The translation class containing the translated text.</param>
         public string Translate(TranslationBase tr) { return _translate == null ? null : (string) _translate.Invoke(null, new object[] { tr }); }
+    }
+
+    /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    public sealed class UndocumentedAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public UndocumentedAttribute() { }
     }
 
     /// <summary>Represents any error encountered while parsing a command line.</summary>
