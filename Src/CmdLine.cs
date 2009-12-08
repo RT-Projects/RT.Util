@@ -95,8 +95,21 @@ namespace RT.Util.CommandLine
                 else if (field.FieldType.IsEnum)   // not positional
                 {
                     foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(val => val != defaultValue))
+                    {
                         foreach (var a in e.GetCustomAttributes<OptionAttribute>())
-                            options[a.Name] = () => { field.SetValue(ret, e.GetValue(null)); i++; missingMandatories.Remove(field); };
+                        {
+                            options[a.Name] = () =>
+                            {
+                                field.SetValue(ret, e.GetValue(null));
+                                i++;
+                                missingMandatories.Remove(field);
+                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(val => val != defaultValue))
+                                    foreach (var a2 in e2.GetCustomAttributes<OptionAttribute>())
+                                        options[a2.Name] = () => { throw new IncompatibleCommandOrOptionException(a.Name, a2.Name, getHelpGenerator(type, applicationTr)); };
+                                options[a.Name] = () => { i++; };
+                            };
+                        }
+                    }
                 }
                 else if (field.FieldType == typeof(bool))
                 {
@@ -255,38 +268,35 @@ namespace RT.Util.CommandLine
 
                 foreach (var opt in optional)
                 {
-                    IEnumerable<IEnumerable<OptionAttribute>> attrGroups;
+                    IEnumerable<OptionAttribute> attrsRaw;
                     if (opt.FieldType.IsEnum)
                     {
                         var defAttr = opt.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                         if (defAttr == null)
                             continue;
-                        attrGroups = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue) && !f.IsDefined<UndocumentedAttribute>()).Select(f => f.GetCustomAttributes<OptionAttribute>());
+                        attrsRaw = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue) && !f.IsDefined<UndocumentedAttribute>()).SelectMany(f => f.GetCustomAttributes<OptionAttribute>());
                     }
                     else
-                        attrGroups = new[] { opt.GetCustomAttributes<OptionAttribute>() };
+                        attrsRaw = opt.GetCustomAttributes<OptionAttribute>();
 
-                    foreach (var attrGroup in attrGroups)
+                    help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
+                    var attrs = attrsRaw.Any(a => !a.Name.StartsWith("--")) ? attrsRaw.Where(a => !a.Name.StartsWith("--")) : attrsRaw;
+                    var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
+                    foreach (var attr in attrs.Skip(1))
+                    {
+                        c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
+                        c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
+                    }
+                    if (opt.FieldType == typeof(string) || opt.FieldType == typeof(string[]))
+                        c = c + new ConsoleColoredString(" <" + opt.Name + ">", ConsoleColor.Cyan);
+                    help.Add(c);
+                    if (opt.FieldType == typeof(string[]))
                     {
                         help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                        var attrs = attrGroup.Any(a => !a.Name.StartsWith("--")) ? attrGroup.Where(a => !a.Name.StartsWith("--")) : attrGroup;
-                        var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
-                        foreach (var attr in attrs.Skip(1))
-                        {
-                            c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
-                            c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
-                        }
-                        if (opt.FieldType == typeof(string) || opt.FieldType == typeof(string[]))
-                            c = c + new ConsoleColoredString(" <" + opt.Name + ">", ConsoleColor.Cyan);
                         help.Add(c);
-                        if (opt.FieldType == typeof(string[]))
-                        {
-                            help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                            help.Add(c);
-                            help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
-                        }
-                        help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
+                        help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
                     }
+                    help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
                 }
 
                 var anyCommandsWithSuboptions = false;
@@ -626,6 +636,7 @@ namespace RT.Util.CommandLine
         [LingoInGroup(TranslationGroup.CommandLineError)]
         public TrString
             UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
+            IncompatibleCommandOrOption = @"The command or option, {0}, cannot be used in conjunction with {1}. Please specify only one of the two.",
             UnrecognizedType = @"{0}.{1} is not of a recognized type.",
             IncompleteOption = @"The ""{0}"" option must be followed by an additional parameter.",
             UnexpectedParameter = @"Unexpected parameter.",
@@ -853,6 +864,25 @@ namespace RT.Util.CommandLine
             : base(tr => tr.UnrecognizedCommandOrOption.Fmt(commandOrOptionName), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
+        }
+    }
+
+    /// <summary>Specifies that the command-line parser encountered a command or option that is not allowed in conjunction with a previously-encountered command or option.</summary>
+    [Serializable]
+    public class IncompatibleCommandOrOptionException : CommandLineParseException
+    {
+        /// <summary>The earlier option or command, which by itself is valid, but conflicts with the <see cref="LaterCommandOrOption"/>.</summary>
+        public string EarlierCommandOrOption { get; private set; }
+        /// <summary>The later option or command, which conflicts with the <see cref="EarlierCommandOrOption"/>.</summary>
+        public string LaterCommandOrOption { get; private set; }
+        /// <summary>Constructor.</summary>
+        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.IncompatibleCommandOrOption.Fmt(later, earlier), helpGenerator, inner)
+        {
+            EarlierCommandOrOption = earlier;
+            LaterCommandOrOption = later;
         }
     }
 

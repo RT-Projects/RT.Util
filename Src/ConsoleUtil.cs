@@ -180,7 +180,7 @@ namespace RT.Util
         /// <summary>Concatenates a string onto a <see cref="ConsoleColoredString"/>s.</summary>
         /// <param name="string1">First input string to concatenate.</param>
         /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The color of each character in the first input string is preserved. The second input string will be given the color of the last character of <paramref name="string1"/>, or <see cref="ConsoleColor.Gray"/> if it is empty.</remarks>
+        /// <remarks>The color of each character in the first input string is preserved. The second input string is given the color <see cref="ConsoleColor.Gray"/>.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
         {
             if (string1 == null || string1.Length == 0)
@@ -190,9 +190,8 @@ namespace RT.Util
 
             var colors = new ConsoleColor[string1._colors.Length + string2.Length];
             Array.Copy(string1._colors, colors, string1._colors.Length);
-            var lastCol = string1._colors[string1._colors.Length - 1];
             for (int i = string1.Length; i < string1.Length + string2.Length; i++)
-                colors[i] = lastCol;
+                colors[i] = ConsoleColor.Gray;
             return new ConsoleColoredString(string1._text + string2, colors);
         }
 
