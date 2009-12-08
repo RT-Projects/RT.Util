@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RT.Util.ExtensionMethods;
-using System.Text.RegularExpressions;
 
 namespace RT.Util
 {
@@ -101,77 +100,78 @@ namespace RT.Util
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>
         public static void Write(ConsoleColoredString value)
         {
-            value.WriteToConsole();
+            value.writeToConsole();
         }
 
-        /// <summary>Writes the specified <see cref="ConsoleColoredString"/> and a newline to the console.</summary>
+        /// <summary>Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
         public static void WriteLine(ConsoleColoredString value)
         {
-            value.WriteToConsole();
+            value.writeToConsole();
             Console.WriteLine();
         }
     }
 
     /// <summary>Encapsulates a string in which each character can have an associated <see cref="ConsoleColor"/>.</summary>
+    /// <remarks>Use <see cref="ConsoleUtil.Write(ConsoleColoredString)"/> and <see cref="ConsoleUtil.WriteLine(ConsoleColoredString)"/> to output the string to the console.</remarks>
     public class ConsoleColoredString
     {
         private string _text;
-        private ConsoleColor[] _colours;
+        private ConsoleColor[] _colors;
 
-        /// <summary>Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a default colour of <see cref="ConsoleColor.Gray"/>.</summary>
+        /// <summary>Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a default color of <see cref="ConsoleColor.Gray"/>.</summary>
         /// <param name="input">The string to convert.</param>
         public static implicit operator ConsoleColoredString(string input)
         {
             return new ConsoleColoredString(input, ConsoleColor.Gray);
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colour.</summary>
+        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
         /// <param name="input">The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
-        /// <param name="color">The colour to assign to the whole string.</param>
+        /// <param name="color">The color to assign to the whole string.</param>
         public ConsoleColoredString(string input, ConsoleColor color)
         {
             _text = input;
-            _colours = new ConsoleColor[input.Length];
+            _colors = new ConsoleColor[input.Length];
             if (color != default(ConsoleColor))
-                for (int i = 0; i < _colours.Length; i++)
-                    _colours[i] = color;
+                for (int i = 0; i < _colors.Length; i++)
+                    _colors[i] = color;
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colours for each character.</summary>
+        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors for each character.</summary>
         /// <param name="input">The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this string must match the number of elements in <paramref name="characterColors"/>.</param>
-        /// <param name="characterColors">The colours to assign to each character in the string. The length of this array must match the number of characters in <paramref name="input"/>.</param>
+        /// <param name="characterColors">The colors to assign to each character in the string. The length of this array must match the number of characters in <paramref name="input"/>.</param>
         public ConsoleColoredString(string input, ConsoleColor[] characterColors)
         {
             if (input.Length != characterColors.Length)
-                throw new InvalidOperationException("The number of characters must match the number of colours.");
+                throw new InvalidOperationException("The number of characters must match the number of colors.");
             _text = input;
-            _colours = characterColors;
+            _colors = characterColors;
         }
 
         /// <summary>Construts a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
         /// <param name="strings">Input strings to concatenate.</param>
-        /// <remarks>The colour of each character in the input strings is preserved.</remarks>
+        /// <remarks>The color of each character in the input strings is preserved.</remarks>
         public ConsoleColoredString(params ConsoleColoredString[] strings)
         {
             _text = strings.Select(s => s._text).JoinString();
-            _colours = new ConsoleColor[strings.Select(s => s.Length).Sum()];
+            _colors = new ConsoleColor[strings.Select(s => s.Length).Sum()];
             var index = 0;
             for (int i = 0; i < strings.Length; i++)
             {
-                Array.Copy(strings[i]._colours, 0, _colours, index, strings[i]._colours.Length);
-                index += strings[i]._colours.Length;
+                Array.Copy(strings[i]._colors, 0, _colors, index, strings[i]._colors.Length);
+                index += strings[i]._colors.Length;
             }
         }
 
         /// <summary>Returns the number of characters in this <see cref="ConsoleColoredString"/></summary>
         public int Length { get { return _text.Length; } }
-        /// <summary>Returns the raw text of this <see cref="ConsoleColoredString"/> by discarding all the colour information.</summary>
+        /// <summary>Returns the raw text of this <see cref="ConsoleColoredString"/> by discarding all the color information.</summary>
         public override string ToString() { return _text; }
 
         /// <summary>Concatenates two <see cref="ConsoleColoredString"/>s.</summary>
         /// <param name="string1">First input string to concatenate.</param>
         /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The colour of each character in the input strings is preserved.</remarks>
+        /// <remarks>The color of each character in the input strings is preserved.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2)
         {
             return new ConsoleColoredString(string1, string2);
@@ -180,7 +180,7 @@ namespace RT.Util
         /// <summary>Concatenates a string onto a <see cref="ConsoleColoredString"/>s.</summary>
         /// <param name="string1">First input string to concatenate.</param>
         /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The colour of each character in the first input string is preserved. The second input string will be given the colour of the last character of <paramref name="string1"/>, or <see cref="ConsoleColor.Gray"/> if it is empty.</remarks>
+        /// <remarks>The color of each character in the first input string is preserved. The second input string will be given the color of the last character of <paramref name="string1"/>, or <see cref="ConsoleColor.Gray"/> if it is empty.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
         {
             if (string1 == null || string1.Length == 0)
@@ -188,9 +188,9 @@ namespace RT.Util
             if (string.IsNullOrEmpty(string2))
                 return string1;
 
-            var colors = new ConsoleColor[string1._colours.Length + string2.Length];
-            Array.Copy(string1._colours, colors, string1._colours.Length);
-            var lastCol = string1._colours[string1._colours.Length - 1];
+            var colors = new ConsoleColor[string1._colors.Length + string2.Length];
+            Array.Copy(string1._colors, colors, string1._colors.Length);
+            var lastCol = string1._colors[string1._colors.Length - 1];
             for (int i = string1.Length; i < string1.Length + string2.Length; i++)
                 colors[i] = lastCol;
             return new ConsoleColoredString(string1._text + string2, colors);
@@ -199,7 +199,7 @@ namespace RT.Util
         /// <summary>Constructs a <see cref="ConsoleColoredString"/> from an EggsML parse tree.</summary>
         /// <param name="node">The root node of the EggsML parse tree.</param>
         /// <returns>The <see cref="ConsoleColoredString"/> constructed from the EggsML parse tree.</returns>
-        /// <remarks><para>The following EggsML tags map to the following console colours:</para>
+        /// <remarks><para>The following EggsML tags map to the following console colors:</para>
         /// <list type="bullet">
         /// <item><description><c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
         /// <item><description><c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
@@ -209,22 +209,22 @@ namespace RT.Util
         /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
         /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
         /// </list>
-        /// <para>Text which is not inside any of the above colour tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
+        /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
         /// </remarks>
         public static ConsoleColoredString FromEggsNode(EggsNode node)
         {
             StringBuilder text = new StringBuilder();
-            List<ConsoleColor> colours = new List<ConsoleColor>();
-            List<int> colourLengths = new List<int>();
+            List<ConsoleColor> colors = new List<ConsoleColor>();
+            List<int> colorLengths = new List<int>();
 
-            eggWalk(node, text, colours, colourLengths, ConsoleColor.Gray, false);
+            eggWalk(node, text, colors, colorLengths, ConsoleColor.Gray, false);
 
-            var colArr = new ConsoleColor[colourLengths.Sum()];
+            var colArr = new ConsoleColor[colorLengths.Sum()];
             var index = 0;
-            for (int i = 0; i < colours.Count; i++)
+            for (int i = 0; i < colors.Count; i++)
             {
-                var col = colours[i];
-                for (int j = 0; j < colourLengths[i]; j++)
+                var col = colors[i];
+                for (int j = 0; j < colorLengths[i]; j++)
                 {
                     colArr[index] = col;
                     index++;
@@ -234,37 +234,37 @@ namespace RT.Util
             return new ConsoleColoredString(text.ToString(), colArr);
         }
 
-        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colours, List<int> colourLengths, ConsoleColor curColour, bool curLight)
+        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colors, List<int> colorLengths, ConsoleColor curColor, bool curLight)
         {
             if (node is EggsText)
             {
                 var txt = (EggsText) node;
                 text.Append(txt.Text);
-                colours.Add(curColour);
-                colourLengths.Add(txt.Text.Length);
+                colors.Add(curColor);
+                colorLengths.Add(txt.Text.Length);
             }
             else if (node is EggsGroup)
             {
                 foreach (var child in ((EggsGroup) node).Children)
-                    eggWalk(child, text, colours, colourLengths, curColour, curLight);
+                    eggWalk(child, text, colors, colorLengths, curColor, curLight);
             }
             else
             {
                 var tag = (EggsTag) node;
                 switch (tag.Tag)
                 {
-                    case '~': curColour = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
-                    case '/': curColour = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
-                    case '$': curColour = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
-                    case '&': curColour = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
-                    case '_': curColour = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
-                    case '%': curColour = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
-                    case '^': curColour = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
-                    case '*': if (!curLight) curColour = (ConsoleColor) ((int) curColour + 8); curLight = true; break;
+                    case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                    case '/': curColor = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                    case '$': curColor = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                    case '&': curColor = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                    case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                    case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                    case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                 }
                 foreach (var childList in tag.Children)
                     foreach (var child in childList)
-                        eggWalk(child, text, colours, colourLengths, curColour, curLight);
+                        eggWalk(child, text, colors, colorLengths, curColor, curLight);
             }
         }
 
@@ -272,14 +272,14 @@ namespace RT.Util
         {
             public ConsoleColoredString Line;
             public StringBuilder WordText;
-            public List<ConsoleColor> WordColours;
+            public List<ConsoleColor> WordColors;
         }
 
         /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output at a specified character width.</summary>
         /// <param name="node">The root node of the EggsML parse tree.</param>
         /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
         /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the EggsML parse tree.</returns>
-        /// <remarks><para>The following EggsML tags map to the following console colours:</para>
+        /// <remarks><para>The following EggsML tags map to the following console colors:</para>
         /// <list type="bullet">
         /// <item><description><c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
         /// <item><description><c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
@@ -289,7 +289,7 @@ namespace RT.Util
         /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
         /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
         /// </list>
-        /// <para>Text which is not inside any of the above colour tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
+        /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
         /// <para>Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In other words, the contents of a <c>+</c> tag are treated as if they were a single word.
         /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</para>
         /// </remarks>
@@ -299,7 +299,7 @@ namespace RT.Util
             {
                 Line = null,
                 WordText = new StringBuilder(),
-                WordColours = new List<ConsoleColor>()
+                WordColors = new List<ConsoleColor>()
             };
 
             foreach (var ret in eggWalkWordWrap(node, wrapWidth, data, ConsoleColor.Gray, false, false))
@@ -308,15 +308,15 @@ namespace RT.Util
             if (data.WordText.Length > 0)
             {
                 if (data.Line == null || data.Line.Length == 0)
-                    data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                    data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                 else
-                    data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                    data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
             }
             if (data.Line != null && data.Line.Length > 0)
                 yield return data.Line;
         }
 
-        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, eggWalkWordWrapData data, ConsoleColor curColour, bool curLight, bool curNowrap)
+        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, eggWalkWordWrapData data, ConsoleColor curColor, bool curLight, bool curNowrap)
         {
             if (node is EggsText)
             {
@@ -327,9 +327,9 @@ namespace RT.Util
                     {
                         if ((data.Line == null || data.Line.Length == 0) && data.WordText.Length >= wrapWidth)
                         {
-                            yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                            yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             data.WordText = new StringBuilder();
-                            data.WordColours = new List<ConsoleColor>();
+                            data.WordColors = new List<ConsoleColor>();
                         }
                         else if (data.Line != null && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
                         {
@@ -337,19 +337,19 @@ namespace RT.Util
                             data.Line = null;
                         }
                         data.WordText.Append(txt[i]);
-                        data.WordColours.Add(curColour);
+                        data.WordColors.Add(curColor);
                     }
                     else
                     {
                         if (data.WordText != null && data.WordText.Length > 0)
                         {
                             if (data.Line == null || data.Line.Length == 0)
-                                data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                                data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             else
-                                data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColours.ToArray());
+                                data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                         }
                         data.WordText = new StringBuilder();
-                        data.WordColours = new List<ConsoleColor>();
+                        data.WordColors = new List<ConsoleColor>();
                     }
                     if (txt[i] == '\n')
                     {
@@ -361,7 +361,7 @@ namespace RT.Util
             else if (node is EggsGroup)
             {
                 foreach (var child in ((EggsGroup) node).Children)
-                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColour, curLight, curNowrap))
+                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColor, curLight, curNowrap))
                         yield return ret;
             }
             else
@@ -369,19 +369,19 @@ namespace RT.Util
                 var tag = (EggsTag) node;
                 switch (tag.Tag)
                 {
-                    case '~': curColour = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
-                    case '/': curColour = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
-                    case '$': curColour = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
-                    case '&': curColour = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
-                    case '_': curColour = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
-                    case '%': curColour = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
-                    case '^': curColour = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
-                    case '*': if (!curLight) curColour = (ConsoleColor) ((int) curColour + 8); curLight = true; break;
+                    case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                    case '/': curColor = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                    case '$': curColor = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                    case '&': curColor = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                    case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                    case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                    case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                     case '+': curNowrap = true; break;
                 }
                 foreach (var childList in tag.Children)
                     foreach (var child in childList)
-                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColour, curLight, curNowrap))
+                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColor, curLight, curNowrap))
                             yield return ret;
             }
         }
@@ -569,23 +569,30 @@ namespace RT.Util
         /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
         /// <returns>A <see cref="ConsoleColoredString"/> object equivalent to the substring that begins at <paramref name="startIndex"/> in this instance.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="startIndex"/> is less than zero or greater than the length of this instance.</exception>
-        public ConsoleColoredString Substring(int startIndex) { return new ConsoleColoredString(_text.Substring(startIndex), _colours.Subarray(startIndex)); }
+        public ConsoleColoredString Substring(int startIndex)
+        {
+            return new ConsoleColoredString(_text.Substring(startIndex), _colors.Subarray(startIndex));
+        }
+
         /// <summary>Retrieves a substring from this instance. The substring starts at a specified character position and has a specified length.</summary>
         /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
         /// <param name="length">The number of characters in the substring.</param>
         /// <returns>A <see cref="ConsoleColoredString"/> equivalent to the substring of length length that begins at <paramref name="startIndex"/> in this instance.</returns>
-        public ConsoleColoredString Substring(int startIndex, int length) { return new ConsoleColoredString(_text.Substring(startIndex, length), _colours.Subarray(startIndex, length)); }
+        public ConsoleColoredString Substring(int startIndex, int length)
+        {
+            return new ConsoleColoredString(_text.Substring(startIndex, length), _colors.Subarray(startIndex, length));
+        }
 
         /// <summary>Outputs the current <see cref="ConsoleColoredString"/> to the console.</summary>
-        public void WriteToConsole()
+        internal void writeToConsole()
         {
             int index = 0;
             while (index < _text.Length)
             {
-                ConsoleColor cc = _colours[index];
+                ConsoleColor cc = _colors[index];
                 Console.ForegroundColor = cc;
                 var origIndex = index;
-                while (index < _text.Length && _colours[index] == cc)
+                while (index < _text.Length && _colors[index] == cc)
                     index++;
                 Console.Write(_text.Substring(origIndex, index - origIndex));
             }

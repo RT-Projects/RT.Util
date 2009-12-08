@@ -374,7 +374,8 @@ namespace RT.Util.CommandLine
                 var doc = getDocumentation(type, applicationTr);
                 if (doc != null)
                 {
-                    help.Add("\n\n");
+                    help.Add(Environment.NewLine);
+                    help.Add(Environment.NewLine);
                     help.Add(ConsoleColoredString.FromEggsNode(doc));
                 }
 
@@ -801,7 +802,7 @@ namespace RT.Util.CommandLine
         /// </summary>
         public void WriteUsageInfoToConsole()
         {
-            GenerateHelp().WriteToConsole();
+            ConsoleUtil.Write(GenerateHelp());
 
             var helps = new[] { "-?", "/?", "-h", "--help", "help" };
             var unrecognized = this as UnrecognizedCommandOrOptionException;
@@ -812,7 +813,7 @@ namespace RT.Util.CommandLine
             if (!requestedHelp)
             {
                 Console.WriteLine();
-                (ConsoleColoredString.FromEggsNode(EggsML.Parse("*_Error:_* ")) + Message).WriteToConsole();
+                ConsoleUtil.WriteLine(new ConsoleColoredString("Error: ", ConsoleColor.Red) + (ConsoleColoredString) Message);
             }
         }
     }

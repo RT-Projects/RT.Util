@@ -380,7 +380,7 @@ namespace RT.Util.Text
             toString(s => Console.Write(s), s => ConsoleUtil.Write(s));
         }
 
-        private void toString(Action<string> outputString, Action<ConsoleColoredString> outputColouredString)
+        private void toString(Action<string> outputString, Action<ConsoleColoredString> outputColoredString)
         {
             int rows = _cells.Count;
             if (rows == 0)
@@ -579,7 +579,7 @@ namespace RT.Util.Text
                     {
                         if (LeftMargin > 0)
                             outputString(new string(' ', LeftMargin));
-                        outputColouredString(previousLine);
+                        outputColoredString(previousLine);
                         outputString(Environment.NewLine);
                     }
 
@@ -595,7 +595,7 @@ namespace RT.Util.Text
             // Output the last line
             if (LeftMargin > 0)
                 outputString(new string(' ', LeftMargin));
-            outputColouredString(new ConsoleColoredString(currentLine.ToArray()));
+            outputColoredString(new ConsoleColoredString(currentLine.ToArray()));
             outputString(Environment.NewLine);
         }
 
