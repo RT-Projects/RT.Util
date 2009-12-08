@@ -424,8 +424,11 @@ namespace RT.Util.CommandLine
                 {
                     helpString.Add(Environment.NewLine);
                     helpString.Add(new ConsoleColoredString("* ", ConsoleColor.DarkYellow));
-                    helpString.Add(new ConsoleColoredString("accepts further arguments on the command line", ConsoleColor.Gray));
-                    helpString.Add(Environment.NewLine);
+                    foreach (var line in tr.AdditionalOptions.Translation.WordWrap(width - 2, 2))
+                    {
+                        helpString.Add(line);
+                        helpString.Add(Environment.NewLine);
+                    }
                 }
 
                 return new ConsoleColoredString(helpString.ToArray());
@@ -648,7 +651,8 @@ namespace RT.Util.CommandLine
         public TrString
             Usage = @"Usage:",
             ParametersHeader = @"Required parameters:",
-            OptionsHeader = @"Options:";
+            OptionsHeader = @"Options:",
+            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by -? to list them.";
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
