@@ -837,16 +837,15 @@ namespace RT.Util.CommandLine
         {
             ConsoleUtil.Write(GenerateHelp());
 
-            var helps = new[] { "-?", "/?", "-h", "--help", "help" };
-            var unrecognized = this as UnrecognizedCommandOrOptionException;
+            var helps = new[] { "-?", "/?", "--?", "-h", "--help", "help" };
             bool requestedHelp =
-                (this is UnrecognizedCommandOrOptionException && helps.Contains((this as UnrecognizedCommandOrOptionException).CommandOrOptionName))
-                || (this is UnexpectedParameterException && helps.Contains((this as UnexpectedParameterException).UnexpectedParameters.FirstOrDefault()));
+                (this is UnrecognizedCommandOrOptionException && helps.Contains(((UnrecognizedCommandOrOptionException) this).CommandOrOptionName))
+                || (this is UnexpectedParameterException && helps.Contains(((UnexpectedParameterException) this).UnexpectedParameters.FirstOrDefault()));
 
             if (!requestedHelp)
             {
                 Console.WriteLine();
-                ConsoleUtil.WriteLine(new ConsoleColoredString("Error: ", ConsoleColor.Red) + (ConsoleColoredString) Message);
+                ConsoleUtil.WriteLine(new ConsoleColoredString("Error: ", ConsoleColor.Red) + Message);
             }
         }
     }

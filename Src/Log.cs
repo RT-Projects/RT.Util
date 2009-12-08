@@ -307,6 +307,7 @@ namespace RT.Util
                 if (type == LogType.Error && ErrorsToStdErr)
                     consoleStream = Console.Error;
 
+                var prevCol = Console.ForegroundColor;
                 Console.ForegroundColor = MsgTypeColor[type];
 
                 int wrapWidth = WordWrap ? ConsoleUtil.WrapWidth() : int.MaxValue;
@@ -319,6 +320,8 @@ namespace RT.Util
                 }
                 if (first)
                     consoleStream.WriteLine(fmtInfo); // don't completely skip blank messages
+
+                Console.ForegroundColor = prevCol;
             }
         }
     }
