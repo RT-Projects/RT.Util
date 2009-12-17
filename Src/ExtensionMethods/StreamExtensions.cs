@@ -14,15 +14,25 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static byte[] ReadAllBytes(this Stream stream)
         {
-            byte[] buffer = new byte[32768];
-            using (MemoryStream ms = new MemoryStream())
+            try
             {
-                while (true)
+                var len = (int) (stream.Length - stream.Position);
+                byte[] buffer = new byte[len];
+                stream.Read(buffer, 0, len);
+                return buffer;
+            }
+            catch (NotSupportedException)
+            {
+                byte[] buffer = new byte[32768];
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    int read = stream.Read(buffer, 0, buffer.Length);
-                    if (read <= 0)
-                        return ms.ToArray();
-                    ms.Write(buffer, 0, read);
+                    while (true)
+                    {
+                        int read = stream.Read(buffer, 0, buffer.Length);
+                        if (read <= 0)
+                            return ms.ToArray();
+                        ms.Write(buffer, 0, read);
+                    }
                 }
             }
         }
