@@ -119,13 +119,26 @@ namespace RT.Util.CommandLine
                     foreach (var a in field.GetCustomAttributes<OptionAttribute>())
                         options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
-                else if (field.FieldType == typeof(string))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(int))
                 {
                     if (positional)
                     {
                         positionals.Add(new positionalParameterInfo
                         {
-                            ProcessParameter = () => { positionals.RemoveAt(0); field.SetValue(ret, args[i]); i++; },
+                            ProcessParameter = () =>
+                            {
+                                if (field.FieldType == typeof(int))
+                                {
+                                    int res;
+                                    if (!int.TryParse(args[i], out res))
+                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
+                                    field.SetValue(ret, res);
+                                }
+                                else
+                                    field.SetValue(ret, args[i]);
+                                positionals.RemoveAt(0);
+                                i++;
+                            },
                             ProcessEndOfParameters = () => { throw new MissingParameterException(field.Name, getHelpGenerator(type)); }
                         });
                     }
@@ -139,7 +152,15 @@ namespace RT.Util.CommandLine
                                 i++;
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
-                                field.SetValue(ret, args[i]);
+                                if (field.FieldType == typeof(int))
+                                {
+                                    int res;
+                                    if (!int.TryParse(args[i], out res))
+                                        throw new InvalidIntegerParameterException(e.Name, getHelpGenerator(type));
+                                    field.SetValue(ret, res);
+                                }
+                                else
+                                    field.SetValue(ret, args[i]);
                                 i++;
                                 missingMandatories.Remove(field);
                             };
@@ -241,21 +262,40 @@ namespace RT.Util.CommandLine
             if (missingMandatories.Count > 0)
                 throw new MissingOptionException(missingMandatories[0], swallowingField, getHelpGenerator(type));
 
+            Type[] typeParam;
+            string error = null;
+            if (type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam))
+            {
+                var tp = typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]);
+                if (typeParam[0] != ApplicationTr.GetType())
+                    throw new CommandLineValidationException(@"The type {0} implements {1}, but ApplicationTr is of type {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
+                        type.FullName,
+                        tp.FullName,
+                        ApplicationTr.GetType().FullName,
+                        typeof(ICommandLineValidatable<>).MakeGenericType(ApplicationTr.GetType()).FullName
+                    ), getHelpGenerator(type));
+
+                var meth = tp.GetMethod("Validate");
+                if (meth == null || !meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeParam[0] }))
+                    throw new CommandLineValidationException(@"Couldn't find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type));
+
+                error = (string) meth.Invoke(ret, new object[] { ApplicationTr });
+            }
+            else if (typeof(ICommandLineValidatable).IsAssignableFrom(type))
+                error = ((ICommandLineValidatable) ret).Validate();
+
+            if (error != null)
+                throw new CommandLineValidationException(error, getHelpGenerator(type));
+
             return ret;
         }
 
-        private Func<Translation, ConsoleColoredString> getHelpGenerator(Type type)
+        private Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type)
         {
-            return tr =>
+            return (tr, wrapWidth) =>
             {
                 if (tr == null)
                     tr = new Translation();
-
-                var width = ConsoleUtil.WrapWidth();
-                if (width == int.MaxValue)
-                    width = 120;    // an arbitrary but sensible default value
-
-                width--;   // outputting characters to the last column in the console causes a blank line, so need to keep the rightmost column clear
 
                 int leftMargin = 3;
 
@@ -269,43 +309,13 @@ namespace RT.Util.CommandLine
                 FieldInfo[] optional, required;
                 getOptionalRequiredFieldsForHelp(type, out optional, out required);
 
-                foreach (var opt in optional)
-                {
-                    IEnumerable<OptionAttribute> attrsRaw;
-                    if (opt.FieldType.IsEnum)
-                    {
-                        var defAttr = opt.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
-                        if (defAttr == null)
-                            continue;
-                        attrsRaw = opt.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => !f.GetValue(null).Equals(defAttr.DefaultValue) && !f.IsDefined<UndocumentedAttribute>()).SelectMany(f => f.GetCustomAttributes<OptionAttribute>());
-                    }
-                    else
-                        attrsRaw = opt.GetCustomAttributes<OptionAttribute>();
-
-                    help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                    var attrs = attrsRaw.Any(a => !a.Name.StartsWith("--")) ? attrsRaw.Where(a => !a.Name.StartsWith("--")) : attrsRaw;
-                    var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
-                    foreach (var attr in attrs.Skip(1))
-                    {
-                        c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
-                        c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
-                    }
-                    if (opt.FieldType == typeof(string) || opt.FieldType == typeof(string[]))
-                        c = c + new ConsoleColoredString(" <" + opt.Name + ">", ConsoleColor.Cyan);
-                    help.Add(c);
-                    if (opt.FieldType == typeof(string[]))
-                    {
-                        help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                        help.Add(c);
-                        help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
-                    }
-                    help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
-                }
-
                 var anyCommandsWithSuboptions = false;
-                var requiredParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int row = 0;
 
+                //
+                // ##  Go through all the REQUIRED parameters, listing them in the "Usage" line as well as constructing the table explaining them
+                //
                 foreach (var f in required.OrderBy(f => f.IsDefined<IsPositionalAttribute>()))
                 {
                     if (!f.IsDefined<IsPositionalAttribute>())
@@ -369,30 +379,66 @@ namespace RT.Util.CommandLine
                     }
                 }
 
-                var optionalParamsTable = new TextTable { MaxWidth = width - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 row = 0;
 
+                //
+                // ##  Go through all the OPTIONAL parameters, listing them in the "Usage" line as well as constructing the table explaining them
+                //
                 foreach (var f in optional)
                 {
+                    // "Usage line"
+                    IEnumerable<OptionAttribute> attrsRaw;
+                    if (f.FieldType.IsEnum)
+                    {
+                        var defAttr = f.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
+                        if (defAttr == null)
+                            continue;
+                        attrsRaw = f.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).Where(fi => !fi.GetValue(null).Equals(defAttr.DefaultValue) && !fi.IsDefined<UndocumentedAttribute>()).SelectMany(fi => fi.GetCustomAttributes<OptionAttribute>());
+                    }
+                    else
+                        attrsRaw = f.GetCustomAttributes<OptionAttribute>();
+
+                    help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
+                    var attrs = attrsRaw.Any(a => !a.Name.StartsWith("--")) ? attrsRaw.Where(a => !a.Name.StartsWith("--")) : attrsRaw;
+                    var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
+                    foreach (var attr in attrs.Skip(1))
+                    {
+                        c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
+                        c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
+                    }
+                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]))
+                        c = c + new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan);
+                    help.Add(c);
+                    if (f.FieldType == typeof(string[]))
+                    {
+                        help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
+                        help.Add(c);
+                        help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
+                    }
+                    help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
+
+                    // Add to the table with documentation
                     if (f.FieldType.IsEnum)
                     {
                         foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
                         {
-                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
-                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
                             optionalParamsTable.SetCell(2, row, getDocumentation(el));
                             row++;
                         }
                     }
                     else
                     {
-                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
-                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(c => c.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
                         optionalParamsTable.SetCell(2, row, getDocumentation(f));
                         row++;
                     }
                 }
 
+                // Put all the pieces together
                 var doc = getDocumentation(type);
                 if (doc != null)
                 {
@@ -402,7 +448,7 @@ namespace RT.Util.CommandLine
                 }
 
                 var helpString = new List<ConsoleColoredString>();
-                foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(width, 8))
+                foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(wrapWidth, 8))
                 {
                     helpString.Add(line);
                     helpString.Add(Environment.NewLine);
@@ -426,8 +472,7 @@ namespace RT.Util.CommandLine
                 if (anyCommandsWithSuboptions)
                 {
                     helpString.Add(Environment.NewLine);
-                    helpString.Add(new ConsoleColoredString("* ", ConsoleColor.DarkYellow));
-                    foreach (var line in tr.AdditionalOptions.Translation.WordWrap(width - 2, 2))
+                    foreach (var line in (new ConsoleColoredString("* ", ConsoleColor.DarkYellow) + tr.AdditionalOptions.Translation).WordWrap(wrapWidth, 2))
                     {
                         helpString.Add(line);
                         helpString.Add(Environment.NewLine);
@@ -459,8 +504,12 @@ namespace RT.Util.CommandLine
 
         /// <summary>If compiled in DEBUG mode, this method performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
         /// Run this method as a post-build step to ensure reliability of execution. In non-DEBUG mode, this method is a no-op.</summary>
-        /// <param name="type">A reference to the class containing the command-line syntax which would be passed to <see cref="Parse(string[])"/>.</param>
-        public void PostBuildStep(Type type)
+        public void PostBuildStep()
+        {
+            postBuildStep(typeof(T));
+        }
+
+        private void postBuildStep(Type type)
         {
 #if DEBUG
             if (!type.IsClass)
@@ -468,6 +517,15 @@ namespace RT.Util.CommandLine
 
             if (type.GetConstructor(Type.EmptyTypes) == null)
                 throw new PostBuildException(@"{0} does not have a default constructor.".Fmt(type.FullName));
+
+            Type[] typeParam;
+            if (type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != ApplicationTr.GetType())
+                throw new PostBuildException(@"The type {0} implements {1}, but ApplicationTr is of type {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
+                    type.FullName,
+                    typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,
+                    ApplicationTr.GetType().FullName,
+                    typeof(ICommandLineValidatable<>).MakeGenericType(ApplicationTr.GetType()).FullName
+                ));
 
             var optionTaken = new Dictionary<string, MemberInfo>();
             FieldInfo lastField = null;
@@ -535,11 +593,11 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || field.FieldType == typeof(int))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
-                        throw new PostBuildException(@"{0}.{1}: Field of type string or string[] must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+                        throw new PostBuildException(@"{0}.{1}: Field of type string, string[] or int must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
 
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
@@ -563,13 +621,13 @@ namespace RT.Util.CommandLine
                         checkCommandNamesUnique(subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass);
 
                         // Recursively check this class
-                        PostBuildStep(subclass);
+                        postBuildStep(subclass);
                     }
 
                     lastField = field;
                 }
                 else
-                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
+                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, int, and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
             }
 #endif
         }
@@ -626,6 +684,23 @@ namespace RT.Util.CommandLine
         #endregion
     }
 
+    /// <summary>Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see cref="CommandLineParser&lt;T&gt;"/>.
+    /// Use this class only in monolingual (unlocalisable) applications. Use <see cref="ICommandLineValidatable&lt;TTranslation&gt;"/> otherwise.</summary>
+    public interface ICommandLineValidatable
+    {
+        /// <summary>When overridden in a derived class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
+        string Validate();
+    }
+
+    /// <summary>Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see cref="CommandLineParser&lt;T&gt;"/>.</summary>
+    /// <typeparam name="TTranslation">A translation-string class containing the error messages that can occur during validation.</typeparam>
+    public interface ICommandLineValidatable<TTranslation> where TTranslation : TranslationBase
+    {
+        /// <summary>When overridden in a derived class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
+        /// <param name="tr">Contains translations for the messages that may occur during validation.</param>
+        string Validate(TTranslation tr);
+    }
+
     /// <summary>Groups the translatable strings in the <see cref="Translation"/> class into categories.</summary>
     public enum TranslationGroup
     {
@@ -645,21 +720,23 @@ namespace RT.Util.CommandLine
 
         [LingoInGroup(TranslationGroup.CommandLineError)]
         public TrString
-            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
             IncompatibleCommandOrOption = @"The command or option, {0}, cannot be used in conjunction with {1}. Please specify only one of the two.",
-            UnrecognizedType = @"{0}.{1} is not of a recognized type.",
             IncompleteOption = @"The ""{0}"" option must be followed by an additional parameter.",
-            UnexpectedParameter = @"Unexpected parameter.",
-            MissingParameter = @"The ""{0}"" parameter is missing.",
+            InvalidInteger = @"The ""{0}"" option expects an integer. The specified parameter does not constitute a valid integer.",
             MissingOption = @"The option ""{0}"" is mandatory and must be specified.",
-            MissingOptionBefore = @"The option ""{0}"" is mandatory and must be specified before the ""{1}"" parameter.";
+            MissingOptionBefore = @"The option ""{0}"" is mandatory and must be specified before the ""{1}"" parameter.",
+            MissingParameter = @"The ""{0}"" parameter is missing.",
+            UnexpectedParameter = @"Unexpected parameter.",
+            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
+            UnrecognizedType = @"{0}.{1} is not of a recognized type.";
 
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
         public TrString
-            Usage = @"Usage:",
-            ParametersHeader = @"Required parameters:",
+            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by -? to list them.",
+            Error = @"Error:",
             OptionsHeader = @"Options:",
-            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by -? to list them.";
+            ParametersHeader = @"Required parameters:",
+            Usage = @"Usage:";
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
@@ -830,23 +907,43 @@ namespace RT.Util.CommandLine
     public abstract class CommandLineParseException : TranslatableException<Translation>
     {
         /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null as the parameter.</summary>
-        internal Func<Translation, ConsoleColoredString> GenerateHelpFunc { get; private set; }
-        /// <summary>Generates the help screen to be output to the user on the console.</summary>
-        public ConsoleColoredString GenerateHelp() { return GenerateHelpFunc(null); }
+        internal Func<Translation, int, ConsoleColoredString> GenerateHelpFunc { get; private set; }
         /// <summary>Generates the help screen to be output to the user on the console.</summary>
         /// <param name="tr">The translation class containing the translated text.</param>
-        public ConsoleColoredString GenerateHelp(Translation tr) { return GenerateHelpFunc(tr); }
+        /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
+        public ConsoleColoredString GenerateHelp(Translation tr, int wrapWidth) { return GenerateHelpFunc(tr, wrapWidth); }
         /// <summary>Constructor.</summary>
-        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
+        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelpFunc = helpGenerator; }
+        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelpFunc = helpGenerator; }
+
+        /// <summary>
+        /// Prints usage infofmation, followed by an error message describing to the user what it was that the parser didn't
+        /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
+        /// Use this overload only if your application is definitely monolingual (unlocalisable).
+        /// </summary>
+        public void WriteUsageInfoToConsole()
+        {
+            WriteUsageInfoToConsole(null);
+        }
+
         /// <summary>
         /// Prints usage infofmation, followed by an error message describing to the user what it was that the parser didn't
         /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
         /// </summary>
-        public void WriteUsageInfoToConsole()
+        /// <param name="tr">Contains translations for the messages used by the command-line parser.</param>
+        public void WriteUsageInfoToConsole(Translation tr)
         {
-            ConsoleUtil.Write(GenerateHelp());
+            if (tr == null)
+                tr = new Translation();
+
+            var wrapWidth = ConsoleUtil.WrapWidth();
+            if (wrapWidth == int.MaxValue)
+                wrapWidth = 120;    // an arbitrary but sensible default value
+
+            wrapWidth--;   // outputting characters to the last column in the console causes a blank line, so need to keep the rightmost column clear
+
+            ConsoleUtil.Write(GenerateHelp(tr, wrapWidth));
 
             var helps = new[] { "-?", "/?", "--?", "-h", "--help", "help" };
             bool requestedHelp =
@@ -856,16 +953,18 @@ namespace RT.Util.CommandLine
             if (!requestedHelp)
             {
                 Console.WriteLine();
-                ConsoleUtil.WriteLine(new ConsoleColoredString("Error: ", ConsoleColor.Red) + Message);
+                foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
+                    ConsoleUtil.WriteLine(line);
             }
         }
     }
 
+    /// <summary>Specifies that the parameters specified by the user on the command-line do not pass the custom validation checks.</summary>
     [Serializable]
     public class CommandLineValidationException : CommandLineParseException
     {
         /// <summary>Constructor.</summary>
-        public CommandLineValidationException(string message, Func<Translation, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
+        public CommandLineValidationException(string message, Func<Translation, int, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
     }
 
     /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
@@ -875,9 +974,9 @@ namespace RT.Util.CommandLine
         /// <summary>The unrecognized command name or option name.</summary>
         public string CommandOrOptionName { get; private set; }
         /// <summary>Constructor.</summary>
-        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
+        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+        public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => tr.UnrecognizedCommandOrOption.Fmt(commandOrOptionName), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
@@ -893,9 +992,9 @@ namespace RT.Util.CommandLine
         /// <summary>The later option or command, which conflicts with the <see cref="EarlierCommandOrOption"/>.</summary>
         public string LaterCommandOrOption { get; private set; }
         /// <summary>Constructor.</summary>
-        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
+        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+        public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => tr.IncompatibleCommandOrOption.Fmt(later, earlier), helpGenerator, inner)
         {
             EarlierCommandOrOption = earlier;
@@ -904,7 +1003,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that the command-line parser encountered an unsupported type in the class definition.</summary>
-    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser&lt;T&gt;.PostBuildStep(Type)"/></remarks>
+    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser&lt;T&gt;.PostBuildStep()"/></remarks>
     [Serializable]
     public class UnrecognizedTypeException : CommandLineParseException
     {
@@ -913,9 +1012,9 @@ namespace RT.Util.CommandLine
         /// <summary>The name of the field that has the unsupported type.</summary>
         public string FieldName { get; private set; }
         /// <summary>Constructor.</summary>
-        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, ConsoleColoredString> helpGenerator) : this(typeName, fieldName, helpGenerator, null) { }
+        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(typeName, fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+        public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => tr.UnrecognizedType.Fmt(typeName, fieldName), helpGenerator, inner)
         {
             TypeName = typeName;
@@ -930,9 +1029,9 @@ namespace RT.Util.CommandLine
         /// <summary>The name of the option that was missing a parameter.</summary>
         public string OptionName { get; private set; }
         /// <summary>Constructor.</summary>
-        public IncompleteOptionException(string optionName, Func<Translation, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
+        public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public IncompleteOptionException(string optionName, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+        public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => tr.IncompleteOption.Fmt(optionName), helpGenerator, inner)
         {
             OptionName = optionName;
@@ -946,9 +1045,9 @@ namespace RT.Util.CommandLine
         /// <summary>Contains the first unexpected parameter and all of the subsequent arguments.</summary>
         public string[] UnexpectedParameters { get; private set; }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
+        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { UnexpectedParameters = unexpectedParams; }
+        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { UnexpectedParameters = unexpectedParams; }
     }
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional positional parameters.</summary>
@@ -958,9 +1057,21 @@ namespace RT.Util.CommandLine
         /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
         public string FieldName { get; private set; }
         /// <summary>Constructor.</summary>
-        public MissingParameterException(string fieldName, Func<Translation, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
+        public MissingParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public MissingParameterException(string fieldName, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.MissingParameter.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
+        public MissingParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.MissingParameter.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
+    }
+
+    /// <summary>Specifies that a parameter that expected an integer was passed a string by the user that doesn't parse as an integer.</summary>
+    [Serializable]
+    public class InvalidIntegerParameterException : CommandLineParseException
+    {
+        /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
+        public string FieldName { get; private set; }
+        /// <summary>Constructor.</summary>
+        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
+        /// <summary>Constructor.</summary>
+        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.InvalidInteger.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
     }
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional mandatory options.</summary>
@@ -972,9 +1083,9 @@ namespace RT.Util.CommandLine
         /// <summary>Contains an optional reference to a field which the missing parameter must precede.</summary>
         public FieldInfo BeforeField { get; private set; }
         /// <summary>Constructor.</summary>
-        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, ConsoleColoredString> helpGenerator) : this(field, beforeField, helpGenerator, null) { }
+        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(field, beforeField, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, ConsoleColoredString> helpGenerator, Exception inner)
+        public MissingOptionException(FieldInfo field, FieldInfo beforeField, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => getMessage(tr, field, beforeField), helpGenerator, inner) { Field = field; BeforeField = beforeField; }
 
         private static string getMessage(Translation tr, FieldInfo field, FieldInfo beforeField)
@@ -997,7 +1108,7 @@ namespace RT.Util.CommandLine
     }
 
 #if DEBUG
-    /// <summary>Specifies that the post-build check (<see cref="CommandLineParser&lt;T&gt;.PostBuildStep(Type)"/>) discovered an error.</summary>
+    /// <summary>Specifies that the post-build check (<see cref="CommandLineParser&lt;T&gt;.PostBuildStep()"/>) discovered an error.</summary>
     [Serializable]
     public class PostBuildException : RTException
     {
