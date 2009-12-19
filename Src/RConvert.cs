@@ -186,6 +186,65 @@ namespace RT.Util
         }
 
         /// <summary>
+        /// Returns true if the specified type is one of the 8 built-in "true" integer types:
+        /// the signed and unsigned 8, 16, 32 and 64-bit types.
+        /// </summary>
+        /// <param name="type">The type to be tested.</param>
+        public static bool IsTrueIntegerType(Type type)
+        {
+            var code = Type.GetTypeCode(type);
+            return IsTrueIntegerType(code);
+        }
+
+        /// <summary>
+        /// Returns true if the specified type is one of the 8 built-in "true" integer types:
+        /// the signed and unsigned 8, 16, 32 and 64-bit types.
+        /// </summary>
+        /// <param name="typeCode">The code of the type to be tested - use <see cref="GetTypeCode"/>
+        /// to get the code of an object's type.</param>
+        public static bool IsTrueIntegerType(TypeCode typeCode)
+        {
+            return (typeCode != TypeCode.Boolean)
+                && (typeCode != TypeCode.Char)
+                && (typeCode != TypeCode.DateTime)
+                && _isIntegerType[(int) typeCode];
+        }
+
+        /// <summary>
+        /// Returns true if the specified type is a nullable form of one of the 8 built-in "true" integer types:
+        /// the signed and unsigned 8, 16, 32 and 64-bit types.
+        /// </summary>
+        /// <param name="type">The type to be tested.</param>
+        public static bool IsTrueIntegerNullableType(Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsTrueIntegerType(type.GetGenericArguments()[0]);
+        }
+
+        /// <summary>
+        /// Returns true if the specified type is integer-compatible (in other words, a string of digits can be
+        /// converted to it using <see cref="RConvert"/>). This includes all types that are <see cref="IsTrueIntegerType(Type)"/>
+        /// as well as DateTime, Char and Boolean.
+        /// </summary>
+        /// <param name="type">The type to be tested.</param>
+        public static bool IsIntegerCompatibleType(Type type)
+        {
+            var code = Type.GetTypeCode(type);
+            return IsIntegerCompatibleType(code);
+        }
+
+        /// <summary>
+        /// Returns true if the specified type is integer-compatible (in other words, a string of digits can be
+        /// converted to it using <see cref="RConvert"/>). This includes all types that are <see cref="IsTrueIntegerType(Type)"/>
+        /// as well as DateTime, Char and Boolean.
+        /// </summary>
+        /// <param name="typeCode">The code of the type to be tested - use <see cref="GetTypeCode"/>
+        /// to get the code of an object's type.</param>
+        public static bool IsIntegerCompatibleType(TypeCode typeCode)
+        {
+            return _isIntegerType[(int) typeCode];
+        }
+
+        /// <summary>
         /// C# does not allow a boxed integer type to be unboxed as anything other
         /// than the true type of the boxed integer. This utility function unboxes the
         /// integer as the correct type and then casts it to a long, returning the result.
@@ -1087,6 +1146,55 @@ namespace RT.Util
 
         #endregion
 
+        /// <summary>
+        /// Converts the specified object to the type <paramref name="toType"/> using the Exact conversion.
+        /// 
+        /// Returns true if successful, or false if the object cannot be converted using
+        /// the Exact conversion. <paramref name="result"/> is set to null
+        /// if the conversion is unsuccessful.
+        /// </summary>
+        public static bool ExactTry(Type toType, object value, out object result)
+        {
+            var code = Type.GetTypeCode(toType);
+            bool success = false;
+            object converted = null;
+            switch (code)
+            {
+                case TypeCode.Boolean:
+                    { bool temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Byte:
+                    { byte temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.SByte:
+                    { sbyte temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Int16:
+                    { short temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.UInt16:
+                    { ushort temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Int32:
+                    { int temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.UInt32:
+                    { uint temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Int64:
+                    { long temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.UInt64:
+                    { ulong temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Single:
+                    { float temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Double:
+                    { double temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Decimal:
+                    { decimal temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.DateTime:
+                    { DateTime temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.Char:
+                    { char temp; success = ExactTry(value, out temp); converted = temp; break; }
+                case TypeCode.String:
+                    { string temp; success = ExactTry(value, out temp); converted = temp; break; }
+            }
+            result = success ? converted : null;
+            return success;
+        }
+
         #endregion
 
         #region Exact - result is an "out" parameter; throw on failure
@@ -1413,47 +1521,15 @@ namespace RT.Util
         #endregion
 
         /// <summary>
-        /// Converts the value to type "t" using the Exact conversion. Throws an
+        /// Converts the value to type <paramref name="toType"/> using the Exact conversion. Throws an
         /// <see cref="RConvertException"/> if the Exact conversion fails.
         /// </summary>
-        public static object Exact(Type t, object value)
+        public static object Exact(Type toType, object value)
         {
-            TypeCode code = Type.GetTypeCode(t);
-            switch (code)
-            {
-                case TypeCode.Boolean:
-                    return ExactToBool(value);
-                case TypeCode.Byte:
-                    return ExactToByte(value);
-                case TypeCode.SByte:
-                    return ExactToSByte(value);
-                case TypeCode.Int16:
-                    return ExactToShort(value);
-                case TypeCode.UInt16:
-                    return ExactToUShort(value);
-                case TypeCode.Int32:
-                    return ExactToInt(value);
-                case TypeCode.UInt32:
-                    return ExactToUInt(value);
-                case TypeCode.Int64:
-                    return ExactToLong(value);
-                case TypeCode.UInt64:
-                    return ExactToULong(value);
-                case TypeCode.Single:
-                    return ExactToFloat(value);
-                case TypeCode.Double:
-                    return ExactToDouble(value);
-                case TypeCode.Decimal:
-                    return ExactToDecimal(value);
-                case TypeCode.DateTime:
-                    return ExactToDateTime(value);
-                case TypeCode.Char:
-                    return ExactToChar(value);
-                case TypeCode.String:
-                    return ExactToString(value);
-                default:
-                    throw new RConvertException(value, t);
-            }
+            object result;
+            if (!ExactTry(toType, value, out result))
+                throw new RConvertException(value, toType);
+            return result;
         }
 
         /// <summary>

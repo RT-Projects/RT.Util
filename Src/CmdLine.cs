@@ -119,7 +119,7 @@ namespace RT.Util.CommandLine
                     foreach (var a in field.GetCustomAttributes<OptionAttribute>())
                         options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(int) || field.FieldType == typeof(int?))
+                else if (field.FieldType == typeof(string) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     if (positional)
                     {
@@ -127,15 +127,24 @@ namespace RT.Util.CommandLine
                         {
                             ProcessParameter = () =>
                             {
-                                if (field.FieldType == typeof(int) || field.FieldType == typeof(int?))
+                                // The following code is also duplicated below
+                                if (RConvert.IsTrueIntegerType(field.FieldType))
                                 {
-                                    int res;
-                                    if (!int.TryParse(args[i], out res))
+                                    object res;
+                                    if (!RConvert.ExactTry(field.FieldType, args[i], out res))
+                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
+                                    field.SetValue(ret, res);
+                                }
+                                else if (RConvert.IsTrueIntegerNullableType(field.FieldType))
+                                {
+                                    object res;
+                                    if (!RConvert.ExactTry(field.FieldType.GetGenericArguments()[0], args[i], out res))
                                         throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
                                 else
                                     field.SetValue(ret, args[i]);
+
                                 positionals.RemoveAt(0);
                                 i++;
                             },
@@ -152,15 +161,24 @@ namespace RT.Util.CommandLine
                                 i++;
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
-                                if (field.FieldType == typeof(int) || field.FieldType == typeof(int?))
+                                // The following code is also duplicated above
+                                if (RConvert.IsTrueIntegerType(field.FieldType))
                                 {
-                                    int res;
-                                    if (!int.TryParse(args[i], out res))
-                                        throw new InvalidIntegerParameterException(e.Name, getHelpGenerator(type));
+                                    object res;
+                                    if (!RConvert.ExactTry(field.FieldType, args[i], out res))
+                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
+                                    field.SetValue(ret, res);
+                                }
+                                else if (RConvert.IsTrueIntegerNullableType(field.FieldType))
+                                {
+                                    object res;
+                                    if (!RConvert.ExactTry(field.FieldType.GetGenericArguments()[0], args[i], out res))
+                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
                                 else
                                     field.SetValue(ret, args[i]);
+
                                 i++;
                                 missingMandatories.Remove(field);
                             };
@@ -593,11 +611,11 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || field.FieldType == typeof(int) || field.FieldType == typeof(int?))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
-                        throw new PostBuildException(@"{0}.{1}: Field of type string, string[] or int must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+                        throw new PostBuildException(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
 
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
@@ -627,7 +645,7 @@ namespace RT.Util.CommandLine
                     lastField = field;
                 }
                 else
-                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, int, and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
+                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
             }
 #endif
         }
