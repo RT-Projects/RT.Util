@@ -119,7 +119,7 @@ namespace RT.Util.CommandLine
                     foreach (var a in field.GetCustomAttributes<OptionAttribute>())
                         options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(int))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(int) || field.FieldType == typeof(int?))
                 {
                     if (positional)
                     {
@@ -127,7 +127,7 @@ namespace RT.Util.CommandLine
                         {
                             ProcessParameter = () =>
                             {
-                                if (field.FieldType == typeof(int))
+                                if (field.FieldType == typeof(int) || field.FieldType == typeof(int?))
                                 {
                                     int res;
                                     if (!int.TryParse(args[i], out res))
@@ -152,7 +152,7 @@ namespace RT.Util.CommandLine
                                 i++;
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
-                                if (field.FieldType == typeof(int))
+                                if (field.FieldType == typeof(int) || field.FieldType == typeof(int?))
                                 {
                                     int res;
                                     if (!int.TryParse(args[i], out res))
@@ -593,7 +593,7 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(options, optionTaken, type, field);
                     checkDocumentation(field);
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || field.FieldType == typeof(int))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || field.FieldType == typeof(int) || field.FieldType == typeof(int?))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
