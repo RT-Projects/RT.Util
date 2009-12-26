@@ -8,8 +8,8 @@
     <ProjectGuid>{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>R.Util</RootNamespace>
-    <AssemblyName>R.Util</AssemblyName>
+    <RootNamespace>RT.KitchenSink</RootNamespace>
+    <AssemblyName>RT.KitchenSink</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <OutputPath>..\Builds\$(Configuration)</OutputPath>
