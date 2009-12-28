@@ -44,11 +44,10 @@ namespace RT.Util
         /// <para>Expands all occurrences of "$(NAME)" in the specified string with the special folder path
         /// for the current machine/user, where NAME is the name of one of the values of the <see cref="Environment.SpecialFolder"/>
         /// enum. There is no support for escaping such a replacement, and invalid names are ignored.</para>
-        /// <para>The following additional names are defined:
+        /// <para>The following additional names are defined:</para>
         /// <list type="bullet">
         /// <item>$(Temp) - system's temporary folder path</item>
         /// </list>
-        /// </para>
         /// </summary>
         public static string ExpandPath(string path)
         {
