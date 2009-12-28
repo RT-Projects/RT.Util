@@ -14,14 +14,6 @@ namespace RT.Util
     /// </summary>
     public static class SettingsUtil
     {
-        // For the future:
-        //- allow xmlclassify to take a lambda which would check whether a certain field should be saved
-        //- optionally mark fields in the settings class as per-pc or per-user using special attributes
-        //- add SettingsUtil which provide two generic methods for loading and saving settings as follows:
-        //  - determine whether to save into application directory by checking if a certain file exists in it
-        //  - if so, save per-pc settings into "appname.pcname.settings.xml" and per-user settings into "appname.pcname.username.settings.xml"
-        //  - otherwise use OS-provided directories for this purpose, i.e. C:\Users in Vista
-
         /// <summary>
         /// Specifies what to do in case of operation failing.
         /// </summary>
@@ -53,10 +45,9 @@ namespace RT.Util
         /// a new instance of the class.
         /// </summary>
         /// <param name="settings">Destination - the settings class will be placed here</param>
-        /// <param name="appName">Application or module name - used to determine the file path</param>
-        public static void LoadSettings<TSettings>(out TSettings settings, string appName) where TSettings : new()
+        /// <param name="filename">The name of the file to load the settings from</param>
+        private static void LoadSettings<TSettings>(out TSettings settings, string filename) where TSettings : new()
         {
-            string filename = PathUtil.AppPathCombine(appName + ".settings.xml");
             if (!File.Exists(filename))
             {
                 settings = new TSettings();
@@ -90,7 +81,7 @@ namespace RT.Util
             var attr = type.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
             if (attr == null)
                 throw new ArgumentException("In order to use this overload of LoadSettings on type {0}, the type must have a {1} on it".Fmt(type.FullName, typeof(SettingsAttribute).FullName), "TSettings");
-            LoadSettings(out settings, attr.AppName);
+            LoadSettings(out settings, attr.GetFileName());
         }
 
         /// <summary>
@@ -98,12 +89,10 @@ namespace RT.Util
         /// </summary>
         /// <param name="settings">The settings class to be saved</param>
         /// <param name="settingsType">The type of the settings object.</param>
-        /// <param name="appName">Application or module name - used to determine the file path</param>
+        /// <param name="filename">The name of the file to load the settings from</param>
         /// <param name="onFailure">Specifies how failures should be handled</param>
-        public static void SaveSettings(object settings, Type settingsType, string appName, OnFailure onFailure)
+        private static void SaveSettings(object settings, Type settingsType, string filename, OnFailure onFailure)
         {
-            string filename = PathUtil.AppPathCombine(appName + ".settings.xml");
-
             if (onFailure == OnFailure.Throw)
             {
                 XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
@@ -147,12 +136,12 @@ namespace RT.Util
         /// <param name="settings">The settings class to be saved</param>
         /// <param name="settingsType">The type of the settings object.</param>
         /// <param name="onFailure">Specifies how failures should be handled</param>
-        public static void SaveSettings(object settings, Type settingsType, OnFailure onFailure)
+        internal static void SaveSettings(object settings, Type settingsType, OnFailure onFailure)
         {
             var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
             if (attr == null)
                 throw new ArgumentException("In order to use this overload of SaveSettings on type {0}, the type must have a {1} on it".Fmt(settingsType.FullName, typeof(SettingsAttribute).FullName), "TSettings");
-            SaveSettings(settings, settingsType, attr.AppName, onFailure);
+            SaveSettings(settings, settingsType, attr.GetFileName(), onFailure);
         }
 
         /// <summary>
@@ -160,11 +149,11 @@ namespace RT.Util
         /// </summary>
         /// <typeparam name="TSettings">The type of the settings object.</typeparam>
         /// <param name="settings">The settings class to be saved</param>
-        /// <param name="appName">Application or module name - used to determine the file path</param>
+        /// <param name="filename">The name of the file to load the settings from</param>
         /// <param name="onFailure">Specifies how failures should be handled</param>
-        public static void SaveSettings<TSettings>(TSettings settings, string appName, OnFailure onFailure)
+        internal static void SaveSettings<TSettings>(TSettings settings, string filename, OnFailure onFailure)
         {
-            SaveSettings(settings, typeof(TSettings), appName, onFailure);
+            SaveSettings(settings, typeof(TSettings), filename, onFailure);
         }
 
         /// <summary>
@@ -319,23 +308,52 @@ namespace RT.Util
     }
 
     /// <summary>
+    /// Determines what the settings in the settings file are logically "attached" to.
+    /// </summary>
+    public enum SettingsKind
+    {
+        /// <summary>
+        /// These settings are specific to a particular computer.
+        /// In normal mode, AppData folder common to all users will be used to store the settings file.
+        /// In portable mode, the settings filename will contain the machine name, so "machine-name-specific" is more precise.
+        /// </summary>
+        MachineSpecific,
+
+        /// <summary>
+        /// These settings are specific to a particular user.
+        /// In normal mode, user's roaming AppData folder will be used to store the settings file.
+        /// In portable mode, the settings filename will contain the user's name, so "user-name-specific" is more precise.
+        /// </summary>
+        UserSpecific,
+
+        /// <summary>
+        /// These settings are specific to a particular combination of user and machine.
+        /// In normal mode, user's non-roaming (local) AppData folder will be used to store the settings file.
+        /// In portable mode, the settings filename will contain both the machine name and the user's name.
+        /// </summary>
+        UserAndMachineSpecific,
+    }
+
+    /// <summary>
     /// Describes the intended usage of a "settings" class to <see cref="SettingsUtil"/> methods.
     /// </summary>
     [global::System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class SettingsAttribute : Attribute
     {
         private string _appName;
+        private SettingsKind _kind;
 
         /// <summary>
         /// Creates an instance of this attribute.
         /// </summary>
         /// <param name="appName">The name of the settings file is formed from this <paramref name="appName"/>
         /// according to certain rules. This should normally be a string equal to the name of the application. Paths and
-        /// extensions should be omitted.
-        /// </param>
-        public SettingsAttribute(string appName)
+        /// extensions should be omitted.</param>
+        /// <param name="kind">Specifies what the settings in this settings class are logically "attached" to.</param>
+        public SettingsAttribute(string appName, SettingsKind kind)
         {
             _appName = appName;
+            _kind = kind;
         }
 
         /// <summary>
@@ -344,5 +362,57 @@ namespace RT.Util
         /// extensions should be omitted.
         /// </summary>
         public string AppName { get { return _appName; } }
+
+        /// <summary>
+        /// Specifies what the settings in this settings class are logically "attached" to.
+        /// </summary>
+        public SettingsKind Kind { get { return _kind; } }
+
+        /// <summary>
+        /// Returns the file name that should be used to store the settings class marked with this attribute. Note that
+        /// the return value may change depending on external factors (the existence of a file). The recommended
+        /// approach is to load settings once, and then save them whenever necessary to whichever path is returned
+        /// by this function.
+        /// </summary>
+        public string GetFileName()
+        {
+            string filename = AppName;
+            switch (Kind)
+            {
+                case SettingsKind.UserSpecific:
+                    // AppName.settings.xml is the user-specific machine-independent settings file; also ensures backwards compatibility
+                    break;
+                case SettingsKind.UserAndMachineSpecific:
+                    // AppName.SIRIUS.settings.xml is the user-specific machine-specific settings file
+                    filename += "." + Environment.MachineName;
+                    break;
+                case SettingsKind.MachineSpecific:
+                    // AppName.AllUsers.SIRIUS.settings.xml is a rare special case for a portable app
+                    filename += ".AllUsers." + Environment.MachineName;
+                    break;
+                default:
+                    throw new InternalError("unreachable (97628)");
+            }
+            filename = filename.FilenameCharactersEscape() + ".Settings.xml";
+
+            if (File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
+            {
+                return PathUtil.AppPathCombine(filename);
+            }
+            else
+            {
+                switch (Kind)
+                {
+                    case SettingsKind.MachineSpecific:
+                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
+                    case SettingsKind.UserSpecific:
+                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName, filename);
+                    case SettingsKind.UserAndMachineSpecific:
+                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
+                    default:
+                        throw new InternalError("unreachable (97629)");
+                }
+            }
+        }
     }
 }
