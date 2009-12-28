@@ -81,6 +81,32 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
+        public void TestFilenameEscape()
+        {
+            Assert.AreEqual("blah", "blah".FilenameCharactersEscape());
+            Assert.AreEqual("bl{2F}ah", "bl/ah".FilenameCharactersEscape());
+            Assert.AreEqual("bl{2A}{2A}ah", "bl**ah".FilenameCharactersEscape());
+            Assert.AreEqual("{2A}", "*".FilenameCharactersEscape());
+
+            Assert.AreEqual("blah ", "blah ".FilenameCharactersEscape());
+            Assert.AreEqual("blah.txt.", "blah.txt.".FilenameCharactersEscape());
+
+            Assert.AreEqual("blah", "blah".FilenameCharactersUnescape());
+            Assert.AreEqual("bl/ah", "bl{2F}ah".FilenameCharactersUnescape());
+            Assert.AreEqual("bl**ah", "bl{2A}{2A}ah".FilenameCharactersUnescape());
+            Assert.AreEqual("*", "{2A}".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{*ah", "bl{{2A}ah".FilenameCharactersUnescape());
+
+            Assert.AreEqual("bl{{}ah", "bl{{}ah".FilenameCharactersUnescape());
+            Assert.AreEqual("bl}ah", "bl}ah".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{2A2A2A2A2A}ah", "bl{2A2A2A2A2A}ah".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{2AH", "bl{2AH".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{2A", "bl{2A".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{2", "bl{2".FilenameCharactersUnescape());
+            Assert.AreEqual("bl{", "bl{".FilenameCharactersUnescape());
+        }
+
+        [Test]
         public void TestTrivial()
         {
             var tww = "\n\n\n".WordWrap(40).ToArray();
