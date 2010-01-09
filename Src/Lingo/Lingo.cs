@@ -255,68 +255,59 @@ namespace RT.Util.Lingo
             /// <summary>Generates the file.</summary>
             public void Dispose()
             {
-                // If the destination file already exists then generate into a temporary file
-                var filenameGenerated = File.Exists(_filename) ? _filename + ".~tmp" : _filename;
-                using (var file = File.Open(filenameGenerated, FileMode.Create, FileAccess.Write, FileShare.Write))
-                using (var f = new StreamWriter(file))
+                var f = new StringBuilder();
+
+                f.AppendLine("using RT.Util.Lingo;");
+                f.AppendLine("");
+                bool first = true;
+                foreach (var kvp in _codeSoFar)
                 {
-                    f.WriteLine("using RT.Util.Lingo;");
-                    f.WriteLine("");
-                    bool first = true;
-                    foreach (var kvp in _codeSoFar)
+                    if (!first)
+                        f.AppendLine();
+                    first = false;
+                    f.AppendLine("namespace " + kvp.Key);
+                    f.AppendLine("{");
+                    bool first2 = true;
+                    foreach (var val in kvp.Value)
                     {
-                        if (!first)
-                            f.WriteLine();
-                        first = false;
-                        f.WriteLine("namespace " + kvp.Key);
-                        f.WriteLine("{");
-                        bool first2 = true;
-                        foreach (var val in kvp.Value)
-                        {
-                            if (!first2)
-                                f.WriteLine();
-                            first2 = false;
-                            f.Write(val);
-                        }
-                        f.WriteLine("}");
+                        if (!first2)
+                            f.AppendLine();
+                        first2 = false;
+                        f.Append(val);
                     }
+                    f.AppendLine("}");
                 }
 
-                if (_filename != filenameGenerated)
+                var newOutput = f.ToString();
+                var prevOutput = File.ReadAllText(_filename);
+                string filenameGenerated = null;
+
+                if (newOutput != prevOutput)
                 {
                     // Replace the destination file with the newly generated stuff, but only if there are any differences.
-                    byte[] hash1, hash2;
-                    using (var hash = new SHA1Managed())
+                    int choice;
+                    while ((choice = DlgMessage.ShowWarning("The file \"{0}\" will be modified by Lingo.".Fmt(Path.GetFullPath(_filename)), "&OK", "&Diff", "&Break")) != 0)
                     {
-                        using (var f = File.OpenRead(_filename))
-                            hash1 = hash.ComputeHash(f);
-                        using (var f = File.OpenRead(_filename + ".~tmp"))
-                            hash2 = hash.ComputeHash(f);
-
-                        if (hash1.SequenceEqual(hash2))
-                            File.Delete(_filename + ".~tmp");
-                        else
+                        if (choice == 1)
                         {
-                            int choice;
-                            while ((choice = DlgMessage.ShowWarning("The file \"{0}\" will be modified by Lingo.".Fmt(Path.GetFullPath(_filename)), "OK", "Diff", "Break")) != 0)
+                            if (Environment.GetEnvironmentVariable("LINGO_DIFF") == null)
+                                DlgMessage.ShowInfo("The \"LINGO_DIFF\" environment variable is not defined. To enable diffing, set it to a full path to your preferred diff program.");
+                            else
                             {
-                                if (choice == 1)
-                                {
-                                    if (Environment.GetEnvironmentVariable("LINGO_DIFF") == null)
-                                        DlgMessage.ShowInfo("The \"LINGO_DIFF\" environment variable is not defined. To enable diffing, set it to a full path to your preferred diff program.");
-                                    else
-                                        Process.Start(Environment.GetEnvironmentVariable("LINGO_DIFF"), @"""{0}"" ""{1}""".Fmt(_filename, filenameGenerated));
-                                }
-                                else if (choice == 2)
-                                    Debugger.Break();
+                                filenameGenerated = Path.GetTempFileName();
+                                File.WriteAllText(filenameGenerated, newOutput);
+                                Process.Start(Environment.GetEnvironmentVariable("LINGO_DIFF"), @"""{0}"" ""{1}""".Fmt(_filename, filenameGenerated));
                             }
-                            // DO NOT step through this code - the debugger will get stuck after the Delete operation. Jump over both lines in one go.
-                            File.Delete(_filename);
-                            File.Move(_filename + ".~tmp", _filename);
-                            // Warn the user that some things may not behave properly until rebuild (eg newly generated strings won't show in translation UI yet).
-                            DlgMessage.ShowWarning("The file \"{0}\" has been modified by Lingo.\n\nPlease rebuild the application to avoid unexpected behaviour, or click \"OK\" at your own risk.".Fmt(Path.GetFullPath(_filename)));
                         }
+                        else if (choice == 2)
+                            Debugger.Break();
                     }
+                    // DO NOT step through this code - the debugger will get stuck after the Delete operation. Jump over both lines in one go.
+                    File.WriteAllText(_filename, newOutput);
+                    if (filenameGenerated != null)
+                        File.Delete(filenameGenerated);
+                    // Warn the user that some things may not behave properly until rebuild (e.g. newly generated strings won't show in translation UI yet).
+                    DlgMessage.ShowWarning("The file \"{0}\" has been modified by Lingo.\n\nPlease rebuild the application to avoid unexpected behaviour, or click \"OK\" at your own risk.".Fmt(Path.GetFullPath(_filename)));
                 }
             }
         }
@@ -428,7 +419,7 @@ namespace RT.Util.Lingo
         /// Returns only those unused fields from the specified type as well as types referenced by that type that have the <see cref="LingoStringClassAttribute"/>.</summary>
         /// <param name="type">Top-level translation-string type whose fields to examine.</param>
         /// <param name="assemblies">Collection of assemblies whose IL code to examine.</param>
-        public static void WarnOfUnusedStrings(Type type, IEnumerable<Assembly> assemblies)
+        public static void WarnOfUnusedStrings(Type type, params Assembly[] assemblies)
         {
             var fields = allTrStringFields(type).ToList();
             var reader = new ilReader();
@@ -445,15 +436,18 @@ namespace RT.Util.Lingo
                         {
                             var field = mod.ResolveField((int) instr.Argument.Value);
                             if (field != null)
+                            {
                                 fields.Remove(field);
+                                if (fields.Count == 0)
+                                    return;
+                            }
                         }
                     }
                 }
             }
 
-            if (fields.Count > 0)
-                if (DlgMessage.ShowWarning("Unused strings found:\n\n • " + fields.Select(f => f.DeclaringType.FullName + "." + f.Name).JoinString("\n • "), "Ignore", "Break") == 1)
-                    Debugger.Break();
+            if (DlgMessage.ShowWarning("Unused strings found:\n\n • " + fields.Select(f => f.DeclaringType.FullName + "." + f.Name).JoinString("\n • "), "Ignore", "Break") == 1)
+                Debugger.Break();
         }
 
         private static IEnumerable<FieldInfo> allTrStringFields(Type type)
