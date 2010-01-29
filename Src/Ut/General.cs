@@ -160,9 +160,19 @@ namespace RT.Util
         /// <returns>Result of the SHA1 hash function as a string of hexadecimal digits.</returns>
         public static string Sha1(string path)
         {
-            var s = SHA1.Create();
             using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                return s.ComputeHash(f).ToHex();
+                return SHA1.Create().ComputeHash(f).ToHex();
+        }
+
+        /// <summary>
+        /// Reads the specified file and computes the MD5 hash function from its contents.
+        /// </summary>
+        /// <param name="path">Path to the file to compute MD5 hash function from.</param>
+        /// <returns>Result of the MD5 hash function as a string of hexadecimal digits.</returns>
+        public static string Md5(string path)
+        {
+            using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                return MD5.Create().ComputeHash(f).ToHex();
         }
 
         /// <summary>
