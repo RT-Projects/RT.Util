@@ -327,81 +327,9 @@ namespace RT.Util.CommandLine
                 FieldInfo[] optional, required;
                 getOptionalRequiredFieldsForHelp(type, out optional, out required);
 
-                var anyCommandsWithSuboptions = false;
-                var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
-                int row = 0;
-
                 //
-                // ##  Go through all the REQUIRED parameters, listing them in the "Usage" line as well as constructing the table explaining them
-                //
-                foreach (var f in required.OrderBy(f => f.IsDefined<IsPositionalAttribute>()))
-                {
-                    if (!f.IsDefined<IsPositionalAttribute>())
-                    {
-                        var opts = f.GetCustomAttributes<OptionAttribute>().Select(opt => opt.Name).ToArray();
-                        if (opts.Length > 1)
-                        {
-                            help.Add(new ConsoleColoredString(" {", ConsoleColor.DarkGray));
-                            help.Add(opts[0]);
-                            foreach (var opt in opts.Skip(1))
-                            {
-                                help.Add(new ConsoleColoredString("|", ConsoleColor.DarkGray));
-                                help.Add(opt);
-                            }
-                            help.Add(new ConsoleColoredString("}", ConsoleColor.DarkGray));
-                        }
-                        else
-                            help.Add(" " + opts[0]);
-                    }
-
-                    help.Add(new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan));
-
-                    if (f.FieldType.IsDefined<CommandGroupAttribute>())
-                    {
-                        help.Add(" ...");
-                        int origRow = row;
-                        foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract && !t.IsDefined<UndocumentedAttribute>()))
-                        {
-                            FieldInfo[] subOptional, subRequired;
-                            getOptionalRequiredFieldsForHelp(ty, out subOptional, out subRequired);
-                            var cell1 = new ConsoleColoredString(ty.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderBy(c => c.Length).JoinString("\n"), ConsoleColor.White);
-                            if (subOptional.Any() || subRequired.Any())
-                            {
-                                cell1 += new ConsoleColoredString("*", ConsoleColor.DarkYellow);
-                                anyCommandsWithSuboptions = true;
-                            }
-                            requiredParamsTable.SetCell(1, row, cell1, true);
-                            requiredParamsTable.SetCell(2, row, getDocumentation(ty));
-                            row++;
-                        }
-                        requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
-                    }
-                    else if (f.FieldType.IsEnum)
-                    {
-                        var positional = f.IsDefined<IsPositionalAttribute>();
-                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                        {
-                            var str = positional
-                                ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
-                                : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
-                            requiredParamsTable.SetCell(0, row, new ConsoleColoredString(str, ConsoleColor.White), true);
-                            requiredParamsTable.SetCell(1, row, getDocumentation(el), 2, 1);
-                            row++;
-                        }
-                    }
-                    else
-                    {
-                        requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), true);
-                        requiredParamsTable.SetCell(1, row, getDocumentation(f), 2, 1);
-                        row++;
-                    }
-                }
-
-                var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
-                row = 0;
-
-                //
-                // ##  Go through all the OPTIONAL parameters, listing them in the "Usage" line as well as constructing the table explaining them
+                // ##  Go through all the OPTIONAL parameters, listing them in the "Usage" line
+                // ##  (we'll construct the table explaining them later, after the required options)
                 //
                 foreach (var f in optional)
                 {
@@ -435,7 +363,91 @@ namespace RT.Util.CommandLine
                         help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
                     }
                     help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
+                }
 
+                var anyCommandsWithSuboptions = false;
+                var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                int row = 0;
+
+                //
+                // ##  Go through all the REQUIRED parameters, listing them in the "Usage" line as well as constructing the table explaining them
+                //
+                foreach (var f in required.OrderBy(f => f.IsDefined<IsPositionalAttribute>()))
+                {
+                    if (!f.IsDefined<IsPositionalAttribute>())
+                    {
+                        var opts = f.GetCustomAttributes<OptionAttribute>().Select(opt => opt.Name).ToArray();
+                        if (opts.Length > 1)
+                        {
+                            help.Add(new ConsoleColoredString(" {", ConsoleColor.DarkGray));
+                            help.Add(opts[0]);
+                            foreach (var opt in opts.Skip(1))
+                            {
+                                help.Add(new ConsoleColoredString("|", ConsoleColor.DarkGray));
+                                help.Add(opt);
+                            }
+                            help.Add(new ConsoleColoredString("}", ConsoleColor.DarkGray));
+                        }
+                        else
+                            help.Add(" " + opts[0]);
+                    }
+
+                    help.Add(new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan));
+
+                    if (f.FieldType.IsDefined<CommandGroupAttribute>())
+                    {
+                        help.Add(" ...");
+                        int origRow = row;
+                        foreach (var ty in f.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(f.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract && !t.IsDefined<UndocumentedAttribute>())
+                            .OrderBy(t => t.GetCustomAttributes<CommandNameAttribute>().MinElement(c => c.Name.Length).Name))
+                        {
+                            FieldInfo[] subOptional, subRequired;
+                            getOptionalRequiredFieldsForHelp(ty, out subOptional, out subRequired);
+                            var cell1 = ConsoleColoredString.Empty;
+                            var cell2 = ConsoleColoredString.Empty;
+                            var suboptions = subOptional.Any() || subRequired.Any();
+                            anyCommandsWithSuboptions |= suboptions;
+                            var asterisk = suboptions ? new ConsoleColoredString("*\n", ConsoleColor.DarkYellow) : new ConsoleColoredString("\n");
+                            foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
+                                if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
+
+                            requiredParamsTable.SetCell(1, row, cell1.Substring(0, cell1.Length - 1), true);
+                            requiredParamsTable.SetCell(2, row, cell2.Substring(0, cell2.Length - 1), true);
+                            requiredParamsTable.SetCell(3, row, getDocumentation(ty));
+                            row++;
+                        }
+                        requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
+                    }
+                    else if (f.FieldType.IsEnum)
+                    {
+                        var positional = f.IsDefined<IsPositionalAttribute>();
+                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                        {
+                            var str = positional
+                                ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
+                                : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
+                            requiredParamsTable.SetCell(0, row, new ConsoleColoredString(str, ConsoleColor.White), true);
+                            requiredParamsTable.SetCell(1, row, getDocumentation(el), 3, 1);
+                            row++;
+                        }
+                    }
+                    else
+                    {
+                        requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), true);
+                        requiredParamsTable.SetCell(1, row, getDocumentation(f), 3, 1);
+                        row++;
+                    }
+                }
+
+                var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
+                row = 0;
+
+                //
+                // ##  Go through all the OPTIONAL parameters, constructing the table explaining them
+                // ##  (we've already listed them in the Usage line because they have to come before the required parameters there)
+                //
+                foreach (var f in optional)
+                {
                     // Add to the table with documentation
                     if (f.FieldType.IsEnum)
                     {
