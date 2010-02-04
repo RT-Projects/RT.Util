@@ -503,6 +503,35 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Joins all strings in the enumerable using the specified string as the separator and the
+        /// specified prefix and suffix for each string.
+        /// <example>
+        ///     <code>
+        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join("[", "]", ", ");
+        ///         // a contains "[Paris], [London], [Tokyo]"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string JoinString(this IEnumerable<string> values, string prefix, string suffix, string separator)
+        {
+            var enumerator = values.GetEnumerator();
+            if (!enumerator.MoveNext())
+                return string.Empty;
+            StringBuilder sb = new StringBuilder();
+            sb.Append(prefix);
+            sb.Append(enumerator.Current);
+            sb.Append(suffix);
+            while (enumerator.MoveNext())
+            {
+                sb.Append(separator);
+                sb.Append(prefix);
+                sb.Append(enumerator.Current);
+                sb.Append(suffix);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Formats a string using <see cref="string.Format(string, object[])"/>.
         /// </summary>
         public static string Fmt(this string formatString, params object[] args)
@@ -755,6 +784,15 @@ namespace RT.Util.ExtensionMethods
                 return source.Substring(startIndex);
             else
                 return source.Substring(startIndex, length);
+        }
+
+        /// <summary>
+        /// Returns true if and only if this string is equal to the other string under the
+        /// invariant-culture case-insensitive comparison.
+        /// </summary>
+        public static bool EqualsNoCase(this string strthis, string str)
+        {
+            return strthis.Equals(str, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }
