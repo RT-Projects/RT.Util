@@ -115,7 +115,9 @@ namespace RT.Util
     /// <remarks>Use <see cref="ConsoleUtil.Write(ConsoleColoredString)"/> and <see cref="ConsoleUtil.WriteLine(ConsoleColoredString)"/> to output the string to the console.</remarks>
     public class ConsoleColoredString
     {
-        public static ConsoleColoredString Empty = new ConsoleColoredString();
+        /// <summary>Represents an empty colored string. This field is read-only.</summary>
+        public static readonly ConsoleColoredString Empty = new ConsoleColoredString();
+
         private string _text;
         private ConsoleColor[] _colors;
 
