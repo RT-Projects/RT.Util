@@ -794,5 +794,17 @@ namespace RT.Util.ExtensionMethods
         {
             return strthis.Equals(str, StringComparison.InvariantCultureIgnoreCase);
         }
+
+        /// <summary>Returns true if and only if this string ends with the specified character.</summary>
+        public static bool EndsWith(this string str, char ch)
+        {
+            return str != null && str.Length > 0 && str[str.Length - 1] == ch;
+        }
+
+        /// <summary>Returns true if and only if this string starts with the specified character.</summary>
+        public static bool StartsWith(this string str, char ch)
+        {
+            return str != null && str.Length > 0 && str[0] == ch;
+        }
     }
 }

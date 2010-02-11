@@ -433,6 +433,18 @@ namespace RT.Util.Xml
             }
 
             Type saveType = saveObject.GetType();
+            if (!saveType.Equals(declaredType))
+            {
+                if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                {
+                    if (saveType.Namespace.Equals(declaredType.Namespace))
+                        elem.Add(new XAttribute("type", saveType.Name));
+                    else
+                        elem.Add(new XAttribute("type", saveType.FullName));
+                }
+                else
+                    elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
+            }
 
             if (saveType == typeof(XElement))
                 elem.Add(new XElement(saveObject as XElement));
@@ -561,19 +573,6 @@ namespace RT.Util.Xml
                                     elem.Add(subElem);
                             }
                         }
-                    }
-
-                    if (!saveType.Equals(declaredType))
-                    {
-                        if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
-                        {
-                            if (saveType.Namespace.Equals(declaredType.Namespace))
-                                elem.Add(new XAttribute("type", saveType.Name));
-                            else
-                                elem.Add(new XAttribute("type", saveType.FullName));
-                        }
-                        else
-                            elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                     }
                 }
             }
