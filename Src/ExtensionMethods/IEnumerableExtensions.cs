@@ -46,11 +46,13 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all consecutive pairs of the elements, including
-        /// a pair containing the last and the first element (hence "closed"). For example, if the source collection
-        /// contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4), (4, 1) }.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all consecutive pairs of the elements.
         /// </summary>
-        public static IEnumerable<Tuple<T, T>> ConsecutivePairsClosed<T>(this IEnumerable<T> enumerable)
+        /// <param name="enumerable">The input enumerable.</param>
+        /// <param name="closed">If true, an additional pair containing the last and first element is included. For example,
+        /// if the source collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref name="closed"/>
+        /// is false, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is true.</param>
+        public static IEnumerable<Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> enumerable, bool closed)
         {
             var enumer = enumerable.GetEnumerator();
             bool any = enumer.MoveNext();
@@ -62,7 +64,8 @@ namespace RT.Util.ExtensionMethods
                 yield return new Tuple<T, T>(last, enumer.Current);
                 last = enumer.Current;
             }
-            yield return new Tuple<T, T>(last, first);
+            if (closed)
+                yield return new Tuple<T, T>(last, first);
         }
 
         /// <summary>
@@ -400,7 +403,7 @@ namespace RT.Util.ExtensionMethods
                 }
                 else
                 {
-                   if (headtail == count) headtail = 0;
+                    if (headtail == count) headtail = 0;
                     yield return queue[headtail];
                     queue[headtail] = item;
                     headtail++;

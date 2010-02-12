@@ -19,10 +19,10 @@ namespace RT.Util.Lingo
         public TrString(string translation) { Translation = translation; }
 
         /// <summary>Implicit cast from string to TrString.</summary>
-        public static implicit operator TrString(string translation) { return new TrString(translation); }
+        public static implicit operator TrString(string translation) { return translation == null ? null : new TrString(translation); }
 
         /// <summary>Implicit cast from TrString to string.</summary>
-        public static implicit operator string(TrString translatable) { return translatable.Translation; }
+        public static implicit operator string(TrString translatable) { return translatable == null ? null : translatable.Translation; }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object[])"/>.</summary>
         public string Fmt(params object[] args) { try { return string.Format(Translation, args); } catch { return Translation; } }
