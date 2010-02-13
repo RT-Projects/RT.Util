@@ -27,12 +27,12 @@ namespace RT.Util.Drawing
         /// <summary>
         /// Draws the specified Image into the destination rectangle DestRect of the Graphics object g using the specified Opacity.
         /// </summary>
-        /// <param name="g">Graphics object to alpha-blend the image onto.</param>
+        /// <param name="graphics">Graphics object to alpha-blend the image onto.</param>
         /// <param name="image">Image to draw.</param>
         /// <param name="destRect">Destination rectangle within the target Graphics canvas.</param>
         /// <param name="opacity">Opacity level to use when drawing the image. 0 means nothing changes.
         /// 1 means the image is drawn normally. 0.5 means a 50% blend between source and destination.</param>
-        public static void DrawImageAlpha(Graphics g, Image image, Rectangle destRect, float opacity)
+        public static void DrawImageAlpha(this Graphics graphics, Image image, Rectangle destRect, float opacity)
         {
             ColorMatrix matrix = new ColorMatrix(new float[][] {
                 new float[] {1, 0, 0, 0, 0},
@@ -45,7 +45,7 @@ namespace RT.Util.Drawing
             attr.SetColorMatrix(matrix,
                 ColorMatrixFlag.Default,
                 ColorAdjustType.Bitmap);
-            g.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
+            graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
         /// <summary>
@@ -83,6 +83,27 @@ namespace RT.Util.Drawing
             g.AddArc(x + width - 2 * radius, y + height - 2 * radius, 2 * radius, 2 * radius, 360, 90);
             g.AddArc(x, y + height - 2 * radius, 2 * radius, 2 * radius, 450, 90);
             return g;
+        }
+
+        /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
+        /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
+        /// <param name="maximumSize">Maximum size (in pixels) the text should have.</param>
+        /// <param name="font">The font to measure.</param>
+        /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
+        public static float GetMaximumFontSize(this Graphics graphics, SizeF maximumSize, FontFamily font, string text)
+        {
+            float low = 1;
+            float? high = null;
+            while (high == null || high.Value - low > 0.1)
+            {
+                float trySize = high == null ? low + 1024 : (low + high.Value) / 2;
+                SizeF sz = graphics.MeasureString(text, new Font(font, trySize, FontStyle.Bold));
+                if (sz.Width > maximumSize.Width || sz.Height > maximumSize.Height)
+                    high = trySize;
+                else
+                    low = trySize;
+            }
+            return low;
         }
     }
 }

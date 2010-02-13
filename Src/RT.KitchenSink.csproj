@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -54,6 +55,7 @@
     <Compile Include="Conversions.cs" />
     <Compile Include="CsvTable.cs" />
     <Compile Include="Drawing\Canvas.cs" />
+    <Compile Include="Drawing\PlasmaFractal.cs" />
     <Compile Include="EventSim\Event.cs" />
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
