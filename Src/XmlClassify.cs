@@ -433,7 +433,10 @@ namespace RT.Util.Xml
             }
 
             Type saveType = saveObject.GetType();
-            if (!declaredType.Equals(saveType) && !declaredType.Equals(typeof(Nullable<>).MakeGenericType(saveType)))
+            Type nullableSaveType;
+            try { nullableSaveType = typeof(Nullable<>).MakeGenericType(saveType); }
+            catch { nullableSaveType = null; }
+            if (!declaredType.Equals(saveType) && !declaredType.Equals(nullableSaveType))
             {
                 if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
                 {
