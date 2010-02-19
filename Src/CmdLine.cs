@@ -411,8 +411,8 @@ namespace RT.Util.CommandLine
                             foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
                                 if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
-                            requiredParamsTable.SetCell(1, row, cell1.Substring(0, cell1.Length - 1), true);
-                            requiredParamsTable.SetCell(2, row, cell2.Substring(0, cell2.Length - 1), true);
+                            requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - 1), true);
+                            requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - 1), true);
                             requiredParamsTable.SetCell(3, row, getDocumentation(ty));
                             row++;
                         }
