@@ -68,27 +68,29 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns the width of the console as far as word wrapping is concerned. This is the true width
-        /// of the console if it is available and neither stdout nor stderr are redirected. In all other
-        /// cases returns int.MaxValue.
+        /// Returns the maximum line width that all code wishing to correctly word-wrap its text output
+        /// should use. If the output is redirected to a file this will return an arbitrary but sensible value,
+        /// otherwise the value reflects the width of the console buffer.
         /// </summary>
-        public static int WrapWidth()
+        public static int WrapToWidth()
         {
             if (StdOutState() == ConsoleState.Redirected || StdErrState() == ConsoleState.Redirected)
-                return int.MaxValue;
-            try { return Console.WindowWidth; }
-            catch { return int.MaxValue; }
+                return 120;
+            try { return Console.BufferWidth - 1; }
+            catch { return 120; }
         }
 
         /// <summary>
-        /// Outputs the specified message to the console window, word-wrapping to the console window's width if possible.
+        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
+        /// paragraphs will be word-wrapped to fit in the console buffer, or to a sensible width if redirected to
+        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
         /// </summary>
-        public static void WriteLine(string message)
+        public static void WriteParagraphs(string message)
         {
             try
             {
-                int width = Console.BufferWidth;
-                foreach (var line in message.WordWrap(width - 1))
+                int width = WrapToWidth();
+                foreach (var line in message.WordWrap(width))
                     Console.WriteLine(line);
             }
             catch

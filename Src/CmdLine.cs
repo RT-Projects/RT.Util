@@ -967,11 +967,7 @@ namespace RT.Util.CommandLine
             if (tr == null)
                 tr = new Translation();
 
-            var wrapWidth = ConsoleUtil.WrapWidth();
-            if (wrapWidth == int.MaxValue)
-                wrapWidth = 120;    // an arbitrary but sensible default value
-
-            wrapWidth--;   // outputting characters to the last column in the console causes a blank line, so need to keep the rightmost column clear
+            var wrapWidth = ConsoleUtil.WrapToWidth();
 
             ConsoleUtil.Write(GenerateHelp(tr, wrapWidth));
 

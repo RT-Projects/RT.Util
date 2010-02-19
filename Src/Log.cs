@@ -310,9 +310,9 @@ namespace RT.Util
                 var prevCol = Console.ForegroundColor;
                 Console.ForegroundColor = MsgTypeColor[type];
 
-                int wrapWidth = WordWrap ? ConsoleUtil.WrapWidth() : int.MaxValue;
+                int wrapWidth = WordWrap ? ConsoleUtil.WrapToWidth() : int.MaxValue;
                 bool first = true;
-                foreach (var line in fmtText.WordWrap(wrapWidth - 1 - fmtInfo.Length))
+                foreach (var line in fmtText.WordWrap(wrapWidth - fmtInfo.Length))
                 {
                     consoleStream.Write(first ? fmtInfo : indent);
                     first = false;

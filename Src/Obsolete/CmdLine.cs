@@ -364,7 +364,7 @@ namespace RT.Util
                 _printer.PrintLine("");
                 foreach (var err in _errors)
                 {
-                    foreach (var line in ("    " + err).WordWrap(_printer.MaxWidth - 5))
+                    foreach (var line in ("    " + err).WordWrap(_printer.MaxWidth - 4))
                         _printer.PrintLine(line);
                     _printer.PrintLine("");
                 }
@@ -491,12 +491,9 @@ namespace RT.Util
             // Print a table of options and their descriptions
             //
             bool anyPrintableOptions = false;
-            var width = ConsoleUtil.WrapWidth();
-            if (width == int.MaxValue)
-                width = 120;
-            width--;
+            var width = ConsoleUtil.WrapToWidth();
             var leftIndent = 4;
-            TextTable table = new TextTable { MaxWidth = _printer.MaxWidth - leftIndent - 5, ColumnSpacing = 3, RowSpacing = 1 };
+            TextTable table = new TextTable { MaxWidth = _printer.MaxWidth - leftIndent - 4, ColumnSpacing = 3, RowSpacing = 1 };
             int row = 0;
             for (int i = 0; i < _byDefineOrder.Count; i++)
             {
@@ -751,7 +748,7 @@ namespace RT.Util
 
         public override int MaxWidth
         {
-            get { return ConsoleUtil.WrapWidth(); }
+            get { return ConsoleUtil.WrapToWidth(); }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }

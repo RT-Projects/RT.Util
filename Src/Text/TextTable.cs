@@ -26,7 +26,7 @@ namespace RT.Util.Text
         public int ColumnSpacing { get; set; }
         /// <summary>Gets or sets the number of characters to space each row apart from the next.</summary>
         public int RowSpacing { get; set; }
-        /// <summary>Gets or sets the maximum width of the table, including all column spacing. If <see cref="UseFullWidth"/> is false, the table may be narrower. If this is null, the table will be as wide as all the text in it, unwrapped.</summary>
+        /// <summary>Gets or sets the maximum width of the table, including all column spacing. If <see cref="UseFullWidth"/> is false, the table may be narrower. If this is null, the table width depends on which method is used to generate it.</summary>
         public int? MaxWidth { get; set; }
         /// <summary>Gets or sets a value indicating whether horizontal rules are rendered between rows. The horizontal rules are rendered only if <see cref="RowSpacing"/> is greater than zero.</summary>
         public bool HorizontalRules { get; set; }
@@ -361,7 +361,7 @@ namespace RT.Util.Text
         public override string ToString()
         {
             var result = new StringBuilder();
-            toString(s => result.Append(s), s => result.Append(s.ToString()));
+            toString(MaxWidth, s => result.Append(s), s => result.Append(s.ToString()));
             return result.ToString();
         }
 
@@ -370,23 +370,17 @@ namespace RT.Util.Text
         public ConsoleColoredString ToColoredString()
         {
             var result = new List<ConsoleColoredString>();
-            toString(s => result.Add(s), s => result.Add(s));
+            toString(MaxWidth, s => result.Add(s), s => result.Add(s));
             return new ConsoleColoredString(result.ToArray());
         }
 
-        /// <summary>Outputs the entire table to the console. If <see cref="MaxWidth"/> is null, it will be set to the width of the console window.</summary>
+        /// <summary>Outputs the entire table to the console.</summary>
         public void WriteToConsole()
         {
-            if (MaxWidth == null)
-            {
-                MaxWidth = ConsoleUtil.WrapWidth() - 1;
-                if (MaxWidth == int.MaxValue - 1)
-                    MaxWidth = 120;
-            }
-            toString(s => Console.Write(s), s => ConsoleUtil.Write(s));
+            toString(MaxWidth ?? ConsoleUtil.WrapToWidth(), s => Console.Write(s), s => ConsoleUtil.Write(s));
         }
 
-        private void toString(Action<string> outputString, Action<ConsoleColoredString> outputColoredString)
+        private void toString(int? maxWidth, Action<string> outputString, Action<ConsoleColoredString> outputColoredString)
         {
             int rows = _cells.Count;
             if (rows == 0)
@@ -422,29 +416,29 @@ namespace RT.Util.Text
             var unwrapped = true;
 
             // If the table is now too wide, use the length of the longest word, or longest paragraph if nowrap
-            if (MaxWidth != null && columnWidths.Sum() > MaxWidth.Value - (cols - 1) * ColumnSpacing)
+            if (maxWidth != null && columnWidths.Sum() > maxWidth - (cols - 1) * ColumnSpacing)
             {
                 columnWidths = generateColumnWidths(cols, cellsByColspan, c => Math.Max(1, c.MinWidth()));
                 unwrapped = false;
             }
 
             // If the table is still too wide, use the length of the longest paragraph if nowrap, otherwise 0
-            if (MaxWidth != null && columnWidths.Sum() > MaxWidth.Value - (cols - 1) * ColumnSpacing)
+            if (maxWidth != null && columnWidths.Sum() > maxWidth - (cols - 1) * ColumnSpacing)
                 columnWidths = generateColumnWidths(cols, cellsByColspan, c => c.NoWrap ? Math.Max(1, c.LongestParagraph()) : 1);
 
             // If the table is still too wide, we will have to wrap like crazy.
-            if (MaxWidth != null && columnWidths.Sum() > MaxWidth.Value - (cols - 1) * ColumnSpacing)
+            if (maxWidth != null && columnWidths.Sum() > maxWidth - (cols - 1) * ColumnSpacing)
             {
                 columnWidths = new int[cols];
                 for (int i = 0; i < cols; i++) columnWidths[i] = 1;
             }
 
             // If the table is STILL too wide, all bets are off.
-            if (MaxWidth != null && columnWidths.Sum() > MaxWidth.Value - (cols - 1) * ColumnSpacing)
-                throw new InvalidOperationException(@"The specified table width is too narrow. It is not possible to fit the {0} columns and the column spacing of {1} per column into a total width of {2} characters.".Fmt(cols, ColumnSpacing, MaxWidth));
+            if (maxWidth != null && columnWidths.Sum() > maxWidth - (cols - 1) * ColumnSpacing)
+                throw new InvalidOperationException(@"The specified table width is too narrow. It is not possible to fit the {0} columns and the column spacing of {1} per column into a total width of {2} characters.".Fmt(cols, ColumnSpacing, maxWidth));
 
             // If we have any extra width to spare...
-            var missingTotalWidth = MaxWidth == null ? 0 : MaxWidth.Value - columnWidths.Sum() - (cols - 1) * ColumnSpacing;
+            var missingTotalWidth = maxWidth == null ? 0 : maxWidth - columnWidths.Sum() - (cols - 1) * ColumnSpacing;
             if (missingTotalWidth > 0 && (UseFullWidth || !unwrapped))
             {
                 // Use the length of the longest paragraph in each column to calculate a proportion by which to enlarge each column
