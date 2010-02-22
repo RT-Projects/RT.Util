@@ -68,9 +68,30 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
+        /// Returns a new BoundingBox bounding the two points specified.
+        /// </summary>
+        public static BoundingBoxD FromPoint(PointD pt1, PointD pt2)
+        {
+            BoundingBoxD box = new BoundingBoxD();
+            if (pt1.X > pt2.X) { box.Xmin = pt2.X; box.Xmax = pt1.X; }
+            else { box.Xmin = pt1.X; box.Xmax = pt2.X; }
+            if (pt1.Y > pt2.Y) { box.Ymin = pt2.Y; box.Ymax = pt1.Y; }
+            else { box.Ymin = pt1.Y; box.Ymax = pt2.Y; }
+            return box;
+        }
+
+        /// <summary>
         /// Returns a new BoundingBox bounding the specified edge.
         /// </summary>
         public static BoundingBoxD FromEdge(ref EdgeD edge)
+        {
+            return FromPoint(ref edge.Start, ref edge.End);
+        }
+
+        /// <summary>
+        /// Returns a new BoundingBox bounding the specified edge.
+        /// </summary>
+        public static BoundingBoxD FromEdge(EdgeD edge)
         {
             return FromPoint(ref edge.Start, ref edge.End);
         }
