@@ -110,6 +110,33 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
+        /// An empty bounding box - which doesn't have any bounds yet.
+        /// </summary>
+        public static readonly BoundingBoxD Empty;
+
+        static BoundingBoxD()
+        {
+            Empty = new BoundingBoxD();
+            Empty.Xmin = Empty.Xmax = Empty.Ymin = Empty.Ymax = double.NaN;
+        }
+
+        /// <summary>
+        /// Updates the bounding box by extending the bounds, if necessary, to include the specified point.
+        /// </summary>
+        public void AddPoint(PointD point)
+        {
+            if (double.IsNaN(Xmin))
+                this = FromPoint(ref point);
+            else
+            {
+                Xmin = Math.Min(Xmin, point.X);
+                Xmax = Math.Max(Xmax, point.X);
+                Ymin = Math.Min(Ymin, point.Y);
+                Ymax = Math.Max(Ymax, point.Y);
+            }
+        }
+
+        /// <summary>
         /// Returns true if this bounding box intersects with the specified ray.
         /// </summary>
         public bool IntersectsWithRay(EdgeD ray)
