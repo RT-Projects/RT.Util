@@ -249,6 +249,58 @@ namespace RT.Util.Geometry
 
         #endregion
 
+        #region RayWithRectangle
+
+        /// <summary>
+        /// Finds intersections between a ray and a rectangle. Returns the lambdas of intersections, if any,
+        /// or NaN otherwise. Guarantees that lambda1 &lt; lambda2, and if only one of them is NaN then
+        /// it's lambda2. Lambda is such that ray.Start + lambda * (ray.End - ray.Start) gives the point of intersection.
+        /// </summary>
+        public static void RayWithRectangle(ref EdgeD ray, ref RectangleD rect, out double lambda1, out double lambda2)
+        {
+            double lambda, dummy;
+            bool done1 = false;
+            lambda1 = lambda2 = double.NaN;
+
+            for (int i = 0; i < 4; i++)
+            {
+                EdgeD segment;
+                switch (i)
+                {
+                    case 0: segment = new EdgeD(rect.Left, rect.Top, rect.Right, rect.Top); break;
+                    case 1: segment = new EdgeD(rect.Right, rect.Top, rect.Right, rect.Bottom); break;
+                    case 2: segment = new EdgeD(rect.Right, rect.Bottom, rect.Left, rect.Bottom); break;
+                    case 3: segment = new EdgeD(rect.Left, rect.Bottom, rect.Left, rect.Top); break;
+                    default: throw new InternalError("fsvxhfhj"); // shut up compiler about uninitialized "segment" variable
+                }
+
+                Intersect.RayWithSegment(ref ray, ref segment, out lambda, out dummy);
+
+                if (!double.IsNaN(lambda))
+                {
+                    if (!done1)
+                    {
+                        lambda1 = lambda;
+                        done1 = true;
+                    }
+                    else if (lambda != lambda1)
+                    {
+                        if (lambda > lambda1)
+                            lambda2 = lambda1;
+                        else
+                        {
+                            lambda2 = lambda1;
+                            lambda1 = lambda;
+                        }
+                        return;
+                    }
+                }
+            }
+
+        }
+
+        #endregion
+
         #region RayWithBoundingBox
 
         /// <summary>

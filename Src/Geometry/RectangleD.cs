@@ -27,7 +27,7 @@ namespace RT.Util.Geometry
 
         /// <summary>Gets the X coordinate of the minimal-X boundary.</summary>
         public double Left { get { return X; } }
-        /// <summary>Gets the X coordinate of the maximal-X boundary.</summary>
+        /// <summary>Gets the X coordinate of the minimal-Y boundary.</summary>
         public double Top { get { return Y; } }
         /// <summary>Gets the X coordinate of the maximal-X boundary.</summary>
         public double Right { get { return X + Width; } }
