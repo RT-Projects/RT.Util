@@ -478,7 +478,7 @@ namespace RT.Util.CommandLine
                 }
 
                 var helpString = new List<ConsoleColoredString>();
-                foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(wrapWidth, 8))
+                foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(wrapWidth, tr.Usage.Translation.Length + 1))
                 {
                     helpString.Add(line);
                     helpString.Add(Environment.NewLine);
