@@ -106,7 +106,7 @@ namespace RT.KitchenSink.Paths
         private void DeleteSubpathEntries(string path)
         {
             for (int i = Paths.Count - 1; i >= 0; i--)
-                if (PathUtil.IsSubpath(path, Paths[i].Path))
+                if (PathUtil.IsSubpathOf(Paths[i].Path, path))
                     Paths.RemoveAt(i);
         }
 

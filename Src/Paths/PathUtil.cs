@@ -134,17 +134,31 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Checks whether path refers to a subdirectory inside ref_path.
+        /// Checks whether <paramref name="path"/> refers to a subdirectory inside <paramref name="refPath"/>.
         /// </summary>
-        public static bool IsSubpath(string ref_path, string path)
+        public static bool IsSubpathOf(string subpath, string parentPath)
         {
-            string bp = PathUtil.NormPath(ref_path.ToUpper());
-            string p = PathUtil.NormPath(path.ToUpper());
+            string parentPathNormalized = PathUtil.NormPath(parentPath);
+            string subpathNormalized = PathUtil.NormPath(subpath);
 
-            if (p.Length <= bp.Length)
+            if (subpathNormalized.Length <= parentPathNormalized.Length)
                 return false;
 
-            return p.Substring(0, bp.Length) == bp;
+            return subpathNormalized.Substring(0, parentPathNormalized.Length).Equals(parentPathNormalized, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Checks whether <paramref name="path"/> refers to a subdirectory inside <paramref name="refPath"/> or the same directory.
+        /// </summary>
+        public static bool IsSubpathOfOrSame(string subpath, string parentPath)
+        {
+            string parentPathNormalized = PathUtil.NormPath(parentPath);
+            string subpathNormalized = PathUtil.NormPath(subpath);
+
+            if (subpathNormalized.Length < parentPathNormalized.Length)
+                return false;
+
+            return subpathNormalized.Substring(0, parentPathNormalized.Length - 1).Equals(parentPathNormalized.Substring(0, parentPathNormalized.Length - 1), StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
