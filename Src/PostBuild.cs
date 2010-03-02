@@ -71,12 +71,18 @@ namespace RT.Util
                             var realException = e;
                             while (realException is TargetInvocationException && realException.InnerException != null)
                                 realException = realException.InnerException;
-                            Console.Error.WriteLine("Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
+
+                            var st = new StackTrace(realException, true);
+                            string fileLine = null;
+                            if (st.FrameCount > 0)
+                                fileLine = st.GetFrame(0).GetFileName() + "(" + st.GetFrame(0).GetFileLineNumber() + "," + st.GetFrame(0).GetFileColumnNumber() + "): ";
+
+                            Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
                             anyError = true;
                         }
                     }
                     else
-                        PostBuildError.SequentialFindTextAndOutputError(sourcePath, "class " + ty.Name, "PostBuildCheck", "Warning: The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be no parameters, and the return type should be IEnumerable<{1}>.".Fmt(ty.FullName, typeof(PostBuildError).FullName));
+                        PostBuildError.SequentialFindTextAndOutputError(sourcePath, "class " + ty.Name, "PostBuildCheck", "Error: The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be no parameters, and the return type should be IEnumerable<{1}>.".Fmt(ty.FullName, typeof(PostBuildError).FullName));
                 }
             }
 
@@ -150,11 +156,14 @@ namespace RT.Util
                 {
                     var lines = File.ReadAllLines(f.FullName);
                     for (int i = 0; i < lines.Length; i++)
-                        if (Regex.IsMatch(lines[i], "\\b" + Regex.Escape(textToFind) + "\\b"))
+                    {
+                        var match = Regex.Match(lines[i], "\\b" + Regex.Escape(textToFind) + "\\b");
+                        if (match.Success)
                         {
-                            Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "): Error: " + Message);
+                            Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "," + (match.Index + 1) + "): Error: " + Message);
                             return;
                         }
+                    }
                 }
             }
             catch (Exception e)
@@ -179,9 +188,10 @@ namespace RT.Util
                         {
                             for (int j = i; j < lines.Length; j++)
                             {
-                                if (Regex.IsMatch(lines[j], "\\b" + Regex.Escape(text2) + "\\b"))
+                                var match = Regex.Match(lines[j], "\\b" + Regex.Escape(text2) + "\\b");
+                                if (match.Success)
                                 {
-                                    Console.Error.WriteLine(f.FullName + "(" + (j + 1) + "): " + errorMessage);
+                                    Console.Error.WriteLine(f.FullName + "(" + (j + 1) + "," + (match.Index + 1) + "): " + errorMessage);
                                     return;
                                 }
                             }
