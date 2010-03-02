@@ -153,6 +153,7 @@
     <Compile Include="EnumStrong.cs" />
     <Compile Include="Testing.cs" />
     <Compile Include="Text\TextTable.cs" />
+    <Compile Include="Threading.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Ut\Diff.cs" />
     <Compile Include="Ut\General.cs" />
