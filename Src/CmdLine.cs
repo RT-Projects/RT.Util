@@ -22,14 +22,23 @@ namespace RT.Util.CommandLine
     /// <item><description>A field of any other type must be the last one, must be marked positional, and must be an abstract class with a <see cref="CommandGroupAttribute"/>. This class must have at least two derived classes with a <see cref="CommandNameAttribute"/>.</description></item>
     /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required, several such attributes are allowed.</description></item>
     /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
-    /// <item><description>Every field must have a <see cref="DocumentationAttribute"/> or <see cref="DocumentationLiteralAttribute"/>, except for enum-typed fields, where the enum values must have those attributes instead.</description></item>
+    /// <item><description>Every field must have documentation or be explicitly marked <see cref="UndocumentedAttribute"/>. For enum-typed fields, the enum values must have documentation or <see cref="UndocumentedAttribute"/> instead.
+    ///                                     Documentation is provided in one of the following ways:
+    ///    <list type="bullet">
+    ///        <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/> to specify documentation directly.</description></item>
+    ///        <item><description>Translatable applications must declare a method with the following signature: <c>static string GetDocumentation(Translation, string)</c>.
+    ///                                            The first parameter must be of the same type as the object passed in for <see cref="ApplicationTr"/>.
+    ///                                            The second parameter is the name of the class, field or enum value for which documentation is sought.
+    ///                                            The return value is the translated string.</description></item>
+    ///    </list>
+    /// </description></item>
     /// </list>
     /// </remarks>
     public class CommandLineParser<T>
     {
         /// <summary>
-        /// Gets or sets the application's translation class which contains the localised strings for the
-        /// <see cref="DocumentationAttribute"/>s in the command-line syntax-defining class.
+        /// Gets or sets the application's translation object which contains the localised strings that document the command-line options and commands.
+        /// This object is passed in to the GetDocumentation method described in the documentation for <see cref="CommandLineParser&lt;T&gt;"/>.
         /// </summary>
         public TranslationBase ApplicationTr { get; set; }
 
@@ -413,7 +422,7 @@ namespace RT.Util.CommandLine
 
                             requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - 1), true);
                             requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - 1), true);
-                            requiredParamsTable.SetCell(3, row, getDocumentation(ty));
+                            requiredParamsTable.SetCell(3, row, getDocumentation(ty, ty));
                             row++;
                         }
                         requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
@@ -427,14 +436,14 @@ namespace RT.Util.CommandLine
                                 ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
                                 : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
                             requiredParamsTable.SetCell(0, row, new ConsoleColoredString(str, ConsoleColor.White), true);
-                            requiredParamsTable.SetCell(1, row, getDocumentation(el), 3, 1);
+                            requiredParamsTable.SetCell(1, row, getDocumentation(el, type), 3, 1);
                             row++;
                         }
                     }
                     else
                     {
                         requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), true);
-                        requiredParamsTable.SetCell(1, row, getDocumentation(f), 3, 1);
+                        requiredParamsTable.SetCell(1, row, getDocumentation(f, type), 3, 1);
                         row++;
                     }
                 }
@@ -455,7 +464,7 @@ namespace RT.Util.CommandLine
                         {
                             optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
                             optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
-                            optionalParamsTable.SetCell(2, row, getDocumentation(el));
+                            optionalParamsTable.SetCell(2, row, getDocumentation(el, type));
                             row++;
                         }
                     }
@@ -463,13 +472,13 @@ namespace RT.Util.CommandLine
                     {
                         optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
                         optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
-                        optionalParamsTable.SetCell(2, row, getDocumentation(f));
+                        optionalParamsTable.SetCell(2, row, getDocumentation(f, type));
                         row++;
                     }
                 }
 
                 // Put all the pieces together
-                var doc = getDocumentation(type);
+                var doc = getDocumentation(type, type);
                 if (doc != null)
                 {
                     help.Add(Environment.NewLine);
@@ -519,55 +528,61 @@ namespace RT.Util.CommandLine
             required = type.GetAllFields().Where(f => f.IsDefined<IsPositionalAttribute>() || f.IsDefined<IsMandatoryAttribute>()).ToArray();
         }
 
-        private EggsNode getDocumentation(MemberInfo member)
+        private EggsNode getDocumentation(MemberInfo member, Type inType)
         {
-            if (member.IsDefined<DocumentationAttribute>())
-                return member.GetCustomAttributes<DocumentationAttribute>().Select(d => EggsML.Parse(d.Translate(ApplicationTr))).First();
-
             if (member.IsDefined<DocumentationLiteralAttribute>())
                 return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
 
-            return null;
+            if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
+                inType = member.DeclaringType;
+            var meth = inType.GetMethod("GetDocumentation", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { ApplicationTr.GetType(), typeof(string) }, null);
+            if (meth == null || meth.ReturnType != typeof(string))
+                return null;
+            var str = (string) meth.Invoke(null, new object[] { ApplicationTr, member.Name });
+            return str == null ? null : EggsML.Parse(str);
         }
 
         #region Post-build step check
 
-        /// <summary>If compiled in DEBUG mode, this method performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
-        /// Run this method as a post-build step to ensure reliability of execution. In non-DEBUG mode, this method is a no-op.</summary>
-        public void PostBuildStep()
+#if DEBUG
+        /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
+        /// Run this method as a post-build step to ensure reliability of execution. This method is available only in DEBUG mode.</summary>
+        public static IEnumerable<PostBuildError> PostBuildStep(Type applicationTrType)
         {
-            postBuildStep(typeof(T));
+            return postBuildStep(typeof(T), applicationTrType);
         }
 
-        private void postBuildStep(Type type)
+        private static IEnumerable<PostBuildError> postBuildStep(Type commandLineType, Type applicationTrType)
         {
-#if DEBUG
-            if (!type.IsClass)
-                throw new PostBuildException(@"{0} is not a class.".Fmt(type.FullName));
+            if (!commandLineType.IsClass)
+                yield return new PostBuildError(@"{0} is not a class.".Fmt(commandLineType.FullName));
 
-            if (type.GetConstructor(Type.EmptyTypes) == null)
-                throw new PostBuildException(@"{0} does not have a default constructor.".Fmt(type.FullName));
+            if (commandLineType.GetConstructor(Type.EmptyTypes) == null)
+                yield return new PostBuildError(@"{0} does not have a default constructor.".Fmt(commandLineType.FullName));
 
-            Type[] typeParam;
-            if (type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != ApplicationTr.GetType())
-                throw new PostBuildException(@"The type {0} implements {1}, but ApplicationTr is of type {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
-                    type.FullName,
-                    typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,
-                    ApplicationTr.GetType().FullName,
-                    typeof(ICommandLineValidatable<>).MakeGenericType(ApplicationTr.GetType()).FullName
-                ));
+            if (applicationTrType != null)
+            {
+                Type[] typeParam;
+                if (commandLineType.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != applicationTrType)
+                    yield return new PostBuildError(@"The type {0} implements {1}, but ApplicationTr is of type {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
+                        commandLineType.FullName,
+                        typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,
+                        applicationTrType.FullName,
+                        typeof(ICommandLineValidatable<>).MakeGenericType(applicationTrType).FullName
+                    ));
+            }
 
             var optionTaken = new Dictionary<string, MemberInfo>();
             FieldInfo lastField = null;
 
-            foreach (var field in type.GetFields())
+            foreach (var field in commandLineType.GetFields())
             {
                 if (lastField != null)
-                    throw new PostBuildException(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name));
+                    yield return new PostBuildError(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name));
                 var positional = field.IsDefined<IsPositionalAttribute>();
 
                 if ((positional || field.IsDefined<IsMandatoryAttribute>()) && field.IsDefined<UndocumentedAttribute>())
-                    throw new PostBuildException(@"{0}.{1}: Fields cannot simultaneously be mandatory/positional and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name));
+                    yield return new PostBuildError(@"{0}.{1}: Fields cannot simultaneously be mandatory/positional and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name));
 
                 // (1) if it's a field of type enum:
                 if (field.FieldType.IsEnum)
@@ -577,13 +592,13 @@ namespace RT.Util.CommandLine
 
                     // check that it is either positional OR has a DefaultAttribute, but not both
                     if (positional && defaultAttr != null)
-                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(commandLineType.FullName, field.Name));
                     if (!positional && defaultAttr == null)
-                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(commandLineType.FullName, field.Name));
 
                     // check that it doesn't have an [Option] or [CommandName] attribute, because the enum values are supposed to have that instead
                     if (field.GetCustomAttributes<OptionAttribute>().Any() || field.GetCustomAttributes<CommandNameAttribute>().Any())
-                        throw new PostBuildException(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(commandLineType.FullName, field.Name));
 
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
@@ -591,123 +606,171 @@ namespace RT.Util.CommandLine
                             continue;
 
                         // check that the enum values all have documentation
-                        checkDocumentation(enumField);
+                        foreach (var err in checkDocumentation(enumField, commandLineType, applicationTrType))
+                            yield return err;
 
                         if (positional)
                         {
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
                             if (!cmdNames.Any())
-                                throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
-                            checkCommandNamesUnique(cmdNames, commandsTaken, type, field, enumField);
+                                yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name));
+                            foreach (var err in checkCommandNamesUnique(cmdNames, commandsTaken, commandLineType, field, enumField))
+                                yield return err;
                         }
                         else
                         {
                             // check that the non-default enum values' Options are present and do not clash
                             var options = enumField.GetCustomAttributes<OptionAttribute>();
                             if (!options.Any())
-                                throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name));
-                            checkOptionsUnique(options, optionTaken, type, field, enumField);
+                                yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name));
+                            foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field, enumField))
+                                yield return err;
                         }
                     }
                 }
                 else if (field.FieldType == typeof(bool))
                 {
                     if (positional)
-                        throw new PostBuildException(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(commandLineType.FullName, field.Name));
 
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any())
-                        throw new PostBuildException(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name));
 
-                    checkOptionsUnique(options, optionTaken, type, field);
-                    checkDocumentation(field);
+                    foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field))
+                        yield return err;
+                    foreach (var err in checkDocumentation(field, commandLineType, applicationTrType))
+                        yield return err;
                 }
                 else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
-                        throw new PostBuildException(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name));
 
-                    checkOptionsUnique(options, optionTaken, type, field);
-                    checkDocumentation(field);
+                    foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field))
+                        yield return err;
+                    foreach (var err in checkDocumentation(field, commandLineType, applicationTrType))
+                        yield return err;
                 }
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
                     // Class-type fields must be positional parameters
                     if (!positional)
-                        throw new PostBuildException(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(commandLineType.FullName, field.Name));
 
                     // The class must have at least two subclasses with a [CommandName] attribute
                     var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>());
                     if (subclasses.Count() < 2)
-                        throw new PostBuildException(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(type.FullName, field.Name));
+                        yield return new PostBuildError(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name));
 
                     var commandsTaken = new Dictionary<string, Type>();
 
                     foreach (var subclass in subclasses)
                     {
-                        checkDocumentation(subclass);
-                        checkCommandNamesUnique(subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass);
+                        foreach (var err in checkDocumentation(subclass, subclass, applicationTrType))
+                            yield return err;
+                        foreach (var err in checkCommandNamesUnique(subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass))
+                            yield return err;
 
                         // Recursively check this class
-                        postBuildStep(subclass);
+                        foreach (var err in postBuildStep(subclass, applicationTrType))
+                            yield return err;
                     }
 
                     lastField = field;
                 }
                 else
-                    throw new PostBuildException(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(type.FullName, field.Name));
+                    yield return new PostBuildError(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name));
             }
-#endif
         }
 
-#if DEBUG
-        private void checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static IEnumerable<PostBuildError> checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
             foreach (var option in options)
             {
                 if (optionTaken.ContainsKey(option.Name))
-                    throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Option ""{4}"" is already taken by {5}.{6}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
+                    yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Option ""{4}"" is already taken by {5}.{6}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
                 optionTaken[option.Name] = enumField;
             }
         }
 
-        private void checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
+        private static IEnumerable<PostBuildError> checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
         {
             foreach (var option in options)
             {
                 if (optionTaken.ContainsKey(option.Name))
-                    throw new PostBuildException(@"{0}.{1}: Option ""{2}"" is already taken by {3}.{4}.".Fmt(type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
+                    yield return new PostBuildError(@"{0}.{1}: Option ""{2}"" is already taken by {3}.{4}.".Fmt(type.FullName, field.Name, option.Name, optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name));
                 optionTaken[option.Name] = field;
             }
         }
 
-        private void checkCommandNamesUnique(IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
+        private static IEnumerable<PostBuildError> checkCommandNamesUnique(IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
         {
             foreach (var cmd in commands)
             {
                 if (commandsTaken.ContainsKey(cmd.Name))
-                    throw new PostBuildException(@"{0}: CommandName ""{1}"" is already taken by {2}.".Fmt(subclass.FullName, cmd.Name, commandsTaken[cmd.Name].FullName));
+                    yield return new PostBuildError(@"{0}: CommandName ""{1}"" is already taken by {2}.".Fmt(subclass.FullName, cmd.Name, commandsTaken[cmd.Name].FullName));
                 commandsTaken[cmd.Name] = subclass;
             }
         }
 
-        private void checkCommandNamesUnique(IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static IEnumerable<PostBuildError> checkCommandNamesUnique(IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
             foreach (var cmd in cmdNames)
             {
                 if (commandsTaken.ContainsKey(cmd.Name))
-                    throw new PostBuildException(@"{0}.{1} (used by {2}.{3}): Enum value's CommandName ""{4}"" is already taken by {5}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, cmd.Name, commandsTaken[cmd.Name].Name));
+                    yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Enum value's CommandName ""{4}"" is already taken by {5}.".Fmt(field.FieldType.FullName, enumField.Name, type.FullName, field.Name, cmd.Name, commandsTaken[cmd.Name].Name));
                 commandsTaken[cmd.Name] = enumField;
             }
         }
 
-        private void checkDocumentation(MemberInfo member)
+        private static Dictionary<Type, object> _applicationTrCache = new Dictionary<Type, object>();
+
+        private static IEnumerable<PostBuildError> checkDocumentation(MemberInfo member, Type inType, Type applicationTrType)
         {
-            // This automatically executes the constructor of the relevant DocumentationAttribute, which in turn will throw an exception if it is invalid.
-            if (!member.IsDefined<DocumentationAttribute>() && !member.IsDefined<DocumentationLiteralAttribute>() && !member.IsDefined<UndocumentedAttribute>())
-                throw new PostBuildException(@"{0}.{1}: Field does not have any documentation. Use the [Documentation] or [DocumentationLiteral] attribute to specify documentation for a command-line option or parameter. Use [Undocumented] to completely hide an option from the help screen.".Fmt(member.DeclaringType.FullName, member.Name));
+            if (member.IsDefined<UndocumentedAttribute>())
+                yield break;
+
+            if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
+                inType = member.DeclaringType;
+
+            string toCheck = null;
+            if (member.IsDefined<DocumentationLiteralAttribute>())
+                toCheck = member.GetCustomAttributes<DocumentationLiteralAttribute>().First().Text;
+            else if (applicationTrType != null)
+            {
+                var meth = inType.GetMethod("GetDocumentation", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTrType, typeof(string) }, null);
+                if (meth != null && meth.ReturnType == typeof(string))
+                {
+                    if (!_applicationTrCache.ContainsKey(applicationTrType))
+                        _applicationTrCache[applicationTrType] = Activator.CreateInstance(applicationTrType);
+                    var appTr = _applicationTrCache[applicationTrType];
+                    toCheck = (string) meth.Invoke(null, new object[] { appTr, member.Name });
+                    if (toCheck == null)
+                    {
+                        yield return new PostBuildError(@"{0}.GetDocumentation() returned null for ""{1}"".".Fmt(inType.FullName, member.Name), PostBuildTokenType.SequentialFind, "public class " + inType.Name, "GetDocumentation");
+                        yield break;
+                    }
+                }
+            }
+
+            if (toCheck == null)
+            {
+                yield return new PostBuildError((@"{0} does not have any documentation. " +
+                    (applicationTrType == null ? "" : @"To provide localised documentation, declare a method ""static string GetDocumentation({1}, string)"" on {2}. ") +
+                    @"Otherwise, use the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
+                    @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(member is Type ? ((Type) member).FullName : member.DeclaringType.FullName + "." + member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
+                    member is Type ? "public class " + member.Name : member.Name);
+                yield break;
+            }
+
+            string eggsError = null;
+            try { var result = EggsML.Parse(toCheck); }
+            catch (EggsMLParseException e) { eggsError = e.Message; }
+            if (eggsError != null)
+                yield return new PostBuildError(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError));
         }
 #endif
 
@@ -726,7 +789,7 @@ namespace RT.Util.CommandLine
     /// <typeparam name="TTranslation">A translation-string class containing the error messages that can occur during validation.</typeparam>
     public interface ICommandLineValidatable<TTranslation> where TTranslation : TranslationBase
     {
-        /// <summary>When overridden in a derived class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
+        /// <summary>When implemented in a class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
         /// <param name="tr">Contains translations for the messages that may occur during validation.</param>
         string Validate(TTranslation tr);
     }
@@ -836,33 +899,6 @@ namespace RT.Util.CommandLine
         public string Name { get; private set; }
     }
 
-    /// <summary>
-    /// Use this to specify that an enum type is used to identify documentation text in an internationalized (multi-language) application.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Enum, Inherited = false, AllowMultiple = true)]
-    public sealed class DocumentationCodesAttribute : Attribute
-    {
-        /// <summary>Constructor.</summary>
-        /// <param name="staticMethods">Points to a static class containing static methods which provide translations for the documentation strings. Those methods must be marked with the <see cref="DocumentationTranslationAttribute"/>.</param>
-        public DocumentationCodesAttribute(Type staticMethods) { Type = staticMethods; }
-        /// <summary>Returns the static class containing static methods which provide translations for the documentation strings.</summary>
-        public Type Type { get; private set; }
-    }
-
-    /// <summary>
-    /// Use this attribute on each static method that provides a translation for a documentation string.
-    /// These static methods must all be in a static class which is pointed to by the <see cref="DocumentationCodesAttribute"/> on an enum type.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public class DocumentationTranslationAttribute : Attribute
-    {
-        /// <summary>Constructor.</summary>
-        /// <param name="code">A code that identifies the translation. This must be a value from an enum type with the <see cref="DocumentationCodesAttribute"/>.</param>
-        public DocumentationTranslationAttribute(object code) { Code = code; }
-        /// <summary>The enum value that represents the documentation text.</summary>
-        public object Code { get; private set; }
-    }
-
     /// <summary>Use this attribute in a non-internationalized (single-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
     public sealed class DocumentationLiteralAttribute : Attribute
@@ -872,56 +908,6 @@ namespace RT.Util.CommandLine
         /// <summary>Constructor.</summary>
         /// <param name="text">Provides the documentation for the corresponding member.</param>
         public DocumentationLiteralAttribute(string text) { Text = text; }
-    }
-
-    /// <summary>Use this attribute in an internationalized (multi-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public class DocumentationAttribute : Attribute
-    {
-        /// <summary>Constructor.</summary>
-        /// <param name="code">A code that identifies the translation. This must be a value from an enum type with the <see cref="DocumentationCodesAttribute"/>.</param>
-        public DocumentationAttribute(object code)
-        {
-            var t = code.GetType();
-            var attrs = t.GetCustomAttributes<DocumentationCodesAttribute>();
-            if (!t.IsEnum || !attrs.Any())
-            {
-#if DEBUG
-                throw new PostBuildException("The type parameter to DocumentationAttribute must be an enum type; {0} was passed instead. Additionally, the enum type must have a [DocumentationCodes] attribute.".Fmt(t.FullName));
-#else
-                return;
-#endif
-            }
-
-            foreach (var meth in attrs.First().Type.GetMethods(BindingFlags.Static | BindingFlags.Public))
-            {
-                if (meth.ReturnType != typeof(string))
-                    continue;
-                var p = meth.GetParameters();
-                if (p.Length != 1 || !typeof(TranslationBase).IsAssignableFrom(p[0].ParameterType))
-                    continue;
-                foreach (var attr in meth.GetCustomAttributes<DocumentationTranslationAttribute>().Where(a => a.Code.Equals(code)))
-                {
-#if DEBUG
-                    if (_translate == null)
-                        _translate = meth;
-                    else
-                        throw new PostBuildException(@"The documentation code ""{0}"" has more than one documentation method: {1}, {2}".Fmt(code, _translate.Name, meth.Name));
-#else
-                    _translate = meth;
-                    return;
-#endif
-                }
-            }
-#if DEBUG
-            if (_translate == null)
-                throw new PostBuildException(@"Documentation method for documentation code ""{0}"" not found.".Fmt(code));
-#endif
-        }
-        private MethodInfo _translate = null;
-        /// <summary>Returns the translated documentation text identified by this attribute.</summary>
-        /// <param name="tr">The translation class containing the translated text.</param>
-        public string Translate(TranslationBase tr) { return _translate == null ? null : (string) _translate.Invoke(null, new object[] { tr }); }
     }
 
     /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
@@ -1029,7 +1015,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that the command-line parser encountered an unsupported type in the class definition.</summary>
-    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser&lt;T&gt;.PostBuildStep()"/></remarks>
+    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser&lt;T&gt;.PostBuildStep"/> in DEBUG mode.</remarks>
     [Serializable]
     public class UnrecognizedTypeException : CommandLineParseException
     {
@@ -1132,33 +1118,4 @@ namespace RT.Util.CommandLine
             return beforeField == null ? tr.MissingOption.Fmt(fieldFormat) : tr.MissingOptionBefore.Fmt(fieldFormat, "<" + beforeField.Name + ">");
         }
     }
-
-#if DEBUG
-    /// <summary>Specifies that the post-build check (<see cref="CommandLineParser&lt;T&gt;.PostBuildStep()"/>) discovered an error.</summary>
-    [Serializable]
-    public class PostBuildException : RTException
-    {
-        /// <summary>Constructor.</summary>
-        public PostBuildException(string message) : this(message, null) { }
-        /// <summary>Constructor.</summary>
-        public PostBuildException(string message, Exception inner) : base(message, inner) { }
-    }
-
-    static class CommandLineParsingReflectionExtensions
-    {
-        public static string GetNamespace(this MemberInfo member)
-        {
-            if (member is Type)
-                return ((Type) member).Namespace;
-            return member.DeclaringType.Namespace;
-        }
-
-        public static string GetTypeName(this MemberInfo member)
-        {
-            if (member is Type)
-                return ((Type) member).Name;
-            return member.DeclaringType.Name;
-        }
-    }
-#endif
 }

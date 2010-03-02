@@ -531,6 +531,36 @@ namespace RT.Util.ExtensionMethods
             return sb.ToString();
         }
 
+        /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
+        public static IEnumerable<string> Trim(this IEnumerable<string> values)
+        {
+            var arr = values.ToArray();
+            var begin = 0;
+            while (begin < arr.Length && string.IsNullOrEmpty(arr[begin]))
+                begin++;
+            if (begin == arr.Length)
+                return new string[0];
+            var end = arr.Length - 1;
+            while (end >= 0 && string.IsNullOrEmpty(arr[end]))
+                end--;
+            return arr.Skip(begin).Take(end - begin + 1);
+        }
+
+        /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
+        public static IEnumerable<object> Trim(this IEnumerable<object> values)
+        {
+            var arr = values.ToArray();
+            var begin = 0;
+            while (begin < arr.Length && (arr[begin] == null || arr[begin].Equals(string.Empty)))
+                begin++;
+            if (begin == arr.Length)
+                return new string[0];
+            var end = arr.Length - 1;
+            while (end >= 0 && (arr[end] == null || arr[end].Equals(string.Empty)))
+                end--;
+            return arr.Skip(begin).Take(end - begin + 1);
+        }
+
         /// <summary>
         /// Formats a string using <see cref="string.Format(string, object[])"/>.
         /// </summary>
