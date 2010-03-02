@@ -650,13 +650,18 @@ namespace RT.Util.ExtensionMethods
         /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
         public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent)
         {
-            if (text == null || text == "")
-                yield break;
             if (maxWidth < 1)
                 throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
             if (hangingIndent < 0)
                 throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
+            if (text == null || text == "")
+                return new string[0];
 
+            return wordWrap(text, maxWidth, hangingIndent);
+        }
+
+        private static IEnumerable<string> wordWrap(this string text, int maxWidth, int hangingIndent)
+        {
             Regex regexSplitOnWindowsNewline = new Regex(@"\r\n", RegexOptions.Compiled);
             Regex regexSplitOnUnixMacNewline = new Regex(@"[\r\n]", RegexOptions.Compiled);
             Regex regexKillDoubleSpaces = new Regex(@"  +", RegexOptions.Compiled);
@@ -688,8 +693,8 @@ namespace RT.Util.ExtensionMethods
                             if (word.Length > maxWidth)
                             {
                                 // This is a very long word
-                                // Leave part of the word on the current line but only if at least 2 chars fit
-                                if (curLine.Length + space.Length + 2 <= maxWidth)
+                                // Leave part of the word on the current line if at least 2 chars fit
+                                if (curLine.Length + space.Length + 2 <= maxWidth || curLine.Length == 0)
                                 {
                                     int length = maxWidth - curLine.Length - space.Length;
                                     curLine.Append(space);
