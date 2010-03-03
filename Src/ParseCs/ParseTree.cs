@@ -1017,7 +1017,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsTypeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("typeof(", Type.ToString(), ')'); } }
     public class CsSizeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("sizeof(", Type.ToString(), ')'); } }
     public class CsDefaultExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("default(", Type.ToString(), ')'); } }
-    public abstract class CsCheckedUncheckedExpression : CsExpression { public CsExpression Subexpression;    }
+    public abstract class CsCheckedUncheckedExpression : CsExpression { public CsExpression Subexpression; }
     public class CsCheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("checked(", Subexpression.ToString(), ')'); } }
     public class CsUncheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("unchecked(", Subexpression.ToString(), ')'); } }
     public class CsTypeIdentifierExpression : CsExpression
@@ -1215,7 +1215,6 @@ namespace RT.KitchenSink.ParseCs
     }
     public class CsLinqJoinClause : CsLinqElement
     {
-        // join p in products on c.Orders.Length equals p.IdProduct
         public string ItemName;
         public CsExpression SourceExpression, KeyExpression1, KeyExpression2;
         public string IntoName;
