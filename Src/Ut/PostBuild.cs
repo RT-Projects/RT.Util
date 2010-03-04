@@ -11,45 +11,42 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
 #if DEBUG
-    /// <summary>Provides the ability to run arbitrary checks on the compiled assembly as a post-build step (see remarks for details).</summary>
-    /// <remarks><para>Intended use is as follows:</para>
-    /// <list type="bullet">
-    ///    <item><description><para>Add the following line to your project's post-build event:</para>
-    ///        <code>"$(TargetPath)" --post-build-check "$(SolutionDir)."</code></description></item>
-    ///    <item><description><para>Add the following code at the beginning of your project's Main() method:</para>
-    ///        <code>
-    ///            #if DEBUG
-    ///                if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
-    ///                    return PostBuild.PostBuildChecks(args[1], Assembly.GetExecutingAssembly());
-    ///            #endif
-    ///        </code>
-    ///        <para>If your project entails several assemblies, you can specify additional assemblies in the call to <see cref="PostBuild.PostBuildChecks"/>.
-    ///        For example, you could specify <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para>
-    ///        </description></item>
-    ///    <item><description><para>Add post-build check methods to any type where they may be relevent. For example, for a command-line program that uses <see cref="RT.Util.CommandLine.CommandLineParser&lt;T&gt;"/>,
-    ///                                                     you might use code similar to the following:</para>
-    ///        <code>
-    ///            #if DEBUG
-    ///                private static IEnumerable&lt;PostBuildError&gt; PostBuildCheck()
-    ///                {
-    ///                    // Replace "CommandLine" with the name of your command-line type, and "Translation" with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
-    ///                    return CommandLineParser&lt;CommandLine&gt;.PostBuildStep(typeof(Translation));
-    ///                }
-    ///            #endif
-    ///        </code>
-    ///        <para>The method is expected to have no parameters, the return type shown above, and it is expected to be static and non-public.</para>
-    ///    </description></item>
-    /// </list></remarks>
-    public static class PostBuild
+    public static partial class Ut
     {
-        /// <summary>Runs all post-build checks defined in the specified assemblies.</summary>
+        /// <summary>Runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build event. See remarks for details.</summary>
+        /// <remarks><para>Intended use is as follows:</para>
+        /// <list type="bullet">
+        ///    <item><description><para>Add the following line to your project's post-build event:</para>
+        ///        <code>"$(TargetPath)" --post-build-check "$(SolutionDir)."</code></description></item>
+        ///    <item><description><para>Add the following code at the beginning of your project's Main() method:</para>
+        ///        <code>
+        ///            #if DEBUG
+        ///                if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
+        ///                    return Ut.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());
+        ///            #endif
+        ///        </code>
+        ///        <para>If your project entails several assemblies, you can specify additional assemblies in the call to <see cref="Ut.RunPostBuildChecks"/>.
+        ///        For example, you could specify <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para>
+        ///        </description></item>
+        ///    <item><description><para>Add post-build check methods to any type where they may be relevant. For example, for a command-line program that uses <see cref="RT.Util.CommandLine.CommandLineParser&lt;T&gt;"/>,
+        ///                                                     you might use code similar to the following:</para>
+        ///        <code>
+        ///            #if DEBUG
+        ///                private static void PostBuildCheck(IPostBuildReporter rep)
+        ///                {
+        ///                    // Replace "CommandLine" with the name of your command-line type, and "Translation" with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
+        ///                    CommandLineParser&lt;CommandLine&gt;.PostBuildStep(rep, typeof(Translation));
+        ///                }
+        ///            #endif
+        ///        </code>
+        ///        <para>The method is expected to have one parameter of type <see cref="IPostBuildReporter"/>, a return type if void, and it is expected to be static and non-public.
+        ///                    Errors are reported by calling methods on said <see cref="IPostBuildReporter"/> object.</para>
+        ///    </description></item>
+        /// </list></remarks>
         /// <param name="sourcePath">Specifies the path to the folder containing the C# source files.</param>
         /// <param name="assemblies">Specifies the compiled assemblies from which to run post-build checks.</param>
         /// <returns>1 if any errors occurred, otherwise 0.</returns>
-        /// <remarks>A post-build check is a static, non-public method called PostBuildCheck() with no parameters and a return type
-        /// of IEnumerable&lt;<see cref="PostBuildError"/>&gt;. Such a method is expected to return each error encountered as a
-        /// <see cref="PostBuildError"/> object, or an empty collection if no errors are found.</remarks>
-        public static int PostBuildChecks(string sourcePath, params Assembly[] assemblies)
+        public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
             var rep = new PostBuildReporter(sourcePath);
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
@@ -133,7 +130,7 @@ namespace RT.Util
         }
     }
 
-    /// <summary>Provides the ability to output post-build errors (with filename and line number) to Console.Error. This interface is used by <see cref="PostBuild.PostBuildChecks"/>.</summary>
+    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
     public interface IPostBuildReporter
     {
         /// <summary>When implemented in a class, finds the first occurrence of the first token in <paramref name="tokens"/>, and then starts searching there to find the first occurrence of each of the subsequent

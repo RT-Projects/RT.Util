@@ -7,7 +7,7 @@ namespace RT.Util
         private static long _start = 0;
 
         /// <summary>
-        /// Starts a simple performance timer.
+        /// Starts a simple performance timer. Use <see cref="Toc"/> to stop.
         /// </summary>
         public static void Tic()
         {
@@ -15,10 +15,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Stops a simple performance timer started by Tic() and returns the
+        /// Stops a simple performance timer started by <see cref="Tic"/> and returns the
         /// number of seconds elapsed, accurate to the resolution of the system
-        /// timer. Note that there exists only a single timer; Toc returns the
-        /// time since the very last call to Tic.
+        /// timer. Note that there exists only a single timer; <see cref="Toc"/> returns the
+        /// time since the very last call to <see cref="Tic"/>.
         /// </summary>
         public static double Toc()
         {

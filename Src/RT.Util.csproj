@@ -135,7 +135,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="Obsolete\CmdLine.cs" />
     <Compile Include="Paths\PathUtil.cs" />
-    <Compile Include="PostBuild.cs" />
+    <Compile Include="Ut\PostBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />

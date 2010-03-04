@@ -10,20 +10,20 @@ using RT.Util.Text;
 namespace RT.Util.CommandLine
 {
     /// <summary>Implements a command-line parser that can turn the commands and options specified by the user on the command line into a strongly-typed instance of a specific class. See remarks for more details.</summary>
-    /// <remarks><para>The following conditions must be met by the class wishing to receive the options and parameters:</para>
     /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
+    /// <remarks><para>The following conditions must be met by the class wishing to receive the options and parameters:</para>
     /// <list type="bullet">
     /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
-    /// <item><description>Each field in the class must be a string, a bool, an enum, or another class with the <see cref="CommandGroupAttribute"/>.</description></item>
+    /// <item><description>Each field in the class must be of type string, string[], bool, an enum type, or a class with the <see cref="CommandGroupAttribute"/>.</description></item>
     /// <item><description>A field of an enum type can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not. If it is neither positional nor mandatory (see below), it must have a <see cref="DefaultValueAttribute"/>.</description></item>
     /// <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is optional, or a <see cref="CommandNameAttribute"/> if it is positional.</description></item>
     /// <item><description>A field of type bool must have an <see cref="OptionAttribute"/> and cannot be positional.</description></item>
-    /// <item><description>A field of type string can be positional or optional. If it is optional, it must have an <see cref="OptionAttribute"/>.</description></item>
+    /// <item><description>A field of type string or string[] can be positional or optional. If it is optional, it must have an <see cref="OptionAttribute"/>. If it is of type string[] and positional, it must be the last field in the class.</description></item>
     /// <item><description>A field of any other type must be the last one, must be marked positional, and must be an abstract class with a <see cref="CommandGroupAttribute"/>. This class must have at least two derived classes with a <see cref="CommandNameAttribute"/>.</description></item>
-    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required, several such attributes are allowed.</description></item>
+    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required, several such attributes are allowed to specify several alternative names for the same option or command (e.g. short and long names).</description></item>
     /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
-    /// <item><description>Every field must have documentation or be explicitly marked <see cref="UndocumentedAttribute"/>. For enum-typed fields, the enum values must have documentation or <see cref="UndocumentedAttribute"/> instead.
-    ///                                     Documentation is provided in one of the following ways:
+    /// <item><description><para>Every field must have documentation or be explicitly marked with <see cref="UndocumentedAttribute"/>. For enum-typed fields, the enum values must have documentation or <see cref="UndocumentedAttribute"/> instead.</para>
+    ///                                     <para>Documentation is provided in one of the following ways:</para>
     ///    <list type="bullet">
     ///        <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/> to specify documentation directly.</description></item>
     ///        <item><description>Translatable applications must declare methods with the following signature: <c>static string FieldNameDoc(Translation)</c>.
@@ -33,6 +33,7 @@ namespace RT.Util.CommandLine
     ///    </list>
     /// </description></item>
     /// </list>
+    /// <para>All of the above requirements can be automatically checked for by running <see cref="PostBuildStep"/> in a post-build event (see <see cref="Ut.RunPostBuildChecks"/> for an example of use).</para>
     /// </remarks>
     public class CommandLineParser<T>
     {
@@ -546,7 +547,9 @@ namespace RT.Util.CommandLine
 
 #if DEBUG
         /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
-        /// Run this method as a post-build step to ensure reliability of execution. This method is available only in DEBUG mode.</summary>
+        /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
+        /// <param name="rep">Object to report post-build errors to.</param>
+        /// <param name="applicationTrType">The type of the translation object, derived from <see cref="TranslationBase"/>, which would be assigned to <see cref="ApplicationTr"/> at normal run-time.</param>
         public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
         {
             postBuildStep(rep, typeof(T), applicationTrType, false);

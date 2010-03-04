@@ -44,7 +44,7 @@ namespace RT.Util.Lingo
         public override string ToString() { return Translation; }
     }
 
-    /// <summary>Represents a translatable string.</summary>
+    /// <summary>Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a language's <see cref="NumberSystem"/>.</summary>
     public class TrStringNum
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
