@@ -51,21 +51,17 @@ namespace RT.Util
         /// <see cref="PostBuildError"/> object, or an empty collection if no errors are found.</remarks>
         public static int PostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
-            bool anyError = false;
+            var rep = new PostBuildReporter(sourcePath);
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
             {
                 var meth = ty.GetMethod("PostBuildCheck", BindingFlags.NonPublic | BindingFlags.Static);
                 if (meth != null)
                 {
-                    if (meth.GetParameters().Length == 0 && meth.ReturnType == typeof(IEnumerable<PostBuildError>))
+                    if (meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeof(IPostBuildReporter) }) && meth.ReturnType == typeof(void))
                     {
                         try
                         {
-                            foreach (var pbe in (IEnumerable<PostBuildError>) meth.Invoke(null, null))
-                            {
-                                anyError = true;
-                                pbe.OutputToConsole(sourcePath);
-                            }
+                            meth.Invoke(null, new object[] { rep });
                         }
                         catch (Exception e)
                         {
@@ -79,133 +75,74 @@ namespace RT.Util
                                 fileLine = st.GetFrame(0).GetFileName() + "(" + st.GetFrame(0).GetFileLineNumber() + "," + st.GetFrame(0).GetFileColumnNumber() + "): ";
 
                             Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
-                            anyError = true;
                         }
                     }
                     else
-                        PostBuildError.SequentialFindTextAndOutputError(sourcePath, "class " + ty.Name, "PostBuildCheck", "Error: The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be no parameters, and the return type should be IEnumerable<{1}>.".Fmt(ty.FullName, typeof(PostBuildError).FullName));
+                        rep.Error(
+                            "The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be one parameter of type {1}, and the return type should be void.".Fmt(ty.FullName, typeof(IPostBuildReporter).FullName),
+                            (ty.IsValueType ? "struct " : "class ") + ty.Name, "PostBuildCheck");
                 }
             }
 
-            return anyError ? 1 : 0;
-        }
-    }
-
-    /// <summary>Specifies the way in which the <see cref="PostBuildError.Tokens"/> are used to find a position in the source code.</summary>
-    public enum PostBuildTokenType
-    {
-        /// <summary>Outputs a separate copy of the error message for each token, and only for the first occurrence of each token within the source code. This is the default.</summary>
-        MultipleErrors,
-        /// <summary>Finds the first occurrence of the first token, and then starts searching there to find the first occurrence of the second token within the same file. Outputs a single copy of the error message. There must be exactly two tokens.</summary>
-        SequentialFind
-    }
-
-    /// <summary>Encapsulates information about an error discovered by the post-build check (<see cref="PostBuild.PostBuildChecks"/>).</summary>
-    [Serializable]
-    public class PostBuildError
-    {
-        /// <summary>Contains the error message.</summary>
-        public string Message { get; private set; }
-
-        /// <summary>Specifies any set of strings for which the source code will be searched in order to locate the relevant line(s) of code.</summary>
-        public string[] Tokens { get; private set; }
-
-        /// <summary>Specifies the way in which the <see cref="Tokens"/> are used to find a position in the source code.</summary>
-        public PostBuildTokenType TokenType { get; private set; }
-
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Error message.</param>
-        /// <param name="tokens">Specifies any set of strings for which the source code will be searched in order to locate the relevant line(s) of code.</param>
-        public PostBuildError(string message, params string[] tokens)
-        {
-            Message = message;
-            TokenType = PostBuildTokenType.MultipleErrors; // default value
-            Tokens = tokens;
+            return rep.AnyErrors ? 1 : 0;
         }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Error message.</param>
-        /// <param name="tokenType">Specifies the way in which the <paramref name="tokens"/> parameter is used to find a position in the source code.</param>
-        /// <param name="tokens">Specifies any set of strings for which the source code will be searched in order to locate the relevant line(s) of code.</param>
-        public PostBuildError(string message, PostBuildTokenType tokenType, params string[] tokens)
+        class PostBuildReporter : IPostBuildReporter
         {
-            if (tokenType == PostBuildTokenType.SequentialFind && tokens.Length != 2)
-                throw new ArgumentException("If 'tokenType' is 'SequentialFind', 'tokens' must have exactly 2 elements.", "tokens");
-            Message = message;
-            TokenType = tokenType;
-            Tokens = tokens;
-        }
+            private string _path;
+            public bool AnyErrors { get; set; }
+            public PostBuildReporter(string path) { _path = path; AnyErrors = false; }
+            public void Error(string message, params string[] tokens) { output("Error: ", message, tokens); }
+            public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
 
-        /// <summary>Outputs the error message to Console.Error, including source file name and line number if any.</summary>
-        /// <param name="path">Path to the source code in which to find the file and line number.</param>
-        public void OutputToConsole(string path)
-        {
-            if (Tokens.Length == 0)
-                Console.Error.WriteLine("Error: " + Message);
-            else if (TokenType == PostBuildTokenType.SequentialFind)
-                SequentialFindTextAndOutputError(path, Tokens[0], Tokens[1], "Error: " + Message);
-            else
-                foreach (var token in Tokens)
-                    findTextAndOutputError(path, token);
-        }
-
-        private void findTextAndOutputError(string path, string textToFind)
-        {
-            try
+            private void output(string errorOrWarning, string message, params string[] tokens)
             {
-                foreach (var f in new DirectoryInfo(path).GetFiles("*.cs", SearchOption.AllDirectories))
+                AnyErrors = true;
+                if (tokens == null || tokens.Length == 0)
                 {
-                    var lines = File.ReadAllLines(f.FullName);
-                    for (int i = 0; i < lines.Length; i++)
+                    Console.Error.WriteLine(errorOrWarning + message);
+                    return;
+                }
+                try
+                {
+                    foreach (var f in new DirectoryInfo(_path).GetFiles("*.cs", SearchOption.AllDirectories))
                     {
-                        var match = Regex.Match(lines[i], "\\b" + Regex.Escape(textToFind) + "\\b");
-                        if (match.Success)
+                        var lines = File.ReadAllLines(f.FullName);
+                        var tokenIndex = 0;
+                        for (int i = 0; i < lines.Length; i++)
                         {
-                            Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "," + (match.Index + 1) + "): Error: " + Message);
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine("Error: " + e.Message + " (" + e.GetType().FullName + ") (" + path + ")");
-            }
-            Console.Error.WriteLine("Error: " + Message);
-        }
-
-        /// <summary>Outputs the specified <paramref name="errorMessage"/> (which should start with either "Error: " or "Warning: ") to Console.Error, possibly augmented with a source file name and line number.
-        /// To determine that source file and line number, searches the C# source files in the specified path for <paramref name="text1"/>, and then searches from that point onwards for <paramref name="text2"/> within the same file.
-        /// The first match is used, if any.</summary>
-        public static void SequentialFindTextAndOutputError(string path, string text1, string text2, string errorMessage)
-        {
-            try
-            {
-                foreach (var f in new DirectoryInfo(path).GetFiles("*.cs", SearchOption.AllDirectories))
-                {
-                    var lines = File.ReadAllLines(f.FullName);
-                    for (int i = 0; i < lines.Length; i++)
-                        if (Regex.IsMatch(lines[i], "\\b" + Regex.Escape(text1) + "\\b"))
-                        {
-                            for (int j = i; j < lines.Length; j++)
+                            var match = Regex.Match(lines[i], "\\b" + Regex.Escape(tokens[tokenIndex]) + "\\b");
+                            if (match.Success)
                             {
-                                var match = Regex.Match(lines[j], "\\b" + Regex.Escape(text2) + "\\b");
-                                if (match.Success)
+                                tokenIndex++;
+                                if (tokenIndex == tokens.Length)
                                 {
-                                    Console.Error.WriteLine(f.FullName + "(" + (j + 1) + "," + (match.Index + 1) + "): " + errorMessage);
+                                    Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "," + (match.Index + 1) + "): " + errorOrWarning + message);
                                     return;
                                 }
                             }
-                            break;
                         }
+                    }
                 }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine("Error: " + e.Message + " (" + e.GetType().FullName + ")");
+                }
+                Console.Error.WriteLine(errorOrWarning + message);
             }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine("Error: " + e.Message + " (" + e.GetType().FullName + ") (" + path + ")");
-            }
-            Console.Error.WriteLine(errorMessage);
         }
+    }
+
+    /// <summary>Provides the ability to output post-build errors (with filename and line number) to Console.Error. This interface is used by <see cref="PostBuild.PostBuildChecks"/>.</summary>
+    public interface IPostBuildReporter
+    {
+        /// <summary>When implemented in a class, finds the first occurrence of the first token in <paramref name="tokens"/>, and then starts searching there to find the first occurrence of each of the subsequent
+        /// <paramref name="tokens"/> within the same file. When found, outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
+        void Error(string message, params string[] tokens);
+
+        /// <summary>When implemented in a class, finds the first occurrence of the first token in <paramref name="tokens"/>, and then starts searching there to find the first occurrence of each of the subsequent
+        /// <paramref name="tokens"/> within the same file. When found, outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
+        void Warning(string message, params string[] tokens);
     }
 #endif
 }

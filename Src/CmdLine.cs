@@ -547,24 +547,24 @@ namespace RT.Util.CommandLine
 #if DEBUG
         /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
         /// Run this method as a post-build step to ensure reliability of execution. This method is available only in DEBUG mode.</summary>
-        public static IEnumerable<PostBuildError> PostBuildStep(Type applicationTrType)
+        public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
         {
-            return postBuildStep(typeof(T), applicationTrType, false);
+            postBuildStep(rep, typeof(T), applicationTrType, false);
         }
 
-        private static IEnumerable<PostBuildError> postBuildStep(Type commandLineType, Type applicationTrType, bool checkClassDoc)
+        private static void postBuildStep(IPostBuildReporter rep, Type commandLineType, Type applicationTrType, bool checkClassDoc)
         {
             if (!commandLineType.IsClass)
-                yield return new PostBuildError(@"{0} is not a class.".Fmt(commandLineType.FullName), (commandLineType.IsEnum ? "enum " : commandLineType.IsInterface ? "interface " : typeof(Delegate).IsAssignableFrom(commandLineType) ? "delegate " : "struct ") + commandLineType.Name);
+                rep.Error(@"{0} is not a class.".Fmt(commandLineType.FullName), (commandLineType.IsEnum ? "enum " : commandLineType.IsInterface ? "interface " : typeof(Delegate).IsAssignableFrom(commandLineType) ? "delegate " : "struct ") + commandLineType.Name);
 
             if (commandLineType.GetConstructor(Type.EmptyTypes) == null)
-                yield return new PostBuildError(@"{0} does not have a default constructor.".Fmt(commandLineType.FullName), "class " + commandLineType.Name);
+                rep.Error(@"{0} does not have a default constructor.".Fmt(commandLineType.FullName), "class " + commandLineType.Name);
 
             if (applicationTrType != null)
             {
                 Type[] typeParam;
                 if (commandLineType.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != applicationTrType)
-                    yield return new PostBuildError(@"The type {0} implements {1}, but the ApplicationTrType is {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
+                    rep.Error(@"The type {0} implements {1}, but the ApplicationTrType is {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
                         commandLineType.FullName,
                         typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,
                         applicationTrType.FullName,
@@ -577,17 +577,16 @@ namespace RT.Util.CommandLine
             FieldInfo lastField = null;
 
             if (checkClassDoc)
-                foreach (var err in checkDocumentation(commandLineType, commandLineType, applicationTrType, sensibleDocMethods))
-                    yield return err;
+                checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
 
             foreach (var field in commandLineType.GetFields())
             {
                 if (lastField != null)
-                    yield return new PostBuildError(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name), "class " + commandLineType.Name, field.Name);
                 var positional = field.IsDefined<IsPositionalAttribute>();
 
                 if ((positional || field.IsDefined<IsMandatoryAttribute>()) && field.IsDefined<UndocumentedAttribute>())
-                    yield return new PostBuildError(@"{0}.{1}: Fields cannot simultaneously be mandatory/positional and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1}: Fields cannot simultaneously be mandatory/positional and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                 // (1) if it's a field of type enum:
                 if (field.FieldType.IsEnum)
@@ -597,13 +596,13 @@ namespace RT.Util.CommandLine
 
                     // check that it is either positional OR has a DefaultAttribute, but not both
                     if (positional && defaultAttr != null)
-                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                     if (!positional && defaultAttr == null)
-                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     // check that it doesn't have an [Option] or [CommandName] attribute, because the enum values are supposed to have that instead
                     if (field.GetCustomAttributes<OptionAttribute>().Any() || field.GetCustomAttributes<CommandNameAttribute>().Any())
-                        yield return new PostBuildError(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
@@ -611,138 +610,129 @@ namespace RT.Util.CommandLine
                             continue;
 
                         // check that the enum values all have documentation
-                        foreach (var err in checkDocumentation(enumField, commandLineType, applicationTrType, sensibleDocMethods))
-                            yield return err;
+                        checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods);
 
                         if (positional)
                         {
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
                             if (!cmdNames.Any())
-                                yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "enum " + field.FieldType.Name, enumField.Name);
-                            foreach (var err in checkCommandNamesUnique(cmdNames, commandsTaken, commandLineType, field, enumField))
-                                yield return err;
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            checkCommandNamesUnique(rep, cmdNames, commandsTaken, commandLineType, field, enumField);
                         }
                         else
                         {
                             // check that the non-default enum values' Options are present and do not clash
                             var options = enumField.GetCustomAttributes<OptionAttribute>();
                             if (!options.Any())
-                                yield return new PostBuildError(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "enum " + field.FieldType.Name, enumField.Name);
-                            foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field, enumField))
-                                yield return err;
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            checkOptionsUnique(rep, options, optionTaken, commandLineType, field, enumField);
                         }
                     }
                 }
                 else if (field.FieldType == typeof(bool))
                 {
                     if (positional)
-                        yield return new PostBuildError(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any())
-                        yield return new PostBuildError(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
-                    foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field))
-                        yield return err;
-                    foreach (var err in checkDocumentation(field, commandLineType, applicationTrType, sensibleDocMethods))
-                        yield return err;
+                    checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
+                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
                 else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
-                        yield return new PostBuildError(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
-                    foreach (var err in checkOptionsUnique(options, optionTaken, commandLineType, field))
-                        yield return err;
-                    foreach (var err in checkDocumentation(field, commandLineType, applicationTrType, sensibleDocMethods))
-                        yield return err;
+                    checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
+                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
                     // Class-type fields must be positional parameters
                     if (!positional)
-                        yield return new PostBuildError(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     // The class must have at least two subclasses with a [CommandName] attribute
                     var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>());
                     if (subclasses.Count() < 2)
-                        yield return new PostBuildError(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + field.FieldType.Name);
+                        rep.Error(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + field.FieldType.Name);
 
                     var commandsTaken = new Dictionary<string, Type>();
 
                     foreach (var subclass in subclasses)
                     {
-                        foreach (var err in checkCommandNamesUnique(subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass))
-                            yield return err;
+                        checkCommandNamesUnique(rep, subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass);
 
                         // Recursively check this class
-                        foreach (var err in postBuildStep(subclass, applicationTrType, true))
-                            yield return err;
+                        postBuildStep(rep, subclass, applicationTrType, true);
                     }
 
                     lastField = field;
                 }
                 else
-                    yield return new PostBuildError(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
             }
 
             // Warn if the method has unused documentation methods
             foreach (var meth in commandLineType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.EndsWith("Doc") && m.ReturnType == typeof(string) && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { applicationTrType })))
                 if (!sensibleDocMethods.Contains(meth))
-                    yield return new PostBuildError(@"{0}.{1} looks like a documentation method, but has no corresponding field.".Fmt(commandLineType.FullName, meth.Name), PostBuildTokenType.SequentialFind, "class " + commandLineType.Name, meth.Name);
+                    rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
         }
 
-        private static IEnumerable<PostBuildError> checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
             foreach (var option in options)
             {
                 if (optionTaken.ContainsKey(option.Name))
                 {
-                    yield return new PostBuildError(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, option.Name), PostBuildTokenType.SequentialFind, "enum " + field.FieldType.Name, enumField.Name);
-                    yield return new PostBuildError(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + type.Name, field.Name);
-                    yield return new PostBuildError(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), PostBuildTokenType.SequentialFind, "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
+                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, option.Name), "enum " + field.FieldType.Name, enumField.Name);
+                    rep.Error(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), "class " + type.Name, field.Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
                 }
                 optionTaken[option.Name] = enumField;
             }
         }
 
-        private static IEnumerable<PostBuildError> checkOptionsUnique(IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
+        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
         {
             foreach (var option in options)
             {
                 if (optionTaken.ContainsKey(option.Name))
                 {
-                    yield return new PostBuildError(@"Option ""{2}"" is used by {0}.{1}...".Fmt(type.FullName, field.Name, option.Name), PostBuildTokenType.SequentialFind, "class " + type.Name, field.Name);
-                    yield return new PostBuildError(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), PostBuildTokenType.SequentialFind, "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
+                    rep.Error(@"Option ""{2}"" is used by {0}.{1}...".Fmt(type.FullName, field.Name, option.Name), "class " + type.Name, field.Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
                 }
                 optionTaken[option.Name] = field;
             }
         }
 
-        private static IEnumerable<PostBuildError> checkCommandNamesUnique(IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
+        private static void checkCommandNamesUnique(IPostBuildReporter rep, IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
         {
             foreach (var cmd in commands)
             {
                 if (commandsTaken.ContainsKey(cmd.Name))
                 {
-                    yield return new PostBuildError(@"CommandName ""{1}"" is used by {0}...".Fmt(subclass.FullName, cmd.Name), "class " + subclass.Name);
-                    yield return new PostBuildError(@" -- ... and by {0}.".Fmt(commandsTaken[cmd.Name].FullName), "class " + commandsTaken[cmd.Name].Name);
+                    rep.Error(@"CommandName ""{1}"" is used by {0}...".Fmt(subclass.FullName, cmd.Name), "class " + subclass.Name);
+                    rep.Error(@" -- ... and by {0}.".Fmt(commandsTaken[cmd.Name].FullName), "class " + commandsTaken[cmd.Name].Name);
                 }
                 commandsTaken[cmd.Name] = subclass;
             }
         }
 
-        private static IEnumerable<PostBuildError> checkCommandNamesUnique(IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static void checkCommandNamesUnique(IPostBuildReporter rep, IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
             foreach (var cmd in cmdNames)
             {
                 if (commandsTaken.ContainsKey(cmd.Name))
                 {
-                    yield return new PostBuildError(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, cmd.Name), PostBuildTokenType.SequentialFind, "enum " + field.FieldType.Name, enumField.Name);
-                    yield return new PostBuildError(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), PostBuildTokenType.SequentialFind, "class " + type.Name, field.Name);
-                    yield return new PostBuildError(@" -- ... and by {0}.{1}.".Fmt(commandsTaken[cmd.Name].DeclaringType.FullName, commandsTaken[cmd.Name].Name), PostBuildTokenType.SequentialFind, "class " + commandsTaken[cmd.Name].DeclaringType.Name, commandsTaken[cmd.Name].Name);
+                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, cmd.Name), "enum " + field.FieldType.Name, enumField.Name);
+                    rep.Error(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), "class " + type.Name, field.Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(commandsTaken[cmd.Name].DeclaringType.FullName, commandsTaken[cmd.Name].Name), "class " + commandsTaken[cmd.Name].DeclaringType.Name, commandsTaken[cmd.Name].Name);
                 }
                 commandsTaken[cmd.Name] = enumField;
             }
@@ -750,10 +740,10 @@ namespace RT.Util.CommandLine
 
         private static Dictionary<Type, object> _applicationTrCache = new Dictionary<Type, object>();
 
-        private static IEnumerable<PostBuildError> checkDocumentation(MemberInfo member, Type inType, Type applicationTrType, List<MethodInfo> sensibleDocMethods)
+        private static void checkDocumentation(IPostBuildReporter rep, MemberInfo member, Type inType, Type applicationTrType, List<MethodInfo> sensibleDocMethods)
         {
             if (member.IsDefined<UndocumentedAttribute>())
-                yield break;
+                return;
 
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
@@ -773,8 +763,8 @@ namespace RT.Util.CommandLine
                     toCheck = (string) meth.Invoke(null, new object[] { appTr });
                     if (toCheck == null)
                     {
-                        yield return new PostBuildError(@"{0}." + member.Name + @"Doc() returned null.".Fmt(inType.FullName), PostBuildTokenType.SequentialFind, "class " + inType.Name, member.Name + "Doc");
-                        yield break;
+                        rep.Error(@"{0}." + member.Name + @"Doc() returned null.".Fmt(inType.FullName), "class " + inType.Name, member.Name + "Doc");
+                        return;
                     }
                 }
             }
@@ -783,32 +773,30 @@ namespace RT.Util.CommandLine
             {
                 if (member is Type)
                 {
-                    yield return new PostBuildError((@"{0} does not have any documentation. " +
+                    rep.Error((@"{0} does not have any documentation. " +
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(((Type) member).FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
-                        PostBuildTokenType.SequentialFind,
                         "CommandName",
                         "class " + member.Name);
                 }
                 else
                 {
-                    yield return new PostBuildError((@"{0}.{1} does not have any documentation. " +
+                    rep.Error((@"{0}.{1} does not have any documentation. " +
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(member.DeclaringType.FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
-                        PostBuildTokenType.SequentialFind,
                         (member.DeclaringType.IsEnum ? "enum " : "class ") + member.DeclaringType.Name,
                         member.Name);
                 }
-                yield break;
+                return;
             }
 
             string eggsError = null;
             try { var result = EggsML.Parse(toCheck); }
             catch (EggsMLParseException e) { eggsError = e.Message; }
             if (eggsError != null)
-                yield return new PostBuildError(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), PostBuildTokenType.SequentialFind, "class " + member.DeclaringType.Name, member.Name);
+                rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
         }
 #endif
 
