@@ -6,6 +6,7 @@ using System.Threading;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
+using System.Reflection;
 
 namespace RT.Util
 {
@@ -47,19 +48,22 @@ namespace RT.Util
         /// <para>The following additional names are defined:</para>
         /// <list type="bullet">
         /// <item>$(Temp) - system's temporary folder path</item>
+        /// <item>$(AppPath) - path to the directory containing the entry assembly</item>
         /// </list>
         /// </summary>
         public static string ExpandPath(string path)
         {
-            Ut.Tic();
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
                 path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
             path = path.Replace("$(Temp)", Path.GetTempPath());
-            time += Ut.Toc();
+            if (path.Contains("$(AppPath)"))
+            {
+                if (Assembly.GetEntryAssembly() == null)
+                    throw new InvalidOperationException("ExpandPath() cannot expand $(AppPath) in an AppDomain where Assembly.GetEntryAssembly() is null.");
+                path = path.Replace("$(AppPath)", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+            }
             return path;
         }
-
-        static double time;
 
         /// <summary>
         /// Checks to see whether the specified path starts with any of the standard paths supported by

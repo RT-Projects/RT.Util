@@ -189,18 +189,23 @@ namespace RT.Util
             _thread.Start();
         }
 
+        private volatile bool _periodicActivityRunning = false;
+
         /// <summary>
         /// Causes the periodic activity to stop occurring. If called while the activity is being performed,
         /// will wait until the activity has completed before returning. Ensures that <see cref="IsRunning"/>
         /// is false once this method returns.
         /// </summary>
-        public virtual bool Shutdown()
+        public virtual bool Shutdown(bool waitForExit)
         {
+            if (waitForExit && _periodicActivityRunning && Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
+                throw new InvalidOperationException("Cannot call Shutdown(true) from within PeriodicActivity() on the same thread (this would cause a deadlock).");
             if (_exiter == null || _exiter.ShouldExit)
                 return false;
             _exiter.ShouldExit = true;
             _sleeper.PreventSleep();
-            _exiter.WaitExited();
+            if (waitForExit)
+                _exiter.WaitExited();
             return true;
         }
 
@@ -209,7 +214,9 @@ namespace RT.Util
             _sleeper.Sleep((int) FirstInterval.TotalMilliseconds);
             while (!_exiter.ShouldExit)
             {
+                _periodicActivityRunning = true;
                 PeriodicActivity();
+                _periodicActivityRunning = false;
                 _sleeper.Sleep((int) SubsequentInterval.TotalMilliseconds);
             }
             _exiter.SignalExited();
