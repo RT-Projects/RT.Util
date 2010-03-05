@@ -33,7 +33,6 @@ namespace RT.Util.CommandLine
     ///    </list>
     /// </description></item>
     /// </list>
-    /// <para>All of the above requirements can be automatically checked for by running <see cref="PostBuildStep"/> in a post-build event (see <see cref="Ut.RunPostBuildChecks"/> for an example of use).</para>
     /// </remarks>
     public class CommandLineParser<T>
     {
@@ -546,10 +545,11 @@ namespace RT.Util.CommandLine
         #region Post-build step check
 
 #if DEBUG
-        /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid.
+        /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid according to the criteria laid out in the documentation of <see cref="CommandLineParser&lt;T&gt;"/>.
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
         /// <param name="rep">Object to report post-build errors to.</param>
         /// <param name="applicationTrType">The type of the translation object, derived from <see cref="TranslationBase"/>, which would be assigned to <see cref="ApplicationTr"/> at normal run-time.</param>
+        /// <remarks>If this method runs successfully, it guarantees that <see cref="UnrecognizedTypeException"/> does not occur at run-time.</remarks>
         public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
         {
             postBuildStep(rep, typeof(T), applicationTrType, false);
@@ -1044,7 +1044,6 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that the command-line parser encountered an unsupported type in the class definition.</summary>
-    /// <remarks>This exception can only occur if the post-build check didn't run; see <see cref="CommandLineParser&lt;T&gt;.PostBuildStep"/> in DEBUG mode.</remarks>
     [Serializable]
     public class UnrecognizedTypeException : CommandLineParseException
     {
