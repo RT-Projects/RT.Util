@@ -137,6 +137,22 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
+        /// Updates the bounding box by extending the bounds, if necessary, to include the specified circle.
+        /// </summary>
+        public void AddCircle(ref PointD center, double radius)
+        {
+            if (double.IsNaN(Xmin))
+                this = FromCircle(ref center, radius);
+            else
+            {
+                Xmin = Math.Min(Xmin, center.X - radius);
+                Xmax = Math.Max(Xmax, center.X + radius);
+                Ymin = Math.Min(Ymin, center.Y - radius);
+                Ymax = Math.Max(Ymax, center.Y + radius);
+            }
+        }
+
+        /// <summary>
         /// Returns true if this bounding box intersects with the specified ray.
         /// </summary>
         public bool IntersectsWithRay(EdgeD ray)
@@ -150,6 +166,14 @@ namespace RT.Util.Geometry
         public bool IntersectsWithBoundingBox(BoundingBoxD box)
         {
             return Intersect.BoundingBoxWithBoundingBox(ref this, ref box);
+        }
+
+        /// <summary>
+        /// Returns true iff this bounding box contains the specified point.
+        /// </summary>
+        public bool ContainsPoint(ref PointD point)
+        {
+            return point.X >= Xmin && point.X <= Xmax && point.Y >= Ymin && point.Y <= Ymax;
         }
     }
 }
