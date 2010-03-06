@@ -75,8 +75,8 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, object parentNode)
         {
-            string BaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            return LoadObjectFromXmlFile<T>(filename, BaseDir, parentNode);
+            string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
+            return LoadObjectFromXmlFile<T>(filename, baseDir, parentNode);
         }
 
         /// <summary>
@@ -273,68 +273,100 @@ namespace RT.Util.Xml
                         throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
                     }
 
-                    foreach (var field in realType.GetAllFields())
+                    xmlIntoObject(elem, ret, realType, baseDir, parentNode);
+                    return ret;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree by applying the values to an existing instance of the type.
+        /// Any objects contained within the object are instantiated anew; only the top-level object passed in is re-used.
+        /// </summary>
+        /// <typeparam name="T">Type of object to reconstruct.</typeparam>
+        /// <param name="xml">XML tree to reconstruct object from.</param>
+        /// <param name="intoObject">Object to assign values to in order to reconstruct the original object.</param>
+        public static void XmlIntoObject<T>(XElement xml, T intoObject)
+        {
+            xmlIntoObject(xml, intoObject, typeof(T), ".", null);
+        }
+
+        /// <summary>
+        /// Reconstructs an object from the specified XML file by applying the values to an existing instance of the desired type.
+        /// Any objects contained within the object are instantiated anew; only the top-level object passed in is re-used.
+        /// The type of object is inferred from the object passed in.
+        /// </summary>
+        /// <param name="filename">Path and filename of the XML file to read from.</param>
+        /// <param name="intoObject">Object to assign values to in order to reconstruct the original object. Also determines the type of object expected from the XML.</param>
+        public static void ReadXmlFileIntoObject(string filename, object intoObject)
+        {
+            var strRead = new StreamReader(filename, Encoding.UTF8);
+            XElement elem = XElement.Load(strRead);
+            strRead.Close();
+            xmlIntoObject(elem, intoObject, intoObject.GetType(), ".", null);
+        }
+
+        private static void xmlIntoObject(XElement xml, object intoObject, Type type, string baseDir, object parentNode)
+        {
+            foreach (var field in type.GetAllFields())
+            {
+                string rFieldName = field.Name.TrimStart('_');
+                MemberInfo getAttrsFrom = field;
+
+                // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
+                var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
+                if (m.Success)
+                {
+                    var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                    if (prop != null)
                     {
-                        string rFieldName = field.Name.TrimStart('_');
-                        MemberInfo getAttrsFrom = field;
+                        rFieldName = m.Groups[1].Value;
+                        getAttrsFrom = prop;
+                    }
+                }
 
-                        // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                        var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
-                        if (m.Success)
+                // [XmlIgnore]
+                if (getAttrsFrom.IsDefined<XmlIgnoreAttribute>())
+                    continue;
+
+                // [XmlParent]
+                else if (getAttrsFrom.IsDefined<XmlParentAttribute>())
+                    field.SetValue(intoObject, parentNode);
+
+                // [XmlFollowId]
+                else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
+                {
+                    if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
+                        throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
+
+                    Type innerType = field.FieldType.GetGenericArguments()[0];
+                    var subElem = xml.Element(rFieldName);
+                    if (subElem != null)
+                    {
+                        var attr = subElem.Attribute("id");
+                        if (attr != null)
                         {
-                            var prop = realType.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
-                            if (prop != null)
-                            {
-                                rFieldName = m.Groups[1].Value;
-                                getAttrsFrom = prop;
-                            }
-                        }
-
-                        // [XmlIgnore]
-                        if (getAttrsFrom.IsDefined<XmlIgnoreAttribute>())
-                            continue;
-
-                        // [XmlParent]
-                        else if (getAttrsFrom.IsDefined<XmlParentAttribute>())
-                            field.SetValue(ret, parentNode);
-
-                        // [XmlFollowId]
-                        else if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
-                        {
-                            if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                                throw new Exception("The field {0}.{1} uses the [XmlFollowId] attribute, but does not have the type XmlDeferredObject<T> for some T.".Fmt(realType.FullName, field.Name));
-
-                            Type innerType = field.FieldType.GetGenericArguments()[0];
-                            var subElem = elem.Element(rFieldName);
-                            if (subElem != null)
-                            {
-                                var attr = subElem.Attribute("id");
-                                if (attr != null)
-                                {
-                                    string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
-                                    field.SetValue(ret,
-                                         typeof(XmlDeferredObject<>).MakeGenericType(innerType)
-                                             .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
-                                             .Invoke(new object[] { 
+                            string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
+                            field.SetValue(intoObject,
+                                 typeof(XmlDeferredObject<>).MakeGenericType(innerType)
+                                     .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
+                                     .Invoke(new object[] { 
                                                  attr.Value,
                                                  typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }, null),
                                                  null,
-                                                 new object[] { innerType, newFile, baseDir, ret }
+                                                 new object[] { innerType, newFile, baseDir, intoObject }
                                             })
-                                     );
-                                }
-                            }
-                        }
-
-                        // Fields with no special [Xml...] attributes
-                        else
-                        {
-                            var tag = elem.Elements(rFieldName);
-                            if (tag.Any())
-                                field.SetValue(ret, objectFromXElement(field.FieldType, tag.First(), baseDir, ret));
+                             );
                         }
                     }
-                    return ret;
+                }
+
+                // Fields with no special [Xml...] attributes
+                else
+                {
+                    var tag = xml.Elements(rFieldName);
+                    if (tag.Any())
+                        field.SetValue(intoObject, objectFromXElement(field.FieldType, tag.First(), baseDir, intoObject));
                 }
             }
         }
