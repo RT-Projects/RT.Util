@@ -183,7 +183,7 @@ namespace RT.Util.Lingo
             Controls.Add(pnlSplit);
             Controls.Add(ts);
 
-            setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : Font);
+            setFont(_settings.FontName != null ? new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular) : SystemFonts.MessageBoxFont);
 
             Load += (s, e) =>
             {
@@ -693,7 +693,7 @@ namespace RT.Util.Lingo
                 Label lblTranslation = new Label { Text = "Translation:", AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
                 lblTranslation.Click += new EventHandler(focusTranslationBox);
                 Controls.Add(lblTranslation, 0, currow);
-                _btnAccept = new Button { Text = "OK", Anchor = AnchorStyles.None, Margin = new Padding(margin), BackColor = Color.FromKnownColor(KnownColor.ButtonFace) };
+                _btnAccept = new Button { Text = "OK", Anchor = AnchorStyles.None, Margin = new Padding(margin) };
 
                 // assign events
                 Click += new EventHandler(focusTranslationBox);
@@ -759,6 +759,7 @@ namespace RT.Util.Lingo
                         BackColor = _anythingFocused ? unsavedFocus : unsavedNormal;
                         break;
                 }
+                _btnAccept.BackColor = Color.Transparent; // silly winforms... changing the color of the panel changes the color of its buttons
             }
             protected abstract void acceptTranslation(object sender, EventArgs e);
 
