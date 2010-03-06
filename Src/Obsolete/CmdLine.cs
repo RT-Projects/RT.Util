@@ -11,12 +11,8 @@ using System.Text.RegularExpressions;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// A class which aids parsing command-line arguments.
-    /// 
-    /// <remarks>Requires the UnmanagedCode security permission due to the use
-    /// of Environment.Exit function.</remarks>
-    /// </summary>
+    /// <summary>(obsolete) A class which aids parsing command-line arguments.</summary>
+    /// <remarks>Requires the UnmanagedCode security permission due to the use of Environment.Exit().</remarks>
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     [Obsolete("Use RT.Util.CommandLine.CommandLineParser.ParseCommandLine<T> instead.")]
     public class CmdLineParser
@@ -686,7 +682,7 @@ namespace RT.Util
         #endregion
     }
 
-    /// <summary>Enumerates the possible command line option types.</summary>
+    /// <summary>(obsolete) Enumerates the possible command-line option types.</summary>
     public enum CmdOptionType
     {
         /// <summary>This option can either be set or not set, and does not allow a value to be specified.</summary>
@@ -697,7 +693,7 @@ namespace RT.Util
         List
     }
 
-    /// <summary>Lists flags that determine the behaviour of an option.</summary>
+    /// <summary>(obsolete) Lists flags that determine the behaviour of an option.</summary>
     [Flags]
     public enum CmdOptionFlags
     {
@@ -709,10 +705,8 @@ namespace RT.Util
         IsHelp = 2,
     }
 
-    /// <summary>
-    /// Abstract base class for a command line parser output printer. Provides an interface
-    /// through which <see cref="CmdLineParser"/> provides information to the user.
-    /// </summary>
+    /// <summary>(obsolete) Abstract base class for a command line parser output printer. Provides an interface
+    /// through which <see cref="CmdLineParser"/> provides information to the user.</summary>
     public abstract class CmdLinePrinterBase
     {
         /// <summary>Prints the specified text</summary>
@@ -727,7 +721,7 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Prints <see cref="CmdLineParser"/> messages to the console.
+    /// (obsolete) Prints <see cref="CmdLineParser"/> messages to the console.
     /// </summary>
     public class CmdLineConsolePrinter : CmdLinePrinterBase
     {
@@ -753,9 +747,7 @@ namespace RT.Util
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
-    /// <summary>
-    /// Prints <see cref="CmdLineParser"/> messages using message boxes.
-    /// </summary>
+    /// <summary>(obsolete) Prints <see cref="CmdLineParser"/> messages using message boxes.</summary>
     public class CmdLineMessageboxPrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
