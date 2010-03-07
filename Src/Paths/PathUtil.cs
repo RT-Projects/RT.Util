@@ -1,7 +1,7 @@
 using System;
-using System.Linq;
 using System.IO;
-using System.Windows.Forms;
+using System.Linq;
+using System.Reflection;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -37,7 +37,7 @@ namespace RT.Util
             {
                 if (_cachedAppPath == "")
                 {
-                    _cachedAppPath = Application.ExecutablePath;
+                    _cachedAppPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                     _cachedAppPath = _cachedAppPath.Remove(
                         _cachedAppPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
                 }

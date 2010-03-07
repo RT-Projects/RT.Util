@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
-using System.Reflection;
 
 namespace RT.Util
 {
