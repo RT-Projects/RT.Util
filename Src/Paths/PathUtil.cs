@@ -37,7 +37,7 @@ namespace RT.Util
             {
                 if (_cachedAppPath == "")
                 {
-                    _cachedAppPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    _cachedAppPath = Assembly.GetEntryAssembly().Location;
                     _cachedAppPath = _cachedAppPath.Remove(
                         _cachedAppPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
                 }
