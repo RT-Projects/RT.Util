@@ -282,7 +282,7 @@ namespace RT.Util.Lingo
                 }
 
                 var newOutput = f.ToString();
-                var prevOutput = File.ReadAllText(_filename);
+                var prevOutput = File.Exists(_filename) ? File.ReadAllText(_filename) : string.Empty;
                 string filenameGenerated = null;
 
                 if (newOutput != prevOutput)
@@ -418,8 +418,8 @@ namespace RT.Util.Lingo
                 .Replace("\v", "\\v");
         }
 
-        /// <summary>Returns a list of translation-string fields (<see cref="TrString"/> or <see cref="TrStringNum"/>) which are not referenced in any of the IL code in the specified assembly or assemblies. 
-        /// Returns only those unused fields from the specified type as well as types referenced by that type that have the <see cref="LingoStringClassAttribute"/>.</summary>
+        /// <summary>Outputs a <see cref="DlgMessage"/> containing a list of translation-string fields (<see cref="TrString"/> or <see cref="TrStringNum"/>) which are not referenced in any of the IL code in the specified assembly or assemblies. 
+        /// Displays only those unused fields from the specified type as well as types referenced by that type that have the <see cref="LingoStringClassAttribute"/>.</summary>
         /// <param name="type">Top-level translation-string type whose fields to examine.</param>
         /// <param name="assemblies">Collection of assemblies whose IL code to examine.</param>
         public static void WarnOfUnusedStrings(Type type, params Assembly[] assemblies)
