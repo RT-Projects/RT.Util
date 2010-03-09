@@ -82,20 +82,63 @@ namespace RT.Util
 
         /// <summary>
         /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
-        /// paragraphs will be word-wrapped to fit in the console buffer, or to a sensible width if redirected to
+        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
         /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
         /// </summary>
         public static void WriteParagraphs(string message)
         {
+            WriteParagraphs(message, 0);
+        }
+
+        /// <summary>
+        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
+        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
+        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
+        /// </summary>
+        /// <param name="message">The message to output.</param>
+        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        public static void WriteParagraphs(string message, int hangingIndent)
+        {
             try
             {
                 int width = WrapToWidth();
-                foreach (var line in message.WordWrap(width))
+                foreach (var line in message.WordWrap(width, hangingIndent))
                     Console.WriteLine(line);
             }
             catch
             {
                 Console.WriteLine(message);
+            }
+        }
+
+        /// <summary>
+        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
+        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
+        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
+        /// </summary>
+        public static void WriteParagraphs(ConsoleColoredString message)
+        {
+            WriteParagraphs(message, 0);
+        }
+
+        /// <summary>
+        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
+        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
+        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
+        /// </summary>
+        /// <param name="message">The message to output.</param>
+        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent)
+        {
+            try
+            {
+                int width = WrapToWidth();
+                foreach (var line in message.WordWrap(width, hangingIndent))
+                    ConsoleUtil.WriteLine(line);
+            }
+            catch
+            {
+                ConsoleUtil.WriteLine(message);
             }
         }
 

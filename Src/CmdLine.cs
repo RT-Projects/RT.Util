@@ -362,10 +362,10 @@ namespace RT.Util.CommandLine
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
                         c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
                     }
-                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]))
+                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(f.FieldType) || RConvert.IsTrueIntegerNullableType(f.FieldType))
                         c = c + new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan);
                     help.Add(c);
-                    if (f.FieldType == typeof(string[]))
+                    if (f.FieldType.IsArray)
                     {
                         help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
                         help.Add(c);
