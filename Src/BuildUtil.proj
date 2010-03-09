@@ -1,0 +1,41 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="Version;Build" ToolsVersion="3.5">
+  <Import Project="..\Build\CommonImports.proj"/>
+  <PropertyGroup>
+    <ProjectName>Util</ProjectName>
+    <BuildsPath Condition="'$(BuildsPath)'==''">..\..\..\builds</BuildsPath>
+  </PropertyGroup>
+
+
+  <Target Name="Version">
+    <AssemblyVersion AssemblyFile="Properties\AssemblyInfo.cs" VersionTemplate="?.?.$(BuildId).$(ChangeId)">
+      <Output TaskParameter="Version" PropertyName="Version"/>
+    </AssemblyVersion>
+  </Target>
+
+
+  <Target Name="Build" DependsOnTargets="BuildDebug;BuildRelease">
+  </Target>
+
+
+  <Target Name="BuildDebug">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Debug;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <Target Name="BuildRelease">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <!-- Deploy to DocGen -->
+  <Target Name="DeployToDocGen" DependsOnTargets="BuildRelease">
+    <Error Condition="'$(DeployPath)'==''" Text="DeployPath must be specified"/>
+    <MakeDir Directories="$(DeployPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Raw\RT.Util.dll" DestinationFolder="$(DeployPath)"/>
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Raw\RT.Util.docs.xml" DestinationFolder="$(DeployPath)"/>
+  </Target>
+
+</Project>
