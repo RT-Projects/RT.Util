@@ -34,8 +34,6 @@
 
 
   <Target Name="Test" DependsOnTargets="Build">
-    <MSBuild Projects="UtilTests.sln" Targets="Rebuild"
-             Properties="Configuration=$(Configuration);Platform=$(Platform);OutputPath=$(OutputPathRaw)\;IntermediateOutputPath=$(OutputPathTemp)\;BaseIntermediateOutputPath=$(OutputPathTemp)\"/>
     <NUnitTeamCity NUnitVersion="NUnit-2.5.3" Assemblies="$(OutputPathRaw)\RT.UtilTests.exe"/>
   </Target>
 
