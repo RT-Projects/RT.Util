@@ -22,15 +22,14 @@ namespace RT.KitchenSink.Drawing
     }
 
     /// <summary>
-    /// Wraps a <see cref="System.Drawing.Graphics"/> to provide a hopefully more convenient interface.
-    /// The major bits of functionality are:
+    /// <para>Wraps a <see cref="System.Drawing.Graphics"/> to provide a hopefully more convenient interface.
+    /// The major bits of functionality are:</para>
     /// <list type="bullet">
-    /// <item>all coordinates in doubles or RT.Util.Geometry structs;</item>
-    /// <item>support for the Y axis growing upwards;</item>
-    /// <item>functions targeted at drawing a 2d world onto a viewport of a specified size.</item>
+    /// <item><description>all coordinates in doubles or <see cref="RT.Util.Geometry"/> structs;</description></item>
+    /// <item><description>support for the Y axis growing upwards;</description></item>
+    /// <item><description>functions targeted at drawing a 2d world onto a viewport of a specified size.</description></item>
     /// </list>
-    /// 
-    /// <para>Common terms and abbreviations:
+    /// <para>Common terms and abbreviations:</para>
     /// <list type="table">
     /// <item><term>Screen</term><description>Rectangular area that will be the final destination of the drawing.</description></item>
     /// <item><term>Viewport</term><description>The region, defined in terms of the world coordinates, that is viewable on the screen.</description></item>
@@ -39,7 +38,6 @@ namespace RT.KitchenSink.Drawing
     /// <item><term>WX, WY, WW, WH</term><description>World X, Y, Width, Height, respectively</description></item>
     /// <item><term>SX, SY, SW, SH</term><description>Screen X, Y, Width, Height, respectively</description></item>
     /// </list>
-    /// </para>
     /// </summary>
     public sealed class Canvas
     {

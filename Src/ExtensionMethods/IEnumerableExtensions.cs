@@ -11,7 +11,7 @@ namespace RT.Util.ExtensionMethods
     public static class IEnumerableExtensions
     {
         /// <summary>
-        /// Returns an enumeration of Tuple&lt;T, T&gt;s containing all pairs of elements from the source IEnumerable.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all pairs of elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
         /// For example, the input sequence 1, 2 yields the pairs [1,1], [1,2], [2,1], and [2,2].
         /// </summary>
         public static IEnumerable<Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
@@ -20,7 +20,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="Tuple&lt;T, U&gt;"/>s containing all ordered pairs of elements from the two source IEnumerables.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, U&gt;"/>s containing all ordered pairs of elements from the two source <see cref="IEnumerable&lt;T&gt;"/>s.
         /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
         /// </summary>
         public static IEnumerable<Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
@@ -33,7 +33,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all unique pairs of distinct elements from the source IEnumerable.
+        /// Returns an enumeration of <see cref="Tuple&lt;T, T&gt;"/>s containing all unique pairs of distinct elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
         /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
         /// </summary>
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
@@ -128,7 +128,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// This does the same as .Order(), but it is much faster if you intend to extract only the first few items using .Take().
+        /// This does the same as <see cref="Order&lt;T&gt;(IEnumerable&lt;T&gt;)"/>, but it is much faster if you intend to extract only the first few items using .Take().
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
@@ -138,7 +138,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// This does the same as .Order(), but it is much faster if you intend to extract only the first few items using .Take().
+        /// This does the same as <see cref="Order&lt;T&gt;(IEnumerable&lt;T&gt;,IComparer&lt;T&gt;)"/>, but it is much faster if you intend to extract only the first few items using .Take().
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
         /// <param name="comparer">An instance of <see cref="IComparer&lt;T&gt;"/> specifying the comparison to use on the items.</param>
@@ -200,10 +200,10 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns all permutations of the input IEnumerable&lt;T&gt;.
+        /// Returns all permutations of the input <see cref="IEnumerable&lt;T&gt;"/>.
         /// </summary>
         /// <param name="source">The list of items to permute.</param>
-        /// <returns>IEnumerable&lt;IEnumerable&lt;T&gt;&gt; containing all permutations of the input IEnumerable&lt;T&gt;.</returns>
+        /// <returns>A collection containing all permutations of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> source)
         {
             // Ensure that the source IEnumerable is evaluated only once
@@ -222,10 +222,10 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns all subsequences of the input IEnumerable&lt;T&gt;.
+        /// Returns all subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.
         /// </summary>
         /// <param name="source">The sequence of items to generate subsequences of.</param>
-        /// <returns>IEnumerable&lt;IEnumerable&lt;T&gt;&gt; containing all subsequences of the input IEnumerable&lt;T&gt;.</returns>
+        /// <returns>A collection containing all subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source)
         {
             // Ensure that the source IEnumerable is evaluated only once
@@ -412,8 +412,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Enumerates only the last <paramref name="count"/> items of this collection. Note that this method
-        /// must enumerate the entire collection to the end once before yielding the first item. Note also that
+        /// Returns a collection containing only the last <paramref name="count"/> items of the input collection.
+        /// This method enumerates the entire collection to the end once before returning. Note also that
         /// the memory usage of this method is proportional to <paramref name="count"/>.
         /// </summary>
         public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
@@ -427,8 +427,7 @@ namespace RT.Util.ExtensionMethods
                 queue.Enqueue(item);
             }
 
-            while (queue.Count > 0)
-                yield return queue.Dequeue();
+            return queue;
         }
     }
 }

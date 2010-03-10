@@ -12,17 +12,15 @@ namespace RT.Util
     /// </summary>
     /// 
     /// <example>
-    /// Copy and paste the following constructors to your class for "default" behaviour:
+    /// <para>Copy and paste the following constructors to your class for "default" behaviour:</para>
     /// 
-    /// /// <summary>Creates an exception instance with the specified message.</summary>
-    /// public !!!MyException!!!(string message)
-    ///     : base(message)
-    /// { }
+    /// <code>
+    /// /// &lt;summary&gt;Creates an exception instance with the specified message.&lt;/summary&gt;
+    /// public MyException(string message) : base(message) { }
     ///
-    /// /// <summary>Creates an exception instance with the specified message and inner exception.</summary>
-    /// public !!!MyException!!!(string message, Exception innerException)
-    ///     : base(null, innerException)
-    /// { }
+    /// /// &lt;summary&gt;Creates an exception instance with the specified message and inner exception.&lt;/summary&gt;
+    /// public MyException(string message, Exception innerException) : base(null, innerException) { }
+    /// </code>
     /// </example>
     public class RTException : Exception
     {

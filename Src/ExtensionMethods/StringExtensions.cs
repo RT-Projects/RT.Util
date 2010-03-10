@@ -380,6 +380,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Escapes all characters in this string whose code is less than 32 using C/C#-compatible backslash escapes.
         /// </summary>
+        /// <seealso cref="CLiteralUnescape"/>
         public static string CLiteralEscape(this string value)
         {
             var result = new StringBuilder(value.Length + value.Length / 2);
@@ -414,6 +415,7 @@ namespace RT.Util.ExtensionMethods
         /// Reverses the escaping done by <see cref="CLiteralEscape"/>. Note that unescaping is not fully C/C#-compatible
         /// in the sense that not all strings that are valid string literals in C/C# can be correctly unescaped by this procedure.
         /// </summary>
+        /// <seealso cref="CLiteralEscape"/>
         public static string CLiteralUnescape(this string value)
         {
             var result = new StringBuilder(value.Length);
@@ -831,12 +833,14 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Returns true if and only if this string ends with the specified character.</summary>
+        /// <seealso cref="StartsWith"/>
         public static bool EndsWith(this string str, char ch)
         {
             return str != null && str.Length > 0 && str[str.Length - 1] == ch;
         }
 
         /// <summary>Returns true if and only if this string starts with the specified character.</summary>
+        /// <seealso cref="EndsWith"/>
         public static bool StartsWith(this string str, char ch)
         {
             return str != null && str.Length > 0 && str[0] == ch;

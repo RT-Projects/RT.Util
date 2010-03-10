@@ -29,11 +29,11 @@ namespace RT.Util
 
         #region Events
         /// <summary>
-        /// Occurs when one of the hooked keys is pressed
+        /// Occurs when one of the hooked keys is pressed.
         /// </summary>
         public event KeyEventHandler KeyDown;
         /// <summary>
-        /// Occurs when one of the hooked keys is released
+        /// Occurs when one of the hooked keys is released.
         /// </summary>
         public event KeyEventHandler KeyUp;
         #endregion

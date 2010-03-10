@@ -25,7 +25,7 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws the specified Image into the destination rectangle DestRect of the Graphics object g using the specified Opacity.
+        /// Draws the specified <paramref name="image"/> into the destination rectangle <paramref name="destRect"/> of the <paramref name="graphics"/> object using the specified <paramref name="opacity"/>.
         /// </summary>
         /// <param name="graphics">Graphics object to alpha-blend the image onto.</param>
         /// <param name="image">Image to draw.</param>
