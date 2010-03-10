@@ -34,7 +34,7 @@
 
 
   <Target Name="Test" DependsOnTargets="Build">
-    <NUnitTeamCity NUnitVersion="NUnit-2.5.3" Assemblies="$(OutputPathRaw)\RT.Util.dll"/>
+    <NUnitTeamCity NUnitVersion="NUnit-2.5.3" Assemblies="$(OutputPathRaw)\UtilTests.exe"/>
   </Target>
 
 </Project>
