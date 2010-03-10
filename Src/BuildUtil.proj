@@ -30,6 +30,13 @@
   </Target>
 
 
+  <Target Name="BuildAndTest">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"
+             Targets="Test"/>
+  </Target>
+
+
   <Target Name="DeployToDocGen" DependsOnTargets="BuildDebug">
     <Error Condition="'$(DeployToDocGenPath)'==''" Text="DeployToDocGenPath must be specified"/>
     <MakeDir Directories="$(DeployToDocGenPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
