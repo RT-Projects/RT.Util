@@ -196,7 +196,7 @@ namespace RT.Util
             _colors = characterColors;
         }
 
-        /// <summary>Construts a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
+        /// <summary>Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
         /// <param name="strings">Input strings to concatenate.</param>
         /// <remarks>The color of each character in the input strings is preserved.</remarks>
         public ConsoleColoredString(params ConsoleColoredString[] strings)
