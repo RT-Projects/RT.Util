@@ -151,7 +151,7 @@ namespace RT.Util
         protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, out string indent, uint verbosity, LogType type, string message, object[] args)
         {
             string timestamp = (TimestampInUTC ? DateTime.Now.ToUniversalTime() : DateTime.Now).ToString(TimestampFormat);
-            if (args.Length > 0)
+            if (args != null && args.Length > 0)
                 fmtText = string.Format(message, args);
             else
                 fmtText = message;
@@ -327,8 +327,8 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which puts messages into any <see cref="Stream"/> by
-    /// creating a TextWriter wrapper around it.
+    /// Implements a logger which puts messages into any <see cref="Stream"/> by creating a TextWriter wrapper around it.
+    /// Use this logger only if the stream will remain open for the duration of the execution.
     /// </summary>
     [Serializable]
     public class StreamLogger : LoggerBase
@@ -391,6 +391,51 @@ namespace RT.Util
                 }
                 if (first)
                     _streamWriter.WriteLine(fmtInfo); // don't completely skip blank messages
+            }
+        }
+    }
+
+    /// <summary>
+    /// Implements a logger which appends messages to a file by opening and closing the file each time.
+    /// This is in contrast to <see cref="StreamLogger"/>, which keeps the stream open.
+    /// </summary>
+    [Serializable]
+    public class FileAppendLogger : LoggerBase
+    {
+        /// <summary>Creates a new instance.</summary>
+        public FileAppendLogger() { Filename = null; }
+
+        /// <summary>Creates a new instance.</summary>
+        public FileAppendLogger(string filename) { Filename = filename; }
+
+        /// <summary>
+        /// Gets or sets the path to the file to which messages are logged.
+        /// </summary>
+        public string Filename { get; set; }
+
+        /// <summary>Logs a message to the underlying stream.</summary>
+        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        {
+            if (VerbosityLimit[type] < verbosity || Filename == null)
+                return;
+
+            lock (_lock_log)
+            {
+                string fmtInfo, fmtText, indent;
+                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
+
+                using (var f = File.AppendText(Filename))
+                {
+                    bool first = true;
+                    foreach (var line in fmtText.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
+                    {
+                        f.Write(first ? fmtInfo : indent);
+                        first = false;
+                        f.WriteLine(line);
+                    }
+                    if (first)
+                        f.WriteLine(fmtInfo); // don't completely skip blank messages
+                }
             }
         }
     }
