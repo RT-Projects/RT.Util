@@ -94,15 +94,17 @@ namespace RT.Util
         /// Takes a string which encodes verbosity limit configuration, parses it
         /// and sets the limits accordingly. On failure throws an ArgumentException
         /// with a fairly detailed description of the string format.
-        /// 
-        /// Examples of valid strings:
-        ///     "" - use defaults
-        ///     "3" - set all limits to 3
-        ///     "2d0" - set all limits to 2, then set the debug limit to 0.
-        ///     "i0w1e2d3" set info=0, warning=1, error=2, debug=3.
-        ///     
-        /// Intended use: configuring the logger via a command-line option.
         /// </summary>
+        /// <remarks>
+        /// <para>Examples of valid strings:</para>
+        /// <list type="table">
+        ///     <item><term>""</term><description>sets default values</description></item>
+        ///     <item><term>"3"</term><description>sets all limits to 3</description></item>
+        ///     <item><term>"2d0"</term><description>sets all limits to 2, then set the debug limit to 0</description></item>
+        ///     <item><term>"i0w1e2d3"</term><description>sets info=0, warning=1, error=2, debug=3</description></item>
+        /// </list>
+        /// <para>Intended use: configuring the logger via a command-line option.</para>
+        /// </remarks>
         public virtual void ConfigureVerbosity(string settings)
         {
             // 0 - set all types to this level
