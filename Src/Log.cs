@@ -148,14 +148,9 @@ namespace RT.Util
         /// the <paramref name="fmtInfo"/> which is the message header and the
         /// <paramref name="fmtText"/> which is the actual message.
         /// </summary>
-        protected virtual void GetFormattedStrings(out string fmtInfo, out string fmtText, out string indent, uint verbosity, LogType type, string message, object[] args)
+        protected virtual void GetFormattedStrings(out string fmtInfo, out string indent, uint verbosity, LogType type)
         {
             string timestamp = (TimestampInUTC ? DateTime.Now.ToUniversalTime() : DateTime.Now).ToString(TimestampFormat);
-            if (args != null && args.Length > 0)
-                fmtText = string.Format(message, args);
-            else
-                fmtText = message;
-
             fmtInfo = string.Format(MessageFormat, timestamp, MsgTypeString[type], verbosity);
             indent = new string(' ', fmtInfo.Length - IndentFormatSuffix.Length) + IndentFormatSuffix;
         }
@@ -174,7 +169,7 @@ namespace RT.Util
         /// <param name="message">The message itself</param>
         /// <param name="args">If present, will be string.Format'ted into the message.
         /// Otherwise "message" will be logged as-is.</param>
-        public abstract void Log(uint verbosity, LogType type, string message, params object[] args);
+        public abstract void Log(uint verbosity, LogType type, string message);
 
         /// <summary>
         /// Returns true if a message of the specified verbosity and type will actually
@@ -186,21 +181,21 @@ namespace RT.Util
         }
 
         /// <summary>Appends an informational message to the log.</summary>
-        public void Info(string message, params object[] args) { Log(1, LogType.Info, message, args); }
+        public void Info(string message) { Log(1, LogType.Info, message); }
         /// <summary>Appends an informational message to the log.</summary>
-        public void Info(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Info, message, args); }
+        public void Info(uint verbosity, string message) { Log(verbosity, LogType.Info, message); }
         /// <summary>Appends a warning message to the log.</summary>
-        public void Warn(string message, params object[] args) { Log(1, LogType.Warning, message, args); }
+        public void Warn(string message) { Log(1, LogType.Warning, message); }
         /// <summary>Appends a warning message to the log.</summary>
-        public void Warn(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Warning, message, args); }
+        public void Warn(uint verbosity, string message) { Log(verbosity, LogType.Warning, message); }
         /// <summary>Appends an error message to the log.</summary>
-        public void Error(string message, params object[] args) { Log(1, LogType.Error, message, args); }
+        public void Error(string message) { Log(1, LogType.Error, message); }
         /// <summary>Appends an error message to the log.</summary>
-        public void Error(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Error, message, args); }
+        public void Error(uint verbosity, string message) { Log(verbosity, LogType.Error, message); }
         /// <summary>Appends a debug message to the log.</summary>
-        public void Debug(string message, params object[] args) { Log(1, LogType.Debug, message, args); }
+        public void Debug(string message) { Log(1, LogType.Debug, message); }
         /// <summary>Appends a debug message to the log.</summary>
-        public void Debug(uint verbosity, string message, params object[] args) { Log(verbosity, LogType.Debug, message, args); }
+        public void Debug(uint verbosity, string message) { Log(verbosity, LogType.Debug, message); }
 
         /// <summary>Determines whether an informational message would be visible (at default verbosity).</summary>
         public bool IsInfoOn() { return IsLogOn(1, LogType.Info); }
@@ -236,7 +231,7 @@ namespace RT.Util
             if (exception.InnerException != null)
                 Exception(exception.InnerException, verbosity, type);
 
-            Log(verbosity, type, "<{0}>: {1}", exception.GetType().ToString(), exception.Message);
+            Log(verbosity, type, "<{0}>: {1}".Fmt(exception.GetType().ToString(), exception.Message));
             Log(verbosity, type, exception.StackTrace);
         }
     }
@@ -250,7 +245,7 @@ namespace RT.Util
         /// <summary>
         /// Does nothing.
         /// </summary>
-        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        public override void Log(uint verbosity, LogType type, string message)
         {
         }
     }
@@ -293,15 +288,15 @@ namespace RT.Util
         }
 
         /// <summary>Logs a message to the console.</summary>
-        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        public override void Log(uint verbosity, LogType type, string message)
         {
             lock (_lock_log)
             {
                 if (VerbosityLimit[type] < verbosity)
                     return;
 
-                string fmtInfo, fmtText, indent;
-                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
+                string fmtInfo, indent;
+                GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
                 TextWriter consoleStream = Console.Out;
                 if (type == LogType.Error && ErrorsToStdErr)
@@ -312,7 +307,7 @@ namespace RT.Util
 
                 int wrapWidth = WordWrap ? ConsoleUtil.WrapToWidth() : int.MaxValue;
                 bool first = true;
-                foreach (var line in fmtText.WordWrap(wrapWidth - fmtInfo.Length))
+                foreach (var line in message.WordWrap(wrapWidth - fmtInfo.Length))
                 {
                     consoleStream.Write(first ? fmtInfo : indent);
                     first = false;
@@ -372,18 +367,18 @@ namespace RT.Util
         }
 
         /// <summary>Logs a message to the underlying stream.</summary>
-        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        public override void Log(uint verbosity, LogType type, string message)
         {
             lock (_lock_log)
             {
                 if (VerbosityLimit[type] < verbosity || _streamWriter == null)
                     return;
 
-                string fmtInfo, fmtText, indent;
-                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
+                string fmtInfo, indent;
+                GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
                 bool first = true;
-                foreach (var line in fmtText.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
+                foreach (var line in message.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
                 {
                     _streamWriter.Write(first ? fmtInfo : indent);
                     first = false;
@@ -414,20 +409,20 @@ namespace RT.Util
         public string Filename { get; set; }
 
         /// <summary>Logs a message to the underlying stream.</summary>
-        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        public override void Log(uint verbosity, LogType type, string message)
         {
             if (VerbosityLimit[type] < verbosity || Filename == null)
                 return;
 
             lock (_lock_log)
             {
-                string fmtInfo, fmtText, indent;
-                GetFormattedStrings(out fmtInfo, out fmtText, out indent, verbosity, type, message, args);
+                string fmtInfo, indent;
+                GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
                 using (var f = File.AppendText(Filename))
                 {
                     bool first = true;
-                    foreach (var line in fmtText.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
+                    foreach (var line in message.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
                     {
                         f.Write(first ? fmtInfo : indent);
                         first = false;
@@ -455,12 +450,12 @@ namespace RT.Util
         public readonly Dictionary<string, LoggerBase> Loggers = new Dictionary<string, LoggerBase>();
 
         /// <summary>Logs a message to the underlying loggers.</summary>
-        public override void Log(uint verbosity, LogType type, string message, params object[] args)
+        public override void Log(uint verbosity, LogType type, string message)
         {
             lock (_lock_log)
             {
                 foreach (LoggerBase logger in Loggers.Values)
-                    logger.Log(verbosity, type, message, args);
+                    logger.Log(verbosity, type, message);
             }
         }
 
