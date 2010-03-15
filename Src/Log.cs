@@ -173,6 +173,9 @@ namespace RT.Util
         /// Otherwise "message" will be logged as-is.</param>
         public abstract void Log(uint verbosity, LogType type, string message);
 
+        /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
+        public abstract void Separator();
+
         /// <summary>
         /// Returns true if a message of the specified verbosity and type will actually
         /// end up being logged.
@@ -250,6 +253,12 @@ namespace RT.Util
         public override void Log(uint verbosity, LogType type, string message)
         {
         }
+        /// <summary>
+        /// Does nothing.
+        /// </summary>
+        public override void Separator()
+        {
+        }
     }
 
     /// <summary>
@@ -321,6 +330,14 @@ namespace RT.Util
                 Console.ForegroundColor = prevCol;
             }
         }
+
+        /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
+        public override void Separator()
+        {
+            Console.Out.WriteLine();
+            Console.Out.WriteLine(new string('-', ConsoleUtil.WrapToWidth()));
+            Console.Out.WriteLine();
+        }
     }
 
     /// <summary>
@@ -378,16 +395,19 @@ namespace RT.Util
 
                 string fmtInfo, indent;
                 GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
+                _streamWriter.Write(fmtInfo);
+                _streamWriter.WriteLine(message);
+            }
+        }
 
-                bool first = true;
-                foreach (var line in message.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
-                {
-                    _streamWriter.Write(first ? fmtInfo : indent);
-                    first = false;
-                    _streamWriter.WriteLine(line);
-                }
-                if (first)
-                    _streamWriter.WriteLine(fmtInfo); // don't completely skip blank messages
+        /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
+        public override void Separator()
+        {
+            lock (_lock_log)
+            {
+                _streamWriter.WriteLine();
+                _streamWriter.WriteLine(new string('-', 120));
+                _streamWriter.WriteLine();
             }
         }
     }
@@ -423,15 +443,22 @@ namespace RT.Util
 
                 using (var f = File.AppendText(Filename))
                 {
-                    bool first = true;
-                    foreach (var line in message.WordWrap(int.MaxValue - 1 - fmtInfo.Length))
-                    {
-                        f.Write(first ? fmtInfo : indent);
-                        first = false;
-                        f.WriteLine(line);
-                    }
-                    if (first)
-                        f.WriteLine(fmtInfo); // don't completely skip blank messages
+                    f.Write(fmtInfo);
+                    f.WriteLine(message);
+                }
+            }
+        }
+
+        /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
+        public override void Separator()
+        {
+            lock (_lock_log)
+            {
+                using (var f = File.AppendText(Filename))
+                {
+                    f.WriteLine();
+                    f.WriteLine(new string('-', 120));
+                    f.WriteLine();
                 }
             }
         }
@@ -458,6 +485,16 @@ namespace RT.Util
             {
                 foreach (LoggerBase logger in Loggers.Values)
                     logger.Log(verbosity, type, message);
+            }
+        }
+
+        /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
+        public override void Separator()
+        {
+            lock (_lock_log)
+            {
+                foreach (LoggerBase logger in Loggers.Values)
+                    logger.Separator();
             }
         }
 
