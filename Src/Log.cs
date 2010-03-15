@@ -163,14 +163,12 @@ namespace RT.Util
         /// is a helper method.
         /// </summary>
         /// <remarks>
-        /// Note that the various specialised functions such as <see cref="Warn(string, object[])"/> simply
+        /// Note that the various specialised functions such as <see cref="Warn(string)"/> simply
         /// call this method to do the work.
         /// </remarks>
         /// <param name="verbosity">Verbosity level of this message</param>
         /// <param name="type">Message type - info, warning, error or debug</param>
         /// <param name="message">The message itself</param>
-        /// <param name="args">If present, will be string.Format'ted into the message.
-        /// Otherwise "message" will be logged as-is.</param>
         public abstract void Log(uint verbosity, LogType type, string message);
 
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>

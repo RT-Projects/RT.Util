@@ -42,45 +42,6 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// <para>Expands all occurrences of "$(NAME)" in the specified string with the special folder path
-        /// for the current machine/user, where NAME is the name of one of the values of the <see cref="Environment.SpecialFolder"/>
-        /// enum. There is no support for escaping such a replacement, and invalid names are ignored.</para>
-        /// <para>The following additional names are defined:</para>
-        /// <list type="bullet">
-        /// <item>$(Temp) - system's temporary folder path</item>
-        /// <item>$(AppPath) - path to the directory containing the entry assembly</item>
-        /// </list>
-        /// </summary>
-        public static string ExpandPath(string path)
-        {
-            foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
-                path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
-            path = path.Replace("$(Temp)", Path.GetTempPath());
-            if (path.Contains("$(AppPath)"))
-            {
-                if (Assembly.GetEntryAssembly() == null)
-                    throw new InvalidOperationException("ExpandPath() cannot expand $(AppPath) in an AppDomain where Assembly.GetEntryAssembly() is null.");
-                path = path.Replace("$(AppPath)", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-            }
-            return path;
-        }
-
-        /// <summary>
-        /// Checks to see whether the specified path starts with any of the standard paths supported by
-        /// <see cref="ExpandPath"/>, and if so, replaces the prefix with a "$(NAME)" string and returns
-        /// the resulting value.
-        /// </summary>
-        public static string UnexpandPath(string path)
-        {
-            foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
-                if (path.StartsWith(Environment.GetFolderPath(folderEnum)))
-                    return "$(" + folderEnum + ")" + path.Substring(Environment.GetFolderPath(folderEnum).Length);
-            if (path.StartsWith(Path.GetTempPath()))
-                return "$(Temp)" + path.Substring(Path.GetTempPath().Length);
-            return path;
-        }
-
-        /// <summary>
         /// Loads settings into the specified class, or, if not available, creates
         /// a new instance of the class.
         /// </summary>

@@ -27,9 +27,10 @@ namespace RT.Util
         private static string _cachedAppPath = null;
 
         /// <summary>
-        /// Returns the application path with a directory separator char at the end.
-        /// The expression 'Ut.AppPath + "FileName"' yields a valid fully qualified
-        /// file name. Supports network paths.
+        /// Returns the full path to the directory containing the application's entry assembly.
+        /// Will succeed for the main AppDomain of an application started as an .exe; will
+        /// throw for anything that doesn't have an entry assembly, such as a manually created AppDomain.
+        /// Use <see cref="AppPathCombine"/> to append path elements.
         /// </summary>
         public static string AppPath
         {
@@ -40,8 +41,7 @@ namespace RT.Util
                     if (Assembly.GetEntryAssembly() == null)
                         throw new InvalidOperationException("PathUtil.AppPath is not supported in an AppDomain that is not the default AppDomain. More precisely, PathUtil.AppPath requires Assembly.GetEntryAssembly() to be non-null.");
                     _cachedAppPath = Assembly.GetEntryAssembly().Location;
-                    _cachedAppPath = _cachedAppPath.Remove(
-                        _cachedAppPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+                    _cachedAppPath = Path.GetDirectoryName(_cachedAppPath);
                 }
                 return _cachedAppPath;
             }
@@ -53,7 +53,7 @@ namespace RT.Util
         /// </summary>
         public static string AppPathCombine(string path)
         {
-            return AppPath + path;
+            return Combine(AppPath, path);
         }
 
         /// <summary>
@@ -67,19 +67,9 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// This function returns a fully qualified name for the subpath, relative
-        /// to the executable directory. This is for the purist programmers who can't
-        /// handle AppPath returning something "invalid" :)
-        /// </summary>
-        public static string MakeAppSubpath(string subpath)
-        {
-            return AppPath + subpath;
-        }
-
-        /// <summary>
         /// Returns a normalized copy of the specified path.
         /// A "normalized path" is a path to a directory (not a file!) which
-        /// ALWAYS ends with a slash. Cf. <see>NormName</see>.
+        /// ALWAYS ends with a slash.
         ///
         /// <para>Returns null for null inputs.</para>
         /// </summary>
@@ -95,44 +85,6 @@ namespace RT.Util
                 return path;
             else
                 return path + Path.DirectorySeparatorChar;
-        }
-
-        /// <summary>
-        /// A "normalized name" is file or directory name which NEVER
-        /// ends with a slash. Cf. <see>NormPath</see>. This includes
-        /// the root directory on Windows, which normalised name is "C:"
-        /// and unix, where it is "".
-        ///
-        /// <para>Returns null for null inputs.</para>
-        /// </summary>
-        public static string NormName(string filedir)
-        {
-            if (filedir == null || filedir.Length == 0)
-                return null;
-            else if (filedir[filedir.Length - 1] == Path.DirectorySeparatorChar)
-                return filedir;
-            else
-                return filedir + Path.DirectorySeparatorChar;
-        }
-
-        /// <summary>
-        /// Ensures that no path ends with a back slash except for the root path.
-        /// Surely this is a funny path, unlike the N(o)rm(al)Path above...
-        /// </summary>
-        public static string FunnyPath(string path)
-        {
-            if (path == null)
-                return "";
-            else if (path.Length == 0)
-                return "";
-            else if (path.Length == 2 && path[1] == ':')
-                return path + Path.DirectorySeparatorChar;
-            else if (path.Length == 3)
-                return path;
-            else if (path[path.Length - 1] == Path.DirectorySeparatorChar)
-                return path.Substring(0, path.Length - 1);
-            else
-                return path;
         }
 
         /// <summary>
@@ -193,6 +145,45 @@ namespace RT.Util
                 p2 = p1.Substring(p2.Length);
                 return -p2.Count(c => c == Path.DirectorySeparatorChar);
             }
+        }
+
+        /// <summary>
+        /// <para>Expands all occurrences of "$(NAME)" in the specified string with the special folder path
+        /// for the current machine/user, where NAME is the name of one of the values of the <see cref="Environment.SpecialFolder"/>
+        /// enum. There is no support for escaping such a replacement, and invalid names are ignored.</para>
+        /// <para>The following additional names are defined:</para>
+        /// <list type="bullet">
+        /// <item>$(Temp) - system's temporary folder path</item>
+        /// <item>$(AppPath) - path to the directory containing the entry assembly</item>
+        /// </list>
+        /// </summary>
+        public static string ExpandPath(string path)
+        {
+            foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
+                path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
+            path = path.Replace("$(Temp)", Path.GetTempPath());
+            if (path.Contains("$(AppPath)"))
+            {
+                if (Assembly.GetEntryAssembly() == null)
+                    throw new InvalidOperationException("ExpandPath() cannot expand $(AppPath) in an AppDomain where Assembly.GetEntryAssembly() is null.");
+                path = path.Replace("$(AppPath)", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+            }
+            return path;
+        }
+
+        /// <summary>
+        /// Checks to see whether the specified path starts with any of the standard paths supported by
+        /// <see cref="ExpandPath"/>, and if so, replaces the prefix with a "$(NAME)" string and returns
+        /// the resulting value.
+        /// </summary>
+        public static string UnexpandPath(string path)
+        {
+            foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
+                if (path.StartsWith(Environment.GetFolderPath(folderEnum)))
+                    return "$(" + folderEnum + ")" + path.Substring(Environment.GetFolderPath(folderEnum).Length);
+            if (path.StartsWith(Path.GetTempPath()))
+                return "$(Temp)" + path.Substring(Path.GetTempPath().Length);
+            return path;
         }
 
         /// <summary>
