@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace RT.Util.Forms
 {
@@ -16,6 +17,7 @@ namespace RT.Util.Forms
         private int _normalWidth, _normalHeight;
         private int _normalLeft, _normalTop;
         private Settings _settings;
+        private string _lastScreenResolution;
 
         // We need a default constructor for the form designer to work, but we don't want it to be used at runtime, so make it private
         private ManagedForm() { }
@@ -24,7 +26,8 @@ namespace RT.Util.Forms
         /// <param name="settings">An object of type <see cref="ManagedForm.Settings"/> from which the position and size of the form are retrieved, and in which they will be stored.</param>
         public ManagedForm(Settings settings)
         {
-            if (settings == null) throw new ArgumentNullException("settings");
+            if (settings == null)
+                throw new ArgumentNullException("settings");
             _settings = settings;
 
             // Since the constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
@@ -38,27 +41,13 @@ namespace RT.Util.Forms
 
                 try
                 {
-                    var vs = SystemInformation.VirtualScreen;
-                    var resolution = vs.Width + "x" + vs.Height;
-
-                    FormDimensions dimensions = null;
-                    if (_settings.DimensionsByRes.ContainsKey(resolution))
-                        dimensions = _settings.DimensionsByRes[resolution];
-
-                    if (dimensions == null)
+                    // This call also sets _lastScreenResolution
+                    if (!setDimensionsForCurrentScreenResolution())
                     {
                         Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
                         Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
                         _normalWidth = Width;
                         _normalHeight = Height;
-                    }
-                    else
-                    {
-                        Left = _normalLeft = dimensions.Left;
-                        Top = _normalTop = dimensions.Top;
-                        Width = _normalWidth = dimensions.Width;
-                        Height = _normalHeight = dimensions.Height;
-                        Maximized = dimensions.Maximized;
                     }
                 }
                 catch
@@ -70,6 +59,8 @@ namespace RT.Util.Forms
                 Move += new EventHandler(processMove);
                 // Close event: save the settings
                 FormClosed += new FormClosedEventHandler(saveSettings);
+                // Restore position and size properly when the screen resolution changes
+                SystemEvents.DisplaySettingsChanged += new EventHandler(displaySettingsChanged);
 
                 _prevWindowState = WindowState;
 
@@ -89,6 +80,32 @@ namespace RT.Util.Forms
                         break;
                 }
             };
+        }
+
+        private bool setDimensionsForCurrentScreenResolution()
+        {
+            var vs = SystemInformation.VirtualScreen;
+            _lastScreenResolution = vs.Width + "x" + vs.Height;
+            if (!_settings.DimensionsByRes.ContainsKey(_lastScreenResolution))
+                return false;
+
+            var dimensions = _settings.DimensionsByRes[_lastScreenResolution];
+            Left = _normalLeft = dimensions.Left;
+            Top = _normalTop = dimensions.Top;
+            Width = _normalWidth = dimensions.Width;
+            Height = _normalHeight = dimensions.Height;
+            Maximized = dimensions.Maximized;
+            return true;
+        }
+
+        private void displaySettingsChanged(object sender, EventArgs e)
+        {
+            // Save the settings for the old resolution
+            updateDimensionsForLastScreenResolution();
+
+            // Set the dimensions for the new resolution. This call also updates _lastScreenResolution.
+            // If no dimensions for the new resolution are stored, this does nothing and relies on the OS to position the window meaningfully.
+            setDimensionsForCurrentScreenResolution();
         }
 
         private void processResize(object sender, EventArgs e)
@@ -136,6 +153,12 @@ namespace RT.Util.Forms
 
         private void processMove(object sender, EventArgs e)
         {
+            // A move event can happen when the user changes the screen resolution, but before the DisplaySettingsChanging and DisplaySettingsChanged events occur.
+            // We need to ignore that spurious move event.
+            var vs = SystemInformation.VirtualScreen;
+            if (vs.Width + "x" + vs.Height != _lastScreenResolution)
+                return;
+
             // Update normal size
             if (WindowState == FormWindowState.Normal)
             {
@@ -261,17 +284,20 @@ namespace RT.Util.Forms
             }
         }
 
-        private void saveSettings(object sender, FormClosedEventArgs e)
+        private void updateDimensionsForLastScreenResolution()
         {
-            var vs = SystemInformation.VirtualScreen;
-            var resolution = vs.Width + "x" + vs.Height;
             var dimensions = new FormDimensions();
             dimensions.Left = _normalLeft;
             dimensions.Top = _normalTop;
             dimensions.Width = _normalWidth;
             dimensions.Height = _normalHeight;
             dimensions.Maximized = Maximized;
-            _settings.DimensionsByRes[resolution] = dimensions;
+            _settings.DimensionsByRes[_lastScreenResolution] = dimensions;
+        }
+
+        private void saveSettings(object sender, FormClosedEventArgs e)
+        {
+            updateDimensionsForLastScreenResolution();
         }
 
         #endregion
