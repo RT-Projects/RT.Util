@@ -31,8 +31,8 @@ namespace RT.Util
         /// Returns the full path to the directory containing the application's entry assembly.
         /// Will succeed for the main AppDomain of an application started as an .exe; will
         /// throw for anything that doesn't have an entry assembly, such as a manually created AppDomain.
-        /// Use <see cref="AppPathCombine"/> to append path elements.
         /// </summary>
+        /// <seealso cref="AppPathCombine(string,string[])"/>
         public static string AppPath
         {
             get
@@ -67,15 +67,10 @@ namespace RT.Util
             return Combine(AppPath, path1, morePaths);
         }
 
-        /// <summary>
-        /// Returns a normalized copy of the specified path.
-        /// A "normalized path" is a path to a directory (not a file!) which
-        /// ALWAYS ends with a slash.
-        ///
-        /// <para>Returns null for null inputs.</para>
-        /// </summary>
-        /// <param name="path">Path to be normalised</param>
-        /// <returns>Normalised version of Path</returns>
+        /// <summary>Normalises the specified path. A "normalised path" is a path to a
+        /// directory (not a file!) which always ends with a slash.</summary>
+        /// <param name="path">Path to be normalised.</param>
+        /// <returns>Normalised version of <paramref name="path"/>, or null if the input was null.</returns>
         public static string NormPath(string path)
         {
             if (path == null)
@@ -89,7 +84,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Checks whether <paramref name="path"/> refers to a subdirectory inside <paramref name="refPath"/>.
+        /// Checks whether <paramref name="subpath"/> refers to a subdirectory inside <paramref name="parentPath"/>.
         /// </summary>
         public static bool IsSubpathOf(string subpath, string parentPath)
         {
@@ -103,7 +98,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Checks whether <paramref name="path"/> refers to a subdirectory inside <paramref name="refPath"/> or the same directory.
+        /// Checks whether <paramref name="subpath"/> refers to a subdirectory inside <paramref name="parentPath"/> or the same directory.
         /// </summary>
         public static bool IsSubpathOfOrSame(string subpath, string parentPath)
         {
@@ -116,48 +111,18 @@ namespace RT.Util
             return subpathNormalized.Substring(0, parentPathNormalized.Length - 1).Equals(parentPathNormalized.Substring(0, parentPathNormalized.Length - 1), StringComparison.InvariantCultureIgnoreCase);
         }
 
-        /// <summary>
-        /// Returns the number of sublevels 'path' is away from ref_path.
-        /// Positive numbers indicate that path is deeper than ref_path;
-        /// negative that it's above ref_path. If neither is a subpath of
-        /// the other returns int.MaxValue.
-        /// </summary>
-        /// <param name="ref_path">Reference path</param>
-        /// <param name="path">Path to be compared</param>
-        public static int PathLevelDistance(string ref_path, string path)
-        {
-            string p1 = PathUtil.NormPath(ref_path.ToUpper());
-            string p2 = PathUtil.NormPath(path.ToUpper());
-
-            if (p1 == p2)
-                return 0;
-
-            if (p1.Length < p2.Length)
-            {
-                if (p2.Substring(0, p1.Length) != p1)
-                    return int.MaxValue;
-                p1 = p2.Substring(p1.Length);
-                return p1.Count(c => c == Path.DirectorySeparatorChar);
-            }
-            else
-            {
-                if (p1.Substring(0, p2.Length) != p2)
-                    return int.MaxValue;
-                p2 = p1.Substring(p2.Length);
-                return -p2.Count(c => c == Path.DirectorySeparatorChar);
-            }
-        }
-
-        /// <summary>
-        /// <para>Expands all occurrences of "$(NAME)" in the specified string with the special folder path
-        /// for the current machine/user, where NAME is the name of one of the values of the <see cref="Environment.SpecialFolder"/>
+        /// <summary>Expands all occurrences of "$(NAME)" in the specified string with the special folder path
+        /// for the current machine/user. See remarks for details.</summary>
+        /// <remarks>
+        /// <para>Expands all occurrences of "$(NAME)", where NAME is the name of one of the values of the <see cref="Environment.SpecialFolder"/>
         /// enum. There is no support for escaping such a replacement, and invalid names are ignored.</para>
-        /// <para>The following additional names are defined:</para>
-        /// <list type="bullet">
-        /// <item>$(Temp) - system's temporary folder path</item>
-        /// <item>$(AppPath) - path to the directory containing the entry assembly</item>
+        /// <para>The following additional names are also recognised:</para>
+        /// <list type="table">
+        /// <item><term>$(Temp)</term><description>expands to the system's temporary folder path (Path.GetTempPath()).</description></item>
+        /// <item><term>$(AppPath)</term><description>expands to the directory containing the entry assembly (Assembly.GetEntryAssembly()).
+        ///    Throws an <see cref="InvalidOperationException"/> if there is no entry assembly (e.g. in a secondary app domain).</description></item>
         /// </list>
-        /// </summary>
+        /// </remarks>
         public static string ExpandPath(string path)
         {
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())

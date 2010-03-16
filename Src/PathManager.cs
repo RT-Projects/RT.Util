@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using RT.Util;
 
 namespace RT.KitchenSink.Paths
@@ -147,7 +148,7 @@ namespace RT.KitchenSink.Paths
             int mindistn = -1;
             for (int i = 0; i < Paths.Count; i++)
             {
-                int d = PathUtil.PathLevelDistance(Paths[i].Path, path);
+                int d = PathLevelDistance(Paths[i].Path, path);
 
                 if (d == int.MaxValue || d < 0)
                     continue;
@@ -174,22 +175,22 @@ namespace RT.KitchenSink.Paths
             // and there are no paths (either Incl. or Excl.) below this path
             int mindist = int.MaxValue;
             int mindistn = -1;
-            for (int i=0; i<Paths.Count; i++)
+            for (int i = 0; i < Paths.Count; i++)
             {
-                int d = PathUtil.PathLevelDistance(Paths[i].Path, path);
+                int d = PathLevelDistance(Paths[i].Path, path);
 
                 if (d == int.MaxValue)
                     continue;
                 else if (d < 0)
                     return false;
 
-                if (d<mindist)
+                if (d < mindist)
                 {
                     mindist = d;
                     mindistn = i;
                 }
             }
-            if (mindistn==-1)
+            if (mindistn == -1)
                 return false;
             else
                 return Paths[mindistn].Include;
@@ -207,7 +208,7 @@ namespace RT.KitchenSink.Paths
         public bool AllImmediateChildrenIncluded(string path)
         {
             for (int i = 0; i < Paths.Count; i++)
-                if (PathUtil.PathLevelDistance(path, Paths[i].Path) == 1 && !Paths[i].Include)
+                if (PathLevelDistance(path, Paths[i].Path) == 1 && !Paths[i].Include)
                     return false;
             return true;
         }
@@ -316,6 +317,37 @@ namespace RT.KitchenSink.Paths
                     if (includeDirs)
                         yield return di;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Determines the number of sublevels <paramref name="path"/> is away from <paramref name="ref_path"/>.
+        /// Positive numbers indicate that <paramref name="path"/> is deeper than <paramref name="ref_path"/>;
+        /// negative that it's above <paramref name="ref_path"/>.</summary>
+        /// <param name="ref_path">Reference path</param>
+        /// <param name="path">Path to be compared</param>
+        /// <returns>The number of sublevels, or int.MaxValue if neither path is a subpath of the other.</returns>
+        public static int PathLevelDistance(string ref_path, string path)
+        {
+            string p1 = PathUtil.NormPath(ref_path.ToUpper());
+            string p2 = PathUtil.NormPath(path.ToUpper());
+
+            if (p1 == p2)
+                return 0;
+
+            if (p1.Length < p2.Length)
+            {
+                if (p2.Substring(0, p1.Length) != p1)
+                    return int.MaxValue;
+                p1 = p2.Substring(p1.Length);
+                return p1.Count(c => c == Path.DirectorySeparatorChar);
+            }
+            else
+            {
+                if (p1.Substring(0, p2.Length) != p2)
+                    return int.MaxValue;
+                p2 = p1.Substring(p2.Length);
+                return -p2.Count(c => c == Path.DirectorySeparatorChar);
             }
         }
 
