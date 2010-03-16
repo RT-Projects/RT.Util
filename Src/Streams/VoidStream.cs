@@ -8,7 +8,7 @@ namespace RT.Util.Streams
     /// <summary>
     /// A stream that discards everything that goes in; all reads result in 0's.
     /// Can be used as the underlying stream for things like <see cref="CRC32Stream"/>.
-    /// Pretends to be a zero-length stream that can swallows writes and length changes.
+    /// Pretends to be a zero-length stream that can swallow writes and length changes.
     /// </summary>
     public class VoidStream : Stream
     {

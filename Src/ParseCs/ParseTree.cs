@@ -8,6 +8,8 @@ using RT.Util.Xml;
 
 namespace RT.KitchenSink.ParseCs
 {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+
     [XmlIgnoreIfDefault, XmlIgnoreIfEmpty]
     public abstract class CsNode { }
 

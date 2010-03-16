@@ -9,10 +9,11 @@ namespace RT.Util
     /// <summary>Represents a path-related exception.</summary>
     public class PathException : RTException
     {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        /// <summary>Constructor.</summary>
         public PathException() : base() { }
+        /// <summary>Constructor.</summary>
+        /// <param name="message">Exception message.</param>
         public PathException(string message) : base(message) { }
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
     /// <summary>

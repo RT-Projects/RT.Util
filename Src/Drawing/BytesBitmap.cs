@@ -91,20 +91,22 @@ namespace RT.Util.Drawing
 
         #region Dispose stuff
 
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-
         private bool _disposed;
 
+        /// <summary>Specifies whether the underlying resources for this <see cref="BytesBitmap"/> have already been disposed.</summary>
         public bool Disposed
         {
             get { return _disposed; }
         }
 
+        /// <summary>Disposes the underlying resources.</summary>
         public void Dispose()
         {
             Dispose(true);
         }
 
+        /// <summary>Disposes the underlying resources.</summary>
+        /// <param name="disposing">True if called from <see cref="Dispose()"/>; false if called from the destructor.</param>
         protected void Dispose(bool disposing)
         {
             if (_disposed)
@@ -120,12 +122,11 @@ namespace RT.Util.Drawing
             }
         }
 
+        /// <summary>Destructor.</summary>
         ~BytesBitmap()
         {
             Dispose(false);
         }
-
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         #endregion
     }

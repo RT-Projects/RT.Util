@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 
 namespace RT.KitchenSink
 {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+    
     public class Regex2
     {
         public static List<Match> Matches(string input, string pattern)

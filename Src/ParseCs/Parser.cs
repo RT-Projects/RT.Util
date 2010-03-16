@@ -6,6 +6,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.ParseCs
 {
+    /// <summary>Provides functionality to parse C# code into a parse-tree representation.</summary>
     public static class Parser
     {
         /// <summary>
@@ -2886,6 +2887,7 @@ namespace RT.KitchenSink.ParseCs
         #endregion
     }
 
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
     public class ParseException : Exception
     {
         private int _index;

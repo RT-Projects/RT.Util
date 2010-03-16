@@ -10,33 +10,52 @@ namespace RT.Util
     /// </summary>
     public static class EnumStrong
     {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        public static T Parse<T>(string value)
+        /// <summary>Returns the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">The string value for which to return the corresponding enum value.</param>
+        public static T Parse<T>(string value) where T : struct
         {
             return (T) Enum.Parse(typeof(T), value);
         }
 
+        /// <summary>Returns the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">A string containing the name or value to convert.</param>
+        /// <param name="ignoreCase">If true, ignore case; otherwise, regard case.</param>
         public static T Parse<T>(string value, bool ignoreCase)
         {
             return (T) Enum.Parse(typeof(T), value, ignoreCase);
         }
 
+        /// <summary>Finds the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">A string containing the name or value to convert.</param>
+        /// <param name="result">Variable receiving the converted value.</param>
+        /// <returns>True if the value was successfully converted; false otherwise.</returns>
         public static bool TryParse<T>(string value, out T result)
         {
             try { result = (T) Enum.Parse(typeof(T), value); return true; }
             catch { result = default(T); return false; }
         }
 
+        /// <summary>Finds the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">A string containing the name or value to convert.</param>
+        /// <param name="result">Variable receiving the converted value.</param>
+        /// <param name="ignoreCase">If true, ignore case; otherwise, regard case.</param>
+        /// <returns>True if the value was successfully converted; false otherwise.</returns>
         public static bool TryParse<T>(string value, out T result, bool ignoreCase)
         {
             try { result = (T) Enum.Parse(typeof(T), value, ignoreCase); return true; }
             catch { result = default(T); return false; }
         }
 
+        /// <summary>Returns the set of enum values from the specified enum type.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the values.</typeparam>
+        /// <returns>A strongly-typed array containing the enum values from the specified type.</returns>
         public static T[] GetValues<T>()
         {
             return (T[]) Enum.GetValues(typeof(T));
         }
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }

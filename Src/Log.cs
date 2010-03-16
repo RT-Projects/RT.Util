@@ -159,16 +159,16 @@ namespace RT.Util
 
         /// <summary>
         /// Appends an entry to the log. Derived classes implement this to put the
-        /// log data where necessary. See also: <see cref="GetFormattedStrings"/> which
-        /// is a helper method.
+        /// log data where necessary.
         /// </summary>
         /// <remarks>
         /// Note that the various specialised functions such as <see cref="Warn(string)"/> simply
         /// call this method to do the work.
         /// </remarks>
-        /// <param name="verbosity">Verbosity level of this message</param>
-        /// <param name="type">Message type - info, warning, error or debug</param>
-        /// <param name="message">The message itself</param>
+        /// <param name="verbosity">Verbosity level of this message.</param>
+        /// <param name="type">Message type (info, warning, error or debug).</param>
+        /// <param name="message">The message itself.</param>
+        /// <seealso cref="GetFormattedStrings"/>
         public abstract void Log(uint verbosity, LogType type, string message);
 
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>

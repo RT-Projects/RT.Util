@@ -4,6 +4,8 @@ using System.Text;
 
 namespace RT.KitchenSink
 {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+    
     public static class Conversions
     {
         public const string Base32RChars = "abcdefghijkmnpqrstuvwxyz23456789";
