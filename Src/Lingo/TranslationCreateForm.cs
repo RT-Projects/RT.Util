@@ -30,6 +30,8 @@ namespace RT.Util.Lingo
         /// <typeparam name="T">Class containing the translatable strings.</typeparam>
         /// <param name="moduleName">Name of the module being translated (forms part of the translation's XML file).</param>
         /// <param name="setLanguage">Callback invoked by this method to change the language used by the program.</param>
+        /// <param name="fontName">Specifies the name of the font to use in this dialog, or null for the default font.</param>
+        /// <param name="fontSize">Specifies the size of the font to use in this dialog. Ignored if <paramref name="fontName"/> is null.</param>
         /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
         public static T CreateTranslation<T>(string moduleName, SetLanguage<T> setLanguage, string fontName, float fontSize) where T : TranslationBase, new()
         {
