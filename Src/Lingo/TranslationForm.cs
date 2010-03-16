@@ -139,25 +139,16 @@ namespace RT.Util.Lingo
             _pnlRightOuter.Controls.Add(_pnlRightInner);
             pnlSplit.Panel2.Controls.Add(_pnlRightOuter);
 
+            Timer timer = new Timer { Interval = 300, Enabled = false };
+            timer.Tick += (s, e) =>
+            {
+                timer.Enabled = false;
+                updateVisiblePanels();
+            };
             _lstGroups.SelectedValueChanged += (s, e) =>
             {
-                if (_lstGroups.Tag == null || (int) _lstGroups.Tag != _lstGroups.SelectedIndex)
-                {
-                    _pnlRightOuter.VerticalScroll.Value = 0;
-                    _pnlRightInner.SuspendLayout();
-                    _pnlRightInner.Controls.Clear();
-                    TranslationGroupListItem li = _lstGroups.SelectedItem as TranslationGroupListItem;
-                    if (li == null)
-                        return;
-                    _currentlyVisibleTranslationPanels = li.TranslationPanels;
-                    foreach (var pnl in _currentlyVisibleTranslationPanels)
-                        pnl.SwitchToGroup(li);
-                    _pnlRightInner.Controls.AddRange(_currentlyVisibleTranslationPanels);
-                    _pnlRightInner.ResumeLayout(true);
-                    if (_currentlyVisibleTranslationPanels.Length > 0)
-                        _lastFocusedPanel = _currentlyVisibleTranslationPanels[0];
-                }
-                _lstGroups.Tag = _lstGroups.SelectedIndex;
+                timer.Enabled = false;
+                timer.Enabled = true;
             };
             _lstGroups.SelectedIndex = 0;
 
@@ -203,6 +194,27 @@ namespace RT.Util.Lingo
                         e.Cancel = true;
                 }
             };
+        }
+
+        private void updateVisiblePanels()
+        {
+            if (_lstGroups.Tag == null || (int) _lstGroups.Tag != _lstGroups.SelectedIndex)
+            {
+                _pnlRightOuter.VerticalScroll.Value = 0;
+                _pnlRightInner.SuspendLayout();
+                _pnlRightInner.Controls.Clear();
+                TranslationGroupListItem li = _lstGroups.SelectedItem as TranslationGroupListItem;
+                if (li == null)
+                    return;
+                _currentlyVisibleTranslationPanels = li.TranslationPanels;
+                foreach (var pnl in _currentlyVisibleTranslationPanels)
+                    pnl.SwitchToGroup(li);
+                _pnlRightInner.Controls.AddRange(_currentlyVisibleTranslationPanels);
+                _pnlRightInner.ResumeLayout(true);
+                if (_currentlyVisibleTranslationPanels.Length > 0)
+                    _lastFocusedPanel = _currentlyVisibleTranslationPanels[0];
+            }
+            _lstGroups.Tag = _lstGroups.SelectedIndex;
         }
 
         /// <summary>
@@ -546,6 +558,7 @@ namespace RT.Util.Lingo
         private void groupSwitch(object sender, GroupSwitchEventArgs e)
         {
             _lstGroups.SelectedItem = e.ListItem;
+            updateVisiblePanels();
             ((TranslationPanel) sender).FocusFirstTranslationBox();
         }
 
@@ -1337,17 +1350,6 @@ namespace RT.Util.Lingo
                         Update();
                     }
                 };
-
-                int selectedIndex = -2;
-                SelectedIndexChanged += (s, e) =>
-                {
-                    if (SelectedIndex != selectedIndex)
-                    {
-                        selectedIndex = SelectedIndex;
-                        RefreshItems();
-                        Update();
-                    }
-                };
             }
 
             private void drawItem(object sender, DrawItemEventArgs e)
@@ -1358,7 +1360,7 @@ namespace RT.Util.Lingo
                 if (tgli == null)
                     return;
                 e.DrawBackground();
-                Color textColor = e.Index == SelectedIndex ? SystemColors.HighlightText : SystemColors.WindowText;
+                Color textColor = (e.State & DrawItemState.Selected) != 0 ? SystemColors.HighlightText : SystemColors.WindowText;
                 e.Graphics.DrawString(tgli.Label, new Font(Font, FontStyle.Bold), new SolidBrush(textColor), new PointF(e.Bounds.Left + HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN));
                 if (tgli.Notes != null)
                 {
@@ -1371,7 +1373,7 @@ namespace RT.Util.Lingo
                     Color red = Color.FromArgb((textColor.R + 256) / 2, textColor.G / 2, textColor.B / 2);
                     e.Graphics.DrawString("!", new Font(Font, FontStyle.Bold), new SolidBrush(red), new PointF(e.Bounds.Right - HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN), new StringFormat { Alignment = StringAlignment.Far });
                 }
-                if (e.Index == SelectedIndex)
+                if ((e.State & DrawItemState.Focus) != 0)
                     e.DrawFocusRectangle();
             }
 

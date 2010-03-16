@@ -129,7 +129,7 @@ namespace RT.Util.Lingo
 
         private void createNewLanguage(object sender, EventArgs e)
         {
-            var newTranslation = TranslationCreateForm.CreateTranslation<TTranslation>(_moduleName, _setLanguage);
+            var newTranslation = TranslationCreateForm.CreateTranslation<TTranslation>(_moduleName, _setLanguage, _trFormSettings.FontName, _trFormSettings.FontSize);
             if (newTranslation != null)
             {
                 _currentLanguage = newTranslation.Language;
