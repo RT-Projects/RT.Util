@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 using RT.Util.Lingo;
 using RT.Util.Text;

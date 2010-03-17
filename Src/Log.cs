@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util

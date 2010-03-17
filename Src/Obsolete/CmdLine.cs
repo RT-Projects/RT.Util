@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Security.Permissions;
 using System.Text;
+using System.Text.RegularExpressions;
+using RT.Util.Consoles;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
-using System.Text.RegularExpressions;
 
 namespace RT.Util
 {

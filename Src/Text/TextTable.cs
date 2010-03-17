@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Text
