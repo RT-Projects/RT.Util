@@ -53,34 +53,34 @@ namespace RT.KitchenSink.Collections
     /// <summary>
     /// <para>Enables easy manipulation of simple hierarchical sets of values.
     /// Targets specifically the use of XML for storing application settings.</para>
-    /// 
+    ///
     /// <para>Examples:</para>
-    /// 
+    ///
     /// <code>
     ///   RVariant v;
     ///   v = 3;                   // now stores the integer "3"
     ///   v = "hi there";          // now stores the string
     ///   v = DateTime.Now();      // stores current time
-    ///   
+    ///
     ///   string s = v;            // s holds datetime in ISO, e.g. "2008-03-13 19:20:14.1230000Z"
-    ///   
+    ///
     ///   v = new RVariant();      // v can become anything at the moment, known as Stub
     ///   v["form1"]["top"] = 20;  // v becomes a Dict, holding another dict, holding 20.
     ///   v["columns"][4] = "hi";  // v["columns"] holds a list: 0..3 are all Stubs, while
     ///                            // item 4 holds "hi" and has path "columns[4]"
-    ///   
+    ///
     ///   v["form2"] = v["form1"]; // deep copying
-    ///   
+    ///
     ///   int i = v["form3"]["top"].OrDefaultTo(47);
     ///                            // since form3/top does not exist, returns 47.
     ///                            // but i = v["form3"]["top"]; throws an RVariantConvertException.
-    ///                            
+    ///
     ///   RVariant.ToXml(v, "settings").Save("settings.xml");
     ///                            // save to an XML file
     /// </code>
-    /// 
+    ///
     /// <para>Properties that aid debugging:</para>
-    /// 
+    ///
     /// <code>
     ///   v.FullPath  - the path to the given node in its hierarchy, e.g. "form2/top".
     ///   v.Kind      - one of the possible variant kinds: Stub, List, Dict, Value.
@@ -222,7 +222,7 @@ namespace RT.KitchenSink.Collections
 
         /// <summary>
         /// Returns a string representation of this RVariant. If this RVariant is
-        /// of the Value Kind returns the value RConvert'ed Exact'ly to a string.
+        /// of the Value Kind, returns the result of <see cref="ExactConvert.ToString"/>.
         /// Otherwise returns a string showing the Path and the Kind of this value.
         /// </summary>
         public override string ToString()
@@ -361,17 +361,17 @@ namespace RT.KitchenSink.Collections
             if (other is RVariant)
                 return Equals((RVariant)other);
 
-            TypeCode code = RConvert.GetTypeCode(other);
+            TypeCode code = ExactConvert.GetTypeCode(other);
             switch (Kind)
             {
                 case RVariantKind.Stub:
                     return false;
 
                 case RVariantKind.Value:
-                    if (!RConvert.IsSupportedType(code))
+                    if (!ExactConvert.IsSupportedType(code))
                         return false;
                     else
-                        return RConvert.ExactToString(_value) == RConvert.ExactToString(other);
+                        return ExactConvert.ToString(_value) == ExactConvert.ToString(other);
 
                 default:
                     return false;
@@ -398,7 +398,7 @@ namespace RT.KitchenSink.Collections
                     return true;
 
                 case RVariantKind.Value:
-                    return RConvert.ExactToString(_value) == RConvert.ExactToString(other._value);
+                    return ExactConvert.ToString(_value) == ExactConvert.ToString(other._value);
 
                 case RVariantKind.List:
                     if (_list.Count != other._list.Count)
@@ -561,7 +561,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator bool(RVariant value)
         {
             bool r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Boolean);
@@ -576,7 +576,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator byte(RVariant value)
         {
             byte r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Byte);
@@ -591,7 +591,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator sbyte(RVariant value)
         {
             sbyte r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.SByte);
@@ -606,7 +606,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator short(RVariant value)
         {
             short r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Int16);
@@ -621,7 +621,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator ushort(RVariant value)
         {
             ushort r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.UInt16);
@@ -636,7 +636,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator int(RVariant value)
         {
             int r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Int32);
@@ -651,7 +651,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator uint(RVariant value)
         {
             uint r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.UInt32);
@@ -666,7 +666,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator long(RVariant value)
         {
             long r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Int64);
@@ -681,7 +681,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator ulong(RVariant value)
         {
             ulong r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.UInt64);
@@ -696,7 +696,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator float(RVariant value)
         {
             float r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Single);
@@ -711,7 +711,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator double(RVariant value)
         {
             double r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Double);
@@ -726,7 +726,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator decimal(RVariant value)
         {
             decimal r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Decimal);
@@ -741,7 +741,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator DateTime(RVariant value)
         {
             DateTime r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.DateTime);
@@ -756,7 +756,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator char(RVariant value)
         {
             char r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.Char);
@@ -771,7 +771,7 @@ namespace RT.KitchenSink.Collections
         public static implicit operator string(RVariant value)
         {
             string r;
-            if (value._kind == RVariantKind.Value && RConvert.ExactTry(value._value, out r))
+            if (value._kind == RVariantKind.Value && ExactConvert.Try(value._value, out r))
                 return r;
             else if (value._kind != RVariantKind.Value)
                 throw new RVariantNotFoundException(value, TypeCode.String);
@@ -887,7 +887,7 @@ namespace RT.KitchenSink.Collections
         public bool OrDefaultTo(bool defaultValue)
         {
             bool result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -901,7 +901,7 @@ namespace RT.KitchenSink.Collections
         public byte OrDefaultTo(byte defaultValue)
         {
             byte result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -915,7 +915,7 @@ namespace RT.KitchenSink.Collections
         public sbyte OrDefaultTo(sbyte defaultValue)
         {
             sbyte result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -929,7 +929,7 @@ namespace RT.KitchenSink.Collections
         public short OrDefaultTo(short defaultValue)
         {
             short result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -943,7 +943,7 @@ namespace RT.KitchenSink.Collections
         public ushort OrDefaultTo(ushort defaultValue)
         {
             ushort result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -957,7 +957,7 @@ namespace RT.KitchenSink.Collections
         public int OrDefaultTo(int defaultValue)
         {
             int result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -971,7 +971,7 @@ namespace RT.KitchenSink.Collections
         public uint OrDefaultTo(uint defaultValue)
         {
             uint result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -985,7 +985,7 @@ namespace RT.KitchenSink.Collections
         public long OrDefaultTo(long defaultValue)
         {
             long result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -999,7 +999,7 @@ namespace RT.KitchenSink.Collections
         public ulong OrDefaultTo(ulong defaultValue)
         {
             ulong result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1013,7 +1013,7 @@ namespace RT.KitchenSink.Collections
         public float OrDefaultTo(float defaultValue)
         {
             float result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1027,7 +1027,7 @@ namespace RT.KitchenSink.Collections
         public double OrDefaultTo(double defaultValue)
         {
             double result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1041,7 +1041,7 @@ namespace RT.KitchenSink.Collections
         public decimal OrDefaultTo(decimal defaultValue)
         {
             decimal result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1055,7 +1055,7 @@ namespace RT.KitchenSink.Collections
         public DateTime OrDefaultTo(DateTime defaultValue)
         {
             DateTime result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1069,7 +1069,7 @@ namespace RT.KitchenSink.Collections
         public char OrDefaultTo(char defaultValue)
         {
             char result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1083,7 +1083,7 @@ namespace RT.KitchenSink.Collections
         public string OrDefaultTo(string defaultValue)
         {
             string result;
-            if (_kind == RVariantKind.Value && RConvert.ExactTry(_value, out result))
+            if (_kind == RVariantKind.Value && ExactConvert.Try(_value, out result))
                 return result;
             else
                 return defaultValue;
@@ -1133,7 +1133,7 @@ namespace RT.KitchenSink.Collections
             switch (value.Kind)
             {
                 case RVariantKind.Value:
-                    element.SetAttribute("value", RConvert.ExactToString(value._value));
+                    element.SetAttribute("value", ExactConvert.ToString(value._value));
                     break;
 
                 case RVariantKind.Dict:

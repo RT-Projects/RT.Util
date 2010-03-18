@@ -90,13 +90,13 @@ namespace RT.Util.Lingo
                         bool isInteger;
                         if (args[i] is double || args[i] is float || args[i] is decimal)
                         {
-                            numD = RConvert.ExactToDouble(args[i]);
+                            numD = ExactConvert.ToDouble(args[i]);
                             numI = unchecked((int) numD);
                             isInteger = numD == (double) numI;
                         }
                         else if (args[i] is int || args[i] is uint || args[i] is long || args[i] is ulong || args[i] is short || args[i] is ushort || args[i] is byte || args[i] is sbyte)
                         {
-                            numI = RConvert.ExactToInt(args[i]);
+                            numI = ExactConvert.ToInt(args[i]);
                             isInteger = true;
                         }
                         else

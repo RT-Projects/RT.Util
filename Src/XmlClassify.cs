@@ -179,8 +179,8 @@ namespace RT.Util.Xml
                     return (char) int.Parse(elem.Value);
                 return elem.Value[0];
             }
-            else if (RConvert.IsSupportedType(type))
-                return RConvert.Exact(type, elem.Value);
+            else if (ExactConvert.IsSupportedType(type))
+                return ExactConvert.To(type, elem.Value);
             else
             {
                 Type[] typeParameters;
@@ -229,7 +229,7 @@ namespace RT.Util.Xml
                         if (keyType != null)
                         {
                             var keyAttr = itemTag.Attribute("key");
-                            try { key = isIntegerType(keyType) ? RConvert.Exact(keyType, keyAttr.Value) : keyType.IsEnum ? Enum.Parse(keyType, keyAttr.Value) : keyAttr.Value; }
+                            try { key = isIntegerType(keyType) ? ExactConvert.To(keyType, keyAttr.Value) : keyType.IsEnum ? Enum.Parse(keyType, keyAttr.Value) : keyAttr.Value; }
                             catch { continue; }
                         }
                         var nullAttr = itemTag.Attribute("null");
@@ -504,10 +504,10 @@ namespace RT.Util.Xml
             }
             else if (saveType.IsEnum)
                 elem.Add(saveObject.ToString());
-            else if (RConvert.IsSupportedType(saveType))
+            else if (ExactConvert.IsSupportedType(saveType))
             {
                 string result;
-                RConvert.Exact(saveObject, out result);
+                ExactConvert.To(saveObject, out result);
                 elem.Add(result);
             }
             else

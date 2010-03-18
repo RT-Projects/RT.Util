@@ -952,7 +952,7 @@ namespace RT.KitchenSink.Collections.Tests
         private void Assert_StoresCorrectValueOfCorrectType(RVariant mvalue, object expected, TypeCode code)
         {
             Assert.AreEqual(RVariantKind.Value, mvalue.Kind);
-            Assert.AreEqual(code, RConvert.GetTypeCode(mvalue.Value));
+            Assert.AreEqual(code, ExactConvert.GetTypeCode(mvalue.Value));
             Assert.AreEqual(expected, mvalue.Value);
         }
 

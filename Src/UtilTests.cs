@@ -14,6 +14,7 @@ namespace RT.Util
     {
         static void Main(string[] args)
         {
+#pragma warning disable 0162
             if (false)
             {
                 Testing.GenerateTestingCode(@"..\..\main\common\Util\UtilTests.cs", "Run Tests", Assembly.GetExecutingAssembly().GetExportedTypes(),
@@ -28,6 +29,7 @@ namespace RT.Util
                 Console.WriteLine("Tests passed; press Enter to exit.");
                 Console.ReadLine();
             }
+#pragma warning restore 0162
         }
     }
 }

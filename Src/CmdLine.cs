@@ -129,7 +129,7 @@ namespace RT.Util.CommandLine
                     foreach (var a in field.GetCustomAttributes<OptionAttribute>())
                         options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
-                else if (field.FieldType == typeof(string) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
+                else if (field.FieldType == typeof(string) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     if (positional)
                     {
@@ -138,17 +138,17 @@ namespace RT.Util.CommandLine
                             ProcessParameter = () =>
                             {
                                 // The following code is also duplicated below
-                                if (RConvert.IsTrueIntegerType(field.FieldType))
+                                if (ExactConvert.IsTrueIntegerType(field.FieldType))
                                 {
                                     object res;
-                                    if (!RConvert.ExactTry(field.FieldType, args[i], out res))
+                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
                                         throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
-                                else if (RConvert.IsTrueIntegerNullableType(field.FieldType))
+                                else if (ExactConvert.IsTrueIntegerNullableType(field.FieldType))
                                 {
                                     object res;
-                                    if (!RConvert.ExactTry(field.FieldType.GetGenericArguments()[0], args[i], out res))
+                                    if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
                                         throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
@@ -172,17 +172,17 @@ namespace RT.Util.CommandLine
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
                                 // The following code is also duplicated above
-                                if (RConvert.IsTrueIntegerType(field.FieldType))
+                                if (ExactConvert.IsTrueIntegerType(field.FieldType))
                                 {
                                     object res;
-                                    if (!RConvert.ExactTry(field.FieldType, args[i], out res))
+                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
                                         throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
-                                else if (RConvert.IsTrueIntegerNullableType(field.FieldType))
+                                else if (ExactConvert.IsTrueIntegerNullableType(field.FieldType))
                                 {
                                     object res;
-                                    if (!RConvert.ExactTry(field.FieldType.GetGenericArguments()[0], args[i], out res))
+                                    if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
                                         throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
                                     field.SetValue(ret, res);
                                 }
@@ -363,7 +363,7 @@ namespace RT.Util.CommandLine
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
                         c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
                     }
-                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(f.FieldType) || RConvert.IsTrueIntegerNullableType(f.FieldType))
+                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]) || ExactConvert.IsTrueIntegerType(f.FieldType) || ExactConvert.IsTrueIntegerNullableType(f.FieldType))
                         c = c + new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan);
                     help.Add(c);
                     if (f.FieldType.IsArray)
@@ -646,7 +646,7 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || RConvert.IsTrueIntegerType(field.FieldType) || RConvert.IsTrueIntegerNullableType(field.FieldType))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)

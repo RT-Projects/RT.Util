@@ -85,6 +85,7 @@
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\GraphicsUtil.cs" />
     <Compile Include="EggsML.cs" />
+    <Compile Include="ExactConvert.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="ExtensionMethods\ControlExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
@@ -139,7 +140,6 @@
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="Ut\PostBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RConvert.cs" />
     <Compile Include="RTException.cs" />
     <Compile Include="SettingsUtil.cs" />
     <Compile Include="SoundPlayerAsync.cs" />
