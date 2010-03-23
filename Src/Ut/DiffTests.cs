@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using RT.Util.ExtensionMethods;
 using RT.Util.Collections;
+using RT.Util.ExtensionMethods;
 
-namespace RT.KitchenSink.Tests
+namespace RT.Util
 {
     [TestFixture]
     public class DiffTests
@@ -31,7 +31,7 @@ namespace RT.KitchenSink.Tests
 
         private void diffTest(string a, string b)
         {
-            var diff = KitchenSinkUt.Diff(a, b);
+            var diff = Ut.Diff(a, b);
             var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();
             Assert.AreEqual(a2, a);
             var b2 = diff.Where(x => x.E2 != DiffOp.Del).Select(x => x.E1.ToString()).JoinString();
@@ -43,7 +43,7 @@ namespace RT.KitchenSink.Tests
         {
             var a = "abcdef";
             var b = "aXcdeY";
-            var diff = KitchenSinkUt.Diff(a, b, new DiffOptions<char> { Predicate = c => (c != 'd') });
+            var diff = Ut.Diff(a, b, new DiffOptions<char> { Predicate = c => (c != 'd') });
             var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();
             Assert.AreEqual(a2, a);
             var b2 = diff.Where(x => x.E2 != DiffOp.Del).Select(x => x.E1.ToString()).JoinString();
@@ -55,7 +55,7 @@ namespace RT.KitchenSink.Tests
         {
             var a = "abcdef";
             var b = "aXcdeY";
-            var diff = KitchenSinkUt.Diff(a, b, new DiffOptions<char>
+            var diff = Ut.Diff(a, b, new DiffOptions<char>
             {
                 PostProcessor = (aa, bb) =>
                 {

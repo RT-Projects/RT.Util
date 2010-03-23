@@ -64,6 +64,7 @@
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="ExactConvertTests.cs" />
     <Compile Include="UtilTests.cs" />
+    <Compile Include="Ut\DiffTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>

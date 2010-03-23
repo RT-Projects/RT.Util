@@ -52,7 +52,6 @@
   <ItemGroup>
     <Compile Include="Collections\RVariantTests.cs" />
     <Compile Include="Collections\SetTests.cs" />
-    <Compile Include="DiffTests.cs" />
     <Compile Include="KitchenSinkTests.cs" />
     <Compile Include="Properties\KitchenSink\KitchenSinkTestsAssemblyInfo.cs" />
   </ItemGroup>
