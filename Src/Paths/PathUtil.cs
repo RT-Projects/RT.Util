@@ -266,9 +266,9 @@ namespace RT.Util
         /// </summary>
         public static string Combine(string path1, string path2, params string[] morepaths)
         {
-            string result = Combine(path1, path2);
+            string result = Path.Combine(path1, path2);
             foreach (string p in morepaths)
-                result = Combine(result, p);
+                result = Path.Combine(result, p);
             return result;
         }
 

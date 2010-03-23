@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using RT.Util.Consoles;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -805,7 +806,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Same as <see cref="string.Substring(int, int)"/> but does not throw exceptions when the start index
-        /// or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
+        ///  or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
         /// </summary>
         public static string SubstringSafe(this string source, int startIndex, int length)
         {
@@ -843,6 +844,15 @@ namespace RT.Util.ExtensionMethods
         public static bool StartsWith(this string str, char ch)
         {
             return str != null && str.Length > 0 && str[0] == ch;
+        }
+
+        /// <summary>Colours the specified string in the specified console colour.</summary>
+        /// <param name="str">The string to colour.</param>
+        /// <param name="color">The colour to colour the string in.</param>
+        /// <returns>A potentially colourful string.</returns>
+        public static ConsoleColoredString Color(this string str, ConsoleColor color)
+        {
+            return new ConsoleColoredString(str, color);
         }
     }
 }

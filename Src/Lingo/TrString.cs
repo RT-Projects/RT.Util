@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using RT.Util.ExtensionMethods;
+using RT.Util.Consoles;
 
 namespace RT.Util.Lingo
 {
@@ -42,6 +43,11 @@ namespace RT.Util.Lingo
         /// <summary>Returns the translation.</summary>
         /// <returns>The translation.</returns>
         public override string ToString() { return Translation; }
+
+        /// <summary>Returns the translation in the specified console colour.</summary>
+        /// <param name="color">The colour in which to colour the translation.</param>
+        /// <returns>A potentially colourful string.</returns>
+        public ConsoleColoredString Color(ConsoleColor color) { return new ConsoleColoredString(Translation, color); }
     }
 
     /// <summary>Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a language's <see cref="NumberSystem"/>.</summary>
