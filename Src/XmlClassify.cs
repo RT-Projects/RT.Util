@@ -515,14 +515,14 @@ namespace RT.Util.Xml
                 Type keyType = null, valueType = null;
                 Type[] typeParameters;
 
-                if (saveType.IsArray)
-                    valueType = saveType.GetElementType();
-                else if (saveType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+                if (declaredType.IsArray)
+                    valueType = declaredType.GetElementType();
+                else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
                 {
                     keyType = typeParameters[0];
                     valueType = typeParameters[1];
                 }
-                else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                else if (declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                     valueType = typeParameters[0];
 
                 if (valueType != null)
@@ -581,6 +581,13 @@ namespace RT.Util.Xml
                             var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true);
                             if (def.Any() && saveValue.Equals(def.First().Value))
                                 continue;
+
+                            if (saveValue != null && (ignoreIfEmpty || getAttrsFrom.IsDefined<XmlIgnoreIfEmptyAttribute>(true)))
+                            {
+                                // Arrays, List<>, and Dictionary<,> all implement ICollection
+                                if (typeof(ICollection).IsAssignableFrom(saveValue.GetType()) && ((ICollection) saveValue).Count == 0)
+                                    continue;
+                            }
 
                             // [XmlFollowId]
                             if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())

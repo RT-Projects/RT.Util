@@ -258,6 +258,10 @@ namespace RT.Util.Lingo
             /// <summary>Generates the file.</summary>
             public void Dispose()
             {
+                if (!Directory.Exists(Path.GetDirectoryName(_filename)))
+                    // silently ignore this error because we might be running the Debug build in some other environment
+                    return;
+
                 var f = new StringBuilder();
 
                 f.AppendLine("using RT.Util.Lingo;");

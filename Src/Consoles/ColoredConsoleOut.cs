@@ -39,5 +39,12 @@ namespace RT.Util.Consoles
         {
             System.Console.WriteLine();
         }
+
+        /// <summary>Outputs the specified text plus a newline to the console.</summary>
+        public override void WriteLine(string str)
+        {
+            Write(str);
+            WriteLine();
+        }
     }
 }
