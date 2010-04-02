@@ -165,9 +165,18 @@ namespace RT.Util
         protected abstract TimeSpan SubsequentInterval { get; }
 
         /// <summary>
-        /// Override with a method that performs the desired periodic activity.
+        /// Override with a method that performs the desired periodic activity. If this method throws an exception
+        /// the thread will terminate, but the <see cref="LastActivity"/> will occur nevertheless.
         /// </summary>
         protected abstract void PeriodicActivity();
+
+        /// <summary>
+        /// Override with a method that performs an activity on the same thread as <see cref="PeriodicActivity"/> during
+        /// shutdown, just before signalling that the shutdown is complete. The default implementation of this method
+        /// does nothing. This method is guaranteed to be called during a shutdown, even if the shutdown is due to an
+        /// exception propagating outside of <see cref="PeriodicActivity"/>.
+        /// </summary>
+        protected virtual void LastActivity() { }
 
         /// <summary>
         /// Returns false before the first call to <see cref="Start"/> and after the first call to <see cref="Shutdown"/>;
@@ -211,15 +220,22 @@ namespace RT.Util
 
         private void threadProc()
         {
-            _sleeper.Sleep((int) FirstInterval.TotalMilliseconds);
-            while (!_exiter.ShouldExit)
+            try
             {
-                _periodicActivityRunning = true;
-                PeriodicActivity();
-                _periodicActivityRunning = false;
-                _sleeper.Sleep((int) SubsequentInterval.TotalMilliseconds);
+                _sleeper.Sleep((int) FirstInterval.TotalMilliseconds);
+                while (!_exiter.ShouldExit)
+                {
+                    _periodicActivityRunning = true;
+                    PeriodicActivity();
+                    _periodicActivityRunning = false;
+                    _sleeper.Sleep((int) SubsequentInterval.TotalMilliseconds);
+                }
             }
-            _exiter.SignalExited();
+            finally
+            {
+                try { LastActivity(); }
+                finally { _exiter.SignalExited(); }
+            }
         }
     }
 
