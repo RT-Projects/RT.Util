@@ -582,12 +582,9 @@ namespace RT.Util.Xml
                             if (def.Any() && saveValue.Equals(def.First().Value))
                                 continue;
 
-                            if (saveValue != null && (ignoreIfEmpty || getAttrsFrom.IsDefined<XmlIgnoreIfEmptyAttribute>(true)))
-                            {
-                                // Arrays, List<>, and Dictionary<,> all implement ICollection
-                                if (typeof(ICollection).IsAssignableFrom(saveValue.GetType()) && ((ICollection) saveValue).Count == 0)
-                                    continue;
-                            }
+                            // Arrays, List<>, and Dictionary<,> all implement ICollection
+                            if (saveValue != null && (ignoreIfEmpty || getAttrsFrom.IsDefined<XmlIgnoreIfEmptyAttribute>(true)) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
+                                continue;
 
                             // [XmlFollowId]
                             if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
@@ -607,9 +604,7 @@ namespace RT.Util.Xml
                             }
                             else
                             {
-                                var subElem = objectToXElement(saveValue, field.FieldType, baseDir, rFieldName);
-                                if (!subElem.IsEmpty || subElem.HasAttributes || !ignoreIfEmpty)
-                                    elem.Add(subElem);
+                                elem.Add(objectToXElement(saveValue, field.FieldType, baseDir, rFieldName));
                             }
                         }
                     }
@@ -643,17 +638,21 @@ namespace RT.Util.Xml
     public class XmlIgnoreAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the value is null, 0, or false.
-    /// If it is used on a class or struct, it applies to all fields and automatically-implemented properties in the class or struct.
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does
+    /// not generate a tag if the value is null, 0, or false. If it is used on a class or struct, it applies to all fields and
+    /// automatically-implemented properties in the class or struct. Notice that using this together with
+    /// <see cref="XmlIgnoreIfEmptyAttribute"/> will cause the distinction between null and an empty collection
+    /// to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public class XmlIgnoreIfDefaultAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field or automatically-implemented property of a collection or dictionary type, <see cref="XmlClassify"/> does not generate a tag if the collection 
-    /// or dictionary is empty. Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty collection or 
-    /// dictionary to be lost. However, a collection or dictionary containing only null elements is persisted correctly.
-    /// If it is used on a class or struct, it applies to all collection-type fields in the class or struct.
+    /// If this attribute is used on a field or automatically-implemented property of a collection type (including
+    /// dictionaries), <see cref="XmlClassify"/> does not generate a tag if the collection is empty. If it is used on
+    /// a class or struct, it applies to all collection-type fields in the class or struct. Notice that using this together
+    /// with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty
+    /// collection to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public class XmlIgnoreIfEmptyAttribute : Attribute { }
