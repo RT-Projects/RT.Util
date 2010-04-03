@@ -122,7 +122,7 @@ namespace RT.KitchenSink.ParseCs
     #region Members, except types
     public abstract class CsMember : CsNode
     {
-        public List<CsCustomAttributeGroup> CustomAttributes;
+        public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public bool IsInternal, IsPrivate, IsProtected, IsPublic, IsNew, IsUnsafe;
         protected virtual StringBuilder modifiersCs()
         {
@@ -173,7 +173,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsEvent : CsMultiMember
     {
         public bool IsAbstract, IsVirtual, IsOverride, IsSealed;
-        public List<CsSimpleMethod> Methods;
+        public List<CsSimpleMethod> Methods = new List<CsSimpleMethod>();
 
         public override string ToString()
         {
@@ -235,7 +235,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public class CsIndexedProperty : CsProperty
     {
-        public List<CsParameter> Parameters;
+        public List<CsParameter> Parameters = new List<CsParameter>();
         public override string ToString()
         {
             var sb = modifiersCs();
@@ -395,7 +395,7 @@ namespace RT.KitchenSink.ParseCs
         public List<CsParameter> Parameters = new List<CsParameter>();
         public CsBlock MethodBody;
         public ConstructorCallType CallType;
-        public List<CsArgument> CallArguments;
+        public List<CsArgument> CallArguments = new List<CsArgument>();
         public bool IsStatic;
 
         public override string ToString()
@@ -570,7 +570,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public class CsEnumValue : CsNode
     {
-        public List<CsCustomAttributeGroup> CustomAttributes;
+        public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public string Name;
         public CsExpression LiteralValue;
         public override string ToString()
@@ -643,7 +643,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsArrayTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
-        public List<int> ArrayRanks;
+        public List<int> ArrayRanks = new List<int> { 1 };
         public override string ToString() { return InnerType.ToString() + ArrayRanks.Select(rank => string.Concat("[", new string(',', rank - 1), "]")).JoinString(); }
         public override bool IsSingleIdentifier() { return false; }
     }
@@ -1164,7 +1164,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsBlockLambdaExpression : CsLambaExpression
     {
         public CsBlock Block;
-        public override string ToString() { return string.Concat(parametersCs(), '\n', Block.ToString(), '\n'); }
+        public override string ToString() { return string.Concat(parametersCs(), '\n', Block.ToString().Trim()); }
     }
     public class CsAnonymousMethodExpression : CsExpression
     {
@@ -1280,7 +1280,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsNameAndCustomAttributes : CsNode
     {
         public string Name;
-        public List<CsCustomAttributeGroup> CustomAttributes;
+        public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public override string ToString()
         {
             return string.Concat(CustomAttributes.Select(c => c.ToString()).JoinString(), ' ', Name.Sanitize());

@@ -345,6 +345,9 @@ namespace RT.KitchenSink.ParseCs
 
         private static IEnumerable<Token> preprocess(IEnumerable<Token> tok)
         {
+            return tok;
+
+            /*
             var openIfs = new Stack<bool>();
             var openRegions = new Stack<string>();
             int lastIndex = 0;
@@ -393,6 +396,7 @@ namespace RT.KitchenSink.ParseCs
 
             if (openIfs.Count > 1)
                 throw new LexException(@"Unterminated #if directive.", lastIndex);
+            */
         }
     }
 

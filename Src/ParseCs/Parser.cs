@@ -2750,25 +2750,19 @@ namespace RT.KitchenSink.ParseCs
         }
         private static void parseLinqQueryBody(CsLinqExpression linq, TokenJar tok, ref int i)
         {
-            while (tok[i].IsIdentifier("join"))
-                linq.Elements.Add(parseLinqJoinClause(tok, ref i));
-
-            while (tok[i].IsIdentifier("from") || tok[i].IsIdentifier("let") || tok[i].IsIdentifier("where"))
+            while (tok[i].IsIdentifier("from") || tok[i].IsIdentifier("let") || tok[i].IsIdentifier("where") || tok[i].IsIdentifier("join") || tok[i].IsIdentifier("orderby"))
             {
                 if (tok[i].IsIdentifier("from"))
-                {
                     linq.Elements.Add(parseLinqFromClause(tok, ref i));
-                    while (tok[i].IsIdentifier("join"))
-                        linq.Elements.Add(parseLinqJoinClause(tok, ref i));
-                }
                 else if (tok[i].IsIdentifier("let"))
                     linq.Elements.Add(parseLinqLetClause(tok, ref i));
                 else if (tok[i].IsIdentifier("where"))
                     linq.Elements.Add(parseLinqWhereClause(tok, ref i));
+                else if (tok[i].IsIdentifier("join"))
+                    linq.Elements.Add(parseLinqJoinClause(tok, ref i));
+                else if (tok[i].IsIdentifier("orderby"))
+                    linq.Elements.Add(parseLinqOrderByClause(tok, ref i));
             }
-
-            if (tok[i].IsIdentifier("orderby"))
-                linq.Elements.Add(parseLinqOrderByClause(tok, ref i));
 
             if (tok[i].IsIdentifier("select"))
                 linq.Elements.Add(parseLinqSelectClause(tok, ref i));
