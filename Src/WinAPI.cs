@@ -373,6 +373,9 @@ namespace RT.Util
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetWindowRect(IntPtr hWnd, ref RECT lpRect);
 
+        [DllImport("kernel32.dll")]
+        public static extern bool SetConsoleOutputCP(uint wCodePageID);
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
