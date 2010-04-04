@@ -460,7 +460,7 @@ namespace RT.KitchenSink.ParseCs
                         }
                         catch (ParseException)
                         {
-                            if ((flags & typeIdentifierFlags.Lenient) == 0)
+                            if ((flags & typeIdentifierFlags.Lenient) != 0)
                             {
                                 part.GenericTypeArguments = null;
                                 return ty;
@@ -745,7 +745,7 @@ namespace RT.KitchenSink.ParseCs
 
             if (tok[j].IsBuiltin("<") || tok[j].IsBuiltin("."))
             {
-                // There are two different cases we need to handle here:
+                // If it's '<', there are two different cases we need to handle here:
                 // (1) The "<" could be the beginning of the method's generic type parameter declaration, e.g.
                 //         void MyMethod<T>() { }
                 // (2) The "<" could be the beginning of a generic type argument to an interface that the method is trying to implement, e.g.
@@ -783,10 +783,10 @@ namespace RT.KitchenSink.ParseCs
                     genericsAlreadyParsed = new List<CsNameAndCustomAttributes>();
                     foreach (var g in lastPart.GenericTypeArguments)
                     {
-                        if (g.IsSingleIdentifier())
-                            genericsAlreadyParsed.Add(new CsNameAndCustomAttributes { Name = g.ToString(), CustomAttributes = new List<CsCustomAttributeGroup>() });
-                        else
+                        var single = g.GetSingleIdentifier();
+                        if (single == null)
                             throw new ParseException(@"Invalid generic type parameter declaration.", tok[j].Index);
+                        genericsAlreadyParsed.Add(new CsNameAndCustomAttributes { Name = single, CustomAttributes = new List<CsCustomAttributeGroup>() });
                     }
                 }
                 else if (tok[j].IsBuiltin("<"))

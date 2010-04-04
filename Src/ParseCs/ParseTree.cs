@@ -173,7 +173,7 @@ namespace RT.KitchenSink.ParseCs
     public class CsEvent : CsMultiMember
     {
         public bool IsAbstract, IsVirtual, IsOverride, IsSealed;
-        public List<CsSimpleMethod> Methods = new List<CsSimpleMethod>();
+        public List<CsSimpleMethod> Methods = null;
 
         public override string ToString()
         {
@@ -614,12 +614,11 @@ namespace RT.KitchenSink.ParseCs
     }
     public abstract class CsTypeIdentifier : CsNode
     {
-        public abstract bool IsSingleIdentifier();
+        public virtual string GetSingleIdentifier() { return null; }
     }
     public class CsEmptyGenericTypeIdentifier : CsTypeIdentifier
     {
         public override string ToString() { return string.Empty; }
-        public override bool IsSingleIdentifier() { return false; }
     }
     public abstract class CsConcreteTypeIdentifierPart : CsNode { }
     public class CsConcreteTypeIdentifierPartIdentifier : CsConcreteTypeIdentifierPart
@@ -638,26 +637,30 @@ namespace RT.KitchenSink.ParseCs
         public bool HasGlobal;
         public List<CsConcreteTypeIdentifierPart> Parts = new List<CsConcreteTypeIdentifierPart>();
         public override string ToString() { return (HasGlobal ? "global::" : string.Empty) + Parts.Select(p => p.ToString()).JoinString("."); }
-        public override bool IsSingleIdentifier() { return !HasGlobal && Parts.Count == 1 && Parts[0] is CsConcreteTypeIdentifierPartIdentifier && ((CsConcreteTypeIdentifierPartIdentifier) Parts[0]).GenericTypeArguments == null; }
+        public override string GetSingleIdentifier()
+        {
+            return !HasGlobal && Parts.Count == 1 &&
+                    Parts[0] is CsConcreteTypeIdentifierPartIdentifier &&
+                    ((CsConcreteTypeIdentifierPartIdentifier) Parts[0]).GenericTypeArguments == null
+                ? ((CsConcreteTypeIdentifierPartIdentifier) Parts[0]).Name
+                : null;
+        }
     }
     public class CsArrayTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public List<int> ArrayRanks = new List<int> { 1 };
         public override string ToString() { return InnerType.ToString() + ArrayRanks.Select(rank => string.Concat("[", new string(',', rank - 1), "]")).JoinString(); }
-        public override bool IsSingleIdentifier() { return false; }
     }
     public class CsPointerTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public override string ToString() { return InnerType.ToString() + "*"; }
-        public override bool IsSingleIdentifier() { return false; }
     }
     public class CsNullableTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public override string ToString() { return InnerType.ToString() + "?"; }
-        public override bool IsSingleIdentifier() { return false; }
     }
     #endregion
 
@@ -1264,7 +1267,7 @@ namespace RT.KitchenSink.ParseCs
 
     #endregion
 
-    #region Miscellaneous classes
+    #region Miscellaneous
     public class CsNameAndExpression : CsNode
     {
         public string Name;
@@ -1283,7 +1286,7 @@ namespace RT.KitchenSink.ParseCs
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public override string ToString()
         {
-            return string.Concat(CustomAttributes.Select(c => c.ToString()).JoinString(), ' ', Name.Sanitize());
+            return CustomAttributes.Select(c => c.ToString()).JoinString() + Name.Sanitize();
         }
     }
 
