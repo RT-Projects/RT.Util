@@ -958,6 +958,22 @@ namespace RT.Util.CommandLine
         /// <param name="tr">The translation class containing the translated text.</param>
         /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
         public ConsoleColoredString GenerateHelp(Translation tr, int wrapWidth) { return GenerateHelpFunc(tr, wrapWidth); }
+        /// <summary>Generates a printable description of the error represented by this exception, typically used to tell the user what they did wrong.</summary>
+        /// <param name="tr">The translation class containing the translated text.</param>
+        /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
+        public ConsoleColoredString GenerateErrorText(Translation tr, int wrapWidth)
+        {
+            if (tr == null)
+                tr = new Translation();
+
+            var strings = new List<ConsoleColoredString>();
+            foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
+            {
+                strings.Add(line);
+                strings.Add(Environment.NewLine);
+            }
+            return new ConsoleColoredString(strings);
+        }
         /// <summary>Constructor.</summary>
         public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
@@ -983,21 +999,22 @@ namespace RT.Util.CommandLine
             if (tr == null)
                 tr = new Translation();
 
-            var wrapWidth = ConsoleUtil.WrapToWidth();
+            ConsoleUtil.Write(GenerateHelp(tr, ConsoleUtil.WrapToWidth()));
 
-            ConsoleUtil.Write(GenerateHelp(tr, wrapWidth));
-
-            var helps = new[] { "-?", "/?", "--?", "-h", "--help", "help" };
-            bool requestedHelp =
-                (this is UnrecognizedCommandOrOptionException && helps.Contains(((UnrecognizedCommandOrOptionException) this).CommandOrOptionName))
-                || (this is UnexpectedParameterException && helps.Contains(((UnexpectedParameterException) this).UnexpectedParameters.FirstOrDefault()));
-
-            if (!requestedHelp)
+            if (!WasCausedByHelpRequest())
             {
                 Console.WriteLine();
-                foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
-                    ConsoleUtil.WriteLine(line);
+                ConsoleUtil.Write(GenerateErrorText(tr, ConsoleUtil.WrapToWidth()));
             }
+        }
+
+        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
+        public bool WasCausedByHelpRequest()
+        {
+            var helps = new[] { "-?", "/?", "--?", "-h", "--help", "help" };
+            return
+                (this is UnrecognizedCommandOrOptionException && helps.Contains(((UnrecognizedCommandOrOptionException) this).CommandOrOptionName))
+                || (this is UnexpectedParameterException && helps.Contains(((UnexpectedParameterException) this).UnexpectedParameters.FirstOrDefault()));
         }
     }
 

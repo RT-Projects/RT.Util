@@ -50,14 +50,25 @@ namespace RT.Util.Consoles
         /// <param name="strings">Input strings to concatenate.</param>
         /// <remarks>The color of each character in the input strings is preserved.</remarks>
         public ConsoleColoredString(params ConsoleColoredString[] strings)
+            : this((ICollection<ConsoleColoredString>) strings)
         {
-            _text = strings.Select(s => s._text).JoinString();
-            _colors = new ConsoleColor[strings.Select(s => s.Length).Sum()];
+        }
+
+        /// <summary>Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
+        /// <param name="strings">Input strings to concatenate.</param>
+        /// <remarks>The color of each character in the input strings is preserved.</remarks>
+        public ConsoleColoredString(ICollection<ConsoleColoredString> strings)
+        {
+            var builder = new StringBuilder();
+            foreach (var str in strings)
+                builder.Append(str._text);
+            _text = builder.ToString();
+            _colors = new ConsoleColor[_text.Length];
             var index = 0;
-            for (int i = 0; i < strings.Length; i++)
+            foreach (var str in strings)
             {
-                Array.Copy(strings[i]._colors, 0, _colors, index, strings[i]._colors.Length);
-                index += strings[i]._colors.Length;
+                Array.Copy(str._colors, 0, _colors, index, str._colors.Length);
+                index += str._colors.Length;
             }
         }
 
