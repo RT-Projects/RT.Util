@@ -175,6 +175,8 @@ namespace RT.Util
             }
             return sb.ToString();
         }
+        /// <summary>Determines whether this node contains any textual content.</summary>
+        public abstract bool HasText { get; }
     }
 
     /// <summary>Represents either an <see cref="EggsGroup"/> or an <see cref="EggsTag"/>.</summary>
@@ -201,6 +203,8 @@ namespace RT.Util
         public override string ToString() { return stringifyList(Children, null); }
         /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml() { return new XElement("root", Children.Select(c => c.ToXml()).ToArray()); }
+        /// <summary>Determines whether this node contains any textual content.</summary>
+        public override bool HasText { get { return Children.Any(c => c.HasText); } }
     }
 
     /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag.</summary>
@@ -273,6 +277,8 @@ namespace RT.Util
             }
             return new XElement(tagName, Children.Count == 1 ? (object) Children[0].Select(ch => ch.ToXml()) : Children.Select(chlist => new XElement("item", chlist.Select(ch => ch.ToXml()))));
         }
+        /// <summary>Determines whether this node contains any textual content.</summary>
+        public override bool HasText { get { return Children.Any(c1 => c1.Any(c2 => c2.HasText)); } }
     }
     /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
     public class EggsText : EggsNode
@@ -292,6 +298,8 @@ namespace RT.Util
         }
         /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml() { return Text; }
+        /// <summary>Determines whether this node contains any textual content.</summary>
+        public override bool HasText { get { return Text != null && Text.Length > 0; } }
     }
 
     /// <summary>Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>

@@ -343,7 +343,6 @@ namespace RT.Util.CommandLine
                 //
                 foreach (var f in optional)
                 {
-                    // "Usage line"
                     IEnumerable<OptionAttribute> attrsRaw;
                     if (f.FieldType.IsEnum)
                     {
@@ -363,7 +362,9 @@ namespace RT.Util.CommandLine
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
                         c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
                     }
-                    if (f.FieldType == typeof(string) || f.FieldType == typeof(string[]) || ExactConvert.IsTrueIntegerType(f.FieldType) || ExactConvert.IsTrueIntegerNullableType(f.FieldType))
+                    if ((f.FieldType == typeof(string) || f.FieldType == typeof(string[]) ||
+                        (ExactConvert.IsTrueIntegerType(f.FieldType) && !f.FieldType.IsEnum) ||
+                        (ExactConvert.IsTrueIntegerNullableType(f.FieldType) && !f.FieldType.GetGenericArguments()[0].IsEnum)))
                         c = c + new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan);
                     help.Add(c);
                     if (f.FieldType.IsArray)
@@ -402,9 +403,25 @@ namespace RT.Util.CommandLine
                             help.Add(" " + opts[0]);
                     }
 
-                    help.Add(new ConsoleColoredString(" <" + f.Name + ">", ConsoleColor.Cyan));
+                    help.Add(" ");
+                    var cmdName = new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan);
+                    help.Add(cmdName);
 
-                    if (f.FieldType.IsDefined<CommandGroupAttribute>())
+                    if (f.FieldType.IsEnum)
+                    {
+                        var positional = f.IsDefined<IsPositionalAttribute>();
+                        requiredParamsTable.SetCell(0, row, cmdName, true);
+                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                        {
+                            var str = positional
+                                ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
+                                : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
+                            requiredParamsTable.SetCell(1, row, new ConsoleColoredString(str, ConsoleColor.White), true);
+                            requiredParamsTable.SetCell(2, row, getDocumentation(el, type), 2, 1);
+                            row++;
+                        }
+                    }
+                    else if (f.FieldType.IsDefined<CommandGroupAttribute>())
                     {
                         help.Add(" ...");
                         int origRow = row;
@@ -421,25 +438,12 @@ namespace RT.Util.CommandLine
                             foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
                                 if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
-                            requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - 1), true);
-                            requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - 1), true);
+                            requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), true);
+                            requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - ConsoleColoredString.NewLine.Length), true);
                             requiredParamsTable.SetCell(3, row, getDocumentation(ty, ty));
                             row++;
                         }
                         requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
-                    }
-                    else if (f.FieldType.IsEnum)
-                    {
-                        var positional = f.IsDefined<IsPositionalAttribute>();
-                        foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                        {
-                            var str = positional
-                                ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
-                                : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
-                            requiredParamsTable.SetCell(0, row, new ConsoleColoredString(str, ConsoleColor.White), true);
-                            requiredParamsTable.SetCell(1, row, getDocumentation(el, type), 3, 1);
-                            row++;
-                        }
                     }
                     else
                     {
@@ -506,6 +510,7 @@ namespace RT.Util.CommandLine
                     helpString.Add(new ConsoleColoredString(tr.ParametersHeader, ConsoleColor.White));
                     helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(ConsoleColoredString.NewLine);
+                    requiredParamsTable.RemoveEmptyColumns();
                     helpString.Add(requiredParamsTable.ToColoredString());
                 }
 
@@ -516,6 +521,7 @@ namespace RT.Util.CommandLine
                     helpString.Add(new ConsoleColoredString(tr.OptionsHeader, ConsoleColor.White));
                     helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(ConsoleColoredString.NewLine);
+                    optionalParamsTable.RemoveEmptyColumns();
                     helpString.Add(optionalParamsTable.ToColoredString());
                 }
 
@@ -657,7 +663,9 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
-                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType))
+                else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) ||
+                    (ExactConvert.IsTrueIntegerType(field.FieldType) && !field.FieldType.IsEnum) ||
+                    (ExactConvert.IsTrueIntegerNullableType(field.FieldType) && !field.FieldType.GetGenericArguments()[0].IsEnum))
                 {
                     var options = field.GetCustomAttributes<OptionAttribute>();
                     if (!options.Any() && !positional)
@@ -690,7 +698,7 @@ namespace RT.Util.CommandLine
                     lastField = field;
                 }
                 else
-                    rep.Error(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), nullable integer types, and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
             }
 
             // Warn if the method has unused documentation methods

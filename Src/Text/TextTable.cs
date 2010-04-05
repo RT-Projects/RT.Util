@@ -735,5 +735,57 @@ namespace RT.Util.Text
                     );
             return columnWidths;
         }
+
+        /// <summary>Removes columns that contain only empty cells. Subsequent columns are moved to the left accordingly.</summary>
+        public void RemoveEmptyColumns()
+        {
+            int cols = _cells.Max(row => row.Count);
+            int col = 0;
+            while (col < cols)
+            {
+                bool columnEmpty = true;
+                foreach (var row in _cells)
+                {
+                    if (row.Count <= col)
+                        continue;
+                    var cel = row[col] as trueCell;
+                    if (cel != null && cel.ColSpan == 1 && cel.Value != null && (
+                        (cel.Value is string && ((string) cel.Value).Length > 0) ||
+                        (cel.Value is ConsoleColoredString && ((ConsoleColoredString) cel.Value).Length > 0) ||
+                        (cel.Value is EggsNode && ((EggsNode) cel.Value).HasText)))
+                    {
+                        columnEmpty = false;
+                        break;
+                    }
+                }
+                if (!columnEmpty)
+                {
+                    col++;
+                    continue;
+                }
+
+                for (int row = 0; row < _cells.Count; row++)
+                {
+                    if (_cells[row].Count <= col)
+                        continue;
+                    var cel = _cells[row][col];
+                    if (cel != null && cel is surrogateCell && ((surrogateCell) cel).RealRow == row)
+                    {
+                        ((trueCell) _cells[row][((surrogateCell) cel).RealCol]).ColSpan--;
+                        _cells[row].RemoveAt(col);
+                    }
+                    else if (cel != null && cel is trueCell && ((trueCell) cel).ColSpan > 1)
+                    {
+                        ((trueCell) cel).ColSpan--;
+                        _cells[row].RemoveAt(col + 1);
+                    }
+                    else
+                    {
+                        _cells[row].RemoveAt(col);
+                    }
+                }
+                cols--;
+            }
+        }
     }
 }
