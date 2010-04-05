@@ -511,10 +511,11 @@ namespace RT.Util
             return false;
         }
 
-        /// <summary>This method is not supported on multicast loggers.</summary>
+        /// <summary>Configures the verbosity of every underlying logger. See <see cref="LoggerBase.ConfigureVerbosity"/> for more info.</summary>
         public override void ConfigureVerbosity(string settings)
         {
-            throw new InvalidOperationException("The verbosity of the MulticastLogger cannot be configured. You should configure the verbosity of the underlying loggers instead.");
+            foreach (var logger in Loggers.Values)
+                logger.ConfigureVerbosity(settings);
         }
     }
 }
