@@ -417,7 +417,7 @@ namespace RT.Util.CommandLine
                             var cell2 = ConsoleColoredString.Empty;
                             var suboptions = subOptional.Any() || subRequired.Any();
                             anyCommandsWithSuboptions |= suboptions;
-                            var asterisk = suboptions ? new ConsoleColoredString("*\n", ConsoleColor.DarkYellow) : new ConsoleColoredString("\n");
+                            var asterisk = suboptions ? new ConsoleColoredString("*", ConsoleColor.DarkYellow) + ConsoleColoredString.NewLine : ConsoleColoredString.NewLine;
                             foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
                                 if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
@@ -478,44 +478,55 @@ namespace RT.Util.CommandLine
                     }
                 }
 
-                // Put all the pieces together
-                var doc = getDocumentation(type, type);
-                if (doc != null)
-                {
-                    help.Add(Environment.NewLine);
-                    help.Add(Environment.NewLine);
-                    help.Add(ConsoleColoredString.FromEggsNode(doc));
-                }
-
                 var helpString = new List<ConsoleColoredString>();
+
+                // Word-wrap the usage line
                 foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(wrapWidth, tr.Usage.Translation.Length + 1))
                 {
                     helpString.Add(line);
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                 }
+
+                // Word-wrap the documentation for the command (if any)
+                var doc = getDocumentation(type, type);
+                if (doc != null)
+                {
+                    helpString.Add(ConsoleColoredString.NewLine);
+                    foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(doc, wrapWidth))
+                    {
+                        helpString.Add(line);
+                        helpString.Add(ConsoleColoredString.NewLine);
+                    }
+                }
+
+                // Table of required parameters
                 if (required.Any())
                 {
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(new ConsoleColoredString(tr.ParametersHeader, ConsoleColor.White));
-                    helpString.Add(Environment.NewLine);
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(requiredParamsTable.ToColoredString());
                 }
+
+                // Table of optional parameters
                 if (optional.Any())
                 {
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(new ConsoleColoredString(tr.OptionsHeader, ConsoleColor.White));
-                    helpString.Add(Environment.NewLine);
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(optionalParamsTable.ToColoredString());
                 }
+
+                // "This command accepts further arguments on the command line."
                 if (anyCommandsWithSuboptions)
                 {
-                    helpString.Add(Environment.NewLine);
+                    helpString.Add(ConsoleColoredString.NewLine);
                     foreach (var line in (new ConsoleColoredString("* ", ConsoleColor.DarkYellow) + tr.AdditionalOptions.Translation).WordWrap(wrapWidth, 2))
                     {
                         helpString.Add(line);
-                        helpString.Add(Environment.NewLine);
+                        helpString.Add(ConsoleColoredString.NewLine);
                     }
                 }
 

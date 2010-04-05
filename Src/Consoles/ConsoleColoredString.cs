@@ -11,7 +11,12 @@ namespace RT.Util.Consoles
     public class ConsoleColoredString
     {
         /// <summary>Represents an empty colored string. This field is read-only.</summary>
-        public static readonly ConsoleColoredString Empty = new ConsoleColoredString();
+        public static ConsoleColoredString Empty { get { if (_empty == null) _empty = new ConsoleColoredString(); return _empty; } }
+        private static ConsoleColoredString _empty = null;
+
+        /// <summary>Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This field is read-only.</summary>
+        public static ConsoleColoredString NewLine { get { if (_newline == null) _newline = new ConsoleColoredString(Environment.NewLine, ConsoleColor.Gray); return _newline; } }
+        private static ConsoleColoredString _newline = null;
 
         private string _text;
         private ConsoleColor[] _colors;
@@ -261,7 +266,7 @@ namespace RT.Util.Consoles
                     }
                     if (txt[i] == '\n')
                     {
-                        yield return data.Line ?? new ConsoleColoredString(string.Empty);
+                        yield return data.Line ?? ConsoleColoredString.Empty;
                         data.Line = null;
                     }
                 }
