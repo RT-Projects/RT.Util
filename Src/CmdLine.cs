@@ -268,7 +268,10 @@ namespace RT.Util.CommandLine
             while (i < args.Length)
             {
                 if (args[i] == "--")
+                {
                     suppressOptions = true;
+                    i++;
+                }
                 else if (!suppressOptions && args[i][0] == '-')
                 {
                     if (options.ContainsKey(args[i]))
