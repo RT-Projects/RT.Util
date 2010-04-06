@@ -78,7 +78,7 @@ namespace RT.Util.Streams
         /// <param name="count">Number of bytes to read from buffer and send to the socket.</param>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            Socket.Send(Encoding.ASCII.GetBytes(count.ToString("X") + "\r\n"));
+            Socket.Send(Encoding.UTF8.GetBytes(count.ToString("X") + "\r\n"));
             Socket.Send(buffer, offset, count, SocketFlags.None);
             Socket.Send(new byte[] { 13, 10 }); // "\r\n"
         }
