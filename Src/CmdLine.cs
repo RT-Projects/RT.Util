@@ -550,6 +550,8 @@ namespace RT.Util.CommandLine
         {
             if (member.IsDefined<DocumentationLiteralAttribute>())
                 return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
+            if (ApplicationTr == null)
+                return null;
 
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
