@@ -51,7 +51,8 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
-        /// before the end of the stream, a shorter array is returned.
+        /// before the end of the stream, a shorter array is returned. If the end of the stream is already
+        /// reached, returns null.
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="length">Number of bytes to read from the stream.</param>
@@ -61,10 +62,20 @@ namespace RT.Util.ExtensionMethods
             var bytesRead = stream.Read(buf, 0, length);
             if (bytesRead == length)
                 return buf;
+            if (bytesRead == 0)
+                return null;
             byte[] result = new byte[bytesRead];
-            if (bytesRead > 0)
-                Array.Copy(buf, result, bytesRead);
+            Array.Copy(buf, result, bytesRead);
             return result;
+        }
+
+        /// <summary>Encodes the specified string as UTF-8 and writes it to the current stream.</summary>
+        /// <param name="stream">Stream to write text to.</param>
+        /// <param name="text">Text to write to the stream as UTF-8.</param>
+        public static void WriteUtf8(this Stream stream, string text)
+        {
+            var data = text.ToUtf8();
+            stream.Write(data, 0, data.Length);
         }
 
         #region Optim write

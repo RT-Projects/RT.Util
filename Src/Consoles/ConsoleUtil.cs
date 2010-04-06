@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Consoles
@@ -154,6 +155,42 @@ namespace RT.Util.Consoles
         {
             value.writeToConsole();
             Console.WriteLine();
+        }
+
+        /// <summary>Writes the specified stack trace to the console in pretty colors.</summary>
+        /// <param name="stackTraceLines">The stack trace. Each string in this collection is expected to be one line of the stack trace.</param>
+        public static void WriteStackTrace(IEnumerable<string> stackTraceLines)
+        {
+            foreach (var traceLine in stackTraceLines)
+            {
+                var m = Regex.Match(traceLine, @"^\s*at ([\w\.]+\.)([\w`<>]+)\.([\w\[\],<>]+)(\(.*\))( in (.:\\.*\\)([^\\]+\.cs):line (\d+))?\s*$");
+                if (m.Success)
+                    ConsoleUtil.WriteParagraphs("    - ".Color(ConsoleColor.DarkGreen) +
+                        m.Groups[1].Value.Color(ConsoleColor.DarkGray) +
+                        m.Groups[2].Value.Color(ConsoleColor.Cyan) + ".".Color(ConsoleColor.DarkGray) +
+                        m.Groups[3].Value.Color(ConsoleColor.White) +
+                        m.Groups[4].Value.Color(ConsoleColor.Green) +
+                        (m.Groups[5].Length > 0 ?
+                            " in ".Color(ConsoleColor.DarkGray) +
+                            m.Groups[6].Value.Color(ConsoleColor.DarkYellow) + m.Groups[7].Value.Color(ConsoleColor.Yellow) + " line ".Color(ConsoleColor.DarkMagenta) +
+                            m.Groups[8].Value.Color(ConsoleColor.Magenta)
+                        : ""), 8
+                    );
+                else
+                {
+                    m = Regex.Match(traceLine, @"^\s*at (.*?)\s*$");
+                    if (m.Success)
+                        ConsoleUtil.WriteParagraphs("    - ".Color(ConsoleColor.DarkGreen) + m.Groups[1].Value.Color(ConsoleColor.DarkGray), 8);
+                    else
+                        ConsoleUtil.WriteParagraphs(traceLine, 8);
+                }
+            }
+        }
+
+        /// <summary>Writes the current stack trace to the console in pretty colors.</summary>
+        public static void WriteStackTrace()
+        {
+            WriteStackTrace(Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Skip(3));
         }
     }
 }

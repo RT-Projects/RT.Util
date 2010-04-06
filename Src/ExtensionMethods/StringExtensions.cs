@@ -56,7 +56,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Contains the set of ASCII characters allowed in a URL.
         /// </summary>
-        private static byte[] urlAllowedBytes = Encoding.ASCII.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@");
+        private static byte[] urlAllowedBytes = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@");
 
         /// <summary>
         /// Escapes all necessary characters in the specified string so as to make it usable safely in a URL.
@@ -242,26 +242,6 @@ namespace RT.Util.ExtensionMethods
         public static int Utf8Length(this string input)
         {
             return Encoding.UTF8.GetByteCount(input);
-        }
-
-        /// <summary>
-        /// Converts the specified string to a byte array. Non-ASCII characters are replaced with question marks ('?').
-        /// </summary>
-        /// <param name="input">String to convert to a byte array.</param>
-        /// <returns>The specified string, converted to a byte-array with non-ASCII characters replaced with question marks ('?').</returns>
-        public static byte[] ToAscii(this string input)
-        {
-            return Encoding.ASCII.GetBytes(input);
-        }
-
-        /// <summary>
-        /// Converts the specified byte array to a string where each byte turns into an ASCII character. Bytes greater than 0x7F are replaced with question marks ('?').
-        /// </summary>
-        /// <param name="input">Byte array to convert to a string.</param>
-        /// <returns>The specified byte array, converted to a string with non-ASCII characters replaced with question marks ('?').</returns>
-        public static string FromAscii(this byte[] input)
-        {
-            return Encoding.ASCII.GetString(input);
         }
 
         /// <summary>
