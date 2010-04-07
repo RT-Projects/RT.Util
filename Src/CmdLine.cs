@@ -1014,7 +1014,7 @@ namespace RT.Util.CommandLine
         }
 
         /// <summary>
-        /// Prints usage infofmation, followed by an error message describing to the user what it was that the parser didn't
+        /// Prints usage information, followed by an error message describing to the user what it was that the parser didn't
         /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
         /// </summary>
         /// <param name="tr">Contains translations for the messages used by the command-line parser.</param>

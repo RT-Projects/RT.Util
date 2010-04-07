@@ -338,7 +338,7 @@ namespace RT.Util.Text
             }
 
             // Insert the cell in the right place
-            var tru = new trueCell
+            _cells[row][col] = new trueCell
             {
                 ColSpan = colSpan,
                 RowSpan = rowSpan,
@@ -346,7 +346,6 @@ namespace RT.Util.Text
                 NoWrap = noWrap,
                 Alignment = alignment
             };
-            _cells[row][col] = tru;
 
             // For cells with span, insert the appropriate surrogate cells.
             for (int x = 0; x < colSpan; x++)
