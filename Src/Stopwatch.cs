@@ -21,9 +21,18 @@ namespace RT.Util
     /// Abstract base class to encapsulate a stopwatch - an object that remembers events as they happen
     /// and when they happen and outputs a report with timing information at the end.
     /// </summary>
-    public abstract class Stopwatch : IDisposable
+    public abstract class Stopwatch
     {
-        public static Stopwatch GlobalStopwatch = new StopwatchReal();
+        private static Stopwatch _globalStopwatch = null;
+        public static Stopwatch GlobalStopwatch
+        {
+            get
+            {
+                if (_globalStopwatch == null)
+                    _globalStopwatch = new StopwatchReal();
+                return _globalStopwatch;
+            }
+        }
 
         /// <summary>
         /// Logs an event.
@@ -36,9 +45,6 @@ namespace RT.Util
         /// </summary>
         /// <param name="filePath">File to save stopwatch output to. If the file already exists, it will be overwritten.</param>
         public abstract void SaveToFile(string filePath);
-
-        /// <summary>No-op.</summary>
-        public void Dispose() { }
     }
 
     /// <summary>
@@ -80,7 +86,7 @@ namespace RT.Util
             int maxLength = 0;
             foreach (var x in Elements)
                 maxLength = Math.Max(maxLength, x.Event.Length + 5);
-            
+
             sb.Append("Item".PadRight(maxLength, ' '));
             sb.Append("Took (ms)".PadLeft(10, ' '));
             sb.AppendLine("Cumu (ms)".PadLeft(10, ' '));

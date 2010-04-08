@@ -26,12 +26,6 @@ namespace RT.Util
     public abstract class LoggerBase
     {
         /// <summary>
-        /// Specifies a short string describing each log type. Defaults to:
-        /// INFO, WARN, ERROR, DEBUG.
-        /// </summary>
-        public Dictionary<LogType, string> MsgTypeString = new Dictionary<LogType, string>();
-
-        /// <summary>
         /// Holds the current verbosity limit for each of the log types. Only messages
         /// with same or lower verbosity will be printed. Defaults to level 1 for
         /// all messages except debug, which defaults to 0.
@@ -78,17 +72,26 @@ namespace RT.Util
         /// </summary>
         public LoggerBase()
         {
-            // Default type strings
-            MsgTypeString[LogType.Info] = "INFO";
-            MsgTypeString[LogType.Warning] = "WARN";
-            MsgTypeString[LogType.Error] = "ERROR";
-            MsgTypeString[LogType.Debug] = "DEBUG";
-
             // Default visibility levels
             VerbosityLimit[LogType.Info] = 1;
             VerbosityLimit[LogType.Warning] = 1;
             VerbosityLimit[LogType.Error] = 1;
             VerbosityLimit[LogType.Debug] = 0;
+        }
+
+        /// <summary>
+        /// Specifies a short string describing each log type (INFO, WARN, ERROR, or DEBUG).
+        /// </summary>
+        public string GetMessageTypeString(LogType type)
+        {
+            switch (type)
+            {
+                case LogType.Info: return "INFO";
+                case LogType.Warning: return "WARN";
+                case LogType.Error: return "ERROR";
+                case LogType.Debug: return "DEBUG";
+            }
+            return null;
         }
 
         /// <summary>
@@ -154,7 +157,7 @@ namespace RT.Util
         protected virtual void GetFormattedStrings(out string fmtInfo, out string indent, uint verbosity, LogType type)
         {
             string timestamp = (TimestampInUTC ? DateTime.Now.ToUniversalTime() : DateTime.Now).ToString(TimestampFormat);
-            fmtInfo = string.Format(MessageFormat, timestamp, MsgTypeString[type], verbosity);
+            fmtInfo = string.Format(MessageFormat, timestamp, GetMessageTypeString(type), verbosity);
             indent = new string(' ', fmtInfo.Length - IndentFormatSuffix.Length) + IndentFormatSuffix;
         }
 
@@ -268,11 +271,6 @@ namespace RT.Util
     public class ConsoleLogger : LoggerBase
     {
         /// <summary>
-        /// Specifies text colors for each of the possible message types.
-        /// </summary>
-        public Dictionary<LogType, ConsoleColor> MsgTypeColor = new Dictionary<LogType, ConsoleColor>();
-
-        /// <summary>
         /// Set this to false to disable the word-wrapping of messages to the
         /// width of the console window.
         /// </summary>
@@ -286,15 +284,25 @@ namespace RT.Util
         public bool ErrorsToStdErr = true;
 
         /// <summary>
-        /// Constructs a new console logger. Initialises message colors to defaults.
+        /// Constructs a new console logger.
         /// </summary>
         public ConsoleLogger()
         {
-            // Default colors
-            MsgTypeColor[LogType.Info] = ConsoleColor.White;
-            MsgTypeColor[LogType.Warning] = ConsoleColor.Yellow;
-            MsgTypeColor[LogType.Error] = ConsoleColor.Red;
-            MsgTypeColor[LogType.Debug] = ConsoleColor.Green;
+        }
+
+        /// <summary>
+        /// Gets a text color for each of the possible message types.
+        /// </summary>
+        public ConsoleColor GetMessageTypeColor(LogType type)
+        {
+            switch (type)
+            {
+                case LogType.Info: return ConsoleColor.White;
+                case LogType.Warning: return ConsoleColor.Yellow;
+                case LogType.Error: return ConsoleColor.Red;
+                case LogType.Debug: return ConsoleColor.Green;
+                default: return ConsoleColor.Gray;
+            }
         }
 
         /// <summary>Logs a message to the console.</summary>
@@ -313,7 +321,7 @@ namespace RT.Util
                     consoleStream = Console.Error;
 
                 var prevCol = Console.ForegroundColor;
-                Console.ForegroundColor = MsgTypeColor[type];
+                Console.ForegroundColor = GetMessageTypeColor(type);
 
                 int wrapWidth = WordWrap ? ConsoleUtil.WrapToWidth() : int.MaxValue;
                 bool first = true;

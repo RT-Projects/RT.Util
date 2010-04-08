@@ -10,7 +10,17 @@ namespace RT.Util
     /// <summary>Implements a parser for the minimalist text mark-up language EggsML.</summary>
     public static class EggsML
     {
-        internal static char[] specialChars = new char[] { '~', '@', '#', '$', '%', '^', '&', '*', '_', '=', '+', '/', '\\', '[', ']', '{', '}', '<', '>', '|', '`', '"' };
+        /// <summary>Returns an array containing all characters that have a special meaning in EggsML.</summary>
+        public static char[] SpecialCharacters
+        {
+            get
+            {
+                if (_specialCharacters == null)
+                    _specialCharacters = "~@#$%^&*_=+/\\[]{}<>|`\"".ToCharArray();
+                return _specialCharacters;
+            }
+        }
+        private static char[] _specialCharacters = null;
 
         /// <summary>Parses the specified EggsML input.</summary>
         /// <param name="input">The EggsML text to parse.</param>
@@ -29,7 +39,7 @@ namespace RT.Util
 
             while (input.Length > 0)
             {
-                var pos = input.IndexOf(ch => specialChars.Contains(ch));
+                var pos = input.IndexOf(ch => SpecialCharacters.Contains(ch));
 
                 if (pos == -1)
                 {
@@ -284,7 +294,7 @@ namespace RT.Util
     public class EggsText : EggsNode
     {
         /// <summary>The text contained in this node.</summary>
-        public string Text = string.Empty;
+        public string Text = "";
         /// <summary>Constructs a new EggsML text node.</summary>
         /// <param name="text">The text for this node to contain.</param>
         public EggsText(string text) { Text = text; }
@@ -292,9 +302,9 @@ namespace RT.Util
         /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
         {
-            if (Text.Where(ch => EggsML.specialChars.Contains(ch) && ch != '"').Take(3).Count() >= 3)
+            if (Text.Where(ch => EggsML.SpecialCharacters.Contains(ch) && ch != '"').Take(3).Count() >= 3)
                 return string.Concat("\"", Text.Replace("\"", "\"\""), "\"");
-            return new string(Text.SelectMany(ch => EggsML.specialChars.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
+            return new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
         }
         /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml() { return Text; }

@@ -56,7 +56,16 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Contains the set of ASCII characters allowed in a URL.
         /// </summary>
-        private static byte[] urlAllowedBytes = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@");
+        private static byte[] _urlAllowedBytes
+        {
+            get
+            {
+                if (_urlAllowedBytesCache == null)
+                    _urlAllowedBytesCache = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@");
+                return _urlAllowedBytesCache;
+            }
+        }
+        private static byte[] _urlAllowedBytesCache = null;
 
         /// <summary>
         /// Escapes all necessary characters in the specified string so as to make it usable safely in a URL.
@@ -69,7 +78,7 @@ namespace RT.Util.ExtensionMethods
             byte[] utf8 = input.ToUtf8();
             StringBuilder sb = new StringBuilder();
             foreach (byte b in utf8)
-                if (urlAllowedBytes.Contains(b))
+                if (_urlAllowedBytes.Contains(b))
                     sb.Append((char) b);
                 else
                     sb.AppendFormat("%{0:X2}", b);
@@ -120,7 +129,16 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Contains the set of characters disallowed in file names across all filesystems supported by our software.
         /// </summary>
-        private static char[] filenameDisallowedCharacters = @"\/:?*""<>|{}".ToCharArray();
+        private static char[] _filenameDisallowedCharacters
+        {
+            get
+            {
+                if (_filenameDisallowedCharactersCache == null)
+                    _filenameDisallowedCharactersCache = @"\/:?*""<>|{}".ToCharArray();
+                return _filenameDisallowedCharactersCache;
+            }
+        }
+        private static char[] _filenameDisallowedCharactersCache = null;
 
         /// <summary>
         /// Escapes all characters in this string which cannot form part of a valid filename on at least one
@@ -133,7 +151,7 @@ namespace RT.Util.ExtensionMethods
             var result = new StringBuilder(input.Length + input.Length / 2);
             foreach (char c in input)
             {
-                if (filenameDisallowedCharacters.Contains(c))
+                if (_filenameDisallowedCharacters.Contains(c))
                 {
                     result.Append('{');
                     foreach (var bt in Encoding.UTF8.GetBytes(c.ToString()))

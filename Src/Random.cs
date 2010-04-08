@@ -10,7 +10,7 @@ namespace RT.Util
         private static Random _rnd = new Random();
 
         /// <summary>
-        /// Resets the random number generator using the specified seed.
+        /// Resets the random number generator using the specified <paramref name="seed"/>.
         /// </summary>
         public static void Reset(int seed)
         {
@@ -27,8 +27,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns a random double between Min and Max. It is unclear whether
-        /// Min or Max can ever be returned.
+        /// Returns a random double between <paramref name="min"/> and <paramref name="max"/>. It is unclear whether
+        /// <paramref name="min"/> or <paramref name="max"/> can ever be returned.
         /// </summary>
         public static double NextDouble(double min, double max)
         {
@@ -46,7 +46,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns a nonnegative random number less than the specified maximum.
+        /// Returns a non-negative random number less than <paramref name="max"/>.
         /// </summary>
         public static int Next(int max)
         {
@@ -55,7 +55,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns a random integer between Min (inclusive) and Max (exclusive).
+        /// Returns a random integer between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive).
         /// </summary>
         public static int Next(int min, int max)
         {

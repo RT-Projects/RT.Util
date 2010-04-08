@@ -44,7 +44,16 @@ namespace RT.Util.Collections
     public struct Tuple<T1, T2> : IComparable<Tuple<T1, T2>>, IEquatable<Tuple<T1, T2>>
     {
         /// <summary>Default tuple comparer uses the default Comparer and EqualityComparer for each value's type.</summary>
-        public static readonly TupleComparer<T1, T2> DefaultComparer = new TupleComparer<T1, T2>();
+        public static TupleComparer<T1, T2> DefaultComparer
+        {
+            get
+            {
+                if (_defaultComparer == null)
+                    _defaultComparer = new TupleComparer<T1, T2>();
+                return _defaultComparer;
+            }
+        }
+        private static TupleComparer<T1, T2> _defaultComparer = null;
 
         /// <summary>The first element in the tuple.</summary>
         public T1 E1;
@@ -219,7 +228,19 @@ namespace RT.Util.Collections
     public static class TupleComparer
     {
         /// <summary>This comparer uses invariant culture case-insensitive string comparer for both values.</summary>
-        public static readonly TupleComparer<string, string> StringInvariantCultureIgnoreCase2 = new TupleComparer<string, string>(StringComparer.InvariantCultureIgnoreCase, StringComparer.InvariantCultureIgnoreCase, StringComparer.InvariantCultureIgnoreCase, StringComparer.InvariantCultureIgnoreCase);
+        public static TupleComparer<string, string> StringInvariantCultureIgnoreCase2
+        {
+            get
+            {
+                if (_stringInvariantCultureIgnoreCase2 == null)
+                {
+                    var comparer = StringComparer.InvariantCultureIgnoreCase;
+                    _stringInvariantCultureIgnoreCase2 = new TupleComparer<string, string>(comparer, comparer, comparer, comparer);
+                }
+                return _stringInvariantCultureIgnoreCase2;
+            }
+        }
+        private static TupleComparer<string, string> _stringInvariantCultureIgnoreCase2 = null;
     }
 
     /// <summary>

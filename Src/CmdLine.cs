@@ -766,7 +766,16 @@ namespace RT.Util.CommandLine
             }
         }
 
-        private static Dictionary<Type, object> _applicationTrCache = new Dictionary<Type, object>();
+        private static Dictionary<Type, object> _applicationTrCacheField = null;
+        private static Dictionary<Type, object> _applicationTrCache
+        {
+            get
+            {
+                if (_applicationTrCacheField == null)
+                    _applicationTrCacheField = new Dictionary<Type, object>();
+                return _applicationTrCacheField;
+            }
+        }
 
         private static void checkDocumentation(IPostBuildReporter rep, MemberInfo member, Type inType, Type applicationTrType, List<MethodInfo> sensibleDocMethods)
         {

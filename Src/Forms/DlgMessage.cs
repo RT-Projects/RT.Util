@@ -34,43 +34,55 @@ namespace RT.Util.Dialogs
     /// </summary>
     internal partial class DlgMessageForm : Form
     {
-        #region Ugly hack, don't look (must come first so that static initialisers work well)
+        private class DlgMessageFormResources
+        {
+            #region Ugly hack, don't look
 
-        /// Embedding resources in VS is fucked up. The name of the resource is hard-coded to
-        /// be the default name of the assembly. There's no reason to generate a resource with
-        /// the specified name (that I found). At the same time, the ResourceManager requires
-        /// to be told the prefix for resource names as a string. These two factors make it
-        /// impossible to use the same resource manager in different projects.
-        /// 
-        /// Workaround: use form's resources, because these are not mangled up by VS. But it's
-        /// not that easy (of course not!) because the form's resources don't come with a
-        /// strongly typed resource manager...
-        private static ResourceManager _resourceManagerCache;
-        private static ResourceManager _resourceManager
+            // Embedding resources in VS is fucked up. The name of the resource is hard-coded to
+            // be the default name of the assembly. There's no reason to generate a resource with
+            // the specified name (that I found). At the same time, the ResourceManager requires
+            // to be told the prefix for resource names as a string. These two factors make it
+            // impossible to use the same resource manager in different projects.
+            // 
+            // Workaround: use form's resources, because these are not mangled up by VS. But it's
+            // not that easy (of course not!) because the form's resources don't come with a
+            // strongly typed resource manager...
+            public Bitmap Info;
+            public Bitmap Question;
+            public Bitmap Warning;
+            public Bitmap Error;
+
+            public DlgMessageFormResources()
+            {
+                // Instead of the following, which works perfectly, the autogenerator produces
+                // something more like this (note the string!):
+                // RM = new ResourceManager("RT.Util.Dialogs.DlgMessage", typeof(DlgMessage).Assembly);
+                var _resourceManager = new ResourceManager(typeof(DlgMessageForm));
+
+                // ARGH without .NET Reflector there's no chance I could have figured out that VS
+                // adds some stupid .Image suffix to these images!...
+                // ARGH 2: and the bloody names are deduced based on which class is declared first
+                // in this source file, which is just absolutely un-fucking-believable. So merely
+                // declaring a new empty class at the start of this file breaks the fucking resources.
+                Info = (Bitmap) _resourceManager.GetObject("info.Image");
+                Question = (Bitmap) _resourceManager.GetObject("question.Image");
+                Warning = (Bitmap) _resourceManager.GetObject("warning.Image");
+                Error = (Bitmap) _resourceManager.GetObject("error.Image");
+            }
+
+            #endregion
+        }
+
+        private static DlgMessageFormResources _resourcesCache = null;
+        private static DlgMessageFormResources _resources
         {
             get
             {
-                if (_resourceManagerCache == null)
-                    _resourceManagerCache = new ResourceManager(typeof(DlgMessageForm));
-                // Instead of the above, which works perfectly, the autogenerator produces
-                // something more like the following (note the string!):
-                // RM = new ResourceManager("RT.Util.Dialogs.DlgMessage", typeof(DlgMessage).Assembly);
-                return _resourceManagerCache;
+                if (_resourcesCache == null)
+                    _resourcesCache = new DlgMessageFormResources();
+                return _resourcesCache;
             }
         }
-
-        /// These are necessary because a certain scenario in VS2005 is totally impossible.
-        /// ARGH without .NET Reflector there's no chance I could have figured out that VS
-        /// adds some stupid .Image suffix to these images!...
-        /// ARGH 2: and the bloody names are deduced based on which class is declared first
-        /// in this source file, which is just absolutely un-fucking-believable. So merely
-        /// declaring a new empty class at the start of this file breaks the fucking resources.
-        private static Bitmap _bmpInfo = (Bitmap) _resourceManager.GetObject("info.Image");
-        private static Bitmap _bmpQuestion = (Bitmap) _resourceManager.GetObject("question.Image");
-        private static Bitmap _bmpWarning = (Bitmap) _resourceManager.GetObject("warning.Image");
-        private static Bitmap _bmpError = (Bitmap) _resourceManager.GetObject("error.Image");
-
-        #endregion
 
         /// <summary>
         /// Change this variable to i18n'ize the default captions
@@ -83,9 +95,22 @@ namespace RT.Util.Dialogs
         /// <summary>
         /// Change this variable to i18n'ize the default images
         /// </summary>
-        internal static Bitmap[] DefaultImage = new Bitmap[] {
-            _bmpInfo, _bmpQuestion, _bmpWarning, _bmpError, null
-        };
+        internal static Bitmap[] DefaultImage = new Bitmap[] { null, null, null, null, null };
+
+        internal static Bitmap GetDefaultImage(DlgType type)
+        {
+            var img = DefaultImage[(int) type];
+            if (img != null)
+                return img;
+            switch (type)
+            {
+                case DlgType.Info: return _resources.Info;
+                case DlgType.Question: return _resources.Question;
+                case DlgType.Warning: return _resources.Warning;
+                case DlgType.Error: return _resources.Error;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Change this variable to i18n'ize the default OK button text
@@ -245,7 +270,7 @@ namespace RT.Util.Dialogs
                 Caption = DlgMessageForm.DefaultCaption[(int) Type];
 
             if (Image == null && Type != DlgType.Custom)
-                Image = DlgMessageForm.DefaultImage[(int) Type];
+                Image = DlgMessageForm.GetDefaultImage(Type);
 
             if (AcceptButton < 0)
                 AcceptButton = 0;
