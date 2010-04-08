@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
+using System.Xml;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
@@ -59,9 +59,12 @@ namespace RT.Util
                 {
                     settings = XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
                 }
-                catch
+                catch (Exception e)
                 {
-                    settings = new TSettings();
+                    if (e is XmlException || e is IOException)
+                        settings = new TSettings();
+                    else
+                        throw;
                 }
             }
         }
