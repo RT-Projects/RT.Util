@@ -345,7 +345,7 @@ namespace RT.KitchenSink.ParseCs
 
         private static IEnumerable<Token> preprocess(IEnumerable<Token> tok)
         {
-            return tok;
+            return tok.Where(t => t.Type != TokenType.PreprocessorDirective);
 
             /*
             var openIfs = new Stack<bool>();
