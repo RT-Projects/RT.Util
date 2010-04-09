@@ -59,12 +59,13 @@ namespace RT.Util
                 {
                     settings = XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
                 }
-                catch (Exception e)
+                catch (XmlException)
                 {
-                    if (e is XmlException || e is IOException)
-                        settings = new TSettings();
-                    else
-                        throw;
+                    settings = new TSettings();
+                }
+                catch (IOException)
+                {
+                    settings = new TSettings();
                 }
             }
         }
