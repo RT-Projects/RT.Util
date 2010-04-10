@@ -14,14 +14,14 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static byte[] ReadAllBytes(this Stream stream)
         {
-            try
+            if (stream.CanSeek)
             {
                 var len = (int) (stream.Length - stream.Position);
                 byte[] buffer = new byte[len];
                 stream.Read(buffer, 0, len);
                 return buffer;
             }
-            catch (NotSupportedException)
+            else
             {
                 byte[] buffer = new byte[32768];
                 using (MemoryStream ms = new MemoryStream())
