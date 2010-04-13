@@ -6,13 +6,13 @@ using NUnit.Framework;
 namespace RT.Util.Xml
 {
     [TestFixture]
-    public class XmlClassifyTests
+    public sealed class XmlClassifyTests
     {
-        private class blankClass
+        private sealed class blankClass
         {
         }
 
-        private class basicClass
+        private sealed class basicClass
         {
             public int AnInt = -123;
             public ushort AUShort = 4747;
@@ -42,20 +42,20 @@ namespace RT.Util.Xml
             }
         }
 
-        private class classWithList
+        private sealed class classWithList
         {
             public List<string> List = new List<string>();
             public List<Dictionary<string, string>> ListDicts = new List<Dictionary<string, string>>();
         }
 
-        private class classWithDict
+        private sealed class classWithDict
         {
             public Dictionary<string, string> Dict = new Dictionary<string, string>();
             public Dictionary<string, List<string>> DictLists = new Dictionary<string, List<string>>();
             public Dictionary<string, basicClass> DictClasses = new Dictionary<string, basicClass>();
         }
 
-        private class nestedClass
+        private sealed class nestedClass
         {
             public basicClass Basic;
             public nestedClass Nested;
@@ -72,15 +72,15 @@ namespace RT.Util.Xml
             }
         }
 
-        private class xmlClass
+        private sealed class xmlClass
         {
             public string Str;
             public XElement Xml;
         }
 
-        private class classWithPrivateCtor
+        private sealed class classWithPrivateCtor
         {
-            private classWithPrivateCtor()
+            private sealed classWithPrivateCtor()
             {
                 Field = 9867;
             }
@@ -88,16 +88,16 @@ namespace RT.Util.Xml
             public int Field = 7462;
         }
 
-        private class classWithNoCtor
+        private sealed class classWithNoCtor
         {
-            private classWithNoCtor(int dummy)
+            private sealed classWithNoCtor(int dummy)
             {
             }
         }
 
-        private class classWithThrowingCtor
+        private sealed class classWithThrowingCtor
         {
-            private classWithThrowingCtor()
+            private sealed classWithThrowingCtor()
             {
                 throw new Exception("Test exception");
             }

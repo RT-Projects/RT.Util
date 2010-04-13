@@ -10,9 +10,9 @@ using RT.Util.Xml;
 namespace RT.Util.Lingo
 {
     /// <summary>Provides a dialog in which the user can create a new translation of the software.</summary>
-    public class TranslationCreateForm : Form
+    public sealed class TranslationCreateForm : Form
     {
-        private class LanguageListItem
+        private sealed class LanguageListItem
         {
             public Language Language;
             public LanguageListItem(Language language) { Language = language; }

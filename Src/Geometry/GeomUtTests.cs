@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace RT.Util.Geometry
 {
     [TestFixture]
-    public class GeomUtTests
+    public sealed class GeomUtTests
     {
         [Test]
         public void TestNormalizedAngle()

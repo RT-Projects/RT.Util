@@ -11,7 +11,7 @@ namespace RT.Util.Controls
     /// <summary>
     /// Encapsulates a textbox which, when in multi-line and wordwrap mode, will automatically set its height to be precisely as necessary to accommodate the contained text.
     /// </summary>
-    public class TextBoxAutoHeight : TextBox
+    public sealed class TextBoxAutoHeight : TextBox
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
         static extern IntPtr SendMessage(IntPtr hWnd, Int32 Msg, IntPtr wParam, IntPtr lParam);

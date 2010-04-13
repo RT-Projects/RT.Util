@@ -75,7 +75,7 @@ namespace RT.Util
     /// to verify its own consistency is where this exception should be thrown, for
     /// example in "unreachable" code safeguards.
     /// </summary>
-    public class InternalError : RTException
+    public sealed class InternalError : RTException
     {
         /// <summary>Creates an exception instance with the specified message.</summary>
         public InternalError(string message)

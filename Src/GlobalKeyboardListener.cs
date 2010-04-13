@@ -9,7 +9,7 @@ namespace RT.Util
     /// <summary>
     /// A class that manages a global low-level keyboard hook
     /// </summary>
-    public class GlobalKeyboardListener
+    public sealed class GlobalKeyboardListener
     {
         /// <summary>
         /// The collections of keys to watch for. This is ignored if <see cref="HookAllKeys"/> is set to true.

@@ -8,7 +8,7 @@ using RT.Util.Collections;
 namespace RT.Util.ExtensionMethods
 {
     [TestFixture]
-    public class IEnumerableExtensionsTests
+    public sealed class IEnumerableExtensionsTests
     {
         [Test]
         public void TestJoin()
@@ -57,7 +57,7 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "stuff" }));
         }
 
-        public class StringIntTupleComparer : IComparer<Tuple<string, int>>
+        public sealed class StringIntTupleComparer : IComparer<Tuple<string, int>>
         {
             public int Compare(Tuple<string, int> x, Tuple<string, int> y)
             {

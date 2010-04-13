@@ -7,9 +7,9 @@ using NUnit.Framework;
 namespace RT.Util.Collections
 {
     [TestFixture]
-    public class TupleTests
+    public sealed class TupleTests
     {
-        class dummyClass
+        sealed class dummyClass
         {
         }
 

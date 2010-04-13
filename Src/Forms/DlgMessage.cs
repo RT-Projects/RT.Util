@@ -32,9 +32,9 @@ namespace RT.Util.Dialogs
     /// This class is used by the <see cref="DlgMessage"/> class. This is the form used
     /// for displaying the message box.
     /// </summary>
-    internal partial class DlgMessageForm : Form
+    internal sealed partial class DlgMessageForm : Form
     {
-        private class DlgMessageFormResources
+        private sealed class DlgMessageFormResources
         {
             #region Ugly hack, don't look
 
@@ -146,7 +146,7 @@ namespace RT.Util.Dialogs
     /// dialog represented, as well as static methods to show some common dialog kinds with
     /// most settings at their defaults.
     /// </summary>
-    public class DlgMessage
+    public sealed class DlgMessage
     {
         /// <summary>
         /// Specifies the message type. This selects a sound, an image and a caption to be used

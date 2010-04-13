@@ -12,7 +12,7 @@ namespace RT.Util.Dialogs
     /// Provides a simple dialog containing a single-line text box,
     /// prompting the user to input some text.
     /// </summary>
-    public partial class InputBox : Form
+    public sealed partial class InputBox : Form
     {
         /// <summary>Initialises a new <see cref="InputBox"/> instance.</summary>
         public InputBox()

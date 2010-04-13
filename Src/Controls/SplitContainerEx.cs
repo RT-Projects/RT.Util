@@ -11,7 +11,7 @@ namespace RT.Util.Controls
     /// <summary>
     /// SplitContainerEx provides such "advanced" features as painting the bloody splitter.
     /// </summary>
-    public partial class SplitContainerEx : SplitContainer
+    public sealed partial class SplitContainerEx : SplitContainer
     {
         /// <summary>
         /// Initialises a <see cref="SplitContainerEx"/> instance.
@@ -74,7 +74,7 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Holds the settings of the <see cref="SplitContainerEx"/>.</summary>
-        public class Settings
+        public sealed class Settings
         {
             /// <summary>Holds the position of the splitter, or null if not stored yet.</summary>
             public double? PositionPercent;

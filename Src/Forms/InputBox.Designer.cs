@@ -1,6 +1,6 @@
 namespace RT.Util.Dialogs
 {
-    partial class InputBox
+    sealed partial class InputBox
     {
         /// <summary>
         /// Required designer variable.

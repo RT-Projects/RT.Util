@@ -247,7 +247,7 @@ namespace RT.Util
     /// Implements a logger which doesn't do anything with the log messages. Use this as the
     /// default logger where no logging is wanted by default, to avoid checks for null in every log message.
     /// </summary>
-    public class NullLogger : LoggerBase
+    public sealed class NullLogger : LoggerBase
     {
         /// <summary>
         /// Does nothing.
@@ -268,7 +268,7 @@ namespace RT.Util
     /// long messages. Can use different colors for the different message types.
     /// </summary>
     [Serializable]
-    public class ConsoleLogger : LoggerBase
+    public sealed class ConsoleLogger : LoggerBase
     {
         /// <summary>
         /// Set this to false to disable the word-wrapping of messages to the
@@ -352,7 +352,7 @@ namespace RT.Util
     /// Use this logger only if the stream will remain open for the duration of the execution.
     /// </summary>
     [Serializable]
-    public class StreamLogger : LoggerBase
+    public sealed class StreamLogger : LoggerBase
     {
         private Stream _underlyingStream = null;
         private StreamWriter _streamWriter;
@@ -424,7 +424,7 @@ namespace RT.Util
     /// This is in contrast to <see cref="StreamLogger"/>, which keeps the stream open.
     /// </summary>
     [Serializable]
-    public class FileAppendLogger : LoggerBase
+    public sealed class FileAppendLogger : LoggerBase
     {
         /// <summary>Creates a new instance.</summary>
         public FileAppendLogger() { Filename = null; }
@@ -477,7 +477,7 @@ namespace RT.Util
     /// respected.
     /// </summary>
     [Serializable]
-    public class MulticastLogger : LoggerBase
+    public sealed class MulticastLogger : LoggerBase
     {
         /// <summary>
         /// Add or remove the underlying loggers here. Every logger in this dictionary

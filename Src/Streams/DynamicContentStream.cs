@@ -12,7 +12,7 @@ namespace RT.Util.Streams
     /// In particular, an intended application is to "read from" a method that uses <c>yield return</c> to return strings as execution proceeds.
     /// This enables generation of, for example, HTML for dynamic web pages.
     /// </summary>
-    public class DynamicContentStream : Stream
+    public sealed class DynamicContentStream : Stream
     {
         private IEnumerator<string> _enumerator = null;
         private byte[] _lastUnprocessedBytes = null;

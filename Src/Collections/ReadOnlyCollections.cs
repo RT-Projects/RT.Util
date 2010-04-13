@@ -10,7 +10,7 @@ namespace RT.Util.Collections
     /// </summary>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(ReadOnlyDictionary<,>.DebugView))]
-    public class ReadOnlyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public sealed class ReadOnlyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private IDictionary<TKey, TValue> _dict;
         private ReadOnlyCollection<TKey> _keys;
@@ -196,7 +196,7 @@ namespace RT.Util.Collections
     /// </summary>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(ReadOnlyCollection<>.DebugView))]
-    public class ReadOnlyCollection<T> : ICollection<T>
+    public sealed class ReadOnlyCollection<T> : ICollection<T>
     {
         private ICollection<T> _coll;
 

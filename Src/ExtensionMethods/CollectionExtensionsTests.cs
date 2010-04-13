@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace RT.Util.ExtensionMethods
 {
     [TestFixture]
-    public class CollectionExtensionsTests
+    public sealed class CollectionExtensionsTests
     {
         [Test]
         public void TestBinarySearch()
@@ -57,7 +57,7 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual(index2, i2);
         }
 
-        private class GenericParameter
+        private sealed class GenericParameter
         {
             public string SomeString;
         }

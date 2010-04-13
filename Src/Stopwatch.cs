@@ -51,7 +51,7 @@ namespace RT.Util
     /// Concrete implementation of <see cref="Stopwatch"/>. This class provides an object that remembers events
     /// as they happen and when they happen and outputs a report with timing information at the end.
     /// </summary>
-    public class StopwatchReal : Stopwatch
+    public sealed class StopwatchReal : Stopwatch
     {
         /// <summary>
         /// Remembers when the stopwatch was started.
@@ -121,7 +121,7 @@ namespace RT.Util
     /// <summary>
     /// Implementation of <see cref="Stopwatch"/> that doesn't do anything.
     /// </summary>
-    public class StopwatchDummy : Stopwatch
+    public sealed class StopwatchDummy : Stopwatch
     {
         /// <summary>
         /// Doesn't do anything.

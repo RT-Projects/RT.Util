@@ -248,7 +248,7 @@ namespace RT.Util.Collections
     /// This class can use supplied comparers and/or equality comparers for each tuple value, or it can
     /// use the default ones if a comparer is omitted.
     /// </summary>
-    public class TupleComparer<T1, T2> : IComparer<Tuple<T1, T2>>, IEqualityComparer<Tuple<T1, T2>>
+    public sealed class TupleComparer<T1, T2> : IComparer<Tuple<T1, T2>>, IEqualityComparer<Tuple<T1, T2>>
     {
         private IComparer<T1> _comp1;
         private IComparer<T2> _comp2;

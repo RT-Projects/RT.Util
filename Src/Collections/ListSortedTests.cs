@@ -7,9 +7,9 @@ using NUnit.Framework;
 namespace RT.Util.Collections
 {
     [TestFixture]
-    public class ListSortedTests
+    public sealed class ListSortedTests
     {
-        class ReverseComparerInt : IComparer<int>
+        sealed class ReverseComparerInt : IComparer<int>
         {
             public int Compare(int x, int y)
             {
@@ -17,7 +17,7 @@ namespace RT.Util.Collections
             }
         }
 
-        class TestThingy : IComparable<TestThingy>
+        sealed class TestThingy : IComparable<TestThingy>
         {
             private int _val;
             private int _instance;

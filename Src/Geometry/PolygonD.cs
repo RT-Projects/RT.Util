@@ -9,7 +9,7 @@ namespace RT.Util.Geometry
     /// <summary>
     /// This class encapsulates double-precision polygons.
     /// </summary>
-    public class PolygonD
+    public sealed class PolygonD
     {
         private List<PointD> _vertices;
 

@@ -84,7 +84,7 @@ namespace RT.Util
             return rep.AnyErrors ? 1 : 0;
         }
 
-        class PostBuildReporter : IPostBuildReporter
+        sealed class PostBuildReporter : IPostBuildReporter
         {
             private string _path;
             public bool AnyErrors { get; set; }

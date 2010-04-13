@@ -12,7 +12,7 @@ namespace RT.Util.Drawing
     /// <summary>
     /// Wrapper around a Bitmap that allows access to its raw byte data.
     /// </summary>
-    public class BytesBitmap : IDisposable
+    public sealed class BytesBitmap : IDisposable
     {
         private SharedPinnedByteArray _bytes;
         private Bitmap _bitmap;
@@ -135,7 +135,7 @@ namespace RT.Util.Drawing
     /// This class represents a byte array which is pinned to avoid relocation
     /// by the GC and implements reference counting.
     /// </summary>
-    internal class SharedPinnedByteArray
+    internal sealed class SharedPinnedByteArray
     {
         private GCHandle _handle;
         private int _refCount;

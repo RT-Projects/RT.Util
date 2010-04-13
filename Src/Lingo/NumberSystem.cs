@@ -19,7 +19,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system with only one string for all numbers (e.g. Japanese, Korean, Vietnamese, Turkish).</summary>
-    public class OneStringNumberSystem : NumberSystem
+    public sealed class OneStringNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 1; } }
@@ -30,7 +30,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system with a string for 1 and another for all other numbers (e.g. Danish, Dutch, English, Faroese, German, Norwegian, Swedish, Estonian, Finnish, Greek, Hebrew, Italian, Portuguese, Spanish, Esperanto).</summary>
-    public class Singular1PluralNumberSystem : NumberSystem
+    public sealed class Singular1PluralNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 2; } }
@@ -41,7 +41,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system with a string for 0 and 1 and another for all other numbers (e.g. French, Brazilian Portuguese).</summary>
-    public class Singular01PluralNumberSystem : NumberSystem
+    public sealed class Singular01PluralNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 2; } }
@@ -52,7 +52,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Latvian: one string for numbers ending in 1 but not 11; one for everything else but 0; and one for 0.</summary>
-    public class LatvianNumberSystem : NumberSystem
+    public sealed class LatvianNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -63,7 +63,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Irish: one string for numbers ending in 1-6, one for numbers ending in 7-9, one for numbers ending in 0.</summary>
-    public class IrishNumberSystem : NumberSystem
+    public sealed class IrishNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -74,7 +74,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Romanian: one string for 1; one for 0 and for all numbers ending in something between 01 and 19; and one for all other numbers.</summary>
-    public class RomanianNumberSystem : NumberSystem
+    public sealed class RomanianNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -85,7 +85,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Lithuanian: one string for numbers ending in 1 but not 11; one for numbers ending in 2-9 but not 12-19; and one for all other numbers.</summary>
-    public class LithuanianNumberSystem : NumberSystem
+    public sealed class LithuanianNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -96,7 +96,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>One string for numbers ending in 1 but not 11; one for numbers ending in 2-4 but not 12-14; and one for all other numbers (e.g. Croatian, Serbian, Russian, Ukrainian).</summary>
-    public class SlavicNumberSystem1 : NumberSystem
+    public sealed class SlavicNumberSystem1 : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -109,7 +109,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>One string for 1, one for 2-4, and one for all other numbers (e.g. Slovak, Czech).</summary>
-    public class SlavicNumberSystem2 : NumberSystem
+    public sealed class SlavicNumberSystem2 : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -120,7 +120,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Polish: one string for 1; one for numbers ending in 2-4 but not 12-14; and one for all other numbers.</summary>
-    public class PolishNumberSystem : NumberSystem
+    public sealed class PolishNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 3; } }
@@ -131,7 +131,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Slovenian: one string for 1; one for 2; one for 3 and 4; and one for all other numbers.</summary>
-    public class SlovenianNumberSystem : NumberSystem
+    public sealed class SlovenianNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 4; } }
@@ -142,7 +142,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Number system for Tagalog (Filipino): one string for numbers ending in 4, 6, or 9; one for all other numbers.</summary>
-    public class TagalogNumberSystem : NumberSystem
+    public sealed class TagalogNumberSystem : NumberSystem
     {
         /// <summary>Returns the number of strings required by this number system.</summary>
         public override int NumStrings { get { return 2; } }

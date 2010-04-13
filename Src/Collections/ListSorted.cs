@@ -10,7 +10,7 @@ namespace RT.Util.Collections
     /// items are allowed, and will always be added to the end of a run of equal items.
     /// Insertion, and removal are O(N); lookups are O(log N); access by index is supported.
     /// </summary>
-    public class ListSorted<T> : IList<T>
+    public sealed class ListSorted<T> : IList<T>
     {
         private List<T> _list;
         private IComparer<T> _comparer;

@@ -7,7 +7,7 @@ namespace RT.Util.Controls
 {
     /// <summary>Provides a narrow panel that somewhat resembles a
     /// tooltip window's title bar with a close button.</summary>
-    public class NiceClosePanel : Panel
+    public sealed class NiceClosePanel : Panel
     {
         private Button _closeButton;
 

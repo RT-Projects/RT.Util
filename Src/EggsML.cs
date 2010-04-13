@@ -198,7 +198,7 @@ namespace RT.Util
     }
 
     /// <summary>Represents a node in the EggsML parse tree that simply contains child nodes, but has no semantic meaning of its own.</summary>
-    public class EggsGroup : EggsContainer
+    public sealed class EggsGroup : EggsContainer
     {
         /// <summary>The children of this node.</summary>
         public List<EggsNode> Children = new List<EggsNode>();
@@ -218,7 +218,7 @@ namespace RT.Util
     }
 
     /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag.</summary>
-    public class EggsTag : EggsContainer
+    public sealed class EggsTag : EggsContainer
     {
         /// <summary>The character used to open the tag (e.g. '[').</summary>
         public char Tag;
@@ -291,7 +291,7 @@ namespace RT.Util
         public override bool HasText { get { return Children.Any(c1 => c1.Any(c2 => c2.HasText)); } }
     }
     /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
-    public class EggsText : EggsNode
+    public sealed class EggsText : EggsNode
     {
         /// <summary>The text contained in this node.</summary>
         public string Text = "";
@@ -314,7 +314,7 @@ namespace RT.Util
 
     /// <summary>Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>
     [Serializable]
-    public class EggsMLParseException : Exception
+    public sealed class EggsMLParseException : Exception
     {
         /// <summary>The character index into the original string where the error occurred.</summary>
         public int Index { get; private set; }

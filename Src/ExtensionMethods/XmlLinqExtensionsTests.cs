@@ -8,7 +8,7 @@ using System.Xml.Linq;
 namespace RT.Util.ExtensionMethods
 {
     [TestFixture]
-    public class XmlLinqExtensionsTests
+    public sealed class XmlLinqExtensionsTests
     {
         string xml = @"<job unique-id='2987CF7B-A18D7EA3-A019820B-D42BC32F'>
                                 <plan id='PRJ-GROUP-PLANNAME'/>

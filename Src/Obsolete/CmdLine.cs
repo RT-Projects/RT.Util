@@ -16,7 +16,7 @@ namespace RT.Util
     /// <remarks>Requires the UnmanagedCode security permission due to the use of Environment.Exit().</remarks>
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     [Obsolete("Use RT.Util.CommandLine.CommandLineParser.ParseCommandLine<T> instead.")]
-    public class CmdLineParser
+    public sealed class CmdLineParser
     {
         /// <summary>
         /// Describes a single option.
@@ -38,7 +38,7 @@ namespace RT.Util
         /// <summary>
         /// Describes a blank line used to separate options when printing help.
         /// </summary>
-        private class separator : option
+        private sealed class separator : option
         {
         }
 
@@ -724,7 +724,7 @@ namespace RT.Util
     /// <summary>
     /// (obsolete) Prints <see cref="CmdLineParser"/> messages to the console.
     /// </summary>
-    public class CmdLineConsolePrinter : CmdLinePrinterBase
+    public sealed class CmdLineConsolePrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         public override void Print(string text)
@@ -749,7 +749,7 @@ namespace RT.Util
     }
 
     /// <summary>(obsolete) Prints <see cref="CmdLineParser"/> messages using message boxes.</summary>
-    public class CmdLineMessageboxPrinter : CmdLinePrinterBase
+    public sealed class CmdLineMessageboxPrinter : CmdLinePrinterBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         private StringBuilder _buffer = new StringBuilder();

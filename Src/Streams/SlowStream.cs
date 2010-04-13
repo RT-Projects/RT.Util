@@ -8,7 +8,7 @@ namespace RT.Util.Streams
     /// Provides methods to read from a stream in small chunks at a time. Optionally suspends
     /// the thread for a specified interval on every chunk.
     /// </summary>
-    public class SlowStream : Stream
+    public sealed class SlowStream : Stream
     {
         /// <summary>Gets or sets the current chunk size (number of bytes read at a time).</summary>
         public int ChunkSize { get; set; }

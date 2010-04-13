@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace RT.Util
 {
     [TestFixture]
-    public class ExactConvertTests
+    public sealed class ExactConvertTests
     {
         #region ExactTry
 
@@ -17,7 +17,7 @@ namespace RT.Util
             public string suppressWarning { get { return anotherField; } set { anotherField = value; } }
         }
 
-        public class AnUnsupportedClass
+        public sealed class AnUnsupportedClass
         {
             private int aField;
             public string anotherField;

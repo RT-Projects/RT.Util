@@ -10,7 +10,7 @@ namespace RT.Util.Controls
     /// screen as required. Repainting of the off-screen buffer is only done
     /// on size changes or explicit calls to <see cref="DoubleBufferedPanel.Refresh"/>.
     /// </summary>
-    public class DoubleBufferedPanel : Panel
+    public sealed class DoubleBufferedPanel : Panel
     {
         /// <summary>
         /// Occurs when the off-screen buffer needs to be painted.

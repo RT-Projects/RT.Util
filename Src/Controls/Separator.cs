@@ -9,7 +9,7 @@ namespace RT.Util.Controls
     /// The purpose is to visually separate blocks of controls, similar to GroupBox but
     /// without completely surrounding the controls in a box.
     /// </summary>
-    public partial class Separator : UserControl
+    public sealed class Separator : UserControl
     {
         private GroupBox _groupBox;
 

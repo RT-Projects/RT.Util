@@ -6,7 +6,7 @@ namespace RT.Util.Streams
     /// Calculates CRC32 checksum of all values that are read/written via this stream.
     /// Seeking is ignored. All the bytes seeked over will be ignored.
     /// </summary>
-    public class CRC32Stream : Stream
+    public sealed class CRC32Stream : Stream
     {
         private static uint[] _poly = new uint[]
         {
@@ -50,7 +50,7 @@ namespace RT.Util.Streams
         /// <summary>
         /// The underlying stream to/from which writing/reading is performed.
         /// </summary>
-        public virtual Stream BaseStream { get { return _stream; } }
+        public Stream BaseStream { get { return _stream; } }
 
         private CRC32Stream() { }
 

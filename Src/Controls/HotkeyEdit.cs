@@ -8,7 +8,7 @@ namespace RT.Util.Controls
     /// is focussed, the control would display "Ctrl+Alt+A". The combination can be read
     /// out by the program in a convenient format.
     /// </summary>
-    public class HotkeyEdit: TextBox
+    public sealed class HotkeyEdit: TextBox
     {
         private bool _lastNone;
         private bool _lastCtrl;

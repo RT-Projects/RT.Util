@@ -10,7 +10,7 @@ namespace RT.Util.Controls
     /// These menu items are intended to be grouped using a <see cref="MenuRadioGroup&lt;T&gt;"/>.
     /// </summary>
     /// <typeparam name="T">The type of the value associated with this menu item.</typeparam>
-    public class MenuRadioItem<T> : ToolStripMenuItem where T : struct
+    public sealed class MenuRadioItem<T> : ToolStripMenuItem where T : struct
     {
         private T _value;
         private MenuRadioGroup<T> _parentGroup;

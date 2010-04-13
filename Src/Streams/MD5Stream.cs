@@ -8,7 +8,7 @@ namespace RT.Util.Streams
     /// <summary>
     /// Calculates MD5 checksum of all values that are read/written via this stream.
     /// </summary>
-    public class MD5Stream : Stream
+    public sealed class MD5Stream : Stream
     {
         private Stream _stream = null;
         private System.Security.Cryptography.MD5 _md5;
@@ -18,7 +18,7 @@ namespace RT.Util.Streams
         /// This is the underlying stream. All reads/writes and most other operations
         /// on this class are performed on this underlying stream.
         /// </summary>
-        public virtual Stream BaseStream { get { return _stream; } }
+        public Stream BaseStream { get { return _stream; } }
 
         private MD5Stream() { }
 

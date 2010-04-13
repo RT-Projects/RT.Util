@@ -1,6 +1,6 @@
 namespace RT.Util.Controls
 {
-    partial class SplitContainerEx
+    sealed partial class SplitContainerEx
     {
         /// <summary> 
         /// Required designer variable.

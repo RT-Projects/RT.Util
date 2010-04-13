@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace RT.Util.ExtensionMethods
 {
     [TestFixture]
-    public class StringExtensionsTests
+    public sealed class StringExtensionsTests
     {
         public void Assert_Join(string separator, IEnumerable<string> values, string expected)
         {

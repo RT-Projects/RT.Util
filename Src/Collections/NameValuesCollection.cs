@@ -17,7 +17,7 @@ namespace RT.Util.Collections
     /// </code>
     /// </summary>
     /// <typeparam name="TValue">The type of the values to be associated with each key.</typeparam>
-    public class NameValuesCollection<TValue> : IDictionary<string, ValuesCollection<TValue>>
+    public sealed class NameValuesCollection<TValue> : IDictionary<string, ValuesCollection<TValue>>
     {
         private Dictionary<string, List<TValue>> _items;
         private bool _isReadOnly = false;

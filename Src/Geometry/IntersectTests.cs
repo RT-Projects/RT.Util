@@ -3,7 +3,7 @@
 namespace RT.Util.Geometry
 {
     [TestFixture]
-    public class IntersectTests
+    public sealed class IntersectTests
     {
         /// <summary>
         /// Like Math.Min but with a total order on doubles.

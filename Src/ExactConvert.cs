@@ -1668,7 +1668,7 @@ namespace RT.Util
     /// <summary>
     /// Represents an exception thrown in the case of conversion failure when using <see cref="ExactConvert"/>.
     /// </summary>
-    public class ExactConvertException : RTException
+    public sealed class ExactConvertException : RTException
     {
         /// <summary>
         /// Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.

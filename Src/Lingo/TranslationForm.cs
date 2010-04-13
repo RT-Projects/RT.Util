@@ -16,7 +16,7 @@ namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
     /// <typeparam name="TTranslation">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
-    public class TranslationForm<TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
+    public sealed class TranslationForm<TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
     {
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;
@@ -37,7 +37,7 @@ namespace RT.Util.Lingo
         private bool _anyChanges;
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
-        public new class Settings : ManagedForm.Settings
+        public new sealed class Settings : ManagedForm.Settings
         {
             /// <summary>Remembers the position of the horizontal splitter (between the tree view and the main interface).</summary>
             public int SplitterDistance = 300;
@@ -588,7 +588,7 @@ namespace RT.Util.Lingo
             }
         }
 
-        private class GroupSwitchEventArgs : EventArgs
+        private sealed class GroupSwitchEventArgs : EventArgs
         {
             public TranslationGroupListItem ListItem;
             public GroupSwitchEventArgs(TranslationGroupListItem listItem) { ListItem = listItem; }
@@ -852,7 +852,7 @@ namespace RT.Util.Lingo
             }
         }
 
-        private class TranslationPanelTrString : TranslationPanel
+        private sealed class TranslationPanelTrString : TranslationPanel
         {
             private TrString _translation;
             private TrString _original;
@@ -1026,7 +1026,7 @@ namespace RT.Util.Lingo
             }
         }
 
-        private class TranslationPanelTrStringNum : TranslationPanel
+        private sealed class TranslationPanelTrStringNum : TranslationPanel
         {
             private TrStringNum _original;
             private TrStringNum _translation;
@@ -1316,7 +1316,7 @@ namespace RT.Util.Lingo
             }
         }
 
-        private class TranslationGroupListItem
+        private sealed class TranslationGroupListItem
         {
             public TranslationPanel[] TranslationPanels;
             public string Label;
@@ -1324,7 +1324,7 @@ namespace RT.Util.Lingo
             public override string ToString() { return Label; }
         }
 
-        private class TranslationGroupListBox : ListBox
+        private sealed class TranslationGroupListBox : ListBox
         {
             private const int VERTICAL_MARGIN = 3;
             private const int HORIZONTAL_MARGIN = 5;

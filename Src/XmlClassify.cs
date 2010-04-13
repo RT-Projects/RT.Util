@@ -628,14 +628,14 @@ namespace RT.Util.Xml
     /// <see cref="XmlIdAttribute"/> attribute within that class or struct.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class XmlFollowIdAttribute : Attribute { }
+    public sealed class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property, it is ignored by <see cref="XmlClassify"/>.
     /// Data stored in this field or automatically-implemented property is not persisted.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class XmlIgnoreAttribute : Attribute { }
+    public sealed class XmlIgnoreAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does
@@ -645,7 +645,7 @@ namespace RT.Util.Xml
     /// to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
-    public class XmlIgnoreIfDefaultAttribute : Attribute { }
+    public sealed class XmlIgnoreIfDefaultAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property of a collection type (including
@@ -655,14 +655,14 @@ namespace RT.Util.Xml
     /// collection to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
-    public class XmlIgnoreIfEmptyAttribute : Attribute { }
+    public sealed class XmlIgnoreIfEmptyAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the field's or property's value is equal to the specified value.
     /// Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type's default value and the specified value to be lost.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class XmlIgnoreIfAttribute : Attribute
+    public sealed class XmlIgnoreIfAttribute : Attribute
     {
         private object _value;
         /// <summary>Constructs an <see cref="XmlIgnoreIfAttribute"/> instance.</summary>
@@ -678,20 +678,20 @@ namespace RT.Util.Xml
     /// automatically-implemented property is set to null. When persisting objects, fields and automatically-implemented properties with this attribute are skipped.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class XmlParentAttribute : Attribute { }
+    public sealed class XmlParentAttribute : Attribute { }
 
     /// <summary>
     /// When reconstructing persisted objects using <see cref="XmlClassify"/>, a field or automatically-implemented property with this attribute receives the ID that was used to refer to the
     /// XML file that stores this object.  See <see cref="XmlFollowIdAttribute"/> for more information. The field or automatically-implemented property must be of type string.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class XmlIdAttribute : Attribute { }
+    public sealed class XmlIdAttribute : Attribute { }
 
     /// <summary>
     /// Provides mechanisms to hold an object that has an ID and gets evaluated at first use.
     /// </summary>
     /// <typeparam name="T">The type of the contained object.</typeparam>
-    public class XmlDeferredObject<T>
+    public sealed class XmlDeferredObject<T>
     {
         /// <summary>Initialises a deferred object using a delegate or lambda expression.</summary>
         /// <param name="id">Id that refers to the object to be generated.</param>

@@ -9,7 +9,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     [TestFixture]
-    public class DiffTests
+    public sealed class DiffTests
     {
         [Test]
         public void DiffTest()

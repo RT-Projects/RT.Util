@@ -35,7 +35,7 @@ namespace RT.Util.CommandLine
     /// </description></item>
     /// </list>
     /// </remarks>
-    public class CommandLineParser<T>
+    public sealed class CommandLineParser<T>
     {
         /// <summary>
         /// Gets or sets the application's translation object which contains the localised strings that document the command-line options and commands.
@@ -60,7 +60,7 @@ namespace RT.Util.CommandLine
             throw new CommandLineValidationException(errorMessage, getHelpGenerator(typeof(T)));
         }
 
-        private class positionalParameterInfo
+        private sealed class positionalParameterInfo
         {
             public Action ProcessParameter;
             public Action ProcessEndOfParameters;
@@ -869,7 +869,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Contains translatable strings pertaining to the command-line parser, including error messages and usage help.</summary>
-    public class Translation : TranslationBase
+    public sealed class Translation : TranslationBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         public Translation() : base(Language.EnglishUS) { }
@@ -1053,7 +1053,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the parameters specified by the user on the command-line do not pass the custom validation checks.</summary>
     [Serializable]
-    public class CommandLineValidationException : CommandLineParseException
+    public sealed class CommandLineValidationException : CommandLineParseException
     {
         /// <summary>Constructor.</summary>
         public CommandLineValidationException(string message, Func<Translation, int, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
@@ -1061,7 +1061,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
     [Serializable]
-    public class UnrecognizedCommandOrOptionException : CommandLineParseException
+    public sealed class UnrecognizedCommandOrOptionException : CommandLineParseException
     {
         /// <summary>The unrecognized command name or option name.</summary>
         public string CommandOrOptionName { get; private set; }
@@ -1077,7 +1077,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered a command or option that is not allowed in conjunction with a previously-encountered command or option.</summary>
     [Serializable]
-    public class IncompatibleCommandOrOptionException : CommandLineParseException
+    public sealed class IncompatibleCommandOrOptionException : CommandLineParseException
     {
         /// <summary>The earlier option or command, which by itself is valid, but conflicts with the <see cref="LaterCommandOrOption"/>.</summary>
         public string EarlierCommandOrOption { get; private set; }
@@ -1096,7 +1096,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered an unsupported type in the class definition.</summary>
     [Serializable]
-    public class UnrecognizedTypeException : CommandLineParseException
+    public sealed class UnrecognizedTypeException : CommandLineParseException
     {
         /// <summary>The full name of the unsupported type that was encountered.</summary>
         public string TypeName { get; private set; }
@@ -1115,7 +1115,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected a parameter to an option.</summary>
     [Serializable]
-    public class IncompleteOptionException : CommandLineParseException
+    public sealed class IncompleteOptionException : CommandLineParseException
     {
         /// <summary>The name of the option that was missing a parameter.</summary>
         public string OptionName { get; private set; }
@@ -1131,7 +1131,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered additional command-line parameters when it expected the end of the command line.</summary>
     [Serializable]
-    public class UnexpectedParameterException : CommandLineParseException
+    public sealed class UnexpectedParameterException : CommandLineParseException
     {
         /// <summary>Contains the first unexpected parameter and all of the subsequent arguments.</summary>
         public string[] UnexpectedParameters { get; private set; }
@@ -1143,7 +1143,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional positional parameters.</summary>
     [Serializable]
-    public class MissingParameterException : CommandLineParseException
+    public sealed class MissingParameterException : CommandLineParseException
     {
         /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
         public string FieldName { get; private set; }
@@ -1155,7 +1155,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that a parameter that expected an integer was passed a string by the user that doesn't parse as an integer.</summary>
     [Serializable]
-    public class InvalidIntegerParameterException : CommandLineParseException
+    public sealed class InvalidIntegerParameterException : CommandLineParseException
     {
         /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
         public string FieldName { get; private set; }
@@ -1167,7 +1167,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional mandatory options.</summary>
     [Serializable]
-    public class MissingOptionException : CommandLineParseException
+    public sealed class MissingOptionException : CommandLineParseException
     {
         /// <summary>Contains the field pertaining to the parameter that was missing.</summary>
         public FieldInfo Field { get; private set; }

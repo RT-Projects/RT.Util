@@ -87,7 +87,7 @@ namespace RT.Util
                     yield return new Tuple<T, DiffOp>(x, DiffOp.None);
         }
 
-        private class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
+        private sealed class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
         private static IEnumerable<Tuple<T, DiffOp>> diff<T>(T[] olda, T[] newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor)
         {
             var newhash = new Dictionary<T, List<int>>();

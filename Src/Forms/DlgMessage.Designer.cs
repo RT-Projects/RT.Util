@@ -46,11 +46,11 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.img)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.info)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.question)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.warning)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.error)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) (this.img)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) (this.info)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) (this.question)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) (this.warning)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) (this.error)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel3
@@ -164,8 +164,8 @@ namespace RT.Util.Dialogs
             // 
             // tableLayoutPanel2
             // 
-            this.tableLayoutPanel2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.tableLayoutPanel2.Anchor = ((System.Windows.Forms.AnchorStyles) ((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel2.AutoSize = true;
             this.tableLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
@@ -213,7 +213,7 @@ namespace RT.Util.Dialogs
             // 
             this.info.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.info.BackColor = System.Drawing.Color.Transparent;
-            this.info.Image = ((System.Drawing.Image)(resources.GetObject("info.Image")));
+            this.info.Image = ((System.Drawing.Image) (resources.GetObject("info.Image")));
             this.info.Location = new System.Drawing.Point(266, 0);
             this.info.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.info.Name = "info";
@@ -227,7 +227,7 @@ namespace RT.Util.Dialogs
             // 
             this.question.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.question.BackColor = System.Drawing.Color.Transparent;
-            this.question.Image = ((System.Drawing.Image)(resources.GetObject("question.Image")));
+            this.question.Image = ((System.Drawing.Image) (resources.GetObject("question.Image")));
             this.question.Location = new System.Drawing.Point(340, 0);
             this.question.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.question.Name = "question";
@@ -241,7 +241,7 @@ namespace RT.Util.Dialogs
             // 
             this.warning.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.warning.BackColor = System.Drawing.Color.Transparent;
-            this.warning.Image = ((System.Drawing.Image)(resources.GetObject("warning.Image")));
+            this.warning.Image = ((System.Drawing.Image) (resources.GetObject("warning.Image")));
             this.warning.Location = new System.Drawing.Point(415, 0);
             this.warning.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.warning.Name = "warning";
@@ -255,7 +255,7 @@ namespace RT.Util.Dialogs
             // 
             this.error.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.error.BackColor = System.Drawing.Color.Transparent;
-            this.error.Image = ((System.Drawing.Image)(resources.GetObject("error.Image")));
+            this.error.Image = ((System.Drawing.Image) (resources.GetObject("error.Image")));
             this.error.Location = new System.Drawing.Point(490, 0);
             this.error.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.error.Name = "error";
@@ -289,7 +289,7 @@ namespace RT.Util.Dialogs
             this.Controls.Add(this.question);
             this.Controls.Add(this.info);
             this.Controls.Add(this.tableLayoutPanel3);
-            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
@@ -305,11 +305,11 @@ namespace RT.Util.Dialogs
             this.tableLayoutPanel1.PerformLayout();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.img)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.info)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.question)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.warning)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.error)).EndInit();
+            ((System.ComponentModel.ISupportInitialize) (this.img)).EndInit();
+            ((System.ComponentModel.ISupportInitialize) (this.info)).EndInit();
+            ((System.ComponentModel.ISupportInitialize) (this.question)).EndInit();
+            ((System.ComponentModel.ISupportInitialize) (this.warning)).EndInit();
+            ((System.ComponentModel.ISupportInitialize) (this.error)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 

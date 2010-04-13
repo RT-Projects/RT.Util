@@ -57,7 +57,7 @@ namespace RT.Util.Streams
     /// <summary>
     /// Same as <see cref="StreamOnSocket"/>, but performs the HTTP Transfer-Encoding: chunked.
     /// </summary>
-    public class StreamOnSocketChunked : StreamOnSocket
+    public sealed class StreamOnSocketChunked : StreamOnSocket
     {
         /// <summary>
         /// Constructs a <see cref="StreamOnSocketChunked"/> object that can send output to a

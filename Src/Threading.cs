@@ -10,7 +10,7 @@ namespace RT.Util
     /// interruptible way.
     /// </summary>
     /// <remarks>This class itself is not entirely thread-safe - see individual members' restrictions.</remarks>
-    public class ThreadSleeper
+    public sealed class ThreadSleeper
     {
         private readonly object _sleeplock = new object();
         private volatile bool _preventSleep = false;
@@ -92,7 +92,7 @@ namespace RT.Util
     /// }
     /// </code>
     /// </example>
-    public class ThreadExiter
+    public sealed class ThreadExiter
     {
         private readonly object _exitlock = new object();
         private volatile bool _shouldExit = false;
@@ -250,7 +250,7 @@ namespace RT.Util
         /// <summary>
         /// Used to define the activities to be executed periodically.
         /// </summary>
-        protected class Task
+        protected sealed class Task
         {
             /// <summary>The activity to be performed.</summary>
             public Action Action;

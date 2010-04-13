@@ -13,7 +13,7 @@ namespace RT.Util
     /// The way SoundPlayer was meant to be, but someone screwed it up.
     /// This is the official MS workaround.
     /// </summary>
-    public class SoundPlayerAsync : IDisposable
+    public sealed class SoundPlayerAsync : IDisposable
     {
         private byte[] _bytesToPlay = null;
 

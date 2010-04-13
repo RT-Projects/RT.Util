@@ -10,7 +10,7 @@ namespace RT.Util.Text
     /// <summary>
     /// Produces a table in a fixed-width character environment.
     /// </summary>
-    public class TextTable
+    public sealed class TextTable
     {
         /// <summary>Provides values to change the horizontal alignment of text within cells.</summary>
         public enum Alignment
@@ -600,12 +600,12 @@ namespace RT.Util.Text
         }
 
         private abstract class cell { }
-        private class surrogateCell : cell
+        private sealed class surrogateCell : cell
         {
             public int RealRow, RealCol;
             public override string ToString() { return "{" + RealCol + ", " + RealRow + "}"; }
         }
-        private class trueCell : cell
+        private sealed class trueCell : cell
         {
             public object Value;                               // either string, ConsoleColoredString, or EggsNode
             public object[] WordwrappedValue;    // either string[] or ConsoleColoredString[]

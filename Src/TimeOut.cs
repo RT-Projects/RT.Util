@@ -9,7 +9,7 @@ namespace RT.Util
     /// a method to check whether the time-out interval has elapsed and another one to check
     /// how much time is left until the interval elapses.
     /// </summary>
-    public class TimeOut
+    public sealed class TimeOut
     {
         private TimeSpan _interval;
         private DateTime _startTime;

@@ -8,7 +8,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.ExtensionMethods
 {
     [TestFixture]
-    public class DateTimeExtensionsTests
+    public sealed class DateTimeExtensionsTests
     {
         private void Assert_DateTimeContentIs(DateTime dt, int year, int month, int day, int hour, int minute, int second, int nanosecond, DateTimeKind kind)
         {

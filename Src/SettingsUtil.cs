@@ -33,7 +33,7 @@ namespace RT.Util
         /// <summary>
         /// Indicates that the user chose to cancel the current operation.
         /// </summary>
-        public class CancelException : RTException
+        public sealed class CancelException : RTException
         {
             /// <summary>Creates an exception instance with the specified message.</summary>
             public CancelException()

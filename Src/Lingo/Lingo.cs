@@ -141,7 +141,7 @@ namespace RT.Util.Lingo
             XmlClassify.SaveObjectToXmlFile(translation, PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
         }
 
-        private class translationInfo
+        private sealed class translationInfo
         {
             public Language Language;
             public bool IsDefault;
@@ -180,7 +180,7 @@ namespace RT.Util.Lingo
             translateControl(control, translation, null);
         }
 
-        private class trStringInfo
+        private sealed class trStringInfo
         {
 #if DEBUG
             public string FieldName;
@@ -213,7 +213,7 @@ namespace RT.Util.Lingo
 
 #if DEBUG
         /// <summary>Contains utility methods to generate C# code for translation strings required for automated translation of forms and controls.</summary>
-        public class TranslationFileGenerator : IDisposable
+        public sealed class TranslationFileGenerator : IDisposable
         {
             private string _filename;
             private Dictionary<string, List<string>> _codeSoFar;
@@ -465,9 +465,9 @@ namespace RT.Util.Lingo
             return fields;
         }
 
-        private class ilReader
+        private sealed class ilReader
         {
-            public class Instruction
+            public sealed class Instruction
             {
                 public int StartOffset { get; private set; }
                 public OpCode OpCode { get; private set; }

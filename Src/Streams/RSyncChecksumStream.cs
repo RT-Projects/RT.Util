@@ -8,7 +8,7 @@ namespace RT.Util.Streams
     /// <summary>
     /// Calculates RSync checksums over bytes.
     /// </summary>
-    public class RSyncChecksumCalculator
+    public sealed class RSyncChecksumCalculator
     {
         private uint _windowSize;
         private byte[] _window;
@@ -110,7 +110,7 @@ namespace RT.Util.Streams
     /// Timwi's version of the RSync checksum calculator. Based on the generic queue class.
     /// May or may not be noticeably slower than the much longer version above.
     /// </summary>
-    public class RSyncChecksumCalculatorTimwi
+    public sealed class RSyncChecksumCalculatorTimwi
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         private uint _windowSize;
@@ -166,7 +166,7 @@ namespace RT.Util.Streams
     /// <summary>
     /// Calculates rsync checksum of all values that are read/written via this stream.
     /// </summary>
-    public class RSyncChecksumStream : Stream
+    public sealed class RSyncChecksumStream : Stream
     {
         private Stream _stream = null;
         private RSyncChecksumCalculator _calc;
@@ -175,7 +175,7 @@ namespace RT.Util.Streams
         /// This is the underlying stream. All reads/writes and most other operations
         /// on this class are performed on this underlying stream.
         /// </summary>
-        public virtual Stream BaseStream { get { return _stream; } }
+        public Stream BaseStream { get { return _stream; } }
 
         private RSyncChecksumStream() { }
 

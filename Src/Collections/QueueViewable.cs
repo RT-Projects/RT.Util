@@ -10,7 +10,7 @@ namespace RT.Util.Collections
     /// has index 0 and is the next item to be dequeued.
     /// </summary>
     /// <typeparam name="T">The type of the elements stored in the queue</typeparam>
-    public class QueueViewable<T> : IEnumerable<T>, ICollection<T>, IList<T>
+    public sealed class QueueViewable<T> : IEnumerable<T>, ICollection<T>, IList<T>
     {
         private T[] _data;
         private int _head = 0;

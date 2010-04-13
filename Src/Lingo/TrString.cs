@@ -6,7 +6,7 @@ using RT.Util.Consoles;
 namespace RT.Util.Lingo
 {
     /// <summary>Represents a translatable string.</summary>
-    public class TrString
+    public sealed class TrString
     {
         /// <summary>Contains the current translation of this string, or for the original language, the current original text.</summary>
         public string Translation;
@@ -51,7 +51,7 @@ namespace RT.Util.Lingo
     }
 
     /// <summary>Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a language's <see cref="NumberSystem"/>.</summary>
-    public class TrStringNum
+    public sealed class TrStringNum
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
         public bool[] IsNumber;

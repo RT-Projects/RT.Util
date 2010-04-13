@@ -8,7 +8,7 @@ namespace RT.Util.Consoles
 {
     /// <summary>Implements a <see cref="TextWriter"/> which outputs text to the console in a predetermined <see cref="ConsoleColor"/>.</summary>
     /// <remarks>Every time a string is output to the console, the current console foreground colour is remembered and returned to its previous value after the output.</remarks>
-    public class ColoredConsoleOut : TextWriter
+    public sealed class ColoredConsoleOut : TextWriter
     {
         private ConsoleColor _color;
 
