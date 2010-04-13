@@ -48,7 +48,7 @@ namespace RT.Util
         /// <returns>1 if any errors occurred, otherwise 0.</returns>
         public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
-            var rep = new PostBuildReporter(sourcePath);
+            var rep = new postBuildReporter(sourcePath);
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
             {
                 var meth = ty.GetMethod("PostBuildCheck", BindingFlags.NonPublic | BindingFlags.Static);
@@ -84,11 +84,11 @@ namespace RT.Util
             return rep.AnyErrors ? 1 : 0;
         }
 
-        sealed class PostBuildReporter : IPostBuildReporter
+        private sealed class postBuildReporter : IPostBuildReporter
         {
             private string _path;
             public bool AnyErrors { get; set; }
-            public PostBuildReporter(string path) { _path = path; AnyErrors = false; }
+            public postBuildReporter(string path) { _path = path; AnyErrors = false; }
             public void Error(string message, params string[] tokens) { output("Error: ", message, tokens); }
             public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
 
