@@ -12,7 +12,7 @@ namespace RT.Util.Controls
     /// a specific value, usually from an enum type.
     /// </summary>
     /// <typeparam name="T">The type of the value associated with each menu item.</typeparam>
-    public sealed class MenuRadioGroup<T> : Component where T : struct
+    public class MenuRadioGroup<T> : Component where T : struct
     {
         private List<MenuRadioItem<T>> _members = new List<MenuRadioItem<T>>();
 

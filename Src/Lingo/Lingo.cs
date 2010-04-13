@@ -241,7 +241,7 @@ namespace RT.Util.Lingo
                 var sb = new StringBuilder();
                 sb.AppendLine("    [LingoStringClass" + translation.GetType().GetCustomAttributes<LingoInGroupAttribute>()
                     .Select(lig => ", LingoInGroup(" + (lig.Group.GetType().Namespace == ns ? lig.Group.GetType().Name : lig.Group.GetType().FullName) + "." + lig.Group.ToString() + ")").JoinString() + "]");
-                sb.AppendLine("    public partial class " + translation.GetType().Name);
+                sb.AppendLine("    sealed partial class " + translation.GetType().Name);
                 sb.AppendLine("    {");
                 bool first = true;
                 foreach (var item in lst)

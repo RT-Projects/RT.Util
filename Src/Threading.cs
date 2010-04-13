@@ -92,7 +92,7 @@ namespace RT.Util
     /// }
     /// </code>
     /// </example>
-    public sealed class ThreadExiter
+    public class ThreadExiter
     {
         private readonly object _exitlock = new object();
         private volatile bool _shouldExit = false;
