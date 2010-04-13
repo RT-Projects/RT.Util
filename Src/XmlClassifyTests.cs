@@ -80,7 +80,7 @@ namespace RT.Util.Xml
 
         private sealed class classWithPrivateCtor
         {
-            private sealed classWithPrivateCtor()
+            private classWithPrivateCtor()
             {
                 Field = 9867;
             }
@@ -90,14 +90,14 @@ namespace RT.Util.Xml
 
         private sealed class classWithNoCtor
         {
-            private sealed classWithNoCtor(int dummy)
+            private classWithNoCtor(int dummy)
             {
             }
         }
 
         private sealed class classWithThrowingCtor
         {
-            private sealed classWithThrowingCtor()
+            private classWithThrowingCtor()
             {
                 throw new Exception("Test exception");
             }
