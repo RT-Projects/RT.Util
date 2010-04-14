@@ -472,17 +472,19 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string JoinString(this IEnumerable<string> values, string separator)
         {
-            var enumerator = values.GetEnumerator();
-            if (!enumerator.MoveNext())
-                return string.Empty;
-            StringBuilder sb = new StringBuilder();
-            sb.Append(enumerator.Current);
-            while (enumerator.MoveNext())
+            using (var enumerator = values.GetEnumerator())
             {
-                sb.Append(separator);
+                if (!enumerator.MoveNext())
+                    return string.Empty;
+                StringBuilder sb = new StringBuilder();
                 sb.Append(enumerator.Current);
+                while (enumerator.MoveNext())
+                {
+                    sb.Append(separator);
+                    sb.Append(enumerator.Current);
+                }
+                return sb.ToString();
             }
-            return sb.ToString();
         }
 
         /// <summary>
