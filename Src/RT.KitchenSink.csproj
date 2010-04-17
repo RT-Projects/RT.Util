@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\LazyToCollection.cs" />
     <Compile Include="Collections\Poset.cs" />
     <Compile Include="Collections\RVariant.cs" />
     <Compile Include="Collections\Set.cs" />
@@ -62,6 +63,13 @@
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
+    <Compile Include="Lex\LexException.cs" />
+    <Compile Include="Lex\LexPosition.cs" />
+    <Compile Include="Lex\LexReader.cs" />
+    <Compile Include="Lex\LexTokenizer.cs" />
+    <Compile Include="Lex\LexTokens.cs" />
+    <Compile Include="Lex\LexUtil.cs" />
+    <Compile Include="Lex\TokenJar.cs" />
     <Compile Include="ParseCs\Lexer.cs" />
     <Compile Include="ParseCs\Parser.cs" />
     <Compile Include="ParseCs\ParseTree.cs" />
