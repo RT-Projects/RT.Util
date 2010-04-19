@@ -10,6 +10,15 @@ namespace RT.KitchenSink.Lex
 {
     public abstract class Token
     {
+        public LexPosition StartLocation { get; private set; }
+        public LexPosition EndLocation { get; private set; }
+
+        public Token(LexPosition start, LexPosition end)
+        {
+            StartLocation = start;
+            EndLocation = end;
+        }
+
         public abstract class Parser
         {
             /// <summary>
@@ -26,25 +35,28 @@ namespace RT.KitchenSink.Lex
 
     public class EndOfFileToken : Token
     {
+        public EndOfFileToken(LexPosition location) : base(location, location) { }
+
         public new class Parser : Token.Parser
         {
             public override Token ParseToken(LexReader reader)
             {
                 if (reader.EndOfFile())
-                    return new EndOfFileToken();
+                    return new EndOfFileToken(reader.GetPosition());
                 else
                     return null;
             }
         }
     }
 
-    public class OperatorToken : Token
+    public class BuiltinToken : Token
     {
-        public string Operator { get; protected set; }
+        public string Builtin { get; protected set; }
 
-        public OperatorToken(string operator_)
+        public BuiltinToken(LexPosition start, LexPosition end, string operator_)
+            : base(start, end)
         {
-            Operator = operator_;
+            Builtin = operator_;
         }
 
         public new class Parser : Token.Parser
@@ -66,8 +78,9 @@ namespace RT.KitchenSink.Lex
                 foreach (var tokenstr in _operators)
                     if (reader.ContinuesWith(tokenstr))
                     {
+                        var start = reader.GetPosition();
                         reader.Consume(tokenstr.Length);
-                        return new OperatorToken(tokenstr);
+                        return new BuiltinToken(start, reader.GetPosition(), tokenstr);
                     }
                 return null;
             }
@@ -77,6 +90,8 @@ namespace RT.KitchenSink.Lex
     public class StringLiteralToken : Token
     {
         public string Value { get; protected set; }
+
+        public StringLiteralToken(LexPosition start, LexPosition end) : base(start, end) { }
 
         public new class Parser : Token.Parser
         {
@@ -107,8 +122,9 @@ namespace RT.KitchenSink.Lex
 
             public override Token ParseToken(LexReader reader)
             {
+                var start = reader.GetPosition();
                 string literal = LexUtil.LexStringLiteral(reader, BasicEscapes, AdvancedEscapes, OpeningSequence, ClosingSequence, EscapeClosingByDoubling);
-                return literal == null ? null : new StringLiteralToken() { Value = literal };
+                return literal == null ? null : new StringLiteralToken(start, reader.GetPosition()) { Value = literal };
             }
         }
     }
@@ -117,7 +133,8 @@ namespace RT.KitchenSink.Lex
     {
         public string Identifier { get; protected set; }
 
-        public IdentifierToken(string identifier)
+        public IdentifierToken(LexPosition start, LexPosition end, string identifier)
+            : base(start, end)
         {
             Identifier = identifier;
         }
@@ -125,14 +142,15 @@ namespace RT.KitchenSink.Lex
 
     public class CommentToken : Token
     {
+        public CommentToken(LexPosition start, LexPosition end) : base(start, end) { }
     }
 
     public class RegexTokenParser<TToken> : Token.Parser where TToken : Token
     {
         public Regex Regex { get; protected set; }
-        public Func<string, TToken> Init { get; protected set; }
+        public Func<LexPosition, LexPosition, string, TToken> Init { get; protected set; }
 
-        public RegexTokenParser(Regex regex, Func<string, TToken> init)
+        public RegexTokenParser(Regex regex, Func<LexPosition, LexPosition, string, TToken> init)
         {
             Regex = regex;
             Init = init;
@@ -140,8 +158,9 @@ namespace RT.KitchenSink.Lex
 
         public override Token ParseToken(LexReader reader)
         {
+            var start = reader.GetPosition();
             string value = reader.ConsumeEntireMatch(Regex);
-            return value == null ? null : Init(value);
+            return value == null ? null : Init(start, reader.GetPosition(), value);
         }
     }
 }

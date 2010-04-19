@@ -143,13 +143,13 @@ namespace RT.KitchenSink.Collections
             throw new NotSupportedException("The LazyToCollection<T> wrapper is read-only.");
         }
 
-        /// <param name="item"></param>
+        /// <summary>Not supported and always throws <see cref="NotSupportedException"/>.</summary>
         public void Clear()
         {
             throw new NotSupportedException("The LazyToCollection<T> wrapper is read-only.");
         }
 
-        /// <param name="item"></param>
+        /// <summary>Not supported and always throws <see cref="NotSupportedException"/>.</summary>
         public bool Remove(T item)
         {
             throw new NotSupportedException("The LazyToCollection<T> wrapper is read-only.");

@@ -27,10 +27,10 @@ namespace RT.KitchenSink.Lex
                 if (token == null)
                     throw new LexException(reader.GetPosition(), "Unrecognized sequence of characters.");
                 var type = token.GetType();
+                if (!ignoreTokens.Contains(type))
+                    yield return token;
                 if (type == stopToken)
                     yield break;
-                else if (!ignoreTokens.Contains(type))
-                    yield return token;
             }
         }
     }
