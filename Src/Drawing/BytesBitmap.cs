@@ -102,30 +102,13 @@ namespace RT.Util.Drawing
         /// <summary>Disposes the underlying resources.</summary>
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        /// <summary>Disposes the underlying resources.</summary>
-        /// <param name="disposing">True if called from <see cref="Dispose()"/>; false if called from the destructor.</param>
-        protected void Dispose(bool disposing)
-        {
             if (_disposed)
                 return;
 
             _bitmap.Dispose();
             _bytes.ReleaseReference();
             _disposed = true;
-
-            if (disposing)
-            {
-                _bitmap = null;
-            }
-        }
-
-        /// <summary>Destructor.</summary>
-        ~BytesBitmap()
-        {
-            Dispose(false);
+            _bitmap = null;
         }
 
         #endregion

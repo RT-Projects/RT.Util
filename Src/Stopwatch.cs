@@ -24,6 +24,8 @@ namespace RT.Util
     public abstract class Stopwatch
     {
         private static Stopwatch _globalStopwatch = null;
+
+        /// <summary>Provides access to a global instance of <see cref="StopwatchReal"/>.</summary>
         public static Stopwatch GlobalStopwatch
         {
             get
