@@ -59,38 +59,14 @@ namespace RT.Util.Xml
         /// </summary>
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename)
-        {
-            return LoadObjectFromXmlFile<T>(filename, null);
-        }
-
-        /// <summary>
-        /// Reads an object of the specified type from the specified XML file.
-        /// </summary>
-        /// <typeparam name="T">Type of object to read.</typeparam>
-        /// <param name="filename">Path and filename of the XML file to read from.</param>
-        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it receives the object passed in here as its value. Default is null.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, object parentNode)
-        {
-            string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            return LoadObjectFromXmlFile<T>(filename, baseDir, parentNode);
-        }
-
-        /// <summary>
-        /// Reads an object of the specified type from the specified XML file.
-        /// </summary>
-        /// <typeparam name="T">Type of object to read.</typeparam>
-        /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="baseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir, object parentNode)
+        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir = null, object parentNode = null)
         {
+            baseDir = baseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
             return (T) loadObjectFromXmlFile(typeof(T), filename, baseDir, parentNode);
         }
 
@@ -100,17 +76,6 @@ namespace RT.Util.Xml
             XElement elem = XElement.Load(strRead);
             strRead.Close();
             return objectFromXElement(type, elem, baseDir, parentNode);
-        }
-
-        /// <summary>
-        /// Reconstructs an object of the specified type from the specified XML tree.
-        /// </summary>
-        /// <typeparam name="T">Type of object to reconstruct.</typeparam>
-        /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem)
-        {
-            return (T) objectFromXElement(typeof(T), elem, null, null);
         }
 
         /// <summary>
@@ -131,23 +96,10 @@ namespace RT.Util.Xml
         /// <param name="elem">XML tree to reconstruct object from.</param>
         /// <param name="baseDir">The base directory from which to locate additional XML files
         /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, string baseDir)
-        {
-            return (T) objectFromXElement(typeof(T), elem, baseDir, null);
-        }
-
-        /// <summary>
-        /// Reconstructs an object of the specified type from the specified XML tree.
-        /// </summary>
-        /// <typeparam name="T">Type of object to reconstruct.</typeparam>
-        /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <param name="baseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, string baseDir, object parentNode)
+        public static T ObjectFromXElement<T>(XElement elem, string baseDir = null, object parentNode = null)
         {
             return (T) objectFromXElement(typeof(T), elem, baseDir, parentNode);
         }
@@ -346,17 +298,19 @@ namespace RT.Util.Xml
                         var attr = subElem.Attribute("id");
                         if (attr != null)
                         {
-                            string newFile = Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + attr.Value + ".xml");
+                            if (baseDir == null)
+                                throw new ArgumentNullException(@"An object that uses [XmlFollowId] can only be reconstructed if a base directory is specified.", "baseDir");
+                            string newFile = Path.Combine(baseDir, innerType.Name, attr.Value + ".xml");
                             field.SetValue(intoObject,
                                  typeof(XmlDeferredObject<>).MakeGenericType(innerType)
                                      .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
                                      .Invoke(new object[] { 
-                                                 attr.Value,
-                                                 typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }, null),
-                                                 null,
-                                                 new object[] { innerType, newFile, baseDir, intoObject }
-                                            })
-                             );
+                                        attr.Value,
+                                        typeof(XmlClassify).GetMethod("loadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }, null),
+                                        null,
+                                        new object[] { innerType, newFile, baseDir, intoObject }
+                                    })
+                            );
                         }
                     }
                 }

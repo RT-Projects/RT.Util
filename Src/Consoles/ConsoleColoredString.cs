@@ -316,20 +316,8 @@ namespace RT.Util.Consoles
         /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
         /// </remarks>
         /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
-        public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth)
-        {
-            return WordWrap(maxWidth, 0);
-        }
-
-        /// <summary>Word-wraps the current <see cref="ConsoleColoredString"/> to a specified width. Supports UNIX-style newlines and indented paragraphs.</summary>
-        /// <remarks>
-        /// <para>The supplied text will be split into "paragraphs" at the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
-        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
-        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
-        /// </remarks>
-        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
         /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
-        public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth, int hangingIndent)
+        public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth, int hangingIndent = 0)
         {
             if (_text.Length == 0)
                 yield break;
@@ -339,7 +327,7 @@ namespace RT.Util.Consoles
                 throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
 
             // Split into "paragraphs"
-            foreach (ConsoleColoredString paragraph in split(new string[] { "\r\n", "\r", "\n" }, null, StringSplitOptions.None))
+            foreach (ConsoleColoredString paragraph in Split(new string[] { "\r\n", "\r", "\n" }, null, StringSplitOptions.None))
             {
                 // Count the number of spaces at the start of the paragraph
                 int indentLen = 0;
@@ -351,7 +339,7 @@ namespace RT.Util.Consoles
                 var space = new string(' ', indentLen);
 
                 // Get a list of words
-                foreach (var wordForeach in paragraph.Substring(indentLen).split(new string[] { " " }, null, StringSplitOptions.RemoveEmptyEntries))
+                foreach (var wordForeach in paragraph.Substring(indentLen).Split(new string[] { " " }, null, StringSplitOptions.RemoveEmptyEntries))
                 {
                     var word = wordForeach;
                     if (curLine.Sum(c => c.Length) + space.Length + word.Length > maxWidth)
@@ -427,27 +415,14 @@ namespace RT.Util.Consoles
         /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int,int,StringComparison)"/>.</summary>
         public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
 
-        /// <summary>Returns a collection that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited by elements of a specified string array.</summary>
-        /// <param name="separator">An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that contains no delimiters, or null.</param>
-        /// <returns>A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited by one or more strings in <paramref name="separator"/>.</returns>
-        public IEnumerable<ConsoleColoredString> Split(string[] separator) { return split(separator, null, StringSplitOptions.None); }
-        /// <summary>Returns a collection that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited by elements of a specified string array.
-        /// A parameter specifies whether to return empty array elements.</summary>
-        /// <param name="separator">An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that contains no delimiters, or null.</param>
-        /// <param name="options">Specify <see cref="System.StringSplitOptions.RemoveEmptyEntries"/> to omit empty array elements from the array returned, 
-        /// or <see cref="System.StringSplitOptions.None"/> to include empty array elements in the array returned.</param>
-        /// <returns>A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited by one or more strings in <paramref name="separator"/>.</returns>
-        public IEnumerable<ConsoleColoredString> Split(string[] separator, StringSplitOptions options) { return split(separator, null, options); }
         /// <summary>Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited by elements of a specified string array.
         /// Parameters specify the maximum number of substrings to return and whether to return empty array elements.</summary>
         /// <param name="separator">An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that contains no delimiters, or null.</param>
-        /// <param name="count">The maximum number of substrings to return.</param>
+        /// <param name="count">The maximum number of substrings to return, or null to return all.</param>
         /// <param name="options">Specify <see cref="System.StringSplitOptions.RemoveEmptyEntries"/> to omit empty array elements from the array returned, 
         /// or <see cref="System.StringSplitOptions.None"/> to include empty array elements in the array returned.</param>
         /// <returns>A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited by one or more strings in <paramref name="separator"/>.</returns>
-        public IEnumerable<ConsoleColoredString> Split(string[] separator, int count, StringSplitOptions options) { return split(separator, count, options); }
-
-        private IEnumerable<ConsoleColoredString> split(string[] separator, int? count, StringSplitOptions options)
+        public IEnumerable<ConsoleColoredString> Split(string[] separator, int? count = null, StringSplitOptions options = StringSplitOptions.None)
         {
             if (separator == null)
             {

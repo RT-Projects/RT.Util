@@ -509,10 +509,10 @@ namespace RT.Util
                     anyPrintableOptions = true;
 
                     if (option.TinyName != null)
-                        table.SetCell(0, row, "-" + option.TinyName, true);
+                        table.SetCell(0, row, "-" + option.TinyName, noWrap: true);
 
                     if (option.LongName != null)
-                        table.SetCell(1, row, "--" + option.LongName, true);
+                        table.SetCell(1, row, "--" + option.LongName, noWrap: true);
 
                     if (option.Description != null)
                         table.SetCell(2, row, option.Description);
@@ -561,21 +561,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns the value specified for a Value-type option, or "null" if
-        /// the option was not specified.
-        ///
-        /// Identical to OptValue(name, null);
-        /// </summary>
-        public string OptValue(string name)
-        {
-            return OptValue(name, null);
-        }
-
-        /// <summary>
         /// Returns the value specified for a Value-type option, or the
         /// default value if it wasn't specified.
         /// </summary>
-        public string OptValue(string name, string defaultIfUnspecified)
+        public string OptValue(string name, string defaultIfUnspecified = null)
         {
             if (!_parsed)
                 throw new InvalidOperationException("The Parse() method must be called before this method can be used.");

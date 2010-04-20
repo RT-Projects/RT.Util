@@ -17,11 +17,12 @@ namespace RT.Util
         private volatile bool _preventSleepOnce = false;
 
         /// <summary>
-        /// Causes the calling thread to sleep for the specified interval in a way that can be interrupted
-        /// or prevented altogether using other methods of this class.
+        /// <para>Causes the calling thread to sleep for the specified interval or indefinitely, in a way that
+        /// can be interrupted or prevented altogether using other methods of this class.</para>
         /// <para>Threading: may only be called on the thread that "owns" this instance.</para>
         /// </summary>
-        public void Sleep(int milliseconds)
+        /// <param name="milliseconds">Number of milliseconds to sleep, or use default value to sleep indefinitely.</param>
+        public void Sleep(int milliseconds = int.MinValue)
         {
             lock (_sleeplock)
             {
@@ -38,16 +39,6 @@ namespace RT.Util
                     _preventSleepOnce = false;
                 }
             }
-        }
-
-        /// <summary>
-        /// Causes the calling thread to sleep indefinitely, in a way that can be interrupted
-        /// or prevented altogether using other methods of this class.
-        /// <para>Threading: may only be called on the thread that "owns" this instance.</para>
-        /// </summary>
-        public void Sleep()
-        {
-            Sleep(int.MinValue);
         }
 
         /// <summary>

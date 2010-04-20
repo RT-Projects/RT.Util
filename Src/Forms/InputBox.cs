@@ -23,53 +23,19 @@ namespace RT.Util.Dialogs
 
         /// <summary>Prompts the user for input.</summary>
         /// <param name="prompt">Message to display to prompt the user.</param>
-        /// <returns>The text entered by the user, or null if the user selected the Cancel button.</returns>
-        public static string GetLine(string prompt)
-        {
-            return GetLine(prompt, "", "Please enter text");
-        }
-
-        /// <summary>Prompts the user for input.</summary>
-        /// <param name="prompt">Message to display to prompt the user.</param>
-        /// <param name="default">Initial value to populate the input box with.</param>
-        /// <returns>The text entered by the user, or null if the user selected the Cancel button.</returns>
-        public static string GetLine(string prompt, string @default)
-        {
-            return GetLine(prompt, @default, "Please enter text");
-        }
-
-        /// <summary>Prompts the user for input.</summary>
-        /// <param name="prompt">Message to display to prompt the user.</param>
         /// <param name="default">Initial value to populate the input box with.</param>
         /// <param name="caption">Caption to use in the title bar of the dialog.</param>
         /// <returns>The text entered by the user, or null if the user selected the Cancel button.</returns>
-        public static string GetLine(string prompt, string @default, string caption)
+        public static string GetLine(string prompt, string @default = "", string caption = "Please enter text", string okButtonText = null, string cancelButtonText = null)
         {
             InputBox dlg = new InputBox();
             dlg.Text = caption;
             dlg.PromptLabel.Text = prompt;
             dlg.EnterBox.Text = @default;
-            if (dlg.ShowDialog() == DialogResult.OK)
-                return dlg.EnterBox.Text;
-            else
-                return null;
-        }
-
-        /// <summary>Prompts the user for input.</summary>
-        /// <param name="prompt">Message to display to prompt the user.</param>
-        /// <param name="default">Initial value to populate the input box with.</param>
-        /// <param name="caption">Caption to use in the title bar of the dialog.</param>
-        /// <param name="okButtonText">Text to use on the OK button.</param>
-        /// <param name="cancelButtonText">Text to use on the Cancel button.</param>
-        /// <returns>The text entered by the user, or null if the user selected the Cancel button.</returns>
-        public static string GetLine(string prompt, string @default, string caption, string okButtonText, string cancelButtonText)
-        {
-            InputBox dlg = new InputBox();
-            dlg.Text = caption;
-            dlg.PromptLabel.Text = prompt;
-            dlg.EnterBox.Text = @default;
-            dlg.BtnOK.Text = okButtonText;
-            dlg.BtnCancel.Text = cancelButtonText;
+            if (okButtonText != null)
+                dlg.BtnOK.Text = okButtonText;
+            if (cancelButtonText != null)
+                dlg.BtnCancel.Text = cancelButtonText;
             if (dlg.ShowDialog() == DialogResult.OK)
                 return dlg.EnterBox.Text;
             else

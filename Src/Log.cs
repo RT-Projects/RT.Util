@@ -204,27 +204,17 @@ namespace RT.Util
         /// <summary>Appends a debug message to the log.</summary>
         public void Debug(uint verbosity, string message) { Log(verbosity, LogType.Debug, message); }
 
-        /// <summary>Determines whether an informational message would be visible (at default verbosity).</summary>
-        public bool IsInfoOn() { return IsLogOn(1, LogType.Info); }
         /// <summary>Determines whether an informational message would be visible at specified verbosity.</summary>
-        public bool IsInfoOn(uint verbosity) { return IsLogOn(verbosity, LogType.Info); }
-        /// <summary>Determines whether a warning message would be visible (at default verbosity).</summary>
-        public bool IsWarnOn() { return IsLogOn(1, LogType.Warning); }
+        public bool IsInfoOn(uint verbosity = 1) { return IsLogOn(verbosity, LogType.Info); }
         /// <summary>Determines whether a warning message would be visible at specified verbosity.</summary>
-        public bool IsWarnOn(uint verbosity) { return IsLogOn(verbosity, LogType.Warning); }
-        /// <summary>Determines whether an error message would be visible (at default verbosity).</summary>
-        public bool IsErrorOn() { return IsLogOn(1, LogType.Error); }
+        public bool IsWarnOn(uint verbosity = 1) { return IsLogOn(verbosity, LogType.Warning); }
         /// <summary>Determines whether an error message would be visible at specified verbosity.</summary>
-        public bool IsErrorOn(uint verbosity) { return IsLogOn(verbosity, LogType.Error); }
-        /// <summary>Determines whether a debug message would be visible (at default verbosity).</summary>
-        public bool IsDebugOn() { return IsLogOn(1, LogType.Debug); }
+        public bool IsErrorOn(uint verbosity = 1) { return IsLogOn(verbosity, LogType.Error); }
         /// <summary>Determines whether a debug message would be visible at specified verbosity.</summary>
-        public bool IsDebugOn(uint verbosity) { return IsLogOn(verbosity, LogType.Debug); }
+        public bool IsDebugOn(uint verbosity = 1) { return IsLogOn(verbosity, LogType.Debug); }
 
         /// <summary>Logs an exception with a stack trace.</summary>
-        public void Exception(Exception exception) { Exception(exception, 1, LogType.Error); }
-        /// <summary>Logs an exception with a stack trace.</summary>
-        public void Exception(Exception exception, LogType type) { Exception(exception, 1, type); }
+        public void Exception(Exception exception, LogType type = LogType.Error) { Exception(exception, 1, type); }
 
         /// <summary>
         /// Logs an exception with a stack trace at the specified verbosity and message type.

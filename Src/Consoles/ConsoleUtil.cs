@@ -87,19 +87,9 @@ namespace RT.Util.Consoles
         /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
         /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
         /// </summary>
-        public static void WriteParagraphs(string message)
-        {
-            WriteParagraphs(message, 0);
-        }
-
-        /// <summary>
-        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
-        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
-        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
-        /// </summary>
         /// <param name="message">The message to output.</param>
         /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
-        public static void WriteParagraphs(string message, int hangingIndent)
+        public static void WriteParagraphs(string message, int hangingIndent = 0)
         {
             try
             {
@@ -118,19 +108,9 @@ namespace RT.Util.Consoles
         /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
         /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
         /// </summary>
-        public static void WriteParagraphs(ConsoleColoredString message)
-        {
-            WriteParagraphs(message, 0);
-        }
-
-        /// <summary>
-        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
-        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
-        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
-        /// </summary>
         /// <param name="message">The message to output.</param>
         /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
-        public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent)
+        public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
         {
             try
             {
@@ -157,10 +137,12 @@ namespace RT.Util.Consoles
             Console.WriteLine();
         }
 
-        /// <summary>Writes the specified stack trace to the console in pretty colors.</summary>
-        /// <param name="stackTraceLines">The stack trace. Each string in this collection is expected to be one line of the stack trace.</param>
-        public static void WriteStackTrace(IEnumerable<string> stackTraceLines)
+        /// <summary>Writes the specified or current stack trace to the console in pretty colors.</summary>
+        /// <param name="stackTraceLines">The stack trace. Each string in this collection is expected to be one line of the stack trace. If null, defaults to the current stack trace.</param>
+        public static void WriteStackTrace(IEnumerable<string> stackTraceLines = null)
         {
+            if (stackTraceLines == null)
+                stackTraceLines = Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Skip(3);
             foreach (var traceLine in stackTraceLines)
             {
                 var m = Regex.Match(traceLine, @"^\s*at ([\w\.]+\.)([\w`<>]+)\.([\w\[\],<>]+)(\(.*\))( in (.:\\.*\\)([^\\]+\.cs):line (\d+))?\s*$");
@@ -185,12 +167,6 @@ namespace RT.Util.Consoles
                         ConsoleUtil.WriteParagraphs(traceLine, 8);
                 }
             }
-        }
-
-        /// <summary>Writes the current stack trace to the console in pretty colors.</summary>
-        public static void WriteStackTrace()
-        {
-            WriteStackTrace(Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Skip(3));
         }
     }
 }

@@ -462,49 +462,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Joins all strings in the enumerable using the specified string as the separator.
-        /// <example>
-        ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join(", ");
-        ///         // a contains "Paris, London, Tokyo"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string JoinString(this IEnumerable<string> values, string separator)
-        {
-            using (var enumerator = values.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                    return string.Empty;
-                StringBuilder sb = new StringBuilder();
-                sb.Append(enumerator.Current);
-                while (enumerator.MoveNext())
-                {
-                    sb.Append(separator);
-                    sb.Append(enumerator.Current);
-                }
-                return sb.ToString();
-            }
-        }
-
-        /// <summary>
-        /// Joins all strings in the enumerable into a single string.
-        /// <example>
-        ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join();
-        ///         // a contains "ParisLondonTokyo"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string JoinString(this IEnumerable<string> values)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (var str in values)
-                sb.Append(str);
-            return sb.ToString();
-        }
-
-        /// <summary>
         /// Joins all strings in the enumerable using the specified string as the separator and the
         /// specified prefix and suffix for each string.
         /// <example>
@@ -514,21 +471,26 @@ namespace RT.Util.ExtensionMethods
         ///     </code>
         /// </example>
         /// </summary>
-        public static string JoinString(this IEnumerable<string> values, string prefix, string suffix, string separator)
+        public static string JoinString(this IEnumerable<string> values, string separator = null, string prefix = null, string suffix = null)
         {
             var enumerator = values.GetEnumerator();
             if (!enumerator.MoveNext())
-                return string.Empty;
+                return "";
             StringBuilder sb = new StringBuilder();
-            sb.Append(prefix);
+            if (prefix != null)
+                sb.Append(prefix);
             sb.Append(enumerator.Current);
-            sb.Append(suffix);
+            if (suffix != null)
+                sb.Append(suffix);
             while (enumerator.MoveNext())
             {
-                sb.Append(separator);
-                sb.Append(prefix);
+                if (separator != null)
+                    sb.Append(separator);
+                if (prefix != null)
+                    sb.Append(prefix);
                 sb.Append(enumerator.Current);
-                sb.Append(suffix);
+                if (suffix != null)
+                    sb.Append(suffix);
             }
             return sb.ToString();
         }
@@ -666,21 +628,8 @@ namespace RT.Util.ExtensionMethods
         /// </remarks>
         /// <param name="text">Text to be word-wrapped.</param>
         /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
-        public static IEnumerable<string> WordWrap(this string text, int maxWidth)
-        {
-            return WordWrap(text, maxWidth, 0);
-        }
-
-        /// <summary>Word-wraps the current string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
-        /// <remarks>
-        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
-        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
-        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
-        /// </remarks>
-        /// <param name="text">Text to be word-wrapped.</param>
-        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
         /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
-        public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent)
+        public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent = 0)
         {
             if (maxWidth < 1)
                 throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");

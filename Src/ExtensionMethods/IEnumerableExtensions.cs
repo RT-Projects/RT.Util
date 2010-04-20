@@ -468,5 +468,29 @@ namespace RT.Util.ExtensionMethods
 
             return queue;
         }
+
+        /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
+        public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence)
+        {
+            return StartsWith<T>(source, sequence, EqualityComparer<T>.Default);
+        }
+
+        /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
+        public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence, IEqualityComparer<T> comparer)
+        {
+            using (var sourceEnum = source.GetEnumerator())
+            using (var seqEnum = sequence.GetEnumerator())
+            {
+                while (true)
+                {
+                    if (!seqEnum.MoveNext())
+                        return true;
+                    if (!sourceEnum.MoveNext())
+                        return false;
+                    if (!comparer.Equals(sourceEnum.Current, seqEnum.Current))
+                        return false;
+                }
+            }
+        }
     }
 }

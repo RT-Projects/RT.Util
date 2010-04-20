@@ -46,170 +46,12 @@ namespace RT.Util.Text
         /// <param name="col">Column where to place the content.</param>
         /// <param name="row">Row where to place the content.</param>
         /// <param name="content">The content to place.</param>
-        public void SetCell(int col, int row, string content)
-        {
-            setCell(col, row, content, 1, 1, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        public void SetCell(int col, int row, string content, bool noWrap)
-        {
-            setCell(col, row, content, 1, 1, noWrap, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        public void SetCell(int col, int row, string content, int colSpan, int rowSpan)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="colSpan">The number of columns to span.</param>
+        /// <param name="rowSpan">The number of rows to span.</param>
         /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
         /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap)
-        {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
-        }
-
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, string content, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, string content, bool noWrap, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, noWrap, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, Alignment alignment)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, string content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
-        {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-
-        public void SetCell(int col, int row, ConsoleColoredString content)
-        {
-            setCell(col, row, content, 1, 1, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, bool noWrap)
-        {
-            setCell(col, row, content, 1, 1, noWrap, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, bool noWrap)
-        {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
-        }
-
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, bool noWrap, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, noWrap, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, Alignment alignment)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
+        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
         }
@@ -218,84 +60,26 @@ namespace RT.Util.Text
         /// <param name="col">Column where to place the content.</param>
         /// <param name="row">Row where to place the content.</param>
         /// <param name="content">The content to place.</param>
-        public void SetCell(int col, int row, EggsNode content)
-        {
-            setCell(col, row, content, 1, 1, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        public void SetCell(int col, int row, EggsNode content, bool noWrap)
-        {
-            setCell(col, row, content, 1, 1, noWrap, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, null);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="colSpan">The number of columns to span.</param>
+        /// <param name="rowSpan">The number of rows to span.</param>
         /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
         /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, bool noWrap)
+        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
         {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, null);
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
         }
 
         /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
         /// <param name="col">Column where to place the content.</param>
         /// <param name="row">Row where to place the content.</param>
         /// <param name="content">The content to place.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, EggsNode content, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell will be word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, EggsNode content, bool noWrap, Alignment alignment)
-        {
-            setCell(col, row, content, 1, 1, noWrap, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, Alignment alignment)
-        {
-            setCell(col, row, content, colSpan, rowSpan, false, alignment);
-        }
-        /// <summary>Places the specified content into the cell at the specified co-ordinates with the supplied options.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span. The default is 1.</param>
-        /// <param name="rowSpan">The number of rows to span. The default is 1.</param>
+        /// <param name="colSpan">The number of columns to span.</param>
+        /// <param name="rowSpan">The number of rows to span.</param>
         /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
         /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell.</param>
-        public void SetCell(int col, int row, EggsNode content, int colSpan, int rowSpan, bool noWrap, Alignment alignment)
+        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        public void SetCell(int col, int row, EggsNode content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
         }

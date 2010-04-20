@@ -413,14 +413,14 @@ namespace RT.Util.CommandLine
                     if (f.FieldType.IsEnum)
                     {
                         var positional = f.IsDefined<IsPositionalAttribute>();
-                        requiredParamsTable.SetCell(0, row, cmdName, true);
+                        requiredParamsTable.SetCell(0, row, cmdName, noWrap: true);
                         foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                         {
                             var str = positional
                                 ? el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n")
                                 : el.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
-                            requiredParamsTable.SetCell(1, row, new ConsoleColoredString(str, ConsoleColor.White), true);
-                            requiredParamsTable.SetCell(2, row, getDocumentation(el, type), 2, 1);
+                            requiredParamsTable.SetCell(1, row, new ConsoleColoredString(str, ConsoleColor.White), noWrap: true);
+                            requiredParamsTable.SetCell(2, row, getDocumentation(el, type), colSpan: 2);
                             row++;
                         }
                     }
@@ -441,17 +441,17 @@ namespace RT.Util.CommandLine
                             foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
                                 if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
-                            requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), true);
-                            requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - ConsoleColoredString.NewLine.Length), true);
+                            requiredParamsTable.SetCell(1, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
+                            requiredParamsTable.SetCell(2, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
                             requiredParamsTable.SetCell(3, row, getDocumentation(ty, ty));
                             row++;
                         }
-                        requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), 1, row - origRow, true);
+                        requiredParamsTable.SetCell(0, origRow, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), rowSpan: row - origRow, noWrap: true);
                     }
                     else
                     {
-                        requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), true);
-                        requiredParamsTable.SetCell(1, row, getDocumentation(f, type), 3, 1);
+                        requiredParamsTable.SetCell(0, row, new ConsoleColoredString("<" + f.Name + ">", ConsoleColor.Cyan), noWrap: true);
+                        requiredParamsTable.SetCell(1, row, getDocumentation(f, type), colSpan: 3);
                         row++;
                     }
                 }
@@ -470,16 +470,16 @@ namespace RT.Util.CommandLine
                     {
                         foreach (var el in f.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(f.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
                         {
-                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
-                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
+                            optionalParamsTable.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                            optionalParamsTable.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                             optionalParamsTable.SetCell(2, row, getDocumentation(el, type));
                             row++;
                         }
                     }
                     else
                     {
-                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
-                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), true);
+                        optionalParamsTable.SetCell(0, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                        optionalParamsTable.SetCell(1, row, new ConsoleColoredString(f.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                         optionalParamsTable.SetCell(2, row, getDocumentation(f, type));
                         row++;
                     }
@@ -1013,21 +1013,12 @@ namespace RT.Util.CommandLine
         public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelpFunc = helpGenerator; }
 
         /// <summary>
-        /// Prints usage infofmation, followed by an error message describing to the user what it was that the parser didn't
-        /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
-        /// Use this overload only if your application is definitely monolingual (unlocalisable).
-        /// </summary>
-        public void WriteUsageInfoToConsole()
-        {
-            WriteUsageInfoToConsole(null);
-        }
-
-        /// <summary>
         /// Prints usage information, followed by an error message describing to the user what it was that the parser didn't
         /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
         /// </summary>
-        /// <param name="tr">Contains translations for the messages used by the command-line parser.</param>
-        public void WriteUsageInfoToConsole(Translation tr)
+        /// <param name="tr">Contains translations for the messages used by the command-line parser. Set this to null
+        /// only if your application is definitely monolingual (unlocalisable).</param>
+        public void WriteUsageInfoToConsole(Translation tr = null)
         {
             if (tr == null)
                 tr = new Translation();

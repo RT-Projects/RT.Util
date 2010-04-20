@@ -28,23 +28,23 @@ namespace RT.Util.Consoles
         /// <summary>Writes the specified string to the console.</summary>
         public override void Write(string value)
         {
-            var before = System.Console.ForegroundColor;
-            System.Console.ForegroundColor = _color;
-            System.Console.Write(value);
-            System.Console.ForegroundColor = before;
+            var before = Console.ForegroundColor;
+            Console.ForegroundColor = _color;
+            Console.Write(value);
+            Console.ForegroundColor = before;
         }
 
         /// <summary>Outputs a newline to the console.</summary>
         public override void WriteLine()
         {
-            System.Console.WriteLine();
+            Console.WriteLine();
         }
 
         /// <summary>Outputs the specified text plus a newline to the console.</summary>
         public override void WriteLine(string str)
         {
             Write(str);
-            WriteLine();
+            Console.WriteLine();
         }
     }
 }
