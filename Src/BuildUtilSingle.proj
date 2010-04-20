@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="Build"
-         ToolsVersion="3.5">
+         ToolsVersion="4.0">
   <Import Project="..\Build\CommonImports.proj"/>
   <UsingTask Condition="'$(TEAMCITY_VERSION)'!=''" TaskName="NUnitTeamCity" AssemblyFile="$(teamcity_dotnet_nunitlauncher_msbuild_task)" />
   <PropertyGroup>
