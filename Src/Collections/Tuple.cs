@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Collections
+namespace RT.Util.ObsoleteTuple
 {
     /// <summary>
     /// A static class with some tuple-related helper methods.

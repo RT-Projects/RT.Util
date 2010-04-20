@@ -15,11 +15,11 @@ namespace RT.Util
         /// <typeparam name="T">The type of items to compare.</typeparam>
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
         /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
-        /// <returns>An IEnumerable&lt;RT.Util.Collections.Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
-        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;RT.Util.Collections.Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
+        /// <returns>An IEnumerable&lt;RT.Util.ObsoleteTuple.Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
+        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;RT.Util.ObsoleteTuple.Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
         /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
         /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
-        public static IEnumerable<RT.Util.Collections.Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new)
+        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new)
         {
             return Diff(old, @new, new DiffOptions<T>());
         }
@@ -31,11 +31,11 @@ namespace RT.Util
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
         /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
         /// <param name="options">An instance of <see cref="DiffOptions&lt;T&gt;"/> which specifies additional options.</param>
-        /// <returns>An IEnumerable&lt;RT.Util.Collections.Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
-        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;RT.Util.Collections.Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
+        /// <returns>An IEnumerable&lt;RT.Util.ObsoleteTuple.Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
+        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;RT.Util.ObsoleteTuple.Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
         /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
         /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
-        public static IEnumerable<RT.Util.Collections.Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new, DiffOptions<T> options)
+        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new, DiffOptions<T> options)
         {
             if (old == null)
                 throw new ArgumentNullException("old");
@@ -53,7 +53,7 @@ namespace RT.Util
             if (startMatchIndex > 0)
             {
                 foreach (var x in olda.Take(startMatchIndex))
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(x, DiffOp.None);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(x, DiffOp.None);
                 olda = olda.Skip(startMatchIndex).ToArray();
                 newa = newa.Skip(startMatchIndex).ToArray();
             }
@@ -77,18 +77,18 @@ namespace RT.Util
                     yield return x;
             else if (olda.Length > 0)
                 foreach (var x in olda)
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(x, DiffOp.Del);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(x, DiffOp.Del);
             else if (newa.Length > 0)
                 foreach (var x in newa)
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(x, DiffOp.Ins);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(x, DiffOp.Ins);
 
             if (endmatch != null)
                 foreach (var x in endmatch)
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(x, DiffOp.None);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(x, DiffOp.None);
         }
 
         private sealed class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
-        private static IEnumerable<RT.Util.Collections.Tuple<T, DiffOp>> diff<T>(T[] olda, T[] newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<RT.Util.Collections.Tuple<T, DiffOp>>> postProcessor)
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, DiffOp>> diff<T>(T[] olda, T[] newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, DiffOp>>> postProcessor)
         {
             var newhash = new Dictionary<T, List<int>>();
             for (int i = 0; i < newa.Length; i++)
@@ -142,7 +142,7 @@ namespace RT.Util
             {
                 while (curold < match.x && curnew < match.y && comparer.Equals(olda[curold], newa[curnew]))
                 {
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }
@@ -169,21 +169,21 @@ namespace RT.Util
                     else
                     {
                         for (; curold < mx; curold++)
-                            yield return new RT.Util.Collections.Tuple<T, DiffOp>(olda[curold], DiffOp.Del);
+                            yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(olda[curold], DiffOp.Del);
                         for (; curnew < my; curnew++)
-                            yield return new RT.Util.Collections.Tuple<T, DiffOp>(newa[curnew], DiffOp.Ins);
+                            yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(newa[curnew], DiffOp.Ins);
                     }
                 }
 
                 while (curold < match.x && curnew < match.y)
                 {
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }
                 if (curold < olda.Length && curnew < newa.Length)
                 {
-                    yield return new RT.Util.Collections.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
+                    yield return new RT.Util.ObsoleteTuple.Tuple<T, DiffOp>(olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }
@@ -209,7 +209,7 @@ namespace RT.Util
         /// <summary>If not null, provides a post-processing step for parts of the diff in between consecutive matches.
         /// Without a post-processing step, these parts are returned as a sequence of deletes followed by a sequence of
         /// inserts.</summary>
-        public Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<RT.Util.Collections.Tuple<T, DiffOp>>> PostProcessor;
+        public Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, DiffOp>>> PostProcessor;
     }
 
     /// <summary>Indicates insertions and deletions in the output of

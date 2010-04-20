@@ -484,7 +484,7 @@ namespace RT.KitchenSink.Drawing
             double y = position.Y;
             bool horz = true;
             var gp = new GraphicsPath();
-            var prevpair = new Tuple<double, double>(lengths.Last(), lengths.First());
+            var prevpair = new RT.Util.ObsoleteTuple.Tuple<double, double>(lengths.Last(), lengths.First());
             foreach (var pair in lengths.ConsecutivePairs(true))
             {
                 double radp = Math.Min(Math.Min(Math.Abs(prevpair.E1), Math.Abs(prevpair.E2)) / 2, radius);

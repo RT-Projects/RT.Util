@@ -30,11 +30,11 @@ namespace RT.KitchenSink.Geometry
         /// <param name="size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <param name="flags">Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags)
+        public static RT.Util.ObsoleteTuple.Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags)
         {
             data d = new data(sites, size.Width, size.Height, flags);
 
-            var ret = new Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>>();
+            var ret = new RT.Util.ObsoleteTuple.Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>>();
             ret.E1 = new List<EdgeD>();
             foreach (edge e in d.Edges)
                 ret.E1.Add(new EdgeD(e.Start.Value, e.End.Value));
@@ -55,7 +55,7 @@ namespace RT.KitchenSink.Geometry
         /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
         /// <param name="size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size)
+        public static RT.Util.ObsoleteTuple.Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size)
         {
             return GenerateVoronoiDiagram(sites, size, 0);
         }

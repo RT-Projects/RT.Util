@@ -57,9 +57,9 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "stuff" }));
         }
 
-        public sealed class StringIntTupleComparer : IComparer<RT.Util.Collections.Tuple<string, int>>
+        public sealed class StringIntTupleComparer : IComparer<RT.Util.ObsoleteTuple.Tuple<string, int>>
         {
-            public int Compare(RT.Util.Collections.Tuple<string, int> x, RT.Util.Collections.Tuple<string, int> y)
+            public int Compare(RT.Util.ObsoleteTuple.Tuple<string, int> x, RT.Util.ObsoleteTuple.Tuple<string, int> y)
             {
                 return x.E1.CompareTo(y.E1);
             }
@@ -71,14 +71,14 @@ namespace RT.Util.ExtensionMethods
             Random rnd = new Random();
             for (int i = 0; i < 100; i++)
             {
-                var lst = new List<RT.Util.Collections.Tuple<string, int>>();
-                lst.Add(new RT.Util.Collections.Tuple<string, int>("one", 1));
-                lst.Add(new RT.Util.Collections.Tuple<string, int>("two", 1));
-                lst.Add(new RT.Util.Collections.Tuple<string, int>("three", 1));
+                var lst = new List<RT.Util.ObsoleteTuple.Tuple<string, int>>();
+                lst.Add(new RT.Util.ObsoleteTuple.Tuple<string, int>("one", 1));
+                lst.Add(new RT.Util.ObsoleteTuple.Tuple<string, int>("two", 1));
+                lst.Add(new RT.Util.ObsoleteTuple.Tuple<string, int>("three", 1));
                 for (int j = 2; j <= 100; j++)
                 {
                     int r = rnd.Next(1, 4);
-                    lst.Add(new RT.Util.Collections.Tuple<string, int>(i == 1 ? "one" : i == 2 ? "two" : "three", j));
+                    lst.Add(new RT.Util.ObsoleteTuple.Tuple<string, int>(i == 1 ? "one" : i == 2 ? "two" : "three", j));
                 }
                 var lstSorted = lst.OrderLazy(new StringIntTupleComparer());
                 string lastString = null;
