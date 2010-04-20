@@ -23,6 +23,9 @@ namespace RT.Util
             if (actions == null)
                 return;
 
+            if (maxSimultaneous < 1)
+                throw new ArgumentException("maxSimultaneous cannot be zero or negative.", "maxSimultaneous");
+
             var threads = new List<Thread>(actions.Length);
 
             if (maxSimultaneous > actions.Length)

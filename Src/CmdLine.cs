@@ -107,7 +107,7 @@ namespace RT.Util.CommandLine
                 }
                 else if (field.FieldType.IsEnum)   // not positional
                 {
-                    foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(val => val != defaultValue))
+                    foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
                     {
                         foreach (var a in e.GetCustomAttributes<OptionAttribute>())
                         {
@@ -116,7 +116,7 @@ namespace RT.Util.CommandLine
                                 field.SetValue(ret, e.GetValue(null));
                                 i++;
                                 missingMandatories.Remove(field);
-                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(val => val != defaultValue))
+                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
                                     foreach (var a2 in e2.GetCustomAttributes<OptionAttribute>())
                                         options[a2.Name] = () => { throw new IncompatibleCommandOrOptionException(a.Name, a2.Name, getHelpGenerator(type)); };
                                 options[a.Name] = () => { i++; };
