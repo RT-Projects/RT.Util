@@ -84,7 +84,7 @@ namespace RT.Util
         }
 
         /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the concatenation of all the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
         /// <typeparam name="TResult">The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
         /// <param name="items">Input collection of items to pass to the function.</param>
         /// <param name="selector">Function that returns a collection for each input item.</param>
@@ -94,7 +94,7 @@ namespace RT.Util
         }
 
         /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the concatenation of all the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
         /// <typeparam name="TResult">The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
         /// <param name="items">Input collection of items to pass to the function.</param>
         /// <param name="maxSimultaneous">Maximum number of concurrent threads allowed.</param>

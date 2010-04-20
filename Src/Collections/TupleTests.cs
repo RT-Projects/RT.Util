@@ -50,7 +50,7 @@ namespace RT.Util.Collections
             TestTuple4(19, 30, 40, 51, 20, 30, 40, 50, -1);
 
             // Exceptions
-            try { (new Tuple<dummyClass, int>()).CompareTo(new Tuple<dummyClass, int>()); }
+            try { (new RT.Util.Collections.Tuple<dummyClass, int>()).CompareTo(new RT.Util.Collections.Tuple<dummyClass, int>()); }
             catch (RTException e)
             {
                 Assert.IsTrue(e.Message.Contains("T1"));
@@ -61,22 +61,22 @@ namespace RT.Util.Collections
 
         private void TestTuple2(int e1a, int e2a, int e1b, int e2b, int expected)
         {
-            Tuple<int, int> a = new Tuple<int, int>(e1a, e2a);
-            Tuple<int, int> b = new Tuple<int, int>(e1b, e2b);
+            RT.Util.Collections.Tuple<int, int> a = new RT.Util.Collections.Tuple<int, int>(e1a, e2a);
+            RT.Util.Collections.Tuple<int, int> b = new RT.Util.Collections.Tuple<int, int>(e1b, e2b);
             Assert.AreEqual(expected, a.CompareTo(b));
         }
 
         private void TestTuple3(int e1a, int e2a, int e3a, int e1b, int e2b, int e3b, int expected)
         {
-            Tuple<int, int, int> a = new Tuple<int, int, int>(e1a, e2a, e3a);
-            Tuple<int, int, int> b = new Tuple<int, int, int>(e1b, e2b, e3b);
+            RT.Util.Collections.Tuple<int, int, int> a = new RT.Util.Collections.Tuple<int, int, int>(e1a, e2a, e3a);
+            RT.Util.Collections.Tuple<int, int, int> b = new RT.Util.Collections.Tuple<int, int, int>(e1b, e2b, e3b);
             Assert.AreEqual(expected, a.CompareTo(b));
         }
 
         private void TestTuple4(int e1a, int e2a, int e3a, int e4a, int e1b, int e2b, int e3b, int e4b, int expected)
         {
-            Tuple<int, int, int, int> a = new Tuple<int, int, int, int>(e1a, e2a, e3a, e4a);
-            Tuple<int, int, int, int> b = new Tuple<int, int, int, int>(e1b, e2b, e3b, e4b);
+            RT.Util.Collections.Tuple<int, int, int, int> a = new RT.Util.Collections.Tuple<int, int, int, int>(e1a, e2a, e3a, e4a);
+            RT.Util.Collections.Tuple<int, int, int, int> b = new RT.Util.Collections.Tuple<int, int, int, int>(e1b, e2b, e3b, e4b);
             Assert.AreEqual(expected, a.CompareTo(b));
         }
     }

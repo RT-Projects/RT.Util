@@ -15,7 +15,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// For each process in the system, enumerates a tuple of parent-process-id,process-id.
         /// </summary>
-        public static IEnumerable<Tuple<int, int>> ParentChildProcessIds()
+        public static IEnumerable<RT.Util.Collections.Tuple<int, int>> ParentChildProcessIds()
         {
             WinAPI.PROCESSENTRY32 procEntry = new WinAPI.PROCESSENTRY32();
             procEntry.dwSize = (uint) Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32));
@@ -25,7 +25,7 @@ namespace RT.Util.ExtensionMethods
                 if (WinAPI.Process32First(handleToSnapshot, ref procEntry))
                 {
                     do
-                        yield return new Tuple<int, int>((int) procEntry.th32ParentProcessID, (int) procEntry.th32ProcessID);
+                        yield return new RT.Util.Collections.Tuple<int, int>((int) procEntry.th32ParentProcessID, (int) procEntry.th32ProcessID);
                     while (WinAPI.Process32Next(handleToSnapshot, ref procEntry));
                 }
                 else

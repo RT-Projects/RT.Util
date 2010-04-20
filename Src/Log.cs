@@ -152,7 +152,7 @@ namespace RT.Util
         /// Helps prepare a log message to the derived classes. Takes the parameters
         /// supplied by a call to one of the Log methods and generates two strings:
         /// the <paramref name="fmtInfo"/> which is the message header and the
-        /// <paramref name="fmtText"/> which is the actual message.
+        /// <paramref name="indent"/> which is the indent text.
         /// </summary>
         protected virtual void GetFormattedStrings(out string fmtInfo, out string indent, uint verbosity, LogType type)
         {

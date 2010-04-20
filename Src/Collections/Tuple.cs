@@ -41,6 +41,7 @@ namespace RT.Util.Collections
     /// A tuple of two values of specified types.
     /// </summary>
     [Serializable]
+    //[Obsolete("Use the real Tuple class instead.")]
     public struct Tuple<T1, T2> : IComparable<Tuple<T1, T2>>, IEquatable<Tuple<T1, T2>>
     {
         /// <summary>Default tuple comparer uses the default Comparer and EqualityComparer for each value's type.</summary>

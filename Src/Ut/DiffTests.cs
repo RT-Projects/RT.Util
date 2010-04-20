@@ -66,7 +66,7 @@ namespace RT.Util
                         Assert.That(bb.SequenceEqual(new char[] { 'X' }));
                     else
                         Assert.That(bb.SequenceEqual(new char[] { 'Y' }));
-                    return aa.Select(c => new Tuple<char, DiffOp>(c, DiffOp.Del)).Concat(bb.Select(c => new Tuple<char, DiffOp>(c, DiffOp.Ins)));
+                    return aa.Select(c => new RT.Util.Collections.Tuple<char, DiffOp>(c, DiffOp.Del)).Concat(bb.Select(c => new RT.Util.Collections.Tuple<char, DiffOp>(c, DiffOp.Ins)));
                 }
             });
             var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();

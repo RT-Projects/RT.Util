@@ -135,7 +135,7 @@ namespace RT.Util
         /// Saves the specified settings class into the appropriate location.
         /// </summary>
         /// <remarks>
-        /// The type <typeparamref name="TSettings"/> must have the <see cref="SettingsAttribute"/>specified,
+        /// The type <paramref name="settingsType"/> must have the <see cref="SettingsAttribute"/>specified,
         /// otherwise an exception will be thrown.
         /// </remarks>
         /// <param name="settings">The settings class to be saved</param>
@@ -409,11 +409,11 @@ namespace RT.Util
                 switch (Kind)
                 {
                     case SettingsKind.MachineSpecific:
-                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
+                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
                     case SettingsKind.UserSpecific:
-                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName, filename);
+                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName, filename);
                     case SettingsKind.UserAndMachineSpecific:
-                        return PathUtil.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
+                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
                     default:
                         throw new InternalError("unreachable (97629)");
                 }

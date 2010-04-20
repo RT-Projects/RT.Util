@@ -58,7 +58,7 @@ namespace RT.Util.Lingo
         /// <returns>The loaded translation.</returns>
         public static TTranslation LoadTranslation<TTranslation>(string module, Language language) where TTranslation : TranslationBase, new()
         {
-            string path = PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
+            string path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
             var trans = XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
             trans.Language = language;
             return trans;
@@ -138,7 +138,7 @@ namespace RT.Util.Lingo
         /// <param name="translation">The translation to save.</param>
         public static void SaveTranslation<TTranslation>(string moduleName, TTranslation translation) where TTranslation : TranslationBase, new()
         {
-            XmlClassify.SaveObjectToXmlFile(translation, PathUtil.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
+            XmlClassify.SaveObjectToXmlFile(translation, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
         }
 
         private sealed class translationInfo
@@ -309,7 +309,7 @@ namespace RT.Util.Lingo
                         else if (choice == 2)
                             Debugger.Break();
                     }
-                    // DO NOT step through this code - the debugger will get stuck after the Delete operation. Jump over both lines in one go.
+                    File.SetAttributes(_filename, File.GetAttributes(_filename) & ~FileAttributes.ReadOnly);
                     File.WriteAllText(_filename, newOutput);
                     if (filenameGenerated != null)
                         File.Delete(filenameGenerated);

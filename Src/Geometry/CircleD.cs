@@ -45,7 +45,7 @@ namespace RT.Util.Geometry
         /// <param name="targetRadius">Target radius for output circles.</param>
         /// <returns>The two output circles if they exist. If the input circles are further
         /// apart than twice the target radius, the desires circles do not exist and null is returned.</returns>
-        public Tuple<CircleD, CircleD>? FindTangentCircles(CircleD other, double targetRadius)
+        public RT.Util.Collections.Tuple<CircleD, CircleD>? FindTangentCircles(CircleD other, double targetRadius)
         {
             double a = ((Center.X - other.Center.X) * (Center.X - other.Center.X)) /
                        ((other.Center.Y - Center.Y) * (other.Center.Y - Center.Y)) + 1;
@@ -80,7 +80,7 @@ namespace RT.Util.Geometry
                 yb += Center.Y;
             }
 
-            return new Tuple<CircleD, CircleD>(new CircleD(xa, ya, targetRadius), new CircleD(xb, yb, targetRadius));
+            return new RT.Util.Collections.Tuple<CircleD, CircleD>(new CircleD(xa, ya, targetRadius), new CircleD(xb, yb, targetRadius));
         }
     }
 }

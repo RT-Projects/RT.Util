@@ -32,7 +32,7 @@ namespace RT.Util
         /// Will succeed for the main AppDomain of an application started as an .exe; will
         /// throw for anything that doesn't have an entry assembly, such as a manually created AppDomain.
         /// </summary>
-        /// <seealso cref="AppPathCombine(string,string[])"/>
+        /// <seealso cref="AppPathCombine(string[])"/>
         public static string AppPath
         {
             get
@@ -54,7 +54,7 @@ namespace RT.Util
         /// </summary>
         public static string AppPathCombine(string path)
         {
-            return Combine(AppPath, path);
+            return Path.Combine(AppPath, path);
         }
 
         /// <summary>
@@ -62,9 +62,9 @@ namespace RT.Util
         /// Ensures that only a single <see cref="Path.DirectorySeparatorChar"/> separates
         /// the executable path and every string.
         /// </summary>
-        public static string AppPathCombine(string path1, params string[] morePaths)
+        public static string AppPathCombine(params string[] morePaths)
         {
-            return Combine(AppPath, path1, morePaths);
+            return Path.Combine(morePaths);
         }
 
         /// <summary>Normalises the specified path. A "normalised path" is a path to a
@@ -253,8 +253,9 @@ namespace RT.Util
 
         /// <summary>
         /// Joins the two paths using the OS separator character. If the second path is absolute,
-        /// only the second path is returned. Identical to <see cref="Path.Combine"/>.
+        /// only the second path is returned.
         /// </summary>
+        [Obsolete("Use Path.Combine instead.")]
         public static string Combine(string path1, string path2)
         {
             return Path.Combine(path1, path2);
@@ -264,6 +265,7 @@ namespace RT.Util
         /// Joins multiple paths using the OS separator character. If any of the paths is absolute,
         /// all preceding paths are discarded.
         /// </summary>
+        [Obsolete("Use Path.Combine instead.")]
         public static string Combine(string path1, string path2, params string[] morepaths)
         {
             string result = Path.Combine(path1, path2);
