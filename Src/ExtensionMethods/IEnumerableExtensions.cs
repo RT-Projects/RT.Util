@@ -36,13 +36,26 @@ namespace RT.Util.ExtensionMethods
         /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, T&gt;"/>s containing all unique pairs of distinct elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
         /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
+        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> UniquePairsObsolete<T>(this IEnumerable<T> source)
         {
             // Make sure that 'source' is evaluated only once
             T[] arr = source.ToArray();
             for (int i = 0; i < arr.Length - 1; i++)
                 for (int j = i + 1; j < arr.Length; j++)
                     yield return new RT.Util.ObsoleteTuple.Tuple<T, T>(arr[i], arr[j]);
+        }
+
+        /// <summary>
+        /// Returns an enumeration of tuples containing all unique pairs of distinct elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
+        /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
+        /// </summary>
+        public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
+        {
+            // Make sure that 'source' is evaluated only once
+            T[] arr = source.ToArray();
+            for (int i = 0; i < arr.Length - 1; i++)
+                for (int j = i + 1; j < arr.Length; j++)
+                    yield return new Tuple<T, T>(arr[i], arr[j]);
         }
 
         /// <summary>

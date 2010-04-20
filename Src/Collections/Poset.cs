@@ -267,7 +267,7 @@ namespace RT.KitchenSink.Collections
             }
 
             foreach (var pair in links.UniquePairs())
-                if (pair.E1 == pair.E2)
+                if (pair.Item1 == pair.Item2)
                     throw new InternalError("Duplicate link");
             foreach (var l in links)
                 checkLinksTowardsMax(l, l._largers);
@@ -285,7 +285,7 @@ namespace RT.KitchenSink.Collections
             }
 
             foreach (var pair in links.UniquePairs())
-                if (pair.E1 == pair.E2)
+                if (pair.Item1 == pair.Item2)
                     throw new InternalError("Duplicate link");
             foreach (var l in links)
                 checkLinksTowardsMin(l, l._smallers);

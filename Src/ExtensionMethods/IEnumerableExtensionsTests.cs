@@ -38,8 +38,8 @@ namespace RT.Util.ExtensionMethods
                 for (int j = i + 1; j < 10; j++)
                 {
                     Assert.IsTrue(iter.MoveNext());
-                    Assert.AreEqual(one[i], iter.Current.E1);
-                    Assert.AreEqual(one[j], iter.Current.E2);
+                    Assert.AreEqual(one[i], iter.Current.Item1);
+                    Assert.AreEqual(one[j], iter.Current.Item2);
                 }
             }
             Assert.IsFalse(iter.MoveNext());
