@@ -25,6 +25,8 @@ namespace RT.Util.Dialogs
         /// <param name="prompt">Message to display to prompt the user.</param>
         /// <param name="default">Initial value to populate the input box with.</param>
         /// <param name="caption">Caption to use in the title bar of the dialog.</param>
+        /// <param name="okButtonText">Caption for the OK button.</param>
+        /// <param name="cancelButtonText">Caption for the Cancel button.</param>
         /// <returns>The text entered by the user, or null if the user selected the Cancel button.</returns>
         public static string GetLine(string prompt, string @default = "", string caption = "Please enter text", string okButtonText = null, string cancelButtonText = null)
         {
