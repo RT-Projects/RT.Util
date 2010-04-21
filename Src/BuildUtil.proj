@@ -1,3 +1,4 @@
+<!-- Custom Main.BuildScriptKind.ZYXWVUTSRQPONMLKJIHGFEDCBA -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="Version;Build" ToolsVersion="4.0">
   <Import Project="..\Build\CommonImports.proj"/>
@@ -27,13 +28,6 @@
   <Target Name="BuildRelease">
     <MSBuild Projects="Build$(ProjectName)Single.proj"
              Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
-  </Target>
-
-
-  <Target Name="BuildAndTest">
-    <MSBuild Projects="Build$(ProjectName)Single.proj"
-             Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"
-             Targets="Test"/>
   </Target>
 
 
