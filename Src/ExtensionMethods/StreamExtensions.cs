@@ -65,7 +65,7 @@ namespace RT.Util.ExtensionMethods
             if (bytesRead == 0)
                 return null;
             byte[] result = new byte[bytesRead];
-            Array.Copy(buf, result, bytesRead);
+            Buffer.BlockCopy(buf, 0, result, 0, bytesRead);
             return result;
         }
 

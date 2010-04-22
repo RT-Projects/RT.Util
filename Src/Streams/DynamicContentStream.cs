@@ -61,14 +61,14 @@ namespace RT.Util.Streams
             {
                 if (_lastUnprocessedBytes.Length - _lastUnprocessedBytesIndex > count)
                 {
-                    Array.Copy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, count);
+                    Buffer.BlockCopy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, count);
                     _lastUnprocessedBytesIndex += count;
                     return count;
                 }
                 else
                 {
                     int howMany = _lastUnprocessedBytes.Length - _lastUnprocessedBytesIndex;
-                    Array.Copy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, howMany);
+                    Buffer.BlockCopy(_lastUnprocessedBytes, _lastUnprocessedBytesIndex, buffer, offset, howMany);
                     _lastUnprocessedBytes = null;
                     _lastUnprocessedBytesIndex = 0;
                     return howMany;
@@ -92,14 +92,14 @@ namespace RT.Util.Streams
                 byte[] bigBuffer = b.ToString().ToUtf8();
                 if (bigBuffer.Length > count)
                 {
-                    Array.Copy(bigBuffer, 0, buffer, offset, count);
+                    Buffer.BlockCopy(bigBuffer, 0, buffer, offset, count);
                     _lastUnprocessedBytes = bigBuffer;
                     _lastUnprocessedBytesIndex = count;
                     return count;
                 }
                 else
                 {
-                    Array.Copy(bigBuffer, 0, buffer, offset, bigBuffer.Length);
+                    Buffer.BlockCopy(bigBuffer, 0, buffer, offset, bigBuffer.Length);
                     _lastUnprocessedBytes = null;
                     return bigBuffer.Length;
                 }
@@ -114,14 +114,14 @@ namespace RT.Util.Streams
                 byte[] encoded = _enumerator.Current.ToUtf8();
                 if (encoded.Length > count)
                 {
-                    Array.Copy(encoded, 0, buffer, 0, count);
+                    Buffer.BlockCopy(encoded, 0, buffer, 0, count);
                     _lastUnprocessedBytes = encoded;
                     _lastUnprocessedBytesIndex = count;
                     return count;
                 }
                 else
                 {
-                    Array.Copy(encoded, 0, buffer, 0, encoded.Length);
+                    Buffer.BlockCopy(encoded, 0, buffer, 0, encoded.Length);
                     return encoded.Length;
                 }
             }
