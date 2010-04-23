@@ -77,6 +77,7 @@
     <Compile Include="Collections\RVariant.cs" />
     <Compile Include="Collections\Set.cs" />
     <Compile Include="Conversions.cs" />
+    <Compile Include="Costreams.cs" />
     <Compile Include="CsvTable.cs" />
     <Compile Include="Drawing\Canvas.cs" />
     <Compile Include="Drawing\PlasmaFractal.cs" />
