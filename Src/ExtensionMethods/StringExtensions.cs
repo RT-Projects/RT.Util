@@ -803,5 +803,41 @@ namespace RT.Util.ExtensionMethods
         {
             return new ConsoleColoredString(str, color);
         }
+
+        /// <summary>
+        /// Reconstructs a byte array from its hexadecimal representation ("hexdump").
+        /// </summary>
+        public static byte[] FromHex(this string input)
+        {
+            if (input == null || (input.Length % 2) != 0)
+                throw new ArgumentOutOfRangeException("The input string must be non-null and of even length.");
+            byte[] result = new byte[input.Length / 2];
+            var j = 0;
+            for (int i = 0; i < result.Length; i++)
+            {
+                // Note: This series of 'if's is actually faster than ((input[j] & 7) + ((input[j] / 56) << 3) + input[j] / 58), although it gives the same result
+                int upperNibble, lowerNibble;
+                if (input[j] >= '0' && input[j] <= '9')
+                    upperNibble = input[j] - '0';
+                else if (input[j] >= 'a' && input[j] <= 'f')
+                    upperNibble = input[j] - 'a' + 10;
+                else if (input[j] >= 'A' && input[j] <= 'F')
+                    upperNibble = input[j] - 'A' + 10;
+                else
+                    throw new InvalidOperationException("The character '{0}' is not a valid hexadecimal digit.".Fmt(input[j]));
+                j++;
+                if (input[j] >= '0' && input[j] <= '9')
+                    lowerNibble = input[j] - '0';
+                else if (input[j] >= 'a' && input[j] <= 'f')
+                    lowerNibble = input[j] - 'a' + 10;
+                else if (input[j] >= 'A' && input[j] <= 'F')
+                    lowerNibble = input[j] - 'A' + 10;
+                else
+                    throw new InvalidOperationException("The character '{0}' is not a valid hexadecimal digit.".Fmt(input[j]));
+                j++;
+                result[i] = (byte) ((upperNibble << 4) + lowerNibble);
+            }
+            return result;
+        }
     }
 }

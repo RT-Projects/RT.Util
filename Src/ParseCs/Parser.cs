@@ -10,15 +10,27 @@ namespace RT.KitchenSink.ParseCs
     public static class Parser
     {
         /// <summary>
-        /// Parses the specified C# source code into a document tree.
+        /// Parses the specified C# source code into a parse tree.
         /// </summary>
         /// <param name="source">C# source code to parse.</param>
         /// <exception cref="ParseException">The specified C# source code could not be parsed.</exception>
-        public static CsDocument Parse(string source)
+        public static CsDocument ParseDocument(string source)
         {
             var tokens = Lexer.Lex(source, Lexer.LexOptions.IgnoreComments);
             int tokenIndex = 0;
             return parseDocument(tokens, ref tokenIndex);
+        }
+
+        /// <summary>
+        /// Parses the specified C# expression into a parse tree.
+        /// </summary>
+        /// <param name="source">C# source code to parse.</param>
+        /// <exception cref="ParseException">The specified C# source code could not be parsed.</exception>
+        public static CsExpression ParseExpression(string source)
+        {
+            var tokens = Lexer.Lex(source, Lexer.LexOptions.IgnoreComments);
+            int tokenIndex = 0;
+            return parseExpression(tokens, ref tokenIndex);
         }
 
         [Flags]
