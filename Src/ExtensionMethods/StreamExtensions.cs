@@ -99,7 +99,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteInt32Optim(this Stream stream, int val)
         {
-            while (val <= -127 || val >= 127)
+            while (val < -64 || val > 63)
             {
                 stream.WriteByte((byte) (val | 128));
                 val >>= 7;
@@ -127,7 +127,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteInt64Optim(this Stream stream, long val)
         {
-            while (val <= -127 || val >= 127)
+            while (val < -64 || val > 63)
             {
                 stream.WriteByte((byte) (val | 128));
                 val >>= 7;
@@ -171,7 +171,7 @@ namespace RT.Util.ExtensionMethods
                 shifts += 7;
             }
             // Sign-extend
-            if (shifts >= 32)
+            if (shifts >= 32) // can only be 28 or 35
                 return res;
             shifts = 32 - shifts;
             return (res << shifts) >> shifts;
@@ -213,7 +213,7 @@ namespace RT.Util.ExtensionMethods
                 shifts += 7;
             }
             // Sign-extend
-            if (shifts >= 64)
+            if (shifts >= 64) // can only be 63 or 70
                 return res;
             shifts = 64 - shifts;
             return (res << shifts) >> shifts;
