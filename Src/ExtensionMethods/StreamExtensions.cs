@@ -159,18 +159,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static int ReadInt32Optim(this Stream stream)
         {
-            byte b = (byte) stream.ReadByte();
+            byte b = 255;
             int shifts = 0;
             int res = 0;
-            while (true)
+            while (b > 127)
             {
-                bool havemore = (b & 128) != 0;
-                b = (byte) (b & 127);
-                res = res | (b << shifts);
+                int read = stream.ReadByte();
+                if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#56384)");
+                b = (byte) read;
+                res = res | ((int) (b & 127) << shifts);
                 shifts += 7;
-                if (!havemore)
-                    break;
-                b = (byte) stream.ReadByte();
             }
             // Sign-extend
             if (shifts >= 32)
@@ -184,18 +182,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static uint ReadUInt32Optim(this Stream stream)
         {
-            byte b = (byte) stream.ReadByte();
+            byte b = 255;
             int shifts = 0;
             uint res = 0;
-            while (true)
+            while (b > 127)
             {
-                bool havemore = (b & 128) != 0;
-                b = (byte) (b & 127);
-                res = res | ((uint) b << shifts);
+                int read = stream.ReadByte();
+                if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#25753)");
+                b = (byte) read;
+                res = res | ((uint) (b & 127) << shifts);
                 shifts += 7;
-                if (!havemore)
-                    break;
-                b = (byte) stream.ReadByte();
             }
             return res;
         }
@@ -205,18 +201,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static long ReadInt64Optim(this Stream stream)
         {
-            byte b = (byte) stream.ReadByte();
+            byte b = 255;
             int shifts = 0;
             long res = 0;
-            while (true)
+            while (b > 127)
             {
-                bool havemore = (b & 128) != 0;
-                b = (byte) (b & 127);
-                res = res | ((long) b << shifts);
+                int read = stream.ReadByte();
+                if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#16854)");
+                b = (byte) read;
+                res = res | ((long) (b & 127) << shifts);
                 shifts += 7;
-                if (!havemore)
-                    break;
-                b = (byte) stream.ReadByte();
             }
             // Sign-extend
             if (shifts >= 64)
@@ -230,18 +224,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ulong ReadUInt64Optim(this Stream stream)
         {
-            byte b = (byte) stream.ReadByte();
+            byte b = 255;
             int shifts = 0;
             ulong res = 0;
-            while (true)
+            while (b > 127)
             {
-                bool havemore = (b & 128) != 0;
-                b = (byte) (b & 127);
-                res = res | ((ulong) b << shifts);
+                int read = stream.ReadByte();
+                if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#64783)");
+                b = (byte) read;
+                res = res | ((ulong) (b & 127) << shifts);
                 shifts += 7;
-                if (!havemore)
-                    break;
-                b = (byte) stream.ReadByte();
             }
             return res;
         }
