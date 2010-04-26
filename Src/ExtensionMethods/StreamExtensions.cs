@@ -99,19 +99,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteInt32Optim(this Stream stream, int val)
         {
-            byte b = 0;
-            while (true)
+            while (val <= -127 || val >= 127)
             {
-                b = (byte) (val & 127);
+                stream.WriteByte((byte) (val | 128));
                 val >>= 7;
-                // terminate if val is all zeroes and top bit is zero (end of positive),
-                // or all ones (-1) and top bit is one (end of negative).
-                if (((val == 0) && ((b & 64) == 0)) || ((val == -1) && ((b & 64) != 0)))
-                    break;
-                b |= 128;
-                stream.WriteByte(b);
             }
-            stream.WriteByte(b);
+            stream.WriteByte((byte) (val & 127));
         }
 
         /// <summary>
@@ -121,18 +114,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteUInt32Optim(this Stream stream, uint val)
         {
-            byte b = 0;
-            while (true)
+            while (val >= 128)
             {
-                b = (byte) (val & 127);
+                stream.WriteByte((byte) (val | 128));
                 val >>= 7;
-                // terminate if there are no more bits
-                if (val == 0)
-                    break;
-                b |= 128;
-                stream.WriteByte(b);
             }
-            stream.WriteByte(b);
+            stream.WriteByte((byte) val);
         }
 
         /// <summary>
@@ -140,19 +127,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteInt64Optim(this Stream stream, long val)
         {
-            byte b = 0;
-            while (true)
+            while (val <= -127 || val >= 127)
             {
-                b = (byte) (val & 127);
+                stream.WriteByte((byte) (val | 128));
                 val >>= 7;
-                // terminate if val is all zeroes and top bit is zero (end of positive),
-                // or all ones (-1) and top bit is one (end of negative).
-                if (((val == 0) && ((b & 64) == 0)) || ((val == -1) && ((b & 64) != 0)))
-                    break;
-                b |= 128;
-                stream.WriteByte(b);
             }
-            stream.WriteByte(b);
+            stream.WriteByte((byte) (val & 127));
         }
 
         /// <summary>
@@ -162,18 +142,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static void WriteUInt64Optim(this Stream stream, ulong val)
         {
-            byte b = 0;
-            while (true)
+            while (val >= 128)
             {
-                b = (byte) (val & 127);
+                stream.WriteByte((byte) (val | 128));
                 val >>= 7;
-                // terminate if there are no more bits
-                if (val == 0)
-                    break;
-                b |= 128;
-                stream.WriteByte(b);
             }
-            stream.WriteByte(b);
+            stream.WriteByte((byte) val);
         }
 
         #endregion
@@ -208,16 +182,16 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Reads an int written by <see cref="StreamExtensions.WriteUInt32Optim"/>.
         /// </summary>
-        public static int ReadUInt32Optim(this Stream stream)
+        public static uint ReadUInt32Optim(this Stream stream)
         {
             byte b = (byte) stream.ReadByte();
             int shifts = 0;
-            int res = 0;
+            uint res = 0;
             while (true)
             {
                 bool havemore = (b & 128) != 0;
                 b = (byte) (b & 127);
-                res = res | (b << shifts);
+                res = res | ((uint) b << shifts);
                 shifts += 7;
                 if (!havemore)
                     break;
