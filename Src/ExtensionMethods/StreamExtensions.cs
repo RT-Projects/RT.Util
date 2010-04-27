@@ -80,23 +80,26 @@ namespace RT.Util.ExtensionMethods
 
         #region Optim write
 
-        /// <summary>
-        /// Writes an integer 7 bits at a time. This allows really short ints to be
+        /// <summary>Encodes a 32-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
+        /// <remarks>
+        /// <para>Writes an integer 7 bits at a time. This allows small integers to be
         /// stored in 1 byte, longer ones in 2, at the cost of storing the longest
-        /// ones in 5 bytes.
+        /// ones in 5 bytes.</para>
         /// 
-        /// Example for a positive int:
-        /// 00000000 00000000 01010101 01010101
-        /// becomes three bytes: 1,1010101 1,0101010 0,0000001
+        /// <para>Example for a positive int:</para>
+        /// <code>00000000 00000000 01010101 01010101</code>
+        /// <para>becomes three bytes:</para>
+        /// <code>1,1010101 1,0101010 0,0000001</code>
         /// 
-        /// Example for a negative int:
-        /// 11111111 11111111 11010101 01010101
-        /// becomes three bytes: 1,1010101 1,0101010 0,1111111
+        /// <para>Example for a negative int:</para>
+        /// <code>11111111 11111111 11010101 01010101</code>
+        /// <para>becomes three bytes:</para>
+        /// <code>1,1010101 1,0101010 0,1111111</code>
         /// 
-        /// Note how an extra byte is needed in this example. This is similar to
+        /// <para>Note how an extra byte is needed in this example. This is similar to
         /// requiring a sign bit, however this way the positive values are directly
-        /// compatible with unsigned Optim values.
-        /// </summary>
+        /// compatible with unsigned Optim values.</para>
+        /// </remarks>
         public static void WriteInt32Optim(this Stream stream, int val)
         {
             while (val < -64 || val > 63)
@@ -107,11 +110,8 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) (val & 127));
         }
 
-        /// <summary>
-        /// See WriteInt32Optim of this function for more info. Note that values
-        /// written by this function cannot be safely read as signed int32s, but the
-        /// other way is fine.
-        /// </summary>
+        /// <summary>Encodes a 32-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
+        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteUInt32Optim(this Stream stream, uint val)
         {
             while (val >= 128)
@@ -122,9 +122,8 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) val);
         }
 
-        /// <summary>
-        /// See WriteInt32Optim for more info.
-        /// </summary>
+        /// <summary>Encodes a 64-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
+        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteInt64Optim(this Stream stream, long val)
         {
             while (val < -64 || val > 63)
@@ -135,11 +134,8 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) (val & 127));
         }
 
-        /// <summary>
-        /// See WriteInt32Optim for more info. Note that values
-        /// written by this function cannot be safely read as signed int64s, but the
-        /// other way is fine.
-        /// </summary>
+        /// <summary>Encodes a 64-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
+        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteUInt64Optim(this Stream stream, ulong val)
         {
             while (val >= 128)
@@ -154,9 +150,7 @@ namespace RT.Util.ExtensionMethods
 
         #region Optim read
 
-        /// <summary>
-        /// Reads an int written by <see cref="StreamExtensions.WriteInt32Optim"/> or <see cref="StreamExtensions.WriteUInt32Optim"/>.
-        /// </summary>
+        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteInt32Optim"/> or <see cref="StreamExtensions.WriteUInt32Optim"/>.</summary>
         public static int ReadInt32Optim(this Stream stream)
         {
             byte b = 255;
@@ -177,9 +171,7 @@ namespace RT.Util.ExtensionMethods
             return (res << shifts) >> shifts;
         }
 
-        /// <summary>
-        /// Reads an int written by <see cref="StreamExtensions.WriteUInt32Optim"/>.
-        /// </summary>
+        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteUInt32Optim"/>.</summary>
         public static uint ReadUInt32Optim(this Stream stream)
         {
             byte b = 255;
@@ -196,9 +188,7 @@ namespace RT.Util.ExtensionMethods
             return res;
         }
 
-        /// <summary>
-        /// Reads an int written by <see cref="StreamExtensions.WriteInt64Optim"/> or <see cref="StreamExtensions.WriteUInt64Optim"/>.
-        /// </summary>
+        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteInt64Optim"/> or <see cref="StreamExtensions.WriteUInt64Optim"/>.</summary>
         public static long ReadInt64Optim(this Stream stream)
         {
             byte b = 255;
@@ -219,9 +209,7 @@ namespace RT.Util.ExtensionMethods
             return (res << shifts) >> shifts;
         }
 
-        /// <summary>
-        /// Reads an int written by <see cref="StreamExtensions.WriteUInt64Optim"/>.
-        /// </summary>
+        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteUInt64Optim"/>.</summary>
         public static ulong ReadUInt64Optim(this Stream stream)
         {
             byte b = 255;
