@@ -74,15 +74,9 @@ namespace RT.Util.Streams
 
         private void readToBuffer(int bytes)
         {
-            int totalRead = 0;
-            do
-            {
-                int read = _stream.Read(_buffer, totalRead, bytes - totalRead);
-                if (read == 0)
-                    throw new EndOfStreamException("Unexpected end of stream.");
-                totalRead += read;
-            }
-            while (totalRead < bytes);
+            int read = _stream.FillBuffer(_buffer, 0, bytes);
+            if (read != bytes)
+                throw new EndOfStreamException("Unexpected end of stream.");
         }
 
         /// <summary>Gets a value indicating whether the underlying stream supports reading.</summary>
@@ -91,7 +85,7 @@ namespace RT.Util.Streams
         public override bool CanSeek { get { return _stream.CanSeek; } }
         /// <summary>Gets a value indicating whether the underlying stream supports writing.</summary>
         public override bool CanWrite { get { return _stream.CanWrite; } }
-        /// <summary>Clears all buffers for the underlying stream and causes any buffered data to be written to the underlying device.</summary>
+        /// <summary>Flushes the underlying stream. Note that <see cref="BinaryStream"/> does not use any buffering of its own that requires flushing.</summary>
         public override void Flush() { _stream.Flush(); }
         /// <summary>Gets the length in bytes of the underlying stream.</summary>
         public override long Length { get { return _stream.Length; } }
@@ -138,17 +132,7 @@ namespace RT.Util.Streams
         /// <exception cref="EndOfStreamException">The end of the stream was reached before the requested number of bytes could be read.</exception>
         public byte[] ReadBytes(int count)
         {
-            byte[] buffer = new byte[count];
-            int totalRead = 0;
-            do
-            {
-                int read = _stream.Read(buffer, totalRead, count - totalRead);
-                if (read == 0)
-                    throw new EndOfStreamException("Attempted to read more bytes than are currently available in the stream.");
-                totalRead += read;
-            }
-            while (totalRead < count);
-            return buffer;
+            return _stream.Read(count);
         }
 
         /// <summary>Writes the specified byte array into the stream.</summary>

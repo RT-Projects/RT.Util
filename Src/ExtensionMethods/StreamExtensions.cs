@@ -16,18 +16,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (stream.CanSeek)
             {
-                var len = (int) (stream.Length - stream.Position);
-                byte[] buffer = new byte[len];
-                int totalRead = 0;
-                do
-                {
-                    int read = stream.Read(buffer, totalRead, len - totalRead);
-                    if (read <= 0)
-                        throw new EndOfStreamException("End of stream is inconsistent with stream length and position.");
-                    totalRead += read;
-                }
-                while (totalRead < len);
-                return buffer;
+                return stream.Read((int) (stream.Length - stream.Position));
             }
             else
             {
@@ -67,22 +56,36 @@ namespace RT.Util.ExtensionMethods
         public static byte[] Read(this Stream stream, int length)
         {
             byte[] buf = new byte[length];
-            int totalRead = 0;
-            do
-            {
-                var bytesRead = stream.Read(buf, totalRead, length - totalRead);
-                if (bytesRead == 0)
-                {
-                    if (totalRead == 0)
-                        return null;
-                    byte[] result = new byte[totalRead];
-                    Buffer.BlockCopy(buf, 0, result, 0, totalRead);
-                    return result;
-                }
-                totalRead += bytesRead;
-            }
-            while (totalRead < length);
+            int read = stream.FillBuffer(buf, 0, length);
+            if (read == 0)
+                return null;
+            if (read < length)
+                Array.Resize(ref buf, length);
             return buf;
+        }
+
+        /// <summary>
+        /// Attempts to fill the buffer with the specified number of bytes from the stream. If there are
+        /// fewer bytes left in the stream than requested then all available bytes will be read into the buffer.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="buffer">Buffer to write the bytes to.</param>
+        /// <param name="offset">Offset at which to write the first byte read from the stream.</param>
+        /// <param name="length">Number of bytes to read from the stream.</param>
+        /// <returns>Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream ended before the required number of bytes were read.</returns>
+        public static int FillBuffer(this Stream stream, byte[] buffer, int offset, int length)
+        {
+            int totalRead = 0;
+            while (length > 0)
+            {
+                var read = stream.Read(buffer, offset, length);
+                if (read == 0)
+                    return totalRead;
+                offset += read;
+                length -= read;
+                totalRead += read;
+            }
+            return totalRead;
         }
 
         /// <summary>Encodes the specified string as UTF-8 and writes it to the current stream.</summary>
