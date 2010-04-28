@@ -162,6 +162,7 @@
     <Compile Include="Obsolete\CmdLine.cs" />
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="Stopwatch.cs" />
+    <Compile Include="Streams\BinaryStream.cs" />
     <Compile Include="Streams\SocketStreams.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
