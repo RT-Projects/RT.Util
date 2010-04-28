@@ -21,7 +21,7 @@ namespace RT.Util.ExtensionMethods
                 int totalRead = 0;
                 do
                 {
-                    int read = stream.Read(buffer, 0, len);
+                    int read = stream.Read(buffer, totalRead, len - totalRead);
                     if (read <= 0)
                         throw new EndOfStreamException("End of stream is inconsistent with stream length and position.");
                     totalRead += read;
@@ -70,7 +70,7 @@ namespace RT.Util.ExtensionMethods
             int totalRead = 0;
             do
             {
-                var bytesRead = stream.Read(buf, 0, length);
+                var bytesRead = stream.Read(buf, totalRead, length - totalRead);
                 if (bytesRead == 0)
                 {
                     if (totalRead == 0)
