@@ -19,12 +19,14 @@ namespace RT.Util.Streams
 
         /// <summary>Initialises a new SlowStream instance.</summary>
         /// <param name="stream">The underlying stream to read in chunks from.</param>
-        public SlowStream(Stream stream) { _stream = stream; }
-
-        /// <summary>Initialises a new SlowStream instance.</summary>
-        /// <param name="stream">The underlying stream to read in chunks from.</param>
-        /// <param name="chunkSize">The number of bytes to read per chunk.</param>
-        public SlowStream(Stream stream, int chunkSize) { _stream = stream; ChunkSize = chunkSize; }
+        /// <param name="chunkSize">The number of bytes to read per chunk. Defaults to 1 KB.</param>
+        public SlowStream(Stream stream, int chunkSize = 1024)
+        {
+            if (chunkSize < 1)
+                throw new ArgumentOutOfRangeException("chunkSize", "chunkSize cannot be zero or negative.");
+            _stream = stream;
+            ChunkSize = chunkSize;
+        }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 

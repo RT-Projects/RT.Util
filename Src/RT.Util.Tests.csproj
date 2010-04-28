@@ -85,6 +85,7 @@
     <Compile Include="Geometry\IntersectTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="ExactConvertTests.cs" />
+    <Compile Include="Streams\NormalizeNewlinesStreamTests.cs" />
     <Compile Include="Streams\BinaryStreamTests.cs" />
     <Compile Include="UtilTests.cs" />
     <Compile Include="Ut\DiffTests.cs" />

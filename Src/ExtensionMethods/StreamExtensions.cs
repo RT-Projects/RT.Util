@@ -18,7 +18,15 @@ namespace RT.Util.ExtensionMethods
             {
                 var len = (int) (stream.Length - stream.Position);
                 byte[] buffer = new byte[len];
-                stream.Read(buffer, 0, len);
+                int totalRead = 0;
+                do
+                {
+                    int read = stream.Read(buffer, 0, len);
+                    if (read <= 0)
+                        throw new EndOfStreamException("End of stream is inconsistent with stream length and position.");
+                    totalRead += read;
+                }
+                while (totalRead < len);
                 return buffer;
             }
             else
@@ -59,14 +67,22 @@ namespace RT.Util.ExtensionMethods
         public static byte[] Read(this Stream stream, int length)
         {
             byte[] buf = new byte[length];
-            var bytesRead = stream.Read(buf, 0, length);
-            if (bytesRead == length)
-                return buf;
-            if (bytesRead == 0)
-                return null;
-            byte[] result = new byte[bytesRead];
-            Buffer.BlockCopy(buf, 0, result, 0, bytesRead);
-            return result;
+            int totalRead = 0;
+            do
+            {
+                var bytesRead = stream.Read(buf, 0, length);
+                if (bytesRead == 0)
+                {
+                    if (totalRead == 0)
+                        return null;
+                    byte[] result = new byte[totalRead];
+                    Buffer.BlockCopy(buf, 0, result, 0, totalRead);
+                    return result;
+                }
+                totalRead += bytesRead;
+            }
+            while (totalRead < length);
+            return buf;
         }
 
         /// <summary>Encodes the specified string as UTF-8 and writes it to the current stream.</summary>
