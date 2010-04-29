@@ -41,6 +41,9 @@ namespace RT.Util.Streams
         private int _stillToOutputLength;
         private bool _ignoreOneLF = false;
 
+        /// <summary>Constructs a <see cref="NewlineNormalizerStream8bit"/>.</summary>
+        /// <param name="underlyingStream">Stream to read textual data from.</param>
+        /// <param name="newline">Normalised newline to use.</param>
         public NewlineNormalizerStream8bit(Stream underlyingStream, byte[] newline = null)
         {
             _newline = newline ?? Environment.NewLine.ToUtf8();
@@ -66,6 +69,19 @@ namespace RT.Util.Streams
             }
         }
 
+        /// <summary>
+        /// Reads a sequence of bytes from the current stream and advances the position within the stream
+        /// by the number of bytes read.
+        /// </summary>
+        /// <param name="buffer">An array of bytes. When this method returns, the buffer contains the specified
+        ///     byte array with the values between offset and (offset + count - 1) replaced
+        ///     by the bytes read from the current source.</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data read
+        ///     from the current stream.</param>
+        /// <param name="count">The maximum number of bytes to be read from the current stream.</param>
+        /// <returns>The total number of bytes read into the buffer. This can be less than the
+        ///     number of bytes requested if that many bytes are not currently available,
+        ///     or zero (0) if the end of the stream has been reached.</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (count < 1)
@@ -191,6 +207,10 @@ namespace RT.Util.Streams
         private bool _bigEndian;
         private byte? _lastByteToOutput = null;
 
+        /// <summary>Constructs a <see cref="NewlineNormalizerStream16bit"/>.</summary>
+        /// <param name="underlyingStream">Stream to read textual data from.</param>
+        /// <param name="newline">Normalised newline to use.</param>
+        /// <param name="bigEndian">Specifies whether the byte order is big-endian (true) or little-endian (false).</param>
         public NewlineNormalizerStream16bit(Stream underlyingStream, byte[] newline = null, bool bigEndian = false)
         {
             _newline = newline ?? Environment.NewLine.ToUtf16();
@@ -233,6 +253,19 @@ namespace RT.Util.Streams
             }
         }
 
+        /// <summary>
+        /// Reads a sequence of bytes from the current stream and advances the position within the stream
+        /// by the number of bytes read.
+        /// </summary>
+        /// <param name="buffer">An array of bytes. When this method returns, the buffer contains the specified
+        ///     byte array with the values between offset and (offset + count - 1) replaced
+        ///     by the bytes read from the current source.</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data read
+        ///     from the current stream.</param>
+        /// <param name="count">The maximum number of bytes to be read from the current stream.</param>
+        /// <returns>The total number of bytes read into the buffer. This can be less than the
+        ///     number of bytes requested if that many bytes are not currently available,
+        ///     or zero (0) if the end of the stream has been reached.</returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (count < 1)

@@ -48,8 +48,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
-        /// before the end of the stream, a shorter array is returned, including 0 if there are no bytes left
-        /// before the end of the stream.
+        /// before the end of the stream, a shorter (possibly empty) array is returned.
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="length">Number of bytes to read from the stream.</param>
