@@ -132,7 +132,11 @@ namespace RT.Util.Streams
         /// <exception cref="EndOfStreamException">The end of the stream was reached before the requested number of bytes could be read.</exception>
         public byte[] ReadBytes(int count)
         {
-            return _stream.Read(count);
+            byte[] buf = new byte[count];
+            int read = _stream.FillBuffer(buf, 0, count);
+            if (read != count)
+                throw new EndOfStreamException("Unexpected end of stream encountered.");
+            return buf;
         }
 
         /// <summary>Writes the specified byte array into the stream.</summary>

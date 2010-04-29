@@ -48,8 +48,8 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
-        /// before the end of the stream, a shorter array is returned. If the end of the stream is already
-        /// reached, returns null.
+        /// before the end of the stream, a shorter array is returned, including 0 if there are no bytes left
+        /// before the end of the stream.
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="length">Number of bytes to read from the stream.</param>
@@ -57,8 +57,6 @@ namespace RT.Util.ExtensionMethods
         {
             byte[] buf = new byte[length];
             int read = stream.FillBuffer(buf, 0, length);
-            if (read == 0)
-                return null;
             if (read < length)
                 Array.Resize(ref buf, length);
             return buf;

@@ -33,7 +33,7 @@ namespace RT.Util.ExtensionMethods
             ms1.WriteUInt32Optim(num);
             var ms2 = new MemoryStream(ms1.ToArray());
             Assert.AreEqual(num, ms2.ReadUInt32Optim());
-            Assert.IsTrue(ms2.Read(1) == null);
+            Assert.IsTrue(ms2.Read(new byte[1], 0, 1) == 0);
             ms1.Dispose();
             ms2.Dispose();
         }
@@ -44,7 +44,7 @@ namespace RT.Util.ExtensionMethods
             ms1.WriteUInt64Optim(num);
             var ms2 = new MemoryStream(ms1.ToArray());
             Assert.AreEqual(num, ms2.ReadUInt64Optim());
-            Assert.IsTrue(ms2.Read(1) == null);
+            Assert.IsTrue(ms2.Read(new byte[1], 0, 1) == 0);
             ms1.Dispose();
             ms2.Dispose();
         }
@@ -55,7 +55,7 @@ namespace RT.Util.ExtensionMethods
             ms1.WriteInt32Optim(num);
             var ms2 = new MemoryStream(ms1.ToArray());
             Assert.AreEqual(num, ms2.ReadInt32Optim());
-            Assert.IsTrue(ms2.Read(1) == null);
+            Assert.IsTrue(ms2.Read(new byte[1], 0, 1) == 0);
             ms1.Dispose();
             ms2.Dispose();
         }
@@ -66,7 +66,7 @@ namespace RT.Util.ExtensionMethods
             ms1.WriteInt64Optim(num);
             var ms2 = new MemoryStream(ms1.ToArray());
             Assert.AreEqual(num, ms2.ReadInt64Optim());
-            Assert.IsTrue(ms2.Read(1) == null);
+            Assert.IsTrue(ms2.Read(new byte[1], 0, 1) == 0);
             ms1.Dispose();
             ms2.Dispose();
         }
