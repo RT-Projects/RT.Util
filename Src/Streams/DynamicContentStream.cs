@@ -19,21 +19,11 @@ namespace RT.Util.Streams
         private int _lastUnprocessedBytesIndex = 0;
 
         /// <summary>
-        /// Instantiates a buffered <see cref="DynamicContentStream"/>.
-        /// </summary>
-        /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
-        public DynamicContentStream(IEnumerable<string> enumerable)
-        {
-            _enumerator = enumerable.GetEnumerator();
-            Buffered = true;
-        }
-
-        /// <summary>
         /// Instantiates a <see cref="DynamicContentStream"/> and lets you configure whether it's buffered or not.
         /// </summary>
         /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
         /// <param name="buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
-        public DynamicContentStream(IEnumerable<string> enumerable, bool buffered)
+        public DynamicContentStream(IEnumerable<string> enumerable, bool buffered = true)
         {
             _enumerator = enumerable.GetEnumerator();
             Buffered = buffered;
@@ -77,32 +67,29 @@ namespace RT.Util.Streams
 
             if (Buffered)
             {
-                StringBuilder b = new StringBuilder();
-                long bytesSoFar = 0;
+                int bytesSoFar = 0;
                 while (bytesSoFar < count)
                 {
                     if (!_enumerator.MoveNext())
                         break;
-                    b.Append(_enumerator.Current);
-                    bytesSoFar += _enumerator.Current.Utf8Length();
+                    if (_enumerator.Current.Length == 0)
+                        continue;
+                    var encodedString = _enumerator.Current.ToUtf8();
+                    if (encodedString.Length + bytesSoFar >= count)
+                    {
+                        Buffer.BlockCopy(encodedString, 0, buffer, offset + bytesSoFar, count - bytesSoFar);
+                        if (encodedString.Length + bytesSoFar > count)
+                        {
+                            _lastUnprocessedBytes = encodedString;
+                            _lastUnprocessedBytesIndex = count - bytesSoFar;
+                        }
+                        return count;
+                    }
+                    else
+                        Buffer.BlockCopy(encodedString, 0, buffer, offset + bytesSoFar, encodedString.Length);
+                    bytesSoFar += encodedString.Length;
                 }
-                if (b.Length == 0)
-                    return 0;
-
-                byte[] bigBuffer = b.ToString().ToUtf8();
-                if (bigBuffer.Length > count)
-                {
-                    Buffer.BlockCopy(bigBuffer, 0, buffer, offset, count);
-                    _lastUnprocessedBytes = bigBuffer;
-                    _lastUnprocessedBytesIndex = count;
-                    return count;
-                }
-                else
-                {
-                    Buffer.BlockCopy(bigBuffer, 0, buffer, offset, bigBuffer.Length);
-                    _lastUnprocessedBytes = null;
-                    return bigBuffer.Length;
-                }
+                return bytesSoFar;
             }
             else
             {
@@ -110,7 +97,8 @@ namespace RT.Util.Streams
                 {
                     if (!_enumerator.MoveNext())
                         return 0;
-                } while (_enumerator.Current.Length == 0);
+                }
+                while (_enumerator.Current.Length == 0);
                 byte[] encoded = _enumerator.Current.ToUtf8();
                 if (encoded.Length > count)
                 {
