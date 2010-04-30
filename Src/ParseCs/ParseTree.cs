@@ -14,7 +14,7 @@ namespace RT.KitchenSink.ParseCs
     public abstract class CsNode { }
 
     #region Document & Namespace
-    public class CsDocument : CsNode
+    public sealed class CsDocument : CsNode
     {
         public List<CsUsingNamespace> UsingNamespaces = new List<CsUsingNamespace>();
         public List<CsUsingAlias> UsingAliases = new List<CsUsingAlias>();
@@ -61,18 +61,18 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public abstract class CsUsing : CsNode { }
-    public class CsUsingNamespace : CsUsing
+    public sealed class CsUsingNamespace : CsUsing
     {
         public string Namespace;
         public override string ToString() { return "using " + Namespace.Sanitize() + ";\n"; }
     }
-    public class CsUsingAlias : CsUsing
+    public sealed class CsUsingAlias : CsUsing
     {
         public string Alias;
         public CsTypeIdentifier Original;
         public override string ToString() { return "using " + Alias.Sanitize() + " = " + Original.ToString() + ";\n"; }
     }
-    public class CsNamespace : CsNode
+    public sealed class CsNamespace : CsNode
     {
         public string Name;
         public List<CsUsingNamespace> UsingNamespaces = new List<CsUsingNamespace>();
@@ -170,7 +170,7 @@ namespace RT.KitchenSink.ParseCs
             return sb;
         }
     }
-    public class CsEvent : CsMultiMember
+    public sealed class CsEvent : CsMultiMember
     {
         public bool IsAbstract, IsVirtual, IsOverride, IsSealed;
         public List<CsSimpleMethod> Methods = null;
@@ -197,7 +197,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsField : CsMultiMember
+    public sealed class CsField : CsMultiMember
     {
         public bool IsReadonly, IsConst, IsVolatile;
         public override string ToString()
@@ -233,7 +233,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsIndexedProperty : CsProperty
+    public sealed class CsIndexedProperty : CsProperty
     {
         public List<CsParameter> Parameters = new List<CsParameter>();
         public override string ToString()
@@ -255,7 +255,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum MethodType { Get, Set, Add, Remove }
-    public class CsSimpleMethod : CsMember
+    public sealed class CsSimpleMethod : CsMember
     {
         public MethodType Type;
         public CsBlock Body;
@@ -274,7 +274,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsMethod : CsMemberLevel2
+    public sealed class CsMethod : CsMemberLevel2
     {
         public List<CsParameter> Parameters = new List<CsParameter>();
         public List<CsNameAndCustomAttributes> GenericTypeParameters = null;
@@ -338,7 +338,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum CastOperatorType { Implicit, Explicit }
-    public class CsCastOperatorOverload : CsOperatorOverload
+    public sealed class CsCastOperatorOverload : CsOperatorOverload
     {
         public CastOperatorType CastType;
         public override string ToString()
@@ -353,7 +353,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsUnaryOperatorOverload : CsOperatorOverload
+    public sealed class CsUnaryOperatorOverload : CsOperatorOverload
     {
         public UnaryOperator Operator;
         public override string ToString()
@@ -369,7 +369,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsBinaryOperatorOverload : CsOperatorOverload
+    public sealed class CsBinaryOperatorOverload : CsOperatorOverload
     {
         public BinaryOperator Operator;
         public CsParameter SecondParameter;
@@ -389,7 +389,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum ConstructorCallType { None, This, Base }
-    public class CsConstructor : CsMember
+    public sealed class CsConstructor : CsMember
     {
         public string Name;
         public List<CsParameter> Parameters = new List<CsParameter>();
@@ -419,7 +419,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsDestructor : CsMember
+    public sealed class CsDestructor : CsMember
     {
         public string Name;
         public CsBlock MethodBody;
@@ -505,15 +505,15 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsInterface : CsTypeLevel2
+    public sealed class CsInterface : CsTypeLevel2
     {
         protected override string typeTypeCs { get { return "interface"; } }
     }
-    public class CsStruct : CsTypeLevel2
+    public sealed class CsStruct : CsTypeLevel2
     {
         protected override string typeTypeCs { get { return "struct"; } }
     }
-    public class CsClass : CsTypeLevel2
+    public sealed class CsClass : CsTypeLevel2
     {
         public bool IsAbstract, IsSealed, IsStatic;
 
@@ -527,7 +527,7 @@ namespace RT.KitchenSink.ParseCs
             return sb;
         }
     }
-    public class CsDelegate : CsTypeCanBeGeneric
+    public sealed class CsDelegate : CsTypeCanBeGeneric
     {
         public CsTypeIdentifier ReturnType;
         public List<CsParameter> Parameters = new List<CsParameter>();
@@ -547,7 +547,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsEnum : CsType
+    public sealed class CsEnum : CsType
     {
         public CsTypeIdentifier BaseType;
         public List<CsEnumValue> EnumValues = new List<CsEnumValue>();
@@ -568,7 +568,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsEnumValue : CsNode
+    public sealed class CsEnumValue : CsNode
     {
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public string Name;
@@ -589,7 +589,7 @@ namespace RT.KitchenSink.ParseCs
     #endregion
 
     #region Parameters and type identifiers
-    public class CsParameter : CsNode
+    public sealed class CsParameter : CsNode
     {
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public CsTypeIdentifier Type;
@@ -616,23 +616,23 @@ namespace RT.KitchenSink.ParseCs
     {
         public virtual string GetSingleIdentifier() { return null; }
     }
-    public class CsEmptyGenericTypeIdentifier : CsTypeIdentifier
+    public sealed class CsEmptyGenericTypeIdentifier : CsTypeIdentifier
     {
         public override string ToString() { return string.Empty; }
     }
     public abstract class CsConcreteTypeIdentifierPart : CsNode { }
-    public class CsConcreteTypeIdentifierPartIdentifier : CsConcreteTypeIdentifierPart
+    public sealed class CsConcreteTypeIdentifierPartIdentifier : CsConcreteTypeIdentifierPart
     {
         public string Name;
         public List<CsTypeIdentifier> GenericTypeArguments = null;
         public override string ToString() { return GenericTypeArguments == null ? Name.Sanitize() : string.Concat(Name.Sanitize(), '<', GenericTypeArguments.Select(p => p.ToString()).JoinString(", "), '>'); }
     }
-    public class CsConcreteTypeIdentifierPartBuiltin : CsConcreteTypeIdentifierPart
+    public sealed class CsConcreteTypeIdentifierPartBuiltin : CsConcreteTypeIdentifierPart
     {
         public string Builtin;
         public override string ToString() { return Builtin; }
     }
-    public class CsConcreteTypeIdentifier : CsTypeIdentifier
+    public sealed class CsConcreteTypeIdentifier : CsTypeIdentifier
     {
         public bool HasGlobal;
         public List<CsConcreteTypeIdentifierPart> Parts = new List<CsConcreteTypeIdentifierPart>();
@@ -646,18 +646,18 @@ namespace RT.KitchenSink.ParseCs
                 : null;
         }
     }
-    public class CsArrayTypeIdentifier : CsTypeIdentifier
+    public sealed class CsArrayTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public List<int> ArrayRanks = new List<int> { 1 };
         public override string ToString() { return InnerType.ToString() + ArrayRanks.Select(rank => string.Concat("[", new string(',', rank - 1), "]")).JoinString(); }
     }
-    public class CsPointerTypeIdentifier : CsTypeIdentifier
+    public sealed class CsPointerTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public override string ToString() { return InnerType.ToString() + "*"; }
     }
-    public class CsNullableTypeIdentifier : CsTypeIdentifier
+    public sealed class CsNullableTypeIdentifier : CsTypeIdentifier
     {
         public CsTypeIdentifier InnerType;
         public override string ToString() { return InnerType.ToString() + "?"; }
@@ -666,10 +666,10 @@ namespace RT.KitchenSink.ParseCs
 
     #region Generics
     public abstract class CsGenericTypeConstraint : CsNode { }
-    public class CsGenericTypeConstraintNew : CsGenericTypeConstraint { public override string ToString() { return "new()"; } }
-    public class CsGenericTypeConstraintClass : CsGenericTypeConstraint { public override string ToString() { return "class"; } }
-    public class CsGenericTypeConstraintStruct : CsGenericTypeConstraint { public override string ToString() { return "struct"; } }
-    public class CsGenericTypeConstraintBaseClass : CsGenericTypeConstraint
+    public sealed class CsGenericTypeConstraintNew : CsGenericTypeConstraint { public override string ToString() { return "new()"; } }
+    public sealed class CsGenericTypeConstraintClass : CsGenericTypeConstraint { public override string ToString() { return "class"; } }
+    public sealed class CsGenericTypeConstraintStruct : CsGenericTypeConstraint { public override string ToString() { return "struct"; } }
+    public sealed class CsGenericTypeConstraintBaseClass : CsGenericTypeConstraint
     {
         public CsTypeIdentifier BaseClass;
         public override string ToString() { return BaseClass.ToString(); }
@@ -677,7 +677,7 @@ namespace RT.KitchenSink.ParseCs
     #endregion
 
     #region Custom attributes
-    public class CsCustomAttribute : CsNode
+    public sealed class CsCustomAttribute : CsNode
     {
         public CsTypeIdentifier Type;
         public List<CsExpression> Positional = new List<CsExpression>();
@@ -690,7 +690,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum CustomAttributeLocation { None, Assembly, Module, Type, Method, Property, Field, Event, Param, Return, Typevar }
-    public class CsCustomAttributeGroup : CsNode
+    public sealed class CsCustomAttributeGroup : CsNode
     {
         public CustomAttributeLocation Location;
         public List<CsCustomAttribute> CustomAttributes;
@@ -724,8 +724,8 @@ namespace RT.KitchenSink.ParseCs
         public List<string> GotoLabels;
         protected string gotoLabels() { return GotoLabels == null ? string.Empty : GotoLabels.Select(g => g.Sanitize() + ':').JoinString(" ") + (this is CsEmptyStatement ? " " : "\n"); }
     }
-    public class CsEmptyStatement : CsStatement { public override string ToString() { return gotoLabels() + ";\n"; } }
-    public class CsBlock : CsStatement
+    public sealed class CsEmptyStatement : CsStatement { public override string ToString() { return gotoLabels() + ";\n"; } }
+    public sealed class CsBlock : CsStatement
     {
         public List<CsStatement> Statements = new List<CsStatement>();
         public override string ToString()
@@ -749,30 +749,30 @@ namespace RT.KitchenSink.ParseCs
             return string.Concat(gotoLabels(), Keyword, ' ', Expression.ToString(), ";\n");
         }
     }
-    public class CsReturnStatement : CsOptionalExpressionStatement { public override string Keyword { get { return "return"; } } }
-    public class CsThrowStatement : CsOptionalExpressionStatement { public override string Keyword { get { return "throw"; } } }
+    public sealed class CsReturnStatement : CsOptionalExpressionStatement { public override string Keyword { get { return "return"; } } }
+    public sealed class CsThrowStatement : CsOptionalExpressionStatement { public override string Keyword { get { return "throw"; } } }
     public abstract class CsBlockStatement : CsStatement { public CsBlock Block; }
-    public class CsCheckedStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "checked\n", Block.ToString()); } }
-    public class CsUncheckedStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "unchecked\n", Block.ToString()); } }
-    public class CsUnsafeStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "unsafe\n", Block.ToString()); } }
-    public class CsSwitchStatement : CsStatement
+    public sealed class CsCheckedStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "checked\n", Block.ToString()); } }
+    public sealed class CsUncheckedStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "unchecked\n", Block.ToString()); } }
+    public sealed class CsUnsafeStatement : CsBlockStatement { public override string ToString() { return string.Concat(gotoLabels(), "unsafe\n", Block.ToString()); } }
+    public sealed class CsSwitchStatement : CsStatement
     {
         public CsExpression SwitchOn;
         public List<CsCaseLabel> Cases = new List<CsCaseLabel>();
         public override string ToString() { return string.Concat(gotoLabels(), "switch (", SwitchOn.ToString(), ")\n{\n", Cases.Select(c => c.ToString().Indent()).JoinString("\n"), "}\n"); }
     }
-    public class CsCaseLabel : CsNode
+    public sealed class CsCaseLabel : CsNode
     {
         public List<CsExpression> CaseValues = new List<CsExpression>();  // use a 'null' expression for the 'default' label
         public List<CsStatement> Statements;
         public override string ToString() { return string.Concat(CaseValues.Select(c => c == null ? "default:\n" : "case " + c.ToString() + ":\n").JoinString(), Statements.Select(s => s.ToString().Indent()).JoinString()); }
     }
-    public class CsExpressionStatement : CsStatement
+    public sealed class CsExpressionStatement : CsStatement
     {
         public CsExpression Expression;
         public override string ToString() { return string.Concat(gotoLabels(), Expression.ToString(), ";\n"); }
     }
-    public class CsVariableDeclarationStatement : CsStatement
+    public sealed class CsVariableDeclarationStatement : CsStatement
     {
         public CsTypeIdentifier Type;
         public List<CsNameAndExpression> NamesAndInitializers = new List<CsNameAndExpression>();
@@ -788,7 +788,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsForeachStatement : CsStatement
+    public sealed class CsForeachStatement : CsStatement
     {
         public CsTypeIdentifier VariableType;
         public string VariableName;
@@ -796,7 +796,7 @@ namespace RT.KitchenSink.ParseCs
         public CsStatement Body;
         public override string ToString() { return string.Concat(gotoLabels(), "foreach (", VariableType == null ? string.Empty : VariableType.ToString() + ' ', VariableName.Sanitize(), " in ", LoopExpression.ToString(), ")\n", Body is CsBlock ? Body.ToString() : Body.ToString().Indent()); }
     }
-    public class CsForStatement : CsStatement
+    public sealed class CsForStatement : CsStatement
     {
         public List<CsStatement> InitializationStatements = new List<CsStatement>();
         public CsExpression TerminationCondition;
@@ -817,7 +817,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsUsingStatement : CsStatement
+    public sealed class CsUsingStatement : CsStatement
     {
         public CsStatement InitializationStatement;
         public CsStatement Body;
@@ -831,7 +831,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsFixedStatement : CsStatement
+    public sealed class CsFixedStatement : CsStatement
     {
         public CsStatement InitializationStatement;
         public CsStatement Body;
@@ -845,7 +845,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsIfStatement : CsStatement
+    public sealed class CsIfStatement : CsStatement
     {
         public CsExpression IfExpression;
         public CsStatement Statement;
@@ -867,15 +867,15 @@ namespace RT.KitchenSink.ParseCs
         public abstract string Keyword { get; }
         public override string ToString() { return string.Concat(gotoLabels(), Keyword, " (", Expression.ToString(), ")\n", Statement is CsBlock ? Statement.ToString() : Statement.ToString().Indent()); }
     }
-    public class CsWhileStatement : CsExpressionBlockStatement { public override string Keyword { get { return "while"; } } }
-    public class CsLockStatement : CsExpressionBlockStatement { public override string Keyword { get { return "lock"; } } }
-    public class CsDoWhileStatement : CsStatement
+    public sealed class CsWhileStatement : CsExpressionBlockStatement { public override string Keyword { get { return "while"; } } }
+    public sealed class CsLockStatement : CsExpressionBlockStatement { public override string Keyword { get { return "lock"; } } }
+    public sealed class CsDoWhileStatement : CsStatement
     {
         public CsExpression WhileExpression;
         public CsStatement Statement;
         public override string ToString() { return string.Concat(gotoLabels(), "do\n", Statement is CsBlock ? Statement.ToString() : Statement.ToString().Indent(), "while (", WhileExpression.ToString(), ");\n"); }
     }
-    public class CsTryStatement : CsStatement
+    public sealed class CsTryStatement : CsStatement
     {
         public CsBlock Block;
         public List<CsCatchClause> Catches = new List<CsCatchClause>();
@@ -895,7 +895,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsCatchClause : CsNode
+    public sealed class CsCatchClause : CsNode
     {
         public CsTypeIdentifier Type;
         public string Name;
@@ -919,19 +919,19 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsGotoStatement : CsStatement { public string Label; public override string ToString() { return string.Concat(gotoLabels(), "goto ", Label.Sanitize(), ";\n"); } }
-    public class CsContinueStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "continue;\n"); } }
-    public class CsBreakStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "break;\n"); } }
-    public class CsGotoDefaultStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "goto default;\n"); } }
-    public class CsGotoCaseStatement : CsStatement { public CsExpression Expression; public override string ToString() { return string.Concat(gotoLabels(), "goto case ", Expression.ToString(), ";\n"); } }
-    public class CsYieldBreakStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "yield break;\n"); } }
-    public class CsYieldReturnStatement : CsStatement { public CsExpression Expression; public override string ToString() { return string.Concat(gotoLabels(), "yield return ", Expression.ToString(), ";\n"); } }
+    public sealed class CsGotoStatement : CsStatement { public string Label; public override string ToString() { return string.Concat(gotoLabels(), "goto ", Label.Sanitize(), ";\n"); } }
+    public sealed class CsContinueStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "continue;\n"); } }
+    public sealed class CsBreakStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "break;\n"); } }
+    public sealed class CsGotoDefaultStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "goto default;\n"); } }
+    public sealed class CsGotoCaseStatement : CsStatement { public CsExpression Expression; public override string ToString() { return string.Concat(gotoLabels(), "goto case ", Expression.ToString(), ";\n"); } }
+    public sealed class CsYieldBreakStatement : CsStatement { public override string ToString() { return string.Concat(gotoLabels(), "yield break;\n"); } }
+    public sealed class CsYieldReturnStatement : CsStatement { public CsExpression Expression; public override string ToString() { return string.Concat(gotoLabels(), "yield return ", Expression.ToString(), ";\n"); } }
     #endregion
 
     #region Expressions
     public abstract class CsExpression : CsNode { }
     public enum AssignmentOperator { Eq, TimesEq, DivEq, ModEq, PlusEq, MinusEq, ShlEq, ShrEq, AndEq, XorEq, OrEq }
-    public class CsAssignmentExpression : CsExpression
+    public sealed class CsAssignmentExpression : CsExpression
     {
         public AssignmentOperator Operator;
         public CsExpression Left, Right;
@@ -953,7 +953,7 @@ namespace RT.KitchenSink.ParseCs
                 Right.ToString());
         }
     }
-    public class CsConditionalExpression : CsExpression
+    public sealed class CsConditionalExpression : CsExpression
     {
         public CsExpression Left, Middle, Right;
         public override string ToString()
@@ -962,14 +962,14 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum BinaryOperator { Times, Div, Mod, Plus, Minus, Shl, Shr, Less, Greater, LessEq, GreaterEq, Eq, NotEq, And, Xor, Or, AndAnd, OrOr, Coalesce }
-    public class CsBinaryOperatorExpression : CsExpression
+    public sealed class CsBinaryOperatorExpression : CsExpression
     {
         public BinaryOperator Operator;
         public CsExpression Left, Right;
         public override string ToString() { return string.Concat(Left.ToString(), ' ', Operator.ToCs(), ' ', Right.ToString()); }
     }
     public enum BinaryTypeOperator { Is, As }
-    public class CsBinaryTypeOperatorExpression : CsExpression
+    public sealed class CsBinaryTypeOperatorExpression : CsExpression
     {
         public BinaryTypeOperator Operator;
         public CsExpression Left;
@@ -985,7 +985,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public enum UnaryOperator { Plus, Minus, Not, Neg, PrefixInc, PrefixDec, PostfixInc, PostfixDec, PointerDeref, AddressOf, True, False }
-    public class CsUnaryOperatorExpression : CsExpression
+    public sealed class CsUnaryOperatorExpression : CsExpression
     {
         public UnaryOperator Operator;
         public CsExpression Operand;
@@ -998,20 +998,20 @@ namespace RT.KitchenSink.ParseCs
             return Operator.ToCs() + Operand.ToString();
         }
     }
-    public class CsCastExpression : CsExpression
+    public sealed class CsCastExpression : CsExpression
     {
         public CsTypeIdentifier Type;
         public CsExpression Operand;
         public override string ToString() { return string.Concat('(', Type.ToString(), ") ", Operand.ToString()); }
     }
     public enum MemberAccessType { Regular, PointerDeref };
-    public class CsMemberAccessExpression : CsExpression
+    public sealed class CsMemberAccessExpression : CsExpression
     {
         public MemberAccessType AccessType;
         public CsExpression Left, Right;
         public override string ToString() { return string.Concat(Left.ToString(), AccessType == MemberAccessType.PointerDeref ? "->" : ".", Right.ToString()); }
     }
-    public class CsFunctionCallExpression : CsExpression
+    public sealed class CsFunctionCallExpression : CsExpression
     {
         public bool IsIndexer;
         public CsExpression Left;
@@ -1019,28 +1019,28 @@ namespace RT.KitchenSink.ParseCs
         public override string ToString() { return string.Concat(Left.ToString(), IsIndexer ? '[' : '(', Arguments.Select(p => p.ToString()).JoinString(", "), IsIndexer ? ']' : ')'); }
     }
     public abstract class CsTypeOperatorExpression : CsExpression { public CsTypeIdentifier Type; }
-    public class CsTypeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("typeof(", Type.ToString(), ')'); } }
-    public class CsSizeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("sizeof(", Type.ToString(), ')'); } }
-    public class CsDefaultExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("default(", Type.ToString(), ')'); } }
+    public sealed class CsTypeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("typeof(", Type.ToString(), ')'); } }
+    public sealed class CsSizeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("sizeof(", Type.ToString(), ')'); } }
+    public sealed class CsDefaultExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("default(", Type.ToString(), ')'); } }
     public abstract class CsCheckedUncheckedExpression : CsExpression { public CsExpression Subexpression; }
-    public class CsCheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("checked(", Subexpression.ToString(), ')'); } }
-    public class CsUncheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("unchecked(", Subexpression.ToString(), ')'); } }
-    public class CsTypeIdentifierExpression : CsExpression
+    public sealed class CsCheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("checked(", Subexpression.ToString(), ')'); } }
+    public sealed class CsUncheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("unchecked(", Subexpression.ToString(), ')'); } }
+    public sealed class CsTypeIdentifierExpression : CsExpression
     {
         public CsTypeIdentifier Type;
         public override string ToString() { return Type.ToString(); }
     }
-    public class CsIdentifierExpression : CsExpression
+    public sealed class CsIdentifierExpression : CsExpression
     {
         public string Identifier;
         public override string ToString() { return Identifier.Sanitize(); }
     }
-    public class CsParenthesizedExpression : CsExpression
+    public sealed class CsParenthesizedExpression : CsExpression
     {
         public CsExpression Subexpression;
         public override string ToString() { return string.Concat('(', Subexpression.ToString(), ')'); }
     }
-    public class CsStringLiteralExpression : CsExpression
+    public sealed class CsStringLiteralExpression : CsExpression
     {
         private static char[] SpecialCharacters1 = new[] { '\0', '\a', '\b', '\f', '\n', '\r', '\t', '\v' };
         private static char[] SpecialCharacters2 = new[] { '"', '\\' };
@@ -1065,21 +1065,21 @@ namespace RT.KitchenSink.ParseCs
                 return string.Concat('"', Literal.Select(ch => ch.CsEscape(false, true)).JoinString(), '"');
         }
     }
-    public class CsCharacterLiteralExpression : CsExpression
+    public sealed class CsCharacterLiteralExpression : CsExpression
     {
         public char Literal;
         public override string ToString() { return string.Concat('\'', Literal.CsEscape(true, false), '\''); }
     }
-    public class CsNumberLiteralExpression : CsExpression
+    public sealed class CsNumberLiteralExpression : CsExpression
     {
         public string Literal;  // Could break this down further, but this is the safest
         public override string ToString() { return Literal; }
     }
-    public class CsBooleanLiteralExpression : CsExpression { public bool Literal; public override string ToString() { return Literal ? "true" : "false"; } }
-    public class CsNullExpression : CsExpression { public override string ToString() { return "null"; } }
-    public class CsThisExpression : CsExpression { public override string ToString() { return "this"; } }
-    public class CsBaseExpression : CsExpression { public override string ToString() { return "base"; } }
-    public class CsNewConstructorExpression : CsExpression
+    public sealed class CsBooleanLiteralExpression : CsExpression { public bool Literal; public override string ToString() { return Literal ? "true" : "false"; } }
+    public sealed class CsNullExpression : CsExpression { public override string ToString() { return "null"; } }
+    public sealed class CsThisExpression : CsExpression { public override string ToString() { return "this"; } }
+    public sealed class CsBaseExpression : CsExpression { public override string ToString() { return "base"; } }
+    public sealed class CsNewConstructorExpression : CsExpression
     {
         public CsTypeIdentifier Type;
         public List<CsArgument> Arguments = new List<CsArgument>();
@@ -1103,17 +1103,17 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsNewAnonymousTypeExpression : CsExpression
+    public sealed class CsNewAnonymousTypeExpression : CsExpression
     {
         public List<CsExpression> Initializers = new List<CsExpression>();
         public override string ToString() { return string.Concat("new { ", Initializers.Select(ini => ini.ToString()).JoinString(", "), " }"); }
     }
-    public class CsNewImplicitlyTypedArrayExpression : CsExpression
+    public sealed class CsNewImplicitlyTypedArrayExpression : CsExpression
     {
         public List<CsExpression> Items = new List<CsExpression>();
         public override string ToString() { return Items.Count == 0 ? "new[] { }" : string.Concat("new[] { ", Items.Select(p => p.ToString()).JoinString(", "), " }"); }
     }
-    public class CsNewArrayExpression : CsExpression
+    public sealed class CsNewArrayExpression : CsExpression
     {
         public CsTypeIdentifier Type;
         public List<CsExpression> SizeExpressions = new List<CsExpression>();
@@ -1159,23 +1159,23 @@ namespace RT.KitchenSink.ParseCs
             return sb;
         }
     }
-    public class CsSimpleLambdaExpression : CsLambaExpression
+    public sealed class CsSimpleLambdaExpression : CsLambaExpression
     {
         public CsExpression Expression;
         public override string ToString() { return string.Concat(parametersCs(), ' ', Expression.ToString()); }
     }
-    public class CsBlockLambdaExpression : CsLambaExpression
+    public sealed class CsBlockLambdaExpression : CsLambaExpression
     {
         public CsBlock Block;
         public override string ToString() { return string.Concat(parametersCs(), '\n', Block.ToString().Trim()); }
     }
-    public class CsAnonymousMethodExpression : CsExpression
+    public sealed class CsAnonymousMethodExpression : CsExpression
     {
         public List<CsParameter> Parameters;
         public CsBlock Block;
         public override string ToString() { return string.Concat("delegate(", Parameters.Select(p => p.ToString()).JoinString(", "), ")\n", Block.ToString().Trim()); }
     }
-    public class CsArrayLiteralExpression : CsExpression
+    public sealed class CsArrayLiteralExpression : CsExpression
     {
         public List<CsExpression> Expressions = new List<CsExpression>();
         public override string ToString()
@@ -1196,7 +1196,7 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public class CsLinqExpression : CsExpression
+    public sealed class CsLinqExpression : CsExpression
     {
         public List<CsLinqElement> Elements = new List<CsLinqElement>();
         public override string ToString()
@@ -1212,13 +1212,13 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     public abstract class CsLinqElement : CsNode { }
-    public class CsLinqFromClause : CsLinqElement
+    public sealed class CsLinqFromClause : CsLinqElement
     {
         public string ItemName;
         public CsExpression SourceExpression;
         public override string ToString() { return string.Concat("from ", ItemName.Sanitize(), " in ", SourceExpression.ToString()); }
     }
-    public class CsLinqJoinClause : CsLinqElement
+    public sealed class CsLinqJoinClause : CsLinqElement
     {
         public string ItemName;
         public CsExpression SourceExpression, KeyExpression1, KeyExpression2;
@@ -1229,18 +1229,18 @@ namespace RT.KitchenSink.ParseCs
             return IntoName == null ? s : string.Concat(s, " into ", IntoName.Sanitize());
         }
     }
-    public class CsLinqLetClause : CsLinqElement
+    public sealed class CsLinqLetClause : CsLinqElement
     {
         public string ItemName;
         public CsExpression Expression;
         public override string ToString() { return string.Concat("let ", ItemName.Sanitize(), " = ", Expression.ToString()); }
     }
-    public class CsLinqWhereClause : CsLinqElement
+    public sealed class CsLinqWhereClause : CsLinqElement
     {
         public CsExpression WhereExpression;
         public override string ToString() { return string.Concat("where ", WhereExpression.ToString()); }
     }
-    public class CsLinqOrderByClause : CsLinqElement
+    public sealed class CsLinqOrderByClause : CsLinqElement
     {
         public List<CsLinqOrderBy> KeyExpressions = new List<CsLinqOrderBy>();
         public override string ToString()
@@ -1248,18 +1248,18 @@ namespace RT.KitchenSink.ParseCs
             return "orderby " + KeyExpressions.Select(k => k.ToString()).JoinString(", ");
         }
     }
-    public class CsLinqSelectClause : CsLinqElement
+    public sealed class CsLinqSelectClause : CsLinqElement
     {
         public CsExpression SelectExpression;
         public override string ToString() { return string.Concat("select ", SelectExpression.ToString()); }
     }
-    public class CsLinqGroupByClause : CsLinqElement
+    public sealed class CsLinqGroupByClause : CsLinqElement
     {
         public CsExpression SelectionExpression;
         public CsExpression KeyExpression;
         public override string ToString() { return string.Concat("group ", SelectionExpression.ToString(), " by ", KeyExpression.ToString()); }
     }
-    public class CsLinqIntoClause : CsLinqElement
+    public sealed class CsLinqIntoClause : CsLinqElement
     {
         public string ItemName;
         public override string ToString() { return string.Concat("into ", ItemName.Sanitize()); }
@@ -1268,7 +1268,7 @@ namespace RT.KitchenSink.ParseCs
     #endregion
 
     #region Miscellaneous
-    public class CsNameAndExpression : CsNode
+    public sealed class CsNameAndExpression : CsNode
     {
         public string Name;
         public CsExpression Expression;
@@ -1280,7 +1280,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
-    public class CsNameAndCustomAttributes : CsNode
+    public sealed class CsNameAndCustomAttributes : CsNode
     {
         public string Name;
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
@@ -1292,7 +1292,7 @@ namespace RT.KitchenSink.ParseCs
 
     public enum ArgumentType { In, Out, Ref }
 
-    public class CsArgument : CsNode
+    public sealed class CsArgument : CsNode
     {
         public ArgumentType ArgumentType;
         public CsExpression ArgumentExpression;
@@ -1304,7 +1304,7 @@ namespace RT.KitchenSink.ParseCs
 
     public enum LinqOrderByType { None, Ascending, Descending }
 
-    public class CsLinqOrderBy : CsNode
+    public sealed class CsLinqOrderBy : CsNode
     {
         public CsExpression OrderByExpression;
         public LinqOrderByType OrderByType;

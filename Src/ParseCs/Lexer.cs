@@ -400,7 +400,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
-    public class LexException : Exception
+    public sealed class LexException : Exception
     {
         private int _index;
         public LexException(string message, int index) : this(message, index, null) { }

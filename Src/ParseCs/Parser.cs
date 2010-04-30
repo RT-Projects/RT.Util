@@ -2894,7 +2894,7 @@ namespace RT.KitchenSink.ParseCs
     }
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-    public class ParseException : Exception
+    public sealed class ParseException : Exception
     {
         private int _index;
         private object _incompleteResult;

@@ -8,7 +8,7 @@ namespace RT.KitchenSink.Tcp
     /// Provides a TCP server which can listen on a TCP port and invoke callback functions when
     /// a new incoming connection is received or when data is received on any active connection.
     /// </summary>
-    public class TcpServer
+    public sealed class TcpServer
     {
         /// <summary>Constructs a <see cref="TcpServer"/>. Use <see cref="StartListening"/> to activate the server.</summary>
         public TcpServer() { }

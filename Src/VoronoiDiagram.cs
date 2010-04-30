@@ -63,7 +63,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class to generate Voronoi diagrams using Fortune's algorithm. Contains internal data structures and methods.
         /// </summary>
-        private class data
+        private sealed class data
         {
             public List<arc> Arcs = new List<arc>();
             public List<siteEvent> SiteEvents = new List<siteEvent>();
@@ -341,7 +341,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.
         /// </summary>
-        private class edge
+        private sealed class edge
         {
             public PointD? Start, End;
             public PointD SiteA, SiteB;
@@ -365,7 +365,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.
         /// </summary>
-        private class polygon
+        private sealed class polygon
         {
             public bool Complete;
             public PointD Site;
@@ -468,7 +468,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class to describe an arc on the beachline (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
         /// </summary>
-        private class arc
+        private sealed class arc
         {
             // The site the arc is associated with. There may be more than one arc for the same site in the Arcs array.
             public PointD Site;
@@ -490,7 +490,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class to describe a site event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
         /// </summary>
-        private class siteEvent : IComparable<siteEvent>
+        private sealed class siteEvent : IComparable<siteEvent>
         {
             public PointD Position;
             public siteEvent(PointD nPosition) { Position = nPosition; }
@@ -516,7 +516,7 @@ namespace RT.KitchenSink.Geometry
         /// <summary>
         /// Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
         /// </summary>
-        private class circleEvent : IComparable<circleEvent>
+        private sealed class circleEvent : IComparable<circleEvent>
         {
             public PointD Center;
             public double X;

@@ -8,7 +8,7 @@ namespace RT.KitchenSink.Web
     /// <summary>
     /// Allows PmWiki pages to be retrieved and edited.
     /// </summary>
-    public class PmWiki
+    public sealed class PmWiki
     {
         /// <summary>
         /// The instance of the Http class used to access PmWiki. Provided here to

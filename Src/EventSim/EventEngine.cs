@@ -13,7 +13,7 @@ namespace RT.KitchenSink.EventSim
     /// can jump straight over the 3.5 seconds because there is no way any other events of
     /// interest could have occurred in this time.
     /// </summary>
-    public class EventEngine
+    public sealed class EventEngine
     {
         /// <summary>
         /// The list of all scheduled events.

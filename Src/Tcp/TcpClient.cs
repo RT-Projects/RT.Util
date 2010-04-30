@@ -7,7 +7,7 @@ namespace RT.KitchenSink.Tcp
 {
     /// <summary>Provides a TCP client that can monitor an existing TCP connection for incoming data
     /// and will raise events (callback functions) when data is received or the connection is closed.</summary>
-    public class TcpClientWithEvents
+    public sealed class TcpClientWithEvents
     {
         private Socket _socket;
         private Thread _readingThread;

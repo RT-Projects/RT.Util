@@ -91,6 +91,12 @@ namespace RT.Util.Consoles
         /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         public static void WriteParagraphs(string message, int hangingIndent = 0)
         {
+            // Special case: if message is empty, WordWrap would output nothing
+            if (message.Length == 0)
+            {
+                Console.WriteLine();
+                return;
+            }
             try
             {
                 int width = WrapToWidth();

@@ -12,7 +12,7 @@ namespace RT.KitchenSink.Paths
     /// Redundant entries are automatically removed.
     /// </summary>
     [Serializable]
-    public class PathManager : ICloneable
+    public sealed class PathManager : ICloneable
     {
         /// <summary>
         /// Default constructor for PathManager - invokes <see cref="Reset"/>.
@@ -26,7 +26,7 @@ namespace RT.KitchenSink.Paths
         /// The structure used to store path information
         /// </summary>
         [Serializable]
-        public class PathInfo
+        public sealed class PathInfo
         {
             /// <summary>
             /// An absolute path to a directory.

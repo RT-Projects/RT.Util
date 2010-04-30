@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace RT.KitchenSink.Lex
 {
-    public class LexReader
+    public sealed class LexReader
     {
         private string _text;
         private int _offset;

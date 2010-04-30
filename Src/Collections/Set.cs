@@ -19,7 +19,7 @@ namespace RT.KitchenSink.Collections
     [Serializable]
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(Set<>.SetDebugView))]
-    public class Set<T> : IEnumerable<T>, ICollection<T>, ICloneable, IEquatable<Set<T>>
+    public sealed class Set<T> : IEnumerable<T>, ICollection<T>, ICloneable, IEquatable<Set<T>>
     {
         private List<T> _set = new List<T>();
         private ReadOnlyCollection<T> _setRO;

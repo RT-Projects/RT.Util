@@ -87,7 +87,7 @@ namespace RT.KitchenSink.Collections
     ///   v.Value     - for Value variants, returns the value stored.
     /// </code>
     /// </summary>
-    public class RVariant : IEquatable<RVariant>, ICloneable, ICollection<RVariant>
+    public sealed class RVariant : IEquatable<RVariant>, ICloneable, ICollection<RVariant>
     {
         /// <summary>
         /// Defines which kind of node this RVariant represents: a List, a
@@ -1399,7 +1399,7 @@ namespace RT.KitchenSink.Collections
     /// Indicates that there was an error while attempting to convert a Value
     /// kind variant from one type to another. E.g. converting "hi" to int.
     /// </summary>
-    public class RVariantConvertException : RVariantException
+    public sealed class RVariantConvertException : RVariantException
     {
         /// <summary>Creates a conversion error exception with the appropriate message.</summary>
         public RVariantConvertException(RVariant variant, TypeCode desiredType)
@@ -1413,7 +1413,7 @@ namespace RT.KitchenSink.Collections
     /// Indicates that a variant was not found where expected. This is only thrown
     /// from the .OrNotFound series of methods.
     /// </summary>
-    public class RVariantNotFoundException : RVariantException
+    public sealed class RVariantNotFoundException : RVariantException
     {
         /// <summary>Creates a value-not-found exception with the appropriate message.</summary>
         public RVariantNotFoundException(RVariant variant, TypeCode desiredType)
@@ -1436,7 +1436,7 @@ namespace RT.KitchenSink.Collections
     /// <summary>
     /// Indicates that RVariant encountered an error while converting XML to variant.
     /// </summary>
-    public class RVariantXmlException : RVariantException
+    public sealed class RVariantXmlException : RVariantException
     {
         /// <summary>Creates an exception instance with the specified message.</summary>
         public RVariantXmlException(string message) :

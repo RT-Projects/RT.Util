@@ -7,7 +7,7 @@ using System.Text;
 
 namespace RT.KitchenSink.Lex
 {
-    public class LexPosition
+    public sealed class LexPosition
     {
         private LexReader _reader;
         private int _offset;

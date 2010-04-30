@@ -39,7 +39,7 @@ namespace RT.KitchenSink.Collections
     /// the just-larger and the just-smaller equivalence classes.
     /// </summary>
     /// <typeparam name="T">The type of the elements to be stored. Must implement <see cref="IPartialComparable&lt;T&gt;"/></typeparam>
-    public class PosetNode<T> : IPartialComparable<PosetNode<T>>, IPartialComparable<T> where T : IPartialComparable<T>
+    public sealed class PosetNode<T> : IPartialComparable<PosetNode<T>>, IPartialComparable<T> where T : IPartialComparable<T>
     {
         private List<T> _elements;
         /// <summary>Stores a set of all nodes which are just-larger than this one. DO NOT CHANGE!</summary>
@@ -120,7 +120,7 @@ namespace RT.KitchenSink.Collections
     /// and the other starting from the maximal elements.
     /// </summary>
     /// <typeparam name="T">The type of the elements to be stored. Must implement <see cref="IPartialComparable&lt;T&gt;"/></typeparam>
-    public class Poset<T> where T : IPartialComparable<T>
+    public sealed class Poset<T> where T : IPartialComparable<T>
     {
         private Set<PosetNode<T>> _minimals = new Set<PosetNode<T>>();
         private Set<PosetNode<T>> _maximals = new Set<PosetNode<T>>();

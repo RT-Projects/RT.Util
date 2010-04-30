@@ -34,14 +34,14 @@ namespace RT.KitchenSink
             thread.Join();
         }
 
-        private class byteChunk
+        private sealed class byteChunk
         {
             public byte[] Buffer;
             public int Offset;
             public int Count;
         }
 
-        private class readingCostream : Stream
+        private sealed class readingCostream : Stream
         {
             private Queue<byteChunk> _queue;
             public readingCostream(Queue<byteChunk> queue) { _queue = queue; }
@@ -89,7 +89,7 @@ namespace RT.KitchenSink
             }
         }
 
-        private class writingCostream : Stream
+        private sealed class writingCostream : Stream
         {
             private Queue<byteChunk> _queue;
             public writingCostream(Queue<byteChunk> queue) { _queue = queue; }

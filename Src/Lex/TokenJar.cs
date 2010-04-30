@@ -8,7 +8,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.Lex
 {
-    public class TokenJar
+    public sealed class TokenJar
     {
         private LexTokenizer _tok;
 
@@ -81,7 +81,7 @@ namespace RT.KitchenSink.Lex
     //    }
     //}
 
-    public class ParseException : Exception
+    public sealed class ParseException : Exception
     {
         public ParseException(string message)
             : base(message)

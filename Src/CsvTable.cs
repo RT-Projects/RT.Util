@@ -9,7 +9,7 @@ namespace RT.KitchenSink
     /// <summary>
     /// Holds a table of RVariant values, which can be saved to a file in CSV format.
     /// </summary>
-    public class CsvTable
+    public sealed class CsvTable
     {
         private List<List<RVariant>> _data = new List<List<RVariant>>();
 

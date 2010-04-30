@@ -8,7 +8,7 @@ using System.IO;
 namespace RT.Util.Streams
 {
     [TestFixture]
-    public class BinaryStreamTests
+    public sealed class BinaryStreamTests
     {
         [Test]
         public void TestAllOperations()

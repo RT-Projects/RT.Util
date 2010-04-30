@@ -7,7 +7,7 @@ using System.Text;
 
 namespace RT.KitchenSink.Lex
 {
-    public class LexException : Exception
+    public sealed class LexException : Exception
     {
         private bool _frozen = false;
         private List<PositionWithDescription> _additionalPositions = new List<PositionWithDescription>();
@@ -37,7 +37,7 @@ namespace RT.KitchenSink.Lex
             return this;
         }
 
-        public class PositionWithDescription
+        public sealed class PositionWithDescription
         {
             public LexPosition Position { get; private set; }
             public string Description { get; private set; }

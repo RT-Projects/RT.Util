@@ -12,7 +12,7 @@ namespace RT.KitchenSink.Web
     /// <summary>
     /// Helper class for interacting with a web site via HTTP.
     /// </summary>
-    public class Http
+    public sealed class Http
     {
         /// <summary>
         /// This event is invoked to report status messages - once at the start and once

@@ -17,7 +17,7 @@ namespace RT.KitchenSink.Collections.Tests
     /// is trustworthy and base other tests on the assumption that comparisons work.
     /// </summary>
     [TestFixture]
-    public class RVariantTests
+    public sealed class RVariantTests
     {
         #region Tests which construct various kinds of structures and verify that they were constructed correctly (incl Path)
 

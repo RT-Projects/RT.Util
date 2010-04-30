@@ -6,7 +6,7 @@ namespace RT.KitchenSink.EventSim
     /// Events are maintained by <see cref="EventEngine"/> and the callback gets
     /// invoked whenever the simulation time reaches the time of the event.
     /// </summary>
-    public class Event
+    public sealed class Event
     {
         /// <summary>
         /// Invoked whenever an event is "due", i.e. whenever the simulation

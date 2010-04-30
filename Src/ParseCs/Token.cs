@@ -17,7 +17,7 @@ namespace RT.KitchenSink.ParseCs
         EndOfFile
     }
 
-    public class Token
+    public sealed class Token
     {
         private string _str;
         private TokenType _type;
@@ -54,7 +54,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
-    public class TokenJar
+    public sealed class TokenJar
     {
         private IEnumerator<Token> _enumerator;
         private Token _endToken;

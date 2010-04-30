@@ -33,11 +33,11 @@ namespace RT.KitchenSink.Lex
         }
     }
 
-    public class EndOfFileToken : Token
+    public sealed class EndOfFileToken : Token
     {
         public EndOfFileToken(LexPosition location) : base(location, location) { }
 
-        public new class Parser : Token.Parser
+        public new sealed class Parser : Token.Parser
         {
             public override Token ParseToken(LexReader reader)
             {
@@ -49,7 +49,7 @@ namespace RT.KitchenSink.Lex
         }
     }
 
-    public class BuiltinToken : Token
+    public sealed class BuiltinToken : Token
     {
         public string Builtin { get; protected set; }
 
@@ -59,7 +59,7 @@ namespace RT.KitchenSink.Lex
             Builtin = operator_;
         }
 
-        public new class Parser : Token.Parser
+        public new sealed class Parser : Token.Parser
         {
             private string[] _operators;
 
@@ -87,13 +87,13 @@ namespace RT.KitchenSink.Lex
         }
     }
 
-    public class StringLiteralToken : Token
+    public sealed class StringLiteralToken : Token
     {
         public string Value { get; protected set; }
 
         public StringLiteralToken(LexPosition start, LexPosition end) : base(start, end) { }
 
-        public new class Parser : Token.Parser
+        public new sealed class Parser : Token.Parser
         {
             public IDictionary<char, char> BasicEscapes { get; protected set; }
             public IDictionary<char, Func<LexReader, string>> AdvancedEscapes { get; protected set; }
@@ -129,7 +129,7 @@ namespace RT.KitchenSink.Lex
         }
     }
 
-    public class IdentifierToken : Token
+    public sealed class IdentifierToken : Token
     {
         public string Identifier { get; protected set; }
 
@@ -140,12 +140,12 @@ namespace RT.KitchenSink.Lex
         }
     }
 
-    public class CommentToken : Token
+    public sealed class CommentToken : Token
     {
         public CommentToken(LexPosition start, LexPosition end) : base(start, end) { }
     }
 
-    public class RegexTokenParser<TToken> : Token.Parser where TToken : Token
+    public sealed class RegexTokenParser<TToken> : Token.Parser where TToken : Token
     {
         public Regex Regex { get; protected set; }
         public Func<LexPosition, LexPosition, string, TToken> Init { get; protected set; }

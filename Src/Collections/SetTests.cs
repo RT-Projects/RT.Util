@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace RT.KitchenSink.Collections.Tests
 {
     [TestFixture]
-    public class SetTests
+    public sealed class SetTests
     {
         [Test]
         public void SetTests1()
