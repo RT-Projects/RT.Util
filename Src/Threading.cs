@@ -178,14 +178,15 @@ namespace RT.Util
         /// <summary>
         /// Schedules the periodic activity to start occurring. This method may only be called once.
         /// </summary>
-        public virtual void Start()
+        /// <param name="backgroundThread">By default (false) the class will use a foreground thread, preventing application shutdown until the thread has terminated. If true, a background thread will be created instead.</param>
+        public virtual void Start(bool backgroundThread = false)
         {
             if (_thread != null)
                 throw new InvalidOperationException("\"Start\" called multiple times ({0})".Fmt(GetType().Name));
 
             _exiter = new ThreadExiter();
             _sleeper = new ThreadSleeper();
-            _thread = new Thread(threadProc);
+            _thread = new Thread(threadProc) { IsBackground = backgroundThread };
             _thread.Start();
         }
 

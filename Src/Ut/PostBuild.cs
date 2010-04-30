@@ -48,6 +48,7 @@ namespace RT.Util
         /// <returns>1 if any errors occurred, otherwise 0.</returns>
         public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
+            int countMethods = 0;
             var rep = new postBuildReporter(sourcePath);
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
             {
@@ -58,6 +59,7 @@ namespace RT.Util
                     {
                         try
                         {
+                            countMethods++;
                             meth.Invoke(null, new object[] { rep });
                         }
                         catch (Exception e)
@@ -72,6 +74,7 @@ namespace RT.Util
                                 fileLine = st.GetFrame(0).GetFileName() + "(" + st.GetFrame(0).GetFileLineNumber() + "," + st.GetFrame(0).GetFileColumnNumber() + "): ";
 
                             Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
+                            rep.AnyErrors = true;
                         }
                     }
                     else
@@ -80,6 +83,8 @@ namespace RT.Util
                             (ty.IsValueType ? "struct " : "class ") + ty.Name, "PostBuildCheck");
                 }
             }
+
+            Console.WriteLine("Post-build checks ran on {0} assemblies, {1} methods and completed {2}.".Fmt(assemblies.Length, countMethods, rep.AnyErrors ? "with ERRORS" : "SUCCESSFULLY"));
 
             return rep.AnyErrors ? 1 : 0;
         }
