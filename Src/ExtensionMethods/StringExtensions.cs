@@ -16,16 +16,6 @@ namespace RT.Util.ExtensionMethods
         private const string _charsBase64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
         private static int[] _invBase64Url; // inverse base-64-url lookup table
 
-        static StringExtensions()
-        {
-            // Initialise the base-64-url inverse lookup table
-            _invBase64Url = new int[256];
-            for (int i = 0; i < _invBase64Url.Length; i++)
-                _invBase64Url[i] = -1;
-            for (int i = 0; i < _charsBase64Url.Length; i++)
-                _invBase64Url[(int) _charsBase64Url[i]] = i;
-        }
-
         /// <summary>
         /// Concatenates the specified number of repetitions of the current string.
         /// </summary>
@@ -232,6 +222,91 @@ namespace RT.Util.ExtensionMethods
             return result.ToString();
         }
 
+        /// <summary>Converts the <paramref name="input"/> to UTF-8 and then encodes it using the MIME quoted-printable format.</summary>
+        public static string ToQuotedPrintable(this string input)
+        {
+            var lines = input.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            var sb = new StringBuilder();
+            foreach (var line in lines)
+            {
+                var lineLength = 0;
+                var numSpaces = 0;
+                var lineUtf8 = line.ToUtf8();
+                for (int i = 0; i < lineUtf8.Length; i++)
+                {
+                    var byt = lineUtf8[i];
+                    if (lineLength > 72)
+                    {
+                        sb.Append("=\r\n");
+                        lineLength = 0;
+                    }
+                    if (byt == 32)
+                        numSpaces++;
+                    else
+                    {
+                        if (numSpaces > 0)
+                        {
+                            if (lineLength + numSpaces > 72)
+                            {
+                                do
+                                {
+                                    if (lineLength > 72)
+                                    {
+                                        sb.Append("=\r\n");
+                                        lineLength = 0;
+                                    }
+                                    sb.Append("=20");
+                                    lineLength += 3;
+                                    numSpaces--;
+                                }
+                                while (numSpaces > 0);
+                            }
+                            else
+                            {
+                                sb.Append(new string(' ', numSpaces));
+                                lineLength += numSpaces;
+                                numSpaces = 0;
+                            }
+                        }
+
+                        if (byt <= 32 || byt > 126)
+                        {
+                            sb.Append('=');
+                            var n = byt >> 4;
+                            sb.Append((char) (n < 10 ? '0' + n : 'A' + n - 10));
+                            n = byt & 0xf;
+                            sb.Append((char) (n < 10 ? '0' + n : 'A' + n - 10));
+                            lineLength += 3;
+                        }
+                        else
+                        {
+                            sb.Append((char) byt);
+                            lineLength++;
+                        }
+                    }
+                }
+
+                if (numSpaces > 0)
+                {
+                    do
+                    {
+                        if (lineLength > 72)
+                        {
+                            sb.Append("=\r\n");
+                            lineLength = 0;
+                        }
+                        sb.Append("=20");
+                        lineLength += 3;
+                        numSpaces--;
+                    }
+                    while (numSpaces > 0);
+                }
+
+                sb.Append("\r\n");
+            }
+            return sb.ToString();
+        }
+
         /// <summary>
         /// Converts the specified string to UTF-8.
         /// </summary>
@@ -302,11 +377,9 @@ namespace RT.Util.ExtensionMethods
             return "'" + input.Replace("'", "''") + "'";
         }
 
-        /// <summary>
-        /// Encodes this byte array to base-64-url format, which is safe for use in URLs and
-        /// does not contain the unnecessary padding when the number of bytes is not divisible
-        /// by 3.
-        /// </summary>
+        /// <summary>Encodes this byte array to base-64-url format, which is safe for use in URLs and
+        /// does not contain the unnecessary padding when the number of bytes is not divisible by 3.</summary>
+        /// <seealso cref="Base64UrlDecode"/>
         public static string Base64UrlEncode(this byte[] bytes)
         {
             StringBuilder result = new StringBuilder();
@@ -343,50 +416,59 @@ namespace RT.Util.ExtensionMethods
             return result.ToString();
         }
 
-        /// <summary>
-        /// Decodes this string from base-64-url format into a byte array. See
-        /// <see cref="Base64UrlEncode"/> for more info on this format.
-        /// </summary>
+        /// <summary>Decodes this string from base-64-url encoding, which is safe for use in URLs and does not
+        /// contain the unnecessary padding whde the number of bytes is not divisible by 3, into a byte array.</summary>
+        /// <seealso cref="Base64UrlEncode"/>
         public static byte[] Base64UrlDecode(this string input)
         {
+            if (_invBase64Url == null)
+            {
+                // Initialise the base-64-url inverse lookup table
+                _invBase64Url = new int[256];
+                for (int j = 0; j < _invBase64Url.Length; j++)
+                    _invBase64Url[j] = -1;
+                for (int j = 0; j < _charsBase64Url.Length; j++)
+                    _invBase64Url[(int) _charsBase64Url[j]] = j;
+            }
+
             // See how many bytes are encoded at the end of the string
             int padding = input.Length % 4;
             if (padding == 1)
-                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string");
+                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
             if (padding > 0)
                 padding--;
 
             byte[] result = new byte[(input.Length / 4) * 3 + padding];
-            int ri = 0, ii = 0; // result index & input index
+            int resultIndex = 0, inputIndex = 0;
 
-            while (ii < input.Length)
+            while (inputIndex < input.Length)
             {
-                if (input.Length - ii >= 4)
+                if (input.Length - inputIndex >= 4)
                 {
                     // 00000011 11112222 22333333
-                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v2 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v3 = checked((uint) _invBase64Url[input[ii++]]);
-                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
-                    result[ri++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
-                    result[ri++] = (byte) ((v2 & 3) << 6 | v3);
+                    uint v0 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v2 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v3 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    result[resultIndex++] = (byte) (v0 << 2 | v1 >> 4);
+                    result[resultIndex++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
+                    result[resultIndex++] = (byte) ((v2 & 3) << 6 | v3);
                 }
-                else if (input.Length - ii == 3)
+                else if (input.Length - inputIndex == 3)
                 {
                     // 00000011 11112222 [22------]
-                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v2 = checked((uint) _invBase64Url[input[ii++]]);
-                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
-                    result[ri++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
+                    uint v0 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v2 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    result[resultIndex++] = (byte) (v0 << 2 | v1 >> 4);
+                    result[resultIndex++] = (byte) ((v1 & 15) << 4 | v2 >> 2);
                 }
-                else if (input.Length - ii == 2)
+                else if (input.Length - inputIndex == 2)
                 {
                     // 00000011 [1111----]
-                    uint v0 = checked((uint) _invBase64Url[input[ii++]]);
-                    uint v1 = checked((uint) _invBase64Url[input[ii++]]);
-                    result[ri++] = (byte) (v0 << 2 | v1 >> 4);
+                    uint v0 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    uint v1 = checked((uint) _invBase64Url[input[inputIndex++]]);
+                    result[resultIndex++] = (byte) (v0 << 2 | v1 >> 4);
                 }
                 else
                     throw new InternalError("Internal error in Base64UrlDecode");
