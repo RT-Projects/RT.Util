@@ -161,6 +161,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="Obsolete\CmdLine.cs" />
     <Compile Include="Paths\PathUtil.cs" />
+    <Compile Include="RummageAttributes.cs" />
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
     <Compile Include="Streams\NewlineNormalizerStream.cs" />
