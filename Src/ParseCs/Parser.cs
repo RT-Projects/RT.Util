@@ -2572,7 +2572,7 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin("delegate"))
             {
                 i++;
-                var delegateParams = tok[i].IsBuiltin("(") ? parseParameterList(tok, ref i) : new List<CsParameter>();
+                var delegateParams = tok[i].IsBuiltin("(") ? parseParameterList(tok, ref i) : null;
                 return new CsAnonymousMethodExpression { Block = parseBlock(tok, ref i), Parameters = delegateParams };
             }
 

@@ -1173,7 +1173,13 @@ namespace RT.KitchenSink.ParseCs
     {
         public List<CsParameter> Parameters;
         public CsBlock Block;
-        public override string ToString() { return string.Concat("delegate(", Parameters.Select(p => p.ToString()).JoinString(", "), ")\n", Block.ToString().Trim()); }
+        public override string ToString()
+        {
+            if (Parameters == null)
+                return "delegate\n" + Block.ToString().Trim();
+            else
+                return string.Concat("delegate(", Parameters.Select(p => p.ToString()).JoinString(", "), ")\n", Block.ToString().Trim());
+        }
     }
     public sealed class CsArrayLiteralExpression : CsExpression
     {
