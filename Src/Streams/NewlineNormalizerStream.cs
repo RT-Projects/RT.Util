@@ -28,7 +28,7 @@ namespace RT.Util.Streams
         /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
         public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
 
-        /// <summary>Return false.</summary>
+        /// <summary>Returns false.</summary>
         public override bool CanRead { get { return true; } }
 
         private byte[] _lastBuffer;
