@@ -61,7 +61,7 @@ namespace RT.KitchenSink
                 lock (_queue)
                 {
                     // If there is no data waiting to be read, wait for it.
-                    if (_queue.Count == 0)
+                    while (_queue.Count == 0)
                         Monitor.Wait(_queue);
 
                     var peeked = _queue.Peek();
