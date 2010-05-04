@@ -3,7 +3,7 @@
 namespace RT.KitchenSink.ParseCs
 {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-    
+
     public enum TokenType
     {
         Builtin,
@@ -93,18 +93,6 @@ namespace RT.KitchenSink.ParseCs
                 return token.Type != TokenType.EndOfFile;
             }
             catch (ParseException) { return false; }
-        }
-        public bool Has(char c, int index)
-        {
-            return this[index].Type == TokenType.Builtin && this[index].TokenStr[0] == c;
-        }
-        public void Split(int index)
-        {
-            var oldToken = this[index];
-            if (oldToken.TokenStr.Length < 2)
-                return;
-            _list.Insert(index + 1, new Token(oldToken.TokenStr.Substring(1), TokenType.Builtin, oldToken.Index + 1));
-            _list[index] = new Token(oldToken.TokenStr.Substring(0, 1), TokenType.Builtin, oldToken.Index);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace RT.KitchenSink.Lex
 
     public sealed class BuiltinToken : Token
     {
-        public string Builtin { get; protected set; }
+        public string Builtin { get; private set; }
 
         public BuiltinToken(LexPosition start, LexPosition end, string operator_)
             : base(start, end)
@@ -89,17 +89,17 @@ namespace RT.KitchenSink.Lex
 
     public sealed class StringLiteralToken : Token
     {
-        public string Value { get; protected set; }
+        public string Value { get; private set; }
 
         public StringLiteralToken(LexPosition start, LexPosition end) : base(start, end) { }
 
         public new sealed class Parser : Token.Parser
         {
-            public IDictionary<char, char> BasicEscapes { get; protected set; }
-            public IDictionary<char, Func<LexReader, string>> AdvancedEscapes { get; protected set; }
-            public string OpeningSequence { get; protected set; }
-            public string ClosingSequence { get; protected set; }
-            public bool EscapeClosingByDoubling { get; protected set; }
+            public IDictionary<char, char> BasicEscapes { get; private set; }
+            public IDictionary<char, Func<LexReader, string>> AdvancedEscapes { get; private set; }
+            public string OpeningSequence { get; private set; }
+            public string ClosingSequence { get; private set; }
+            public bool EscapeClosingByDoubling { get; private set; }
 
             public Parser(string openingSequence, string closingSequence, bool escapeClosingByDoubling)
                 : this(null, null, openingSequence, closingSequence, escapeClosingByDoubling)
@@ -131,7 +131,7 @@ namespace RT.KitchenSink.Lex
 
     public sealed class IdentifierToken : Token
     {
-        public string Identifier { get; protected set; }
+        public string Identifier { get; private set; }
 
         public IdentifierToken(LexPosition start, LexPosition end, string identifier)
             : base(start, end)
@@ -147,8 +147,8 @@ namespace RT.KitchenSink.Lex
 
     public sealed class RegexTokenParser<TToken> : Token.Parser where TToken : Token
     {
-        public Regex Regex { get; protected set; }
-        public Func<LexPosition, LexPosition, string, TToken> Init { get; protected set; }
+        public Regex Regex { get; private set; }
+        public Func<LexPosition, LexPosition, string, TToken> Init { get; private set; }
 
         public RegexTokenParser(Regex regex, Func<LexPosition, LexPosition, string, TToken> init)
         {

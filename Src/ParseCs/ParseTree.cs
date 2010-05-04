@@ -69,7 +69,7 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsUsingAlias : CsUsing
     {
         public string Alias;
-        public CsTypeIdentifier Original;
+        public CsTypeName Original;
         public override string ToString() { return "using " + Alias.Sanitize() + " = " + Original.ToString() + ";\n"; }
     }
     public sealed class CsNamespace : CsNode
@@ -138,7 +138,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public abstract class CsMultiMember : CsMember
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public List<CsNameAndExpression> NamesAndInitializers = new List<CsNameAndExpression>();
 
         public bool IsStatic;
@@ -153,10 +153,10 @@ namespace RT.KitchenSink.ParseCs
     public abstract class CsMemberLevel2 : CsMember
     {
         public string Name;
-        public CsTypeIdentifier ImplementsFrom;
+        public CsTypeName ImplementsFrom;
         public bool IsAbstract, IsVirtual, IsOverride, IsSealed, IsStatic, IsExtern;
 
-        public CsTypeIdentifier Type;  // for methods, this is the return type
+        public CsTypeName Type;  // for methods, this is the return type
 
         protected override StringBuilder modifiersCs()
         {
@@ -282,14 +282,14 @@ namespace RT.KitchenSink.ParseCs
         public CsBlock MethodBody;
         public bool IsPartial;
 
-        protected string genericTypeParametersCs()
+        private string genericTypeParametersCs()
         {
             if (GenericTypeParameters == null)
                 return string.Empty;
             return string.Concat("<", GenericTypeParameters.Select(g => g.ToString()).JoinString(", "), ">");
         }
 
-        protected string genericTypeConstraintsCs()
+        private string genericTypeConstraintsCs()
         {
             if (GenericTypeConstraints == null)
                 return string.Empty;
@@ -327,7 +327,7 @@ namespace RT.KitchenSink.ParseCs
     public abstract class CsOperatorOverload : CsMember
     {
         public bool IsStatic;
-        public CsTypeIdentifier ReturnType;
+        public CsTypeName ReturnType;
         public CsParameter Parameter;
         public CsBlock MethodBody;
         protected override StringBuilder modifiersCs()
@@ -464,7 +464,7 @@ namespace RT.KitchenSink.ParseCs
     {
         public bool IsPartial;
 
-        public List<CsTypeIdentifier> BaseTypes = null;
+        public List<CsTypeName> BaseTypes = null;
         public List<CsMember> Members = new List<CsMember>();
 
         protected abstract string typeTypeCs { get; }
@@ -529,7 +529,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsDelegate : CsTypeCanBeGeneric
     {
-        public CsTypeIdentifier ReturnType;
+        public CsTypeName ReturnType;
         public List<CsParameter> Parameters = new List<CsParameter>();
         public override string ToString()
         {
@@ -549,7 +549,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsEnum : CsType
     {
-        public CsTypeIdentifier BaseType;
+        public CsTypeName BaseType;
         public List<CsEnumValue> EnumValues = new List<CsEnumValue>();
         public override string ToString()
         {
@@ -588,11 +588,11 @@ namespace RT.KitchenSink.ParseCs
     }
     #endregion
 
-    #region Parameters and type identifiers
+    #region Parameters, simple names and type names
     public sealed class CsParameter : CsNode
     {
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public string Name;
         public bool IsThis, IsOut, IsRef, IsParams;
         public override string ToString()
@@ -612,54 +612,61 @@ namespace RT.KitchenSink.ParseCs
             return sb.ToString();
         }
     }
-    public abstract class CsTypeIdentifier : CsNode
+
+    public abstract class CsSimpleName : CsNode
     {
-        public virtual string GetSingleIdentifier() { return null; }
+        public abstract bool EndsWithGenerics { get; }
     }
-    public sealed class CsEmptyGenericTypeIdentifier : CsTypeIdentifier
-    {
-        public override string ToString() { return string.Empty; }
-    }
-    public abstract class CsConcreteTypeIdentifierPart : CsNode { }
-    public sealed class CsConcreteTypeIdentifierPartIdentifier : CsConcreteTypeIdentifierPart
+    public sealed class CsSimpleNameIdentifier : CsSimpleName
     {
         public string Name;
-        public List<CsTypeIdentifier> GenericTypeArguments = null;
+        public List<CsTypeName> GenericTypeArguments = null;
         public override string ToString() { return GenericTypeArguments == null ? Name.Sanitize() : string.Concat(Name.Sanitize(), '<', GenericTypeArguments.Select(p => p.ToString()).JoinString(", "), '>'); }
+        public override bool EndsWithGenerics { get { return GenericTypeArguments != null && GenericTypeArguments.Count > 0; } }
     }
-    public sealed class CsConcreteTypeIdentifierPartBuiltin : CsConcreteTypeIdentifierPart
+    public sealed class CsSimpleNameBuiltin : CsSimpleName
     {
         public string Builtin;
         public override string ToString() { return Builtin; }
+        public override bool EndsWithGenerics { get { return false; } }
     }
-    public sealed class CsConcreteTypeIdentifier : CsTypeIdentifier
+
+    public abstract class CsTypeName : CsNode
+    {
+        public virtual string GetSingleIdentifier() { return null; }
+    }
+    public sealed class CsEmptyGenericParameter : CsTypeName
+    {
+        public override string ToString() { return string.Empty; }
+    }
+    public sealed class CsConcreteTypeName : CsTypeName
     {
         public bool HasGlobal;
-        public List<CsConcreteTypeIdentifierPart> Parts = new List<CsConcreteTypeIdentifierPart>();
+        public List<CsSimpleName> Parts = new List<CsSimpleName>();
         public override string ToString() { return (HasGlobal ? "global::" : string.Empty) + Parts.Select(p => p.ToString()).JoinString("."); }
         public override string GetSingleIdentifier()
         {
             return !HasGlobal && Parts.Count == 1 &&
-                    Parts[0] is CsConcreteTypeIdentifierPartIdentifier &&
-                    ((CsConcreteTypeIdentifierPartIdentifier) Parts[0]).GenericTypeArguments == null
-                ? ((CsConcreteTypeIdentifierPartIdentifier) Parts[0]).Name
+                    Parts[0] is CsSimpleNameIdentifier &&
+                    ((CsSimpleNameIdentifier) Parts[0]).GenericTypeArguments == null
+                ? ((CsSimpleNameIdentifier) Parts[0]).Name
                 : null;
         }
     }
-    public sealed class CsArrayTypeIdentifier : CsTypeIdentifier
+    public sealed class CsArrayTypeName : CsTypeName
     {
-        public CsTypeIdentifier InnerType;
+        public CsTypeName InnerType;
         public List<int> ArrayRanks = new List<int> { 1 };
         public override string ToString() { return InnerType.ToString() + ArrayRanks.Select(rank => string.Concat("[", new string(',', rank - 1), "]")).JoinString(); }
     }
-    public sealed class CsPointerTypeIdentifier : CsTypeIdentifier
+    public sealed class CsPointerTypeName : CsTypeName
     {
-        public CsTypeIdentifier InnerType;
+        public CsTypeName InnerType;
         public override string ToString() { return InnerType.ToString() + "*"; }
     }
-    public sealed class CsNullableTypeIdentifier : CsTypeIdentifier
+    public sealed class CsNullableTypeName : CsTypeName
     {
-        public CsTypeIdentifier InnerType;
+        public CsTypeName InnerType;
         public override string ToString() { return InnerType.ToString() + "?"; }
     }
     #endregion
@@ -671,7 +678,7 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsGenericTypeConstraintStruct : CsGenericTypeConstraint { public override string ToString() { return "struct"; } }
     public sealed class CsGenericTypeConstraintBaseClass : CsGenericTypeConstraint
     {
-        public CsTypeIdentifier BaseClass;
+        public CsTypeName BaseClass;
         public override string ToString() { return BaseClass.ToString(); }
     }
     #endregion
@@ -679,7 +686,7 @@ namespace RT.KitchenSink.ParseCs
     #region Custom attributes
     public sealed class CsCustomAttribute : CsNode
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public List<CsExpression> Positional = new List<CsExpression>();
         public List<CsNameAndExpression> Named = new List<CsNameAndExpression>();
         public override string ToString()
@@ -774,7 +781,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsVariableDeclarationStatement : CsStatement
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public List<CsNameAndExpression> NamesAndInitializers = new List<CsNameAndExpression>();
         public bool IsConst;
         public override string ToString()
@@ -790,7 +797,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsForeachStatement : CsStatement
     {
-        public CsTypeIdentifier VariableType;
+        public CsTypeName VariableType;
         public string VariableName;
         public CsExpression LoopExpression;
         public CsStatement Body;
@@ -897,7 +904,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsCatchClause : CsNode
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public string Name;
         public CsBlock Block;
         public override string ToString()
@@ -973,7 +980,7 @@ namespace RT.KitchenSink.ParseCs
     {
         public BinaryTypeOperator Operator;
         public CsExpression Left;
-        public CsTypeIdentifier Right;
+        public CsTypeName Right;
         public override string ToString()
         {
             return string.Concat(
@@ -1000,7 +1007,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsCastExpression : CsExpression
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public CsExpression Operand;
         public override string ToString() { return string.Concat('(', Type.ToString(), ") ", Operand.ToString()); }
     }
@@ -1018,22 +1025,17 @@ namespace RT.KitchenSink.ParseCs
         public List<CsArgument> Arguments = new List<CsArgument>();
         public override string ToString() { return string.Concat(Left.ToString(), IsIndexer ? '[' : '(', Arguments.Select(p => p.ToString()).JoinString(", "), IsIndexer ? ']' : ')'); }
     }
-    public abstract class CsTypeOperatorExpression : CsExpression { public CsTypeIdentifier Type; }
+    public abstract class CsTypeOperatorExpression : CsExpression { public CsTypeName Type; }
     public sealed class CsTypeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("typeof(", Type.ToString(), ')'); } }
     public sealed class CsSizeofExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("sizeof(", Type.ToString(), ')'); } }
     public sealed class CsDefaultExpression : CsTypeOperatorExpression { public override string ToString() { return string.Concat("default(", Type.ToString(), ')'); } }
     public abstract class CsCheckedUncheckedExpression : CsExpression { public CsExpression Subexpression; }
     public sealed class CsCheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("checked(", Subexpression.ToString(), ')'); } }
     public sealed class CsUncheckedExpression : CsCheckedUncheckedExpression { public override string ToString() { return string.Concat("unchecked(", Subexpression.ToString(), ')'); } }
-    public sealed class CsTypeIdentifierExpression : CsExpression
+    public sealed class CsSimpleNameExpression : CsExpression
     {
-        public CsTypeIdentifier Type;
-        public override string ToString() { return Type.ToString(); }
-    }
-    public sealed class CsIdentifierExpression : CsExpression
-    {
-        public string Identifier;
-        public override string ToString() { return Identifier.Sanitize(); }
+        public CsSimpleName SimpleName;
+        public override string ToString() { return SimpleName.ToString(); }
     }
     public sealed class CsParenthesizedExpression : CsExpression
     {
@@ -1081,7 +1083,7 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsBaseExpression : CsExpression { public override string ToString() { return "base"; } }
     public sealed class CsNewConstructorExpression : CsExpression
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public List<CsArgument> Arguments = new List<CsArgument>();
         public List<CsExpression> Initializers;
         public override string ToString()
@@ -1115,7 +1117,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsNewArrayExpression : CsExpression
     {
-        public CsTypeIdentifier Type;
+        public CsTypeName Type;
         public List<CsExpression> SizeExpressions = new List<CsExpression>();
         public List<int> AdditionalRanks = new List<int>();
         public List<CsExpression> Items;
