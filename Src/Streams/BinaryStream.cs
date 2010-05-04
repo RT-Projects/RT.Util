@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using RT.Util.ExtensionMethods;
@@ -444,6 +445,27 @@ namespace RT.Util.Streams
         public void WriteTimeSpan(TimeSpan value)
         {
             WriteLong(value.Ticks);
+        }
+
+        /// <summary>Writes an <see cref="ICollection&lt;T&gt;"/> of <see cref="IBinaryStreamSerializable"/> values to the stream.</summary>
+        public void WriteCollection(ICollection<IBinaryStreamSerializable> collection)
+        {
+            WriteVarInt(collection.Count);
+            foreach (var item in collection)
+                item.WriteToBinaryStream(this);
+        }
+
+        /// <summary>Reads a collection written by <see cref="WriteCollection"/> into an array.</summary>
+        public TItem[] ReadCollectionAsArray<TItem>() where TItem : IBinaryStreamSerializable, new()
+        {
+            int count = ReadVarInt();
+            var result = new TItem[count];
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = new TItem();
+                result[i].ReadFromBinaryStream(this);
+            }
+            return result;
         }
     }
 }
