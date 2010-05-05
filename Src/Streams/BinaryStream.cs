@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using RT.Util.ExtensionMethods;
 
@@ -447,10 +448,11 @@ namespace RT.Util.Streams
             WriteLong(value.Ticks);
         }
 
-        /// <summary>Writes an <see cref="ICollection&lt;T&gt;"/> of <see cref="IBinaryStreamSerializable"/> values to the stream.</summary>
-        public void WriteCollection(ICollection<IBinaryStreamSerializable> collection)
+        /// <summary>Writes an <see cref="IEnumerable&lt;T&gt;"/> of <see cref="IBinaryStreamSerializable"/> values to the stream.
+        /// Note that the enumerable may be enumerated twice.</summary>
+        public void WriteCollection(IEnumerable<IBinaryStreamSerializable> collection)
         {
-            WriteVarInt(collection.Count);
+            WriteVarInt(collection.Count());
             foreach (var item in collection)
                 item.WriteToBinaryStream(this);
         }
@@ -464,6 +466,20 @@ namespace RT.Util.Streams
             {
                 result[i] = new TItem();
                 result[i].ReadFromBinaryStream(this);
+            }
+            return result;
+        }
+
+        /// <summary>Reads a collection written by <see cref="WriteCollection"/> into a list.</summary>
+        public List<TItem> ReadCollectionAsList<TItem>() where TItem : IBinaryStreamSerializable, new()
+        {
+            int count = ReadVarInt();
+            var result = new List<TItem>(count);
+            for (int i = 0; i < count; i++)
+            {
+                var item = new TItem();
+                item.ReadFromBinaryStream(this);
+                result.Add(item);
             }
             return result;
         }

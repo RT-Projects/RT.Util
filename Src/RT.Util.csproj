@@ -164,6 +164,7 @@
     <Compile Include="RummageAttributes.cs" />
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
+    <Compile Include="Streams\ConsoleLoggingStream.cs" />
     <Compile Include="Streams\NewlineNormalizerStream.cs" />
     <Compile Include="Streams\SocketStreams.cs" />
     <Compile Include="Ut\Parallel.cs" />
