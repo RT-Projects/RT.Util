@@ -29,6 +29,24 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Adds an element to a two-level Dictionary&lt;,&gt;.
+        /// If the specified key does not exist in the outer Dictionary, a new Dictionary is created.
+        /// </summary>
+        /// <typeparam name="K1">Type of the key of the outer Dictionary.</typeparam>
+        /// <typeparam name="K2">Type of the key of the inner Dictionary.</typeparam>
+        /// <typeparam name="V">Type of the values in the inner Dictionary.</typeparam>
+        /// <param name="dic">Dictionary to operate on.</param>
+        /// <param name="key1">Key at which the inner Dictionary is located in the outer Dictionary.</param>
+        /// <param name="key2">Key at which the value is located in the inner Dictionary.</param>
+        /// <param name="value">Value to add to the inner Dictionary.</param>
+        public static void AddSafe<K1, K2, V>(this Dictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value)
+        {
+            if (!dic.ContainsKey(key1))
+                dic[key1] = new Dictionary<K2, V>();
+            dic[key1][key2] = value;
+        }
+
+        /// <summary>
         /// Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;.
         /// If the specified key does not exist in the current Dictionary, a new List is created.
         /// </summary>

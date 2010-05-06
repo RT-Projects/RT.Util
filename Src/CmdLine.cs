@@ -850,7 +850,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see cref="CommandLineParser&lt;T&gt;"/>.</summary>
     /// <typeparam name="TTranslation">A translation-string class containing the error messages that can occur during validation.</typeparam>
-    public interface ICommandLineValidatable<TTranslation> where TTranslation : TranslationBase
+    public interface ICommandLineValidatable<in TTranslation> where TTranslation : TranslationBase
     {
         /// <summary>When implemented in a class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
         /// <param name="tr">Contains translations for the messages that may occur during validation.</param>

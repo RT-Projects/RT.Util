@@ -81,20 +81,22 @@ namespace RT.Util.ExtensionMethods
                 yield return new RT.Util.ObsoleteTuple.Tuple<T, T>(last, first);
         }
 
-        /// <summary>
-        /// Returns an enumeration of the specified enumerable in sorted order.
-        /// </summary>
+        /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
             return source.OrderBy(x => x);
         }
 
-        /// <summary>
-        /// Returns an enumeration of the specified enumerable in sorted order.
-        /// </summary>
-        public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparison)
+        /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparer.</summary>
+        public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
-            return source.OrderBy(x => x, comparison);
+            return source.OrderBy(x => x, comparer);
+        }
+
+        /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
+        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
+        {
+            return source.OrderBy(x => x, new CustomComparer<T>(comparison));
         }
 
         /// <summary>

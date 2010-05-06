@@ -1044,18 +1044,16 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsStringLiteralExpression : CsExpression
     {
-        private static char[] SpecialCharacters1 = new[] { '\0', '\a', '\b', '\f', '\n', '\r', '\t', '\v' };
-        private static char[] SpecialCharacters2 = new[] { '"', '\\' };
         public string Literal;
         public override string ToString()
         {
             bool useVerbatim;
 
             // If the string contains any of the escapable characters, use those escape sequences.
-            if (Literal.Any(ch => SpecialCharacters1.Contains(ch)))
+            if (Literal.Any(ch => "\0\a\b\f\n\r\t\v".Contains(ch)))
                 useVerbatim = false;
             // Otherwise, if the string contains a double-quote or backslash, use verbatim.
-            else if (Literal.Any(ch => SpecialCharacters2.Contains(ch)))
+            else if (Literal.Any(ch => ch == '"' || ch == '\\'))
                 useVerbatim = true;
             // In all other cases, use escape sequences.
             else

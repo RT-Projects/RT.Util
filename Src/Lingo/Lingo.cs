@@ -21,7 +21,7 @@ namespace RT.Util.Lingo
     /// </summary>
     /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
     /// <param name="translation">The new translation to be used by the program.</param>
-    public delegate void SetLanguage<TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
+    public delegate void SetLanguage<in TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
 
     /// <summary>
     /// Static class with helper methods to support multi-language applications.

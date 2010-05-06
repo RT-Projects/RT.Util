@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
+    <Compile Include="Collections\Comparer.cs" />
     <Compile Include="Collections\ListSorted.cs" />
     <Compile Include="Collections\NameValuesCollection.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
