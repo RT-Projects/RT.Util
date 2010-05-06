@@ -7,7 +7,7 @@ namespace RT.Util.Collections
 {
     public class CustomComparer<T> : IComparer<T>
     {
-        Comparison<T> _comparison;
+        private Comparison<T> _comparison;
         public CustomComparer(Comparison<T> comparison) { _comparison = comparison; }
         public int Compare(T x, T y) { return _comparison(x, y); }
     }
