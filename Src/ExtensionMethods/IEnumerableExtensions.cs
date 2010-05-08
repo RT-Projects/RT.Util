@@ -304,9 +304,7 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>
-        /// Returns the first element of a sequence, or a default value if the sequence contains no elements.
-        /// </summary>
+        /// <summary>Returns the first element of a sequence, or a default value if the sequence contains no elements.</summary>
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The <see cref="IEnumerable&lt;T&gt;"/> to return the first element of.</param>
@@ -326,6 +324,26 @@ namespace RT.Util.ExtensionMethods
                     if (predicate(e.Current))
                         return resultSelector(e.Current);
                 }
+            }
+        }
+
+        /// <summary>Returns the only element of a sequence that satisfies a specified condition, the type's default value if no such element exists,
+        /// and throws an exception if more than one such element exists.</summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable&lt;T&gt;"/> to return the one element of.</param>
+        /// <param name="predicate">A function to test each element for a condition.</param>
+        /// <returns>Returns the type's default value if no item matches the predicate, or the only item if there is exactly one.
+        /// Otherwise, throws InvalidOperationException.</returns>
+        public static T AtMostOne<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            using (var e = source.GetEnumerator())
+            {
+                if (!e.MoveNext())
+                    return default(T);
+                var value = e.Current;
+                if (e.MoveNext())
+                    throw new InvalidOperationException("The sequence contained more than one matching element.");
+                return value;
             }
         }
 

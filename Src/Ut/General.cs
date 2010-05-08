@@ -183,5 +183,12 @@ namespace RT.Util
             var v = Assembly.GetEntryAssembly().GetName().Version;
             return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Build, v.Revision); // in our use: v.Build is build#, v.Revision is p4 changelist
         }
+
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void Assert(bool assertion)
+        {
+            if (!assertion)
+                System.Diagnostics.Debugger.Break();
+        }
     }
 }
