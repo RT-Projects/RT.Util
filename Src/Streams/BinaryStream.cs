@@ -7,15 +7,6 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Streams
 {
-    /// <summary>Indicates that a class can be serialised into and deserialised from a <see cref="BinaryStream"/>.</summary>
-    public interface IBinaryStreamSerializable
-    {
-        /// <summary>When implemented in a class, serialises the current instance and writes it into a <see cref="BinaryStream"/>.</summary>
-        void WriteToBinaryStream(BinaryStream stream);
-        /// <summary>When implemented in a class, reads a serialised instance from a <see cref="BinaryStream"/> and populates the current instance.</summary>
-        void ReadFromBinaryStream(BinaryStream stream);
-    }
-
     /// <summary>Reads/writes various data types as binary values in a specific encoding.</summary>
     /// <remarks><para>This class does not use any buffering of its own.</para>
     /// <para>It is permissible to seek, read from, and write to the underlying stream.</para></remarks>
@@ -446,42 +437,6 @@ namespace RT.Util.Streams
         public void WriteTimeSpan(TimeSpan value)
         {
             WriteLong(value.Ticks);
-        }
-
-        /// <summary>Writes an <see cref="IEnumerable&lt;T&gt;"/> of <see cref="IBinaryStreamSerializable"/> values to the stream.
-        /// Note that the enumerable may be enumerated twice.</summary>
-        public void WriteCollection(IEnumerable<IBinaryStreamSerializable> collection)
-        {
-            WriteVarInt(collection.Count());
-            foreach (var item in collection)
-                item.WriteToBinaryStream(this);
-        }
-
-        /// <summary>Reads a collection written by <see cref="WriteCollection"/> into an array.</summary>
-        public TItem[] ReadCollectionAsArray<TItem>() where TItem : IBinaryStreamSerializable, new()
-        {
-            int count = ReadVarInt();
-            var result = new TItem[count];
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i] = new TItem();
-                result[i].ReadFromBinaryStream(this);
-            }
-            return result;
-        }
-
-        /// <summary>Reads a collection written by <see cref="WriteCollection"/> into a list.</summary>
-        public List<TItem> ReadCollectionAsList<TItem>() where TItem : IBinaryStreamSerializable, new()
-        {
-            int count = ReadVarInt();
-            var result = new List<TItem>(count);
-            for (int i = 0; i < count; i++)
-            {
-                var item = new TItem();
-                item.ReadFromBinaryStream(this);
-                result.Add(item);
-            }
-            return result;
         }
     }
 }

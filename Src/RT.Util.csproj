@@ -166,8 +166,10 @@
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
     <Compile Include="Streams\ConsoleLoggingStream.cs" />
+    <Compile Include="Streams\ControlCodedStream.cs" />
     <Compile Include="Streams\NewlineNormalizerStream.cs" />
     <Compile Include="Streams\SocketStreams.cs" />
+    <Compile Include="Streams\PeekableStream.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

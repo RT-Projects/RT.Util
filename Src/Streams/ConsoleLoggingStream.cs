@@ -15,9 +15,7 @@ namespace RT.Util.Streams
         private Stream _stream;
         private string _readPrefix, _writePrefix;
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
+        /// <summary>Constructor.</summary>
         /// <param name="underlyingStream">The underlying stream on which all operations are to be performed.</param>
         /// <param name="readPrefix">If not null, all calls to <see cref="Read"/> will print a single line to the console starting with this prefix and showing a hex dump of the bytes read.</param>
         /// <param name="writePrefix">If not null, all calls to <see cref="Read"/> will print a single line to the console starting with this prefix and showing a hex dump of the bytes written.</param>
