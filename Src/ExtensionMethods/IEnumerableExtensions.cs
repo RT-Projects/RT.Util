@@ -336,7 +336,7 @@ namespace RT.Util.ExtensionMethods
         /// Otherwise, throws InvalidOperationException.</returns>
         public static T AtMostOne<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
-            using (var e = source.GetEnumerator())
+            using (var e = source.Where(predicate).GetEnumerator())
             {
                 if (!e.MoveNext())
                     return default(T);
