@@ -438,5 +438,23 @@ namespace RT.Util.Streams
         {
             WriteLong(value.Ticks);
         }
+
+        /// <summary>Writes the data contained in the specified <see cref="MemoryStream"/> to the stream as a length-prefixed block of bytes.</summary>
+        public void WriteMemoryStream(MemoryStream stream)
+        {
+            WriteVarUInt((uint) stream.Length);
+            stream.WriteTo(_stream);
+        }
+
+        /// <summary>Reads a length-prefixed block of bytes from the stream (for example, one produced by <see cref="WriteMemoryStream"/>).</summary>
+        public MemoryStream ReadMemoryStream()
+        {
+            var length = (int) ReadVarUInt();
+            byte[] buf = new byte[length];
+            int read = _stream.FillBuffer(buf, 0, length);
+            if (read < length)
+                throw new EndOfStreamException("Unexpected end of stream while reading a block of bytes.");
+            return new MemoryStream(buf);
+        }
     }
 }
