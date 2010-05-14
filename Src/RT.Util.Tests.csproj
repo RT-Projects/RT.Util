@@ -85,11 +85,10 @@
     <Compile Include="Geometry\IntersectTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="ExactConvertTests.cs" />
-    <Compile Include="Streams\ControlCodedStreamTests.cs" />
     <Compile Include="Streams\DynamicContentStreamTests.cs" />
     <Compile Include="Streams\NewlineNormalizerStreamTests.cs" />
     <Compile Include="Streams\BinaryStreamTests.cs" />
-    <Compile Include="Streams\PeekableStreamTests.cs" />
+    <Compile Include="Streams\TimeoutableStreamTests.cs" />
     <Compile Include="UtilTests.cs" />
     <Compile Include="Ut\DiffTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
