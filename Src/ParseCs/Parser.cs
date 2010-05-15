@@ -100,7 +100,7 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin("="))
             {
                 i++;
-                var typeIdent = parseTypeIdentifier(tok, ref i, 0).Item1;
+                var typeIdent = parseTypeName(tok, ref i, 0).Item1;
                 if (!tok[i].IsBuiltin(";"))
                     throw new ParseException("';' expected. (1)", tok[i].Index);
                 i++;
@@ -217,7 +217,7 @@ namespace RT.KitchenSink.ParseCs
             List<CsCustomAttribute> group = new List<CsCustomAttribute>();
             while (true)
             {
-                var type = parseTypeIdentifier(tok, ref i, 0).Item1;
+                var type = parseTypeName(tok, ref i, 0).Item1;
                 var attr = new CsCustomAttribute { Type = type };
                 group.Add(attr);
                 if (tok[i].IsBuiltin("]"))
@@ -334,7 +334,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         try
                         {
-                            var ident = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1;
+                            var ident = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1;
                             ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { BaseClass = ident });
                         }
                         catch (ParseException e)
@@ -409,12 +409,12 @@ namespace RT.KitchenSink.ParseCs
                 isParams = true;
                 i++;
             }
-            var type = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
+            var type = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
             var name = tok[i].Identifier();
             i++;
             return new CsParameter { Type = type, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs };
         }
-        private static Tuple<CsTypeName, bool> parseTypeIdentifier(TokenJar tok, ref int i, typeIdentifierFlags flags)
+        private static Tuple<CsTypeName, bool> parseTypeName(TokenJar tok, ref int i, typeIdentifierFlags flags)
         {
             var ty = new CsConcreteTypeName();
             if (tok[i].IsIdentifier("global") && tok[i + 1].IsBuiltin("::"))
@@ -461,12 +461,12 @@ namespace RT.KitchenSink.ParseCs
                     {
                         try
                         {
-                            var result = parseTypeIdentifier(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
+                            var result = parseTypeName(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
                             part.GenericTypeArguments.Add(result.Item1);
                             while (tok[j].IsBuiltin(","))
                             {
                                 j++;
-                                result = parseTypeIdentifier(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
+                                result = parseTypeName(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
                                 part.GenericTypeArguments.Add(result.Item1);
                             }
                             if (result.Item2)
@@ -706,7 +706,7 @@ namespace RT.KitchenSink.ParseCs
                 CsTypeName type;
                 try
                 {
-                    type = parseTypeIdentifier(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
+                    type = parseTypeName(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
                 }
                 catch (ParseException e)
                 {
@@ -780,7 +780,7 @@ namespace RT.KitchenSink.ParseCs
                 // up to the method name and leave us at the '<'. If the method has only generic type parameters without custom attributes (or none at all), then this will include
                 // the method name and generic type parameters as part of the parsed type identifier. We'll then have to remove it from there.
                 j--;
-                var ty = (CsConcreteTypeName) parseTypeIdentifier(tok, ref j, typeIdentifierFlags.Lenient).Item1;
+                var ty = (CsConcreteTypeName) parseTypeName(tok, ref j, typeIdentifierFlags.Lenient).Item1;
 
                 if (tok[j].IsBuiltin(".") && tok[j + 1].IsBuiltin("this"))
                 {
@@ -1000,7 +1000,7 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin("operator"))
                 throw new ParseException("'operator' expected.", tok[i].Index);
             i++;
-            op.ReturnType = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
+            op.ReturnType = parseTypeName(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
             var parameters = parseParameterList(tok, ref i);
@@ -1097,7 +1097,7 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
             i = j + 1;
 
-            ev.Type = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
+            ev.Type = parseTypeName(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
 
             string name = tok[i].Identifier();
             i++;
@@ -1239,7 +1239,7 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin(":"))
             {
                 i++;
-                en.BaseType = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1;
+                en.BaseType = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1;
             }
 
             if (!tok[i].IsBuiltin("{"))
@@ -1297,7 +1297,7 @@ namespace RT.KitchenSink.ParseCs
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for delegates.".Fmt(tok[i].TokenStr), tok[i].Index);
             i = j + 1;
-            deleg.ReturnType = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
+            deleg.ReturnType = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
             deleg.Name = tok[i].Identifier();
             i++;
             try
@@ -1355,11 +1355,11 @@ namespace RT.KitchenSink.ParseCs
                 try
                 {
                     type.BaseTypes = new List<CsTypeName>();
-                    type.BaseTypes.Add(parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1);
+                    type.BaseTypes.Add(parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1);
                     while (tok[i].IsBuiltin(","))
                     {
                         i++;
-                        type.BaseTypes.Add(parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1);
+                        type.BaseTypes.Add(parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1);
                     }
                 }
                 catch (ParseException e)
@@ -1627,7 +1627,7 @@ namespace RT.KitchenSink.ParseCs
                 if (tok[i].IsBuiltin("("))
                 {
                     i++;
-                    ctch.Type = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
+                    ctch.Type = parseTypeName(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
                     if (tok[i].Type == TokenType.Identifier)
                     {
                         ctch.Name = tok[i].TokenStr;
@@ -1829,7 +1829,7 @@ namespace RT.KitchenSink.ParseCs
             }
             else
             {
-                fore.VariableType = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
+                fore.VariableType = parseTypeName(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
                 fore.VariableName = tok[i].Identifier();
                 i++;
                 if (!tok[i].IsBuiltin("in"))
@@ -1952,7 +1952,7 @@ namespace RT.KitchenSink.ParseCs
             var j = i;
             try
             {
-                var ty = parseTypeIdentifier(tok, ref j, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
+                var ty = parseTypeName(tok, ref j, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
                 if (tok[j].Type == TokenType.Identifier)
                     declType = ty;
             }
@@ -2213,7 +2213,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     var op = tok[i].IsBuiltin("is") ? BinaryTypeOperator.Is : BinaryTypeOperator.As;
                     i++;
-                    try { return new CsBinaryTypeOperatorExpression { Left = left, Right = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1, Operator = op }; }
+                    try { return new CsBinaryTypeOperatorExpression { Left = left, Right = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1, Operator = op }; }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsTypeName)
@@ -2350,6 +2350,8 @@ namespace RT.KitchenSink.ParseCs
                     i++;
                 }
             }
+            if (left is CsSimpleNameExpression && ((CsSimpleNameExpression) left).SimpleName is CsSimpleNameBuiltin)
+                throw new ParseException("'{0}' cannot be an expression by itself.".Fmt(left.ToString()), tok[i - 1].Index);
             return left;
         }
         private static List<CsArgument> parseArgumentList(TokenJar tok, ref int i, out bool isIndexer)
@@ -2441,7 +2443,7 @@ namespace RT.KitchenSink.ParseCs
                 i++;
                 CsTypeName ty;
                 var tif = typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays;
-                try { ty = parseTypeIdentifier(tok, ref i, typof ? tif | typeIdentifierFlags.AllowEmptyGenerics : tif).Item1; }
+                try { ty = parseTypeName(tok, ref i, typof ? tif | typeIdentifierFlags.AllowEmptyGenerics : tif).Item1; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsTypeName)
@@ -2502,7 +2504,7 @@ namespace RT.KitchenSink.ParseCs
                     throw new ParseException("'{', '[' or type expected.", tok[i].Index);
                 else
                 {
-                    var ty = parseTypeIdentifier(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.Lenient).Item1;
+                    var ty = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.Lenient).Item1;
                     if (tok[i].IsBuiltin("("))
                     {
                         // Constructor call with parameters
@@ -2679,47 +2681,65 @@ namespace RT.KitchenSink.ParseCs
 
                 // Every time we encounter an open-parenthesis, we don't know in advance whether it's a cast, a sub-expression, or a lambda expression.
                 // We've already checked for lambda expression above, so we can rule that one out, but to check whether it's a cast, we need to tentatively 
-                // parse it and see if it is followed by ')' and then followed by a unary expression.
-                // However, there is an exception:
-                //     var blah = (SomeType) +5;
-                // The Microsoft C# compiler parses this as a binary expression rather than a cast of a unary expression. Therefore,
-                // we specifically check for the four unary operators that are also binary operators and reject the cast so that it becomes a binary expression.
+                // parse it, see if it is followed by ')', and then follow a heuristic specified in the C# standard.
 
-                bool doThrow = false;
+                CsTypeName typeName = null;
+                CsExpression expression = null;
+                int afterType = i;
+                int afterExpression = i;
+
+                // Does it parse as a type?
                 try
                 {
-                    var j = i;
-                    var ty = parseTypeIdentifier(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
-                    if (tok[j].IsBuiltin(")"))
-                    {
-                        j++;
+                    typeName = parseTypeName(tok, ref afterType, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
+                    if (!tok[afterType].IsBuiltin(")"))
+                        typeName = null;
+                    afterType++;
+                }
+                catch { }
 
-                        // Special case: if there's "delegate" after the ')', it's definitely intended to be a cast. In this case, don't silently swallow exceptions
-                        // because then we would lose parse errors inside the delegate body.
-                        if (tok[j].IsBuiltin("delegate"))
-                            doThrow = true;
-
-                        // Don't interpret these as unary operators after a cast. Instead, fail the cast to allow this to be a binary operator expression.
-                        if (!tok[j].IsBuiltin("+") && !tok[j].IsBuiltin("-") && !tok[j].IsBuiltin("*") && !tok[j].IsBuiltin("&"))
-                        {
-                            var operand = parseExpressionUnary(tok, ref j);
-                            i = j;
-                            return new CsCastExpression { Operand = operand, Type = ty };
-                        }
-                    }
+                // Does it parse as a parenthesised expression?
+                try
+                {
+                    expression = parseExpression(tok, ref afterExpression);
+                    if (!tok[afterExpression].IsBuiltin(")"))
+                        throw new ParseException("')' expected after parenthesised expression.", tok[afterExpression].Index);
+                    afterExpression++;
                 }
                 catch (ParseException)
                 {
-                    if (doThrow)
+                    // It’s neither an expression nor a valid type name.
+                    if (typeName == null)
                         throw;
                 }
 
-                // It doesn't look like a valid cast. Try a parenthesised expression.
-                var expr = new CsParenthesizedExpression { Subexpression = parseExpression(tok, ref i) };
-                if (!tok[i].IsBuiltin(")"))
-                    throw new ParseException("')' expected.", tok[i].Index, expr);
-                i++;
-                return expr;
+                // According to the Standard, we are supposed to interpret this as a cast if:
+                // • it definitely doesn’t parse as an expression; OR
+                // • the next token is one of a special set
+
+                if (expression == null || (typeName != null && (
+                    tok[afterType].IsBuiltin("~") || tok[afterType].IsBuiltin("!") || tok[afterType].IsBuiltin("(") ||
+                    tok[afterType].Type == TokenType.Identifier || tok[afterType].Type == TokenType.CharacterLiteral ||
+                    tok[afterType].Type == TokenType.NumberLiteral || tok[afterType].Type == TokenType.StringLiteral ||
+                    (tok[afterType].Type == TokenType.Builtin && tok[afterType].TokenStr != "is" && tok[afterType].TokenStr != "as" && Lexer.Keywords.Contains(tok[afterType].TokenStr)))))
+                {
+                    // It’s a cast!
+                    try
+                    {
+                        i = afterType;
+                        return new CsCastExpression { Operand = parseExpressionUnary(tok, ref i), Type = typeName };
+                    }
+                    catch (ParseException e)
+                    {
+                        if (e.IncompleteResult is CsExpression)
+                            throw new ParseException(e.Message, e.Index, new CsCastExpression { Operand = (CsExpression) e.IncompleteResult, Type = typeName });
+                        throw;
+                    }
+                }
+
+                // It’s a subexpression!
+                i = afterExpression;
+                return new CsParenthesizedExpression { Subexpression = expression };
             }
 
             return parseExpressionIdentifier(tok, ref i);
@@ -2731,7 +2751,7 @@ namespace RT.KitchenSink.ParseCs
             try
             {
                 var j = i;
-                var ty = parseTypeIdentifier(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.DontAllowDot).Item1;
+                var ty = parseTypeName(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.DontAllowDot).Item1;
 
                 // Since we didn't allow dot and we didn't allow arrays, nullables or pointers, we should get a simple name
                 if (!(ty is CsConcreteTypeName) || ((CsConcreteTypeName) ty).Parts.Count != 1)
