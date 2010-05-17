@@ -40,6 +40,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The specified string with the necessary HTML or XML escaping applied.</returns>
         public static string HtmlEscape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("'", "&#39;").Replace("\"", "&quot;");
         }
 
@@ -65,6 +67,8 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="UrlUnescape(string)"/>
         public static string UrlEscape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             byte[] utf8 = input.ToUtf8();
             StringBuilder sb = new StringBuilder();
             foreach (byte b in utf8)
@@ -83,8 +87,14 @@ namespace RT.Util.ExtensionMethods
         /// /// <seealso cref="UrlEscape(string)"/>
         public static string UrlUnescape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
+
+            if (Regex.IsMatch(input, @"%[^0-9a-fA-F]|%.[^0-9a-fA-F]|%.?\z", RegexOptions.Singleline))
+                throw new ArgumentException("The input string is not in valid URL-escaped format.", "input");
+
             if (input.Length < 3)
-                return input;
+                return input.Replace('+', ' ');
 
             int bufferSize = input.Length;
             for (int i = 0; i < input.Length; i++)
@@ -138,6 +148,9 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string FilenameCharactersEscape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
+
             var result = new StringBuilder(input.Length + input.Length / 2);
             foreach (char c in input)
             {
@@ -161,6 +174,9 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string FilenameCharactersUnescape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
+
             var result = new StringBuilder(input.Length);
             byte[] decode = new byte[4];
 
@@ -229,6 +245,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The specified string, converted to a byte-array containing the UTF-8 encoding of the string.</returns>
         public static byte[] ToUtf8(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return Encoding.UTF8.GetBytes(input);
         }
 
@@ -239,6 +257,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The specified string, converted to a byte-array containing the UTF-16 encoding of the string.</returns>
         public static byte[] ToUtf16(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return Encoding.Unicode.GetBytes(input);
         }
 
@@ -249,6 +269,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The specified string, converted to a byte-array containing the UTF-16 (Big Endian) encoding of the string.</returns>
         public static byte[] ToUtf16BE(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return Encoding.BigEndianUnicode.GetBytes(input);
         }
 
@@ -259,6 +281,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A string containing the characters represented by the UTF-8-encoded input.</returns>
         public static string FromUtf8(this byte[] input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return Encoding.UTF8.GetString(input);
         }
 
@@ -269,6 +293,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The length of the string in bytes when encoded as UTF-8.</returns>
         public static int Utf8Length(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return Encoding.UTF8.GetByteCount(input);
         }
 
@@ -279,6 +305,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>JavaScript-compatible representation of the input string.</returns>
         public static string JsEscape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("</", "<\"+\"/") + "\"";
         }
 
@@ -289,6 +317,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>SQL-compatible representation of the input string.</returns>
         public static string SqlEscape(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             return "'" + input.Replace("'", "''") + "'";
         }
 
@@ -297,6 +327,9 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="Base64UrlDecode"/>
         public static string Base64UrlEncode(this byte[] bytes)
         {
+            if (bytes == null)
+                throw new ArgumentNullException("bytes");
+
             StringBuilder result = new StringBuilder();
             int i = 0;
 
@@ -336,6 +369,11 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="Base64UrlEncode"/>
         public static byte[] Base64UrlDecode(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
+            if (input.Any(ch => !_charsBase64Url.Contains(ch)))
+                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
+
             if (_invBase64Url == null)
             {
                 // Initialise the base-64-url inverse lookup table
@@ -398,6 +436,9 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="CLiteralUnescape"/>
         public static string CLiteralEscape(this string value)
         {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
             var result = new StringBuilder(value.Length + value.Length / 2);
 
             for (int i = 0; i < value.Length; i++)
@@ -433,6 +474,9 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="CLiteralEscape"/>
         public static string CLiteralUnescape(this string value)
         {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
             var result = new StringBuilder(value.Length);
 
             int i = 0;
@@ -459,13 +503,16 @@ namespace RT.Util.ExtensionMethods
                         case 'r': result.Append('\r'); break;
                         case '\\': result.Append('\\'); break;
                         case 'x':
-                            if (i + 2 >= value.Length)
-                                throw new ArgumentException("String ends before the escape sequence at position {0} is complete".Fmt(i - 1), "value");
-                            int code;
-                            if (!int.TryParse(value.Substring(i + 1, 2), NumberStyles.AllowHexSpecifier, null, out code))
-                                throw new ArgumentException(@"Cannot parse hex escape sequence ""\x{0}"" at position {1}".Fmt(value.Substring(i + 1, 2), i - 1), "value");
+                            // See how many characters are hex digits
+                            var len = 0;
+                            i++;
+                            while (len <= 4 && i + len < value.Length && ((value[i + len] >= '0' && value[i + len] <= '9') || (value[i + len] >= 'a' && value[i + len] <= 'f') || (value[i + len] >= 'A' && value[i + len] <= 'F')))
+                                len++;
+                            if (len == 0)
+                                throw new ArgumentException(@"Invalid hex escape sequence ""\x"" at position {0}".Fmt(i - 2), "value");
+                            int code = int.Parse(value.Substring(i, len), NumberStyles.AllowHexSpecifier);
                             result.Append((char) code);
-                            i += 2;
+                            i += len - 1;
                             break;
                         default:
                             throw new ArgumentException("Unrecognised escape sequence at position {0}: \\{1}".Fmt(i - 1, c), "value");
@@ -490,6 +537,9 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string JoinString(this IEnumerable<string> values, string separator = null, string prefix = null, string suffix = null)
         {
+            if (values == null)
+                throw new ArgumentNullException("values");
+
             var enumerator = values.GetEnumerator();
             if (!enumerator.MoveNext())
                 return "";
@@ -515,6 +565,8 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
         public static IEnumerable<string> Trim(this IEnumerable<string> values)
         {
+            if (values == null)
+                throw new ArgumentNullException("values");
             var arr = values.ToArray();
             var begin = 0;
             while (begin < arr.Length && string.IsNullOrEmpty(arr[begin]))
@@ -530,6 +582,8 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
         public static IEnumerable<object> Trim(this IEnumerable<object> values)
         {
+            if (values == null)
+                throw new ArgumentNullException("values");
             var arr = values.ToArray();
             var begin = 0;
             while (begin < arr.Length && (arr[begin] == null || arr[begin].Equals(string.Empty)))
@@ -580,7 +634,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<object> FmtEnumerable(this string formatString, params object[] args)
         {
-            if (formatString == null) throw new ArgumentNullException("formatString");
+            if (formatString == null)
+                throw new ArgumentNullException("formatString");
 
             StringBuilder sb = new StringBuilder(formatString.Length);
             int i = 0;
@@ -648,6 +703,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
         public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent = 0)
         {
+            if (text == null)
+                throw new ArgumentNullException("text");
             if (maxWidth < 1)
                 throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
             if (hangingIndent < 0)
@@ -743,6 +800,8 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Attempts to detect Unix-style and Mac-style line endings and converts them to Windows (\r\n).</summary>
         public static string UnifyLineEndings(this string input)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             string[] lines = Regex.Split(input, @"\r\n|\r|\n");
             return lines.JoinString("\r\n");
         }
@@ -753,6 +812,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static bool UrlStartsWith(this string url, string path)
         {
+            if (url == null)
+                throw new ArgumentNullException("url");
             return (url == path) || url.StartsWith(path + "/") || url.StartsWith(path + "?");
         }
 
@@ -762,6 +823,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string SubstringSafe(this string source, int startIndex)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             if (startIndex >= source.Length)
                 return "";
             else if (startIndex < 0)
@@ -776,6 +839,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static string SubstringSafe(this string source, int startIndex, int length)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             if (startIndex < 0)
             {
                 length += startIndex;
@@ -795,6 +860,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static bool EqualsNoCase(this string strthis, string str)
         {
+            if (strthis == null)
+                throw new ArgumentNullException("strthis");
             return strthis.Equals(str, StringComparison.InvariantCultureIgnoreCase);
         }
 
@@ -802,6 +869,8 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="StartsWith"/>
         public static bool EndsWith(this string str, char ch)
         {
+            if (str == null)
+                throw new ArgumentNullException("str");
             return str != null && str.Length > 0 && str[str.Length - 1] == ch;
         }
 
@@ -809,6 +878,8 @@ namespace RT.Util.ExtensionMethods
         /// <seealso cref="EndsWith"/>
         public static bool StartsWith(this string str, char ch)
         {
+            if (str == null)
+                throw new ArgumentNullException("str");
             return str != null && str.Length > 0 && str[0] == ch;
         }
 
@@ -818,6 +889,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A potentially colourful string.</returns>
         public static ConsoleColoredString Color(this string str, ConsoleColor color)
         {
+            if (str == null)
+                throw new ArgumentNullException("str");
             return new ConsoleColoredString(str, color);
         }
 

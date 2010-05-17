@@ -33,6 +33,8 @@ namespace RT.Util.Consoles
         /// <param name="color">The color to assign to the whole string.</param>
         public ConsoleColoredString(string input, ConsoleColor color)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
             _text = input;
             _colors = new ConsoleColor[input.Length];
             if (color != default(ConsoleColor))
