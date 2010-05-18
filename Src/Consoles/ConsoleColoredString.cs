@@ -199,6 +199,7 @@ namespace RT.Util.Consoles
         /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output at a specified character width.</summary>
         /// <param name="node">The root node of the EggsML parse tree.</param>
         /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
+        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
         /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the EggsML parse tree.</returns>
         /// <remarks><para>The following EggsML tags map to the following console colors:</para>
         /// <list type="bullet">
@@ -228,7 +229,7 @@ namespace RT.Util.Consoles
 
             if (data.WordText.Length > 0)
             {
-                if (data.Line == null || data.Line.Length == 0)
+                if (data.Line == null)
                     data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                 else
                     data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
@@ -276,7 +277,7 @@ namespace RT.Util.Consoles
                     if (txt[i] == '\n')
                     {
                         yield return data.Line ?? ConsoleColoredString.Empty;
-                        data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
+                        data.Line = null;
                     }
                 }
             }
