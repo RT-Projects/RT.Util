@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using RT.Util.Collections;
-using System.Collections;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -152,6 +149,9 @@ namespace RT.Util.ExtensionMethods
         /// <param name="index2">Receives the value of the second index (see remarks).</param>
         public static void BinarySearch<TK, TV>(this SortedList<TK, TV> list, TK key, out int index1, out int index2)
         {
+            if (list == null)
+                throw new ArgumentNullException("list");
+
             var keys = list.Keys;
             var comparer = Comparer<TK>.Default;
 
@@ -210,6 +210,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static T[] Subarray<T>(this T[] array, int startIndex)
         {
+            if (array == null)
+                throw new ArgumentNullException("array");
             if (startIndex < 0 || startIndex > array.Length)
                 throw new ArgumentOutOfRangeException();
             int length = array.Length - startIndex;
@@ -224,6 +226,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static T[] Subarray<T>(this T[] array, int startIndex, int length)
         {
+            if (array == null)
+                throw new ArgumentNullException("array");
             if (startIndex < 0 || length < 0 || startIndex + length > array.Length)
                 throw new ArgumentOutOfRangeException();
             T[] result = new T[length];
@@ -236,6 +240,10 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, int otherStartIndex, int length) where T : IEquatable<T>
         {
+            if (sourceArray == null)
+                throw new ArgumentNullException("sourceArray");
+            if (otherArray == null)
+                throw new ArgumentNullException("otherArray");
             if (sourceStartIndex < 0 || length < 0 || otherStartIndex < 0 || sourceStartIndex + length > sourceArray.Length || otherStartIndex + length > otherArray.Length)
                 throw new ArgumentOutOfRangeException();
             for (int i = 0; i < length; i++)
@@ -255,6 +263,10 @@ namespace RT.Util.ExtensionMethods
         /// <param name="sourceLength">Maximum length of the source array to search. The greatest index that can be returned is this minus the length of <paramref name="findWhat"/>.</param>
         public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int sourceLength) where T : IEquatable<T>
         {
+            if (sourceArray == null)
+                throw new ArgumentNullException("sourceArray");
+            if (findWhat == null)
+                throw new ArgumentNullException("findWhat"); 
             if (startIndex < 0 || startIndex > sourceArray.Length)
                 throw new ArgumentOutOfRangeException();
             var maxIndex = sourceLength - findWhat.Length;
@@ -272,6 +284,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll)
         {
+            if (coll == null)
+                throw new ArgumentNullException("coll");
             return new ReadOnlyCollection<T>(coll);
         }
 
@@ -282,6 +296,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll, ref ReadOnlyCollection<T> cache)
         {
+            if (coll == null)
+                throw new ArgumentNullException("coll");
             if (cache == null || !cache.IsWrapperFor(coll))
                 cache = new ReadOnlyCollection<T>(coll);
             return cache;
@@ -293,6 +309,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict)
         {
+            if (dict == null)
+                throw new ArgumentNullException("dict");
             return new ReadOnlyDictionary<TK, TV>(dict);
         }
 
@@ -303,6 +321,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict, ref ReadOnlyDictionary<TK, TV> cache)
         {
+            if (dict == null)
+                throw new ArgumentNullException("dict");
             if (cache == null || !cache.IsWrapperFor(dict))
                 cache = new ReadOnlyDictionary<TK, TV>(dict);
             return cache;
@@ -314,6 +334,10 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IDictionary<TKey, TValue> CopyMerge<TKey, TValue>(this IDictionary<TKey, TValue> first, IDictionary<TKey, TValue> second)
         {
+            if (first == null)
+                throw new ArgumentNullException("first");
+            if (second == null)
+                throw new ArgumentNullException("second");
             Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>(first);
             foreach (var kvp in second)
                 dict.Add(kvp.Key, kvp.Value);
@@ -321,10 +345,13 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Generates a representation of the specified byte array as hexadecimal numbers ("hexdump").
+        /// Generates a representation of the specified byte array as hexadecimal numbers (“hexdump”).
         /// </summary>
         public static string ToHex(this byte[] byteArray)
         {
+            if (byteArray == null)
+                throw new ArgumentNullException("byteArray");
+
             char[] charArr = new char[byteArray.Length * 2];
             var j = 0;
             for (int i = 0; i < byteArray.Length; i++)

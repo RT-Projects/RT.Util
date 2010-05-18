@@ -877,18 +877,17 @@ namespace RT.Util.CommandLine
         [LingoInGroup(TranslationGroup.CommandLineError)]
         public TrString
             IncompatibleCommandOrOption = @"The command or option, {0}, cannot be used in conjunction with {1}. Please specify only one of the two.",
-            IncompleteOption = @"The ""{0}"" option must be followed by an additional parameter.",
-            InvalidInteger = @"The ""{0}"" option expects an integer. The specified parameter does not constitute a valid integer.",
-            MissingOption = @"The option ""{0}"" is mandatory and must be specified.",
-            MissingOptionBefore = @"The option ""{0}"" is mandatory and must be specified before the ""{1}"" parameter.",
-            MissingParameter = @"The ""{0}"" parameter is missing.",
+            IncompleteOption = @"The {0} option must be followed by an additional parameter.",
+            InvalidInteger = @"The {0} option expects an integer. The specified parameter does not constitute a valid integer.",
+            MissingOption = @"The option {0} is mandatory and must be specified.",
+            MissingOptionBefore = @"The option {0} is mandatory and must be specified before the {1} parameter.",
+            MissingParameter = @"The {0} parameter is missing.",
             UnexpectedParameter = @"Unexpected parameter.",
-            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
-            UnrecognizedType = @"{0}.{1} is not of a recognized type.";
+            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.";
 
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
         public TrString
-            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by -? to list them.",
+            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by *$-?$* to list them.",
             Error = @"Error:",
             OptionsHeader = @"Options:",
             ParametersHeader = @"Required parameters:",
@@ -1000,12 +999,24 @@ namespace RT.Util.CommandLine
                 tr = new Translation();
 
             var strings = new List<ConsoleColoredString>();
-            foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
+            try
             {
-                strings.Add(line);
-                strings.Add(Environment.NewLine);
+                foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(EggsML.Parse("_*{0}*_ ".Fmt(EggsML.Escape(tr.Error)) + Message), wrapWidth, tr.Error.Translation.Length + 1))
+                {
+                    strings.Add(line);
+                    strings.Add(Environment.NewLine);
+                }
+                return new ConsoleColoredString(strings);
             }
-            return new ConsoleColoredString(strings);
+            catch (EggsMLParseException)
+            {
+                foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
+                {
+                    strings.Add(line);
+                    strings.Add(Environment.NewLine);
+                }
+                return new ConsoleColoredString(strings);
+            }
         }
         /// <summary>Constructor.</summary>
         public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
@@ -1060,7 +1071,7 @@ namespace RT.Util.CommandLine
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnrecognizedCommandOrOption.Fmt(commandOrOptionName), helpGenerator, inner)
+            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
         }
@@ -1078,7 +1089,7 @@ namespace RT.Util.CommandLine
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompatibleCommandOrOption.Fmt(later, earlier), helpGenerator, inner)
+            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*${0}$*`".Fmt(EggsML.Escape(later)), "`*${0}$*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
         {
             EarlierCommandOrOption = earlier;
             LaterCommandOrOption = later;
@@ -1097,7 +1108,8 @@ namespace RT.Util.CommandLine
         public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(typeName, fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnrecognizedTypeException(string typeName, string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnrecognizedType.Fmt(typeName, fieldName), helpGenerator, inner)
+            // This uses a literal (untranslatable) string because this error is not supposed to occur; the post-build check should catch it.
+            : base(tr => "{0}.{1} is not of a recognized type.".Fmt(typeName, fieldName), helpGenerator, inner)
         {
             TypeName = typeName;
             FieldName = fieldName;
@@ -1114,7 +1126,7 @@ namespace RT.Util.CommandLine
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompleteOption.Fmt(optionName), helpGenerator, inner)
+            : base(tr => tr.IncompleteOption.Fmt("`*${0}$*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
         {
             OptionName = optionName;
         }
@@ -1129,7 +1141,11 @@ namespace RT.Util.CommandLine
         /// <summary>Constructor.</summary>
         public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.UnexpectedParameter, helpGenerator, inner) { UnexpectedParameters = unexpectedParams; }
+        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.UnexpectedParameter, helpGenerator, inner)
+        {
+            UnexpectedParameters = unexpectedParams;
+        }
     }
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional positional parameters.</summary>
@@ -1141,7 +1157,11 @@ namespace RT.Util.CommandLine
         /// <summary>Constructor.</summary>
         public MissingParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public MissingParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.MissingParameter.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
+        public MissingParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.MissingParameter.Fmt("`*&{0}&*`".Fmt(EggsML.Escape(fieldName))), helpGenerator, inner)
+        {
+            FieldName = fieldName;
+        }
     }
 
     /// <summary>Specifies that a parameter that expected an integer was passed a string by the user that doesn't parse as an integer.</summary>
@@ -1153,7 +1173,11 @@ namespace RT.Util.CommandLine
         /// <summary>Constructor.</summary>
         public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(tr => tr.InvalidInteger.Fmt(fieldName), helpGenerator, inner) { FieldName = fieldName; }
+        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.InvalidInteger.Fmt("`*&<<{0}>>&*`".Fmt(EggsML.Escape(fieldName))), helpGenerator, inner)
+        {
+            FieldName = fieldName;
+        }
     }
 
     /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected additional mandatory options.</summary>
@@ -1174,18 +1198,18 @@ namespace RT.Util.CommandLine
         {
             string fieldFormat;
             if (field.FieldType.IsEnum)
-                fieldFormat = "{" + field.FieldType.GetFields().SelectMany(f => f.GetCustomAttributes<OptionAttribute>().Select(o => o.Name)).JoinString("|") + "}";
+                fieldFormat = "`*${{" + field.FieldType.GetFields().SelectMany(f => f.GetCustomAttributes<OptionAttribute>().Select(o => EggsML.Escape(o.Name))).JoinString("||") + "}}$*`";
             else
             {
-                var options = field.GetCustomAttributes<OptionAttribute>().Select(o => o.Name).ToArray();
+                var options = field.GetCustomAttributes<OptionAttribute>().Select(o => EggsML.Escape(o.Name)).ToArray();
                 if (options.Length > 1)
-                    fieldFormat = "{" + options.JoinString("|") + "}";
+                    fieldFormat = "`*${{" + options.JoinString("||") + "}}$*`";
                 else
-                    fieldFormat = options[0];
-                fieldFormat += " <" + field.Name + ">";
+                    fieldFormat = "`*$" + options[0] + "$*`";
+                fieldFormat += " `*&<<" + EggsML.Escape(field.Name) + ">>&*`";
             }
 
-            return beforeField == null ? tr.MissingOption.Fmt(fieldFormat) : tr.MissingOptionBefore.Fmt(fieldFormat, "<" + beforeField.Name + ">");
+            return beforeField == null ? tr.MissingOption.Fmt(fieldFormat) : tr.MissingOptionBefore.Fmt(fieldFormat, "`*&<<" + EggsML.Escape(beforeField.Name) + ">>&*`");
         }
     }
 }

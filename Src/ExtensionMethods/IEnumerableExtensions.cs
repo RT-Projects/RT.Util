@@ -16,6 +16,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             return source.Join(source);
         }
 
@@ -24,6 +26,12 @@ namespace RT.Util.ExtensionMethods
         /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return joinIterator(source, with);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, U>> joinIterator<T, U>(IEnumerable<T> source, IEnumerable<U> with)
         {
             // Make sure that 'with' is evaluated only once
             U[] withArr = with.ToArray();
@@ -38,6 +46,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> UniquePairsObsolete<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return uniquePairsObsoleteIterator(source);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> uniquePairsObsoleteIterator<T>(IEnumerable<T> source)
+        {
             // Make sure that 'source' is evaluated only once
             T[] arr = source.ToArray();
             for (int i = 0; i < arr.Length - 1; i++)
@@ -51,6 +65,12 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return uniquePairsIterator(source);
+        }
+        private static IEnumerable<Tuple<T, T>> uniquePairsIterator<T>(IEnumerable<T> source)
+        {
             // Make sure that 'source' is evaluated only once
             T[] arr = source.ToArray();
             for (int i = 0; i < arr.Length - 1; i++)
@@ -61,13 +81,19 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, T&gt;"/>s containing all consecutive pairs of the elements.
         /// </summary>
-        /// <param name="enumerable">The input enumerable.</param>
+        /// <param name="source">The input enumerable.</param>
         /// <param name="closed">If true, an additional pair containing the last and first element is included. For example,
         /// if the source collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref name="closed"/>
         /// is false, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is true.</param>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> enumerable, bool closed)
+        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
         {
-            var enumer = enumerable.GetEnumerator();
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return consecutivePairsIterator(source, closed);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> consecutivePairsIterator<T>(IEnumerable<T> source, bool closed)
+        {
+            var enumer = source.GetEnumerator();
             bool any = enumer.MoveNext();
             if (!any) yield break;
             T first = enumer.Current;
@@ -109,6 +135,14 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A collection containing the individual pieces taken from the original collection.</returns>
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
         {
+            if (splitWhat == null)
+                throw new ArgumentNullException("splitWhat");
+            if (splitWhere == null)
+                throw new ArgumentNullException("splitWhere");
+            return splitIterator(splitWhat, splitWhere);
+        }
+        private static IEnumerable<IEnumerable<T>> splitIterator<T>(IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
+        {
             int prevIndex = 0;
             foreach (var index in splitWhat.Select((elem, ind) => new { e = elem, i = ind }).Where(x => splitWhere(x.e)))
             {
@@ -118,28 +152,34 @@ namespace RT.Util.ExtensionMethods
             yield return splitWhat.Skip(prevIndex);
         }
 
-        /// <summary>
-        /// Adds a single element to the end of an IEnumerable.
-        /// </summary>
+        /// <summary>Adds a single element to the end of an IEnumerable.</summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing all the input elements, followed by the specified additional element.</returns>
-        public static IEnumerable<T> Concat<T>(this IEnumerable<T> input, T element)
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> source, T element)
         {
-            foreach (var e in input)
-                yield return e;
-            yield return element;
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return concatIterator(element, source, true);
         }
 
-        /// <summary>
-        /// Adds a single element to the start of an IEnumerable.
-        /// </summary>
+        /// <summary>Adds a single element to the start of an IEnumerable.</summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing the specified additional element, followed by all the input elements.</returns>
         public static IEnumerable<T> Concat<T>(this T head, IEnumerable<T> tail)
         {
-            yield return head;
-            foreach (var e in tail)
+            if (tail == null)
+                throw new ArgumentNullException("tail");
+            return concatIterator(head, tail, true);
+        }
+
+        private static IEnumerable<T> concatIterator<T>(T extraElement, IEnumerable<T> source, bool insertAtStart)
+        {
+            if (insertAtStart)
+                yield return extraElement;
+            foreach (var e in source)
                 yield return e;
+            if (!insertAtStart)
+                yield return extraElement;
         }
 
         /// <summary>
@@ -160,6 +200,10 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
         public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (comparer == null)
+                throw new ArgumentNullException("comparer");
             var arr = source.ToArray();
             if (arr.Length < 2)
                 return arr;
@@ -221,6 +265,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A collection containing all permutations of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             // Ensure that the source IEnumerable is evaluated only once
             return permutations(source.ToArray());
         }
@@ -243,6 +289,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A collection containing all subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
         public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             // Ensure that the source IEnumerable is evaluated only once
             return subsequences(source.ToArray());
         }
@@ -273,6 +321,8 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the first element in <paramref name="source"/>.</returns>
         public static T FirstOrDefault<T>(this IEnumerable<T> source, T @default)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             using (var e = source.GetEnumerator())
             {
                 if (!e.MoveNext())
@@ -292,6 +342,10 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static T FirstOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (predicate == null)
+                throw new ArgumentNullException("predicate");
             using (var e = source.GetEnumerator())
             {
                 while (true)
@@ -315,6 +369,12 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the transformed first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static TResult FirstOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, Func<TSource, TResult> resultSelector, TResult @default)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (predicate == null)
+                throw new ArgumentNullException("predicate");
+            if (resultSelector == null)
+                throw new ArgumentNullException("resultSelector");
             using (var e = source.GetEnumerator())
             {
                 while (true)
@@ -336,6 +396,10 @@ namespace RT.Util.ExtensionMethods
         /// Otherwise, throws InvalidOperationException.</returns>
         public static T AtMostOne<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (predicate == null)
+                throw new ArgumentNullException("predicate");
             using (var e = source.Where(predicate).GetEnumerator())
             {
                 if (!e.MoveNext())
@@ -353,6 +417,14 @@ namespace RT.Util.ExtensionMethods
         /// For example, [1, 2, 3, 4].ZipPad(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> ZipPad<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
+            if (@this == null)
+                throw new ArgumentNullException("this");
+            if (other == null)
+                throw new ArgumentNullException("other");
+            return zipPadIterator(@this, other);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipPadIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
@@ -375,6 +447,14 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> ZipTruncate<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
+            if (@this == null)
+                throw new ArgumentNullException("this");
+            if (other == null)
+                throw new ArgumentNullException("other");
+            return zipTruncateIterator(@this, other);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipTruncateIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
             bool more1 = enum1.MoveNext();
@@ -393,6 +473,14 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> Zip<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
+            if (@this == null)
+                throw new ArgumentNullException("this");
+            if (other == null)
+                throw new ArgumentNullException("other");
+            return zipIterator(@this, other);
+        }
+        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
+        {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
             while (enum1.MoveNext())
@@ -403,13 +491,17 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns the index of the first element in this <paramref name="enumerable"/> satisfying
+        /// Returns the index of the first element in this <paramref name="source"/> satisfying
         /// the specified <paramref name="condition"/>. If no such elements are found, returns -1.
         /// </summary>
-        public static int IndexOf<T>(this IEnumerable<T> enumerable, Func<T, bool> condition)
+        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> condition)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (condition == null)
+                throw new ArgumentNullException("condition");
             int index = 0;
-            foreach (var v in enumerable)
+            foreach (var v in source)
             {
                 if (condition(v))
                     return index;
@@ -421,6 +513,10 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
         public static T MinElement<T>(this IEnumerable<T> source, Func<T, int> valueSelector)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (valueSelector == null)
+                throw new ArgumentNullException("valueSelector");
             using (var enumerator = source.GetEnumerator())
             {
                 if (!enumerator.MoveNext())
@@ -447,6 +543,12 @@ namespace RT.Util.ExtensionMethods
         /// enumerating subsequent items.
         /// </summary>
         public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return skipLastIterator(source, count);
+        }
+        private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count)
         {
             var queue = new T[count];
             int headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
@@ -477,15 +579,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
         {
-            var queue = new Queue<T>(count + 1);
+            if (source == null)
+                throw new ArgumentNullException("source");
 
+            var queue = new Queue<T>(count + 1);
             foreach (var item in source)
             {
                 if (queue.Count == count)
                     queue.Dequeue();
                 queue.Enqueue(item);
             }
-
             return queue;
         }
 
@@ -498,6 +601,13 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
         public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence, IEqualityComparer<T> comparer)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (sequence == null)
+                throw new ArgumentNullException("sequence");
+            if (comparer == null)
+                throw new ArgumentNullException("comparer");
+
             using (var sourceEnum = source.GetEnumerator())
             using (var seqEnum = sequence.GetEnumerator())
             {

@@ -25,6 +25,8 @@ namespace RT.Util.Consoles
         /// <param name="input">The string to convert.</param>
         public static implicit operator ConsoleColoredString(string input)
         {
+            if (input == null)
+                return null;
             return new ConsoleColoredString(input, ConsoleColor.Gray);
         }
 
@@ -47,6 +49,10 @@ namespace RT.Util.Consoles
         /// <param name="characterColors">The colors to assign to each character in the string. The length of this array must match the number of characters in <paramref name="input"/>.</param>
         public ConsoleColoredString(string input, ConsoleColor[] characterColors)
         {
+            if (input == null)
+                throw new ArgumentNullException("input");
+            if (characterColors == null)
+                throw new ArgumentNullException("characterColors");
             if (input.Length != characterColors.Length)
                 throw new InvalidOperationException("The number of characters must match the number of colors.");
             _text = input;
@@ -208,7 +214,7 @@ namespace RT.Util.Consoles
         /// <para>Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In other words, the contents of a <c>+</c> tag are treated as if they were a single word.
         /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</para>
         /// </remarks>
-        public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth)
+        public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth, int hangingIndent = 0)
         {
             var data = new eggWalkWordWrapData
             {
@@ -217,7 +223,7 @@ namespace RT.Util.Consoles
                 WordColors = new List<ConsoleColor>()
             };
 
-            foreach (var ret in eggWalkWordWrap(node, wrapWidth, data, ConsoleColor.Gray, false, false))
+            foreach (var ret in eggWalkWordWrap(node, wrapWidth, hangingIndent, data, ConsoleColor.Gray, false, false))
                 yield return ret;
 
             if (data.WordText.Length > 0)
@@ -231,7 +237,7 @@ namespace RT.Util.Consoles
                 yield return data.Line;
         }
 
-        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, eggWalkWordWrapData data, ConsoleColor curColor, bool curLight, bool curNowrap)
+        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, int hangingIndent, eggWalkWordWrapData data, ConsoleColor curColor, bool curLight, bool curNowrap)
         {
             if (node is EggsText)
             {
@@ -240,16 +246,17 @@ namespace RT.Util.Consoles
                 {
                     if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
                     {
-                        if ((data.Line == null || data.Line.Length == 0) && data.WordText.Length >= wrapWidth)
+                        if (data.Line == null && data.WordText.Length >= wrapWidth)
                         {
                             yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             data.WordText = new StringBuilder();
                             data.WordColors = new List<ConsoleColor>();
+                            data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
                         }
                         else if (data.Line != null && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
                         {
                             yield return data.Line;
-                            data.Line = null;
+                            data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
                         }
                         data.WordText.Append(txt[i]);
                         data.WordColors.Add(curColor);
@@ -258,7 +265,7 @@ namespace RT.Util.Consoles
                     {
                         if (data.WordText != null && data.WordText.Length > 0)
                         {
-                            if (data.Line == null || data.Line.Length == 0)
+                            if (data.Line == null)
                                 data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             else
                                 data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
@@ -269,14 +276,14 @@ namespace RT.Util.Consoles
                     if (txt[i] == '\n')
                     {
                         yield return data.Line ?? ConsoleColoredString.Empty;
-                        data.Line = null;
+                        data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
                     }
                 }
             }
             else if (node is EggsGroup)
             {
                 foreach (var child in ((EggsGroup) node).Children)
-                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColor, curLight, curNowrap))
+                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
                         yield return ret;
             }
             else
@@ -296,7 +303,7 @@ namespace RT.Util.Consoles
                 }
                 foreach (var childList in tag.Children)
                     foreach (var child in childList)
-                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, data, curColor, curLight, curNowrap))
+                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
                             yield return ret;
             }
         }
