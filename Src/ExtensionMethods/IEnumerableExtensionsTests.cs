@@ -11,6 +11,23 @@ namespace RT.Util.ExtensionMethods
     public sealed class IEnumerableExtensionsTests
     {
         [Test]
+        public void TestUniquePairs()
+        {
+            var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
+            var iter = one.UniquePairs().GetEnumerator();
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = i + 1; j < 10; j++)
+                {
+                    Assert.IsTrue(iter.MoveNext());
+                    Assert.AreEqual(one[i], iter.Current.Item1);
+                    Assert.AreEqual(one[j], iter.Current.Item2);
+                }
+            }
+            Assert.IsFalse(iter.MoveNext());
+        }
+
+        [Test]
         public void TestJoin()
         {
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
@@ -29,32 +46,21 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestUniquePairs()
-        {
-            var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
-            var iter = one.UniquePairs().GetEnumerator();
-            for (int i = 0; i < 10; i++)
-            {
-                for (int j = i + 1; j < 10; j++)
-                {
-                    Assert.IsTrue(iter.MoveNext());
-                    Assert.AreEqual(one[i], iter.Current.Item1);
-                    Assert.AreEqual(one[j], iter.Current.Item2);
-                }
-            }
-            Assert.IsFalse(iter.MoveNext());
-        }
-
-        [Test]
-        public void TestSorted()
+        public void TestOrder()
         {
             List<int> a = new List<int>() { 9, 3, 5, 1, 2, 4, 2, 2 };
             List<int> aSorted = new List<int>(a.Order());
             Assert.IsTrue(aSorted.SequenceEqual(new List<int>() { 1, 2, 2, 2, 3, 4, 5, 9 }));
 
-            List<string> s = new List<string>() { "some", "blah", "stuff", "apple" };
+            List<string> s = new List<string>() { "some", "blah", "Stuff", "apple" };
             List<string> sSorted = new List<string>(s.Order());
-            Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "stuff" }));
+            Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "Stuff" }));
+
+            sSorted = new List<string>(s.Order(StringComparer.InvariantCultureIgnoreCase));
+            Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "some", "Stuff" }));
+
+            //sSorted = new List<string>(s.Order(StringComparer.InvariantCulture));
+            //Assert.IsTrue(sSorted.SequenceEqual(new List<string>() { "apple", "blah", "Stuff", "some" }));
         }
 
         public sealed class StringIntTupleComparer : IComparer<RT.Util.ObsoleteTuple.Tuple<string, int>>
