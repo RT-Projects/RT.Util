@@ -29,6 +29,8 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
+            if (with == null)
+                throw new ArgumentNullException("with");
             return joinIterator(source, with);
         }
         private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, U>> joinIterator<T, U>(IEnumerable<T> source, IEnumerable<U> with)
@@ -122,6 +124,10 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
         public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (comparison == null)
+                throw new ArgumentNullException("comparison");
             return source.OrderBy(x => x, new CustomComparer<T>(comparison));
         }
 
@@ -546,6 +552,10 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
+            if (count < 0)
+                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+            if (count == 0)
+                return source;
             return skipLastIterator(source, count);
         }
         private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count)
@@ -581,6 +591,10 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
+            if (count < 0)
+                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+            if (count == 0)
+                return new T[0];
 
             var queue = new Queue<T>(count + 1);
             foreach (var item in source)
@@ -589,7 +603,7 @@ namespace RT.Util.ExtensionMethods
                     queue.Dequeue();
                 queue.Enqueue(item);
             }
-            return queue;
+            return queue.AsEnumerable();
         }
 
         /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
