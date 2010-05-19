@@ -159,7 +159,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return concatIterator(element, source, true);
+            return concatIterator(element, source, false);
         }
 
         /// <summary>Adds a single element to the start of an IEnumerable.</summary>
