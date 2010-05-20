@@ -221,7 +221,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestAtMostOne()
         {
-            Assert.Throws(typeof(ArgumentNullException), () => IEnumerableExtensions.AtMostOne<string>(null, null));
+            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(null, null));
             Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(new string[0], null));
             Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(null, str => str != null));
 

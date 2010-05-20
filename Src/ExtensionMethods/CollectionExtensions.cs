@@ -20,6 +20,10 @@ namespace RT.Util.ExtensionMethods
         /// <param name="value">Value to add to the List located at the specified Key.</param>
         public static void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
         {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
                 dic[key] = new List<V>();
             dic[key].Add(value);
@@ -36,8 +40,14 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key1">Key at which the inner Dictionary is located in the outer Dictionary.</param>
         /// <param name="key2">Key at which the value is located in the inner Dictionary.</param>
         /// <param name="value">Value to add to the inner Dictionary.</param>
-        public static void AddSafe<K1, K2, V>(this Dictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value)
+        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value)
         {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key1 == null)
+                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key1))
                 dic[key1] = new Dictionary<K2, V>();
             dic[key1][key2] = value;
@@ -54,8 +64,14 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key1">Key at which the second-level Dictionary is located in the first-level Dictionary.</param>
         /// <param name="key2">Key at which the list is located in the second-level Dictionary.</param>
         /// <param name="value">Value to add to the List located at the specified Keys.</param>
-        public static void AddSafe<K1, K2, V>(this Dictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
+        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
         {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key1 == null)
+                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key1))
                 dic[key1] = new Dictionary<K2, List<V>>();
             if (!dic[key1].ContainsKey(key2))
@@ -64,14 +80,18 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Increments an integer in a <see cref="Dictionary&lt;K, V&gt;"/> by 1. If the specified key does
+        /// Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by 1. If the specified key does
         /// not exist in the current dictionary, the value 1 is inserted.
         /// </summary>
-        /// <typeparam name="K">Type of the key of the Dictionary.</typeparam>
+        /// <typeparam name="K">Type of the key of the dictionary.</typeparam>
         /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key">Key at which the list is located in the Dictionary.</param>
-        public static void IncSafe<K>(this Dictionary<K, int> dic, K key)
+        /// <param name="key">Key at which the list is located in the dictionary.</param>
+        public static void IncSafe<K>(this IDictionary<K, int> dic, K key)
         {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
                 dic[key] = 1;
             else
@@ -79,15 +99,19 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Increments an integer in a <see cref="Dictionary&lt;K, V&gt;"/> by the specified amount.
+        /// Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by the specified amount.
         /// If the specified key does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.
         /// </summary>
-        /// <typeparam name="K">Type of the key of the Dictionary.</typeparam>
+        /// <typeparam name="K">Type of the key of the dictionary.</typeparam>
         /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key">Key at which the list is located in the Dictionary.</param>
+        /// <param name="key">Key at which the list is located in the dictionary.</param>
         /// <param name="amount">The amount by which to increment the integer.</param>
-        public static void IncSafe<K>(this Dictionary<K, int> dic, K key, int amount)
+        public static void IncSafe<K>(this IDictionary<K, int> dic, K key, int amount)
         {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
                 dic[key] = amount;
             else
@@ -101,6 +125,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="list">List to shuffle.</param>
         public static void Shuffle<T>(this IList<T> list)
         {
+            if (list == null)
+                throw new ArgumentNullException("list");
             for (int j = list.Count; j >= 1; j--)
             {
                 int item = Rnd.Next(0, j);
@@ -120,6 +146,10 @@ namespace RT.Util.ExtensionMethods
         public static bool DictionaryEqual<TK, TV>(this IDictionary<TK, TV> dictA, IDictionary<TK, TV> dictB)
             where TV : IEquatable<TV>
         {
+            if (dictA == null)
+                throw new ArgumentNullException("dictA");
+            if (dictB == null)
+                throw new ArgumentNullException("dictB");
             if (dictA.Count != dictB.Count)
                 return false;
             foreach (var key in dictA.Keys)
@@ -151,6 +181,8 @@ namespace RT.Util.ExtensionMethods
         {
             if (list == null)
                 throw new ArgumentNullException("list");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in SortedList.");
 
             var keys = list.Keys;
             var comparer = Comparer<TK>.Default;
@@ -197,6 +229,10 @@ namespace RT.Util.ExtensionMethods
         /// <param name="defaultVal">Value to return if key is not contained in the dictionary.</param>
         public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultVal)
         {
+            if (dict == null)
+                throw new ArgumentNullException("dict");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
             TValue value;
             if (dict.TryGetValue(key, out value))
                 return value;
@@ -205,15 +241,15 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new
-        /// array containing all items from the specified index onwards.
+        /// Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new array containing
+        /// all items from the specified <paramref name="startIndex"/> onwards.
         /// </summary>
         public static T[] Subarray<T>(this T[] array, int startIndex)
         {
             if (array == null)
                 throw new ArgumentNullException("array");
             if (startIndex < 0 || startIndex > array.Length)
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative or extend beyond the end of the array.");
             int length = array.Length - startIndex;
             T[] result = new T[length];
             Array.Copy(array, startIndex, result, 0, length);
@@ -221,15 +257,17 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new
-        /// array containing "length" items from the specified index onwards.
+        /// Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new array containing
+        /// <paramref name="length"/> items from the specified <paramref name="startIndex"/> onwards.
         /// </summary>
         public static T[] Subarray<T>(this T[] array, int startIndex, int length)
         {
             if (array == null)
                 throw new ArgumentNullException("array");
-            if (startIndex < 0 || length < 0 || startIndex + length > array.Length)
-                throw new ArgumentOutOfRangeException();
+            if (startIndex < 0)
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+            if (length < 0 || startIndex + length > array.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or extend beyond the end of the array.");
             T[] result = new T[length];
             Array.Copy(array, startIndex, result, 0, length);
             return result;
@@ -266,7 +304,7 @@ namespace RT.Util.ExtensionMethods
             if (sourceArray == null)
                 throw new ArgumentNullException("sourceArray");
             if (findWhat == null)
-                throw new ArgumentNullException("findWhat"); 
+                throw new ArgumentNullException("findWhat");
             if (startIndex < 0 || startIndex > sourceArray.Length)
                 throw new ArgumentOutOfRangeException();
             var maxIndex = sourceLength - findWhat.Length;

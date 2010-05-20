@@ -592,7 +592,6 @@ namespace RT.Util.CommandLine
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
         /// <param name="rep">Object to report post-build errors to.</param>
         /// <param name="applicationTrType">The type of the translation object, derived from <see cref="TranslationBase"/>, which would be assigned to <see cref="ApplicationTr"/> at normal run-time.</param>
-        /// <remarks>If this method runs successfully, it guarantees that <see cref="UnrecognizedTypeException"/> does not occur at run-time.</remarks>
         public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
         {
             postBuildStep(rep, typeof(T), applicationTrType, false);
