@@ -65,7 +65,7 @@ namespace RT.Util.ExtensionMethods
             var sSorted = s.Order();
             Assert.IsTrue(sSorted.SequenceEqual(new[] { "apple", "blah", "some", "Stuff" }));
 
-            sSorted = s.Order(StringComparer.InvariantCultureIgnoreCase);
+            sSorted = s.Order(StringComparer.OrdinalIgnoreCase);
             Assert.IsTrue(sSorted.SequenceEqual(new[] { "apple", "blah", "some", "Stuff" }));
 
             sSorted = s.Order(StringComparer.Ordinal);
@@ -320,12 +320,12 @@ namespace RT.Util.ExtensionMethods
             Assert.IsFalse(input.StartsWith(new[] { "one", "two", "three", "four" }));
             Assert.IsFalse(input.StartsWith(new[] { "two" }));
 
-            Assert.IsTrue(input.StartsWith(new string[] { }, StringComparer.InvariantCultureIgnoreCase));
-            Assert.IsTrue(input.StartsWith(new[] { "One" }, StringComparer.InvariantCultureIgnoreCase));
-            Assert.IsTrue(input.StartsWith(new[] { "One", "Two" }, StringComparer.InvariantCultureIgnoreCase));
-            Assert.IsTrue(input.StartsWith(new[] { "One", "Two", "Three" }, StringComparer.InvariantCultureIgnoreCase));
-            Assert.IsFalse(input.StartsWith(new[] { "One", "Two", "Three", "Four" }, StringComparer.InvariantCultureIgnoreCase));
-            Assert.IsFalse(input.StartsWith(new[] { "Two" }, StringComparer.InvariantCultureIgnoreCase));
+            Assert.IsTrue(input.StartsWith(new string[] { }, StringComparer.OrdinalIgnoreCase));
+            Assert.IsTrue(input.StartsWith(new[] { "One" }, StringComparer.OrdinalIgnoreCase));
+            Assert.IsTrue(input.StartsWith(new[] { "One", "Two" }, StringComparer.OrdinalIgnoreCase));
+            Assert.IsTrue(input.StartsWith(new[] { "One", "Two", "Three" }, StringComparer.OrdinalIgnoreCase));
+            Assert.IsFalse(input.StartsWith(new[] { "One", "Two", "Three", "Four" }, StringComparer.OrdinalIgnoreCase));
+            Assert.IsFalse(input.StartsWith(new[] { "Two" }, StringComparer.OrdinalIgnoreCase));
         }
     }
 }
