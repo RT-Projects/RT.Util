@@ -94,7 +94,7 @@ namespace RT.Util
             if (subpathNormalized.Length <= parentPathNormalized.Length)
                 return false;
 
-            return subpathNormalized.Substring(0, parentPathNormalized.Length).Equals(parentPathNormalized, StringComparison.InvariantCultureIgnoreCase);
+            return subpathNormalized.Substring(0, parentPathNormalized.Length).Equals(parentPathNormalized, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace RT.Util
             if (subpathNormalized.Length < parentPathNormalized.Length)
                 return false;
 
-            return subpathNormalized.Substring(0, parentPathNormalized.Length - 1).Equals(parentPathNormalized.Substring(0, parentPathNormalized.Length - 1), StringComparison.InvariantCultureIgnoreCase);
+            return subpathNormalized.Substring(0, parentPathNormalized.Length - 1).Equals(parentPathNormalized.Substring(0, parentPathNormalized.Length - 1), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Expands all occurrences of "$(NAME)" in the specified string with the special folder path

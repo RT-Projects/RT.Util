@@ -862,7 +862,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (strthis == null)
                 throw new ArgumentNullException("strthis");
-            return strthis.Equals(str, StringComparison.InvariantCultureIgnoreCase);
+            return strthis.Equals(str, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Returns true if and only if this string ends with the specified character.</summary>

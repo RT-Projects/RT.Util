@@ -235,7 +235,7 @@ namespace RT.Util.ObsoleteTuple
             {
                 if (_stringInvariantCultureIgnoreCase2 == null)
                 {
-                    var comparer = StringComparer.InvariantCultureIgnoreCase;
+                    var comparer = StringComparer.OrdinalIgnoreCase;
                     _stringInvariantCultureIgnoreCase2 = new TupleComparer<string, string>(comparer, comparer, comparer, comparer);
                 }
                 return _stringInvariantCultureIgnoreCase2;

@@ -678,9 +678,9 @@ namespace RT.Util
             {
                 string val = (string) value;
                 result = false;
-                if (string.Equals(val, "True", StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(val, "True", StringComparison.OrdinalIgnoreCase))
                     result = true; // result = true, return true
-                else if (!string.Equals(val, "False", StringComparison.InvariantCultureIgnoreCase))
+                else if (!string.Equals(val, "False", StringComparison.OrdinalIgnoreCase))
                     return false;  // result = default(bool), return false
                 return true;       // result = false, return true
             }
@@ -852,11 +852,11 @@ namespace RT.Util
             else if (code == TypeCode.String)
             {
                 result = 0;
-                if (string.Compare((string) value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (string.Compare((string) value, "Inf", StringComparison.OrdinalIgnoreCase) == 0)
                     result = float.PositiveInfinity;
-                else if (string.Compare((string) value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "-Inf", StringComparison.OrdinalIgnoreCase) == 0)
                     result = float.NegativeInfinity;
-                else if (string.Compare((string) value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = float.NaN;
 
                 if (result == 0)
@@ -911,11 +911,11 @@ namespace RT.Util
             else if (code == TypeCode.String)
             {
                 result = 0;
-                if (string.Compare((string) value, "Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                if (string.Compare((string) value, "Inf", StringComparison.OrdinalIgnoreCase) == 0)
                     result = double.PositiveInfinity;
-                else if (string.Compare((string) value, "-Inf", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "-Inf", StringComparison.OrdinalIgnoreCase) == 0)
                     result = double.NegativeInfinity;
-                else if (string.Compare((string) value, "NaN", StringComparison.InvariantCultureIgnoreCase) == 0)
+                else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = double.NaN;
 
                 if (result == 0)
