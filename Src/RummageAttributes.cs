@@ -20,4 +20,12 @@ namespace RT.Util
         /// <summary>Constructor.</summary>
         public RummageNoRenameAttribute() { }
     }
+
+    /// <summary>Instructs Rummage to inline a specific method. </summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageInlineAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public RummageInlineAttribute() { }
+    }
 }
