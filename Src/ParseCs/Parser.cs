@@ -349,12 +349,17 @@ namespace RT.KitchenSink.ParseCs
             }
             return ret;
         }
-        private static List<CsParameter> parseParameterList(TokenJar tok, ref int i)
+        private static List<CsParameter> parseParameterList(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
             bool square = tok[i].IsBuiltin("[");
 
             if (!square && !tok[i].IsBuiltin("("))
-                throw new ParseException("'(' + parameter list + ')' expected.", tok[i].Index);
+            {
+                if (tryNotToThrow)
+                    return null;
+                else
+                    throw new ParseException("'(' + parameter list + ')' expected.", tok[i].Index);
+            }
 
             List<CsParameter> ret = new List<CsParameter>();
             if (tok[i + 1].IsBuiltin(square ? "]" : ")"))
@@ -366,7 +371,13 @@ namespace RT.KitchenSink.ParseCs
             do
             {
                 i++;
-                try { ret.Add(parseParameter(tok, ref i)); }
+                try
+                {
+                    var parsed = parseParameter(tok, ref i, tryNotToThrow);
+                    if (parsed == null)
+                        return null;
+                    ret.Add(parsed);
+                }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsParameter)
@@ -382,7 +393,7 @@ namespace RT.KitchenSink.ParseCs
 
             return ret;
         }
-        private static CsParameter parseParameter(TokenJar tok, ref int i)
+        private static CsParameter parseParameter(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
             var customAttribs = new List<CsCustomAttributeGroup>();
             while (tok[i].IsBuiltin("["))
@@ -409,12 +420,14 @@ namespace RT.KitchenSink.ParseCs
                 isParams = true;
                 i++;
             }
-            var type = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
+            var result = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays, tryNotToThrow);
+            if (result == null || (tryNotToThrow && tok[i].Type != TokenType.Identifier))
+                return null;
             var name = tok[i].Identifier();
             i++;
-            return new CsParameter { Type = type, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs };
+            return new CsParameter { Type = result.Item1, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs };
         }
-        private static Tuple<CsTypeName, bool> parseTypeName(TokenJar tok, ref int i, typeIdentifierFlags flags)
+        private static Tuple<CsTypeName, bool> parseTypeName(TokenJar tok, ref int i, typeIdentifierFlags flags, bool tryNotToThrow = false)
         {
             var ty = new CsConcreteTypeName();
             if (tok[i].IsIdentifier("global") && tok[i + 1].IsBuiltin("::"))
@@ -432,6 +445,8 @@ namespace RT.KitchenSink.ParseCs
                     partAbstract = new CsSimpleNameBuiltin { Builtin = tok[j].TokenStr };
                 else if (ty.Parts.Count > 0 && (flags & typeIdentifierFlags.Lenient) != 0 && tok[j].Type != TokenType.Identifier)
                     return new Tuple<CsTypeName, bool>(ty, false);
+                else if (tok[j].Type != TokenType.Identifier && tryNotToThrow)
+                    return null;
                 else
                     partAbstract = new CsSimpleNameIdentifier { Name = tok[j].Identifier("Type expected.") };
                 j++;
@@ -2016,9 +2031,11 @@ namespace RT.KitchenSink.ParseCs
         #endregion
 
         #region Expressions (except Linq)
-        private static CsExpression parseExpression(TokenJar tok, ref int i)
+        private static CsExpression parseExpression(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionConditional(tok, ref i);
+            var left = parseExpressionConditional(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             if (tok[i].Type == TokenType.Builtin && assignmentOperators.Contains(tok[i].TokenStr))
             {
                 AssignmentOperator type;
@@ -2043,9 +2060,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionConditional(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionConditional(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionCoaslesce(tok, ref i);
+            var left = parseExpressionCoaslesce(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             bool haveQ = false;
             if (tok[i].IsBuiltin("?"))
             {
@@ -2091,9 +2110,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionCoaslesce(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionCoaslesce(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionBoolOr(tok, ref i);
+            var left = parseExpressionBoolOr(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("??"))
             {
                 i++;
@@ -2107,9 +2128,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionBoolOr(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionBoolOr(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionBoolAnd(tok, ref i);
+            var left = parseExpressionBoolAnd(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("||"))
             {
                 i++;
@@ -2123,9 +2146,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionBoolAnd(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionBoolAnd(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionLogicalOr(tok, ref i);
+            var left = parseExpressionLogicalOr(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("&&"))
             {
                 i++;
@@ -2139,9 +2164,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionLogicalOr(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionLogicalOr(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionLogicalXor(tok, ref i);
+            var left = parseExpressionLogicalXor(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("|"))
             {
                 i++;
@@ -2155,9 +2182,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionLogicalXor(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionLogicalXor(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionLogicalAnd(tok, ref i);
+            var left = parseExpressionLogicalAnd(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("^"))
             {
                 i++;
@@ -2171,9 +2200,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionLogicalAnd(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionLogicalAnd(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionEquality(tok, ref i);
+            var left = parseExpressionEquality(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("&"))
             {
                 i++;
@@ -2187,9 +2218,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionEquality(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionEquality(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionRelational(tok, ref i);
+            var left = parseExpressionRelational(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("==") || tok[i].IsBuiltin("!="))
             {
                 BinaryOperator op = tok[i].IsBuiltin("==") ? BinaryOperator.Eq : BinaryOperator.NotEq;
@@ -2204,9 +2237,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionRelational(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionRelational(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionShift(tok, ref i);
+            var left = parseExpressionShift(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("<") || tok[i].IsBuiltin(">") || tok[i].IsBuiltin("<=") || tok[i].IsBuiltin(">=") || tok[i].IsBuiltin("is") || tok[i].IsBuiltin("as"))
             {
                 if (tok[i].IsBuiltin("is") || tok[i].IsBuiltin("as"))
@@ -2236,9 +2271,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionShift(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionShift(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionAdditive(tok, ref i);
+            var left = parseExpressionAdditive(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("<<") || tok[i].IsBuiltin(">>"))
             {
                 BinaryOperator op = tok[i].IsBuiltin("<<") ? BinaryOperator.Shl : BinaryOperator.Shr;
@@ -2253,9 +2290,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionAdditive(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionAdditive(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionMultiplicative(tok, ref i);
+            var left = parseExpressionMultiplicative(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("+") || tok[i].IsBuiltin("-"))
             {
                 BinaryOperator op = tok[i].IsBuiltin("+") ? BinaryOperator.Plus : BinaryOperator.Minus;
@@ -2270,9 +2309,11 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionMultiplicative(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionMultiplicative(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionUnary(tok, ref i);
+            var left = parseExpressionUnary(tok, ref i, tryNotToThrow);
+            if (left == null)
+                return null;
             while (tok[i].IsBuiltin("*") || tok[i].IsBuiltin("/") || tok[i].IsBuiltin("%"))
             {
                 BinaryOperator op = tok[i].IsBuiltin("*") ? BinaryOperator.Times : tok[i].IsBuiltin("/") ? BinaryOperator.Div : BinaryOperator.Mod;
@@ -2287,7 +2328,7 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionUnary(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionUnary(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
             if (tok[i].Type != TokenType.Builtin)
                 return parseExpressionPrimary(tok, ref i);
@@ -2304,13 +2345,13 @@ namespace RT.KitchenSink.ParseCs
                 case "++": op = UnaryOperator.PrefixInc; break;
                 case "--": op = UnaryOperator.PrefixDec; break;
                 default:
-                    return parseExpressionPrimary(tok, ref i);
+                    return parseExpressionPrimary(tok, ref i, tryNotToThrow);
             }
             i++;
             var operand = parseExpressionUnary(tok, ref i);
             return new CsUnaryOperatorExpression { Operand = operand, Operator = op };
         }
-        private static CsExpression parseExpressionPrimary(TokenJar tok, ref int i)
+        private static CsExpression parseExpressionPrimary(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
             var left = parseExpressionIdentifierOrKeyword(tok, ref i);
             while (tok[i].IsBuiltin(".") || tok[i].IsBuiltin("->") || tok[i].IsBuiltin("(") || tok[i].IsBuiltin("[") || tok[i].IsBuiltin("++") || tok[i].IsBuiltin("--"))
@@ -2351,7 +2392,12 @@ namespace RT.KitchenSink.ParseCs
                 }
             }
             if (left is CsSimpleNameExpression && ((CsSimpleNameExpression) left).SimpleName is CsSimpleNameBuiltin)
-                throw new ParseException("'{0}' cannot be an expression by itself.".Fmt(left.ToString()), tok[i - 1].Index);
+            {
+                if (tryNotToThrow)
+                    return null;
+                else
+                    throw new ParseException("'{0}' cannot be an expression by itself.".Fmt(left.ToString()), tok[i - 1].Index);
+            }
             return left;
         }
         private static List<CsArgument> parseArgumentList(TokenJar tok, ref int i, out bool isIndexer)
@@ -2611,8 +2657,8 @@ namespace RT.KitchenSink.ParseCs
                     try
                     {
                         var j = i;
-                        var tried = parseParameterList(tok, ref j);
-                        if (tok[j].IsBuiltin("=>"))
+                        var tried = parseParameterList(tok, ref j, tryNotToThrow: true);
+                        if (tried != null && tok[j].IsBuiltin("=>"))
                         {
                             i = j + 1;
                             parameters = tried;
@@ -2691,17 +2737,19 @@ namespace RT.KitchenSink.ParseCs
                 // Does it parse as a type?
                 try
                 {
-                    typeName = parseTypeName(tok, ref afterType, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1;
-                    if (!tok[afterType].IsBuiltin(")"))
-                        typeName = null;
-                    afterType++;
+                    var result = parseTypeName(tok, ref afterType, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays, true);
+                    if (result != null && tok[afterType].IsBuiltin(")"))
+                    {
+                        typeName = result.Item1;
+                        afterType++;
+                    }
                 }
                 catch { }
 
                 // Does it parse as a parenthesised expression?
                 try
                 {
-                    expression = parseExpression(tok, ref afterExpression);
+                    expression = parseExpression(tok, ref afterExpression, true);
                     if (!tok[afterExpression].IsBuiltin(")"))
                         throw new ParseException("')' expected after parenthesised expression.", tok[afterExpression].Index);
                     afterExpression++;
