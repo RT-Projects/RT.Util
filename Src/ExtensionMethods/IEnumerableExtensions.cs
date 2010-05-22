@@ -640,13 +640,44 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Creates a <see cref="Queue&lt;T&gt;"/> from an enumerable collection.</summary>
         public static Queue<T> ToQueue<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             return new Queue<T>(source);
         }
 
         /// <summary>Creates a <see cref="Stack&lt;T&gt;"/> from an enumerable collection.</summary>
         public static Stack<T> ToStack<T>(this IEnumerable<T> source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             return new Stack<T>(source);
+        }
+
+        /// <summary>Returns a collection of integer containing the indexes at which the elements of the source collection match the given predicate.</summary>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The source collection whose elements are tested using <paramref name="predicate"/>.</param>
+        /// <param name="predicate">The predicate against which the elements of <paramref name="source"/> are tested.</param>
+        /// <returns>A collection containing the zero-based indexes of all the matching elements, in increasing order.</returns>
+        public static IEnumerable<int> SelectIndexWhere<T>(this IEnumerable<T> source, Predicate<T> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (predicate == null)
+                throw new ArgumentNullException("predicate");
+            return selectIndexWhereIterator(source, predicate);
+        }
+        private static IEnumerable<int> selectIndexWhereIterator<T>(this IEnumerable<T> source, Predicate<T> predicate)
+        {
+            int i = 0;
+            using (var e = source.GetEnumerator())
+            {
+                while (e.MoveNext())
+                {
+                    if (predicate(e.Current))
+                        yield return i;
+                    i++;
+                }
+            }
         }
     }
 }

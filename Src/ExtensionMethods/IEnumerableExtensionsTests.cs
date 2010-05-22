@@ -13,7 +13,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestUniquePairs()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.UniquePairs<string>(null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.UniquePairs<string>(null); });
 
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
             var iter = one.UniquePairs().GetEnumerator();
@@ -32,9 +32,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestJoin()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Join<string, string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Join<string, string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Join<string, string>(null, new string[0]));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(null, new string[0]); });
 
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
             var two = new string[] { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
@@ -54,8 +54,8 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestOrder()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Order<string>(null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Order<string>(null, StringComparer.Ordinal));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Order<string>(null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Order<string>(null, StringComparer.Ordinal); });
 
             int[] a = new[] { 9, 3, 5, 1, 2, 4, 2, 2 };
             var aSorted = a.Order();
@@ -75,9 +75,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestOrderBy()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderBy<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderBy<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderBy<string>(null, (a, b) => a.CompareTo(b)));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(null, (a, b) => a.CompareTo(b)); });
 
             var s = new[] { "some", "blah", "Stuff", "apple" };
             var sSorted = s.OrderBy((a, b) => a[1].CompareTo(b[1]));
@@ -87,9 +87,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestSplit()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Split<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Split<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Split<string>(null, str => str != null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Split<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Split<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Split<string>(null, str => str != null); });
 
             var input = new[] { 1, 47, 4, 47, 5, 6, 1, 47, 47, 47, 0 };
             var result = input.Split(i => i == 47).ToArray();
@@ -105,11 +105,11 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestConcat()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Concat<string>((string) null, null));
-            Assert.DoesNotThrow(() => IEnumerableExtensions.Concat<string>((string) null, new string[0]));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Concat<string>((string) null, null); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.Concat<string>((string) null, new string[0]); });
 
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Concat<string>(null, (string) null));
-            Assert.DoesNotThrow(() => IEnumerableExtensions.Concat<string>(new string[0], (string) null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Concat<string>(null, (string) null); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.Concat<string>(new string[0], (string) null); });
 
             var input = new[] { 1, 2, 3, 4 };
             Assert.IsTrue(input.Concat(5).SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
@@ -119,10 +119,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestOrderLazy()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderLazy<string>(null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderLazy<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderLazy<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.OrderLazy<string>(null, StringComparer.Ordinal));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderLazy<string>(null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderLazy<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderLazy<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderLazy<string>(null, StringComparer.Ordinal); });
 
             // This tests that OrderLazy() is a _stable_ sort (the integers are for verifying the stability)
             Random rnd = new Random();
@@ -160,7 +160,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestPermutations()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Permutations<string>(null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Permutations<string>(null); });
 
             var input = new[] { 1, 2, 3 };
             var result = input.Permutations().ToArray();
@@ -178,7 +178,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestSubsequences()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Subsequences<string>(null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Subsequences<string>(null); });
 
             var input = new[] { 1, 2, 3 };
             var result = input.Subsequences().ToArray();
@@ -198,11 +198,11 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestFirstOrDefault()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.FirstOrDefault<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.FirstOrDefault<string>(null, null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.FirstOrDefault<string>(new string[0], null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.FirstOrDefault<string>(null, str => str != null, null));
-            Assert.DoesNotThrow(() => IEnumerableExtensions.FirstOrDefault<string>(new string[0], str => str != null, null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(new string[0], null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, str => str != null, null); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.FirstOrDefault<string>(new string[0], str => str != null, null); });
 
             var input = new[] { "one", "two", "three", "four" };
 
@@ -221,9 +221,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestAtMostOne()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.AtMostOne<string>(null, str => str != null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(null, str => str != null); });
 
             var input = new[] { "one", "two", "three" };
 
@@ -235,15 +235,15 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestZipPadAndTruncate()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Zip<string, string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Zip<string, string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.Zip<string, string>(null, new string[0]));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipPad<string, string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipPad<string, string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipPad<string, string>(null, new string[0]));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipTruncate<string, string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipTruncate<string, string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.ZipTruncate<string, string>(null, new string[0]));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(null, new string[0]); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(null, new string[0]); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(null, new string[0]); });
 
 #warning Add fuller testing to this when it no longer uses the obsolete Tuple<>
         }
@@ -251,9 +251,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestIndexOf()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.IndexOf<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.IndexOf<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.IndexOf<string>(null, str => str != null));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, str => str != null); });
 
             var input = new[] { 1, 2, 3, 4 };
             Assert.AreEqual(2, input.IndexOf(i => i == 3));
@@ -264,9 +264,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestMinElement()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.MinElement<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.MinElement<string>(new[] { "" }, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.MinElement<string>(null, str => str.Length));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(new[] { "" }, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(null, str => str.Length); });
             Assert.Throws<InvalidOperationException>(() => IEnumerableExtensions.MinElement<string>(new string[0], str => str.Length));
 
             var input = new[] { "one", "two", "three", "four" };
@@ -279,7 +279,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestSkipLast()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.SkipLast<string>(null, 5));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.SkipLast<string>(null, 5); });
 
             var input = new[] { "one", "two", "three", "four" };
             Assert.IsTrue(input.SkipLast(0).SequenceEqual(input));
@@ -290,7 +290,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestTakeLast()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.TakeLast<string>(null, 5));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.TakeLast<string>(null, 5); });
 
             var input = new[] { "one", "two", "three", "four" };
             Assert.IsTrue(input.TakeLast(0).SequenceEqual(new string[0]));
@@ -301,16 +301,16 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestStartsWith()
         {
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, new string[0]));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(new string[0], null, null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, null, StringComparer.Ordinal));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(new string[0], new string[0], null));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(null, new string[0], StringComparer.Ordinal));
-            Assert.Throws<ArgumentNullException>(() => IEnumerableExtensions.StartsWith<string>(new string[0], null, StringComparer.Ordinal));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, new string[0]); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(new string[0], null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, null, StringComparer.Ordinal); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(new string[0], new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(null, new string[0], StringComparer.Ordinal); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.StartsWith<string>(new string[0], null, StringComparer.Ordinal); });
 
             var input = new[] { "one", "two", "three" };
             Assert.IsTrue(input.StartsWith(new string[] { }));
@@ -326,6 +326,25 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(input.StartsWith(new[] { "One", "Two", "Three" }, StringComparer.OrdinalIgnoreCase));
             Assert.IsFalse(input.StartsWith(new[] { "One", "Two", "Three", "Four" }, StringComparer.OrdinalIgnoreCase));
             Assert.IsFalse(input.StartsWith(new[] { "Two" }, StringComparer.OrdinalIgnoreCase));
+        }
+
+        [Test]
+        public void TestSelectIndexWhere()
+        {
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.SelectIndexWhere<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.SelectIndexWhere<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.SelectIndexWhere<string>(null, s => true); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.SelectIndexWhere<string>(new string[0], s => true); });
+
+            var test = new[] { "one", "two", "three", "four", "five" };
+            Assert.IsTrue(test.SelectIndexWhere(s => s.Length == 3).SequenceEqual(new[] { 0, 1 }));
+            Assert.IsTrue(test.SelectIndexWhere(s => s[0] == 't').SequenceEqual(new[] { 1, 2 }));
+            Assert.IsTrue(test.SelectIndexWhere(s => s == null).SequenceEqual(new int[0]));
+
+            var test2 = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            Assert.IsTrue(test2.SelectIndexWhere(i => i % 3 == 0).SequenceEqual(new[] { 2, 5, 8 }));
+            Assert.IsTrue(test2.SelectIndexWhere(i => false).SequenceEqual(new int[0]));
+            Assert.IsTrue(test2.SelectIndexWhere(i => true).SequenceEqual(Enumerable.Range(0, 10)));
         }
     }
 }

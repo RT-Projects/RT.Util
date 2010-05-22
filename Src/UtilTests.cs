@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Text;
 using NUnit.Direct;
 
 namespace RT.Util
@@ -8,6 +9,7 @@ namespace RT.Util
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
             NUnitDirect.RunTestsOnAssembly(Assembly.GetEntryAssembly());
             Console.WriteLine("Press Enter to exit.");
             Console.ReadLine();
