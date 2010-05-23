@@ -910,7 +910,7 @@ namespace RT.Util.CommandLine
             MissingOptionBefore = @"The option {0} is mandatory and must be specified before the {1} parameter.",
             MissingParameter = @"The parameter {0} is mandatory and must be specified.",
             MissingParameterBefore = @"The parameter {0} is mandatory and must be specified before the {1} parameter.",
-            UnexpectedParameter = @"Unexpected parameter.",
+            UnexpectedParameter = @"Unexpected parameter: {0}",
             UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.";
 
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
@@ -1150,7 +1150,7 @@ namespace RT.Util.CommandLine
         public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnexpectedParameter, helpGenerator, inner)
+            : base(tr => tr.UnexpectedParameter.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(unexpectedParams.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
         {
             UnexpectedParameters = unexpectedParams;
         }
