@@ -30,15 +30,15 @@ namespace RT.Util.Collections
         }
     }
 
-    /// <summary>Encapsulates an IComparer&lt;T&gt; that uses a comparison function provided as a delegate.</summary>
-    /// <typeparam name="T">The type of elements to be compared.</typeparam>
+    /// <summary>Encapsulates an IEqualityComparer&lt;T&gt; that uses an equality comparison function provided as a delegate.</summary>
+    /// <typeparam name="T">The type of elements to be compared for equality.</typeparam>
     public class CustomEqualityComparer<T> : IEqualityComparer<T>
     {
         private Func<T, T, bool> _comparison;
         private Func<T, int> _getHashCode;
 
         /// <summary>Constructor.</summary>
-        /// <param name="comparison">Provides the comparison function for this comparer.</param>
+        /// <param name="comparison">Provides the comparison function for this equality comparer.</param>
         public CustomEqualityComparer(Func<T, T, bool> comparison, Func<T, int> getHashCode) { _comparison = comparison; _getHashCode = getHashCode; }
         /// <summary>Compares two elements for equality.</summary>
         /// <remarks>This method implements <see cref="IEqualityComparer&lt;T&gt;.Equals(T,T)"/>.</remarks>
