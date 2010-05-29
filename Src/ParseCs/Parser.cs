@@ -2968,6 +2968,7 @@ namespace RT.KitchenSink.ParseCs
             tok[i].Assert("into");
             i++;
             linq.Elements.Add(new CsLinqIntoClause { ItemName = tok[i].Identifier() });
+            i++;
             parseLinqQueryBody(linq, tok, ref i);
         }
         private static CsLinqFromClause parseLinqFromClause(TokenJar tok, ref int i)
