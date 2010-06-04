@@ -425,7 +425,15 @@ namespace RT.KitchenSink.ParseCs
                 return null;
             var name = tok[i].Identifier();
             i++;
-            return new CsParameter { Type = result.Item1, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs };
+            CsExpression defaultValue = null;
+            if (tok[i].IsBuiltin("="))
+            {
+                i++;
+                defaultValue = parseExpression(tok, ref i, tryNotToThrow);
+                if (defaultValue == null)
+                    return null;
+            }
+            return new CsParameter { Type = result.Item1, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs, DefaultValue = defaultValue };
         }
         private static Tuple<CsTypeName, bool> parseTypeName(TokenJar tok, ref int i, typeIdentifierFlags flags, bool tryNotToThrow = false)
         {
@@ -2412,10 +2420,18 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin(isIndexer ? "]" : ")"))
             {
                 ArgumentType inoutref = ArgumentType.In;
+                string argName = null;
                 try
                 {
                     while (true)
                     {
+                        argName = null;
+                        if (tok[i].Type == TokenType.Identifier && tok.IndexExists(i + 1) && tok[i + 1].IsBuiltin(":"))
+                        {
+                            argName = tok[i].Identifier();
+                            i += 2;
+                        }
+                        inoutref = ArgumentType.In;
                         if (tok[i].IsBuiltin("ref"))
                         {
                             inoutref = ArgumentType.Ref;
@@ -2426,7 +2442,7 @@ namespace RT.KitchenSink.ParseCs
                             inoutref = ArgumentType.Out;
                             i++;
                         }
-                        arguments.Add(new CsArgument { ArgumentType = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
+                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentType = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
                         if (tok[i].IsBuiltin(isIndexer ? "]" : ")"))
                             break;
                         else if (!tok[i].IsBuiltin(","))
@@ -2437,7 +2453,7 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        arguments.Add(new CsArgument { ArgumentType = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
+                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentType = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
                     throw new ParseException(e.Message, e.Index, arguments);
                 }
             }

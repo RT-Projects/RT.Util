@@ -594,6 +594,7 @@ namespace RT.KitchenSink.ParseCs
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public CsTypeName Type;
         public string Name;
+        public CsExpression DefaultValue;
         public bool IsThis, IsOut, IsRef, IsParams;
         public override string ToString()
         {
@@ -609,6 +610,11 @@ namespace RT.KitchenSink.ParseCs
             sb.Append(Type.ToString());
             sb.Append(' ');
             sb.Append(Name.Sanitize());
+            if (DefaultValue != null)
+            {
+                sb.Append(" = ");
+                sb.Append(DefaultValue.ToString());
+            }
             return sb.ToString();
         }
     }
@@ -1300,11 +1306,23 @@ namespace RT.KitchenSink.ParseCs
 
     public sealed class CsArgument : CsNode
     {
+        public string ArgumentName;
         public ArgumentType ArgumentType;
         public CsExpression ArgumentExpression;
         public override string ToString()
         {
-            return (ArgumentType == ArgumentType.Out ? "out " : ArgumentType == ArgumentType.Ref ? "ref " : string.Empty) + ArgumentExpression.ToString();
+            var sb = new StringBuilder();
+            if (ArgumentName != null)
+            {
+                sb.Append(ArgumentName);
+                sb.Append(": ");
+            }
+            if (ArgumentType == ArgumentType.Out)
+                sb.Append("out ");
+            else if (ArgumentType == ArgumentType.Ref)
+                sb.Append("ref ");
+            sb.Append(ArgumentExpression.ToString());
+            return sb.ToString();
         }
     }
 

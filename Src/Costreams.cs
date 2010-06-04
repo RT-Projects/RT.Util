@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace RT.KitchenSink
 {
-    static partial class Ut
+    static partial class Ks
     {
         /// <summary>Runs the two specified processes in parallel, allowing one to generate data by writing it to a stream, and the other to consume the data by reading it from the stream.</summary>
         /// <param name="writingAction">An action that generates data and writes it to a stream.</param>

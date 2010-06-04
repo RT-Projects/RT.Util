@@ -60,6 +60,7 @@
     <Compile Include="EventSim\EventCallback.cs" />
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
+    <Compile Include="IL.cs" />
     <Compile Include="Lex\LexException.cs" />
     <Compile Include="Lex\LexPosition.cs" />
     <Compile Include="Lex\LexReader.cs" />
