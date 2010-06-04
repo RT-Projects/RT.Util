@@ -57,7 +57,7 @@ namespace RT.Util.ExtensionMethods
             byte[] buf = new byte[length];
             int read = stream.FillBuffer(buf, 0, length);
             if (read < length)
-                Array.Resize(ref buf, length);
+                Array.Resize(ref buf, read);
             return buf;
         }
 
