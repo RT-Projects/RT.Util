@@ -21,6 +21,22 @@ namespace RT.Util
         public RummageNoRenameAttribute() { }
     }
 
+    /// <summary>Instructs Rummage to keep all the methods, constructors and fields in a specific type.</summary>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Delegate | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageNoRemoveAnythingAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public RummageNoRemoveAnythingAttribute() { }
+    }
+
+    /// <summary>Instructs Rummage to keep the original name of all the methods, fields and nested types within a specific type.</summary>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Delegate | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageNoRenameAnythingAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public RummageNoRenameAnythingAttribute() { }
+    }
+
     /// <summary>Instructs Rummage to inline a specific method that would otherwise not be automatically inlined.</summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
     public sealed class RummageInlineAttribute : Attribute
