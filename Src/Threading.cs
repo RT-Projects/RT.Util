@@ -232,9 +232,9 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Encapsulates a class performing multiple related yet independent tasks on the same thread
+    /// <para>Encapsulates a class performing multiple related yet independent tasks on the same thread
     /// at a certain minimum interval each. Schedules the activity that is the most late at every opportunity,
-    /// but will never execute more than one activity at a time (as they all share the same thread).
+    /// but will never execute more than one activity at a time (as they all share the same thread).</para>
     /// <para>Threading: unsafe (call public methods on the creating thread only)</para>
     /// </summary>
     public abstract class PeriodicMultiple : Periodic
