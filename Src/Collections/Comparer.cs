@@ -39,6 +39,7 @@ namespace RT.Util.Collections
 
         /// <summary>Constructor.</summary>
         /// <param name="comparison">Provides the comparison function for this equality comparer.</param>
+        /// <param name="getHashCode">Provides the hash function for this equality comparer.</param>
         public CustomEqualityComparer(Func<T, T, bool> comparison, Func<T, int> getHashCode) { _comparison = comparison; _getHashCode = getHashCode; }
         /// <summary>Compares two elements for equality.</summary>
         /// <remarks>This method implements <see cref="IEqualityComparer&lt;T&gt;.Equals(T,T)"/>.</remarks>
