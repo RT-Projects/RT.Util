@@ -104,7 +104,7 @@ namespace RT.Util.Xml
             return (T) objectFromXElement(typeof(T), elem, baseDir, parentNode);
         }
 
-        private static object objectFromXElement(Type type, XElement elem, string baseDir, object parentNode)
+        private static object objectFromXElement(Type type, XElement elem, string baseDir, object parentNode, Dictionary<string, object> remember = null)
         {
             if (elem.Attribute("null") != null)
                 return null;
@@ -137,9 +137,20 @@ namespace RT.Util.Xml
             {
                 Type[] typeParameters;
 
+                if (remember == null)
+                    remember = new Dictionary<string, object>();
+
                 // If it's a nullable type, just determine the inner type and start again
                 if (type.TryGetInterfaceGenericParameters(typeof(Nullable<>), out typeParameters))
-                    return objectFromXElement(typeParameters[0], elem, baseDir, parentNode);
+                    return objectFromXElement(typeParameters[0], elem, baseDir, parentNode, remember);
+
+                var refAttr = elem.Attribute("ref");
+                if (refAttr != null)
+                {
+                    if (!remember.ContainsKey(refAttr.Value))
+                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).");
+                    return remember[refAttr.Value];
+                }
 
                 // Check if it's an array, collection or dictionary
                 Type keyType = null, valueType = null;
@@ -168,6 +179,9 @@ namespace RT.Util.Xml
                     else
                         outputList = Activator.CreateInstance(type);
 
+                    if (elem.Attribute("refid") != null)
+                        remember[elem.Attribute("refid").Value] = outputList;
+
                     var addMethod = type.IsArray
                         ? type.GetMethod("Set", new Type[] { typeof(int), valueType })
                         : keyType == null
@@ -186,7 +200,7 @@ namespace RT.Util.Xml
                         }
                         var nullAttr = itemTag.Attribute("null");
                         if (nullAttr == null)
-                            value = objectFromXElement(valueType, itemTag, baseDir, parentNode);
+                            value = objectFromXElement(valueType, itemTag, baseDir, parentNode, remember);
                         if (type.IsArray)
                             addMethod.Invoke(outputList, new object[] { i++, value });
                         else if (keyType == null)
@@ -225,7 +239,7 @@ namespace RT.Util.Xml
                         throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
                     }
 
-                    xmlIntoObject(elem, ret, realType, baseDir, parentNode);
+                    xmlIntoObject(elem, ret, realType, baseDir, parentNode, remember);
                     return ret;
                 }
             }
@@ -258,8 +272,17 @@ namespace RT.Util.Xml
             xmlIntoObject(elem, intoObject, intoObject.GetType(), ".", null);
         }
 
-        private static void xmlIntoObject(XElement xml, object intoObject, Type type, string baseDir, object parentNode)
+        private static void xmlIntoObject(XElement xml, object intoObject, Type type, string baseDir, object parentNode, Dictionary<string, object> remember = null)
         {
+            if (xml.Attribute("refid") != null)
+            {
+                // ‘remember’ is only null if this was called from XmlFileIntoObject() or ReadXmlFileIntoObject();
+                // objectFromXElement() always passes in a non-null instance
+                if (remember == null)
+                    remember = new Dictionary<string, object>();
+                remember[xml.Attribute("refid").Value] = intoObject;
+            }
+
             foreach (var field in type.GetAllFields())
             {
                 string rFieldName = field.Name.TrimStart('_');
@@ -320,7 +343,7 @@ namespace RT.Util.Xml
                 {
                     var tag = xml.Elements(rFieldName);
                     if (tag.Any())
-                        field.SetValue(intoObject, objectFromXElement(field.FieldType, tag.First(), baseDir, intoObject));
+                        field.SetValue(intoObject, objectFromXElement(field.FieldType, tag.First(), baseDir, intoObject, remember));
                 }
             }
         }
@@ -364,7 +387,8 @@ namespace RT.Util.Xml
 
         private static void saveObjectToXmlFile(object saveObject, Type declaredType, string filename, string baseDir)
         {
-            var x = objectToXElement(saveObject, declaredType, baseDir, "item");
+            int i = 0;
+            var x = objectToXElement(saveObject, declaredType, baseDir, "item", null, ref i);
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -377,7 +401,8 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject)
         {
-            return objectToXElement(saveObject, typeof(T), null, "item");
+            int i = 0;
+            return objectToXElement(saveObject, typeof(T), null, "item", null, ref i);
         }
 
         /// <summary>
@@ -390,7 +415,8 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir)
         {
-            return objectToXElement(saveObject, typeof(T), baseDir, "item");
+            int i = 0;
+            return objectToXElement(saveObject, typeof(T), baseDir, "item", null, ref i);
         }
 
         /// <summary>
@@ -405,10 +431,11 @@ namespace RT.Util.Xml
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir, string tagName)
         {
-            return objectToXElement(saveObject, typeof(T), baseDir, tagName);
+            int i = 0;
+            return objectToXElement(saveObject, typeof(T), baseDir, tagName, null, ref i);
         }
 
-        private static XElement objectToXElement(object saveObject, Type declaredType, string baseDir, string tagName)
+        private static XElement objectToXElement(object saveObject, Type declaredType, string baseDir, string tagName, Dictionary<object, XElement> remember, ref int nextId)
         {
             XElement elem = new XElement(tagName);
 
@@ -466,6 +493,23 @@ namespace RT.Util.Xml
             }
             else
             {
+                if (remember == null)
+                    remember = new Dictionary<object, XElement>();
+
+                if (remember.ContainsKey(saveObject))
+                {
+                    var attr = remember[saveObject].Attribute("refid");
+                    if (attr == null)
+                    {
+                        attr = new XAttribute("refid", nextId.ToString());
+                        nextId++;
+                        remember[saveObject].Add(attr);
+                    }
+                    elem.Add(new XAttribute("ref", attr.Value));
+                    return elem;
+                }
+                remember.Add(saveObject, elem);
+
                 Type keyType = null, valueType = null;
                 Type[] typeParameters;
 
@@ -490,7 +534,7 @@ namespace RT.Util.Xml
                     {
                         object key = null;
                         var value = keyType == null ? enumerator.Current : kvpType.GetProperty("Value").GetValue(enumerator.Current, null);
-                        var tag = objectToXElement(value, valueType, baseDir, "item");
+                        var tag = objectToXElement(value, valueType, baseDir, "item", remember, ref nextId);
                         if (keyType != null)
                         {
                             key = kvpType.GetProperty("Key").GetValue(enumerator.Current, null);
@@ -558,7 +602,7 @@ namespace RT.Util.Xml
                             }
                             else
                             {
-                                elem.Add(objectToXElement(saveValue, field.FieldType, baseDir, rFieldName));
+                                elem.Add(objectToXElement(saveValue, field.FieldType, baseDir, rFieldName, remember, ref nextId));
                             }
                         }
                     }
