@@ -326,6 +326,8 @@ namespace RT.Util.Dialogs
             Form.AcceptButton = Btn[AcceptButton];
             Form.CancelButton = Btn[CancelButton];
 
+            Form.Shown += (dummy1, dummy2) => Btn[AcceptButton].Focus(); // otherwise the AcceptButton has no effect
+
             // --- Ding
 
             if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
