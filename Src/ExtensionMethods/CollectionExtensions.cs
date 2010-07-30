@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
@@ -402,6 +403,49 @@ namespace RT.Util.ExtensionMethods
                 j++;
             }
             return new string(charArr);
+        }
+
+        /// <summary>Removes all entries from a dictionary that satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">Dictionary to operate on.</param>
+        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        public static void RemoveAll<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<KeyValuePair<TKey, TVal>> predicate)
+        {
+            foreach (var kvp in dict.Where(kvp => predicate(kvp)).ToArray())
+                dict.Remove(kvp.Key);
+        }
+
+        /// <summary>Removes all entries from a dictionary whose keys satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">Dictionary to operate on.</param>
+        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        public static void RemoveAllByKey<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<TKey> predicate)
+        {
+            foreach (var kvp in dict.Where(kvp => predicate(kvp.Key)).ToArray())
+                dict.Remove(kvp.Key);
+        }
+
+        /// <summary>Removes all entries from a dictionary whose values satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">Dictionary to operate on.</param>
+        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        public static void RemoveAllByValue<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<TVal> predicate)
+        {
+            foreach (var kvp in dict.Where(kvp => predicate(kvp.Value)).ToArray())
+                dict.Remove(kvp.Key);
+        }
+
+        /// <summary>Enqueues several values into a <see cref="Queue&lt;T&gt;"/>.</summary>
+        /// <typeparam name="T">Type of the elements in the queue.</typeparam>
+        /// <param name="queue">Queue to insert items into.</param>
+        /// <param name="values">Values to enqueue.</param>
+        public static void EnqueueRange<T>(this Queue<T> queue, IEnumerable<T> values)
+        {
+            foreach (var value in values)
+                queue.Enqueue(value);
         }
     }
 }
