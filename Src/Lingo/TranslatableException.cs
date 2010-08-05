@@ -10,7 +10,7 @@ namespace RT.Util.Lingo
     /// </summary>
     /// <typeparam name="TTranslation">The type containing the translatable strings.</typeparam>
     [Serializable]
-    public abstract class TranslatableException<TTranslation> : RTException where TTranslation : TranslationBase, new()
+    public abstract class TranslatableException<[RummageKeepArgumentsReflectionSafe]TTranslation> : RTException where TTranslation : TranslationBase, new()
     {
         private static TTranslation _defaultTranslation;
         private Func<TTranslation, string> _getMessage;

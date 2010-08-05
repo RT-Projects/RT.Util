@@ -27,20 +27,20 @@ namespace RT.Util.Lingo
         public Language SelectedLanguage { get { return ((LanguageListItem) _lstLanguages.SelectedItem).Language; } }
 
         /// <summary>Presents the user with a dialog to select a language from, and (if they click "OK") creates a new XML file for the new translation.</summary>
-        /// <typeparam name="T">Class containing the translatable strings.</typeparam>
+        /// <typeparam name="TTranslation">Class containing the translatable strings.</typeparam>
         /// <param name="moduleName">Name of the module being translated (forms part of the translation's XML file).</param>
         /// <param name="setLanguage">Callback invoked by this method to change the language used by the program.</param>
         /// <param name="fontName">Specifies the name of the font to use in this dialog, or null for the default font.</param>
         /// <param name="fontSize">Specifies the size of the font to use in this dialog. Ignored if <paramref name="fontName"/> is null.</param>
         /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
-        public static T CreateTranslation<T>(string moduleName, SetLanguage<T> setLanguage, string fontName, float fontSize) where T : TranslationBase, new()
+        public static TTranslation CreateTranslation<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, string fontName, float fontSize) where TTranslation : TranslationBase, new()
         {
             using (TranslationCreateForm tcf = new TranslationCreateForm())
             {
                 tcf.Font = fontName != null ? new Font(fontName, fontSize, FontStyle.Regular) : SystemFonts.MessageBoxFont;
                 if (tcf.ShowDialog() == DialogResult.OK)
                 {
-                    T trans = new T { Language = tcf.SelectedLanguage };
+                    TTranslation trans = new TTranslation { Language = tcf.SelectedLanguage };
                     string iso = trans.Language.GetIsoLanguageCode();
                     string xmlFile = PathUtil.AppPathCombine("Translations", moduleName + "." + iso + ".xml");
                     if (!File.Exists(xmlFile))

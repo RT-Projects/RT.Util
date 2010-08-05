@@ -9,7 +9,7 @@ namespace RT.Util.Lingo
     /// Helps an application using Lingo to display language selection UI in the main menu.
     /// </summary>
     /// <typeparam name="TTranslation">The type of the class holding the program's translation.</typeparam>
-    public sealed class LanguageMainMenuHelper<TTranslation> where TTranslation : TranslationBase, new()
+    public sealed class LanguageMainMenuHelper<[RummageKeepArgumentsReflectionSafe]TTranslation> where TTranslation : TranslationBase, new()
     {
         private string _programTitle;
         private string _moduleName;

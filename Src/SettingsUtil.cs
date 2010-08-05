@@ -47,7 +47,7 @@ namespace RT.Util
         /// </summary>
         /// <param name="settings">Destination - the settings class will be placed here</param>
         /// <param name="filename">The name of the file to load the settings from</param>
-        private static void LoadSettings<TSettings>(out TSettings settings, string filename) where TSettings : new()
+        private static void LoadSettings<[RummageKeepArgumentsReflectionSafe]TSettings>(out TSettings settings, string filename) where TSettings : new()
         {
             if (!File.Exists(filename))
             {
@@ -80,7 +80,7 @@ namespace RT.Util
         /// </remarks>
         /// <param name="settings">Destination - the settings class will be placed here.</param>
         /// <typeparam name="TSettings">The type of the settings class.</typeparam>
-        public static void LoadSettings<TSettings>(out TSettings settings) where TSettings : new()
+        public static void LoadSettings<[RummageKeepArgumentsReflectionSafe]TSettings>(out TSettings settings) where TSettings : new()
         {
             var type = typeof(TSettings);
             var attr = type.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
@@ -156,7 +156,7 @@ namespace RT.Util
         /// <param name="settings">The settings class to be saved</param>
         /// <param name="filename">The name of the file to load the settings from</param>
         /// <param name="onFailure">Specifies how failures should be handled</param>
-        internal static void SaveSettings<TSettings>(TSettings settings, string filename, OnFailure onFailure)
+        internal static void SaveSettings<[RummageKeepArgumentsReflectionSafe]TSettings>(TSettings settings, string filename, OnFailure onFailure)
         {
             SaveSettings(settings, typeof(TSettings), filename, onFailure);
         }
@@ -171,7 +171,7 @@ namespace RT.Util
         /// <typeparam name="TSettings">The type of the settings object.</typeparam>
         /// <param name="settings">The settings class to be saved</param>
         /// <param name="onFailure">Specifies how failures should be handled</param>
-        public static void SaveSettings<TSettings>(TSettings settings, OnFailure onFailure)
+        public static void SaveSettings<[RummageKeepArgumentsReflectionSafe]TSettings>(TSettings settings, OnFailure onFailure)
         {
             SaveSettings(settings, typeof(TSettings), onFailure);
         }

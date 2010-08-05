@@ -16,7 +16,7 @@ namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
     /// <typeparam name="TTranslation">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
-    public sealed class TranslationForm<TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
+    public sealed class TranslationForm<[RummageKeepArgumentsReflectionSafe]TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
     {
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;

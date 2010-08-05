@@ -35,7 +35,7 @@ namespace RT.Util.CommandLine
     /// </description></item>
     /// </list>
     /// </remarks>
-    public sealed class CommandLineParser<T>
+    public sealed class CommandLineParser<[RummageKeepArgumentsReflectionSafe]T>
     {
         /// <summary>
         /// Gets or sets the application's translation object which contains the localised strings that document the command-line options and commands.
@@ -877,7 +877,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see cref="CommandLineParser&lt;T&gt;"/>.</summary>
     /// <typeparam name="TTranslation">A translation-string class containing the error messages that can occur during validation.</typeparam>
-    public interface ICommandLineValidatable<in TTranslation> where TTranslation : TranslationBase
+    public interface ICommandLineValidatable<[RummageKeepArgumentsReflectionSafe]in TTranslation> where TTranslation : TranslationBase
     {
         /// <summary>When implemented in a class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
         /// <param name="tr">Contains translations for the messages that may occur during validation.</param>
