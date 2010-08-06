@@ -49,7 +49,7 @@ namespace RT.Util
 
 
     /// <summary>Instructs Rummage to refrain from making any changes to a specific type.</summary>
-    [AttributeUsage(AttributeTargetSets.DefinitionsWithAccessModifiers | AttributeTargetSets.DefinitionsWithNames | AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargetSets.DefinitionsWithAccessModifiers | AttributeTargetSets.DefinitionsWithNames | AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class RummageKeepReflectionSafeAttribute : Attribute
     {
     }
@@ -57,6 +57,12 @@ namespace RT.Util
     /// <summary>Instructs Rummage to keep all the types reflection-safe which are passed in for the given generic parameter.</summary>
     [AttributeUsage(AttributeTargets.GenericParameter, Inherited = false, AllowMultiple = false)]
     public sealed class RummageKeepArgumentsReflectionSafeAttribute : Attribute
+    {
+    }
+
+    /// <summary>Use only on custom-attribute class declarations. Instructs Rummage to keep everything reflection-safe that uses the given custom attribute.</summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageKeepUsersReflectionSafeAttribute : Attribute
     {
     }
 }

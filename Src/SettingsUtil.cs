@@ -342,7 +342,7 @@ namespace RT.Util
     /// <summary>
     /// Describes the intended usage of a "settings" class to <see cref="SettingsUtil"/> methods.
     /// </summary>
-    [global::System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    [global::System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class SettingsAttribute : Attribute
     {
         private string _appName;

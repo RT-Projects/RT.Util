@@ -935,7 +935,7 @@ namespace RT.Util.CommandLine
     /// <summary>
     /// Use this on a sub-class of an abstract class to specify the command the user must use to invoke that class.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
     public sealed class CommandNameAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -946,7 +946,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Use this to specify that a command-line parameter is mandatory.</summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class IsMandatoryAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -957,7 +957,7 @@ namespace RT.Util.CommandLine
     /// Use this to specify that a command-line parameter is positional, i.e. is not invoked by an option that starts with "-".
     /// This automatically implies that the parameter is mandatory, so <see cref="IsMandatoryAttribute"/> is not necessary.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class IsPositionalAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -965,7 +965,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Use this on a command-line option of an enum type to specify the default value in case the option is not specified.</summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class DefaultValueAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -979,7 +979,7 @@ namespace RT.Util.CommandLine
     /// Use this to specify that a field in a class can be specified on the command line using an option, for example "-a" or "--option-name".
     /// The option name MUST begin with a "-".
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
     public sealed class OptionAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
@@ -990,7 +990,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Use this attribute in a non-internationalized (single-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class DocumentationLiteralAttribute : Attribute
     {
         /// <summary>Retrieves the documentation for the corresponding member.</summary>
@@ -1001,7 +1001,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
     public sealed class UndocumentedAttribute : Attribute
     {
         /// <summary>Constructor.</summary>

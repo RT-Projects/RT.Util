@@ -625,7 +625,7 @@ namespace RT.Util.Xml
     /// Use <see cref="XmlDeferredObject&lt;T&gt;.Id"/> to retrieve the ID used to reference the object. You can also capture the ID into the class or struct T by using the 
     /// <see cref="XmlIdAttribute"/> attribute within that class or struct.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property), RummageKeepUsersReflectionSafe]
     public sealed class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
@@ -642,7 +642,7 @@ namespace RT.Util.Xml
     /// <see cref="XmlIgnoreIfEmptyAttribute"/> will cause the distinction between null and an empty collection
     /// to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true), RummageKeepUsersReflectionSafe]
     public sealed class XmlIgnoreIfDefaultAttribute : Attribute { }
 
     /// <summary>
@@ -652,14 +652,14 @@ namespace RT.Util.Xml
     /// with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty
     /// collection to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true), RummageKeepUsersReflectionSafe]
     public sealed class XmlIgnoreIfEmptyAttribute : Attribute { }
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the field's or property's value is equal to the specified value.
     /// Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type's default value and the specified value to be lost.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property), RummageKeepUsersReflectionSafe]
     public sealed class XmlIgnoreIfAttribute : Attribute
     {
         private object _value;
@@ -675,14 +675,14 @@ namespace RT.Util.Xml
     /// its parent node in the XML tree. If the field or automatically-implemented property is of an incompatible type, a run-time exception occurs. If there was no parent node, the field or 
     /// automatically-implemented property is set to null. When persisting objects, fields and automatically-implemented properties with this attribute are skipped.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property), RummageKeepUsersReflectionSafe]
     public sealed class XmlParentAttribute : Attribute { }
 
     /// <summary>
     /// When reconstructing persisted objects using <see cref="XmlClassify"/>, a field or automatically-implemented property with this attribute receives the ID that was used to refer to the
     /// XML file that stores this object.  See <see cref="XmlFollowIdAttribute"/> for more information. The field or automatically-implemented property must be of type string.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property), RummageKeepUsersReflectionSafe]
     public sealed class XmlIdAttribute : Attribute { }
 
     /// <summary>
