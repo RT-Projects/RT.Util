@@ -11,8 +11,12 @@ namespace RT.Util
         {
             Console.OutputEncoding = Encoding.UTF8;
             NUnitDirect.RunTestsOnAssembly(Assembly.GetEntryAssembly());
-            Console.WriteLine("Press Enter to exit.");
-            Console.ReadLine();
+
+            if (args.Length != 1 || args[0] != "--no-wait")
+            {
+                Console.WriteLine("Press Enter to exit.");
+                Console.ReadLine();
+            }
         }
     }
 }
