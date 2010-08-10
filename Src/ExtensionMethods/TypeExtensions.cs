@@ -91,5 +91,15 @@ namespace RT.Util.ExtensionMethods
         {
             return member.IsDefined(typeof(T), inherit);
         }
+
+        /// <summary>
+        /// Indicates whether one or more instance of the specified attribute type is applied to this parameter.
+        /// </summary>
+        /// <typeparam name="T">The type of attribute to search for.</typeparam>
+        /// <param name="parameter">Parameter whose custom attributes to search.</param>
+        public static bool IsDefined<T>(this ParameterInfo parameter)
+        {
+            return parameter.IsDefined(typeof(T), false /* This argument is ignored */);
+        }
     }
 }
