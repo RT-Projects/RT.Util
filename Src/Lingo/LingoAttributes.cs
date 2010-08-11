@@ -24,7 +24,12 @@ namespace RT.Util.Lingo
         private readonly object _group;
         /// <summary>Constructor for a <see cref="LingoInGroupAttribute"/> attribute.</summary>
         /// <param name="group">Specifies that a translatable string is in a particular group.</param>
-        public LingoInGroupAttribute(object group) { _group = group; }
+        public LingoInGroupAttribute(object group)
+        {
+            if (!(group is Enum))
+                throw new InvalidOperationException(@"Only enum types are allowed on a [LingoInGroup] attribute.");
+            _group = group;
+        }
 
         /// <summary>Gets the group a translatable string is in.</summary>
         public object Group { get { return _group; } }
