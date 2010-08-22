@@ -396,7 +396,7 @@ namespace RT.Util
                     filename += ".AllUsers." + Environment.MachineName;
                     break;
                 default:
-                    throw new InternalError("unreachable (97628)");
+                    throw new InternalErrorException("unreachable (97628)");
             }
             filename = filename.FilenameCharactersEscape() + ".Settings.xml";
 
@@ -415,7 +415,7 @@ namespace RT.Util
                     case SettingsKind.UserAndMachineSpecific:
                         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
                     default:
-                        throw new InternalError("unreachable (97629)");
+                        throw new InternalErrorException("unreachable (97629)");
                 }
             }
         }

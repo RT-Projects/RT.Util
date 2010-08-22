@@ -184,12 +184,14 @@ namespace RT.Util
             return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Build, v.Revision); // in our use: v.Build is build#, v.Revision is p4 changelist
         }
 
-        /// <summary>Checks the specified condition and causes the debugger to break if it is false. (Has no effect in non-DEBUG builds.)</summary>
-        [System.Diagnostics.Conditional("DEBUG")]
+        /// <summary>Checks the specified condition and causes the debugger to break if it is false. Throws an <see cref="InternalErrorException"/> afterwards.</summary>
         public static void Assert(bool assertion)
         {
             if (!assertion)
+            {
                 System.Diagnostics.Debugger.Break();
+                throw new InternalErrorException("Assertion failure");
+            }
         }
     }
 }

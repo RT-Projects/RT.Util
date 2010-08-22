@@ -24,11 +24,13 @@ namespace RT.Util
     {
     }
 
+    /// <summary>Instructs rummage to avoid un-nesting the specified type.</summary>
     [AttributeUsage(AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoUnnestAttribute : Attribute
     {
     }
 
+    /// <summary>Instructs rummage to keep the original access modifier of a specific element.</summary>
     [AttributeUsage(AttributeTargetSets.DefinitionsWithAccessModifiers, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoMarkPublicAttribute : Attribute
     {

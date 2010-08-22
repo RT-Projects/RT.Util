@@ -168,7 +168,7 @@ namespace RT.KitchenSink.Collections
                 {
                     any = true;
                     if (!object.ReferenceEquals(linkto, toadd))
-                        throw new InternalError("Equal poset nodes are not the same instance");
+                        throw new InternalErrorException("Equal poset nodes are not the same instance");
                 }
                 else if ((upwards && partcmp == PartialComparisonResult.Greater) || (!upwards && partcmp == PartialComparisonResult.Less))
                 {
@@ -250,25 +250,25 @@ namespace RT.KitchenSink.Collections
             checkLinksTowardsMax(null, _minimals);
             checkLinksTowardsMin(null, _maximals);
             if (_minimals.Any(n => n._smallers.Count != 0))
-                throw new InternalError("Minimals have smaller links");
+                throw new InternalErrorException("Minimals have smaller links");
             if (_maximals.Any(n => n._largers.Count != 0))
-                throw new InternalError("Maximals have larger links");
+                throw new InternalErrorException("Maximals have larger links");
         }
 
         private void checkLinksTowardsMax(PosetNode<T> node, Set<PosetNode<T>> links)
         {
             if (node != null)
             {
-                if (FindEqual(node.Elements[0]) == null) throw new InternalError("Not findable!");
-                if (findEqualDownwards(node.Elements[0]) == null) throw new InternalError("Not findable!");
+                if (FindEqual(node.Elements[0]) == null) throw new InternalErrorException("Not findable!");
+                if (findEqualDownwards(node.Elements[0]) == null) throw new InternalErrorException("Not findable!");
                 foreach (var l in links)
                     if (!l._smallers.Contains(node))
-                        throw new InternalError("Links inconsistent");
+                        throw new InternalErrorException("Links inconsistent");
             }
 
             foreach (var pair in links.UniquePairs())
                 if (pair.Item1 == pair.Item2)
-                    throw new InternalError("Duplicate link");
+                    throw new InternalErrorException("Duplicate link");
             foreach (var l in links)
                 checkLinksTowardsMax(l, l._largers);
         }
@@ -277,16 +277,16 @@ namespace RT.KitchenSink.Collections
         {
             if (node != null)
             {
-                if (FindEqual(node.Elements[0]) == null) throw new InternalError("Not findable!");
-                if (findEqualDownwards(node.Elements[0]) == null) throw new InternalError("Not findable!");
+                if (FindEqual(node.Elements[0]) == null) throw new InternalErrorException("Not findable!");
+                if (findEqualDownwards(node.Elements[0]) == null) throw new InternalErrorException("Not findable!");
                 foreach (var l in links)
                     if (!l._largers.Contains(node))
-                        throw new InternalError("Links inconsistent");
+                        throw new InternalErrorException("Links inconsistent");
             }
 
             foreach (var pair in links.UniquePairs())
                 if (pair.Item1 == pair.Item2)
-                    throw new InternalError("Duplicate link");
+                    throw new InternalErrorException("Duplicate link");
             foreach (var l in links)
                 checkLinksTowardsMin(l, l._smallers);
         }

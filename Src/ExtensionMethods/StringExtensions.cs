@@ -424,7 +424,7 @@ namespace RT.Util.ExtensionMethods
                     result[resultIndex++] = (byte) (v0 << 2 | v1 >> 4);
                 }
                 else
-                    throw new InternalError("Internal error in Base64UrlDecode");
+                    throw new InternalErrorException("Internal error in Base64UrlDecode");
             }
 
             return result;

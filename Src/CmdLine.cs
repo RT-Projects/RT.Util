@@ -84,7 +84,7 @@ namespace RT.Util.CommandLine
                 var defaultValue = defaultAttr == null ? null : defaultAttr.DefaultValue;
 
                 if (positional && mandatory && haveSeenOptionalPositional)
-                    throw new InternalError("Cannot have positional mandatory parameter after a positional optional one.");
+                    throw new InternalErrorException("Cannot have positional mandatory parameter after a positional optional one.");
 
                 if (positional && !mandatory)
                     haveSeenOptionalPositional = true;
@@ -285,7 +285,7 @@ namespace RT.Util.CommandLine
                 }
                 else
                     // This only happens if the post-build check didn't run
-                    throw new InternalError("{0}.{1} is not of a recognized type.".Fmt(type.FullName, field.Name));
+                    throw new InternalErrorException("{0}.{1} is not of a recognized type.".Fmt(type.FullName, field.Name));
             }
 
             bool suppressOptions = false;

@@ -75,15 +75,15 @@ namespace RT.Util
     /// to verify its own consistency is where this exception should be thrown, for
     /// example in "unreachable" code safeguards.
     /// </summary>
-    public sealed class InternalError : RTException
+    public sealed class InternalErrorException : RTException
     {
         /// <summary>Creates an exception instance with the specified message.</summary>
-        public InternalError(string message)
+        public InternalErrorException(string message)
             : base(message)
         { }
 
         /// <summary>Creates an exception instance with the specified message and inner exception.</summary>
-        public InternalError(string message, Exception innerException)
+        public InternalErrorException(string message, Exception innerException)
             : base(null, innerException)
         { }
     }

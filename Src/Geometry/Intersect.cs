@@ -271,7 +271,7 @@ namespace RT.Util.Geometry
                     case 1: segment = new EdgeD(rect.Right, rect.Top, rect.Right, rect.Bottom); break;
                     case 2: segment = new EdgeD(rect.Right, rect.Bottom, rect.Left, rect.Bottom); break;
                     case 3: segment = new EdgeD(rect.Left, rect.Bottom, rect.Left, rect.Top); break;
-                    default: throw new InternalError("fsvxhfhj"); // shut up compiler about uninitialized "segment" variable
+                    default: throw new InternalErrorException("fsvxhfhj"); // shut up compiler about uninitialized "segment" variable
                 }
 
                 Intersect.RayWithSegment(ref ray, ref segment, out lambda, out dummy);

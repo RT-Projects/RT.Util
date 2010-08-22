@@ -136,11 +136,11 @@ namespace RT.Util.Streams
             {
                 byte[] firstbuf = _buffers.First.Value.Item1;
                 int read = Math.Min(count, _buffers.First.Value.Item2 - _offset);
-                if (read <= 0) throw new InternalError("PeekableStream: _offset was pointing beyond the end of the first buffer");
+                if (read <= 0) throw new InternalErrorException("PeekableStream: _offset was pointing beyond the end of the first buffer");
 
                 Buffer.BlockCopy(src: firstbuf, srcOffset: _offset, dst: buffer, dstOffset: offset, count: read);
                 var removed = removeFromBuffers(read);
-                if (removed != read) throw new InternalError("PeekableStream: 827364");
+                if (removed != read) throw new InternalErrorException("PeekableStream: 827364");
 
                 return read;
             }
