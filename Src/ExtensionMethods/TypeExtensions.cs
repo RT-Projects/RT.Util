@@ -101,5 +101,13 @@ namespace RT.Util.ExtensionMethods
         {
             return parameter.IsDefined(typeof(T), false /* This argument is ignored */);
         }
+
+        public static T GetFieldValue<T>(this object instance, string fieldName)
+        {
+            var field = instance.GetType().GetAllFields().Single(f => f.Name == fieldName);
+            if (field.FieldType != typeof(T))
+                throw new InvalidOperationException("Field is of incorrect type. Expected: {0}; got: {1}".Fmt(typeof(T).FullName, field.FieldType.FullName));
+            return (T) field.GetValue(instance);
+        }
     }
 }
