@@ -1001,7 +1001,7 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     public sealed class UndocumentedAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
