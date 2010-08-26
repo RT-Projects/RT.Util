@@ -89,6 +89,22 @@ namespace RT.Util
         public const int SWP_ASYNCWINDOWPOS = 0x4000;
         public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE; // ?!
 
+        // ShowWindow constants
+        public const int SW_FORCEMINIMIZE = 11;
+        public const int SW_HIDE = 0;
+        public const int SW_MAXIMIZE = 3;
+        public const int SW_MINIMIZE = 6;
+        public const int SW_RESTORE = 9;
+        public const int SW_SHOW = 5;
+        public const int SW_SHOWDEFAULT = 10;
+        public const int SW_SHOWMAXIMIZED = 3;
+        public const int SW_SHOWMINIMIZED = 2;
+        public const int SW_SHOWMINNOACTIVE = 7;
+        public const int SW_SHOWNA = 8;
+        public const int SW_SHOWNOACTIVATE = 4;
+        public const int SW_SHOWNORMAL = 1;
+
+        // Virtual-key code to scancode conversion constants
         public const uint MAPVK_VK_TO_VSC = 0x00;
         public const uint MAPVK_VSC_TO_VK = 0x01;
         public const uint MAPVK_VK_TO_CHAR = 0x02;
@@ -398,6 +414,11 @@ namespace RT.Util
             return focusedControlHandle;
         }
 
-    }
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
 
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    }
 }
