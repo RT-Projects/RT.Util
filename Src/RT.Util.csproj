@@ -43,7 +43,6 @@
     <Compile Include="Collections\NameValuesCollection.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\ReadOnlyCollections.cs" />
-    <Compile Include="Collections\Tuple.cs" />
     <Compile Include="Consoles\ColoredConsoleOut.cs" />
     <Compile Include="Consoles\ConsoleColoredString.cs" />
     <Compile Include="Consoles\ConsoleUtil.cs" />
@@ -129,7 +128,6 @@
     </Compile>
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
-    <Compile Include="Obsolete\CmdLine.cs" />
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="RummageAttributes.cs" />
     <Compile Include="Stopwatch.cs" />

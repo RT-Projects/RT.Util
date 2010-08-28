@@ -452,7 +452,7 @@ namespace RT.KitchenSink.ParseCs
                 if (tok[j].Type == TokenType.Builtin && (flags & typeIdentifierFlags.AllowKeywords) == typeIdentifierFlags.AllowKeywords && builtinTypes.Contains(tok[j].TokenStr))
                     partAbstract = new CsSimpleNameBuiltin { Builtin = tok[j].TokenStr };
                 else if (ty.Parts.Count > 0 && (flags & typeIdentifierFlags.Lenient) != 0 && tok[j].Type != TokenType.Identifier)
-                    return new Tuple<CsTypeName, bool>(ty, false);
+                    return Tuple.Create((CsTypeName) ty, false);
                 else if (tok[j].Type != TokenType.Identifier && tryNotToThrow)
                     return null;
                 else
@@ -510,7 +510,7 @@ namespace RT.KitchenSink.ParseCs
                             if ((flags & typeIdentifierFlags.Lenient) != 0)
                             {
                                 part.GenericTypeArguments = null;
-                                return new Tuple<CsTypeName, bool>(ty, false);
+                                return Tuple.Create((CsTypeName) ty, false);
                             }
                             throw;
                         }
@@ -559,7 +559,7 @@ namespace RT.KitchenSink.ParseCs
                                 throw new ParseException("',' or ']' expected.", tok[j].Index, ret);
                             if (arrayRanks.Count > 0)
                                 ret = new CsArrayTypeName { ArrayRanks = arrayRanks, InnerType = ret };
-                            return new Tuple<CsTypeName, bool>(ret, false);
+                            return Tuple.Create(ret, false);
                         }
                         j++;
                         i = j;
@@ -572,13 +572,13 @@ namespace RT.KitchenSink.ParseCs
             catch (ParseException e)
             {
                 if ((flags & typeIdentifierFlags.Lenient) != 0)
-                    return new Tuple<CsTypeName, bool>(ret, false);
+                    return Tuple.Create(ret, false);
                 if (e.IncompleteResult is CsTypeName)
                     throw;
                 throw new ParseException(e.Message, e.Index, ret);
             }
             i = j;
-            return new Tuple<CsTypeName, bool>(ret, onShr);
+            return Tuple.Create(ret, onShr);
         }
         private static void parseModifiers(CsMember mem, TokenJar tok, ref int i)
         {

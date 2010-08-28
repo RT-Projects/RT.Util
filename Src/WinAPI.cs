@@ -90,19 +90,19 @@ namespace RT.Util
         public const int TOPMOST_FLAGS = SWP_NOMOVE | SWP_NOSIZE; // ?!
 
         // ShowWindow constants
-        public const int SW_FORCEMINIMIZE = 11;
         public const int SW_HIDE = 0;
-        public const int SW_MAXIMIZE = 3;
-        public const int SW_MINIMIZE = 6;
-        public const int SW_RESTORE = 9;
-        public const int SW_SHOW = 5;
-        public const int SW_SHOWDEFAULT = 10;
-        public const int SW_SHOWMAXIMIZED = 3;
+        public const int SW_SHOWNORMAL = 1;
         public const int SW_SHOWMINIMIZED = 2;
+        public const int SW_SHOWMAXIMIZED = 3;
+        public const int SW_MAXIMIZE = 3;
+        public const int SW_SHOWNOACTIVATE = 4;
+        public const int SW_SHOW = 5;
+        public const int SW_MINIMIZE = 6;
         public const int SW_SHOWMINNOACTIVE = 7;
         public const int SW_SHOWNA = 8;
-        public const int SW_SHOWNOACTIVATE = 4;
-        public const int SW_SHOWNORMAL = 1;
+        public const int SW_RESTORE = 9;
+        public const int SW_SHOWDEFAULT = 10;
+        public const int SW_FORCEMINIMIZE = 11;
 
         // Virtual-key code to scancode conversion constants
         public const uint MAPVK_VK_TO_VSC = 0x00;
@@ -392,6 +392,14 @@ namespace RT.Util
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleOutputCP(uint wCodePageID);
 
+        /// <summary>Returns the window handle of the console window associated with the current process, or IntPtr.Zero if there is no console window.</summary>
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
+
+        /// <summary>Shows or hides the window identified by <paramref name="hWnd"/>. For <paramref name="nCmdShow"/>, use <see cref="SW_SHOW"/> et al.</summary>
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
@@ -413,12 +421,5 @@ namespace RT.Util
 
             return focusedControlHandle;
         }
-
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr GetConsoleWindow();
-
-        [DllImport("user32.dll")]
-        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
     }
 }

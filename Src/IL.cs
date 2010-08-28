@@ -10,12 +10,18 @@ using RT.Util;
 
 namespace RT.KitchenSink
 {
+    /// <summary>Provides a collection on unconnected pieces of functionality.</summary>
     public static partial class Ks
     {
         private static AssemblyBuilder _assemblyBuilder = null;
         private static ModuleBuilder _moduleBuilder = null;
         private static Dictionary<Action<IIL>, IRunner> _runners = null;
 
+        /// <summary>Executes a sequence of IL instructions specified in a lambda block. See remarks for how to use.</summary>
+        /// <param name="code">Provides a delegate that specifies the IL instructions to execute.</param>
+        /// <remarks>Any code in the provided delegate that is not a call to the <see cref="IIL"/> interface instance provided,
+        /// will be executed before all the IL, not interleaved with it as specified. Think of the delegate method as one that constructs
+        /// the IL code before it is executed.</remarks>
         public static void RunIL(Action<IIL> code)
         {
             if (_assemblyBuilder == null)
@@ -63,6 +69,10 @@ namespace RT.KitchenSink
             public void Call<T1, T2>(Expression<Action<T1, T2>> method) { emitCall(OpCodes.Call, method); }
             public void Call<T1, T2, T3>(Expression<Action<T1, T2, T3>> method) { emitCall(OpCodes.Call, method); }
             public void Call<T1, T2, T3, T4>(Expression<Action<T1, T2, T3, T4>> method) { emitCall(OpCodes.Call, method); }
+            public void Call<TResult>(Expression<Func<TResult>> method) { emitCall(OpCodes.Call, method); }
+            public void Call<T1, TResult>(Expression<Func<T1, TResult>> method) { emitCall(OpCodes.Call, method); }
+            public void Call<T1, T2, TResult>(Expression<Func<T1, T2, TResult>> method) { emitCall(OpCodes.Call, method); }
+            public void Call<T1, T2, T3, TResult>(Expression<Func<T1, T2, T3, TResult>> method) { emitCall(OpCodes.Call, method); }
             public void Dup() { _il.Emit(OpCodes.Dup); }
             public void Ldc_i4(int constant) { _il.Emit(OpCodes.Ldc_I4, constant); }
             public void Ldloc(IILLocal local) { _il.Emit(OpCodes.Ldloc, ((ilLocal) local).Local); }
@@ -75,34 +85,72 @@ namespace RT.KitchenSink
         private class ilLocal : IILLocal { private LocalBuilder _local; public ilLocal(LocalBuilder local) { _local = local; } public LocalBuilder Local { get { return _local; } } }
     }
 
+    /// <summary>Provides an interface for running a method. This is used internally by <see cref="Ks.RunIL"/>,
+    /// but needs to be public in order for the dynamic assembly to implement it.</summary>
     public interface IRunner
     {
+        /// <summary>Runs something.</summary>
         void Run();
     }
 
+    /// <summary>Provides methods to construct a sequence of IL instructions.</summary>
     public interface IIL
     {
+        /// <summary>Declares a local variable.</summary>
+        /// <param name="type">Type of the local variable to declare.</param>
+        /// <returns>An object that can be used in methods such as <see cref="Ldloc"/>.</returns>
         IILLocal DeclareLocal(Type type);
+        /// <summary>Defines a goto label.</summary>
+        /// <returns>An object that can be used in methods such as <see cref="Br"/>.</returns>
         IILLabel DefineLabel();
+        /// <summary>Defines the position of a goto label within the sequence of instructions.</summary>
+        /// <param name="label">The goto label defined by <see cref="DefineLabel"/>.</param>
         void MarkLabel(IILLabel label);
 
+        /// <summary>Add instruction.</summary>
         void Add();
+        /// <summary>Bge instruction.</summary>
         void Bge(IILLabel label);
+        /// <summary>Blt instruction.</summary>
         void Blt(IILLabel label);
+        /// <summary>Br instruction.</summary>
         void Br(IILLabel label);
+        /// <summary>Call instruction.</summary>
         void Call(Expression<Action> method);
+        /// <summary>Call instruction.</summary>
         void Call<T1>(Expression<Action<T1>> method);
+        /// <summary>Call instruction.</summary>
         void Call<T1, T2>(Expression<Action<T1, T2>> method);
+        /// <summary>Call instruction.</summary>
         void Call<T1, T2, T3>(Expression<Action<T1, T2, T3>> method);
+        /// <summary>Call instruction.</summary>
         void Call<T1, T2, T3, T4>(Expression<Action<T1, T2, T3, T4>> method);
+        /// <summary>Call instruction.</summary>
+        void Call<TResult>(Expression<Func<TResult>> method);
+        /// <summary>Call instruction.</summary>
+        void Call<T1, TResult>(Expression<Func<T1, TResult>> method);
+        /// <summary>Call instruction.</summary>
+        void Call<T1, T2, TResult>(Expression<Func<T1, T2, TResult>> method);
+        /// <summary>Call instruction.</summary>
+        void Call<T1, T2, T3, TResult>(Expression<Func<T1, T2, T3, TResult>> method);
+        /// <summary>Dup instruction.</summary>
         void Dup();
+        /// <summary>Ldc_i4 instruction.</summary>
         void Ldc_i4(int constant);
+        /// <summary>Ldloc instruction.</summary>
         void Ldloc(IILLocal local);
+        /// <summary>Pop instruction.</summary>
         void Pop();
+        /// <summary>Ret instruction.</summary>
         void Ret();
+        /// <summary>Stloc instruction.</summary>
         void Stloc(IILLocal local);
     }
 
+    /// <summary>Provides an object that represents a local variable.</summary>
+    /// <seealso cref="IIL"/>
     public interface IILLocal { }
+    /// <summary>Provides an object that represents a goto label.</summary>
+    /// <seealso cref="IIL"/>
     public interface IILLabel { }
 }

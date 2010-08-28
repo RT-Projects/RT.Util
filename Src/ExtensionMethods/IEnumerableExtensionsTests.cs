@@ -44,8 +44,8 @@ namespace RT.Util.ExtensionMethods
                 foreach (string j in two)
                 {
                     Assert.IsTrue(iter.MoveNext());
-                    Assert.AreEqual(i, iter.Current.E1);
-                    Assert.AreEqual(j, iter.Current.E2);
+                    Assert.AreEqual(i, iter.Current.Item1);
+                    Assert.AreEqual(j, iter.Current.Item2);
                 }
             }
             Assert.IsFalse(iter.MoveNext());
@@ -245,7 +245,37 @@ namespace RT.Util.ExtensionMethods
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(new string[0], null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(null, new string[0]); });
 
-#warning Add fuller testing to this when it no longer uses the obsolete Tuple<>
+            var seq = new int[] { 1, 2, 3 };
+
+            // Test same-length sequence
+            var test1 = seq.Zip(new string[] { "One", "Two", "Three" }).ToList();
+            Assert.AreEqual(test1.Count, 3);
+            Assert.AreEqual(test1[0].Item1, 1);
+            Assert.AreEqual(test1[1].Item1, 2);
+            Assert.AreEqual(test1[2].Item1, 3);
+            Assert.AreEqual(test1[0].Item2, "One");
+            Assert.AreEqual(test1[1].Item2, "Two");
+            Assert.AreEqual(test1[2].Item2, "Three");
+
+            // Test shorter sequence: should be padded
+            var test2 = seq.Zip(new string[] { "One", "Two" }).ToList();
+            Assert.AreEqual(test2.Count, 3);
+            Assert.AreEqual(test2[0].Item1, 1);
+            Assert.AreEqual(test2[1].Item1, 2);
+            Assert.AreEqual(test2[2].Item1, 3);
+            Assert.AreEqual(test2[0].Item2, "One");
+            Assert.AreEqual(test2[1].Item2, "Two");
+            Assert.AreEqual(test2[2].Item2, null);
+
+            // Test longer sequence: should be truncated
+            var test3 = seq.Zip(new string[] { "One", "Two", "Three", "Four" }).ToList();
+            Assert.AreEqual(test3.Count, 3);
+            Assert.AreEqual(test3[0].Item1, 1);
+            Assert.AreEqual(test3[1].Item1, 2);
+            Assert.AreEqual(test3[2].Item1, 3);
+            Assert.AreEqual(test3[0].Item2, "One");
+            Assert.AreEqual(test3[1].Item2, "Two");
+            Assert.AreEqual(test3[2].Item2, "Three");
         }
 
         [Test]

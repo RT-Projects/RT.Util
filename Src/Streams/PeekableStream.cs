@@ -212,7 +212,7 @@ namespace RT.Util.Streams
             int read = _stream.Read(data, 0, count);
             if (read > 0)
             {
-                var node = _buffers.AddLast(new Tuple<byte[], int>(data, read));
+                var node = _buffers.AddLast(Tuple.Create(data, read));
                 foreach (var peek in _peeks)
                     if (peek._buffer == null)
                         peek._buffer = node; // the offset should already be at zero in this case

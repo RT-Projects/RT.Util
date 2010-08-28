@@ -11,10 +11,10 @@ namespace RT.Util.ExtensionMethods
     public static class IEnumerableExtensions
     {
         /// <summary>
-        /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, T&gt;"/>s containing all pairs of elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
+        /// Returns an enumeration of tuples containing all pairs of elements from the source collection.
         /// For example, the input sequence 1, 2 yields the pairs [1,1], [1,2], [2,1], and [2,2].
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
+        public static IEnumerable<Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -22,10 +22,10 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, U&gt;"/>s containing all ordered pairs of elements from the two source <see cref="IEnumerable&lt;T&gt;"/>s.
+        /// Returns an enumeration of tuples containing all ordered pairs of elements from the two source collections.
         /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
+        public static IEnumerable<Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -33,36 +33,17 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("with");
             return joinIterator(source, with);
         }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, U>> joinIterator<T, U>(IEnumerable<T> source, IEnumerable<U> with)
+        private static IEnumerable<Tuple<T, U>> joinIterator<T, U>(IEnumerable<T> source, IEnumerable<U> with)
         {
             // Make sure that 'with' is evaluated only once
             U[] withArr = with.ToArray();
             foreach (T item1 in source)
                 foreach (U item2 in withArr)
-                    yield return new RT.Util.ObsoleteTuple.Tuple<T, U>(item1, item2);
+                    yield return new Tuple<T, U>(item1, item2);
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, T&gt;"/>s containing all unique pairs of distinct elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
-        /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
-        /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> UniquePairsObsolete<T>(this IEnumerable<T> source)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            return uniquePairsObsoleteIterator(source);
-        }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> uniquePairsObsoleteIterator<T>(IEnumerable<T> source)
-        {
-            // Make sure that 'source' is evaluated only once
-            T[] arr = source.ToArray();
-            for (int i = 0; i < arr.Length - 1; i++)
-                for (int j = i + 1; j < arr.Length; j++)
-                    yield return new RT.Util.ObsoleteTuple.Tuple<T, T>(arr[i], arr[j]);
-        }
-
-        /// <summary>
-        /// Returns an enumeration of tuples containing all unique pairs of distinct elements from the source <see cref="IEnumerable&lt;T&gt;"/>.
+        /// Returns an enumeration of tuples containing all unique pairs of distinct elements from the source collection.
         /// For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.
         /// </summary>
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
@@ -81,19 +62,19 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an enumeration of <see cref="RT.Util.ObsoleteTuple.Tuple&lt;T, T&gt;"/>s containing all consecutive pairs of the elements.
+        /// Returns an enumeration of tuples containing all consecutive pairs of the elements.
         /// </summary>
         /// <param name="source">The input enumerable.</param>
         /// <param name="closed">If true, an additional pair containing the last and first element is included. For example,
         /// if the source collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref name="closed"/>
         /// is false, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is true.</param>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
+        public static IEnumerable<Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
             return consecutivePairsIterator(source, closed);
         }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T, T>> consecutivePairsIterator<T>(IEnumerable<T> source, bool closed)
+        private static IEnumerable<Tuple<T, T>> consecutivePairsIterator<T>(IEnumerable<T> source, bool closed)
         {
             var enumer = source.GetEnumerator();
             bool any = enumer.MoveNext();
@@ -102,11 +83,11 @@ namespace RT.Util.ExtensionMethods
             T last = enumer.Current;
             while (enumer.MoveNext())
             {
-                yield return new RT.Util.ObsoleteTuple.Tuple<T, T>(last, enumer.Current);
+                yield return new Tuple<T, T>(last, enumer.Current);
                 last = enumer.Current;
             }
             if (closed)
-                yield return new RT.Util.ObsoleteTuple.Tuple<T, T>(last, first);
+                yield return new Tuple<T, T>(last, first);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
@@ -422,7 +403,7 @@ namespace RT.Util.ExtensionMethods
         /// index. The shorter sequence is padded with its type's default value to match the length of the longer sequence.
         /// For example, [1, 2, 3, 4].ZipPad(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> ZipPad<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        public static IEnumerable<Tuple<T1, T2>> ZipPad<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             if (@this == null)
                 throw new ArgumentNullException("this");
@@ -430,7 +411,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("other");
             return zipPadIterator(@this, other);
         }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipPadIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
+        private static IEnumerable<Tuple<T1, T2>> zipPadIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
@@ -438,7 +419,7 @@ namespace RT.Util.ExtensionMethods
             bool more2 = enum2.MoveNext();
             while (more1 || more2)
             {
-                yield return new RT.Util.ObsoleteTuple.Tuple<T1, T2>(more1 ? enum1.Current : default(T1), more2 ? enum2.Current : default(T2));
+                yield return new Tuple<T1, T2>(more1 ? enum1.Current : default(T1), more2 ? enum2.Current : default(T2));
                 if (more1)
                     more1 = enum1.MoveNext();
                 if (more2)
@@ -451,7 +432,7 @@ namespace RT.Util.ExtensionMethods
         /// index. The longer sequence is truncated to match the length of the shorter sequence.
         /// For example, [1, 2, 3, 4].ZipTruncate(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> ZipTruncate<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        public static IEnumerable<Tuple<T1, T2>> ZipTruncate<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             if (@this == null)
                 throw new ArgumentNullException("this");
@@ -459,7 +440,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("other");
             return zipTruncateIterator(@this, other);
         }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipTruncateIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
+        private static IEnumerable<Tuple<T1, T2>> zipTruncateIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
@@ -467,7 +448,7 @@ namespace RT.Util.ExtensionMethods
             bool more2 = enum2.MoveNext();
             while (more1 && more2)
             {
-                yield return new RT.Util.ObsoleteTuple.Tuple<T1, T2>(enum1.Current, enum2.Current);
+                yield return new Tuple<T1, T2>(enum1.Current, enum2.Current);
                 more1 = enum1.MoveNext();
                 more2 = enum2.MoveNext();
             }
@@ -477,7 +458,7 @@ namespace RT.Util.ExtensionMethods
         /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
         /// index. The second sequence is either padded or truncated to match the first sequence's length.
         /// </summary>
-        public static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> Zip<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
+        public static IEnumerable<Tuple<T1, T2>> Zip<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             if (@this == null)
                 throw new ArgumentNullException("this");
@@ -485,14 +466,14 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("other");
             return zipIterator(@this, other);
         }
-        private static IEnumerable<RT.Util.ObsoleteTuple.Tuple<T1, T2>> zipIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
+        private static IEnumerable<Tuple<T1, T2>> zipIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
         {
             var enum1 = @this.GetEnumerator();
             var enum2 = other.GetEnumerator();
             while (enum1.MoveNext())
             {
                 T2 elem = enum2.MoveNext() ? enum2.Current : default(T2);
-                yield return new RT.Util.ObsoleteTuple.Tuple<T1, T2>(enum1.Current, elem);
+                yield return new Tuple<T1, T2>(enum1.Current, elem);
             }
         }
 

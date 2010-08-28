@@ -32,9 +32,9 @@ namespace RT.Util
         private void diffTest(string a, string b)
         {
             var diff = Ut.Diff(a, b);
-            var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();
+            var a2 = diff.Where(x => x.Item2 != DiffOp.Ins).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(a2, a);
-            var b2 = diff.Where(x => x.E2 != DiffOp.Del).Select(x => x.E1.ToString()).JoinString();
+            var b2 = diff.Where(x => x.Item2 != DiffOp.Del).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(b2, b);
         }
 
@@ -44,9 +44,9 @@ namespace RT.Util
             var a = "abcdef";
             var b = "aXcdeY";
             var diff = Ut.Diff(a, b, new DiffOptions<char> { Predicate = c => (c != 'd') });
-            var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();
+            var a2 = diff.Where(x => x.Item2 != DiffOp.Ins).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(a2, a);
-            var b2 = diff.Where(x => x.E2 != DiffOp.Del).Select(x => x.E1.ToString()).JoinString();
+            var b2 = diff.Where(x => x.Item2 != DiffOp.Del).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(b2, b);
         }
 
@@ -66,12 +66,12 @@ namespace RT.Util
                         Assert.That(bb.SequenceEqual(new char[] { 'X' }));
                     else
                         Assert.That(bb.SequenceEqual(new char[] { 'Y' }));
-                    return aa.Select(c => new RT.Util.ObsoleteTuple.Tuple<char, DiffOp>(c, DiffOp.Del)).Concat(bb.Select(c => new RT.Util.ObsoleteTuple.Tuple<char, DiffOp>(c, DiffOp.Ins)));
+                    return aa.Select(c => Tuple.Create(c, DiffOp.Del)).Concat(bb.Select(c => Tuple.Create(c, DiffOp.Ins)));
                 }
             });
-            var a2 = diff.Where(x => x.E2 != DiffOp.Ins).Select(x => x.E1.ToString()).JoinString();
+            var a2 = diff.Where(x => x.Item2 != DiffOp.Ins).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(a2, a);
-            var b2 = diff.Where(x => x.E2 != DiffOp.Del).Select(x => x.E1.ToString()).JoinString();
+            var b2 = diff.Where(x => x.Item2 != DiffOp.Del).Select(x => x.Item1.ToString()).JoinString();
             Assert.AreEqual(b2, b);
         }
     }

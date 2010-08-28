@@ -102,11 +102,22 @@ namespace RT.Util.ExtensionMethods
             return parameter.IsDefined(typeof(T), false /* This argument is ignored */);
         }
 
+        /// <summary>Searches the specified object’s time for a field of the specified name and returns that field’s value.</summary>
+        /// <typeparam name="T">Expected type of the field.</typeparam>
+        /// <param name="instance">Instance from which to retrieve the field value.</param>
+        /// <param name="fieldName">Name of the field to return the value of.</param>
+        /// <returns>The value of the first.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// <list type="bullet">
+        /// <item><description>The field is of a different type than specified.</description></item>
+        /// <item><description>There is no field with the specified name.</description></item>
+        /// </list>
+        /// </exception>
         public static T GetFieldValue<T>(this object instance, string fieldName)
         {
             var field = instance.GetType().GetAllFields().Single(f => f.Name == fieldName);
-            if (field.FieldType != typeof(T))
-                throw new InvalidOperationException("Field is of incorrect type. Expected: {0}; got: {1}".Fmt(typeof(T).FullName, field.FieldType.FullName));
+            if (typeof(T).IsAssignableFrom(field.FieldType))
+                throw new InvalidOperationException("Field is of type {1}, but was expected to be of type {0} (or derived from it).".Fmt(typeof(T).FullName, field.FieldType.FullName));
             return (T) field.GetValue(instance);
         }
     }

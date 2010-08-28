@@ -484,33 +484,33 @@ namespace RT.KitchenSink.Drawing
             double y = position.Y;
             bool horz = true;
             var gp = new GraphicsPath();
-            var prevpair = new RT.Util.ObsoleteTuple.Tuple<double, double>(lengths.Last(), lengths.First());
+            var prevpair = Tuple.Create(lengths.Last(), lengths.First());
             foreach (var pair in lengths.ConsecutivePairs(true))
             {
-                double radp = Math.Min(Math.Min(Math.Abs(prevpair.E1), Math.Abs(prevpair.E2)) / 2, radius);
-                double radf = Math.Min(Math.Min(Math.Abs(pair.E1), Math.Abs(pair.E2)) / 2, radius);
-                if (horz && pair.E1 > 0)
+                double radp = Math.Min(Math.Min(Math.Abs(prevpair.Item1), Math.Abs(prevpair.Item2)) / 2, radius);
+                double radf = Math.Min(Math.Min(Math.Abs(pair.Item1), Math.Abs(pair.Item2)) / 2, radius);
+                if (horz && pair.Item1 > 0)
                 {
-                    gp.AddLine(SX(x + radp), SY(y), SX(x + pair.E1 - radf), SY(y));
-                    gp.AddArc(SX(x + pair.E1 - 2 * radf), SY(y - (pair.E2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 270f : 90f, pair.E2 > 0 ? 90f : -90f);
+                    gp.AddLine(SX(x + radp), SY(y), SX(x + pair.Item1 - radf), SY(y));
+                    gp.AddArc(SX(x + pair.Item1 - 2 * radf), SY(y - (pair.Item2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.Item2 > 0 ? 270f : 90f, pair.Item2 > 0 ? 90f : -90f);
                 }
-                else if (horz && pair.E1 < 0)
+                else if (horz && pair.Item1 < 0)
                 {
-                    gp.AddLine(SX(x - radp), SY(y), SX(x + pair.E1 + radf), SY(y));
-                    gp.AddArc(SX(x + pair.E1), SY(y - (pair.E2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 270f : 90f, pair.E2 > 0 ? -90f : 90f);
+                    gp.AddLine(SX(x - radp), SY(y), SX(x + pair.Item1 + radf), SY(y));
+                    gp.AddArc(SX(x + pair.Item1), SY(y - (pair.Item2 > 0 ? 0 : 2 * radf)), SW(2 * radf), SH(2 * radf), pair.Item2 > 0 ? 270f : 90f, pair.Item2 > 0 ? -90f : 90f);
                 }
-                else if (!horz && pair.E1 > 0)
+                else if (!horz && pair.Item1 > 0)
                 {
-                    gp.AddLine(SX(x), SY(y + radp), SX(x), SY(y + pair.E1 - radf));
-                    gp.AddArc(SX(x - (pair.E2 > 0 ? 0 : 2 * radf)), SY(y + pair.E1 - 2 * radf), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 180f : 0f, pair.E2 > 0 ? -90f : 90f);
+                    gp.AddLine(SX(x), SY(y + radp), SX(x), SY(y + pair.Item1 - radf));
+                    gp.AddArc(SX(x - (pair.Item2 > 0 ? 0 : 2 * radf)), SY(y + pair.Item1 - 2 * radf), SW(2 * radf), SH(2 * radf), pair.Item2 > 0 ? 180f : 0f, pair.Item2 > 0 ? -90f : 90f);
                 }
-                else if (!horz && pair.E1 < 0)
+                else if (!horz && pair.Item1 < 0)
                 {
-                    gp.AddLine(SX(x), SY(y - radp), SX(x), SY(y + pair.E1 + radf));
-                    gp.AddArc(SX(x - (pair.E2 > 0 ? 0 : 2 * radf)), SY(y + pair.E1), SW(2 * radf), SH(2 * radf), pair.E2 > 0 ? 180f : 0f, pair.E2 > 0 ? 90f : -90f);
+                    gp.AddLine(SX(x), SY(y - radp), SX(x), SY(y + pair.Item1 + radf));
+                    gp.AddArc(SX(x - (pair.Item2 > 0 ? 0 : 2 * radf)), SY(y + pair.Item1), SW(2 * radf), SH(2 * radf), pair.Item2 > 0 ? 180f : 0f, pair.Item2 > 0 ? 90f : -90f);
                 }
-                if (horz) x += pair.E1;
-                else y += pair.E1;
+                if (horz) x += pair.Item1;
+                else y += pair.Item1;
                 prevpair = pair;
                 horz = !horz;
             }
