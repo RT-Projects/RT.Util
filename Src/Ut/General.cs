@@ -190,7 +190,7 @@ namespace RT.Util
             if (!assertion)
             {
                 System.Diagnostics.Debugger.Break();
-                //throw new InternalErrorException("Assertion failure");
+                throw new InternalErrorException("Assertion failure");
             }
         }
     }
