@@ -16,12 +16,9 @@ namespace RT.Util
     /// </summary>
     public static partial class Ut
     {
-        /// <summary>
-        /// Converts file size in bytes to a string in bytes, kbytes, Mbytes
-        /// or Gbytes accordingly. The suffix appended is kB, MB or GB.
-        /// </summary>
-        /// <param name="size">Size in bytes</param>
-        /// <returns>Converted string</returns>
+        /// <summary>Converts file size in bytes to a string that uses KB, MB, GB or TB.</summary>
+        /// <param name="size">The file size in bytes.</param>
+        /// <returns>The converted string.</returns>
         public static string SizeToString(long size)
         {
             if (size == 0)
@@ -29,11 +26,13 @@ namespace RT.Util
             else if (size < 1024)
                 return size.ToString("#,###");
             else if (size < 1024 * 1024)
-                return (size / 1024d).ToString("#,###.## kB");
+                return (size / 1024d).ToString("#,###.## KB");
             else if (size < 1024 * 1024 * 1024)
-                return (size / (1024d * 1024d)).ToString("#,###.## MB");
+                return (size / 1024d / 1024d).ToString("#,###.## MB");
+            else if (size < 1024L * 1024 * 1024 * 1024)
+                return (size / 1024d / 1024d / 1024d).ToString("#,###.## GB");
             else
-                return (size / (1024d * 1024d * 1024d)).ToString("#,###.## GB");
+                return (size / 1024d / 1024d / 1024d / 1024d).ToString("#,###.## TB");
         }
 
         /// <summary>
