@@ -455,6 +455,7 @@ namespace RT.Util.ExtensionMethods
                     case '\f': result.Append(@"\f"); break;
                     case '\r': result.Append(@"\r"); break;
                     case '\\': result.Append(@"\\"); break;
+                    case '"': result.Append(@"\"""); break;
                     default:
                         if (c >= ' ')
                             result.Append(c);
