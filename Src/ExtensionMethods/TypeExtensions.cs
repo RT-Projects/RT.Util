@@ -116,7 +116,7 @@ namespace RT.Util.ExtensionMethods
         public static T GetFieldValue<T>(this object instance, string fieldName)
         {
             var field = instance.GetType().GetAllFields().Single(f => f.Name == fieldName);
-            if (typeof(T).IsAssignableFrom(field.FieldType))
+            if (!typeof(T).IsAssignableFrom(field.FieldType))
                 throw new InvalidOperationException("Field is of type {1}, but was expected to be of type {0} (or derived from it).".Fmt(typeof(T).FullName, field.FieldType.FullName));
             return (T) field.GetValue(instance);
         }
