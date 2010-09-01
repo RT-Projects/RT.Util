@@ -188,7 +188,8 @@ namespace RT.Util
         {
             if (!assertion)
             {
-                System.Diagnostics.Debugger.Break();
+                if (System.Diagnostics.Debugger.IsAttached)
+                    System.Diagnostics.Debugger.Break();
                 throw new InternalErrorException("Assertion failure");
             }
         }
