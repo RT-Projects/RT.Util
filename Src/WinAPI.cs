@@ -20,6 +20,16 @@ namespace RT.Util
         /// </summary>
         public static readonly long PerformanceFreq;
 
+        /// <summary>
+        /// Normally an unhandled exception will result in Windows showing a generic error dialog, while keeping the
+        /// process alive and stopped. This method will disable that: an unhandled exception will result in the process
+        /// terminating quietly.
+        /// </summary>
+        public static void DisableGeneralProtectionFaultErrorBox()
+        {
+            SetErrorMode(SetErrorMode(0) | ErrorModes.SEM_NOGPFAULTERRORBOX);
+        }
+
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
         #region Enums / flags
@@ -51,6 +61,16 @@ namespace RT.Util
             Module32 = 0x00000010,
             Inherit = 0x80000000,
             All = 0x0000001F
+        }
+
+        [Flags]
+        public enum ErrorModes : uint
+        {
+            SYSTEM_DEFAULT = 0x0,
+            SEM_FAILCRITICALERRORS = 0x0001,
+            SEM_NOALIGNMENTFAULTEXCEPT = 0x0004,
+            SEM_NOGPFAULTERRORBOX = 0x0002,
+            SEM_NOOPENFILEERRORBOX = 0x8000
         }
 
         #endregion
@@ -399,6 +419,9 @@ namespace RT.Util
         /// <summary>Shows or hides the window identified by <paramref name="hWnd"/>. For <paramref name="nCmdShow"/>, use <see cref="SW_SHOW"/> et al.</summary>
         [DllImport("user32.dll")]
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("kernel32.dll")]
+        static extern ErrorModes SetErrorMode(ErrorModes uMode);
 
         #endregion
 
