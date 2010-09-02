@@ -4,6 +4,8 @@ using NUnit.Direct;
 using NUnit.Framework;
 using RT.Util;
 
+[assembly: Timeout(20000)]
+
 namespace RT.KitchenSink.Tests
 {
     static class KitchenSinkTests

@@ -2,6 +2,9 @@
 using System.Reflection;
 using System.Text;
 using NUnit.Direct;
+using NUnit.Framework;
+
+[assembly: Timeout(10000)]
 
 namespace RT.Util
 {
