@@ -75,9 +75,9 @@ namespace RT.Util.CommandLine
             FieldInfo swallowingField = null;
             var haveSeenOptionalPositional = false;
 
-            foreach (var fieldForeachVariable in type.GetFields())
+            foreach (var fieldForeach in type.GetFields())
             {
-                var field = fieldForeachVariable; // This is necessary for the lambda expressions to work
+                var field = fieldForeach; // This is necessary for the lambda expressions to work
                 var positional = field.IsDefined<IsPositionalAttribute>();
                 var mandatory = field.IsDefined<IsMandatoryAttribute>();
                 var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
@@ -120,10 +120,12 @@ namespace RT.Util.CommandLine
                 }
                 else if (field.FieldType.IsEnum)   // not positional
                 {
-                    foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
+                    foreach (var eForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
                     {
-                        foreach (var o in e.GetOrderedOptionAttributeNames())
+                        var e = eForeach;
+                        foreach (var oForeach in e.GetOrderedOptionAttributeNames())
                         {
+                            var o = oForeach;
                             options[o] = () =>
                             {
                                 field.SetValue(ret, e.GetValue(null));
