@@ -155,5 +155,7 @@ namespace RT.Util
         /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
         void Warning(string message, params string[] tokens);
     }
+#else
+    interface IPostBuildReporter { } // to suppress a documentation cref warning
 #endif
 }

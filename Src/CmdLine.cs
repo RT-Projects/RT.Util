@@ -122,25 +122,25 @@ namespace RT.Util.CommandLine
                 {
                     foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
                     {
-                        foreach (var a in e.GetCustomAttributes<OptionAttribute>())
+                        foreach (var o in e.GetOrderedOptionAttributeNames())
                         {
-                            options[a.Name] = () =>
+                            options[o] = () =>
                             {
                                 field.SetValue(ret, e.GetValue(null));
                                 i++;
                                 missingMandatories.Remove(field);
                                 foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
-                                    foreach (var a2 in e2.GetCustomAttributes<OptionAttribute>())
-                                        options[a2.Name] = () => { throw new IncompatibleCommandOrOptionException(a.Name, a2.Name, getHelpGenerator(type)); };
-                                options[a.Name] = () => { i++; };
+                                    foreach (var o2 in e2.GetOrderedOptionAttributeNames())
+                                        options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type)); };
+                                options[o] = () => { i++; };
                             };
                         }
                     }
                 }
                 else if (field.FieldType == typeof(bool))
                 {
-                    foreach (var a in field.GetCustomAttributes<OptionAttribute>())
-                        options[a.Name] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
+                    foreach (var o in field.GetOrderedOptionAttributeNames())
+                        options[o] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
                 else if (field.FieldType == typeof(string) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType))
                 {
@@ -181,14 +181,14 @@ namespace RT.Util.CommandLine
                     }
                     else
                     {
-                        foreach (var eForeach in field.GetCustomAttributes<OptionAttribute>())
+                        foreach (var eForeach in field.GetOrderedOptionAttributeNames())
                         {
                             var e = eForeach;
-                            options[e.Name] = () =>
+                            options[e] = () =>
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(e, getHelpGenerator(type));
                                 // The following code is also duplicated above
                                 if (ExactConvert.IsTrueIntegerType(field.FieldType))
                                 {
@@ -239,14 +239,14 @@ namespace RT.Util.CommandLine
                     else
                     {
                         field.SetValue(ret, new string[] { });
-                        foreach (var eForeach in field.GetCustomAttributes<OptionAttribute>())
+                        foreach (var eForeach in field.GetOrderedOptionAttributeNames())
                         {
                             var e = eForeach;
-                            options[e.Name] = () =>
+                            options[e] = () =>
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(e.Name, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(e, getHelpGenerator(type));
                                 var prev = (string[]) field.GetValue(ret);
                                 if (prev == null || prev.Length == 0)
                                     field.SetValue(ret, new string[] { args[i] });
@@ -371,26 +371,26 @@ namespace RT.Util.CommandLine
                 // List all the OPTIONS (mandatory first) in the "Usage" line
                 foreach (var f in mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld })))
                 {
-                    IEnumerable<OptionAttribute> attrsRaw;
+                    IEnumerable<string> optionsRaw;
                     if (f.Field.FieldType.IsEnum)
                     {
                         var defAttr = f.Field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                         if (defAttr == null)
                             continue;
-                        attrsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
+                        optionsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
                             .Where(fld => !fld.GetValue(null).Equals(defAttr.DefaultValue) && !fld.IsDefined<UndocumentedAttribute>())
-                            .SelectMany(fi => fi.GetCustomAttributes<OptionAttribute>());
+                            .SelectMany(fi => fi.GetOrderedOptionAttributeNames());
                     }
                     else
-                        attrsRaw = f.Field.GetCustomAttributes<OptionAttribute>();
+                        optionsRaw = f.Field.GetOrderedOptionAttributeNames();
 
                     help.Add(new ConsoleColoredString(f.Mandatory ? " " : " [", ConsoleColor.DarkGray));
-                    var attrs = attrsRaw.Any(a => !a.Name.StartsWith("--")) ? attrsRaw.Where(a => !a.Name.StartsWith("--")) : attrsRaw;
-                    var c = new ConsoleColoredString(attrs.First().Name, ConsoleColor.Cyan);
-                    foreach (var attr in attrs.Skip(1))
+                    var options = optionsRaw.Any(a => !a.StartsWith("--")) ? optionsRaw.Where(a => !a.StartsWith("--")) : optionsRaw;
+                    var c = new ConsoleColoredString(options.First(), ConsoleColor.Cyan);
+                    foreach (var option in options.Skip(1))
                     {
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
-                        c = c + new ConsoleColoredString(attr.Name, ConsoleColor.Cyan);
+                        c = c + new ConsoleColoredString(option, ConsoleColor.Cyan);
                     }
                     if ((f.Field.FieldType == typeof(string) || f.Field.FieldType == typeof(string[]) ||
                         (ExactConvert.IsTrueIntegerType(f.Field.FieldType) && !f.Field.FieldType.IsEnum) ||
@@ -511,8 +511,8 @@ namespace RT.Util.CommandLine
             {
                 foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(field.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
                 {
-                    table.SetCell(0, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                    table.SetCell(1, row, new ConsoleColoredString(el.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                    table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                    table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                     table.SetCell(2, row, getDocumentation(el, type), colSpan: 3);
                     row++;
                 }
@@ -547,8 +547,8 @@ namespace RT.Util.CommandLine
             }
             else
             {
-                table.SetCell(0, row, new ConsoleColoredString(field.GetCustomAttributes<OptionAttribute>().Where(o => !o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                table.SetCell(1, row, new ConsoleColoredString(field.GetCustomAttributes<OptionAttribute>().Where(o => o.Name.StartsWith("--")).Select(o => o.Name).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                table.SetCell(0, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                table.SetCell(1, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                 table.SetCell(2, row, getDocumentation(field, type), colSpan: 3);
                 row++;
             }
@@ -676,7 +676,7 @@ namespace RT.Util.CommandLine
                         else
                         {
                             // check that the non-default enum values' Options are present and do not clash
-                            var options = enumField.GetCustomAttributes<OptionAttribute>();
+                            var options = enumField.GetOrderedOptionAttributeNames();
                             if (!options.Any())
                                 rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
                             checkOptionsUnique(rep, options, optionTaken, commandLineType, field, enumField);
@@ -688,7 +688,7 @@ namespace RT.Util.CommandLine
                     if (positional)
                         rep.Error(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
-                    var options = field.GetCustomAttributes<OptionAttribute>();
+                    var options = field.GetOrderedOptionAttributeNames();
                     if (!options.Any())
                         rep.Error(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
@@ -699,7 +699,7 @@ namespace RT.Util.CommandLine
                     (ExactConvert.IsTrueIntegerType(field.FieldType) && !field.FieldType.IsEnum) ||
                     (ExactConvert.IsTrueIntegerNullableType(field.FieldType) && !field.FieldType.GetGenericArguments()[0].IsEnum))
                 {
-                    var options = field.GetCustomAttributes<OptionAttribute>();
+                    var options = field.GetOrderedOptionAttributeNames();
                     if (!options.Any() && !positional)
                         rep.Error(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
@@ -739,30 +739,30 @@ namespace RT.Util.CommandLine
                     rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
         }
 
-        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<string> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
             foreach (var option in options)
             {
-                if (optionTaken.ContainsKey(option.Name))
+                if (optionTaken.ContainsKey(option))
                 {
-                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, option.Name), "enum " + field.FieldType.Name, enumField.Name);
+                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, option), "enum " + field.FieldType.Name, enumField.Name);
                     rep.Error(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), "class " + type.Name, field.Name);
-                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option].DeclaringType.FullName, optionTaken[option].Name), "class " + optionTaken[option].DeclaringType.Name, optionTaken[option].Name);
                 }
-                optionTaken[option.Name] = enumField;
+                optionTaken[option] = enumField;
             }
         }
 
-        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<OptionAttribute> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
+        private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<string> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field)
         {
             foreach (var option in options)
             {
-                if (optionTaken.ContainsKey(option.Name))
+                if (optionTaken.ContainsKey(option))
                 {
-                    rep.Error(@"Option ""{2}"" is used by {0}.{1}...".Fmt(type.FullName, field.Name, option.Name), "class " + type.Name, field.Name);
-                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option.Name].DeclaringType.FullName, optionTaken[option.Name].Name), "class " + optionTaken[option.Name].DeclaringType.Name, optionTaken[option.Name].Name);
+                    rep.Error(@"Option ""{2}"" is used by {0}.{1}...".Fmt(type.FullName, field.Name, option), "class " + type.Name, field.Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option].DeclaringType.FullName, optionTaken[option].Name), "class " + optionTaken[option].DeclaringType.Name, optionTaken[option].Name);
                 }
-                optionTaken[option.Name] = field;
+                optionTaken[option] = field;
             }
         }
 
@@ -977,16 +977,16 @@ namespace RT.Util.CommandLine
 
     /// <summary>
     /// Use this to specify that a field in a class can be specified on the command line using an option, for example "-a" or "--option-name".
-    /// The option name MUST begin with a "-".
+    /// The option name(s) MUST begin with a "-".
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class OptionAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
-        /// <param name="name">The name of the option.</param>
-        public OptionAttribute(string name) { Name = name; }
-        /// <summary>The name of the option.</summary>
-        public string Name { get; private set; }
+        /// <param name="names">The name of the option. Specify several names as synonyms if required.</param>
+        public OptionAttribute(params string[] names) { Names = names; }
+        /// <summary>All of the names of the option.</summary>
+        public string[] Names { get; private set; }
     }
 
     /// <summary>Use this attribute in a non-internationalized (single-language) application to link a command-line option or command with the help text that describes (documents) it.</summary>
@@ -1194,10 +1194,10 @@ namespace RT.Util.CommandLine
             if (field.IsDefined<IsPositionalAttribute>())
                 fieldFormat = "`*&<<" + EggsML.Escape(field.Name) + ">>&*`";
             else if (field.FieldType.IsEnum)
-                fieldFormat = "`*${{" + field.FieldType.GetFields().SelectMany(f => f.GetCustomAttributes<OptionAttribute>().Select(o => EggsML.Escape(o.Name))).JoinString("||") + "}}$*`";
+                fieldFormat = "`*${{" + field.FieldType.GetFields().SelectMany(f => f.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o))).JoinString("||") + "}}$*`";
             else
             {
-                var options = field.GetCustomAttributes<OptionAttribute>().Select(o => EggsML.Escape(o.Name)).ToArray();
+                var options = field.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o)).ToArray();
                 if (options.Length > 1)
                     fieldFormat = "`*${{" + options.JoinString("||") + "}}$*`";
                 else
@@ -1206,6 +1206,28 @@ namespace RT.Util.CommandLine
             }
 
             return beforeField == null ? (isOption ? tr.MissingOption : tr.MissingParameter).Fmt(fieldFormat) : (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).Fmt(fieldFormat, "`*&<<" + EggsML.Escape(beforeField.Name) + ">>&*`");
+        }
+    }
+
+    static class CmdLineExtensions
+    {
+        public static IEnumerable<string> GetOrderedOptionAttributeNames(this MemberInfo member)
+        {
+            return member.GetCustomAttributes<OptionAttribute>()
+                .SelectMany(attr => attr.Names)
+                .OrderBy(compareOptionNames);
+        }
+
+        private static int compareOptionNames(string opt1, string opt2)
+        {
+            bool long1 = opt1.StartsWith("--");
+            bool long2 = opt2.StartsWith("--");
+            if (long1 == long2)
+                return StringComparer.OrdinalIgnoreCase.Compare(opt1, opt2);
+            else if (long1)
+                return 1; // --blah comes after -blah
+            else
+                return -1;
         }
     }
 }
