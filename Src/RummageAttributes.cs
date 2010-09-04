@@ -36,14 +36,14 @@ namespace RT.Util
     {
     }
 
-    /// <summary>Instructs Rummage not to inline a specific method that would otherwise be automatically inlined. This attribute takes precedence over <see cref="RummageInlineAttribute"/> if both are specified on the same method.</summary>
-    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    /// <summary>Instructs Rummage not to inline a specific method or property that would otherwise be automatically inlined. This attribute takes precedence over <see cref="RummageInlineAttribute"/> if both are specified on the same method or property.</summary>
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoInlineAttribute : Attribute
     {
     }
 
-    /// <summary>Instructs Rummage to inline a specific method that would otherwise not be automatically inlined.</summary>
-    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    /// <summary>Instructs Rummage to inline a specific method or property that would otherwise not be automatically inlined.</summary>
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public sealed class RummageInlineAttribute : Attribute
     {
     }
