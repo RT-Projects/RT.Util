@@ -403,18 +403,18 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Returns the index of the first element in this <paramref name="source"/> satisfying
-        /// the specified <paramref name="condition"/>. If no such elements are found, returns -1.
+        /// the specified <paramref name="predicate"/>. If no such elements are found, returns -1.
         /// </summary>
-        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> condition)
+        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            if (condition == null)
+            if (predicate == null)
                 throw new ArgumentNullException("condition");
             int index = 0;
             foreach (var v in source)
             {
-                if (condition(v))
+                if (predicate(v))
                     return index;
                 index++;
             }
@@ -422,7 +422,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
-        public static T MinElement<T>(this IEnumerable<T> source, Func<T, int> valueSelector)
+        public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -433,11 +433,11 @@ namespace RT.Util.ExtensionMethods
                 if (!enumerator.MoveNext())
                     throw new InvalidOperationException("source contains no elements.");
                 T minElem = enumerator.Current;
-                int minValue = valueSelector(minElem);
+                TValue minValue = valueSelector(minElem);
                 while (enumerator.MoveNext())
                 {
-                    int value = valueSelector(enumerator.Current);
-                    if (value < minValue)
+                    TValue value = valueSelector(enumerator.Current);
+                    if (value.CompareTo(minValue) < 0)
                     {
                         minValue = value;
                         minElem = enumerator.Current;

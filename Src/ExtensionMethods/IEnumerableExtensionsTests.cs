@@ -252,10 +252,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestMinElement()
         {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(new[] { "" }, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string>(null, str => str.Length); });
-            Assert.Throws<InvalidOperationException>(() => IEnumerableExtensions.MinElement<string>(new string[0], str => str.Length));
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string, int>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string, int>(new[] { "" }, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElement<string, int>(null, str => str.Length); });
+            Assert.Throws<InvalidOperationException>(() => IEnumerableExtensions.MinElement<string, int>(new string[0], str => str.Length));
 
             var input = new[] { "one", "two", "three", "four" };
             Assert.AreEqual("one", input.MinElement(str => str.Length));
