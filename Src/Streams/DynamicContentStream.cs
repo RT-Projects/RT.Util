@@ -29,6 +29,16 @@ namespace RT.Util.Streams
             Buffered = buffered;
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing && _enumerator != null)
+            {
+                _enumerator.Dispose();
+                _enumerator = null;
+            }
+        }
+
         /// <summary>
         /// If true, each call to <see cref="Read"/> will move the enumerator forward as far as necessary to fill the buffer.
         /// If false, each call to <see cref="Read"/> returns only the text produced by a single MoveNext() of the enumerator.

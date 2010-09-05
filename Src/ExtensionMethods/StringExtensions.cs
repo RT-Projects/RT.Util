@@ -503,6 +503,7 @@ namespace RT.Util.ExtensionMethods
                         case 'f': result.Append('\f'); break;
                         case 'r': result.Append('\r'); break;
                         case '\\': result.Append('\\'); break;
+                        case '"': result.Append('"'); break;
                         case 'x':
                             // See how many characters are hex digits
                             var len = 0;
@@ -526,43 +527,6 @@ namespace RT.Util.ExtensionMethods
             return result.ToString();
         }
 
-        /// <summary>
-        /// Joins all strings in the enumerable using the specified string as the separator and the
-        /// specified prefix and suffix for each string.
-        /// <example>
-        ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join("[", "]", ", ");
-        ///         // a contains "[Paris], [London], [Tokyo]"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string JoinString(this IEnumerable<string> values, string separator = null, string prefix = null, string suffix = null)
-        {
-            if (values == null)
-                throw new ArgumentNullException("values");
-
-            var enumerator = values.GetEnumerator();
-            if (!enumerator.MoveNext())
-                return "";
-            StringBuilder sb = new StringBuilder();
-            if (prefix != null)
-                sb.Append(prefix);
-            sb.Append(enumerator.Current);
-            if (suffix != null)
-                sb.Append(suffix);
-            while (enumerator.MoveNext())
-            {
-                if (separator != null)
-                    sb.Append(separator);
-                if (prefix != null)
-                    sb.Append(prefix);
-                sb.Append(enumerator.Current);
-                if (suffix != null)
-                    sb.Append(suffix);
-            }
-            return sb.ToString();
-        }
-
         /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
         public static IEnumerable<string> Trim(this IEnumerable<string> values)
         {
@@ -576,23 +540,6 @@ namespace RT.Util.ExtensionMethods
                 return new string[0];
             var end = arr.Length - 1;
             while (end >= 0 && string.IsNullOrEmpty(arr[end]))
-                end--;
-            return arr.Skip(begin).Take(end - begin + 1);
-        }
-
-        /// <summary>Returns the specified collection, but with leading and trailing empty strings and nulls removed.</summary>
-        public static IEnumerable<object> Trim(this IEnumerable<object> values)
-        {
-            if (values == null)
-                throw new ArgumentNullException("values");
-            var arr = values.ToArray();
-            var begin = 0;
-            while (begin < arr.Length && (arr[begin] == null || arr[begin].Equals(string.Empty)))
-                begin++;
-            if (begin == arr.Length)
-                return new string[0];
-            var end = arr.Length - 1;
-            while (end >= 0 && (arr[end] == null || arr[end].Equals(string.Empty)))
                 end--;
             return arr.Skip(begin).Take(end - begin + 1);
         }

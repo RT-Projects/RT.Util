@@ -16,17 +16,19 @@ namespace RT.Util.ExtensionMethods
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.UniquePairs<string>(null); });
 
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
-            var iter = one.UniquePairs().GetEnumerator();
-            for (int i = 0; i < 10; i++)
+            using (var iter = one.UniquePairs().GetEnumerator())
             {
-                for (int j = i + 1; j < 10; j++)
+                for (int i = 0; i < 10; i++)
                 {
-                    Assert.IsTrue(iter.MoveNext());
-                    Assert.AreEqual(one[i], iter.Current.Item1);
-                    Assert.AreEqual(one[j], iter.Current.Item2);
+                    for (int j = i + 1; j < 10; j++)
+                    {
+                        Assert.IsTrue(iter.MoveNext());
+                        Assert.AreEqual(one[i], iter.Current.Item1);
+                        Assert.AreEqual(one[j], iter.Current.Item2);
+                    }
                 }
+                Assert.IsFalse(iter.MoveNext());
             }
-            Assert.IsFalse(iter.MoveNext());
         }
 
         [Test]
@@ -38,17 +40,19 @@ namespace RT.Util.ExtensionMethods
 
             var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
             var two = new string[] { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
-            var iter = one.Join(two).GetEnumerator();
-            foreach (int i in one)
+            using (var iter = one.Join(two).GetEnumerator())
             {
-                foreach (string j in two)
+                foreach (int i in one)
                 {
-                    Assert.IsTrue(iter.MoveNext());
-                    Assert.AreEqual(i, iter.Current.Item1);
-                    Assert.AreEqual(j, iter.Current.Item2);
+                    foreach (string j in two)
+                    {
+                        Assert.IsTrue(iter.MoveNext());
+                        Assert.AreEqual(i, iter.Current.Item1);
+                        Assert.AreEqual(j, iter.Current.Item2);
+                    }
                 }
+                Assert.IsFalse(iter.MoveNext());
             }
-            Assert.IsFalse(iter.MoveNext());
         }
 
         [Test]
@@ -233,52 +237,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestZipPadAndTruncate()
-        {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Zip<string, string>(null, new string[0]); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipPad<string, string>(null, new string[0]); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.ZipTruncate<string, string>(null, new string[0]); });
-
-            var seq = new int[] { 1, 2, 3 };
-
-            // Test same-length sequence
-            var test1 = seq.Zip(new string[] { "One", "Two", "Three" }).ToList();
-            Assert.AreEqual(test1.Count, 3);
-            Assert.AreEqual(test1[0].Item1, 1);
-            Assert.AreEqual(test1[1].Item1, 2);
-            Assert.AreEqual(test1[2].Item1, 3);
-            Assert.AreEqual(test1[0].Item2, "One");
-            Assert.AreEqual(test1[1].Item2, "Two");
-            Assert.AreEqual(test1[2].Item2, "Three");
-
-            // Test shorter sequence: should be padded
-            var test2 = seq.Zip(new string[] { "One", "Two" }).ToList();
-            Assert.AreEqual(test2.Count, 3);
-            Assert.AreEqual(test2[0].Item1, 1);
-            Assert.AreEqual(test2[1].Item1, 2);
-            Assert.AreEqual(test2[2].Item1, 3);
-            Assert.AreEqual(test2[0].Item2, "One");
-            Assert.AreEqual(test2[1].Item2, "Two");
-            Assert.AreEqual(test2[2].Item2, null);
-
-            // Test longer sequence: should be truncated
-            var test3 = seq.Zip(new string[] { "One", "Two", "Three", "Four" }).ToList();
-            Assert.AreEqual(test3.Count, 3);
-            Assert.AreEqual(test3[0].Item1, 1);
-            Assert.AreEqual(test3[1].Item1, 2);
-            Assert.AreEqual(test3[2].Item1, 3);
-            Assert.AreEqual(test3[0].Item2, "One");
-            Assert.AreEqual(test3[1].Item2, "Two");
-            Assert.AreEqual(test3[2].Item2, "Three");
-        }
-
-        [Test]
         public void TestIndexOf()
         {
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null); });
@@ -375,6 +333,21 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(test2.SelectIndexWhere(i => i % 3 == 0).SequenceEqual(new[] { 2, 5, 8 }));
             Assert.IsTrue(test2.SelectIndexWhere(i => false).SequenceEqual(new int[0]));
             Assert.IsTrue(test2.SelectIndexWhere(i => true).SequenceEqual(Enumerable.Range(0, 10)));
+        }
+
+        [Test]
+        public void TestJoinString()
+        {
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.JoinString<string>(null); });
+
+            Assert.AreEqual("London, Paris, Tokyo", new[] { "London", "Paris", "Tokyo" }.JoinString(", "));
+            Assert.AreEqual("London|Paris|Tokyo", new[] { "London", "Paris", "Tokyo" }.JoinString("|"));
+
+            Assert.AreEqual("[London], [Paris], [Tokyo]", new[] { "London", "Paris", "Tokyo" }.JoinString(", ", "[", "]"));
+            Assert.AreEqual("<London><Paris><Tokyo>", new[] { "London", "Paris", "Tokyo" }.JoinString(null, "<", ">"));
+
+            Assert.AreEqual("", new string[] { }.JoinString("|"));
+            Assert.AreEqual("London", new[] { "London" }.JoinString("|"));
         }
     }
 }

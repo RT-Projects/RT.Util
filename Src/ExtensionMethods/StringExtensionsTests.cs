@@ -9,21 +9,6 @@ namespace RT.Util.ExtensionMethods
     [TestFixture]
     public sealed class StringExtensionsTests
     {
-        public void Assert_Join(string separator, IEnumerable<string> values, string expected)
-        {
-            Assert.AreEqual(expected, values.JoinString(separator));
-        }
-
-        [Test]
-        public void TestJoin()
-        {
-            Assert_Join(", ", new[] { "London", "Paris", "Tokyo" }, "London, Paris, Tokyo");
-            Assert_Join("|", new[] { "London", "Paris", "Tokyo" }, "London|Paris|Tokyo");
-
-            Assert_Join("|", new string[] { }, "");
-            Assert_Join("|", new[] { "London" }, "London");
-        }
-
         [Test]
         public void TestRepeat()
         {
@@ -63,13 +48,12 @@ namespace RT.Util.ExtensionMethods
             AssertCLiteralEscape("test, прове́рка", @"test, прове́рка");
             AssertCLiteralEscape("\0\a\b\t\n\v\f\r\\", @"\0\a\b\t\n\v\f\r\\");
             AssertCLiteralEscape("test\r\n; \tstuff\x15\x1A", @"test\r\n; \tstuff\x15\x1A");
+            AssertCLiteralEscape("\"", @"\""");
             Assert.AreEqual("test\\x0D\\x0A; \\x09stuff\\x15\\x1A -- \\x41".CLiteralUnescape(), "test\\r\\n; \\tstuff\\x15\\x1A -- A".CLiteralUnescape());
             try { @"test, \z stuff".CLiteralUnescape(); Assert.Fail(); }
             catch (ArgumentException e) { Assert.IsTrue(e.Message.Contains("6")); Assert.IsTrue(e.Message.Contains(@"\z")); }
-            try { @"test, \".CLiteralUnescape(); Assert.Fail(); }
-            catch (ArgumentException) { }
-            try { @"test, \x".CLiteralUnescape(); Assert.Fail(); }
-            catch (ArgumentException) { }
+            Assert.Throws<ArgumentException>(() => { @"test, \".CLiteralUnescape(); Assert.Fail(); });
+            Assert.Throws<ArgumentException>(() => { @"test, \x".CLiteralUnescape(); Assert.Fail(); });
         }
 
         private void AssertCLiteralEscape(string unescaped, string expectEscaped)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
@@ -76,18 +77,20 @@ namespace RT.Util.ExtensionMethods
         }
         private static IEnumerable<Tuple<T, T>> consecutivePairsIterator<T>(IEnumerable<T> source, bool closed)
         {
-            var enumer = source.GetEnumerator();
-            bool any = enumer.MoveNext();
-            if (!any) yield break;
-            T first = enumer.Current;
-            T last = enumer.Current;
-            while (enumer.MoveNext())
+            using (var enumer = source.GetEnumerator())
             {
-                yield return new Tuple<T, T>(last, enumer.Current);
-                last = enumer.Current;
+                bool any = enumer.MoveNext();
+                if (!any) yield break;
+                T first = enumer.Current;
+                T last = enumer.Current;
+                while (enumer.MoveNext())
+                {
+                    yield return new Tuple<T, T>(last, enumer.Current);
+                    last = enumer.Current;
+                }
+                if (closed)
+                    yield return new Tuple<T, T>(last, first);
             }
-            if (closed)
-                yield return new Tuple<T, T>(last, first);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
@@ -399,85 +402,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. The shorter sequence is padded with its type's default value to match the length of the longer sequence.
-        /// For example, [1, 2, 3, 4].ZipPad(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"], [4, null].
-        /// </summary>
-        public static IEnumerable<Tuple<T1, T2>> ZipPad<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            if (@this == null)
-                throw new ArgumentNullException("this");
-            if (other == null)
-                throw new ArgumentNullException("other");
-            return zipPadIterator(@this, other);
-        }
-        private static IEnumerable<Tuple<T1, T2>> zipPadIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            var enum1 = @this.GetEnumerator();
-            var enum2 = other.GetEnumerator();
-            bool more1 = enum1.MoveNext();
-            bool more2 = enum2.MoveNext();
-            while (more1 || more2)
-            {
-                yield return new Tuple<T1, T2>(more1 ? enum1.Current : default(T1), more2 ? enum2.Current : default(T2));
-                if (more1)
-                    more1 = enum1.MoveNext();
-                if (more2)
-                    more2 = enum2.MoveNext();
-            }
-        }
-
-        /// <summary>
-        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. The longer sequence is truncated to match the length of the shorter sequence.
-        /// For example, [1, 2, 3, 4].ZipTruncate(["one", "two", "three"]) enumerates [1, "one"], [2, "two"], [3, "three"].
-        /// </summary>
-        public static IEnumerable<Tuple<T1, T2>> ZipTruncate<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            if (@this == null)
-                throw new ArgumentNullException("this");
-            if (other == null)
-                throw new ArgumentNullException("other");
-            return zipTruncateIterator(@this, other);
-        }
-        private static IEnumerable<Tuple<T1, T2>> zipTruncateIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            var enum1 = @this.GetEnumerator();
-            var enum2 = other.GetEnumerator();
-            bool more1 = enum1.MoveNext();
-            bool more2 = enum2.MoveNext();
-            while (more1 && more2)
-            {
-                yield return new Tuple<T1, T2>(enum1.Current, enum2.Current);
-                more1 = enum1.MoveNext();
-                more2 = enum2.MoveNext();
-            }
-        }
-
-        /// <summary>
-        /// Enumerates all pairs of values from this and the <paramref name="other"/> sequence that have the same
-        /// index. The second sequence is either padded or truncated to match the first sequence's length.
-        /// </summary>
-        public static IEnumerable<Tuple<T1, T2>> Zip<T1, T2>(this IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            if (@this == null)
-                throw new ArgumentNullException("this");
-            if (other == null)
-                throw new ArgumentNullException("other");
-            return zipIterator(@this, other);
-        }
-        private static IEnumerable<Tuple<T1, T2>> zipIterator<T1, T2>(IEnumerable<T1> @this, IEnumerable<T2> other)
-        {
-            var enum1 = @this.GetEnumerator();
-            var enum2 = other.GetEnumerator();
-            while (enum1.MoveNext())
-            {
-                T2 elem = enum2.MoveNext() ? enum2.Current : default(T2);
-                yield return new Tuple<T1, T2>(enum1.Current, elem);
-            }
-        }
-
-        /// <summary>
         /// Returns the index of the first element in this <paramref name="source"/> satisfying
         /// the specified <paramref name="condition"/>. If no such elements are found, returns -1.
         /// </summary>
@@ -659,6 +583,43 @@ namespace RT.Util.ExtensionMethods
                     i++;
                 }
             }
+        }
+
+        /// <summary>
+        /// Turns all elements in the enumerable to strings and joins them using the specified string
+        /// as the separator and the specified prefix and suffix for each string.
+        /// <example>
+        ///     <code>
+        ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join("[", "]", ", ");
+        ///         // a contains "[Paris], [London], [Tokyo]"
+        ///     </code>
+        /// </example>
+        /// </summary>
+        public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null)
+        {
+            if (values == null)
+                throw new ArgumentNullException("values");
+
+            using (var enumerator = values.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                    return "";
+                StringBuilder sb = new StringBuilder();
+                sb.Append(prefix).Append(enumerator.Current.ToString()).Append(suffix);
+                while (enumerator.MoveNext())
+                    sb.Append(separator).Append(prefix).Append(enumerator.Current.ToString()).Append(suffix);
+                return sb.ToString();
+            }
+        }
+
+        /// <summary>Inserts the specified item in between each element in the input collection.</summary>
+        /// <param name="source">The input collection.</param>
+        /// <param name="extraElement">The element to insert between each consecutive pair of elements in the input collection.</param>
+        /// <returns>A collection containing the original collection with the extra element inserted.
+        /// For example, new[] { 1, 2, 3 }.InsertBetween(0) returns { 1, 0, 2, 0, 3 }.</returns>
+        public static IEnumerable<T> InsertBetween<T>(this IEnumerable<T> source, T extraElement)
+        {
+            return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
         }
     }
 }
