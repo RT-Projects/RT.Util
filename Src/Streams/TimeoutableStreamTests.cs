@@ -15,13 +15,15 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            bool pipeready = false;
             var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
+                while (!pipeready) Thread.Sleep(50);
+                Thread.Sleep(50);
                 using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
-                    Thread.Sleep(50);
                     pipe.Connect();
                     Thread.Sleep(100);
                     binary.WriteString("TEST");
@@ -44,6 +46,7 @@ namespace RT.Util.Streams
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {
+                    pipeready = true;
                     pipe.WaitForConnection();
                     binary.ReadString();
                     binary.ReadString();
@@ -67,13 +70,15 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            bool pipeready = false;
             var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
+                while (!pipeready) Thread.Sleep(50);
+                Thread.Sleep(50);
                 using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
-                    Thread.Sleep(50);
                     pipe.Connect();
                     Thread.Sleep(100);
                     binary.WriteString("TEST");
@@ -93,6 +98,7 @@ namespace RT.Util.Streams
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {
+                    pipeready = true;
                     pipe.WaitForConnection();
                     timeout.ReadTimeout = 300;
                     binary.ReadString();
@@ -116,13 +122,15 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            bool pipeready = false;
             var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
+                while (!pipeready) Thread.Sleep(50);
+                Thread.Sleep(50);
                 using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
-                    Thread.Sleep(50);
                     pipe.Connect();
                     Thread.Sleep(100);
                     binary.ReadString();
@@ -142,6 +150,7 @@ namespace RT.Util.Streams
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {
+                    pipeready = true;
                     pipe.WaitForConnection();
                     timeout.WriteTimeout = 300;
                     binary.WriteString("TEST");
