@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using NUnit.Direct;
@@ -12,10 +13,13 @@ namespace RT.Util
     {
         static void Main(string[] args)
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            NUnitDirect.RunTestsOnAssembly(Assembly.GetEntryAssembly());
+            bool wait = !args.Contains("--no-wait");
+            bool notimes = args.Contains("--no-times");
 
-            if (args.Length != 1 || args[0] != "--no-wait")
+            Console.OutputEncoding = Encoding.UTF8;
+            NUnitDirect.RunTestsOnAssembly(Assembly.GetEntryAssembly(), notimes);
+
+            if (wait)
             {
                 Console.WriteLine("Press Enter to exit.");
                 Console.ReadLine();
