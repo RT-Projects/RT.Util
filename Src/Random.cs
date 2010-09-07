@@ -62,5 +62,25 @@ namespace RT.Util
             lock (_rnd)
                 return _rnd.Next(min, max);
         }
+
+        /// <summary>
+        /// Fills the specified buffer with random bytes.
+        /// </summary>
+        public static void NextBytes(byte[] buffer)
+        {
+            lock (_rnd)
+                _rnd.NextBytes(buffer);
+        }
+
+        /// <summary>
+        /// Returns a new array with the specified number of elements, filled with random bytes.
+        /// </summary>
+        public static byte[] NextBytes(int count)
+        {
+            var buffer = new byte[count];
+            lock (_rnd)
+                _rnd.NextBytes(buffer);
+            return buffer;
+        }
     }
 }
