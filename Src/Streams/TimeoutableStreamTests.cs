@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Threading;
 using NUnit.Framework;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Streams
 {
@@ -14,9 +15,10 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
-                using (var pipe = new NamedPipeClientStream(".", "testpipe3845R6HDEFYG", PipeDirection.InOut, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
                     Thread.Sleep(50);
@@ -38,7 +40,7 @@ namespace RT.Util.Streams
 
             var ts = new Thread(() =>
             {
-                using (var pipe = new NamedPipeServerStream("testpipe3845R6HDEFYG", PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {
@@ -65,9 +67,10 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
-                using (var pipe = new NamedPipeClientStream(".", "testpipe3845R6HDEFYG", PipeDirection.InOut, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
                     Thread.Sleep(50);
@@ -86,7 +89,7 @@ namespace RT.Util.Streams
 
             var ts = new Thread(() =>
             {
-                using (var pipe = new NamedPipeServerStream("testpipe3845R6HDEFYG", PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {
@@ -113,9 +116,10 @@ namespace RT.Util.Streams
         {
             bool okclient = false;
             bool okserver = false;
+            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
-                using (var pipe = new NamedPipeClientStream(".", "testpipe3845R6HDEFYG", PipeDirection.InOut, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
                 using (var binary = new BinaryStream(pipe))
                 {
                     Thread.Sleep(50);
@@ -134,7 +138,7 @@ namespace RT.Util.Streams
 
             var ts = new Thread(() =>
             {
-                using (var pipe = new NamedPipeServerStream("testpipe3845R6HDEFYG", PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 using (var timeout = new TimeoutableStream(pipe))
                 using (var binary = new BinaryStream(timeout))
                 {

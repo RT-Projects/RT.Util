@@ -29,6 +29,7 @@ namespace RT.Util.Streams
             Buffered = buffered;
         }
 
+        /// <summary>Releases the unmanaged resources used by this stream and optionally releases the managed resources.</summary>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);

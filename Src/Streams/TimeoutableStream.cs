@@ -22,7 +22,7 @@ namespace RT.Util.Streams
             WriteTimeout = Timeout.Infinite;
         }
 
-        /// <summary>Disposes of this stream, the underlying stream and any associated peek streams.</summary>
+        /// <summary>Disposes of this stream and the underlying stream.</summary>
         protected override void Dispose(bool disposing)
         {
             if (!_disposed)
