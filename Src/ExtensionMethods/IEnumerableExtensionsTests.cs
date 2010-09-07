@@ -141,7 +141,7 @@ namespace RT.Util.ExtensionMethods
                     int r = rnd.Next(1, 4);
                     lst.Add(new Tuple<string, int>(i == 1 ? "one" : i == 2 ? "two" : "three", j));
                 }
-                var lstSorted = lst.OrderLazy(CustomComparer.Create<Tuple<string, int>>((x, y) => x.Item1.CompareTo(y.Item1)));
+                var lstSorted = lst.OrderLazy(new CustomComparer<Tuple<string, int>>((x, y) => x.Item1.CompareTo(y.Item1)));
                 string lastString = null;
                 int lastInt = 0;
                 foreach (var a in lstSorted)
