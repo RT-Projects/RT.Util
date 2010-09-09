@@ -974,7 +974,14 @@ namespace RT.KitchenSink.ParseCs
             return string.Concat(Left.ToString(), " ? ", Middle.ToString(), " : ", Right.ToString());
         }
     }
-    public enum BinaryOperator { Times, Div, Mod, Plus, Minus, Shl, Shr, Less, Greater, LessEq, GreaterEq, Eq, NotEq, And, Xor, Or, AndAnd, OrOr, Coalesce }
+    public enum BinaryOperator
+    {
+        // The following operators are used both in CsBinaryOperatorExpression and in CsBinaryOperatorOverload
+        Times, Div, Mod, Plus, Minus, Shl, Shr, Less, Greater, LessEq, GreaterEq, Eq, NotEq, And, Xor, Or,
+
+        // The following operators are used only in CsBinaryOperatorExpression
+        AndAnd, OrOr, Coalesce
+    }
     public sealed class CsBinaryOperatorExpression : CsExpression
     {
         public BinaryOperator Operator;
@@ -997,7 +1004,17 @@ namespace RT.KitchenSink.ParseCs
             );
         }
     }
-    public enum UnaryOperator { Plus, Minus, Not, Neg, PrefixInc, PrefixDec, PostfixInc, PostfixDec, PointerDeref, AddressOf, True, False }
+    public enum UnaryOperator
+    {
+        // The following unary operators are used both in CsUnaryOperatorExpression and in CsOperatorOverload
+        Plus, Minus, Not, Neg, PrefixInc, PrefixDec,
+
+        // The following unary operators are used only in CsUnaryOperatorExpression
+        PostfixInc, PostfixDec, PointerDeref, AddressOf,
+
+        // The following unary operators are used only in CsOperatorOverload
+        True, False
+    }
     public sealed class CsUnaryOperatorExpression : CsExpression
     {
         public UnaryOperator Operator;
