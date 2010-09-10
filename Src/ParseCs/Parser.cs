@@ -2371,8 +2371,6 @@ namespace RT.KitchenSink.ParseCs
                     try { left = new CsMemberAccessExpression { AccessType = type, Left = left, Right = parseExpressionIdentifier(tok, ref i) }; }
                     catch (ParseException e)
                     {
-                        if (e.IncompleteResult is CsExpression)
-                            throw new ParseException(e.Message, e.Index, new CsMemberAccessExpression { AccessType = type, Left = left, Right = (CsExpression) e.IncompleteResult });
                         throw new ParseException(e.Message, e.Index, left);
                     }
                 }
@@ -2809,7 +2807,7 @@ namespace RT.KitchenSink.ParseCs
             return parseExpressionIdentifier(tok, ref i);
         }
         private static string[] _genericMethodGroupMagicalTokens = new[] { "(", ")", "]", ":", ";", ",", ".", "?", "==", "!=" };
-        private static CsExpression parseExpressionIdentifier(TokenJar tok, ref int i)
+        private static CsSimpleNameExpression parseExpressionIdentifier(TokenJar tok, ref int i)
         {
             // Check if this can be parsed as a type identifier. If it can't, don't throw; if it failed because of a malformed generic type parameter, it could still be a less-than operator.
             try

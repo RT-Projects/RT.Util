@@ -1038,7 +1038,8 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsMemberAccessExpression : CsExpression
     {
         public MemberAccessType AccessType;
-        public CsExpression Left, Right;
+        public CsExpression Left;
+        public CsSimpleNameExpression Right;
         public override string ToString() { return string.Concat(Left.ToString(), AccessType == MemberAccessType.PointerDeref ? "->" : ".", Right.ToString()); }
     }
     public sealed class CsFunctionCallExpression : CsExpression
