@@ -423,6 +423,12 @@ namespace RT.Util
         [DllImport("kernel32.dll")]
         static extern ErrorModes SetErrorMode(ErrorModes uMode);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool QueryThreadCycleTime(IntPtr threadHandle, out ulong cycleTime);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetCurrentThread();
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member

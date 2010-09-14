@@ -124,7 +124,8 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <typeparam name="T">Type of elements in the list.</typeparam>
         /// <param name="list">List to shuffle.</param>
-        public static void Shuffle<T>(this IList<T> list)
+        /// <returns>The list operated on.</returns>
+        public static IList<T> Shuffle<T>(this IList<T> list)
         {
             if (list == null)
                 throw new ArgumentNullException("list");
@@ -138,6 +139,7 @@ namespace RT.Util.ExtensionMethods
                     list[j - 1] = t;
                 }
             }
+            return list;
         }
 
         /// <summary>

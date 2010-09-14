@@ -27,4 +27,54 @@ namespace RT.Util
             return ((double) (stop - _start)) / (double) WinAPI.PerformanceFreq;
         }
     }
+
+    /// <summary>
+    /// Provides a more accurate way to measure the amount of CPU time consumed by a thread, using
+    /// the new QueryThreadCycleTime call introduced in Vista. Unlike <see cref="Ut.Tic"/>, this measures in
+    /// unspecified units, and only counts the times when this thread is actually in possession of a CPU time slice.
+    /// Important: must be instantiated and used on the same thread for the results to be valid.
+    /// </summary>
+    public class TicTocCycles
+    {
+        private IntPtr _threadHandle;
+        private ulong _ticCycles;
+        private long _calibrationCycles;
+
+        /// <summary>Constructor.</summary>
+        public TicTocCycles()
+        {
+            _threadHandle = WinAPI.GetCurrentThread();
+
+            _calibrationCycles = 0;
+
+            long minCycles = long.MaxValue;
+            for (int i = 0; i < 10000; i++)
+            {
+                long cycles;
+                Tic();
+                cycles = Toc();
+                if (i > 200)  // it is important to discard the initial measurements because they are slower than the rest
+                    if (minCycles > cycles)
+                        minCycles = cycles;
+            }
+
+            _calibrationCycles = minCycles;
+        }
+
+        /// <summary>Indicates the start of a measurement interval.</summary>
+        public void Tic()
+        {
+            WinAPI.QueryThreadCycleTime(_threadHandle, out _ticCycles);
+        }
+
+        /// <summary>Indicates the end of a measurement interval. Returns the amount of CPU time
+        /// consumed by _this thread only_ since the last call to <see cref="Tic"/>.</summary>
+        public long Toc()
+        {
+            ulong tocCycles;
+            WinAPI.QueryThreadCycleTime(_threadHandle, out tocCycles);
+            return (long) tocCycles - (long) _ticCycles - _calibrationCycles;
+        }
+
+    }
 }
