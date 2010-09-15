@@ -26,6 +26,7 @@ namespace RT.Util.Lingo
         private ToolStripMenuItem _mnuFindPrev;
         private ToolStripMenuItem _mnuApply;
         private TranslationGroupListBox _lstGroups;
+        private Timer _lstGroupsSelectionChangeTimer;
 
         private TranslationPanel _lastFocusedPanel;
         private string _moduleName;
@@ -139,16 +140,16 @@ namespace RT.Util.Lingo
             _pnlRightOuter.Controls.Add(_pnlRightInner);
             pnlSplit.Panel2.Controls.Add(_pnlRightOuter);
 
-            Timer timer = new Timer { Interval = 300, Enabled = false };
-            timer.Tick += (s, e) =>
+            _lstGroupsSelectionChangeTimer = new Timer { Interval = 300, Enabled = false };
+            _lstGroupsSelectionChangeTimer.Tick += (s, e) =>
             {
-                timer.Enabled = false;
+                _lstGroupsSelectionChangeTimer.Enabled = false;
                 updateVisiblePanels();
             };
             _lstGroups.SelectedValueChanged += (s, e) =>
             {
-                timer.Enabled = false;
-                timer.Enabled = true;
+                _lstGroupsSelectionChangeTimer.Enabled = false;
+                _lstGroupsSelectionChangeTimer.Enabled = true;
             };
             _lstGroups.SelectedIndex = 0;
 
@@ -362,19 +363,38 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
+                DlgMessage.Show("You unchecked both “Search English text” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
-            int start = _lastFocusedPanel == null ? 0 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) + 1;
-            int finish = _lastFocusedPanel == null ? _allTranslationPanels.Length - 1 : start - 1;
-            for (int i = start % _allTranslationPanels.Length; i != finish; i = (i + 1) % _allTranslationPanels.Length)
+
+            var cursorPosition = _lastFocusedPanel == null ? null : _lastFocusedPanel.GetCursorPositionInfo();
+            var panelIndex = _lastFocusedPanel == null ? 0 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel);
+            bool secondRun = _lastFocusedPanel == null;
+            int i = panelIndex;
+
+            while (true)
             {
-                if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
+                var result = _allTranslationPanels[i].FindNext(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans, cursorPosition);
+                if (result != null)
                 {
                     _lstGroups.SelectedItem = _allTranslationPanels[i].ListItems.First();
-                    _allTranslationPanels[i].FocusFirstTranslationBox();
+                    _lstGroupsSelectionChangeTimer.Enabled = false;
+                    updateVisiblePanels();
+                    if (result.TextBoxIndex == -1)
+                        _allTranslationPanels[i].FocusFirstTranslationBox();
+                    else
+                        _allTranslationPanels[i].FocusTranslationBox(result.TextBoxIndex, result.CharacterIndex, _settings.LastFindQuery.Length);
                     return;
                 }
+                i = (i + 1) % _allTranslationPanels.Length;
+                if ((panelIndex == _allTranslationPanels.Length - 1 && i == 0) || (i == panelIndex + 1))
+                {
+                    if (secondRun)
+                        break;
+                    else
+                        secondRun = true;
+                }
+                cursorPosition = null;
             }
             DlgMessage.Show("No matching strings found.", "Find", DlgType.Info);
         }
@@ -383,19 +403,38 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.Show("You unchecked both \"Search English text\" and \"Search Translations\". That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
+                DlgMessage.Show("You unchecked both “Search English text” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
-            int start = _lastFocusedPanel == null ? _allTranslationPanels.Length - 1 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel) - 1;
-            int finish = _lastFocusedPanel == null ? 0 : start + 1;
-            for (int i = (start + _allTranslationPanels.Length) % _allTranslationPanels.Length; i != finish; i = (i + _allTranslationPanels.Length - 1) % _allTranslationPanels.Length)
+
+            var cursorPosition = _lastFocusedPanel == null ? null : _lastFocusedPanel.GetCursorPositionInfo();
+            var panelIndex = _lastFocusedPanel == null ? _allTranslationPanels.Length - 1 : Array.IndexOf(_allTranslationPanels, _lastFocusedPanel);
+            bool secondRun = _lastFocusedPanel == null;
+            int i = panelIndex;
+
+            while (true)
             {
-                if (_allTranslationPanels[i].Contains(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans))
+                var result = _allTranslationPanels[i].FindPrev(_settings.LastFindQuery, _settings.LastFindOrig, _settings.LastFindTrans, cursorPosition);
+                if (result != null)
                 {
                     _lstGroups.SelectedItem = _allTranslationPanels[i].ListItems.First();
-                    _allTranslationPanels[i].FocusFirstTranslationBox();
+                    _lstGroupsSelectionChangeTimer.Enabled = false;
+                    updateVisiblePanels();
+                    if (result.TextBoxIndex == -1)
+                        _allTranslationPanels[i].FocusFirstTranslationBox();
+                    else
+                        _allTranslationPanels[i].FocusTranslationBox(result.TextBoxIndex, result.CharacterIndex, _settings.LastFindQuery.Length);
                     return;
                 }
+                i = (i + _allTranslationPanels.Length - 1) % _allTranslationPanels.Length;
+                if ((panelIndex == 0 && i == _allTranslationPanels.Length - 1) || (i == panelIndex - 1))
+                {
+                    if (secondRun)
+                        break;
+                    else
+                        secondRun = true;
+                }
+                cursorPosition = null;
             }
             DlgMessage.Show("No matching strings found.", "Find", DlgType.Info);
         }
@@ -410,6 +449,8 @@ namespace RT.Util.Lingo
                 if (refList[i].TranslationPanel.State != TranslationPanelState.UpToDateAndSaved)
                 {
                     _lstGroups.SelectedItem = refList[i].ListItem;
+                    _lstGroupsSelectionChangeTimer.Enabled = false;
+                    updateVisiblePanels();
                     refList[i].TranslationPanel.FocusFirstTranslationBox();
                     return;
                 }
@@ -558,6 +599,7 @@ namespace RT.Util.Lingo
         private void groupSwitch(object sender, GroupSwitchEventArgs e)
         {
             _lstGroups.SelectedItem = e.ListItem;
+            _lstGroupsSelectionChangeTimer.Enabled = false;
             updateVisiblePanels();
             ((TranslationPanel) sender).FocusFirstTranslationBox();
         }
@@ -738,9 +780,11 @@ namespace RT.Util.Lingo
             protected static Color outOfDateOldFocus = Color.FromArgb(0xcc, 0xcc, 0xff);
             protected static Color unsavedOldFocus = Color.FromArgb(0xff, 0xcc, 0xcc);
 
-            public abstract bool Contains(string substring, bool inOriginal, bool inTranslation);
+            public abstract CursorPositionInfo FindNext(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom);
+            public abstract CursorPositionInfo FindPrev(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom);
             public abstract void FocusFirstTranslationBox();
             public abstract void FocusLastTranslationBox();
+            public abstract void FocusTranslationBox(int boxIndex, int characterIndex, int selectionLength);
             public virtual void SetUpToDate()
             {
                 State = TranslationPanelState.UpToDateAndSaved;
@@ -850,6 +894,8 @@ namespace RT.Util.Lingo
                 if (GroupSwitch != null)
                     GroupSwitch(this, new GroupSwitchEventArgs(listItem));
             }
+
+            public abstract CursorPositionInfo GetCursorPositionInfo();
         }
 
         private sealed class TranslationPanelTrString : TranslationPanel
@@ -968,11 +1014,47 @@ namespace RT.Util.Lingo
                 }
             }
 
-            public override bool Contains(string substring, bool inOriginal, bool inTranslation)
+            public override CursorPositionInfo FindNext(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom)
             {
-                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols | CompareOptions.IgnoreWidth;
-                return (inOriginal && CultureInfo.InvariantCulture.CompareInfo.IndexOf(_original.Translation, substring, co) != -1) ||
-                    (inTranslation && CultureInfo.InvariantCulture.CompareInfo.IndexOf(_translation.Translation, substring, co) != -1);
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth;
+                int pos;
+
+                // Search in original first
+                if (searchFrom == null && inOriginal && (pos = CultureInfo.InvariantCulture.CompareInfo.IndexOf(_original.Translation, substring, co)) != -1)
+                    return new CursorPositionInfo(-1, 0);
+
+                // Search in translation if we’re not already at the end
+                if (searchFrom != null && searchFrom.CharacterIndex >= _txtTranslation.TextLength)
+                    return null;
+                if (inTranslation && (pos = CultureInfo.InvariantCulture.CompareInfo.IndexOf(_txtTranslation.Text, substring, searchFrom == null ? 0 : searchFrom.CharacterIndex + 1, co)) != -1)
+                    return new CursorPositionInfo(0, pos);
+
+                return null;
+            }
+
+            public override CursorPositionInfo FindPrev(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom)
+            {
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth;
+                int pos;
+
+                // If we’re already at the beginning, return nothing
+                if (searchFrom != null && searchFrom.CharacterIndex == 0)
+                    return null;
+
+                // Search in translation 
+                if (inTranslation)
+                {
+                    // “- 2” at the end because LastIndexOf seems to be off by one... :/
+                    var startIndex = searchFrom == null ? _txtTranslation.TextLength - 1 : searchFrom.CharacterIndex + substring.Length - 2;
+                    if ((pos = CultureInfo.InvariantCulture.CompareInfo.LastIndexOf(_txtTranslation.Text, substring, startIndex, co)) != -1)
+                        return new CursorPositionInfo(0, pos);
+                }
+
+                // Search in original 
+                if (inOriginal && (pos = CultureInfo.InvariantCulture.CompareInfo.LastIndexOf(_original.Translation, substring, co)) != -1)
+                    return new CursorPositionInfo(-1, 0);
+
+                return null;
             }
 
             public override void FocusFirstTranslationBox()
@@ -985,6 +1067,12 @@ namespace RT.Util.Lingo
             {
                 _txtTranslation.Focus();
                 _txtTranslation.SelectAll();
+            }
+
+            public override void FocusTranslationBox(int boxIndex, int characterIndex, int selectionLength)
+            {
+                _txtTranslation.Focus();
+                _txtTranslation.Select(characterIndex, selectionLength);
             }
 
             public override void SetUpToDate()
@@ -1024,6 +1112,8 @@ namespace RT.Util.Lingo
                     }
                 }
             }
+
+            public override CursorPositionInfo GetCursorPositionInfo() { return new CursorPositionInfo(0, _txtTranslation.SelectionStart); }
         }
 
         private sealed class TranslationPanelTrStringNum : TranslationPanel
@@ -1250,12 +1340,63 @@ namespace RT.Util.Lingo
                 }
             }
 
-            public override bool Contains(string substring, bool inOriginal, bool inTranslation)
+            public override CursorPositionInfo FindNext(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom)
             {
-                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols | CompareOptions.IgnoreWidth;
-                return
-                    (inOriginal && _original.Translations.Any(t => CultureInfo.InvariantCulture.CompareInfo.IndexOf(t, substring, co) != -1)) ||
-                    (inTranslation && _translation.Translations.Any(t => CultureInfo.InvariantCulture.CompareInfo.IndexOf(t, substring, co) != -1));
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth;
+                int pos;
+
+                // First search in original
+                if (searchFrom == null && inOriginal)
+                    for (int i = 0; i < _original.Translations.Length; i++)
+                        if ((pos = CultureInfo.InvariantCulture.CompareInfo.IndexOf(_original.Translations[i], substring, co)) != -1)
+                            return new CursorPositionInfo(-1, 0);
+
+                // Then search in translations
+                if (inTranslation)
+                {
+                    int startInTextbox = searchFrom == null || searchFrom.TextBoxIndex == -1 ? 0 : searchFrom.TextBoxIndex;
+                    if (searchFrom != null && searchFrom.TextBoxIndex != -1 && searchFrom.CharacterIndex >= _txtTranslation[startInTextbox].TextLength)
+                        startInTextbox++;
+                    if (startInTextbox >= _txtTranslation.Length)
+                        return null;
+                    int startAtCharacter = searchFrom == null ? 0 : searchFrom.CharacterIndex + 1;
+
+                    for (int i = startInTextbox; i < _txtTranslation.Length; i++)
+                        if ((pos = CultureInfo.InvariantCulture.CompareInfo.IndexOf(_txtTranslation[i].Text, substring, i == startInTextbox ? startAtCharacter : 0, co)) != -1)
+                            return new CursorPositionInfo(i, pos);
+                }
+                return null;
+            }
+
+            public override CursorPositionInfo FindPrev(string substring, bool inOriginal, bool inTranslation, CursorPositionInfo searchFrom)
+            {
+                CompareOptions co = CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreWidth;
+                int pos;
+
+                // First search in translations
+                if (inTranslation)
+                {
+                    int startInTextbox = searchFrom == null || searchFrom.TextBoxIndex == -1 ? _txtTranslation.Length - 1 : searchFrom.TextBoxIndex;
+                    if (searchFrom != null && searchFrom.TextBoxIndex == 0 && searchFrom.CharacterIndex == 0)
+                        startInTextbox--;
+                    if (startInTextbox > 0)
+                    {
+                        // “- 2” at the end because LastIndexOf seems to be off by one... :/
+                        int startAtCharacter = searchFrom == null ? _txtTranslation[startInTextbox].TextLength : searchFrom.CharacterIndex + substring.Length - 2;
+
+                        for (int i = startInTextbox; i >= 0; i--)
+                            if ((pos = CultureInfo.InvariantCulture.CompareInfo.LastIndexOf(_txtTranslation[i].Text, substring, i == startInTextbox ? startAtCharacter : 0, co)) != -1)
+                                return new CursorPositionInfo(i, pos);
+                    }
+                }
+
+                // Then search in original
+                if (inOriginal)
+                    for (int i = 0; i < _original.Translations.Length; i++)
+                        if ((pos = CultureInfo.InvariantCulture.CompareInfo.IndexOf(_original.Translations[i], substring, co)) != -1)
+                            return new CursorPositionInfo(-1, 0);
+
+                return null;
             }
 
             public override void FocusFirstTranslationBox()
@@ -1268,6 +1409,12 @@ namespace RT.Util.Lingo
             {
                 _txtTranslation[_txtTranslation.Length - 1].Focus();
                 _txtTranslation[_txtTranslation.Length - 1].SelectAll();
+            }
+
+            public override void FocusTranslationBox(int boxIndex, int characterIndex, int selectionLength)
+            {
+                _txtTranslation[boxIndex].Focus();
+                _txtTranslation[boxIndex].Select(characterIndex, selectionLength);
             }
 
             public override void SetUpToDate()
@@ -1313,6 +1460,14 @@ namespace RT.Util.Lingo
                 base.SetFont(font, f);
                 foreach (var l in _smallLabels)
                     l.Font = new Font(font.Name, font.Size * 0.8f, FontStyle.Regular);
+            }
+
+            public override CursorPositionInfo GetCursorPositionInfo()
+            {
+                return new CursorPositionInfo(
+                    textBoxIndex: _txtTranslation.IndexOf(tt => tt.Focused),
+                    characterIndex: _txtTranslation.First(tt => tt.Focused).SelectionStart
+                );
             }
         }
 
@@ -1389,6 +1544,13 @@ namespace RT.Util.Lingo
                     h += (int) e.Graphics.MeasureString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), ClientSize.Width - 2 * HORIZONTAL_MARGIN - INDENTATION).Height + VERTICAL_MARGIN;
                 e.ItemHeight = h;
             }
+        }
+
+        private class CursorPositionInfo
+        {
+            public int TextBoxIndex;    // or -1 for original
+            public int CharacterIndex;
+            public CursorPositionInfo(int textBoxIndex, int characterIndex) { TextBoxIndex = textBoxIndex; CharacterIndex = characterIndex; }
         }
     }
 }
