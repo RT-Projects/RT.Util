@@ -12,7 +12,7 @@ namespace RT.Util.Collections
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index, or the type argument’s default value if the index does not exist.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">index is less than 0.</exception>
-        public T this[int index]
+        public new T this[int index]
         {
             get
             {
