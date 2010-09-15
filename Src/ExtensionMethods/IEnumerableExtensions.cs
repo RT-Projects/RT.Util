@@ -315,9 +315,9 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("source");
             using (var e = source.GetEnumerator())
             {
-                if (!e.MoveNext())
-                    return @default;
-                return e.Current;
+                if (e.MoveNext())
+                    return e.Current;
+                return @default;
             }
         }
 
@@ -338,13 +338,10 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("predicate");
             using (var e = source.GetEnumerator())
             {
-                while (true)
-                {
-                    if (!e.MoveNext())
-                        return @default;
+                while (e.MoveNext())
                     if (predicate(e.Current))
                         return e.Current;
-                }
+                return @default;
             }
         }
 
@@ -367,13 +364,10 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("resultSelector");
             using (var e = source.GetEnumerator())
             {
-                while (true)
-                {
-                    if (!e.MoveNext())
-                        return @default;
+                while (e.MoveNext())
                     if (predicate(e.Current))
                         return resultSelector(e.Current);
-                }
+                return @default;
             }
         }
 

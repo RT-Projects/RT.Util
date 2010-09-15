@@ -37,15 +37,15 @@ namespace RT.Util.Controls
         /// <summary>Constructor.</summary>
         public DoubleBufferedPanel()
         {
-            this.SetStyle(
+            SetStyle(
                 ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.UserPaint |
                 ControlStyles.DoubleBuffer, true
             );
 
             RefreshOnResize = true;
-            this.Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
-            this.Resize += new EventHandler(DoubleBufferedPanel_Resize);
+            Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
+            Resize += new EventHandler(DoubleBufferedPanel_Resize);
         }
 
         private void DoubleBufferedPanel_Resize(object sender, EventArgs e)
@@ -69,10 +69,8 @@ namespace RT.Util.Controls
                     Buffer = new Bitmap(Width, Height);
 
                 if (PaintBuffer != null)
-                    PaintBuffer(this, new PaintEventArgs(
-                        Graphics.FromImage(Buffer),
-                        new Rectangle(0, 0, Width, Height)
-                    ));
+                    using (var graphics = Graphics.FromImage(Buffer))
+                        PaintBuffer(this, new PaintEventArgs(graphics, new Rectangle(0, 0, Width, Height)));
             }
             base.Refresh();
         }

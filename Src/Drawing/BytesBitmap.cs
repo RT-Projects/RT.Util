@@ -47,8 +47,8 @@ namespace RT.Util.Drawing
         public Bitmap GetBitmapCopy()
         {
             Bitmap bmp = new Bitmap(_bitmap);
-            Graphics gr = Graphics.FromImage(bmp);
-            gr.DrawImageUnscaled(_bitmap, 0, 0);
+            using (var gr = Graphics.FromImage(bmp))
+                gr.DrawImageUnscaled(_bitmap, 0, 0);
             return bmp;
         }
 
