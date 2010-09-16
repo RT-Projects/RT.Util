@@ -245,7 +245,7 @@ namespace RT.KitchenSink.Collections
                 return;
 
             if (_kind != RVariantKind.Stub)
-                throw new Exception("Internal error");
+                throw new InternalErrorException("RVariant.assumeKind() encountered an internal error.");
 
             _kind = kind;
 
@@ -359,7 +359,7 @@ namespace RT.KitchenSink.Collections
         public override bool Equals(object other)
         {
             if (other is RVariant)
-                return Equals((RVariant)other);
+                return Equals((RVariant) other);
 
             TypeCode code = ExactConvert.GetTypeCode(other);
             switch (Kind)
@@ -386,7 +386,7 @@ namespace RT.KitchenSink.Collections
         /// </summary>
         public bool Equals(RVariant other)
         {
-            if ((object)other == null)
+            if ((object) other == null)
                 return false;
 
             if (this.Kind != other.Kind)
@@ -429,13 +429,13 @@ namespace RT.KitchenSink.Collections
         /// Compares RVariant to another object. If the RVariant and the object are not
         /// null, uses <see cref="Equals(object)"/> to do the comparison.
         /// </summary>
-        public static bool operator==(RVariant a, object b)
+        public static bool operator ==(RVariant a, object b)
         {
-            if ((object)a == null && (object)b == null)
+            if ((object) a == null && (object) b == null)
                 return true;
-            else if ((object)a == null)
+            else if ((object) a == null)
                 return false;
-            else if ((object)b == null)
+            else if ((object) b == null)
                 return false;
             else
                 return a.Equals(b);
@@ -444,13 +444,13 @@ namespace RT.KitchenSink.Collections
         /// <summary>
         /// The opposite of <see cref="operator=="/>.
         /// </summary>
-        public static bool operator!=(RVariant a, object b)
+        public static bool operator !=(RVariant a, object b)
         {
-            if ((object)a == null && (object)b == null)
+            if ((object) a == null && (object) b == null)
                 return false;
-            else if ((object)a == null)
+            else if ((object) a == null)
                 return true;
-            else if ((object)b == null)
+            else if ((object) b == null)
                 return true;
             else
                 return !a.Equals(b);
@@ -786,91 +786,91 @@ namespace RT.KitchenSink.Collections
         /// <summary>Provides an implicit conversion of a bool to RVariant.</summary>
         public static implicit operator RVariant(bool value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a byte to RVariant.</summary>
         public static implicit operator RVariant(byte value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a sbyte to RVariant.</summary>
         public static implicit operator RVariant(sbyte value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a short to RVariant.</summary>
         public static implicit operator RVariant(short value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a ushort to RVariant.</summary>
         public static implicit operator RVariant(ushort value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of an int to RVariant.</summary>
         public static implicit operator RVariant(int value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a uint to RVariant.</summary>
         public static implicit operator RVariant(uint value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a long to RVariant.</summary>
         public static implicit operator RVariant(long value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a ulong to RVariant.</summary>
         public static implicit operator RVariant(ulong value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a float to RVariant.</summary>
         public static implicit operator RVariant(float value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a double to RVariant.</summary>
         public static implicit operator RVariant(double value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a decimal to RVariant.</summary>
         public static implicit operator RVariant(decimal value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a DateTime to RVariant.</summary>
         public static implicit operator RVariant(DateTime value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a char to RVariant.</summary>
         public static implicit operator RVariant(char value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         /// <summary>Provides an implicit conversion of a string to RVariant.</summary>
         public static implicit operator RVariant(string value)
         {
-            return new RVariant((object)value);
+            return new RVariant((object) value);
         }
 
         #endregion
@@ -1202,7 +1202,7 @@ namespace RT.KitchenSink.Collections
                             else
                             {
                                 RVariant newEl = new RVariant();
-                                newEl.doFromXml((XmlElement)subNode, path + "/" + subNode.Name);
+                                newEl.doFromXml((XmlElement) subNode, path + "/" + subNode.Name);
                                 _dict.Add(subNode.Name, newEl);
                             }
                         }
@@ -1221,7 +1221,7 @@ namespace RT.KitchenSink.Collections
                             if (children[i].Name == "item")
                             {
                                 RVariant newEl = new RVariant();
-                                newEl.doFromXml((XmlElement)children[i], path + "[" + i + "]");
+                                newEl.doFromXml((XmlElement) children[i], path + "[" + i + "]");
                                 _list.Add(newEl);
                             }
                             else

@@ -1,9 +1,7 @@
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
-using System.Drawing.Imaging;
-using RT.Util.Collections;
 using System.Drawing.Drawing2D;
-using System;
+using System.Drawing.Imaging;
 
 namespace RT.Util.Drawing
 {
@@ -12,10 +10,11 @@ namespace RT.Util.Drawing
     /// </summary>
     public static class GraphicsUtil
     {
-        /// <summary>
-        /// Blends the specified colors together. Amount specifies how much
-        /// of the Color to keep, "on top of" the BackColor.
-        /// </summary>
+        /// <summary>Blends the specified colors together.</summary>
+        /// <param name="color">Color to blend onto the background color.</param>
+        /// <param name="backColor">Color to blend the other color onto.</param>
+        /// <param name="amount">How much of <paramref name="color"/> to keep, “on top of” <paramref name="backColor"/>.</param>
+        /// <returns>The blended colors.</returns>
         public static Color ColorBlend(Color color, Color backColor, double amount)
         {
             byte r = (byte) ((color.R * amount) + backColor.R * (1 - amount));

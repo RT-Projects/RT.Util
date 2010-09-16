@@ -149,7 +149,7 @@ namespace RT.Util
     public abstract class EggsNode
     {
         /// <summary>Allows implicit conversion from a string to an <see cref="EggsText"/> node.</summary>
-        public static implicit operator EggsNode(string text) { return new EggsText(text); }
+        public static implicit operator EggsNode(string text) { return text == null ? null : new EggsText(text); }
         /// <summary>Returns the EggsML parse tree as XML.</summary>
         public abstract object ToXml();
         /// <summary>The index in the original string where this tag was opened.</summary>
@@ -297,7 +297,12 @@ namespace RT.Util
         public string Text = "";
         /// <summary>Constructs a new EggsML text node.</summary>
         /// <param name="text">The text for this node to contain.</param>
-        public EggsText(string text) { Text = text; }
+        public EggsText(string text)
+        {
+            if (text == null)
+                throw new ArgumentNullException("text", "The 'text' for an EggsText node cannot be null.");
+            Text = text;
+        }
         /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
         /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
