@@ -378,6 +378,26 @@ namespace RT.KitchenSink.Drawing
         }
 
         /// <summary>
+        /// Fills a circle using the specified pen.
+        /// </summary>
+        public void FillCircle(Brush brush, PointD center, double radius)
+        {
+            Graphics.FillEllipse(brush,
+                SX(center.X - radius), sTop(center.Y - radius, center.Y + radius),
+                SW(2 * radius), SH(2 * radius));
+        }
+
+        /// <summary>
+        /// Fills a circle using the specified pen.
+        /// </summary>
+        public void FillCircle(Brush brush, double centerX, double centerY, double radius)
+        {
+            Graphics.FillEllipse(brush,
+                SX(centerX - radius), sTop(centerY - radius, centerY + radius),
+                SW(2 * radius), SH(2 * radius));
+        }
+
+        /// <summary>
         /// Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are
         /// connected to the centre with straight lines.
         /// </summary>
