@@ -38,7 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
-    <Compile Include="Collections\DynaList.cs" />
+    <Compile Include="Collections\AutoList.cs" />
     <Compile Include="Collections\ListSorted.cs" />
     <Compile Include="Collections\NameValuesCollection.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
