@@ -2417,7 +2417,7 @@ namespace RT.KitchenSink.ParseCs
             var arguments = new List<CsArgument>();
             if (!tok[i].IsBuiltin(isIndexer ? "]" : ")"))
             {
-                ArgumentType inoutref = ArgumentType.In;
+                ArgumentMode inoutref = ArgumentMode.In;
                 string argName = null;
                 try
                 {
@@ -2429,18 +2429,18 @@ namespace RT.KitchenSink.ParseCs
                             argName = tok[i].Identifier();
                             i += 2;
                         }
-                        inoutref = ArgumentType.In;
+                        inoutref = ArgumentMode.In;
                         if (tok[i].IsBuiltin("ref"))
                         {
-                            inoutref = ArgumentType.Ref;
+                            inoutref = ArgumentMode.Ref;
                             i++;
                         }
                         else if (tok[i].IsBuiltin("out"))
                         {
-                            inoutref = ArgumentType.Out;
+                            inoutref = ArgumentMode.Out;
                             i++;
                         }
-                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentType = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
+                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
                         if (tok[i].IsBuiltin(isIndexer ? "]" : ")"))
                             break;
                         else if (!tok[i].IsBuiltin(","))
@@ -2451,7 +2451,7 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentType = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
+                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
                     throw new ParseException(e.Message, e.Index, arguments);
                 }
             }
@@ -2607,7 +2607,7 @@ namespace RT.KitchenSink.ParseCs
                         var ret = new CsNewArrayExpression { Type = ty };
                         ret.SizeExpressions.AddRange(parseArgumentList(tok, ref i, out dummy).Select(p =>
                         {
-                            if (p.ArgumentType != ArgumentType.In)
+                            if (p.ArgumentMode != ArgumentMode.In)
                                 throw new ParseException("'out' and 'ref' parameters are not allowed in an array constructor.", tok[k].Index);
                             return p.ArgumentExpression;
                         }));
@@ -2704,7 +2704,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (tok[i].IsBuiltin("{"))
                 {
-                    var lambda = new CsBlockLambdaExpression { ParameterNames = parameters };
+                    var lambda = new CsBlockLambdaExpression { Parameters = parameters };
                     try { lambda.Block = parseBlock(tok, ref i); }
                     catch (ParseException e)
                     {
@@ -2719,13 +2719,13 @@ namespace RT.KitchenSink.ParseCs
                 }
                 else
                 {
-                    var lambda = new CsSimpleLambdaExpression { ParameterNames = parameters };
-                    try { lambda.Expression = parseExpression(tok, ref i); }
+                    var lambda = new CsSimpleLambdaExpression { Parameters = parameters };
+                    try { lambda.Body = parseExpression(tok, ref i); }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsExpression)
                         {
-                            lambda.Expression = (CsExpression) e.IncompleteResult;
+                            lambda.Body = (CsExpression) e.IncompleteResult;
                             throw new ParseException(e.Message, e.Index, lambda);
                         }
                         throw;
@@ -2804,33 +2804,38 @@ namespace RT.KitchenSink.ParseCs
                 return new CsParenthesizedExpression { Subexpression = expression };
             }
 
-            return parseExpressionIdentifier(tok, ref i);
+            return new CsSimpleNameExpression { SimpleName = parseExpressionIdentifier(tok, ref i) };
         }
         private static string[] _genericMethodGroupMagicalTokens = new[] { "(", ")", "]", ":", ";", ",", ".", "?", "==", "!=" };
-        private static CsSimpleNameExpression parseExpressionIdentifier(TokenJar tok, ref int i)
+        private static CsSimpleName parseExpressionIdentifier(TokenJar tok, ref int i)
         {
             // Check if this can be parsed as a type identifier. If it can't, don't throw; if it failed because of a malformed generic type parameter, it could still be a less-than operator.
+            CsTypeName ty;
+            var j = i;
             try
             {
-                var j = i;
-                var ty = parseTypeName(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.DontAllowDot).Item1;
-
-                // Since we didn't allow dot and we didn't allow arrays, nullables or pointers, we should get a simple name
-                if (!(ty is CsConcreteTypeName) || ((CsConcreteTypeName) ty).Parts.Count != 1)
-                    throw new ParseException("Unexpected internal error: Expected simple name, received '{0}'.".Fmt(ty), i);
-                var simpleName = ((CsConcreteTypeName) ty).Parts[0];
-
-                // Special case: only accept an identifier with generic type parameters if it has one of a special set of tokens following it; otherwise, reject it so that it is parsed as a less-than operator
-                // (this is so that a generic method group expression is correctly parsed, but two less-than/greater-than or less-than/shift-right expressions are not mistaken for a generic method group expression)
-                if (!simpleName.EndsWithGenerics || (tok.IndexExists(j) && tok[j].Type == TokenType.Builtin && _genericMethodGroupMagicalTokens.Contains(tok[j].TokenStr)))
-                {
-                    i = j;
-                    return new CsSimpleNameExpression { SimpleName = simpleName };
-                }
+                ty = parseTypeName(tok, ref j, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.DontAllowDot).Item1;
             }
-            catch (ParseException) { }
+            catch (ParseException)
+            {
+                goto afterTy;
+            }
 
-            var ret = new CsSimpleNameExpression { SimpleName = new CsSimpleNameIdentifier { Name = tok[i].Identifier() } };
+            // Since we didn't allow dot and we didn't allow arrays, nullables or pointers, we should get a simple name
+            if (!(ty is CsConcreteTypeName) || ((CsConcreteTypeName) ty).Parts.Count != 1)
+                throw new ParseException("Unexpected internal error: Expected simple name, received '{0}'.".Fmt(ty), i);
+            var simpleName = ((CsConcreteTypeName) ty).Parts[0];
+
+            // Special case: only accept an identifier with generic type parameters if it has one of a special set of tokens following it; otherwise, reject it so that it is parsed as a less-than operator
+            // (this is so that a generic method group expression is correctly parsed, but two less-than/greater-than or less-than/shift-right expressions are not mistaken for a generic method group expression)
+            if (!simpleName.EndsWithGenerics || (tok.IndexExists(j) && tok[j].Type == TokenType.Builtin && _genericMethodGroupMagicalTokens.Contains(tok[j].TokenStr)))
+            {
+                i = j;
+                return simpleName;
+            }
+
+        afterTy:
+            var ret = new CsSimpleNameIdentifier { Name = tok[i].Identifier() };
             i++;
             return ret;
         }

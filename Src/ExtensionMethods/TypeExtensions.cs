@@ -120,5 +120,19 @@ namespace RT.Util.ExtensionMethods
                 throw new InvalidOperationException("Field is of type {1}, but was expected to be of type {0} (or derived from it).".Fmt(typeof(T).FullName, field.FieldType.FullName));
             return (T) field.GetValue(instance);
         }
+
+        /// <summary>Determines whether a property has a public getter.</summary>
+        public static bool HasPublicGetter(this PropertyInfo Property)
+        {
+            var meth = Property.GetGetMethod();
+            return meth != null && meth.IsPublic;
+        }
+
+        /// <summary>Determines whether a property is static.</summary>
+        public static bool IsStatic(this PropertyInfo Property)
+        {
+            var meth = Property.GetGetMethod();
+            return meth == null ? Property.GetSetMethod().IsStatic : meth.IsStatic;
+        }
     }
 }

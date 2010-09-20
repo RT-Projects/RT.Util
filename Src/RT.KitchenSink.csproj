@@ -68,9 +68,15 @@
     <Compile Include="Lex\LexTokens.cs" />
     <Compile Include="Lex\LexUtil.cs" />
     <Compile Include="Lex\TokenJar.cs" />
+    <Compile Include="ParseCs\CandidateInfo.cs" />
+    <Compile Include="ParseCs\Conversion.cs" />
+    <Compile Include="ParseCs\NameResolver.cs" />
     <Compile Include="ParseCs\Lexer.cs" />
     <Compile Include="ParseCs\Parser.cs" />
+    <Compile Include="ParseCs\ParserUtil.cs" />
     <Compile Include="ParseCs\ParseTree.cs" />
+    <Compile Include="ParseCs\ResolveContext.cs" />
+    <Compile Include="ParseCs\TypeInference.cs" />
     <Compile Include="PathManager.cs" />
     <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
@@ -82,12 +88,6 @@
     <Compile Include="Tcp\TcpEvents.cs" />
     <Compile Include="Tcp\TcpServer.cs" />
     <Compile Include="VoronoiDiagram.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="RT.Util.csproj">
-      <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
-      <Name>Util</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -105,6 +105,12 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="RT.Util.csproj">
+      <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
+      <Name>Util</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
