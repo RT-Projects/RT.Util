@@ -17,6 +17,7 @@ namespace RT.KitchenSink.ParseCs
         private object _currentInstance;
         private Assembly[] _assemblies;
         private Dictionary<string, ResolveContext> _localNames = new Dictionary<string, ResolveContext>();
+        private List<string> _usingNamespaces = new List<string>();
 
         private NameResolver(string currentNamespace, Type currentType, object currentInstance, Assembly[] assemblies)
         {
@@ -101,6 +102,7 @@ namespace RT.KitchenSink.ParseCs
                     soFar += (soFar == null ? "" : ".") + part;
                     candidatePrefixes.Add(soFar);
                 }
+                candidatePrefixes.AddRange(_usingNamespaces);
             }
 
             // Is it a namespace?
@@ -234,6 +236,11 @@ namespace RT.KitchenSink.ParseCs
         public void ForgetLocalName(string name)
         {
             _localNames.Remove(name);
+        }
+
+        public void AddUsing(string @namespace)
+        {
+            _usingNamespaces.Add(@namespace);
         }
     }
 }
