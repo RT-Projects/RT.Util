@@ -114,6 +114,9 @@ namespace RT.KitchenSink.ParseCs
             if (!to.IsValueType && from is ResolveContextNullLiteral)
                 return new NullLiteralConversion(true);
 
+            if (from is ResolveContextLambda)
+                return null;
+
             return Implicit(from.ExpressionType, to);
         }
     }

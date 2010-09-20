@@ -126,7 +126,19 @@ namespace RT.KitchenSink.ParseCs
             {
                 // If no unfixed type parameters exist then type inference succeeds.
                 if (_fixed.All(b => b))
+                {
+                    // Change all the implicitly-typed lambda expressions to explicit ones
+                    for (int p = 0; p < _parameters.Length; p++)
+                    {
+                        var lambda = _arguments[p] as ResolveContextLambda;
+                        if (lambda == null)
+                            continue;
+                        var dlgParameterTypes = ParserUtil.GetDelegateParameterTypes(_parameters[p].ParameterType);
+                        var linqExpr = lambda.Lambda.ToLinqExpression(_resolver, dlgParameterTypes.Select(dlgp => substituteFixed(dlgp)).ToArray());
+                        _arguments[p] = new ResolveContextExpression(linqExpr, wasAnonymousFunction: true);
+                    }
                     return true;
+                }
 
                 // If there exists one or more arguments Ei with corresponding parameter type Ti such that the output type of Ei with type Ti
                 // contains at least one unfixed type parameter Xj, and none of the input types of Ei with type Ti contains any unfixed type
