@@ -615,5 +615,20 @@ namespace RT.Util.ExtensionMethods
         {
             return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
         }
+
+        /// <summary>Determines whether all the input sequences are equal according to SequenceEquals.</summary>
+        public static bool AllSequencesEqual<T>(this IEnumerable<IEnumerable<T>> sources)
+        {
+            using (var e = sources.GetEnumerator())
+            {
+                if (!e.MoveNext())
+                    return true;
+                var firstSequence = e.Current;
+                while (e.MoveNext())
+                    if (!firstSequence.SequenceEqual(e.Current))
+                        return false;
+                return true;
+            }
+        }
     }
 }
