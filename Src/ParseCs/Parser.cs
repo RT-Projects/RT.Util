@@ -1784,6 +1784,12 @@ namespace RT.KitchenSink.ParseCs
             {
                 while (true)
                 {
+                    // CASE 1: for (int i = 0, j = 0; ...)
+                    //      In this case, parseVariableDeclarationOrExpressionStatement() will consume the entire variable declaration statement and leave i pointing at the semicolon.
+                    // CASE 2: for (int i = 0, int j = 0; ...)
+                    //      This is not allowed. In this case, parseVariableDeclarationOrExpressionStatement() will throw the relevant exception.
+                    // CASE 3: for (i = 0, j = 0; ...)
+                    //      In this case, parseVariableDeclarationOrExpressionStatement() will parse only the “i = 0” part and leave i pointing at the comma.
                     fore.InitializationStatements.Add(parseVariableDeclarationOrExpressionStatement(tok, ref i));
                     if (tok[i].IsBuiltin(","))
                     {
@@ -2011,7 +2017,7 @@ namespace RT.KitchenSink.ParseCs
                     throw new ParseException(e.Message, e.Index, decl);
                 }
 
-                // This function does not consume the trailing ';' of the statement, so that 'using' can use it (where the statement ends with a ')' instead).
+                // This function does not consume the trailing ';' of the statement, so that 'using' and 'for' can use it (where the statement can end with a ')' or ',' instead).
                 return decl;
             }
 
@@ -2033,7 +2039,7 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException(msg, e.Index, e.IncompleteResult);
             }
 
-            // This function does not consume the trailing ';' of the statement, so that 'using' can use it (where the statement ends with a ')' instead).
+            // This function does not consume the trailing ';' of the statement, so that 'using' and 'for' can use it (where the statement can end with a ')' or ',' instead).
             return exprStat;
         }
         #endregion
