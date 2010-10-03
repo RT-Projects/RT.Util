@@ -43,13 +43,12 @@ namespace RT.Util.Xml
     ///    <see cref="XmlIgnoreIfDefaultAttribute"/>, <see cref="XmlIgnoreIfEmptyAttribute"/>, <see cref="XmlParentAttribute"/>. If an attribute can be used on a field, it can equally well be used on an auto-generated property,
     ///    but not on any other properties.
     /// </description></item>
+    /// <item><description>XmlClassify maintains object identity and correctly handles cycles in the object graph (by using XML attributes to refer to earlier tags).</description></item>
     /// </list>
     /// <para>Limitations:</para>
     /// <list type="bullet">
     /// <item><description>XmlClassify requires that the type have a parameterless constructor, although it need not be public. This parameterless constructor is executed with all its side-effects before the object is reconstructed.</description></item>
-    /// <item><description>XmlClassify does not handle cycles in the object graph (this causes a stack overflow).</description></item>
-    /// <item><description>If the object graph is an acyclic graph but not a tree, object identity is lost. The reconstructed graph contains multiple copies of the objects that are referenced multiple times.</description></item>
-    /// <item><description>If a field is of type ICollection&lt;T&gt;, IDictionary&lt;K, V&gt;, or any class that implements either of these, polymorphism is not supported, and nor is any information stored in those classes.
+    /// <item><description>If a field is of type ICollection&lt;T&gt;, IList&lt;T&gt;, IDictionary&lt;K, V&gt;, or any class that implements either of these, polymorphism is not supported, and nor is any information stored in those classes.
     ///    In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A comparer assigned by the class’s parameterless constructor is also not used.</description></item>
     /// </list>
     /// </remarks>
