@@ -168,7 +168,7 @@ namespace RT.Util.Xml
                 if (valueType != null)
                 {
                     if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
-                        throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(elem.Name, keyType));
+                        throw new InvalidOperationException("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(elem.Name, keyType));
 
                     object outputList;
                     MethodInfo addMethod;
@@ -185,10 +185,7 @@ namespace RT.Util.Xml
                     else
                     {
                         if (type.GetGenericTypeDefinition() == typeof(ICollection<>) || type.GetGenericTypeDefinition() == typeof(IList<>))
-                        {
-                            var listType = typeof(List<>).MakeGenericType(valueType);
-                            outputList = Activator.CreateInstance(listType);
-                        }
+                            outputList = Activator.CreateInstance(typeof(List<>).MakeGenericType(valueType));
                         else
                             outputList = Activator.CreateInstance(type);
                         addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
