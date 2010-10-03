@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Xml
 {
@@ -101,6 +103,19 @@ namespace RT.Util.Xml
             {
                 throw new Exception("Test exception");
             }
+        }
+
+        private sealed class classWithAdvancedTypes
+        {
+            // Should use List<int> when restoring
+            public ICollection<int> IntCollection;
+            public IList<int> IntList;
+
+            // Should use Dictionary<int, string> when restoring
+            public IDictionary<int, string> IntStringDic;
+
+            // Should work as expected
+            public SortedDictionary<int, string> SortedDic;
         }
 
         [Test]
@@ -345,6 +360,34 @@ namespace RT.Util.Xml
                 Assert.Fail("Expected System.Exception");
             }
             catch { }
+        }
+
+        [Test]
+        public void TestAdvancedClass()
+        {
+            var x = new classWithAdvancedTypes
+            {
+                IntCollection = new int[] { 1, 2, 3, 4 },
+                IntList = new int[] { 5, 6, 7, 8 },
+                IntStringDic = new SortedDictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" }, { 4, "four" } },
+                SortedDic = new SortedDictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" }, { 4, "four" } }
+            };
+
+            var xml = XmlClassify.ObjectToXElement(x);
+            var x2 = XmlClassify.ObjectFromXElement<classWithAdvancedTypes>(xml);
+
+            Assert.IsTrue(x2.IntCollection != null);
+            Assert.IsTrue(x2.IntCollection.SequenceEqual(new[] { 1, 2, 3, 4 }));
+            Assert.IsTrue(x2.IntList != null);
+            Assert.IsTrue(x2.IntList.SequenceEqual(new[] { 5, 6, 7, 8 }));
+            Assert.IsTrue(x2.IntStringDic != null);
+            Assert.IsTrue(x2.IntStringDic.GetType() == typeof(Dictionary<int, string>));
+            Assert.IsTrue(x2.IntStringDic.Keys.Order().SequenceEqual(new[] { 1, 2, 3, 4 }));
+            Assert.IsTrue(x2.IntStringDic.Values.Order().SequenceEqual(new[] { "four", "one", "three", "two" }));
+            Assert.IsTrue(x2.SortedDic != null);
+            Assert.IsTrue(x2.SortedDic.GetType() == typeof(SortedDictionary<int, string>));
+            Assert.IsTrue(x2.SortedDic.Keys.Order().SequenceEqual(new[] { 1, 2, 3, 4 }));
+            Assert.IsTrue(x2.SortedDic.Values.Order().SequenceEqual(new[] { "four", "one", "three", "two" }));
         }
     }
 }

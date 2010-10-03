@@ -176,10 +176,11 @@ namespace RT.Util.Xml
                         outputList = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { elem.Elements("item").Count() });
                         addMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
                     }
-                    else if (type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                    else if (keyType != null)
                     {
-                        outputList = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
-                        addMethod = type.GetMethod("Add", new Type[] { keyType, valueType });
+                        var dicType = type.GetGenericTypeDefinition() == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type;
+                        outputList = Activator.CreateInstance(dicType);
+                        addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
                     }
                     else
                     {
