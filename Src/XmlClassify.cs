@@ -17,11 +17,11 @@ namespace RT.Util.Xml
     /// </summary>
     /// <remarks>
     /// <para>By default, XmlClassify persists the value of all instance fields, including private, inherited and compiler-generated ones. It does not persist static members or the result of property getters.
-    ///    Each field is persisted in an XML tag whose name is the field's name minus any leading underscores. Compiler-generated fields for automatically-implemented properties are
-    ///    instead persisted in an XML tag whose name is the automatically-implemented property's name minus any leading underscores.</para>
+    ///    Each field is persisted in an XML tag whose name is the field’s name minus any leading underscores. Compiler-generated fields for automatically-implemented properties are
+    ///    instead persisted in an XML tag whose name is the automatically-implemented property’s name minus any leading underscores.</para>
     /// <para>Features:</para>
     /// <list type="bullet">
-    /// <item><description>XmlClassify fully supports all the built-in types which are keywords in C# except 'object'. It also supports DateTime.</description></item>
+    /// <item><description>XmlClassify fully supports all the built-in types which are keywords in C# except ‘object’ and ‘dynamic’. It also supports DateTime.</description></item>
     /// <item><description>XmlClassify fully supports classes and structs that contain only fields of the above types as well as fields whose type is itself such a class or struct.</description></item>
     /// <item><description>XmlClassify has special handling for classes that implement IDictionary&lt;K, V&gt;, where V must be a type also supported by XmlClassify. K must be string, an integer type, or an enum type.
     ///    If the field is of a concrete type, that type is maintained.
@@ -30,14 +30,15 @@ namespace RT.Util.Xml
     ///    If the field is of a concrete type, that type is maintained.
     ///    If the field is of the interface type ICollection&lt;T&gt; itself, the type List&lt;T&gt; is used to reconstruct the object.
     ///    If the type also implements IDictionary&lt;K, V&gt;, the special handling for that takes precedence.</description></item>
-    /// <item><description>For classes that don't implement any of the above-mentioned interfaces, XmlClassify supports polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
-    /// <item><description>XmlClassify supports auto-generated properties. The XML tag's name is the name of the property rather than the hidden auto-generated field, although the field's value is persisted.
+    /// <item><description>For classes that don’t implement any of the above-mentioned interfaces, XmlClassify supports polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
+    /// <item><description>XmlClassify supports auto-generated properties. The XML tag’s name is the name of the property rather than the hidden auto-generated field, although the field’s value is persisted.
     ///    All other properties are ignored.</description></item>
+    /// <item><description>XmlClassify also supports having fields of one of the types ICollection&lt;T&gt;, IList&lt;T&gt;, and IDictionary&lt;TKey, TValue&gt;. It will use List&lt;T&gt; and Dictionary&lt;TKey, TValue&gt; when restoring objects from XML.</description></item>
     /// <item><description>XmlClassify ignores the order of XML tags (except when handling collections and dictionaries). It uses tag names to identify which tag belongs to which field.</description></item>
     /// <item><description>XmlClassify silently discards unrecognised XML tags instead of throwing errors. This is by design because it enables the programmer to remove a field from a class without invalidating previously-saved XML files.</description></item>
     /// <item><description>XmlClassify silently ignores missing XML tags. A field whose XML tag is missing retains the value assigned to it by the parameterless constructor.
     ///    This is by design because it enables the programmer to add a new field to a class (and specifying a default initialisation value for it) without invalidating previously-saved XML files.</description></item>
-    /// <item><description>The following custom attributes can be used to alter XmlClassify's behaviour. See the custom attribute class's documentation for more information:
+    /// <item><description>The following custom attributes can be used to alter XmlClassify’s behaviour. See the custom attribute class’s documentation for more information:
     ///    <see cref="XmlFollowIdAttribute"/>, <see cref="XmlIdAttribute"/>, <see cref="XmlIgnoreAttribute"/>, <see cref="XmlIgnoreIfAttribute"/>,
     ///    <see cref="XmlIgnoreIfDefaultAttribute"/>, <see cref="XmlIgnoreIfEmptyAttribute"/>, <see cref="XmlParentAttribute"/>. If an attribute can be used on a field, it can equally well be used on an auto-generated property,
     ///    but not on any other properties.
@@ -49,7 +50,7 @@ namespace RT.Util.Xml
     /// <item><description>XmlClassify does not handle cycles in the object graph (this causes a stack overflow).</description></item>
     /// <item><description>If the object graph is an acyclic graph but not a tree, object identity is lost. The reconstructed graph contains multiple copies of the objects that are referenced multiple times.</description></item>
     /// <item><description>If a field is of type ICollection&lt;T&gt;, IDictionary&lt;K, V&gt;, or any class that implements either of these, polymorphism is not supported, and nor is any information stored in those classes.
-    ///    In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A comparer assigned by the class's parameterless constructor is also not used.</description></item>
+    ///    In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A comparer assigned by the class’s parameterless constructor is also not used.</description></item>
     /// </list>
     /// </remarks>
     public static class XmlClassify
@@ -140,7 +141,7 @@ namespace RT.Util.Xml
                 if (remember == null)
                     remember = new Dictionary<string, object>();
 
-                // If it's a nullable type, just determine the inner type and start again
+                // If it’s a nullable type, just determine the inner type and start again
                 if (type.TryGetInterfaceGenericParameters(typeof(Nullable<>), out typeParameters))
                     return objectFromXElement(typeParameters[0], elem, baseDir, parentNode, remember);
 
@@ -152,7 +153,7 @@ namespace RT.Util.Xml
                     return remember[refAttr.Value];
                 }
 
-                // Check if it's an array, collection or dictionary
+                // Check if it’s an array, collection or dictionary
                 Type keyType = null, valueType = null;
                 if (type.IsArray)
                     valueType = type.GetElementType();
@@ -170,23 +171,31 @@ namespace RT.Util.Xml
                         throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(elem.Name, keyType));
 
                     object outputList;
+                    MethodInfo addMethod;
                     if (type.IsArray)
+                    {
                         outputList = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { elem.Elements("item").Count() });
-                    else if (type.GetGenericTypeDefinition() == typeof(ICollection<>))
-                        outputList = Activator.CreateInstance(typeof(List<>).MakeGenericType(valueType));
+                        addMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
+                    }
                     else if (type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                    {
                         outputList = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
+                        addMethod = type.GetMethod("Add", new Type[] { keyType, valueType });
+                    }
                     else
-                        outputList = Activator.CreateInstance(type);
+                    {
+                        if (type.GetGenericTypeDefinition() == typeof(ICollection<>) || type.GetGenericTypeDefinition() == typeof(IList<>))
+                        {
+                            var listType = typeof(List<>).MakeGenericType(valueType);
+                            outputList = Activator.CreateInstance(listType);
+                        }
+                        else
+                            outputList = Activator.CreateInstance(type);
+                        addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
+                    }
 
                     if (elem.Attribute("refid") != null)
                         remember[elem.Attribute("refid").Value] = outputList;
-
-                    var addMethod = type.IsArray
-                        ? type.GetMethod("Set", new Type[] { typeof(int), valueType })
-                        : keyType == null
-                            ? type.GetMethod("Add", new Type[] { valueType })
-                            : type.GetMethod("Add", new Type[] { keyType, valueType });
 
                     int i = 0;
                     foreach (var itemTag in elem.Elements("item"))
@@ -288,7 +297,7 @@ namespace RT.Util.Xml
                 string rFieldName = field.Name.TrimStart('_');
                 MemberInfo getAttrsFrom = field;
 
-                // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
+                // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
                 var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
                 if (m.Success)
                 {
@@ -445,18 +454,24 @@ namespace RT.Util.Xml
                 return elem;
             }
 
+            // Add a “type” attribute if the instance type is different from the field’s declared type
             Type saveType = saveObject.GetType();
-            if (declaredType != saveType && (!saveType.IsValueType || declaredType != typeof(Nullable<>).MakeGenericType(saveType)))
+            if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
             {
-                if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                // ... but only add this attribute if it is not a collection, because then XmlClassify doesn’t care about the “type” attribute when restoring the object from XML anyway
+                Type[] typeParameters;
+                if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                 {
-                    if (saveType.Namespace.Equals(declaredType.Namespace))
-                        elem.Add(new XAttribute("type", saveType.Name));
+                    if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                    {
+                        if (saveType.Namespace.Equals(declaredType.Namespace))
+                            elem.Add(new XAttribute("type", saveType.Name));
+                        else
+                            elem.Add(new XAttribute("type", saveType.FullName));
+                    }
                     else
-                        elem.Add(new XAttribute("type", saveType.FullName));
+                        elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                 }
-                else
-                    elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
             }
 
             if (saveType == typeof(XElement))
@@ -493,6 +508,9 @@ namespace RT.Util.Xml
             }
             else
             {
+                if (declaredType.IsInterface && declaredType.GetGenericTypeDefinition() != typeof(ICollection<>) && declaredType.GetGenericTypeDefinition() != typeof(IList<>) && declaredType.GetGenericTypeDefinition() != typeof(IDictionary<,>))
+                    throw new InvalidOperationException("The field {0} is of an interface type, but not ICollection<T>, IList<T> or IDictionary<TKey, TValue>. Those are the only interface types supported.".Fmt(tagName));
+
                 if (remember == null)
                     remember = new Dictionary<object, XElement>();
 
@@ -526,7 +544,7 @@ namespace RT.Util.Xml
                 if (valueType != null)
                 {
                     if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
-                        throw new Exception("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(tagName, keyType.FullName));
+                        throw new InvalidOperationException("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(tagName, keyType.FullName));
 
                     var enumerator = saveType.GetMethod("GetEnumerator", new Type[] { }).Invoke(saveObject, new object[] { }) as IEnumerator;
                     Type kvpType = keyType == null ? null : typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType);
@@ -553,7 +571,7 @@ namespace RT.Util.Xml
                         string rFieldName = field.Name.TrimStart('_');
                         MemberInfo getAttrsFrom = field;
 
-                        // Special case: compiler-generated fields for auto-implemented properties have a name that can't be used as a tag name. Use the property name instead, which is probably what the user expects anyway
+                        // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
                         var m = Regex.Match(field.Name, @"^<(.*)>k__BackingField$");
                         if (m.Success)
                         {
@@ -656,8 +674,8 @@ namespace RT.Util.Xml
     public sealed class XmlIgnoreIfEmptyAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the field's or property's value is equal to the specified value.
-    /// Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type's default value and the specified value to be lost.
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does not generate a tag if the field’s or property’s value is equal to the specified value.
+    /// Notice that using this together with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type’s default value and the specified value to be lost.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlIgnoreIfAttribute : Attribute
