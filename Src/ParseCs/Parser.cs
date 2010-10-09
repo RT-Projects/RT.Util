@@ -57,6 +57,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 while (tok.IndexExists(i))
                 {
+                    var j = i;
                     object result = parseMemberDeclaration(tok, ref i, true);
                     if (result is CsUsingAlias)
                         doc.UsingAliases.Add((CsUsingAlias) result);
@@ -69,7 +70,7 @@ namespace RT.KitchenSink.ParseCs
                     else if (result is CsCustomAttributeGroup)
                         doc.CustomAttributes.Add((CsCustomAttributeGroup) result);
                     else
-                        throw new ParseException("Unexpected element. Expected 'using', 'namespace', or a type declaration.", tok[i].Index, doc);
+                        throw new ParseException("Members cannot be declared directly at the top level. Expected 'using', 'namespace', or a type declaration.", tok[j].Index, doc);
                 }
             }
             catch (LexException e)
@@ -156,6 +157,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 while (!tok[i].IsBuiltin("}"))
                 {
+                    var j = i;
                     object result = parseMemberDeclaration(tok, ref i, false);
                     if (result is CsUsingAlias)
                         ns.UsingAliases.Add((CsUsingAlias) result);
@@ -166,7 +168,7 @@ namespace RT.KitchenSink.ParseCs
                     else if (result is CsType)
                         ns.Types.Add((CsType) result);
                     else
-                        throw new ParseException("Unexpected element. Expected 'using', 'namespace', or a type declaration.", tok[i].Index);
+                        throw new ParseException("Members cannot be declared directly in a namespace. Expected 'using', 'namespace', or a type declaration.", tok[j].Index);
                 }
                 i++;
             }
@@ -1174,7 +1176,8 @@ namespace RT.KitchenSink.ParseCs
         }
         private static void parsePropertyBody(CsProperty prop, TokenJar tok, ref int i)
         {
-            tok[i].Assert("{");
+            if (!tok[i].IsBuiltin("{"))
+                throw new ParseException(@"'{' expected.", tok[i].Index);
             i++;
 
             while (!tok[i].IsBuiltin("}"))
