@@ -441,6 +441,32 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
+        public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (valueSelector == null)
+                throw new ArgumentNullException("valueSelector");
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                    throw new InvalidOperationException("source contains no elements.");
+                T maxElem = enumerator.Current;
+                TValue maxValue = valueSelector(maxElem);
+                while (enumerator.MoveNext())
+                {
+                    TValue value = valueSelector(enumerator.Current);
+                    if (value.CompareTo(maxValue) > 0)
+                    {
+                        maxValue = value;
+                        maxElem = enumerator.Current;
+                    }
+                }
+                return maxElem;
+            }
+        }
+
         /// <summary>
         /// Enumerates the items of this collection, skipping the last <paramref name="count"/> items. Note that the
         /// memory usage of this method is proportional to <paramref name="count"/>, but the source collection is
