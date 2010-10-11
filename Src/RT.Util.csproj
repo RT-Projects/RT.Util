@@ -52,6 +52,9 @@
     <Compile Include="Controls\HotkeyEdit.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\LabelEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\MenuRadioGroup.cs">
       <SubType>Component</SubType>
     </Compile>
