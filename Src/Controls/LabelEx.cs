@@ -214,9 +214,8 @@ namespace RT.Util.Controls
 
                 using (var subfont = new Font(font, substyle))
                 {
-                    foreach (var subnodes in n.Children)
-                        foreach (var subnode in subnodes)
-                            doPaintOrMeasure(subnode, subfont, n.Tag == '&' && ShowKeyboardCues);
+                    foreach (var subnode in n.Children)
+                        doPaintOrMeasure(subnode, subfont, n.Tag == '&' && ShowKeyboardCues);
                 }
             }
             else if (node is EggsGroup)

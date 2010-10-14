@@ -466,9 +466,8 @@ namespace RT.Util.Text
                 else
                 {
                     var tag = (EggsTag) node;
-                    foreach (var childList in tag.Children)
-                        foreach (var child in childList)
-                            longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
+                    foreach (var child in tag.Children)
+                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
                 }
             }
 

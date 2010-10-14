@@ -183,9 +183,8 @@ namespace RT.Util.Consoles
                     case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
                     case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                 }
-                foreach (var childList in tag.Children)
-                    foreach (var child in childList)
-                        eggWalk(child, text, colors, colorLengths, curColor, curLight);
+                foreach (var child in tag.Children)
+                    eggWalk(child, text, colors, colorLengths, curColor, curLight);
             }
         }
 
@@ -302,10 +301,9 @@ namespace RT.Util.Consoles
                     case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                     case '+': curNowrap = true; break;
                 }
-                foreach (var childList in tag.Children)
-                    foreach (var child in childList)
-                        foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
-                            yield return ret;
+                foreach (var child in tag.Children)
+                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
+                        yield return ret;
             }
         }
 

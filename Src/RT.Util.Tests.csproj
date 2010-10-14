@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ListSortedTests.cs" />
+    <Compile Include="EggsMLTests.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensionsTests.cs" />
