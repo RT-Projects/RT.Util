@@ -429,6 +429,9 @@ namespace RT.Util
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetCurrentThread();
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
