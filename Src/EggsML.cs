@@ -12,10 +12,10 @@ namespace RT.Util
     /// <remarks>
     ///     <para>The “rules” of EggsML are, in summary:</para>
     ///     <list type="bullet">
-    ///         <item><description>In EggsML, the following non-alphanumeric characters are “special” (have meaning): <c>~ @ # $ % ^ & * _ = + / \ | [ ] { } &lt; &gt; ` "</c></description></item>
+    ///         <item><description>In EggsML, the following non-alphanumeric characters are “special” (have meaning): <c>~ @ # $ % ^ &amp; * _ = + / \ | [ ] { } &lt; &gt; ` "</c></description></item>
     ///         <item><description>All other characters are always literal.</description></item>
     ///         <item><description>All the special characters can be escaped by doubling them.</description></item>
-    ///         <item><description>The characters <c>~ @ # $ % ^ & * _ = + / \ | [ { &lt;</c> can be used to open a “tag”.</description></item>
+    ///         <item><description>The characters <c>~ @ # $ % ^ &amp; * _ = + / \ | [ { &lt;</c> can be used to open a “tag”.</description></item>
     ///         <item><description>Tags that start with <c>[ { &lt;</c> are closed with <c>] } &gt;</c>. All other tags are closed with the same character.</description></item>
     ///         <item><description>Tags can be nested arbitrarily. In order to start a nested tag of the same character as its immediate parent, triple the tag character. For example, <c>*one ***two* three*</c> contains an asterisk tag nested inside another asterisk tag, while <c>*one *two* three*</c> would be parsed as two asterisk tags, one containing “one ” and the other containing “ three”.</description></item>
     ///         <item><description>The backtick character (<c>`</c>) can be used to “unjoin” multiple copies of the same character. For example, <c>**</c> is a literal asterisk, but <c>*`*</c> is an empty tag containing no text.</description></item>
