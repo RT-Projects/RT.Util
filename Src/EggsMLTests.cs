@@ -29,7 +29,7 @@ namespace RT.Util
             foreach (var tuple in expectations)
             {
                 Func<EggsNode, string> recurse = null;
-                recurse = node => (node is EggsTag ? ((EggsTag) node).Tag.ToString() : "") + (node is EggsContainer ? "(" + ((EggsContainer) node).Children.Count.ToString() + ":" + ((EggsContainer) node).Children.Select(n => recurse(n)).JoinString(",") + ")" : "");
+                recurse = node => (node is EggsTag ? ((EggsTag) node).Tag + "(" + ((EggsTag) node).Children.Count.ToString() + ":" + ((EggsTag) node).Children.Select(n => recurse(n)).JoinString(",") + ")" : "");
                 var eggs = EggsML.Parse(tuple.Item1);
                 Assert.AreEqual(tuple.Item2, recurse(eggs));
                 Assert.AreEqual(tuple.Item3, eggs.ToString());

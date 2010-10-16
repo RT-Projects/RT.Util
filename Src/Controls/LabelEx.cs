@@ -173,7 +173,22 @@ namespace RT.Util.Controls
 
         private void doPaintOrMeasure(EggsNode node, Font font, bool mnemonic)
         {
-            if (node is EggsText)
+            var tag = node as EggsTag;
+            if (tag != null)
+            {
+                var substyle =
+                    tag.Tag == '*' ? font.Style | FontStyle.Bold :
+                    tag.Tag == '/' ? font.Style | FontStyle.Italic :
+                    tag.Tag == '_' ? font.Style | FontStyle.Underline : font.Style;
+
+                using (var subfont = new Font(font, substyle))
+                    foreach (var subnode in tag.Children)
+                        doPaintOrMeasure(subnode, subfont, tag.Tag == '&' && ShowKeyboardCues);
+
+                foreach (var subnode in tag.Children)
+                    doPaintOrMeasure(subnode, font, mnemonic);
+            }
+            else if (node is EggsText)
             {
                 var dummy = new Size(int.MaxValue, int.MaxValue); // the API requires a size to be specified in order to specify format flags..... argh!
                 var glyphOverhang = (TextRenderer.MeasureText(_paintGr, "mm", font).Width - TextRenderer.MeasureText(_paintGr, "mm", font, dummy, TextFormatFlags.NoPadding).Width + 1) / 2;
@@ -203,25 +218,6 @@ namespace RT.Util.Controls
                     if (_doMeasure)
                         _cachedMeasuredHeight = _paintY + size.Height;
                 }
-            }
-            else if (node is EggsTag)
-            {
-                var n = (EggsTag) node;
-                var substyle =
-                    n.Tag == '*' ? font.Style | FontStyle.Bold :
-                    n.Tag == '/' ? font.Style | FontStyle.Italic :
-                    n.Tag == '_' ? font.Style | FontStyle.Underline : font.Style;
-
-                using (var subfont = new Font(font, substyle))
-                {
-                    foreach (var subnode in n.Children)
-                        doPaintOrMeasure(subnode, subfont, n.Tag == '&' && ShowKeyboardCues);
-                }
-            }
-            else if (node is EggsGroup)
-            {
-                foreach (var subnode in ((EggsGroup) node).Children)
-                    doPaintOrMeasure(subnode, font, mnemonic);
             }
         }
 

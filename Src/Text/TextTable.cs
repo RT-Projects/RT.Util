@@ -430,7 +430,13 @@ namespace RT.Util.Text
             }
             private void longestEggWalk(EggsNode node, ref int longestSoFar, ref int curLength, bool curNowrap, bool para)
             {
-                if (node is EggsText && curNowrap && !para)
+                var tag = node as EggsTag;
+                if (tag != null)
+                {
+                    foreach (var child in tag.Children)
+                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
+                }
+                else if (node is EggsText && curNowrap && !para)
                 {
                     curLength += ((EggsText) node).Text.Length;
                     if (curLength > longestSoFar)
@@ -456,18 +462,6 @@ namespace RT.Util.Text
                         i += char.IsSurrogate(txt, i) ? 2 : 1;
                     }
                     return;
-                }
-                else if (node is EggsGroup)
-                {
-                    foreach (var child in ((EggsGroup) node).Children)
-                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap, para);
-                    return;
-                }
-                else
-                {
-                    var tag = (EggsTag) node;
-                    foreach (var child in tag.Children)
-                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
                 }
             }
 

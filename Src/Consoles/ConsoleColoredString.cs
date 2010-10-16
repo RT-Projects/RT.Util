@@ -157,21 +157,9 @@ namespace RT.Util.Consoles
 
         private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colors, List<int> colorLengths, ConsoleColor curColor, bool curLight)
         {
-            if (node is EggsText)
+            var tag = node as EggsTag;
+            if (tag != null)
             {
-                var txt = (EggsText) node;
-                text.Append(txt.Text);
-                colors.Add(curColor);
-                colorLengths.Add(txt.Text.Length);
-            }
-            else if (node is EggsGroup)
-            {
-                foreach (var child in ((EggsGroup) node).Children)
-                    eggWalk(child, text, colors, colorLengths, curColor, curLight);
-            }
-            else
-            {
-                var tag = (EggsTag) node;
                 switch (tag.Tag)
                 {
                     case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
@@ -185,6 +173,13 @@ namespace RT.Util.Consoles
                 }
                 foreach (var child in tag.Children)
                     eggWalk(child, text, colors, colorLengths, curColor, curLight);
+            }
+            else if (node is EggsText)
+            {
+                var txt = (EggsText) node;
+                text.Append(txt.Text);
+                colors.Add(curColor);
+                colorLengths.Add(txt.Text.Length);
             }
         }
 
@@ -239,7 +234,26 @@ namespace RT.Util.Consoles
 
         private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, int hangingIndent, eggWalkWordWrapData data, ConsoleColor curColor, bool curLight, bool curNowrap)
         {
-            if (node is EggsText)
+            var tag = node as EggsTag;
+            if (tag != null)
+            {
+                switch (tag.Tag)
+                {
+                    case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                    case '/': curColor = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                    case '$': curColor = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                    case '&': curColor = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                    case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                    case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                    case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
+                    case '+': curNowrap = true; break;
+                }
+                foreach (var child in tag.Children)
+                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
+                        yield return ret;
+            }
+            else if (node is EggsText)
             {
                 var txt = ((EggsText) node).Text;
                 for (int i = 0; i < txt.Length; i++)
@@ -279,31 +293,6 @@ namespace RT.Util.Consoles
                         data.Line = null;
                     }
                 }
-            }
-            else if (node is EggsGroup)
-            {
-                foreach (var child in ((EggsGroup) node).Children)
-                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
-                        yield return ret;
-            }
-            else
-            {
-                var tag = (EggsTag) node;
-                switch (tag.Tag)
-                {
-                    case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
-                    case '/': curColor = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
-                    case '$': curColor = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
-                    case '&': curColor = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
-                    case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
-                    case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
-                    case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
-                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
-                    case '+': curNowrap = true; break;
-                }
-                foreach (var child in tag.Children)
-                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
-                        yield return ret;
             }
         }
 

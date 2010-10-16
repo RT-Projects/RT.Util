@@ -815,20 +815,24 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>Returns true if and only if this string ends with the specified character.</summary>
         /// <seealso cref="StartsWith"/>
-        public static bool EndsWith(this string str, char ch)
+        public static bool EndsWith(this string str, char? ch)
         {
             if (str == null)
                 throw new ArgumentNullException("str");
-            return str != null && str.Length > 0 && str[str.Length - 1] == ch;
+            if (ch == null)
+                return true;
+            return str != null && str.Length > 0 && str[str.Length - 1] == ch.Value;
         }
 
         /// <summary>Returns true if and only if this string starts with the specified character.</summary>
         /// <seealso cref="EndsWith"/>
-        public static bool StartsWith(this string str, char ch)
+        public static bool StartsWith(this string str, char? ch)
         {
             if (str == null)
                 throw new ArgumentNullException("str");
-            return str != null && str.Length > 0 && str[0] == ch;
+            if (ch == null)
+                return true;
+            return str != null && str.Length > 0 && str[0] == ch.Value;
         }
 
         /// <summary>Colours the specified string in the specified console colour.</summary>
