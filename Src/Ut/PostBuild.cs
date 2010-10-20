@@ -20,16 +20,15 @@ namespace RT.Util
         ///        <code>"$(TargetPath)" --post-build-check "$(SolutionDir)."</code></description></item>
         ///    <item><description><para>Add the following code at the beginning of your project's Main() method:</para>
         ///        <code>
-        ///            #if DEBUG
-        ///                if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
-        ///                    return Ut.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());
-        ///            #endif
+        ///            if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
+        ///                return Ut.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());
         ///        </code>
         ///        <para>If your project entails several assemblies, you can specify additional assemblies in the call to <see cref="Ut.RunPostBuildChecks"/>.
-        ///        For example, you could specify <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para>
+        ///            For example, you could specify <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para>
         ///        </description></item>
-        ///    <item><description><para>Add post-build check methods to any type where they may be relevant. For example, for a command-line program that uses <see cref="RT.Util.CommandLine.CommandLineParser&lt;T&gt;"/>,
-        ///                                                     you might use code similar to the following:</para>
+        ///    <item><description>
+        ///        <para>Add post-build check methods to any type where they may be relevant. For example, for a command-line program that uses
+        ///            <see cref="RT.Util.CommandLine.CommandLineParser&lt;T&gt;"/>, you might use code similar to the following:</para>
         ///        <code>
         ///            #if DEBUG
         ///                private static void PostBuildCheck(IPostBuildReporter rep)
@@ -39,8 +38,9 @@ namespace RT.Util
         ///                }
         ///            #endif
         ///        </code>
-        ///        <para>The method is expected to have one parameter of type <see cref="IPostBuildReporter"/>, a return type if void, and it is expected to be static and non-public.
-        ///                    Errors are reported by calling methods on said <see cref="IPostBuildReporter"/> object.</para>
+        ///        <para>The method is expected to have one parameter of type <see cref="IPostBuildReporter"/>, a return type of void, and it is expected
+        ///            to be static and non-public. Errors and warnings can be reported by calling methods on said <see cref="IPostBuildReporter"/> object.
+        ///            Alternatively, throwing an exception will also report an error.</para>
         ///    </description></item>
         /// </list></remarks>
         /// <param name="sourcePath">Specifies the path to the folder containing the C# source files.</param>
@@ -72,7 +72,7 @@ namespace RT.Util
                             var st = new StackTrace(realException, true);
                             string fileLine = null;
                             if (st.FrameCount > 0)
-                                fileLine = st.GetFrame(0).GetFileName() + "(" + st.GetFrame(0).GetFileLineNumber() + "," + st.GetFrame(0).GetFileColumnNumber() + "): ";
+                                fileLine = st.GetFrame(1).GetFileName() + "(" + st.GetFrame(1).GetFileLineNumber() + "," + st.GetFrame(1).GetFileColumnNumber() + "): ";
 
                             Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
                             rep.AnyErrors = true;
@@ -96,87 +96,23 @@ namespace RT.Util
 #if DEBUG
         private sealed class postBuildReporter : IPostBuildReporter
         {
+            private string _path;
             public bool AnyErrors { get; set; }
-            public string Path { get; private set; }
-            public postBuildReporter(string path) { Path = path; AnyErrors = false; }
+            public postBuildReporter(string path) { _path = path; AnyErrors = false; }
+            public void Error(string message, params string[] tokens) { output("Error: ", message, tokens); }
+            public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
 
-            public void Error(string message, string filename, int lineNumber, int columnNumber)
+            private void output(string errorOrWarning, string message, params string[] tokens)
             {
                 AnyErrors = true;
-                Console.Error.WriteLine(filename + "(" + lineNumber + "," + columnNumber + "): Error: " + message);
-            }
-            public void Warning(string message, string filename, int lineNumber, int columnNumber)
-            {
-                Console.Error.WriteLine(filename + "(" + lineNumber + "," + columnNumber + "): Warning: " + message);
-            }
-        }
-#endif
-    }
-
-#if DEBUG
-    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
-    public interface IPostBuildReporter
-    {
-        /// <summary>When implemented in a class, outputs the error <paramref name="message"/> including the specified
-        /// <paramref name="filename"/>, <paramref name="lineNumber"/> and <paramref name="columnNumber"/>.</summary>
-        /// <param name="message">The error message to display.</param>
-        /// <param name="filename">The full path of the file in which the error occurred, or null to output no error location information.</param>
-        /// <param name="lineNumber">Line number where the error occurred (ignored if <paramref name="filename"/> is null).</param>
-        /// <param name="columnNumber">Cursor position within the line where the error occurred (ignored if <paramref name="filename"/> is null).</param>
-        void Error(string message, string filename = null, int lineNumber = 0, int columnNumber = 0);
-
-        /// <summary>When implemented in a class, outputs the warning <paramref name="message"/> including the specified
-        /// <paramref name="filename"/>, <paramref name="lineNumber"/> and <paramref name="columnNumber"/>.</summary>
-        /// <param name="message">The warning message to display.</param>
-        /// <param name="filename">The full path of the file in which the warning occurred, or null to output no warning location information.</param>
-        /// <param name="lineNumber">Line number where the warning occurred (ignored if <paramref name="filename"/> is null).</param>
-        /// <param name="columnNumber">Cursor position within the line where the warning occurred (ignored if <paramref name="filename"/> is null).</param>
-        void Warning(string message, string filename = null, int lineNumber = 0, int columnNumber = 0);
-
-        /// <summary>Get a local path from which to read source files.</summary>
-        string Path { get; }
-    }
-
-    /// <summary>Provides extension functionality for the <see cref="IPostBuildReporter"/> type.</summary>
-    public static class PostBuildReporterExtensions
-    {
-        /// <summary>Searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
-        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
-        /// outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
-        public static void Error(this IPostBuildReporter rep, string message, params string[] tokens)
-        {
-            output(rep, true, message, tokens);
-        }
-
-        /// <summary>Searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
-        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
-        /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
-        public static void Warning(this IPostBuildReporter rep, string message, params string[] tokens)
-        {
-            output(rep, false, message, tokens);
-        }
-
-        /// <summary>Outputs the specified <paramref name="exception"/> as an error message along with the location in the source where it occurred.</summary>
-        public static void Error(this IPostBuildReporter rep, Exception exception)
-        {
-            var stackFrame = new StackTrace(exception, true).GetFrame(1);
-            rep.Error("{0} ({1})".Fmt(exception.Message, exception.GetType().FullName), stackFrame.GetFileName(), stackFrame.GetFileLineNumber(), stackFrame.GetFileColumnNumber());
-        }
-
-        /// <summary>Outputs the specified <paramref name="exception"/> as a warning message along with the location in the source where it occurred.</summary>
-        public static void Warning(this IPostBuildReporter rep, Exception exception)
-        {
-            var stackFrame = new StackTrace(exception, true).GetFrame(1);
-            rep.Warning("{0} ({1})".Fmt(exception.Message, exception.GetType().FullName), stackFrame.GetFileName(), stackFrame.GetFileLineNumber(), stackFrame.GetFileColumnNumber());
-        }
-
-        private static void output(IPostBuildReporter rep, bool error, string message, params string[] tokens)
-        {
-            if (tokens != null && tokens.Length > 0)
-            {
+                if (tokens == null || tokens.Length == 0)
+                {
+                    Console.Error.WriteLine(errorOrWarning + message);
+                    return;
+                }
                 try
                 {
-                    foreach (var f in new DirectoryInfo(rep.Path).GetFiles("*.cs", SearchOption.AllDirectories))
+                    foreach (var f in new DirectoryInfo(_path).GetFiles("*.cs", SearchOption.AllDirectories))
                     {
                         var lines = File.ReadAllLines(f.FullName);
                         var tokenIndex = 0;
@@ -188,10 +124,7 @@ namespace RT.Util
                                 tokenIndex++;
                                 if (tokenIndex == tokens.Length)
                                 {
-                                    if (error)
-                                        rep.Error(message, f.FullName, i + 1, match.Index + 1);
-                                    else
-                                        rep.Warning(message, f.FullName, i + 1, match.Index + 1);
+                                    Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "," + (match.Index + 1) + "): " + errorOrWarning + message);
                                     return;
                                 }
                             }
@@ -200,18 +133,27 @@ namespace RT.Util
                 }
                 catch (Exception e)
                 {
-                    if (error)
-                        rep.Error(e.Message + " (" + e.GetType().FullName + ")");
-                    else
-                        rep.Warning(e.Message + " (" + e.GetType().FullName + ")");
-                    return;
+                    Console.Error.WriteLine("Error: " + e.Message + " (" + e.GetType().FullName + ")");
                 }
+                Console.Error.WriteLine(errorOrWarning + message);
             }
-            if (error)
-                rep.Error(message);
-            else
-                rep.Warning(message);
         }
+#endif
+    }
+
+#if DEBUG
+    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
+    public interface IPostBuildReporter
+    {
+        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
+        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
+        /// outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
+        void Error(string message, params string[] tokens);
+
+        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
+        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
+        /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
+        void Warning(string message, params string[] tokens);
     }
 #else
     interface IPostBuildReporter { } // to suppress a documentation cref warning
