@@ -102,11 +102,11 @@ namespace RT.Util.ExtensionMethods
             return parameter.IsDefined(typeof(T), false /* This argument is ignored */);
         }
 
-        /// <summary>Searches the specified object’s time for a field of the specified name and returns that field’s value.</summary>
+        /// <summary>Searches the specified object’s type for a field of the specified name and returns that field’s value.</summary>
         /// <typeparam name="T">Expected type of the field.</typeparam>
         /// <param name="instance">Instance from which to retrieve the field value.</param>
         /// <param name="fieldName">Name of the field to return the value of.</param>
-        /// <returns>The value of the first.</returns>
+        /// <returns>The value of the field.</returns>
         /// <exception cref="InvalidOperationException">
         /// <list type="bullet">
         /// <item><description>The field is of a different type than specified.</description></item>
