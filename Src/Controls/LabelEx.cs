@@ -147,7 +147,7 @@ namespace RT.Util.Controls
             _paintY = 0;
             _paintColor = initialColor;
             _doMeasure = false;
-            doPaintOrMeasure(_parsed, initialFont, false);
+            doPaintOrMeasure(_parsed, initialFont);
         }
 
         private Size measure()
@@ -160,7 +160,7 @@ namespace RT.Util.Controls
                     _doMeasure = true;
                     _cachedMeasuredWidth = 0;
                     _cachedMeasuredHeight = 0;
-                    doPaintOrMeasure(_parsed, Font, false);
+                    doPaintOrMeasure(_parsed, Font);
                 }
             return new Size(_cachedMeasuredWidth, _cachedMeasuredHeight);
         }
@@ -171,7 +171,7 @@ namespace RT.Util.Controls
         private bool _doMeasure;
         private int _lineStartGlyphOverhang;
 
-        private void doPaintOrMeasure(EggsNode node, Font font, bool mnemonic)
+        private void doPaintOrMeasure(EggsNode node, Font font)
         {
             var tag = node as EggsTag;
             if (tag != null)
@@ -183,10 +183,7 @@ namespace RT.Util.Controls
 
                 using (var subfont = new Font(font, substyle))
                     foreach (var subnode in tag.Children)
-                        doPaintOrMeasure(subnode, subfont, tag.Tag == '&' && ShowKeyboardCues);
-
-                foreach (var subnode in tag.Children)
-                    doPaintOrMeasure(subnode, font, mnemonic);
+                        doPaintOrMeasure(subnode, subfont);
             }
             else if (node is EggsText)
             {
@@ -202,7 +199,7 @@ namespace RT.Util.Controls
                         _lineStartGlyphOverhang = glyphOverhang;
                     if (!_doMeasure)
                     {
-                        if (mnemonic)
+                        if (node.Parent != null && node.Parent.Tag == '&' && ShowKeyboardCues)
                             TextRenderer.DrawText(_paintGr, "&" + line, font, new Point(_paintX, _paintY), _paintColor);
                         else
                             TextRenderer.DrawText(_paintGr, line, font, new Point(_paintX, _paintY), _paintColor, TextFormatFlags.NoPrefix);

@@ -192,6 +192,8 @@ namespace RT.Util
         public int Index { get; protected set; }
         /// <summary>Determines whether this node contains any textual content.</summary>
         public abstract bool HasText { get; }
+        /// <summary>Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
+        public EggsTag Parent { get; internal set; }
         /// <summary>Constructor.</summary>
         /// <param name="index">The index within the original string where this node starts.</param>
         public EggsNode(int index) { Index = index; }
@@ -227,7 +229,7 @@ namespace RT.Util
     {
         /// <summary>Adds a new child node to this tag’s children.</summary>
         /// <param name="child">The child node to add.</param>
-        internal void Add(EggsNode child) { _children.Add(child); }
+        internal void Add(EggsNode child) { child.Parent = this; _children.Add(child); }
         /// <summary>The children of this node.</summary>
         public ReadOnlyCollection<EggsNode> Children { get { return _children.AsReadOnly(ref _childrenCache); } }
         private ReadOnlyCollection<EggsNode> _childrenCache;
