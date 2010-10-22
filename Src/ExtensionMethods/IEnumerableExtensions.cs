@@ -625,9 +625,9 @@ namespace RT.Util.ExtensionMethods
                 if (!enumerator.MoveNext())
                     return "";
                 StringBuilder sb = new StringBuilder();
-                sb.Append(prefix).Append(enumerator.Current.ToString()).Append(suffix);
+                sb.Append(prefix).Append(enumerator.Current == null ? null : enumerator.Current.ToString()).Append(suffix);
                 while (enumerator.MoveNext())
-                    sb.Append(separator).Append(prefix).Append(enumerator.Current.ToString()).Append(suffix);
+                    sb.Append(separator).Append(prefix).Append(enumerator.Current == null ? null : enumerator.Current.ToString()).Append(suffix);
                 return sb.ToString();
             }
         }
