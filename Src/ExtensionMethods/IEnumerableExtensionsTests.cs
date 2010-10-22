@@ -348,6 +348,10 @@ namespace RT.Util.ExtensionMethods
 
             Assert.AreEqual("", new string[] { }.JoinString("|"));
             Assert.AreEqual("London", new[] { "London" }.JoinString("|"));
+
+            // Test that nulls don’t crash it
+            Assert.AreEqual(", ", new string[] { null, null }.JoinString(", "));
+            Assert.AreEqual("London, , Tokyo", new[] { "London", null, "Tokyo" }.JoinString(", "));
         }
 
         [Test]
