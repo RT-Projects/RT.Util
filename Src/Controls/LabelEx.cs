@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace RT.Util.Controls
@@ -13,6 +15,7 @@ namespace RT.Util.Controls
     {
         private EggsNode _parsed;
         private int _cachedMeasuredWidth, _cachedMeasuredHeight;
+        private Size _cachedGlyphOverhang;
         private char _mnemonic;
 
         /// <summary>Constructor.</summary>
@@ -25,7 +28,7 @@ namespace RT.Util.Controls
             AutoSize = true;
         }
 
-        /// <summary>Text displayed in the label. EggsML supported: * to bold, / to italicize, _ to underline.</summary>
+        /// <summary>Text displayed in the label. EggsML supported: * to bold, / to italicize, _ to underline, + for nowrap.</summary>
         [EditorAttribute("System.ComponentModel.Design.MultilineStringEditor, System.Design", "System.Drawing.Design.UITypeEditor")]
         [EditorBrowsable(EditorBrowsableState.Always)]
         [Browsable(true)]
@@ -130,7 +133,15 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         public override Size GetPreferredSize(Size constrainingSize)
         {
-            return measure();
+            if (_cachedMeasuredWidth == 0)
+                using (var g = CreateGraphics())
+                {
+                    _cachedGlyphOverhang = TextRenderer.MeasureText(g, "Wg", Font, dummySize) - TextRenderer.MeasureText(g, "Wg", Font, dummySize, TextFormatFlags.NoPadding);
+                    _cachedMeasuredWidth = 0;
+                    _cachedMeasuredHeight = 0;
+                    doPaintOrMeasure(g, _parsed, Font, ForeColor, false);
+                }
+            return new Size(_cachedMeasuredWidth, _cachedMeasuredHeight);
         }
 
         /// <summary>Override; see base.</summary>
@@ -142,79 +153,137 @@ namespace RT.Util.Controls
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
         protected void PaintLabel(Graphics g, Color initialColor, Font initialFont)
         {
-            _paintGr = g;
-            _paintX = 0;
-            _paintY = 0;
-            _paintColor = initialColor;
-            _doMeasure = false;
-            doPaintOrMeasure(_parsed, initialFont);
+            doPaintOrMeasure(g, _parsed, initialFont, initialColor, true);
         }
 
-        private Size measure()
+        private class eggWalkData
         {
-            if (_cachedMeasuredWidth == 0)
-                using (_paintGr = CreateGraphics())
-                {
-                    _paintX = 0;
-                    _paintY = 0;
-                    _doMeasure = true;
-                    _cachedMeasuredWidth = 0;
-                    _cachedMeasuredHeight = 0;
-                    doPaintOrMeasure(_parsed, Font);
-                }
-            return new Size(_cachedMeasuredWidth, _cachedMeasuredHeight);
+            public bool AtStartOfLine;
+            public List<string> WordPieces;
+            public List<Font> WordPiecesFonts;
+            public List<int> WordPiecesWidths;
+            public int X, Y;
+            public bool DoPaint;
+            public Graphics Graphics;
         }
 
-        private Graphics _paintGr;
-        private int _paintX, _paintY;
-        private Color _paintColor;
-        private bool _doMeasure;
-        private int _lineStartGlyphOverhang;
+        // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
+        private Size dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private void doPaintOrMeasure(EggsNode node, Font font)
+        private void doPaintOrMeasure(Graphics g, EggsNode node, Font font, Color initialColor, bool doPaint)
         {
+            var data = new eggWalkData
+            {
+                AtStartOfLine = true,
+                X = _cachedGlyphOverhang.Width,
+                Y = _cachedGlyphOverhang.Height,
+                WordPieces = new List<string>(),
+                WordPiecesFonts = new List<Font>(),
+                WordPiecesWidths = new List<int>(),
+                DoPaint = doPaint,
+                Graphics = g
+            };
+            eggWalkWordWrap(node, 0, data, font, initialColor, false);
+
+            if (data.WordPieces.Count > 0)
+            {
+                if (!data.AtStartOfLine)
+                    data.X += TextRenderer.MeasureText(g, " ", font, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                renderText(data);
+            }
+
+            _cachedMeasuredWidth += _cachedGlyphOverhang.Width;
+            _cachedMeasuredHeight += _cachedGlyphOverhang.Height;
+        }
+
+        private void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, Color curColor, bool curNowrap)
+        {
+            var spaceSize = TextRenderer.MeasureText(data.Graphics, " ", curFont, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             var tag = node as EggsTag;
             if (tag != null)
             {
-                var substyle =
-                    tag.Tag == '*' ? font.Style | FontStyle.Bold :
-                    tag.Tag == '/' ? font.Style | FontStyle.Italic :
-                    tag.Tag == '_' ? font.Style | FontStyle.Underline : font.Style;
-
-                using (var subfont = new Font(font, substyle))
-                    foreach (var subnode in tag.Children)
-                        doPaintOrMeasure(subnode, subfont);
+                switch (tag.Tag)
+                {
+                    case '/': curFont = new Font(curFont, curFont.Style | FontStyle.Italic); break;
+                    case '*': curFont = new Font(curFont, curFont.Style | FontStyle.Bold); break;
+                    case '_': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
+                    case '+': curNowrap = true; break;
+                }
+                foreach (var child in tag.Children)
+                    eggWalkWordWrap(child, hangingIndent, data, curFont, curColor, curNowrap);
             }
             else if (node is EggsText)
             {
-                var dummy = new Size(int.MaxValue, int.MaxValue); // the API requires a size to be specified in order to specify format flags..... argh!
-                var glyphOverhang = (TextRenderer.MeasureText(_paintGr, "mm", font).Width - TextRenderer.MeasureText(_paintGr, "mm", font, dummy, TextFormatFlags.NoPadding).Width + 1) / 2;
-
-                var lines = ((EggsText) node).Text.Split('\n');
-                for (int i = 0; i < lines.Length; i++)
+                var txt = ((EggsText) node).Text;
+                for (int i = 0; i < txt.Length; i++)
                 {
-                    string line = lines[i].Replace("\r", "");
-                    var size = TextRenderer.MeasureText(_paintGr, line, font, dummy, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                    if (_doMeasure && _paintX == 0)
-                        _lineStartGlyphOverhang = glyphOverhang;
-                    if (!_doMeasure)
+                    if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
                     {
-                        if (node.Parent != null && node.Parent.Tag == '&' && ShowKeyboardCues)
-                            TextRenderer.DrawText(_paintGr, "&" + line, font, new Point(_paintX, _paintY), _paintColor);
+                        var nextCharWidth = TextRenderer.MeasureText(data.Graphics, txt[i].ToString(), curFont, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                        var curWidths = data.WordPiecesWidths.Sum();
+
+                        if (data.AtStartOfLine && data.X + curWidths + nextCharWidth >= ClientSize.Width - _cachedGlyphOverhang.Width)
+                        {
+                            renderText(data);
+                            data.WordPieces.Clear();
+                            data.WordPiecesFonts.Clear();
+                            data.WordPiecesWidths.Clear();
+                            data.X = hangingIndent + _cachedGlyphOverhang.Width;
+                            data.Y += spaceSize.Height;
+                        }
+                        else if (!data.AtStartOfLine && data.X + spaceSize.Width + curWidths + nextCharWidth >= ClientSize.Width - _cachedGlyphOverhang.Width)
+                        {
+                            data.X = hangingIndent + _cachedGlyphOverhang.Width;
+                            data.Y += spaceSize.Height;
+                            data.AtStartOfLine = true;
+                        }
+                        if (data.WordPieces.Count == 0 || data.WordPiecesFonts.Last() != curFont)
+                        {
+                            data.WordPieces.Add(txt[i].ToString());
+                            data.WordPiecesFonts.Add(curFont);
+                            data.WordPiecesWidths.Add(nextCharWidth);
+                        }
                         else
-                            TextRenderer.DrawText(_paintGr, line, font, new Point(_paintX, _paintY), _paintColor, TextFormatFlags.NoPrefix);
+                        {
+                            data.WordPieces[data.WordPieces.Count - 1] += txt[i];
+                            data.WordPiecesWidths[data.WordPiecesWidths.Count - 1] += nextCharWidth;
+                        }
                     }
-                    _paintX += size.Width;
-                    if (_doMeasure)
-                        _cachedMeasuredWidth = Math.Max(_cachedMeasuredWidth, _lineStartGlyphOverhang + _paintX + glyphOverhang);
-                    if (i + 1 < lines.Length)
+                    else
                     {
-                        _paintX = 0;
-                        _paintY += size.Height;
+                        if (data.WordPieces.Count > 0)
+                        {
+                            if (!data.AtStartOfLine)
+                                data.X += spaceSize.Width;
+                            renderText(data);
+                            data.AtStartOfLine = false;
+                        }
+                        data.WordPieces.Clear();
+                        data.WordPiecesFonts.Clear();
+                        data.WordPiecesWidths.Clear();
                     }
-                    if (_doMeasure)
-                        _cachedMeasuredHeight = _paintY + size.Height;
+                    if (txt[i] == '\n')
+                    {
+                        data.X = _cachedGlyphOverhang.Width;
+                        data.Y += spaceSize.Height;
+                        data.AtStartOfLine = true;
+                    }
                 }
+            }
+        }
+
+        private void renderText(eggWalkData data)
+        {
+            for (int i = 0; i < data.WordPieces.Count; i++)
+            {
+                if (data.DoPaint)
+                    TextRenderer.DrawText(data.Graphics, data.WordPieces[i], data.WordPiecesFonts[i], new Point(data.X, data.Y), ForeColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                data.X += data.WordPiecesWidths[i];
+            }
+            if (!data.DoPaint)
+            {
+                _cachedMeasuredWidth = Math.Max(_cachedMeasuredWidth, data.X);
+                _cachedMeasuredHeight = data.Y;
             }
         }
 
