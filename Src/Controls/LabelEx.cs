@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace RT.Util.Controls
@@ -14,9 +13,8 @@ namespace RT.Util.Controls
     public class LabelEx : Control
     {
         private EggsNode _parsed;
-        private int _cachedMeasuredWidth, _cachedMeasuredHeight;
-        private Size _cachedGlyphOverhang;
         private char _mnemonic;
+        private Dictionary<Size, Size> _cachedPreferredSizes = new Dictionary<Size, Size>();
 
         /// <summary>Constructor.</summary>
         public LabelEx()
@@ -58,8 +56,8 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnFontChanged(EventArgs e)
         {
-            base.OnTextChanged(e);
-            _cachedMeasuredWidth = 0;
+            _cachedPreferredSizes.Clear();
+            base.OnFontChanged(e);
             autosize();
             Invalidate();
         }
@@ -67,9 +65,9 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnTextChanged(EventArgs e)
         {
+            _cachedPreferredSizes.Clear();
             base.OnTextChanged(e);
             _parsed = EggsML.Parse(parseMnemonic(base.Text));
-            _cachedMeasuredWidth = 0;
             autosize();
             Invalidate();
         }
@@ -133,15 +131,10 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         public override Size GetPreferredSize(Size constrainingSize)
         {
-            if (_cachedMeasuredWidth == 0)
+            if (!_cachedPreferredSizes.ContainsKey(constrainingSize))
                 using (var g = CreateGraphics())
-                {
-                    _cachedGlyphOverhang = TextRenderer.MeasureText(g, "Wg", Font, dummySize) - TextRenderer.MeasureText(g, "Wg", Font, dummySize, TextFormatFlags.NoPadding);
-                    _cachedMeasuredWidth = 0;
-                    _cachedMeasuredHeight = 0;
-                    doPaintOrMeasure(g, _parsed, Font, ForeColor, false);
-                }
-            return new Size(_cachedMeasuredWidth, _cachedMeasuredHeight);
+                    _cachedPreferredSizes[constrainingSize] = doPaintOrMeasure(g, _parsed, Font, ForeColor, false, constrainingSize == new Size() ? _dummySize : constrainingSize);
+            return _cachedPreferredSizes[constrainingSize];
         }
 
         /// <summary>Override; see base.</summary>
@@ -153,52 +146,64 @@ namespace RT.Util.Controls
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
         protected void PaintLabel(Graphics g, Color initialColor, Font initialFont)
         {
-            doPaintOrMeasure(g, _parsed, initialFont, initialColor, true);
+            doPaintOrMeasure(g, _parsed, initialFont, initialColor, true, ClientSize);
         }
 
         private class eggWalkData
         {
             public bool AtStartOfLine;
+            public int X, Y;
             public List<string> WordPieces;
             public List<Font> WordPiecesFonts;
             public List<int> WordPiecesWidths;
-            public int X, Y;
+            public int WordPiecesWidthsSum;
             public bool DoPaint;
             public Graphics Graphics;
+            public Size ConstrainingSize, MeasuredSize, GlyphOverhang;
+            public Dictionary<FontStyle, Size> SpaceSizes;
         }
 
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
-        private Size dummySize = new Size(int.MaxValue, int.MaxValue);
+        private Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private void doPaintOrMeasure(Graphics g, EggsNode node, Font font, Color initialColor, bool doPaint)
+        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font font, Color initialColor, bool doPaint, Size constrainingSize)
         {
+            var glyphOverhang = TextRenderer.MeasureText(g, "Wg", font, _dummySize) - TextRenderer.MeasureText(g, "Wg", font, _dummySize, TextFormatFlags.NoPadding);
             var data = new eggWalkData
             {
                 AtStartOfLine = true,
-                X = _cachedGlyphOverhang.Width,
-                Y = _cachedGlyphOverhang.Height,
+                X = glyphOverhang.Width,
+                Y = glyphOverhang.Height,
                 WordPieces = new List<string>(),
                 WordPiecesFonts = new List<Font>(),
                 WordPiecesWidths = new List<int>(),
+                WordPiecesWidthsSum = 0,
                 DoPaint = doPaint,
-                Graphics = g
+                Graphics = g,
+                ConstrainingSize = constrainingSize,
+                MeasuredSize = new Size(),
+                GlyphOverhang = glyphOverhang,
+                SpaceSizes = new Dictionary<FontStyle, Size>()
             };
             eggWalkWordWrap(node, 0, data, font, initialColor, false);
 
             if (data.WordPieces.Count > 0)
             {
                 if (!data.AtStartOfLine)
-                    data.X += TextRenderer.MeasureText(g, " ", font, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                    data.X += TextRenderer.MeasureText(g, " ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
                 renderText(data);
             }
 
-            _cachedMeasuredWidth += _cachedGlyphOverhang.Width;
-            _cachedMeasuredHeight += _cachedGlyphOverhang.Height;
+            return new Size(
+                data.MeasuredSize.Width + glyphOverhang.Width,
+                data.MeasuredSize.Height + glyphOverhang.Height + data.SpaceSizes[font.Style].Height
+            );
         }
 
         private void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, Color curColor, bool curNowrap)
         {
-            var spaceSize = TextRenderer.MeasureText(data.Graphics, " ", curFont, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+            if (!data.SpaceSizes.ContainsKey(curFont.Style))
+                data.SpaceSizes[curFont.Style] = TextRenderer.MeasureText(data.Graphics, " ", curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             var tag = node as EggsTag;
             if (tag != null)
             {
@@ -206,7 +211,8 @@ namespace RT.Util.Controls
                 {
                     case '/': curFont = new Font(curFont, curFont.Style | FontStyle.Italic); break;
                     case '*': curFont = new Font(curFont, curFont.Style | FontStyle.Bold); break;
-                    case '_': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
+                    case '_':
+                    case '&': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
                     case '+': curNowrap = true; break;
                 }
                 foreach (var child in tag.Children)
@@ -217,55 +223,71 @@ namespace RT.Util.Controls
                 var txt = ((EggsText) node).Text;
                 for (int i = 0; i < txt.Length; i++)
                 {
-                    if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
-                    {
-                        var nextCharWidth = TextRenderer.MeasureText(data.Graphics, txt[i].ToString(), curFont, dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
-                        var curWidths = data.WordPiecesWidths.Sum();
+                    int lengthOfWord = 0;
+                    while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
+                        lengthOfWord++;
 
-                        if (data.AtStartOfLine && data.X + curWidths + nextCharWidth >= ClientSize.Width - _cachedGlyphOverhang.Width)
+                    if (lengthOfWord > 0)
+                    {
+                    retry1:
+                        string fragment = txt.Substring(i, lengthOfWord);
+                        var fragmentWidth = TextRenderer.MeasureText(data.Graphics, fragment, curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                    retry2:
+
+                        if (data.AtStartOfLine && data.X + data.WordPiecesWidthsSum + fragmentWidth > data.ConstrainingSize.Width - data.GlyphOverhang.Width)
                         {
+                            if (lengthOfWord > 1)
+                            {
+                                lengthOfWord /= 2;
+                                goto retry1;
+                            }
                             renderText(data);
                             data.WordPieces.Clear();
                             data.WordPiecesFonts.Clear();
                             data.WordPiecesWidths.Clear();
-                            data.X = hangingIndent + _cachedGlyphOverhang.Width;
-                            data.Y += spaceSize.Height;
+                            data.WordPiecesWidthsSum = 0;
+                            data.X = hangingIndent + data.GlyphOverhang.Width;
+                            data.Y += data.SpaceSizes[curFont.Style].Height;
                         }
-                        else if (!data.AtStartOfLine && data.X + spaceSize.Width + curWidths + nextCharWidth >= ClientSize.Width - _cachedGlyphOverhang.Width)
+                        else if (!data.AtStartOfLine && data.X + data.SpaceSizes[curFont.Style].Width + data.WordPiecesWidthsSum + fragmentWidth > data.ConstrainingSize.Width - data.GlyphOverhang.Width)
                         {
-                            data.X = hangingIndent + _cachedGlyphOverhang.Width;
-                            data.Y += spaceSize.Height;
+                            data.X = hangingIndent + data.GlyphOverhang.Width;
+                            data.Y += data.SpaceSizes[curFont.Style].Height;
                             data.AtStartOfLine = true;
+                            goto retry2;
                         }
-                        if (data.WordPieces.Count == 0 || data.WordPiecesFonts.Last() != curFont)
+
+                        if (data.WordPieces.Count == 0 || data.WordPiecesFonts[data.WordPiecesFonts.Count - 1] != curFont)
                         {
-                            data.WordPieces.Add(txt[i].ToString());
+                            data.WordPieces.Add(fragment);
                             data.WordPiecesFonts.Add(curFont);
-                            data.WordPiecesWidths.Add(nextCharWidth);
+                            data.WordPiecesWidths.Add(fragmentWidth);
                         }
                         else
                         {
-                            data.WordPieces[data.WordPieces.Count - 1] += txt[i];
-                            data.WordPiecesWidths[data.WordPiecesWidths.Count - 1] += nextCharWidth;
+                            data.WordPieces[data.WordPieces.Count - 1] += fragment;
+                            data.WordPiecesWidths[data.WordPiecesWidths.Count - 1] += fragmentWidth;
                         }
+                        data.WordPiecesWidthsSum += fragmentWidth;
+                        i += lengthOfWord - 1;
+                        continue;
                     }
-                    else
+
+                    if (data.WordPieces.Count > 0)
                     {
-                        if (data.WordPieces.Count > 0)
-                        {
-                            if (!data.AtStartOfLine)
-                                data.X += spaceSize.Width;
-                            renderText(data);
-                            data.AtStartOfLine = false;
-                        }
-                        data.WordPieces.Clear();
-                        data.WordPiecesFonts.Clear();
-                        data.WordPiecesWidths.Clear();
+                        if (!data.AtStartOfLine)
+                            data.X += data.SpaceSizes[curFont.Style].Width;
+                        renderText(data);
+                        data.AtStartOfLine = false;
                     }
+                    data.WordPieces.Clear();
+                    data.WordPiecesFonts.Clear();
+                    data.WordPiecesWidths.Clear();
+                    data.WordPiecesWidthsSum = 0;
                     if (txt[i] == '\n')
                     {
-                        data.X = _cachedGlyphOverhang.Width;
-                        data.Y += spaceSize.Height;
+                        data.X = data.GlyphOverhang.Width;
+                        data.Y += data.SpaceSizes[curFont.Style].Height;
                         data.AtStartOfLine = true;
                     }
                 }
@@ -280,11 +302,7 @@ namespace RT.Util.Controls
                     TextRenderer.DrawText(data.Graphics, data.WordPieces[i], data.WordPiecesFonts[i], new Point(data.X, data.Y), ForeColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                 data.X += data.WordPiecesWidths[i];
             }
-            if (!data.DoPaint)
-            {
-                _cachedMeasuredWidth = Math.Max(_cachedMeasuredWidth, data.X);
-                _cachedMeasuredHeight = data.Y;
-            }
+            data.MeasuredSize = new Size(Math.Max(data.MeasuredSize.Width, data.X), data.Y);
         }
 
         /// <summary>Override; see base.</summary>
