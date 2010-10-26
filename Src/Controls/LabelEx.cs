@@ -37,7 +37,7 @@ namespace RT.Util.Controls
             set { base.Text = value; }
         }
 
-        /// <summary>Set to true to make the label size itself to fit all the text. Does not support wrapping of long lines and does not play well with Anchor/Dock.</summary>
+        /// <summary>Set to true to make the label size itself to fit all the text.</summary>
         [EditorBrowsable(EditorBrowsableState.Always)]
         [Browsable(true)]
         [RefreshProperties(RefreshProperties.All)]
@@ -144,9 +144,9 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
-        protected void PaintLabel(Graphics g, Color initialColor, Font initialFont)
+        protected void PaintLabel(Graphics g, Color color, Font initialFont)
         {
-            doPaintOrMeasure(g, _parsed, initialFont, initialColor, true, ClientSize);
+            doPaintOrMeasure(g, _parsed, initialFont, color, true, ClientSize);
         }
 
         private class eggWalkData
@@ -161,14 +161,16 @@ namespace RT.Util.Controls
             public Graphics Graphics;
             public Size ConstrainingSize, MeasuredSize, GlyphOverhang;
             public Dictionary<FontStyle, Size> SpaceSizes;
+            public Color ForeColor;
         }
 
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
-        private Size _dummySize = new Size(int.MaxValue, int.MaxValue);
+        private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font font, Color initialColor, bool doPaint, Size constrainingSize)
+        private static Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, Size constrainingSize)
         {
-            var glyphOverhang = TextRenderer.MeasureText(g, "Wg", font, _dummySize) - TextRenderer.MeasureText(g, "Wg", font, _dummySize, TextFormatFlags.NoPadding);
+            var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
+            glyphOverhang = new Size(glyphOverhang.Width / 2, glyphOverhang.Height / 2);
             var data = new eggWalkData
             {
                 AtStartOfLine = true,
@@ -183,24 +185,25 @@ namespace RT.Util.Controls
                 ConstrainingSize = constrainingSize,
                 MeasuredSize = new Size(),
                 GlyphOverhang = glyphOverhang,
-                SpaceSizes = new Dictionary<FontStyle, Size>()
+                SpaceSizes = new Dictionary<FontStyle, Size>(),
+                ForeColor = foreColor,
             };
-            eggWalkWordWrap(node, 0, data, font, initialColor, false);
+            eggWalkWordWrap(node, 0, data, initialFont, false);
 
             if (data.WordPieces.Count > 0)
             {
                 if (!data.AtStartOfLine)
-                    data.X += TextRenderer.MeasureText(g, " ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                    data.X += TextRenderer.MeasureText(g, " ", initialFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
                 renderText(data);
             }
 
             return new Size(
                 data.MeasuredSize.Width + glyphOverhang.Width,
-                data.MeasuredSize.Height + glyphOverhang.Height + data.SpaceSizes[font.Style].Height
+                data.MeasuredSize.Height + glyphOverhang.Height + data.SpaceSizes[initialFont.Style].Height
             );
         }
 
-        private void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, Color curColor, bool curNowrap)
+        private static void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, bool curNowrap)
         {
             if (!data.SpaceSizes.ContainsKey(curFont.Style))
                 data.SpaceSizes[curFont.Style] = TextRenderer.MeasureText(data.Graphics, " ", curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
@@ -216,7 +219,7 @@ namespace RT.Util.Controls
                     case '+': curNowrap = true; break;
                 }
                 foreach (var child in tag.Children)
-                    eggWalkWordWrap(child, hangingIndent, data, curFont, curColor, curNowrap);
+                    eggWalkWordWrap(child, hangingIndent, data, curFont, curNowrap);
             }
             else if (node is EggsText)
             {
@@ -294,12 +297,12 @@ namespace RT.Util.Controls
             }
         }
 
-        private void renderText(eggWalkData data)
+        private static void renderText(eggWalkData data)
         {
             for (int i = 0; i < data.WordPieces.Count; i++)
             {
                 if (data.DoPaint)
-                    TextRenderer.DrawText(data.Graphics, data.WordPieces[i], data.WordPiecesFonts[i], new Point(data.X, data.Y), ForeColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    TextRenderer.DrawText(data.Graphics, data.WordPieces[i], data.WordPiecesFonts[i], new Point(data.X, data.Y), data.ForeColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                 data.X += data.WordPiecesWidths[i];
             }
             data.MeasuredSize = new Size(Math.Max(data.MeasuredSize.Width, data.X), data.Y);
