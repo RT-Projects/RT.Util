@@ -216,14 +216,6 @@ namespace RT.Util.Consoles
             }
         }
 
-        private sealed class eggWalkWordWrapData
-        {
-            public ConsoleColoredString Line;
-            public StringBuilder WordText;
-            public List<ConsoleColor> WordColors;
-            public int CurParagraphIndent;
-        }
-
         /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output at a specified character width.</summary>
         /// <param name="node">The root node of the EggsML parse tree.</param>
         /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
@@ -245,98 +237,31 @@ namespace RT.Util.Consoles
         /// </remarks>
         public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth, int hangingIndent = 0)
         {
-            var data = new eggWalkWordWrapData
-            {
-                Line = "",
-                WordText = new StringBuilder(),
-                WordColors = new List<ConsoleColor>(),
-                CurParagraphIndent = 0
-            };
-
-            foreach (var ret in eggWalkWordWrap(node, wrapWidth, hangingIndent, data, ConsoleColor.Gray, false, false))
-                yield return ret;
-
-            if (data.WordText.Length > 0)
-            {
-                if (string.IsNullOrWhiteSpace((string) data.Line))
-                    data.Line += new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
-                else
-                    data.Line += " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
-            }
-            if (data.Line != null && data.Line.Length > 0)
-                yield return data.Line;
-        }
-
-        private static IEnumerable<ConsoleColoredString> eggWalkWordWrap(EggsNode node, int wrapWidth, int hangingIndent, eggWalkWordWrapData data, ConsoleColor curColor, bool curLight, bool curNowrap)
-        {
-            var tag = node as EggsTag;
-            if (tag != null)
-            {
-                switch (tag.Tag)
+            var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
+            EggsML.WordWrap<ConsoleColor>(node, ConsoleColor.Gray, wrapWidth - 1, hangingIndent,
+                (text, color) => text.Length,
+                (text, color, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
+                color => { results.Add(ConsoleColoredString.Empty); },
+                (color, tag) =>
                 {
-                    case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
-                    case '/': curColor = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
-                    case '$': curColor = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
-                    case '&': curColor = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
-                    case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
-                    case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
-                    case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
-                    case '=': curColor = ConsoleColor.DarkGray; curLight = true; break;
-                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
-                    case '+': curNowrap = true; break;
-                }
-                foreach (var child in tag.Children)
-                    foreach (var ret in eggWalkWordWrap(child, wrapWidth, hangingIndent, data, curColor, curLight, curNowrap))
-                        yield return ret;
-            }
-            else if (node is EggsText)
-            {
-                var txt = ((EggsText) node).Text;
-                for (int i = 0; i < txt.Length; i++)
-                {
-                    var isNullOrWhitespace = string.IsNullOrWhiteSpace((string) data.Line);
-                    if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
+                    bool curLight = color >= ConsoleColor.DarkGray;
+                    switch (tag)
                     {
-                        if (isNullOrWhitespace && data.Line.Length + data.WordText.Length >= wrapWidth)
-                        {
-                            yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
-                            data.WordText = new StringBuilder();
-                            data.WordColors = new List<ConsoleColor>();
-                            data.Line = new string(' ', hangingIndent + data.CurParagraphIndent);
-                        }
-                        else if (!isNullOrWhitespace && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
-                        {
-                            yield return data.Line;
-                            data.Line = new string(' ', hangingIndent + data.CurParagraphIndent);
-                        }
-                        data.WordText.Append(txt[i]);
-                        data.WordColors.Add(curColor);
+                        case '~': return curLight ? ConsoleColor.DarkGray : ConsoleColor.Black;
+                        case '/': return curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue;
+                        case '$': return curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen;
+                        case '&': return curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan;
+                        case '_': return curLight ? ConsoleColor.Red : ConsoleColor.DarkRed;
+                        case '%': return curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta;
+                        case '^': return curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow;
+                        case '=': return ConsoleColor.DarkGray;
+                        case '*': return curLight ? color : (ConsoleColor) ((int) color + 8);
                     }
-                    else
-                    {
-                        if (data.WordText != null && data.WordText.Length > 0)
-                        {
-                            if (isNullOrWhitespace)
-                                data.Line += new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
-                            else
-                                data.Line += " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
-                        }
-                        else if (string.IsNullOrWhiteSpace((string) data.Line))
-                        {
-                            data.Line += " ";
-                            data.CurParagraphIndent++;
-                        }
-                        data.WordText = new StringBuilder();
-                        data.WordColors = new List<ConsoleColor>();
-                    }
-                    if (txt[i] == '\n')
-                    {
-                        yield return data.Line ?? ConsoleColoredString.Empty;
-                        data.Line = "";
-                        data.CurParagraphIndent = 0;
-                    }
-                }
-            }
+                    return color;
+                });
+            if (results.Last().Length == 0)
+                results.RemoveAt(results.Count - 1);
+            return results;
         }
 
         /// <summary>Returns the character at the specified index.</summary>

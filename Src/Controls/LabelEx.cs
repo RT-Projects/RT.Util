@@ -133,166 +133,47 @@ namespace RT.Util.Controls
             doPaintOrMeasure(g, _parsed, initialFont, color, true, ClientSize);
         }
 
-        private class eggWalkData
-        {
-            public bool AtStartOfLine;
-            public int X, Y;
-            public List<string> WordPieces;
-            public List<Font> WordPiecesFonts;
-            public List<int> WordPiecesWidths;
-            public int WordPiecesWidthsSum;
-            public bool DoPaint;
-            public Graphics Graphics;
-            public Size ConstrainingSize, MeasuredSize, GlyphOverhang;
-            public Dictionary<FontStyle, Size> SpaceSizes;
-            public Color ForeColor;
-        }
-
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, Size constrainingSize)
         {
+            int x = 0, y = 0, maxX = 0;
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
-            glyphOverhang = new Size(glyphOverhang.Width / 2, glyphOverhang.Height / 2);
-            var data = new eggWalkData
+
+            var spaceSizes = new Dictionary<FontStyle, Size>();
+            Func<Font, Size> spaceSize = font =>
             {
-                AtStartOfLine = true,
-                X = glyphOverhang.Width,
-                Y = glyphOverhang.Height,
-                WordPieces = new List<string>(),
-                WordPiecesFonts = new List<Font>(),
-                WordPiecesWidths = new List<int>(),
-                WordPiecesWidthsSum = 0,
-                DoPaint = doPaint,
-                Graphics = g,
-                ConstrainingSize = constrainingSize,
-                MeasuredSize = new Size(),
-                GlyphOverhang = glyphOverhang,
-                SpaceSizes = new Dictionary<FontStyle, Size>(),
-                ForeColor = foreColor,
+                if (!spaceSizes.ContainsKey(font.Style))
+                    spaceSizes[font.Style] = TextRenderer.MeasureText(g, " ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                return spaceSizes[font.Style];
             };
-            eggWalkWordWrap(node, 0, data, initialFont, false);
 
-            if (data.WordPieces.Count > 0)
-            {
-                if (!data.AtStartOfLine)
-                    data.X += TextRenderer.MeasureText(g, " ", initialFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
-                renderText(data);
-            }
-
-            return new Size(
-                data.MeasuredSize.Width + glyphOverhang.Width,
-                data.MeasuredSize.Height + glyphOverhang.Height + data.SpaceSizes[initialFont.Style].Height
-            );
-        }
-
-        private void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, bool curNowrap)
-        {
-            if (!data.SpaceSizes.ContainsKey(curFont.Style))
-                data.SpaceSizes[curFont.Style] = TextRenderer.MeasureText(data.Graphics, " ", curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            var tag = node as EggsTag;
-            if (tag != null)
-            {
-                switch (tag.Tag)
+            EggsML.WordWrap<Font>(node, initialFont, constrainingSize.Width - glyphOverhang.Width, 0,
+                (text, font) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
+                (text, font, width) =>
                 {
-                    case '/': curFont = new Font(curFont, curFont.Style | FontStyle.Italic); break;
-                    case '*': curFont = new Font(curFont, curFont.Style | FontStyle.Bold); break;
-                    case '_': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
-                    case '&':
-                        if (ShowKeyboardCues)
-                            curFont = new Font(curFont, curFont.Style | FontStyle.Underline);
-                        break;
-                    case '+': curNowrap = true; break;
-                }
-                foreach (var child in tag.Children)
-                    eggWalkWordWrap(child, hangingIndent, data, curFont, curNowrap);
-            }
-            else if (node is EggsText)
-            {
-                var txt = ((EggsText) node).Text;
-                for (int i = 0; i < txt.Length; i++)
+                    if (doPaint && !string.IsNullOrWhiteSpace(text))
+                        TextRenderer.DrawText(g, text, font, new Point(x + glyphOverhang.Width / 2, y + glyphOverhang.Height / 2), foreColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    x += width;
+                    maxX = Math.Max(maxX, x);
+                },
+                font => { x = 0; y += spaceSize(font).Height; },
+                (font, tag) =>
                 {
-                    int lengthOfWord = 0;
-                    while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
-                        lengthOfWord++;
-
-                    if (lengthOfWord > 0)
+                    switch (tag)
                     {
-                    retry1:
-                        string fragment = txt.Substring(i, lengthOfWord);
-                        var fragmentWidth = TextRenderer.MeasureText(data.Graphics, fragment, curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
-                    retry2:
-
-                        if (data.AtStartOfLine && data.X + data.WordPiecesWidthsSum + fragmentWidth > data.ConstrainingSize.Width - data.GlyphOverhang.Width)
-                        {
-                            if (lengthOfWord > 1)
-                            {
-                                lengthOfWord /= 2;
-                                goto retry1;
-                            }
-                            renderText(data);
-                            data.WordPieces.Clear();
-                            data.WordPiecesFonts.Clear();
-                            data.WordPiecesWidths.Clear();
-                            data.WordPiecesWidthsSum = 0;
-                            data.X = hangingIndent + data.GlyphOverhang.Width;
-                            data.Y += data.SpaceSizes[curFont.Style].Height;
-                        }
-                        else if (!data.AtStartOfLine && data.X + data.SpaceSizes[curFont.Style].Width + data.WordPiecesWidthsSum + fragmentWidth > data.ConstrainingSize.Width - data.GlyphOverhang.Width)
-                        {
-                            data.X = hangingIndent + data.GlyphOverhang.Width;
-                            data.Y += data.SpaceSizes[curFont.Style].Height;
-                            data.AtStartOfLine = true;
-                            goto retry2;
-                        }
-
-                        if (data.WordPieces.Count == 0 || data.WordPiecesFonts[data.WordPiecesFonts.Count - 1] != curFont)
-                        {
-                            data.WordPieces.Add(fragment);
-                            data.WordPiecesFonts.Add(curFont);
-                            data.WordPiecesWidths.Add(fragmentWidth);
-                        }
-                        else
-                        {
-                            data.WordPieces[data.WordPieces.Count - 1] += fragment;
-                            data.WordPiecesWidths[data.WordPiecesWidths.Count - 1] += fragmentWidth;
-                        }
-                        data.WordPiecesWidthsSum += fragmentWidth;
-                        i += lengthOfWord - 1;
-                        continue;
+                        case '/': return new Font(font, font.Style | FontStyle.Italic);
+                        case '*': return new Font(font, font.Style | FontStyle.Bold);
+                        case '_': return new Font(font, font.Style | FontStyle.Underline);
+                        case '&':
+                            if (ShowKeyboardCues)
+                                return new Font(font, font.Style | FontStyle.Underline);
+                            return font;
                     }
-
-                    if (data.WordPieces.Count > 0)
-                    {
-                        if (!data.AtStartOfLine)
-                            data.X += data.SpaceSizes[curFont.Style].Width;
-                        renderText(data);
-                        data.AtStartOfLine = false;
-                    }
-                    data.WordPieces.Clear();
-                    data.WordPiecesFonts.Clear();
-                    data.WordPiecesWidths.Clear();
-                    data.WordPiecesWidthsSum = 0;
-                    if (txt[i] == '\n')
-                    {
-                        data.X = data.GlyphOverhang.Width;
-                        data.Y += data.SpaceSizes[curFont.Style].Height;
-                        data.AtStartOfLine = true;
-                    }
-                }
-            }
-        }
-
-        private static void renderText(eggWalkData data)
-        {
-            for (int i = 0; i < data.WordPieces.Count; i++)
-            {
-                if (data.DoPaint)
-                    TextRenderer.DrawText(data.Graphics, data.WordPieces[i], data.WordPiecesFonts[i], new Point(data.X, data.Y), data.ForeColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                data.X += data.WordPiecesWidths[i];
-            }
-            data.MeasuredSize = new Size(Math.Max(data.MeasuredSize.Width, data.X), data.Y);
+                    return font;
+                });
+            return new Size(maxX + glyphOverhang.Width, y + spaceSize(initialFont).Height + glyphOverhang.Height);
         }
 
         /// <summary>Override; see base.</summary>
