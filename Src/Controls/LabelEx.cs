@@ -151,7 +151,7 @@ namespace RT.Util.Controls
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private static Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, Size constrainingSize)
+        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, Size constrainingSize)
         {
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
             glyphOverhang = new Size(glyphOverhang.Width / 2, glyphOverhang.Height / 2);
@@ -187,7 +187,7 @@ namespace RT.Util.Controls
             );
         }
 
-        private static void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, bool curNowrap)
+        private void eggWalkWordWrap(EggsNode node, int hangingIndent, eggWalkData data, Font curFont, bool curNowrap)
         {
             if (!data.SpaceSizes.ContainsKey(curFont.Style))
                 data.SpaceSizes[curFont.Style] = TextRenderer.MeasureText(data.Graphics, " ", curFont, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
