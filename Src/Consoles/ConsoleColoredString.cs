@@ -30,6 +30,15 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(input, ConsoleColor.Gray);
         }
 
+        /// <summary>Provides explicit conversion from <see cref="ConsoleColoredString"/> to <see cref="string"/> by discarding all color information.</summary>
+        /// <param name="input">The string to convert.</param>
+        public static explicit operator string(ConsoleColoredString input)
+        {
+            if (input == null)
+                return null;
+            return input._text;
+        }
+
         /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
         /// <param name="input">The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
         /// <param name="color">The color to assign to the whole string.</param>
@@ -96,18 +105,22 @@ namespace RT.Util.Consoles
         /// <remarks>The color of each character in the input strings is preserved.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2)
         {
+            if (string1 == null || string1.Length == 0)
+                return string2 ?? "";
+            if (string2 == null || string2.Length == 0)
+                return string1;
             return new ConsoleColoredString(string1, string2);
         }
 
-        /// <summary>Concatenates a string onto a <see cref="ConsoleColoredString"/>s.</summary>
+        /// <summary>Concatenates a string onto a <see cref="ConsoleColoredString"/>.</summary>
         /// <param name="string1">First input string to concatenate.</param>
         /// <param name="string2">Second input string to concatenate.</param>
         /// <remarks>The color of each character in the first input string is preserved. The second input string is given the color <see cref="ConsoleColor.Gray"/>.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
         {
             if (string1 == null || string1.Length == 0)
-                return string2;    // implicit conversion
-            if (string.IsNullOrEmpty(string2))
+                return string2 ?? "";    // implicit conversion
+            if (string2 == null || string2.Length == 0)
                 return string1;
 
             var colors = new ConsoleColor[string1._colors.Length + string2.Length];
@@ -115,6 +128,24 @@ namespace RT.Util.Consoles
             for (int i = string1.Length; i < string1.Length + string2.Length; i++)
                 colors[i] = ConsoleColor.Gray;
             return new ConsoleColoredString(string1._text + string2, colors);
+        }
+
+        /// <summary>Concatenates a <see cref="ConsoleColoredString"/> onto a string.</summary>
+        /// <param name="string1">First input string to concatenate.</param>
+        /// <param name="string2">Second input string to concatenate.</param>
+        /// <remarks>The color of each character in the second input string is preserved. The first input string is given the color <see cref="ConsoleColor.Gray"/>.</remarks>
+        public static ConsoleColoredString operator +(string string1, ConsoleColoredString string2)
+        {
+            if (string2 == null || string2.Length == 0)
+                return string1 ?? "";   // implicit conversion
+            if (string1 == null || string1.Length == 0)
+                return string2;
+
+            var colors = new ConsoleColor[string1.Length + string2._colors.Length];
+            for (int i = 0; i < string1.Length; i++)
+                colors[i] = ConsoleColor.Gray;
+            Array.Copy(string2._colors, 0, colors, string1.Length, string2._colors.Length);
+            return new ConsoleColoredString(string1 + string2._text, colors);
         }
 
         /// <summary>Constructs a <see cref="ConsoleColoredString"/> from an EggsML parse tree.</summary>
@@ -129,6 +160,7 @@ namespace RT.Util.Consoles
         /// <item><description><c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
         /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
         /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
+        /// <item><description><c>=</c> = dark gray (independent of <c>*</c> tag)</description></item>
         /// </list>
         /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
         /// </remarks>
@@ -169,6 +201,7 @@ namespace RT.Util.Consoles
                     case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
                     case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
                     case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '=': curColor = ConsoleColor.DarkGray; curLight = true; break;
                     case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                 }
                 foreach (var child in tag.Children)
@@ -188,6 +221,7 @@ namespace RT.Util.Consoles
             public ConsoleColoredString Line;
             public StringBuilder WordText;
             public List<ConsoleColor> WordColors;
+            public int CurParagraphIndent;
         }
 
         /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output at a specified character width.</summary>
@@ -213,9 +247,10 @@ namespace RT.Util.Consoles
         {
             var data = new eggWalkWordWrapData
             {
-                Line = null,
+                Line = "",
                 WordText = new StringBuilder(),
-                WordColors = new List<ConsoleColor>()
+                WordColors = new List<ConsoleColor>(),
+                CurParagraphIndent = 0
             };
 
             foreach (var ret in eggWalkWordWrap(node, wrapWidth, hangingIndent, data, ConsoleColor.Gray, false, false))
@@ -223,10 +258,10 @@ namespace RT.Util.Consoles
 
             if (data.WordText.Length > 0)
             {
-                if (data.Line == null)
-                    data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
+                if (string.IsNullOrWhiteSpace((string) data.Line))
+                    data.Line += new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                 else
-                    data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
+                    data.Line += " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
             }
             if (data.Line != null && data.Line.Length > 0)
                 yield return data.Line;
@@ -246,6 +281,7 @@ namespace RT.Util.Consoles
                     case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
                     case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
                     case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                    case '=': curColor = ConsoleColor.DarkGray; curLight = true; break;
                     case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                     case '+': curNowrap = true; break;
                 }
@@ -258,19 +294,20 @@ namespace RT.Util.Consoles
                 var txt = ((EggsText) node).Text;
                 for (int i = 0; i < txt.Length; i++)
                 {
+                    var isNullOrWhitespace = string.IsNullOrWhiteSpace((string) data.Line);
                     if ((curNowrap || !char.IsWhiteSpace(txt, i)) && txt[i] != '\n')
                     {
-                        if (data.Line == null && data.WordText.Length >= wrapWidth)
+                        if (isNullOrWhitespace && data.Line.Length + data.WordText.Length >= wrapWidth)
                         {
                             yield return new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             data.WordText = new StringBuilder();
                             data.WordColors = new List<ConsoleColor>();
-                            data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
+                            data.Line = new string(' ', hangingIndent + data.CurParagraphIndent);
                         }
-                        else if (data.Line != null && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
+                        else if (!isNullOrWhitespace && data.Line.Length + 1 + data.WordText.Length >= wrapWidth)
                         {
                             yield return data.Line;
-                            data.Line = hangingIndent > 0 ? new string(' ', hangingIndent - 1) : null;
+                            data.Line = new string(' ', hangingIndent + data.CurParagraphIndent);
                         }
                         data.WordText.Append(txt[i]);
                         data.WordColors.Add(curColor);
@@ -279,10 +316,15 @@ namespace RT.Util.Consoles
                     {
                         if (data.WordText != null && data.WordText.Length > 0)
                         {
-                            if (data.Line == null)
-                                data.Line = new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
+                            if (isNullOrWhitespace)
+                                data.Line += new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
                             else
-                                data.Line = data.Line + " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
+                                data.Line += " " + new ConsoleColoredString(data.WordText.ToString(), data.WordColors.ToArray());
+                        }
+                        else if (string.IsNullOrWhiteSpace((string) data.Line))
+                        {
+                            data.Line += " ";
+                            data.CurParagraphIndent++;
                         }
                         data.WordText = new StringBuilder();
                         data.WordColors = new List<ConsoleColor>();
@@ -290,7 +332,8 @@ namespace RT.Util.Consoles
                     if (txt[i] == '\n')
                     {
                         yield return data.Line ?? ConsoleColoredString.Empty;
-                        data.Line = null;
+                        data.Line = "";
+                        data.CurParagraphIndent = 0;
                     }
                 }
             }

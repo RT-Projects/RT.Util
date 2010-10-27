@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -67,46 +68,29 @@ namespace RT.Util.Controls
         {
             _cachedPreferredSizes.Clear();
             base.OnTextChanged(e);
-            _parsed = EggsML.Parse(parseMnemonic(base.Text));
+            _parsed = EggsML.Parse(base.Text);
+            _mnemonic = char.ToUpperInvariant(parseMnemonic(_parsed));
             autosize();
             Invalidate();
         }
 
-        private string parseMnemonic(string text)
+        private char parseMnemonic(EggsNode node)
         {
-            // The only legal ways to use & are:
-            // &<char>, only once ever, where <char> can't be a space (to catch the common error of "This & that")
-            // && any number of times
-            // Anything else throws
+            // The only legal way to use & is as a tag containing a single character. For example:
+            // &A&ssembly    (mnemonic is 'A')
+            // Ob&f&uscate   (mnemonic is 'F')
 
-            _mnemonic = '\0';
-            int i = 0;
-            while (i < text.Length)
+            var tag = node as EggsTag;
+            if (tag == null)
+                return '\0';
+            if (tag.Tag == '&')
             {
-                if (text[i] != '&')
-                    i++;
-                else
-                {
-                    if (i + 1 >= text.Length)
-                        throw new ArgumentException("LabelEx text cannot end in an unescaped \"&\" character.");
-                    else
-                    {
-                        if (text[i + 1] == '&')
-                            i += 2;
-                        else
-                        {
-                            if (_mnemonic != '\0')
-                                throw new ArgumentException("LabelEx text cannot have more than one mnemonic sequence (like \"&a\").");
-                            if (text[i + 1] == ' ')
-                                throw new ArgumentException("LabelEx text mnemonic cannot be a space character.");
-                            _mnemonic = char.ToUpper(text[i + 1]);
-                            text = text.Substring(0, i) + "`&" + text[i + 1] + "&`" + text.Substring(i + 2);
-                            i += 2 /* start at i+2 in original text */ - 1 /* the ampersand removed */ + 4 /* the characters inserted */;
-                        }
-                    }
-                }
+                if (tag.Children.Count != 1 || !(tag.Children.First() is EggsText) || ((EggsText) tag.Children.First()).Text.Length != 1)
+                    throw new ArgumentException("'&' mnemonic tag must not contain anything other than a single character.");
+                return ((EggsText) tag.Children.First()).Text[0];
             }
-            return text;
+            else
+                return tag.Children.Select(c => parseMnemonic(c)).FirstOrDefault(c => c != '\0');
         }
 
         private void autosize()
@@ -214,8 +198,11 @@ namespace RT.Util.Controls
                 {
                     case '/': curFont = new Font(curFont, curFont.Style | FontStyle.Italic); break;
                     case '*': curFont = new Font(curFont, curFont.Style | FontStyle.Bold); break;
-                    case '_':
-                    case '&': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
+                    case '_': curFont = new Font(curFont, curFont.Style | FontStyle.Underline); break;
+                    case '&':
+                        if (ShowKeyboardCues)
+                            curFont = new Font(curFont, curFont.Style | FontStyle.Underline);
+                        break;
                     case '+': curNowrap = true; break;
                 }
                 foreach (var child in tag.Children)
@@ -311,7 +298,7 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override bool ProcessMnemonic(char charCode)
         {
-            if (Enabled && Visible && _mnemonic != '\0' && _mnemonic == char.ToUpper(charCode) && Parent != null)
+            if (Enabled && Visible && _mnemonic == char.ToUpperInvariant(charCode) && Parent != null)
             {
                 OnMnemonic();
                 return true;

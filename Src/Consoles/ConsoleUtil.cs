@@ -97,16 +97,52 @@ namespace RT.Util.Consoles
                 Console.WriteLine();
                 return;
             }
+            int width;
             try
             {
-                int width = WrapToWidth();
-                foreach (var line in message.WordWrap(width, hangingIndent))
-                    Console.WriteLine(line);
+                width = WrapToWidth();
             }
             catch
             {
                 Console.WriteLine(message);
+                return;
             }
+            foreach (var line in message.WordWrap(width, hangingIndent))
+                Console.WriteLine(line);
+        }
+
+        /// <summary>
+        /// Outputs the specified coloured message, marked up using EggsML, to the console window, treating
+        /// newlines as paragraph breaks. All paragraphs are word-wrapped to fit in the console buffer, or to a
+        /// sensible width if redirected to a file. Each paragraph is indented by the number of spaces at the start
+        /// of the corresponding line.
+        /// </summary>
+        /// <param name="message">The message to output.</param>
+        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        /// <remarks>See <see cref="ConsoleColoredString.FromEggsNodeWordWrap"/> for the colour syntax.</remarks>
+        public static void WriteParagraphs(EggsNode message, int hangingIndent = 0)
+        {
+            int width;
+            try
+            {
+                width = WrapToWidth();
+            }
+            catch
+            {
+                // Fall back to non-word-wrapping
+                WriteLine(ConsoleColoredString.FromEggsNode(message));
+                return;
+            }
+            bool any = false;
+            foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(message, width, hangingIndent))
+            {
+                WriteLine(line);
+                any = true;
+            }
+
+            // Special case: if the input is empty, output an empty line
+            if (!any)
+                Console.WriteLine();
         }
 
         /// <summary>
@@ -118,16 +154,19 @@ namespace RT.Util.Consoles
         /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
         {
+            int width;
             try
             {
-                int width = WrapToWidth();
-                foreach (var line in message.WordWrap(width, hangingIndent))
-                    ConsoleUtil.WriteLine(line);
+                width = WrapToWidth();
             }
             catch
             {
                 ConsoleUtil.WriteLine(message);
+                return;
             }
+            foreach (var line in message.WordWrap(width, hangingIndent))
+                ConsoleUtil.WriteLine(line);
+
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>

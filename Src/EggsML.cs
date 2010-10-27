@@ -168,6 +168,8 @@ namespace RT.Util
         /// <summary>Escapes the input string such that it can be used in EggsML syntax.</summary>
         public static string Escape(string input)
         {
+            if (!input.Any(ch => SpecialCharacters.Contains(ch)))
+                return input;
             return @"""" + input.Replace(@"""", @"""""") + @"""";
         }
 
