@@ -241,7 +241,7 @@ namespace RT.Util.Consoles
             EggsML.WordWrap<ConsoleColor>(node, ConsoleColor.Gray, wrapWidth - 1, hangingIndent,
                 (text, color) => text.Length,
                 (text, color, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
-                color => { results.Add(ConsoleColoredString.Empty); },
+                (color, isHanging) => { results.Add(isHanging ? new ConsoleColoredString(new string(' ', hangingIndent), color) : ConsoleColoredString.Empty); },
                 (color, tag) =>
                 {
                     bool curLight = color >= ConsoleColor.DarkGray;

@@ -216,7 +216,7 @@ namespace RT.Util
             public int WordPiecesWidthsSum;
             public EggMeasure<TState> Measure;
             public EggRender<TState> Render;
-            public Action<TState> AdvanceToNextLine;
+            public Action<TState, bool> AdvanceToNextLine;
             public EggNextState<TState> NextState;
             public int X, Width;
         }
@@ -230,10 +230,10 @@ namespace RT.Util
         /// <param name="hangingIndent">A hanging indent that is added to every line except the first of each paragraph.</param>
         /// <param name="measure">A delegate that measures the width of any piece of text.</param>
         /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
-        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line (when a word is wrapped or a new paragraph begins).</param>
+        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line. The boolean specifies whether a word is wrapped (true) or a new paragraph begins (false).</param>
         /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
         public static void WordWrap<TState>(EggsNode node, TState initialState, int width, int hangingIndent,
-            EggMeasure<TState> measure, EggRender<TState> render, Action<TState> advanceToNextLine, EggNextState<TState> nextState)
+            EggMeasure<TState> measure, EggRender<TState> render, Action<TState, bool> advanceToNextLine, EggNextState<TState> nextState)
         {
             var data = new eggWalkData<TState>
             {
@@ -296,7 +296,7 @@ namespace RT.Util
                             }
                             for (int j = 0; j < data.WordPieces.Count; j++)
                                 data.Render(data.WordPieces[j], data.WordPiecesState[j], data.WordPiecesWidths[j]);
-                            data.AdvanceToNextLine(state);
+                            data.AdvanceToNextLine(state, true);
                             data.WordPieces.Clear();
                             data.WordPiecesState.Clear();
                             data.WordPiecesWidths.Clear();
@@ -306,7 +306,7 @@ namespace RT.Util
                         else if (!data.AtStartOfLine && data.X + data.Measure(" ", state) + data.WordPiecesWidthsSum + fragmentWidth > data.Width)
                         {
                             data.X = hangingIndent;
-                            data.AdvanceToNextLine(state);
+                            data.AdvanceToNextLine(state, true);
                             data.AtStartOfLine = true;
                             goto retry2;
                         }
@@ -339,7 +339,7 @@ namespace RT.Util
                     if (txt[i] == '\n')
                     {
                         data.X = 0;
-                        data.AdvanceToNextLine(state);
+                        data.AdvanceToNextLine(state, false);
                         data.AtStartOfLine = true;
                     }
                 }

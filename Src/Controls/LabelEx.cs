@@ -149,7 +149,8 @@ namespace RT.Util.Controls
                 return spaceSizes[font.Style];
             };
 
-            EggsML.WordWrap<Font>(node, initialFont, constrainingSize.Width - glyphOverhang.Width, 0,
+            int hangingIndent = 0;
+            EggsML.WordWrap<Font>(node, initialFont, constrainingSize.Width - glyphOverhang.Width, hangingIndent,
                 (text, font) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
                 (text, font, width) =>
                 {
@@ -158,7 +159,7 @@ namespace RT.Util.Controls
                     x += width;
                     maxX = Math.Max(maxX, x);
                 },
-                font => { x = 0; y += spaceSize(font).Height; },
+                (font, isHanging) => { x = isHanging ? hangingIndent : 0; y += spaceSize(font).Height; },
                 (font, tag) =>
                 {
                     switch (tag)
