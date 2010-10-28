@@ -224,6 +224,16 @@ namespace RT.Util
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
+        /// This method is called just before the settings class is written out to disk, allowing any required changes to
+        /// be made to the fields. The base implementation does nothing. Note that this may be called on a different thread
+        /// than the one invoking a Save* operation (but the same as the thread performing the save immediately after this
+        /// method returns).
+        /// </summary>
+        protected virtual void BeforeSave()
+        {
+        }
+
+        /// <summary>
         /// <para>Saves the settings. Intended to be used whenever it is absolutely vital to save the settings and
         /// bug the user if this fails.</para>
         /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>,
@@ -239,6 +249,7 @@ namespace RT.Util
                     _saveThread.Abort();
                     _saveThread = null;
                 }
+                BeforeSave();
                 SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.ShowRetryOnly);
             }
         }
@@ -259,6 +270,7 @@ namespace RT.Util
                     _saveThread.Abort();
                     _saveThread = null;
                 }
+                BeforeSave();
                 SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.DoNothing);
             }
         }
@@ -305,6 +317,7 @@ namespace RT.Util
             Thread.Sleep(2000);
             lock (_lock)
             {
+                BeforeSave();
                 SettingsUtil.SaveSettings(_saveObj, _saveObj.GetType(), SettingsUtil.OnFailure.DoNothing);
                 _saveThread = null;
             }
