@@ -388,14 +388,16 @@ namespace RT.Util
         }
 
         /// <summary>Gets the text of this node and/or sub-nodes concatenated into one string.</summary>
-        public string Text
+        public string ToString(bool excludeSyntax)
         {
-            get
+            if (excludeSyntax)
             {
                 var builder = new StringBuilder();
                 textify(builder);
                 return builder.ToString();
             }
+            else
+                return ToString();
         }
 
         internal abstract void textify(StringBuilder builder);
@@ -420,6 +422,7 @@ namespace RT.Util
         /// <param name="tag">The character used to open the tag (e.g. '[').</param>
         /// <param name="index">The index in the original string where this tag was opened.</param>
         public EggsTag(char? tag, int index) : base(index) { Tag = tag; _children = new List<EggsNode>(); }
+
         /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
         /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
@@ -439,6 +442,7 @@ namespace RT.Util
                     ? Tag + childrenStr + "`" + EggsML.opposite(Tag)
                     : Tag + childrenStr + EggsML.opposite(Tag);
         }
+
         /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml()
         {
@@ -468,17 +472,20 @@ namespace RT.Util
             }
             return new XElement(tagName, _children.Select(child => child.ToXml()));
         }
+
         internal override void textify(StringBuilder builder)
         {
             foreach (var child in _children)
                 child.textify(builder);
         }
     }
+
     /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
     public sealed class EggsText : EggsNode
     {
         /// <summary>The text contained in this node.</summary>
         public string Text { get; private set; }
+
         /// <summary>Constructs a new EggsML text node.</summary>
         /// <param name="text">The text for this node to contain.</param>
         /// <param name="index">The index in the original string where this text starts.</param>
@@ -489,6 +496,7 @@ namespace RT.Util
                 throw new ArgumentNullException("text", "The 'text' for an EggsText node cannot be null.");
             Text = text;
         }
+
         /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
         /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
         public override string ToString()
@@ -497,10 +505,13 @@ namespace RT.Util
                 return string.Concat("\"", Text.Replace("\"", "\"\""), "\"");
             return new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
         }
+
         /// <summary>Returns an XML representation of this EggsML node.</summary>
         public override object ToXml() { return Text; }
+
         /// <summary>Determines whether this node contains any textual content.</summary>
         public override bool HasText { get { return Text != null && Text.Length > 0; } }
+
         internal override void textify(StringBuilder builder) { builder.Append(Text); }
     }
 

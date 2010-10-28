@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
@@ -30,56 +30,61 @@ namespace RT.Util.Forms
                 throw new ArgumentNullException("settings");
             _settings = settings;
 
-            // Since the constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
+            var vs = SystemInformation.VirtualScreen;
+            _lastScreenResolution = vs.Width + "x" + vs.Height;
+
+            // Since the base constructor is executed before InitializeComponent(), and InitializeComponent() potentially sets ClientSize, which reverts our changes,
             // we need to apply the settings later. Use the Load event for this
-            Load += (sender, e) =>
+            Load += formLoad;
+        }
+
+        private void formLoad(object sender, EventArgs e)
+        {
+            // Just leaving the form font at the default uses the wrong font - the one
+            // returned by SystemFonts.DefaultFont, which is not one configured through the Desktop Properties dialog.
+            // Fix this.
+            Font = SystemFonts.MessageBoxFont;
+
+            try
             {
-                // Just leaving the form font at the default uses the wrong font - the one
-                // returned by SystemFonts.DefaultFont, which is not one configured through the Desktop Properties dialog.
-                // Fix this.
-                Font = System.Drawing.SystemFonts.MessageBoxFont;
-
-                try
+                // This call also sets _lastScreenResolution
+                if (!setDimensionsForCurrentScreenResolution())
                 {
-                    // This call also sets _lastScreenResolution
-                    if (!setDimensionsForCurrentScreenResolution())
-                    {
-                        Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
-                        Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
-                        _normalWidth = Width;
-                        _normalHeight = Height;
-                    }
+                    Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
+                    Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
+                    _normalWidth = Width;
+                    _normalHeight = Height;
                 }
-                catch
-                { }
+            }
+            catch
+            { }
 
-                // SizeChanged event: keeps track of minimize/maximize and normal size
-                SizeChanged += new EventHandler(processResize);
-                // Move event: keeps track of normal dimensions
-                Move += new EventHandler(processMove);
-                // Close event: save the settings
-                FormClosed += new FormClosedEventHandler(saveSettings);
-                // Restore position and size properly when the screen resolution changes
-                SystemEvents.DisplaySettingsChanged += new EventHandler(displaySettingsChanged);
+            // SizeChanged event: keeps track of minimize/maximize and normal size
+            SizeChanged += processResize;
+            // Move event: keeps track of normal dimensions
+            Move += processMove;
+            // Close event: save the settings
+            FormClosed += saveSettings;
+            // Restore position and size properly when the screen resolution changes
+            SystemEvents.DisplaySettingsChanged += displaySettingsChanged;
 
-                _prevWindowState = WindowState;
+            _prevWindowState = WindowState;
 
-                switch (WindowState)
-                {
-                    case FormWindowState.Minimized:
-                        _stateMinimized = true;
-                        _stateMaximized = false; // (guessing?)
-                        break;
-                    case FormWindowState.Maximized:
-                        _stateMinimized = false;
-                        _stateMaximized = true;
-                        break;
-                    case FormWindowState.Normal:
-                        _stateMinimized = false;
-                        _stateMaximized = false;
-                        break;
-                }
-            };
+            switch (WindowState)
+            {
+                case FormWindowState.Minimized:
+                    _stateMinimized = true;
+                    _stateMaximized = false; // (guessing?)
+                    break;
+                case FormWindowState.Maximized:
+                    _stateMinimized = false;
+                    _stateMaximized = true;
+                    break;
+                case FormWindowState.Normal:
+                    _stateMinimized = false;
+                    _stateMaximized = false;
+                    break;
+            }
         }
 
         private bool setDimensionsForCurrentScreenResolution()
@@ -242,6 +247,34 @@ namespace RT.Util.Forms
             }
             else
                 base.Show();
+        }
+
+        /// <summary>Shows the form as a modal dialog box with the currently active window set as its owner.</summary>
+        /// <param name="centerInForm">If specified, this form will be centered relative to the specified form.</param>
+        /// <param name="repositionParentAfterwards">If set to true, will cause the parent to be moved after this form is closed to be centered with respect to it.</param>
+        /// <returns>One of the <see cref="System.Windows.Forms.DialogResult"/> values.</returns>
+        public virtual DialogResult ShowDialog(Form centerInForm = null, bool repositionParentAfterwards = false)
+        {
+            var dims = _settings.DimensionsByRes[_lastScreenResolution];
+            if (!dims.Maximized)
+            {
+                dims.Left = centerInForm.Left + (centerInForm.Width - dims.Width) / 2;
+                dims.Top = centerInForm.Top + (centerInForm.Height - dims.Height) / 2;
+            }
+
+            var result = base.ShowDialog();
+
+            if (repositionParentAfterwards)
+            {
+                dims = _settings.DimensionsByRes[_lastScreenResolution];
+                if (!dims.Maximized)
+                {
+                    centerInForm.Left = dims.Left + (dims.Width - centerInForm.Width) / 2;
+                    centerInForm.Top = dims.Top + (dims.Height - centerInForm.Height) / 2;
+                }
+            }
+
+            return result;
         }
 
         #region Settings-related
