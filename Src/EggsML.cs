@@ -282,10 +282,10 @@ namespace RT.Util
 
                     if (lengthOfWord > 0)
                     {
-                    retry1:
+                        retry1:
                         string fragment = txt.Substring(i, lengthOfWord);
                         var fragmentWidth = data.Measure(fragment, state);
-                    retry2:
+                        retry2:
 
                         if (data.AtStartOfLine && data.X + data.WordPiecesWidthsSum + fragmentWidth > data.Width)
                         {
@@ -386,6 +386,19 @@ namespace RT.Util
             }
             return sb.ToString();
         }
+
+        /// <summary>Gets the text of this node and/or sub-nodes concatenated into one string.</summary>
+        public string Text
+        {
+            get
+            {
+                var builder = new StringBuilder();
+                textify(builder);
+                return builder.ToString();
+            }
+        }
+
+        internal abstract void textify(StringBuilder builder);
     }
 
     /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag or the top-level node.</summary>
@@ -455,6 +468,11 @@ namespace RT.Util
             }
             return new XElement(tagName, _children.Select(child => child.ToXml()));
         }
+        internal override void textify(StringBuilder builder)
+        {
+            foreach (var child in _children)
+                child.textify(builder);
+        }
     }
     /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
     public sealed class EggsText : EggsNode
@@ -483,6 +501,7 @@ namespace RT.Util
         public override object ToXml() { return Text; }
         /// <summary>Determines whether this node contains any textual content.</summary>
         public override bool HasText { get { return Text != null && Text.Length > 0; } }
+        internal override void textify(StringBuilder builder) { builder.Append(Text); }
     }
 
     /// <summary>Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>
