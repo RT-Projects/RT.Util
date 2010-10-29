@@ -218,7 +218,106 @@ namespace RT.Util
             public EggRender<TState> Render;
             public Action<TState, bool> AdvanceToNextLine;
             public EggNextState<TState> NextState;
-            public int X, Width;
+            public int X, Width, HangingIndent;
+
+            public void EggWalkWordWrap(EggsNode node, TState initialState)
+            {
+                eggWalkWordWrapRecursive(node, initialState, false);
+
+                if (WordPieces.Count > 0)
+                {
+                    if (!AtStartOfLine)
+                        Render(" ", initialState, Measure(" ", initialState));
+                    for (int i = 0; i < WordPieces.Count; i++)
+                        Render(WordPieces[i], WordPiecesState[i], WordPiecesWidths[i]);
+                }
+            }
+
+            private void eggWalkWordWrapRecursive(EggsNode node, TState state, bool curNowrap)
+            {
+                var tag = node as EggsTag;
+                if (tag != null)
+                {
+                    var newState = tag.Tag == null ? state : NextState(state, tag.Tag.Value);
+                    if (tag.Tag == '+')
+                        curNowrap = true;
+                    foreach (var child in tag.Children)
+                        eggWalkWordWrapRecursive(child, newState, curNowrap);
+                }
+                else if (node is EggsText)
+                {
+                    var txt = ((EggsText) node).Text;
+                    for (int i = 0; i < txt.Length; i++)
+                    {
+                        int lengthOfWord = 0;
+                        while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
+                            lengthOfWord++;
+
+                        if (lengthOfWord > 0)
+                        {
+                        retry1:
+                            string fragment = txt.Substring(i, lengthOfWord);
+                            var fragmentWidth = Measure(fragment, state);
+                        retry2:
+
+                            if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > Width)
+                            {
+                                if (lengthOfWord > 1)
+                                {
+                                    lengthOfWord /= 2;
+                                    goto retry1;
+                                }
+                                for (int j = 0; j < WordPieces.Count; j++)
+                                    Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
+                                AdvanceToNextLine(state, true);
+                                WordPieces.Clear();
+                                WordPiecesState.Clear();
+                                WordPiecesWidths.Clear();
+                                WordPiecesWidthsSum = 0;
+                                X = HangingIndent;
+                            }
+                            else if (!AtStartOfLine && X + Measure(" ", state) + WordPiecesWidthsSum + fragmentWidth > Width)
+                            {
+                                X = HangingIndent;
+                                AdvanceToNextLine(state, true);
+                                AtStartOfLine = true;
+                                goto retry2;
+                            }
+
+                            WordPieces.Add(fragment);
+                            WordPiecesState.Add(state);
+                            WordPiecesWidths.Add(fragmentWidth);
+                            WordPiecesWidthsSum += fragmentWidth;
+                            i += lengthOfWord - 1;
+                            continue;
+                        }
+
+                        if (WordPieces.Count > 0)
+                        {
+                            if (!AtStartOfLine)
+                            {
+                                var w = Measure(" ", state);
+                                Render(" ", state, w);
+                                X += w;
+                            }
+                            for (int j = 0; j < WordPieces.Count; j++)
+                                Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
+                            X += WordPiecesWidthsSum;
+                            AtStartOfLine = false;
+                        }
+                        WordPieces.Clear();
+                        WordPiecesState.Clear();
+                        WordPiecesWidths.Clear();
+                        WordPiecesWidthsSum = 0;
+                        if (txt[i] == '\n')
+                        {
+                            X = 0;
+                            AdvanceToNextLine(state, false);
+                            AtStartOfLine = true;
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>Word-wraps a given piece of EggsML, assuming that it is linearly flowing text. Newline (\n) characters can be used to split the text into multiple paragraphs.</summary>
@@ -235,7 +334,7 @@ namespace RT.Util
         public static void WordWrap<TState>(EggsNode node, TState initialState, int width, int hangingIndent,
             EggMeasure<TState> measure, EggRender<TState> render, Action<TState, bool> advanceToNextLine, EggNextState<TState> nextState)
         {
-            var data = new eggWalkData<TState>
+            new eggWalkData<TState>
             {
                 AtStartOfLine = true,
                 WordPieces = new List<string>(),
@@ -247,103 +346,9 @@ namespace RT.Util
                 AdvanceToNextLine = advanceToNextLine,
                 NextState = nextState,
                 X = 0,
-                Width = width
-            };
-            eggWalkWordWrap(node, hangingIndent, data, initialState, false);
-
-            if (data.WordPieces.Count > 0)
-            {
-                if (!data.AtStartOfLine)
-                    render(" ", initialState, measure(" ", initialState));
-                for (int i = 0; i < data.WordPieces.Count; i++)
-                    render(data.WordPieces[i], data.WordPiecesState[i], data.WordPiecesWidths[i]);
-            }
-        }
-
-        private static void eggWalkWordWrap<TState>(EggsNode node, int hangingIndent, eggWalkData<TState> data, TState state, bool curNowrap)
-        {
-            var tag = node as EggsTag;
-            if (tag != null)
-            {
-                var newState = tag.Tag == null ? state : data.NextState(state, tag.Tag.Value);
-                if (tag.Tag == '+')
-                    curNowrap = true;
-                foreach (var child in tag.Children)
-                    eggWalkWordWrap(child, hangingIndent, data, newState, curNowrap);
-            }
-            else if (node is EggsText)
-            {
-                var txt = ((EggsText) node).Text;
-                for (int i = 0; i < txt.Length; i++)
-                {
-                    int lengthOfWord = 0;
-                    while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
-                        lengthOfWord++;
-
-                    if (lengthOfWord > 0)
-                    {
-                        retry1:
-                        string fragment = txt.Substring(i, lengthOfWord);
-                        var fragmentWidth = data.Measure(fragment, state);
-                        retry2:
-
-                        if (data.AtStartOfLine && data.X + data.WordPiecesWidthsSum + fragmentWidth > data.Width)
-                        {
-                            if (lengthOfWord > 1)
-                            {
-                                lengthOfWord /= 2;
-                                goto retry1;
-                            }
-                            for (int j = 0; j < data.WordPieces.Count; j++)
-                                data.Render(data.WordPieces[j], data.WordPiecesState[j], data.WordPiecesWidths[j]);
-                            data.AdvanceToNextLine(state, true);
-                            data.WordPieces.Clear();
-                            data.WordPiecesState.Clear();
-                            data.WordPiecesWidths.Clear();
-                            data.WordPiecesWidthsSum = 0;
-                            data.X = hangingIndent;
-                        }
-                        else if (!data.AtStartOfLine && data.X + data.Measure(" ", state) + data.WordPiecesWidthsSum + fragmentWidth > data.Width)
-                        {
-                            data.X = hangingIndent;
-                            data.AdvanceToNextLine(state, true);
-                            data.AtStartOfLine = true;
-                            goto retry2;
-                        }
-
-                        data.WordPieces.Add(fragment);
-                        data.WordPiecesState.Add(state);
-                        data.WordPiecesWidths.Add(fragmentWidth);
-                        data.WordPiecesWidthsSum += fragmentWidth;
-                        i += lengthOfWord - 1;
-                        continue;
-                    }
-
-                    if (data.WordPieces.Count > 0)
-                    {
-                        if (!data.AtStartOfLine)
-                        {
-                            var w = data.Measure(" ", state);
-                            data.Render(" ", state, w);
-                            data.X += w;
-                        }
-                        for (int j = 0; j < data.WordPieces.Count; j++)
-                            data.Render(data.WordPieces[j], data.WordPiecesState[j], data.WordPiecesWidths[j]);
-                        data.X += data.WordPiecesWidthsSum;
-                        data.AtStartOfLine = false;
-                    }
-                    data.WordPieces.Clear();
-                    data.WordPiecesState.Clear();
-                    data.WordPiecesWidths.Clear();
-                    data.WordPiecesWidthsSum = 0;
-                    if (txt[i] == '\n')
-                    {
-                        data.X = 0;
-                        data.AdvanceToNextLine(state, false);
-                        data.AtStartOfLine = true;
-                    }
-                }
-            }
+                Width = width,
+                HangingIndent = hangingIndent
+            }.EggWalkWordWrap(node, initialState);
         }
     }
 
@@ -352,12 +357,16 @@ namespace RT.Util
     {
         /// <summary>Returns the EggsML parse tree as XML.</summary>
         public abstract object ToXml();
+
         /// <summary>The index in the original string where this node starts.</summary>
         public int Index { get; protected set; }
+
         /// <summary>Determines whether this node contains any textual content.</summary>
         public abstract bool HasText { get; }
+
         /// <summary>Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
         public EggsTag Parent { get; internal set; }
+
         /// <summary>Constructor.</summary>
         /// <param name="index">The index within the original string where this node starts.</param>
         public EggsNode(int index) { Index = index; }
@@ -409,15 +418,20 @@ namespace RT.Util
         /// <summary>Adds a new child node to this tag’s children.</summary>
         /// <param name="child">The child node to add.</param>
         internal void Add(EggsNode child) { child.Parent = this; _children.Add(child); }
+
         /// <summary>The children of this node.</summary>
         public ReadOnlyCollection<EggsNode> Children { get { return _children.AsReadOnly(ref _childrenCache); } }
         private ReadOnlyCollection<EggsNode> _childrenCache;
+
         /// <summary>The underlying collection containing the children of this node.</summary>
         private List<EggsNode> _children;
+
         /// <summary>Determines whether this node contains any textual content.</summary>
         public override bool HasText { get { return _children.Any(child => child.HasText); } }
+
         /// <summary>The character used to open the tag (e.g. “[”), or null if this is the top-level node.</summary>
         public char? Tag { get; private set; }
+
         /// <summary>Constructs a new EggsML parse-tree node that represents an EggsML tag.</summary>
         /// <param name="tag">The character used to open the tag (e.g. '[').</param>
         /// <param name="index">The index in the original string where this tag was opened.</param>
@@ -521,10 +535,12 @@ namespace RT.Util
     {
         /// <summary>The character index into the original string where the error occurred.</summary>
         public int Index { get; private set; }
+
         /// <summary>Constructor.</summary>
         /// <param name="message">Message.</param>
         /// <param name="index">The character index into the original string where the error occurred.</param>
         public EggsMLParseException(string message, int index) : base(message) { Index = index; }
+
         /// <summary>Constructor.</summary>
         /// <param name="message">Message.</param>
         /// <param name="index">The character index into the original string where the error occurred.</param>
