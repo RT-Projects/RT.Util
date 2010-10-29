@@ -255,6 +255,8 @@ namespace RT.Util.Forms
         /// <returns>One of the <see cref="System.Windows.Forms.DialogResult"/> values.</returns>
         public virtual DialogResult ShowDialog(Form centerInForm = null, bool repositionParentAfterwards = false)
         {
+            if (!_settings.DimensionsByRes.ContainsKey(_lastScreenResolution))
+                _settings.DimensionsByRes[_lastScreenResolution] = new FormDimensions { Left = Left, Top = Top, Width = Width, Height = Height };
             var dims = _settings.DimensionsByRes[_lastScreenResolution];
             if (!dims.Maximized)
             {

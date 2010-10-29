@@ -315,6 +315,12 @@ namespace RT.Util
                             AdvanceToNextLine(state, false);
                             AtStartOfLine = true;
                         }
+                        else if (AtStartOfLine)
+                        {
+                            var w = Measure(" ", state);
+                            Render(" ", state, w);
+                            X += w;
+                        }
                     }
                 }
             }
