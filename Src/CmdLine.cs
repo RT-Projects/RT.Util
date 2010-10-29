@@ -1017,11 +1017,11 @@ namespace RT.Util.CommandLine
         /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null as the parameter.</summary>
         internal Func<Translation, int, ConsoleColoredString> GenerateHelpFunc { get; private set; }
         /// <summary>Generates the help screen to be output to the user on the console.</summary>
-        /// <param name="tr">The translation class containing the translated text.</param>
+        /// <param name="tr">The translation class containing the translated text, or null for English.</param>
         /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
         public ConsoleColoredString GenerateHelp(Translation tr, int wrapWidth) { return GenerateHelpFunc(tr, wrapWidth); }
         /// <summary>Generates a printable description of the error represented by this exception, typically used to tell the user what they did wrong.</summary>
-        /// <param name="tr">The translation class containing the translated text.</param>
+        /// <param name="tr">The translation class containing the translated text, or null for English.</param>
         /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
         public ConsoleColoredString GenerateErrorText(Translation tr, int wrapWidth)
         {
