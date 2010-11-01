@@ -15,7 +15,7 @@ namespace RT.Util.Controls
     {
         private EggsNode _parsed;
         private char _mnemonic;
-        private Dictionary<Size, Size> _cachedPreferredSizes = new Dictionary<Size, Size>();
+        private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
 
         /// <summary>Constructor.</summary>
         public LabelEx()
@@ -23,6 +23,7 @@ namespace RT.Util.Controls
             DoubleBuffered = true;
             SetStyle(ControlStyles.Selectable | ControlStyles.FixedHeight, false);
             SetStyle(ControlStyles.ResizeRedraw, true);
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             TabStop = false;
             AutoSize = true;
         }
@@ -115,10 +116,10 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         public override Size GetPreferredSize(Size constrainingSize)
         {
-            if (!_cachedPreferredSizes.ContainsKey(constrainingSize))
+            if (!_cachedPreferredSizes.ContainsKey(constrainingSize.Width))
                 using (var g = CreateGraphics())
-                    _cachedPreferredSizes[constrainingSize] = doPaintOrMeasure(g, _parsed, Font, ForeColor, false, constrainingSize == new Size() ? _dummySize : constrainingSize);
-            return _cachedPreferredSizes[constrainingSize];
+                    _cachedPreferredSizes[constrainingSize.Width] = doPaintOrMeasure(g, _parsed, Font, ForeColor, false, constrainingSize.Width == 0 ? int.MaxValue : constrainingSize.Width);
+            return _cachedPreferredSizes[constrainingSize.Width];
         }
 
         /// <summary>Override; see base.</summary>
@@ -130,13 +131,13 @@ namespace RT.Util.Controls
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
         protected void PaintLabel(Graphics g, Color color, Font initialFont)
         {
-            doPaintOrMeasure(g, _parsed, initialFont, color, true, ClientSize);
+            doPaintOrMeasure(g, _parsed, initialFont, color, true, ClientSize.Width);
         }
 
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, Size constrainingSize)
+        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, int constrainingWidth)
         {
             int x = 0, y = 0, maxX = 0;
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
@@ -150,7 +151,7 @@ namespace RT.Util.Controls
             };
 
             int hangingIndent = 0;
-            EggsML.WordWrap<Font>(node, initialFont, constrainingSize.Width - glyphOverhang.Width, hangingIndent,
+            EggsML.WordWrap<Font>(node, initialFont, Math.Max(1, constrainingWidth - glyphOverhang.Width), hangingIndent,
                 (text, font) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
                 (text, font, width) =>
                 {

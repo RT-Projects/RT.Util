@@ -199,6 +199,12 @@ namespace RT.Util
         /// <see cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
         public delegate int EggMeasure<TState>(string text, TState state);
 
+        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
+        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">The state (font, color etc.) of the text.</param>
+        /// <param name="isHanging">Specifies whether a word is wrapped (true) or a new paragraph begins (false).</param>
+        public delegate void EggsNextLine<TState>(TState state, bool isHanging);
+
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
         /// changes for a given EggsML tag character.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
@@ -216,7 +222,7 @@ namespace RT.Util
             public int WordPiecesWidthsSum;
             public EggMeasure<TState> Measure;
             public EggRender<TState> Render;
-            public Action<TState, bool> AdvanceToNextLine;
+            public EggsNextLine<TState> AdvanceToNextLine;
             public EggNextState<TState> NextState;
             public int X, Width, HangingIndent;
 
@@ -262,11 +268,13 @@ namespace RT.Util
 
                             if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > Width)
                             {
+                                // If here: the single word (or its fragment) doesn't fit on the line.
                                 if (lengthOfWord > 1)
                                 {
                                     lengthOfWord /= 2;
                                     goto retry1;
                                 }
+                                // If here: we're at the start of the line and not even a single letter fits.
                                 for (int j = 0; j < WordPieces.Count; j++)
                                     Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
                                 AdvanceToNextLine(state, true);
@@ -278,6 +286,7 @@ namespace RT.Util
                             }
                             else if (!AtStartOfLine && X + Measure(" ", state) + WordPiecesWidthsSum + fragmentWidth > Width)
                             {
+                                // If here: the current word doesn't fit on the current line, but some words did fit.
                                 X = HangingIndent;
                                 AdvanceToNextLine(state, true);
                                 AtStartOfLine = true;
@@ -335,11 +344,13 @@ namespace RT.Util
         /// <param name="hangingIndent">A hanging indent that is added to every line except the first of each paragraph.</param>
         /// <param name="measure">A delegate that measures the width of any piece of text.</param>
         /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
-        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line. The boolean specifies whether a word is wrapped (true) or a new paragraph begins (false).</param>
+        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
         /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
         public static void WordWrap<TState>(EggsNode node, TState initialState, int width, int hangingIndent,
-            EggMeasure<TState> measure, EggRender<TState> render, Action<TState, bool> advanceToNextLine, EggNextState<TState> nextState)
+            EggMeasure<TState> measure, EggRender<TState> render, EggsNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
+            if (width <= 0)
+                throw new ArgumentException("Wrap width must be greater than zero.");
             new eggWalkData<TState>
             {
                 AtStartOfLine = true,
