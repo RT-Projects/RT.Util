@@ -255,44 +255,59 @@ namespace RT.Util
                     var txt = ((EggsText) node).Text;
                     for (int i = 0; i < txt.Length; i++)
                     {
+                        // Check whether we are looking at a whitespace character or not, and if not, find the end of the word.
                         int lengthOfWord = 0;
                         while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
                             lengthOfWord++;
 
                         if (lengthOfWord > 0)
                         {
-                        retry1:
+                            // We are looking at a word. (It doesn’t matter whether we’re at the beginning of the word or in the middle of one.)
+                            retry1:
                             string fragment = txt.Substring(i, lengthOfWord);
                             var fragmentWidth = Measure(fragment, state);
-                        retry2:
+                            retry2:
 
+                            // If we are at the start of a line, and the word itself doesn’t fit on a line by itself, we need to break the word up.
                             if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > Width)
                             {
-                                // If here: the single word (or its fragment) doesn't fit on the line.
+                                // We don’t know exactly where to break the word, so use binary search to discover where that is.
                                 if (lengthOfWord > 1)
                                 {
                                     lengthOfWord /= 2;
                                     goto retry1;
                                 }
-                                // If here: we're at the start of the line and not even a single letter fits.
-                                for (int j = 0; j < WordPieces.Count; j++)
-                                    Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
-                                AdvanceToNextLine(state, true);
-                                WordPieces.Clear();
-                                WordPiecesState.Clear();
-                                WordPiecesWidths.Clear();
-                                WordPiecesWidthsSum = 0;
-                                X = HangingIndent;
+
+                                // If we get to here, ‘WordPieces’ contains as much of the word as fits into one line, and the next letter makes it too long.
+                                // If ‘WordPieces’ is empty, we are at the beginning of a paragraph and the first letter already doesn’t fit.
+                                if (WordPieces.Count > 0)
+                                {
+                                    // Render the part of the word that fits on the line and then move to the next line.
+                                    for (int j = 0; j < WordPieces.Count; j++)
+                                        Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
+                                    AdvanceToNextLine(state, true);
+                                    WordPieces.Clear();
+                                    WordPiecesState.Clear();
+                                    WordPiecesWidths.Clear();
+                                    WordPiecesWidthsSum = 0;
+                                    X = HangingIndent;
+                                }
                             }
                             else if (!AtStartOfLine && X + Measure(" ", state) + WordPiecesWidthsSum + fragmentWidth > Width)
                             {
-                                // If here: the current word doesn't fit on the current line, but some words did fit.
+                                // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
+                                // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
                                 X = HangingIndent;
                                 AdvanceToNextLine(state, true);
                                 AtStartOfLine = true;
+
+                                // In case the word also doesn’t fit on a line all by itself, go back to top (now that ‘AtStartOfLine’ is true)
+                                // where it will check whether we need to break the word apart.
                                 goto retry2;
                             }
 
+                            // If we get to here, the current fragment fits on the current line (or it is a single character that overflows
+                            // the line all by itself).
                             WordPieces.Add(fragment);
                             WordPiecesState.Add(state);
                             WordPiecesWidths.Add(fragmentWidth);
@@ -301,8 +316,10 @@ namespace RT.Util
                             continue;
                         }
 
+                        // We encounter a whitespace character. All the word pieces fit on the current line, so render them.
                         if (WordPieces.Count > 0)
                         {
+                            // Add a space if we are not at the beginning of the line.
                             if (!AtStartOfLine)
                             {
                                 var w = Measure(" ", state);
@@ -318,14 +335,17 @@ namespace RT.Util
                         WordPiecesState.Clear();
                         WordPiecesWidths.Clear();
                         WordPiecesWidthsSum = 0;
+
                         if (txt[i] == '\n')
                         {
+                            // If the whitespace character is actually a newline, start a new paragraph.
                             X = 0;
                             AdvanceToNextLine(state, false);
                             AtStartOfLine = true;
                         }
                         else if (AtStartOfLine)
                         {
+                            // Otherwise, if we are at the beginning of the line, treat this space as the paragraph’s indentation.
                             var w = Measure(" ", state);
                             Render(" ", state, w);
                             X += w;
