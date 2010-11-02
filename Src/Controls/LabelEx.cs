@@ -16,6 +16,7 @@ namespace RT.Util.Controls
         private EggsNode _parsed;
         private char _mnemonic;
         private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
+        private bool _wordWrap = false;
 
         /// <summary>Constructor.</summary>
         public LabelEx()
@@ -44,7 +45,7 @@ namespace RT.Util.Controls
         [Browsable(true)]
         [RefreshProperties(RefreshProperties.All)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public override bool AutoSize
         {
             get { return base.AutoSize; }
@@ -52,6 +53,21 @@ namespace RT.Util.Controls
             {
                 base.AutoSize = value;
                 autosize();
+            }
+        }
+
+        /// <summary>Enable/disable wrapping long lines on word boundaries.</summary>
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(false)]
+        public virtual bool WordWrap
+        {
+            get { return _wordWrap; }
+            set
+            {
+                _cachedPreferredSizes.Clear();
+                _wordWrap = value;
+                autosize();
+                Invalidate();
             }
         }
 
@@ -102,18 +118,6 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Override; see base.</summary>
-        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
-        {
-            if (AutoSize)
-            {
-                var preferredSize = PreferredSize;
-                width = preferredSize.Width;
-                height = preferredSize.Height;
-            }
-            base.SetBoundsCore(x, y, width, height, specified);
-        }
-
-        /// <summary>Override; see base.</summary>
         public override Size GetPreferredSize(Size constrainingSize)
         {
             if (!_cachedPreferredSizes.ContainsKey(constrainingSize.Width))
@@ -150,8 +154,9 @@ namespace RT.Util.Controls
                 return spaceSizes[font.Style];
             };
 
+            int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
             int hangingIndent = 0;
-            EggsML.WordWrap<Font>(node, initialFont, Math.Max(1, constrainingWidth - glyphOverhang.Width), hangingIndent,
+            EggsML.WordWrap<Font>(node, initialFont, wrapWidth, hangingIndent,
                 (text, font) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
                 (text, font, width) =>
                 {

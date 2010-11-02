@@ -231,12 +231,7 @@ namespace RT.Util
                 eggWalkWordWrapRecursive(node, initialState, false);
 
                 if (WordPieces.Count > 0)
-                {
-                    if (!AtStartOfLine)
-                        Render(" ", initialState, Measure(" ", initialState));
-                    for (int i = 0; i < WordPieces.Count; i++)
-                        Render(WordPieces[i], WordPiecesState[i], WordPiecesWidths[i]);
-                }
+                    renderPieces(initialState);
             }
 
             private void eggWalkWordWrapRecursive(EggsNode node, TState state, bool curNowrap)
@@ -283,23 +278,15 @@ namespace RT.Util
                                 if (WordPieces.Count > 0)
                                 {
                                     // Render the part of the word that fits on the line and then move to the next line.
-                                    for (int j = 0; j < WordPieces.Count; j++)
-                                        Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
-                                    AdvanceToNextLine(state, true);
-                                    WordPieces.Clear();
-                                    WordPiecesState.Clear();
-                                    WordPiecesWidths.Clear();
-                                    WordPiecesWidthsSum = 0;
-                                    X = HangingIndent;
+                                    renderPieces(state);
+                                    advanceToNextLine(true, state);
                                 }
                             }
                             else if (!AtStartOfLine && X + Measure(" ", state) + WordPiecesWidthsSum + fragmentWidth > Width)
                             {
                                 // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
                                 // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
-                                X = HangingIndent;
-                                AdvanceToNextLine(state, true);
-                                AtStartOfLine = true;
+                                advanceToNextLine(true, state);
 
                                 // In case the word also doesn’t fit on a line all by itself, go back to top (now that ‘AtStartOfLine’ is true)
                                 // where it will check whether we need to break the word apart.
@@ -319,29 +306,14 @@ namespace RT.Util
                         // We encounter a whitespace character. All the word pieces fit on the current line, so render them.
                         if (WordPieces.Count > 0)
                         {
-                            // Add a space if we are not at the beginning of the line.
-                            if (!AtStartOfLine)
-                            {
-                                var w = Measure(" ", state);
-                                Render(" ", state, w);
-                                X += w;
-                            }
-                            for (int j = 0; j < WordPieces.Count; j++)
-                                Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
-                            X += WordPiecesWidthsSum;
+                            renderPieces(state);
                             AtStartOfLine = false;
                         }
-                        WordPieces.Clear();
-                        WordPiecesState.Clear();
-                        WordPiecesWidths.Clear();
-                        WordPiecesWidthsSum = 0;
 
                         if (txt[i] == '\n')
                         {
                             // If the whitespace character is actually a newline, start a new paragraph.
-                            X = 0;
-                            AdvanceToNextLine(state, false);
-                            AtStartOfLine = true;
+                            advanceToNextLine(false, state);
                         }
                         else if (AtStartOfLine)
                         {
@@ -352,6 +324,31 @@ namespace RT.Util
                         }
                     }
                 }
+            }
+
+            private void advanceToNextLine(bool isHanging, TState state)
+            {
+                AdvanceToNextLine(state, true);
+                AtStartOfLine = true;
+                X = isHanging ? HangingIndent : 0;
+            }
+
+            private void renderPieces(TState state)
+            {
+                // Add a space if we are not at the beginning of the line.
+                if (!AtStartOfLine)
+                {
+                    var w = Measure(" ", state);
+                    Render(" ", state, w);
+                    X += w;
+                }
+                for (int j = 0; j < WordPieces.Count; j++)
+                    Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
+                X += WordPiecesWidthsSum;
+                WordPieces.Clear();
+                WordPiecesState.Clear();
+                WordPiecesWidths.Clear();
+                WordPiecesWidthsSum = 0;
             }
         }
 
