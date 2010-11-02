@@ -239,8 +239,8 @@ namespace RT.Util.Consoles
         {
             var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
             EggsML.WordWrap<ConsoleColor>(node, ConsoleColor.Gray, wrapWidth, hangingIndent,
-                (text, color) => text.Length,
-                (text, color, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
+                (color, text) => text.Length,
+                (color, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
                 (color, isHanging) => { results.Add(isHanging ? new ConsoleColoredString(new string(' ', hangingIndent), color) : ConsoleColoredString.Empty); },
                 (color, tag) =>
                 {

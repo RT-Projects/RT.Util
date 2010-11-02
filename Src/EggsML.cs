@@ -186,18 +186,18 @@ namespace RT.Util
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="text">The string to render.</param>
         /// <param name="state">The state (font, color, etc.) the string is in.</param>
+        /// <param name="text">The string to render.</param>
         /// <param name="width">The measured width of the string.</param>
-        public delegate void EggRender<TState>(string text, TState state, int width);
+        public delegate void EggRender<TState>(TState state, string text, int width);
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which measures the width of a string.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="text">The text whose width to measure.</param>
         /// <param name="state">The state (font, color etc.) of the text.</param>
+        /// <param name="text">The text whose width to measure.</param>
         /// <returns>The width of the text in any arbitrary unit, as long as the “width” parameter in the call to
         /// <see cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
-        public delegate int EggMeasure<TState>(string text, TState state);
+        public delegate int EggMeasure<TState>(TState state, string text);
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
@@ -224,7 +224,7 @@ namespace RT.Util
             public EggRender<TState> Render;
             public EggsNextLine<TState> AdvanceToNextLine;
             public EggNextState<TState> NextState;
-            public int X, Width, HangingIndent;
+            public int X, WrapWidth, ActualWidth, HangingIndent;
 
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
@@ -260,11 +260,11 @@ namespace RT.Util
                             // We are looking at a word. (It doesn’t matter whether we’re at the beginning of the word or in the middle of one.)
                             retry1:
                             string fragment = txt.Substring(i, lengthOfWord);
-                            var fragmentWidth = Measure(fragment, state);
+                            var fragmentWidth = Measure(state, fragment);
                             retry2:
 
                             // If we are at the start of a line, and the word itself doesn’t fit on a line by itself, we need to break the word up.
-                            if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > Width)
+                            if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
                             {
                                 // We don’t know exactly where to break the word, so use binary search to discover where that is.
                                 if (lengthOfWord > 1)
@@ -282,7 +282,7 @@ namespace RT.Util
                                     advanceToNextLine(true, state);
                                 }
                             }
-                            else if (!AtStartOfLine && X + Measure(" ", state) + WordPiecesWidthsSum + fragmentWidth > Width)
+                            else if (!AtStartOfLine && X + Measure(state, " ") + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
                             {
                                 // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
                                 // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
@@ -318,9 +318,7 @@ namespace RT.Util
                         else if (AtStartOfLine)
                         {
                             // Otherwise, if we are at the beginning of the line, treat this space as the paragraph’s indentation.
-                            var w = Measure(" ", state);
-                            Render(" ", state, w);
-                            X += w;
+                            renderSpace(state);
                         }
                     }
                 }
@@ -333,18 +331,23 @@ namespace RT.Util
                 X = isHanging ? HangingIndent : 0;
             }
 
+            private void renderSpace(TState state)
+            {
+                var w = Measure(state, " ");
+                Render(state, " ", w);
+                X += w;
+                ActualWidth = Math.Max(ActualWidth, X);
+            }
+
             private void renderPieces(TState state)
             {
                 // Add a space if we are not at the beginning of the line.
                 if (!AtStartOfLine)
-                {
-                    var w = Measure(" ", state);
-                    Render(" ", state, w);
-                    X += w;
-                }
+                    renderSpace(state);
                 for (int j = 0; j < WordPieces.Count; j++)
-                    Render(WordPieces[j], WordPiecesState[j], WordPiecesWidths[j]);
+                    Render(WordPiecesState[j], WordPieces[j], WordPiecesWidths[j]);
                 X += WordPiecesWidthsSum;
+                ActualWidth = Math.Max(ActualWidth, X);
                 WordPieces.Clear();
                 WordPiecesState.Clear();
                 WordPiecesWidths.Clear();
@@ -356,19 +359,20 @@ namespace RT.Util
         /// <typeparam name="TState">The type of the text state that an EggsML can change, e.g. font or color.</typeparam>
         /// <param name="node">The root node of the EggsML tree to word-wrap.</param>
         /// <param name="initialState">The initial text state.</param>
-        /// <param name="width">The maximum width at which to word-wrap. This width can be measured in any unit,
+        /// <param name="wrapWidth">The maximum width at which to word-wrap. This width can be measured in any unit,
         /// as long as <paramref name="measure"/> uses the same unit.</param>
         /// <param name="hangingIndent">A hanging indent that is added to every line except the first of each paragraph.</param>
         /// <param name="measure">A delegate that measures the width of any piece of text.</param>
         /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
         /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
         /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
-        public static void WordWrap<TState>(EggsNode node, TState initialState, int width, int hangingIndent,
+        /// <returns>The maximum width of the text.</returns>
+        public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth, int hangingIndent,
             EggMeasure<TState> measure, EggRender<TState> render, EggsNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
-            if (width <= 0)
+            if (wrapWidth <= 0)
                 throw new ArgumentException("Wrap width must be greater than zero.");
-            new eggWalkData<TState>
+            var data = new eggWalkData<TState>
             {
                 AtStartOfLine = true,
                 WordPieces = new List<string>(),
@@ -380,9 +384,12 @@ namespace RT.Util
                 AdvanceToNextLine = advanceToNextLine,
                 NextState = nextState,
                 X = 0,
-                Width = width,
-                HangingIndent = hangingIndent
-            }.EggWalkWordWrap(node, initialState);
+                WrapWidth = wrapWidth,
+                ActualWidth = 0,
+                HangingIndent = hangingIndent,
+            };
+            data.EggWalkWordWrap(node, initialState);
+            return data.ActualWidth;
         }
     }
 

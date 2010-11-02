@@ -45,7 +45,7 @@ namespace RT.Util.Controls
         [Browsable(true)]
         [RefreshProperties(RefreshProperties.All)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        [DefaultValue(false)]
+        [DefaultValue(true)]
         public override bool AutoSize
         {
             get { return base.AutoSize; }
@@ -143,7 +143,6 @@ namespace RT.Util.Controls
 
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, int constrainingWidth)
         {
-            int x = 0, y = 0, maxX = 0;
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
 
             var spaceSizes = new Dictionary<FontStyle, Size>();
@@ -154,18 +153,18 @@ namespace RT.Util.Controls
                 return spaceSizes[font.Style];
             };
 
+            int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
             int hangingIndent = 0;
-            EggsML.WordWrap<Font>(node, initialFont, wrapWidth, hangingIndent,
-                (text, font) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
-                (text, font, width) =>
+            int actualWidth = EggsML.WordWrap<Font>(node, initialFont, wrapWidth, hangingIndent,
+                (font, text) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
+                (font, text, width) =>
                 {
                     if (doPaint && !string.IsNullOrWhiteSpace(text))
-                        TextRenderer.DrawText(g, text, font, new Point(x + glyphOverhang.Width / 2, y + glyphOverhang.Height / 2), foreColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                        TextRenderer.DrawText(g, text, font, new Point(x, y), foreColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     x += width;
-                    maxX = Math.Max(maxX, x);
                 },
-                (font, isHanging) => { x = isHanging ? hangingIndent : 0; y += spaceSize(font).Height; },
+                (font, isHanging) => { x = glyphOverhang.Width / 2 + (isHanging ? hangingIndent : 0); y += spaceSize(font).Height; },
                 (font, tag) =>
                 {
                     switch (tag)
@@ -180,7 +179,7 @@ namespace RT.Util.Controls
                     }
                     return font;
                 });
-            return new Size(maxX + glyphOverhang.Width, y + spaceSize(initialFont).Height + glyphOverhang.Height);
+            return new Size(actualWidth + glyphOverhang.Width, y + spaceSize(initialFont).Height + glyphOverhang.Height);
         }
 
         /// <summary>Override; see base.</summary>
