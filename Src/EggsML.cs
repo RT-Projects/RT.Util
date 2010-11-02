@@ -228,6 +228,9 @@ namespace RT.Util
 
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
+                if (node == null)
+                    throw new ArgumentNullException("node");
+
                 eggWalkWordWrapRecursive(node, initialState, false);
 
                 if (WordPieces.Count > 0)
@@ -322,6 +325,8 @@ namespace RT.Util
                         }
                     }
                 }
+                else
+                    throw new InvalidOperationException("An EggsNode is expected to be either EggsTag or EggsText, not {0}.".Fmt(node.GetType().FullName));
             }
 
             private void advanceToNextLine(bool isHanging, TState state)
@@ -370,6 +375,8 @@ namespace RT.Util
         public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth, int hangingIndent,
             EggMeasure<TState> measure, EggRender<TState> render, EggsNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
+            if (node == null)
+                throw new ArgumentNullException("node");
             if (wrapWidth <= 0)
                 throw new ArgumentException("Wrap width must be greater than zero.");
             var data = new eggWalkData<TState>

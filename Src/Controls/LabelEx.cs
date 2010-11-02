@@ -21,6 +21,7 @@ namespace RT.Util.Controls
         /// <summary>Constructor.</summary>
         public LabelEx()
         {
+            _parsed = EggsML.Parse("");
             DoubleBuffered = true;
             SetStyle(ControlStyles.Selectable | ControlStyles.FixedHeight, false);
             SetStyle(ControlStyles.ResizeRedraw, true);
