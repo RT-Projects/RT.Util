@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RT.Util.Collections;
+using System.Text.RegularExpressions;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -655,6 +655,15 @@ namespace RT.Util.ExtensionMethods
                         return false;
                 return true;
             }
+        }
+
+        /// <summary>Inserts spaces at the beginning of every line contained within the specified string.</summary>
+        /// <param name="str">String to add indentation to.</param>
+        /// <param name="by">Number of spaces to add.</param>
+        /// <returns>The indented string.</returns>
+        public static string Indent(this string str, int by)
+        {
+            return Regex.Replace(str, "^", new string(' ', by), RegexOptions.Multiline);
         }
     }
 }
