@@ -202,8 +202,8 @@ namespace RT.Util
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
         /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="isHanging">Specifies whether a word is wrapped (true) or a new paragraph begins (false).</param>
-        public delegate void EggsNextLine<TState>(TState state, bool isHanging);
+        /// <param name="indent">0 if a new paragraph begins, otherwise the indentation of the current paragraph plus the hanging indentation.</param>
+        public delegate void EggsNextLine<TState>(TState state, int indent);
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
         /// changes for a given EggsML tag character.</summary>
@@ -224,7 +224,7 @@ namespace RT.Util
             public EggRender<TState> Render;
             public EggsNextLine<TState> AdvanceToNextLine;
             public EggNextState<TState> NextState;
-            public int X, WrapWidth, ActualWidth, HangingIndent;
+            public int X, WrapWidth, ActualWidth, HangingIndent, CurParagraphIndent;
 
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
@@ -282,14 +282,14 @@ namespace RT.Util
                                 {
                                     // Render the part of the word that fits on the line and then move to the next line.
                                     renderPieces(state);
-                                    advanceToNextLine(true, state);
+                                    advanceToNextLine(state, true);
                                 }
                             }
                             else if (!AtStartOfLine && X + Measure(state, " ") + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
                             {
                                 // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
                                 // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
-                                advanceToNextLine(true, state);
+                                advanceToNextLine(state, true);
 
                                 // In case the word also doesn’t fit on a line all by itself, go back to top (now that ‘AtStartOfLine’ is true)
                                 // where it will check whether we need to break the word apart.
@@ -316,12 +316,13 @@ namespace RT.Util
                         if (txt[i] == '\n')
                         {
                             // If the whitespace character is actually a newline, start a new paragraph.
-                            advanceToNextLine(false, state);
+                            advanceToNextLine(state, false);
                         }
                         else if (AtStartOfLine)
                         {
                             // Otherwise, if we are at the beginning of the line, treat this space as the paragraph’s indentation.
                             renderSpace(state);
+                            CurParagraphIndent = X;
                         }
                     }
                 }
@@ -329,11 +330,13 @@ namespace RT.Util
                     throw new InvalidOperationException("An EggsNode is expected to be either EggsTag or EggsText, not {0}.".Fmt(node.GetType().FullName));
             }
 
-            private void advanceToNextLine(bool isHanging, TState state)
+            private void advanceToNextLine(TState state, bool isHanging)
             {
-                AdvanceToNextLine(state, true);
+                if (!isHanging)
+                    CurParagraphIndent = 0;
+                X = isHanging ? CurParagraphIndent + HangingIndent : 0;
+                AdvanceToNextLine(state, X);
                 AtStartOfLine = true;
-                X = isHanging ? HangingIndent : 0;
             }
 
             private void renderSpace(TState state)

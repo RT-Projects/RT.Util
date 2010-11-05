@@ -76,6 +76,7 @@ namespace RT.Util.Controls
         protected override void OnFontChanged(EventArgs e)
         {
             _cachedPreferredSizes.Clear();
+            _cachedRendering = null;
             base.OnFontChanged(e);
             autosize();
             Invalidate();
@@ -85,6 +86,7 @@ namespace RT.Util.Controls
         protected override void OnTextChanged(EventArgs e)
         {
             _cachedPreferredSizes.Clear();
+            _cachedRendering = null;
             base.OnTextChanged(e);
             _parsed = EggsML.Parse(base.Text);
             _mnemonic = char.ToUpperInvariant(parseMnemonic(_parsed));
@@ -123,7 +125,7 @@ namespace RT.Util.Controls
         {
             if (!_cachedPreferredSizes.ContainsKey(constrainingSize.Width))
                 using (var g = CreateGraphics())
-                    _cachedPreferredSizes[constrainingSize.Width] = doPaintOrMeasure(g, _parsed, Font, ForeColor, false, constrainingSize.Width == 0 ? int.MaxValue : constrainingSize.Width);
+                    _cachedPreferredSizes[constrainingSize.Width] = doPaintOrMeasure(g, _parsed, Font, ForeColor, constrainingSize.Width == 0 ? int.MaxValue : constrainingSize.Width);
             return _cachedPreferredSizes[constrainingSize.Width];
         }
 
@@ -133,16 +135,28 @@ namespace RT.Util.Controls
             PaintLabel(e.Graphics, Enabled ? ForeColor : SystemColors.GrayText, Font);
         }
 
+        private int _cachedRenderingWidth;
+        private Color _cachedRenderingColor;
+        private List<Tuple<string, Font, Point, Color>> _cachedRendering;
+
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
-        protected void PaintLabel(Graphics g, Color color, Font initialFont)
+        protected void PaintLabel(Graphics g, Color initialColor, Font initialFont)
         {
-            doPaintOrMeasure(g, _parsed, initialFont, color, true, ClientSize.Width);
+            if (_cachedRendering == null || _cachedRenderingWidth != ClientSize.Width || _cachedRenderingColor != initialColor)
+            {
+                _cachedRendering = new List<Tuple<string, Font, Point, Color>>();
+                _cachedRenderingWidth = ClientSize.Width;
+                _cachedRenderingColor = initialColor;
+                doPaintOrMeasure(g, _parsed, initialFont, initialColor, _cachedRenderingWidth, _cachedRendering);
+            }
+            foreach (var item in _cachedRendering)
+                TextRenderer.DrawText(g, item.Item1, item.Item2, item.Item3, item.Item4, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
 
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, bool doPaint, int constrainingWidth)
+        private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color foreColor, int constrainingWidth, List<Tuple<string, Font, Point, Color>> renderings = null)
         {
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
 
@@ -161,11 +175,11 @@ namespace RT.Util.Controls
                 (font, text) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
                 (font, text, width) =>
                 {
-                    if (doPaint && !string.IsNullOrWhiteSpace(text))
-                        TextRenderer.DrawText(g, text, font, new Point(x, y), foreColor, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                    if (renderings != null && !string.IsNullOrWhiteSpace(text))
+                        renderings.Add(Tuple.Create(text, font, new Point(x, y), foreColor));
                     x += width;
                 },
-                (font, isHanging) => { x = glyphOverhang.Width / 2 + (isHanging ? hangingIndent : 0); y += spaceSize(font).Height; },
+                (font, indent) => { x = indent + glyphOverhang.Width / 2; y += spaceSize(font).Height; },
                 (font, tag) =>
                 {
                     switch (tag)
