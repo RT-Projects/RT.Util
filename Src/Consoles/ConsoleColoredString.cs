@@ -238,26 +238,31 @@ namespace RT.Util.Consoles
         public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth, int hangingIndent = 0)
         {
             var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
-            EggsML.WordWrap<ConsoleColor>(node, ConsoleColor.Gray, wrapWidth, hangingIndent,
+            EggsML.WordWrap(node, ConsoleColor.Gray, wrapWidth,
                 (color, text) => text.Length,
                 (color, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
-                (color, indent) => { results.Add(new ConsoleColoredString(new string(' ', indent), color)); },
+                (color, newParagraph, indent) =>
+                {
+                    var s = newParagraph ? 0 : indent + hangingIndent;
+                    results.Add(new ConsoleColoredString(new string(' ', s), color));
+                    return s;
+                },
                 (color, tag) =>
                 {
                     bool curLight = color >= ConsoleColor.DarkGray;
                     switch (tag)
                     {
-                        case '~': return curLight ? ConsoleColor.DarkGray : ConsoleColor.Black;
-                        case '/': return curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue;
-                        case '$': return curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen;
-                        case '&': return curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan;
-                        case '_': return curLight ? ConsoleColor.Red : ConsoleColor.DarkRed;
-                        case '%': return curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta;
-                        case '^': return curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow;
-                        case '=': return ConsoleColor.DarkGray;
-                        case '*': return curLight ? color : (ConsoleColor) ((int) color + 8);
+                        case '~': color = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                        case '/': color = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                        case '$': color = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                        case '&': color = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                        case '_': color = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                        case '%': color = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                        case '^': color = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                        case '=': color = ConsoleColor.DarkGray; break;
+                        case '*': color = curLight ? color : (ConsoleColor) ((int) color + 8); break;
                     }
-                    return color;
+                    return Tuple.Create(color, 0);
                 });
             if (results.Last().Length == 0)
                 results.RemoveAt(results.Count - 1);

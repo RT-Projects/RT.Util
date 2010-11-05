@@ -202,16 +202,18 @@ namespace RT.Util
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
         /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="indent">0 if a new paragraph begins, otherwise the indentation of the current paragraph plus the hanging indentation.</param>
-        public delegate void EggsNextLine<TState>(TState state, int indent);
+        /// <param name="newParagraph">‘true’ if a new paragraph begins, ‘false’ if a word is being wrapped within a paragraph.</param>
+        /// <param name="indent">If <paramref name="newParagraph"/> is false, the indentation of the current paragraph as measured only by its leading spaces; otherwise, zero.</param>
+        /// <returns>The indentation for the next line. Use this to implement, for example, hanging indents.</returns>
+        public delegate int EggNextLine<TState>(TState state, bool newParagraph, int indent);
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
         /// changes for a given EggsML tag character.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
         /// <param name="oldState">The previous state (for the parent tag).</param>
         /// <param name="eggTag">The EggsML tag character.</param>
-        /// <returns>The next state. Return the old state for all tags that should not have a meaning.</returns>
-        public delegate TState EggNextState<TState>(TState oldState, char eggTag);
+        /// <returns>The next state (return the old state for all tags that should not have a meaning) and an integer indicating the amount by which opening this tag has advanced the text position.</returns>
+        public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag);
 
         private sealed class eggWalkData<TState>
         {
@@ -222,9 +224,9 @@ namespace RT.Util
             public int WordPiecesWidthsSum;
             public EggMeasure<TState> Measure;
             public EggRender<TState> Render;
-            public EggsNextLine<TState> AdvanceToNextLine;
+            public EggNextLine<TState> AdvanceToNextLine;
             public EggNextState<TState> NextState;
-            public int X, WrapWidth, ActualWidth, HangingIndent, CurParagraphIndent;
+            public int X, WrapWidth, ActualWidth, CurParagraphIndent;
 
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
@@ -242,9 +244,15 @@ namespace RT.Util
                 var tag = node as EggsTag;
                 if (tag != null)
                 {
-                    var newState = tag.Tag == null ? state : NextState(state, tag.Tag.Value);
-                    if (tag.Tag == '+')
-                        curNowrap = true;
+                    var newState = state;
+                    if (tag.Tag != null)
+                    {
+                        var tup = NextState(state, tag.Tag.Value);
+                        newState = tup.Item1;
+                        X += tup.Item2;
+                        if (tag.Tag == '+')
+                            curNowrap = true;
+                    }
                     foreach (var child in tag.Children)
                         eggWalkWordWrapRecursive(child, newState, curNowrap);
                 }
@@ -282,14 +290,14 @@ namespace RT.Util
                                 {
                                     // Render the part of the word that fits on the line and then move to the next line.
                                     renderPieces(state);
-                                    advanceToNextLine(state, true);
+                                    advanceToNextLine(state, false);
                                 }
                             }
                             else if (!AtStartOfLine && X + Measure(state, " ") + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
                             {
                                 // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
                                 // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
-                                advanceToNextLine(state, true);
+                                advanceToNextLine(state, false);
 
                                 // In case the word also doesn’t fit on a line all by itself, go back to top (now that ‘AtStartOfLine’ is true)
                                 // where it will check whether we need to break the word apart.
@@ -316,13 +324,12 @@ namespace RT.Util
                         if (txt[i] == '\n')
                         {
                             // If the whitespace character is actually a newline, start a new paragraph.
-                            advanceToNextLine(state, false);
+                            advanceToNextLine(state, true);
                         }
                         else if (AtStartOfLine)
                         {
                             // Otherwise, if we are at the beginning of the line, treat this space as the paragraph’s indentation.
-                            renderSpace(state);
-                            CurParagraphIndent = X;
+                            CurParagraphIndent += renderSpace(state);
                         }
                     }
                 }
@@ -330,21 +337,21 @@ namespace RT.Util
                     throw new InvalidOperationException("An EggsNode is expected to be either EggsTag or EggsText, not {0}.".Fmt(node.GetType().FullName));
             }
 
-            private void advanceToNextLine(TState state, bool isHanging)
+            private void advanceToNextLine(TState state, bool newParagraph)
             {
-                if (!isHanging)
+                if (newParagraph)
                     CurParagraphIndent = 0;
-                X = isHanging ? CurParagraphIndent + HangingIndent : 0;
-                AdvanceToNextLine(state, X);
+                X = AdvanceToNextLine(state, newParagraph, CurParagraphIndent);
                 AtStartOfLine = true;
             }
 
-            private void renderSpace(TState state)
+            private int renderSpace(TState state)
             {
                 var w = Measure(state, " ");
                 Render(state, " ", w);
                 X += w;
                 ActualWidth = Math.Max(ActualWidth, X);
+                return w;
             }
 
             private void renderPieces(TState state)
@@ -369,14 +376,13 @@ namespace RT.Util
         /// <param name="initialState">The initial text state.</param>
         /// <param name="wrapWidth">The maximum width at which to word-wrap. This width can be measured in any unit,
         /// as long as <paramref name="measure"/> uses the same unit.</param>
-        /// <param name="hangingIndent">A hanging indent that is added to every line except the first of each paragraph.</param>
         /// <param name="measure">A delegate that measures the width of any piece of text.</param>
         /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
         /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
         /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
         /// <returns>The maximum width of the text.</returns>
-        public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth, int hangingIndent,
-            EggMeasure<TState> measure, EggRender<TState> render, EggsNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
+        public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth,
+            EggMeasure<TState> measure, EggRender<TState> render, EggNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
             if (node == null)
                 throw new ArgumentNullException("node");
@@ -395,8 +401,7 @@ namespace RT.Util
                 NextState = nextState,
                 X = 0,
                 WrapWidth = wrapWidth,
-                ActualWidth = 0,
-                HangingIndent = hangingIndent,
+                ActualWidth = 0
             };
             data.EggWalkWordWrap(node, initialState);
             return data.ActualWidth;

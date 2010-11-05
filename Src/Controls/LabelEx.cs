@@ -30,7 +30,7 @@ namespace RT.Util.Controls
             AutoSize = true;
         }
 
-        /// <summary>Text displayed in the label. EggsML supported: * to bold, / to italicize, _ to underline, + for nowrap.</summary>
+        /// <summary>Text displayed in the label. EggsML supported: * to bold, / to italicize, _ to underline, + for nowrap, [...] for bulleted list items.</summary>
         [EditorAttribute("System.ComponentModel.Design.MultilineStringEditor, System.Design", "System.Drawing.Design.UITypeEditor")]
         [EditorBrowsable(EditorBrowsableState.Always)]
         [Browsable(true)]
@@ -168,33 +168,65 @@ namespace RT.Util.Controls
                 return spaceSizes[font.Style];
             };
 
+            Dictionary<FontStyle, int> bulletSizes = null;
+            Func<Font, int> bulletSize = font =>
+            {
+                if (bulletSizes == null)
+                    bulletSizes = new Dictionary<FontStyle, int>();
+                if (!bulletSizes.ContainsKey(font.Style))
+                    bulletSizes[font.Style] = TextRenderer.MeasureText(g, " • ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                return bulletSizes[font.Style];
+            };
+
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
-            int hangingIndent = 0;
-            int actualWidth = EggsML.WordWrap<Font>(node, initialFont, wrapWidth, hangingIndent,
-                (font, text) => (text == " " ? spaceSize(font) : TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
-                (font, text, width) =>
+            int actualWidth = EggsML.WordWrap(node, new { Font = initialFont, BulletIndent = 0 }, wrapWidth,
+                (state, text) => (text == " " ? spaceSize(state.Font) : TextRenderer.MeasureText(g, text, state.Font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
+                (state, text, width) =>
                 {
                     if (renderings != null && !string.IsNullOrWhiteSpace(text))
-                        renderings.Add(Tuple.Create(text, font, new Point(x, y), foreColor));
+                        renderings.Add(Tuple.Create(text, state.Font, new Point(x, y), foreColor));
                     x += width;
                 },
-                (font, indent) => { x = indent + glyphOverhang.Width / 2; y += spaceSize(font).Height; },
-                (font, tag) =>
+                (state, newParagraph, indent) =>
                 {
+                    y += spaceSize(state.Font).Height;
+                    var newIndent = state.BulletIndent + indent;
+                    x = newIndent + glyphOverhang.Width / 2;
+                    return newIndent;
+                },
+                (state, tag) =>
+                {
+                    var font = state.Font;
+                    var bulletIndent = state.BulletIndent;
+                    int advance = 0;
                     switch (tag)
                     {
-                        case '/': return new Font(font, font.Style | FontStyle.Italic);
-                        case '*': return new Font(font, font.Style | FontStyle.Bold);
-                        case '_': return new Font(font, font.Style | FontStyle.Underline);
+                        case '/': font = new Font(font, font.Style | FontStyle.Italic); break;
+                        case '*': font = new Font(font, font.Style | FontStyle.Bold); break;
+                        case '_': font = new Font(font, font.Style | FontStyle.Underline); break;
                         case '&':
                             if (ShowKeyboardCues)
-                                return new Font(font, font.Style | FontStyle.Underline);
-                            return font;
+                                font = new Font(font, font.Style | FontStyle.Underline);
+                            break;
+                        case '[':
+                            advance = bulletSize(font);
+                            if (renderings != null)
+                                renderings.Add(Tuple.Create(" • ", font, new Point(x, y), foreColor));
+                            x += advance;
+                            bulletIndent = state.BulletIndent + advance;
+                            break;
                     }
-                    return font;
+                    return Tuple.Create(new { Font = font, BulletIndent = bulletIndent }, advance);
                 });
             return new Size(actualWidth + glyphOverhang.Width, y + spaceSize(initialFont).Height + glyphOverhang.Height);
+        }
+
+        /// <summary>Override; see base.</summary>
+        protected override void OnChangeUICues(UICuesEventArgs e)
+        {
+            if (e.ChangeKeyboard && _mnemonic != '\0')
+                _cachedRendering = null;
         }
 
         /// <summary>Override; see base.</summary>
