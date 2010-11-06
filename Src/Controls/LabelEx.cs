@@ -17,6 +17,7 @@ namespace RT.Util.Controls
         private char _mnemonic;
         private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
         private bool _wordWrap = false;
+        private double _paragraphSpacing = 0d;
 
         /// <summary>Constructor.</summary>
         public LabelEx()
@@ -66,7 +67,24 @@ namespace RT.Util.Controls
             set
             {
                 _cachedPreferredSizes.Clear();
+                _cachedRendering = null;
                 _wordWrap = value;
+                autosize();
+                Invalidate();
+            }
+        }
+
+        /// <summary>Specifies the line spacing between paragraph as a multiple of the line height.</summary>
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(0d)]
+        public virtual double ParagraphSpacing
+        {
+            get { return _paragraphSpacing; }
+            set
+            {
+                _cachedPreferredSizes.Clear();
+                _cachedRendering = null;
+                _paragraphSpacing = value;
                 autosize();
                 Invalidate();
             }
@@ -190,7 +208,10 @@ namespace RT.Util.Controls
                 },
                 (state, newParagraph, indent) =>
                 {
-                    y += spaceSize(state.Font).Height;
+                    var sh = spaceSize(state.Font).Height;
+                    y += sh;
+                    if (newParagraph && _paragraphSpacing > 0)
+                        y += (int) (_paragraphSpacing * sh);
                     var newIndent = state.BulletIndent + indent;
                     x = newIndent + glyphOverhang.Width / 2;
                     return newIndent;
