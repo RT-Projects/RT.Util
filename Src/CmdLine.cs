@@ -997,7 +997,6 @@ namespace RT.Util.CommandLine
 
     /// <summary>
     /// Use this to specify that a command-line parameter is positional, i.e. is not invoked by an option that starts with "-".
-    /// This automatically implies that the parameter is mandatory, so <see cref="IsMandatoryAttribute"/> is not necessary.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class IsPositionalAttribute : Attribute
