@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,7 +30,8 @@ namespace RT.Util.CommandLine
     ///                 <item><description>Every value of such an enum must have a <see cref="CommandNameAttribute"/> if
     ///                                                 the field is positional, or an <see cref="OptionAttribute"/> if not.</description></item>
     ///                 <item><description>If the field is optional, one enum value may have an <see cref="IsDefaultAttribute"/> instead.
-    ///                                                 In such a case, ensure that the field is initialised to the same enum value via a field initialiser.</item>
+    ///                                                 In such a case, ensure that the field is initialised to the same enum value via a field
+    ///                                                 initialiser.</description></item>
     ///             </list>
     ///         </description></item>
     ///         <item><description>An abstract class with the <see cref="CommandGroupAttribute"/>. The field must be the last field in
