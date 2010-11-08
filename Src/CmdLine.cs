@@ -339,7 +339,7 @@ namespace RT.Util.CommandLine
                 else
                 {
                     if (positionals.Count == 0)
-                        throw new UnexpectedParameterException(args.Subarray(i), getHelpGenerator(type));
+                        throw new UnexpectedArgumentException(args.Subarray(i), getHelpGenerator(type));
                     positionals[0].ProcessParameter();
                 }
             }
@@ -1049,11 +1049,11 @@ namespace RT.Util.CommandLine
         public UndocumentedAttribute() { }
     }
 
-    /// <summary>Represents any error encountered while parsing a command line.</summary>
+    /// <summary>Represents any error encountered while parsing a command line. This class is abstract.</summary>
     [Serializable]
     public abstract class CommandLineParseException : TranslatableException<Translation>
     {
-        /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null as the parameter.</summary>
+        /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null for the Translation parameter.</summary>
         internal Func<Translation, int, ConsoleColoredString> GenerateHelpFunc { get; private set; }
         /// <summary>Generates the help screen to be output to the user on the console.</summary>
         /// <param name="tr">The translation class containing the translated text, or null for English.</param>
@@ -1094,7 +1094,8 @@ namespace RT.Util.CommandLine
 
         /// <summary>
         /// Prints usage information, followed by an error message describing to the user what it was that the parser didn't
-        /// understand. When the exception was caused by one of a list of common help switches, no error message is printed.
+        /// understand. When the exception was caused by a help switch (see <see cref="WasCausedByHelpRequest"/>),
+        /// no error message is printed.
         /// </summary>
         /// <param name="tr">Contains translations for the messages used by the command-line parser. Set this to null
         /// only if your application is definitely monolingual (unlocalisable).</param>
@@ -1113,16 +1114,19 @@ namespace RT.Util.CommandLine
         }
 
         /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
+        /// <remarks>Currently the following switches are recognised as help switches:
+        /// <c>-?</c>, <c>/?</c>, <c>--?</c>, <c>-h</c>, <c>/h</c>, <c>--help</c>, <c>help</c>
+        /// </remarks>
         public bool WasCausedByHelpRequest()
         {
-            var helps = new[] { "-?", "/?", "--?", "-h", "--help", "help" };
+            var helps = new[] { "-?", "/?", "--?", "-h", "/h", "--help", "help" };
             return
                 (this is UnrecognizedCommandOrOptionException && helps.Contains(((UnrecognizedCommandOrOptionException) this).CommandOrOptionName))
-                || (this is UnexpectedParameterException && helps.Contains(((UnexpectedParameterException) this).UnexpectedParameters.FirstOrDefault()));
+                || (this is UnexpectedArgumentException && helps.Contains(((UnexpectedArgumentException) this).UnexpectedParameters.FirstOrDefault()));
         }
     }
 
-    /// <summary>Specifies that the parameters specified by the user on the command-line do not pass the custom validation checks.</summary>
+    /// <summary>Specifies that the arguments specified by the user on the command-line do not pass the custom validation checks.</summary>
     [Serializable]
     public sealed class CommandLineValidationException : CommandLineParseException
     {
@@ -1130,7 +1134,8 @@ namespace RT.Util.CommandLine
         public CommandLineValidationException(string message, Func<Translation, int, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
     }
 
-    /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
+    /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/>
+    /// or <see cref="CommandNameAttribute"/> attribute with a matching option or command name).</summary>
     [Serializable]
     public sealed class UnrecognizedCommandOrOptionException : CommandLineParseException
     {
@@ -1165,11 +1170,11 @@ namespace RT.Util.CommandLine
         }
     }
 
-    /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected a parameter to an option.</summary>
+    /// <summary>Specifies that the command-line parser encountered the end of the command line when it expected an argument to an option.</summary>
     [Serializable]
     public sealed class IncompleteOptionException : CommandLineParseException
     {
-        /// <summary>The name of the option that was missing a parameter.</summary>
+        /// <summary>The name of the option that was missing an argument.</summary>
         public string OptionName { get; private set; }
         /// <summary>Constructor.</summary>
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
@@ -1181,27 +1186,27 @@ namespace RT.Util.CommandLine
         }
     }
 
-    /// <summary>Specifies that the command-line parser encountered additional command-line parameters when it expected the end of the command line.</summary>
+    /// <summary>Specifies that the command-line parser encountered additional command-line arguments when it expected the end of the command line.</summary>
     [Serializable]
-    public sealed class UnexpectedParameterException : CommandLineParseException
+    public sealed class UnexpectedArgumentException : CommandLineParseException
     {
-        /// <summary>Contains the first unexpected parameter and all of the subsequent arguments.</summary>
+        /// <summary>Contains the first unexpected argument and all of the subsequent arguments.</summary>
         public string[] UnexpectedParameters { get; private set; }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedParams, helpGenerator, null) { }
+        public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedArgs, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public UnexpectedParameterException(string[] unexpectedParams, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnexpectedParameter.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(unexpectedParams.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
+        public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.UnexpectedParameter.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
         {
-            UnexpectedParameters = unexpectedParams;
+            UnexpectedParameters = unexpectedArgs;
         }
     }
 
-    /// <summary>Specifies that a parameter that expected an integer was passed a string by the user that doesn't parse as an integer.</summary>
+    /// <summary>Specifies that a parameter that expected a numerical value was passed a string by the user that doesn’t parse as a number.</summary>
     [Serializable]
     public sealed class InvalidNumericParameterException : CommandLineParseException
     {
-        /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
+        /// <summary>Contains the name of the field pertaining to the parameter that was passed an invalid value.</summary>
         public string FieldName { get; private set; }
         /// <summary>Constructor.</summary>
         public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
