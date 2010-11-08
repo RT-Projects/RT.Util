@@ -17,18 +17,20 @@ namespace RT.Util.CommandLine
     /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
     /// <item><description>Each field in the class must be of one of the following types:
     ///     <list type="bullet">
-    ///         <item><description><c>string</c> or <c>string[]</c>. The field can be positional or optional. If it is optional, 
-    ///                                         it must have an <see cref="OptionAttribute"/>. If it is of type <c>string[]</c> and positional,
-    ///                                         it must be the last field in the class.</description></item>
+    ///         <item><description><c>string</c>, <c>string[]</c>, any integer type, <c>float</c>, <c>double</c>, or any
+    ///                                         nullable version of these. The field can be positional or not. If it is optional (not mandatory), it
+    ///                                         must have an <see cref="OptionAttribute"/>. If it is of type <c>string[]</c> and positional, it
+    ///                                         must be the last field in the class.</description></item>
     ///         <item><description><c>bool</c>. The field must have an <see cref="OptionAttribute"/> and cannot be
-    ///                                         positional.</description></item>
+    ///                                         positional or mandatory.</description></item>
     ///         <item><description>Any enum type.
     ///             <list type="bullet">
-    ///                 <item><description>The field can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not.
-    ///                                                 If it is neither positional nor mandatory (see below), it must have a 
-    ///                                                 <see cref="DefaultValueAttribute"/>.</description></item>
-    ///                 <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is
-    ///                                                 optional, or a <see cref="CommandNameAttribute"/> if it is positional.</description></item>
+    ///                 <item><description>The field can be positional (marked with the <see cref="IsPositionalAttribute"/>) or
+    ///                                                 not, and it can be mandatory or not.</description></item>
+    ///                 <item><description>Every value of such an enum must have a <see cref="CommandNameAttribute"/> if
+    ///                                                 the field is positional, or an <see cref="OptionAttribute"/> if not.</description></item>
+    ///                 <item><description>If the field is optional, one enum value may have an <see cref="IsDefaultAttribute"/> instead.
+    ///                                                 In such a case, ensure that the field is initialised to the same enum value via a field initialiser.</item>
     ///             </list>
     ///         </description></item>
     ///         <item><description>An abstract class with the <see cref="CommandGroupAttribute"/>. The field must be the last field in
@@ -39,8 +41,9 @@ namespace RT.Util.CommandLine
     /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required,
     ///                                 several such attributes are allowed to specify several alternative names for the same option or command
     ///                                 (e.g. short and long names).</description></item>
-    /// <item><description>Any field can be made mandatory by using the <see cref="IsMandatoryAttribute"/>. A positional field
-    ///                                 can only be made mandatory if all the positional fields preceding it are also mandatory.</description></item>
+    /// <item><description>Any field (other than <c>bool</c> fields) can be made mandatory by using the
+    ///                                 <see cref="IsMandatoryAttribute"/>. A positional field can only be made mandatory if all the positional
+    ///                                 fields preceding it are also mandatory.</description></item>
     /// <item><description><para>Every field must have documentation or be explicitly marked with
     ///                                 <see cref="UndocumentedAttribute"/>, except for fields of an enum type, in which case the values in
     ///                                 the enum type must have documentation or <see cref="UndocumentedAttribute"/>.</para>
@@ -102,8 +105,6 @@ namespace RT.Util.CommandLine
                 var field = fieldForeach; // This is necessary for the lambda expressions to work
                 var positional = field.IsDefined<IsPositionalAttribute>();
                 var mandatory = field.IsDefined<IsMandatoryAttribute>();
-                var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
-                var defaultValue = defaultAttr == null ? null : defaultAttr.DefaultValue;
 
                 if (positional && mandatory && haveSeenOptionalPositional)
                     throw new InternalErrorException("Cannot have positional mandatory parameter after a positional optional one.");
@@ -144,7 +145,7 @@ namespace RT.Util.CommandLine
                 // ### ENUM fields, not positional
                 else if (field.FieldType.IsEnum)
                 {
-                    foreach (var eForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
+                    foreach (var eForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
                     {
                         var e = eForeach;
                         foreach (var oForeach in e.GetOrderedOptionAttributeNames())
@@ -155,7 +156,7 @@ namespace RT.Util.CommandLine
                                 field.SetValue(ret, e.GetValue(null));
                                 i++;
                                 missingMandatories.Remove(field);
-                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
+                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
                                     foreach (var o2 in e2.GetOrderedOptionAttributeNames())
                                         options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type)); };
                                 options[o] = () => { i++; };
@@ -406,11 +407,8 @@ namespace RT.Util.CommandLine
                     IEnumerable<string> optionsRaw;
                     if (f.Field.FieldType.IsEnum)
                     {
-                        var defAttr = f.Field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
-                        if (defAttr == null)
-                            continue;
                         optionsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
-                            .Where(fld => !fld.GetValue(null).Equals(defAttr.DefaultValue) && !fld.IsDefined<UndocumentedAttribute>())
+                            .Where(fld => !fld.IsDefined<IsDefaultAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
                             .SelectMany(fi => fi.GetOrderedOptionAttributeNames());
                     }
                     else
@@ -544,7 +542,7 @@ namespace RT.Util.CommandLine
             // ### ENUM fields, not positional
             else if (field.FieldType.IsEnum)
             {
-                foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(field.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
+                foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
                 {
                     table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                     table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
@@ -682,23 +680,28 @@ namespace RT.Util.CommandLine
                 // ### ENUM fields
                 if (field.FieldType.IsEnum)
                 {
-                    var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
                     var commandsTaken = new Dictionary<string, FieldInfo>();
-
-                    // check that it is either positional OR has a DefaultAttribute, but not both
-                    if (positional && defaultAttr != null)
-                        rep.Error(@"{0}.{1}: Fields of an enum type cannot both be positional and have a default value.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
-                    if (!positional && defaultAttr == null)
-                        rep.Error(@"{0}.{1}: Fields of an enum type must be either positional or have a default value.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     // check that it doesn't have an [Option] or [CommandName] attribute, because the enum values are supposed to have that instead
                     if (field.GetCustomAttributes<OptionAttribute>().Any() || field.GetCustomAttributes<CommandNameAttribute>().Any())
                         rep.Error(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
+                    bool haveDefault = false;
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
-                        if (!positional && enumField.GetValue(null).Equals(defaultAttr.DefaultValue))
+                        if (enumField.IsDefined<IsDefaultAttribute>())
+                        {
+                            if (mandatory)
+                                rep.Error("{0}.{1} (used by {2}.{3}): The [IsDefault] attribute cannot be used if the field is marked mandatory.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            if (haveDefault)
+                                rep.Error("{0}.{1} (used by {2}.{3}): There is more than one [IsDefault] attribute in this enum type. Only one such attribute is allowed.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            else if (positional && enumField.IsDefined<CommandNameAttribute>())
+                                rep.Error("{0}.{1} (used by {2}.{3}): Cannot have [IsDefault] and [CommandName] attribute on the same enum value.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            else if (!positional && enumField.IsDefined<OptionAttribute>())
+                                rep.Error("{0}.{1} (used by {2}.{3}): Cannot have [IsDefault] and [Option] attribute on the same enum value.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            haveDefault = true;
                             continue;
+                        }
 
                         // check that the enum values all have documentation
                         checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods);
@@ -708,15 +711,15 @@ namespace RT.Util.CommandLine
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
                             if (!cmdNames.Any())
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value does not have a [CommandName] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [CommandName] attribute or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
                             checkCommandNamesUnique(rep, cmdNames, commandsTaken, commandLineType, field, enumField);
                         }
                         else
                         {
-                            // check that the non-default enum values' Options are present and do not clash
+                            // check that the non-default enum values’ Options are present and do not clash
                             var options = enumField.GetOrderedOptionAttributeNames();
                             if (!options.Any())
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
                             checkOptionsUnique(rep, options, optionTaken, commandLineType, field, enumField);
                         }
                     }
@@ -724,8 +727,8 @@ namespace RT.Util.CommandLine
                 // ### BOOL fields
                 else if (field.FieldType == typeof(bool))
                 {
-                    if (positional)
-                        rep.Error(@"{0}.{1}: Fields of type bool cannot be positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    if (positional || mandatory)
+                        rep.Error(@"{0}.{1}: Fields of type bool cannot be positional or mandatory.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     var options = field.GetOrderedOptionAttributeNames();
                     if (!options.Any())
@@ -1005,15 +1008,13 @@ namespace RT.Util.CommandLine
         public IsPositionalAttribute() { }
     }
 
-    /// <summary>Use this on a command-line option of an enum type to specify the default value in case the option is not specified.</summary>
+    /// <summary>Use this on an enum value to specify that it is the default value in case the option is not specified.
+    /// (Make sure that the relevant field is also initialised to the same enum value using a field initialiser.)</summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
-    public sealed class DefaultValueAttribute : Attribute
+    public sealed class IsDefaultAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
-        /// <param name="defaultValue">The default value to be assigned to the field in case the command-line option is not specified.</param>
-        public DefaultValueAttribute(object defaultValue) { DefaultValue = defaultValue; }
-        /// <summary>The default value to be assigned to the field in case the command-line option is not specified.</summary>
-        public object DefaultValue { get; private set; }
+        public IsDefaultAttribute() { }
     }
 
     /// <summary>
