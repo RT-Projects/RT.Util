@@ -15,23 +15,44 @@ namespace RT.Util.CommandLine
     /// <remarks><para>The following conditions must be met by the class wishing to receive the options and parameters:</para>
     /// <list type="bullet">
     /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
-    /// <item><description>Each field in the class must be of type string, string[], bool, an enum type, or a class with the <see cref="CommandGroupAttribute"/>.</description></item>
-    /// <item><description>A field of an enum type can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not. If it is neither positional nor mandatory (see below), it must have a <see cref="DefaultValueAttribute"/>.</description></item>
-    /// <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is optional, or a <see cref="CommandNameAttribute"/> if it is positional.</description></item>
-    /// <item><description>A field of type bool must have an <see cref="OptionAttribute"/> and cannot be positional.</description></item>
-    /// <item><description>A field of type string or string[] can be positional or optional. If it is optional, it must have an <see cref="OptionAttribute"/>. If it is of type string[] and positional, it must be the last field in the class.</description></item>
-    /// <item><description>A field of any other type must be the last one, must be marked positional, and must be an abstract class with a <see cref="CommandGroupAttribute"/>. This class must have at least two derived classes with a <see cref="CommandNameAttribute"/>.</description></item>
-    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required, several such attributes are allowed to specify several alternative names for the same option or command (e.g. short and long names).</description></item>
+    /// <item><description>Each field in the class must be of one of the following types:
+    ///     <list type="bullet">
+    ///         <item><description><c>string</c> or <c>string[]</c>. The field can be positional or optional. If it is optional, 
+    ///                                         it must have an <see cref="OptionAttribute"/>. If it is of type <c>string[]</c> and positional,
+    ///                                         it must be the last field in the class.</description></item>
+    ///         <item><description><c>bool</c>. The field must have an <see cref="OptionAttribute"/> and cannot be
+    ///                                         positional.</description></item>
+    ///         <item><description>Any enum type.
+    ///             <list type="bullet">
+    ///                 <item><description>The field can be positional (marked with the <see cref="IsPositionalAttribute"/>) or not.
+    ///                                                 If it is neither positional nor mandatory (see below), it must have a 
+    ///                                                 <see cref="DefaultValueAttribute"/>.</description></item>
+    ///                 <item><description>Every value of such an enum must have an <see cref="OptionAttribute"/> if the field is
+    ///                                                 optional, or a <see cref="CommandNameAttribute"/> if it is positional.</description></item>
+    ///             </list>
+    ///         </description></item>
+    ///         <item><description>An abstract class with the <see cref="CommandGroupAttribute"/>. The field must be the last field in
+    ///                                         the class and must be marked positional. The abstract class must have at least two derived classes with
+    ///                                         a <see cref="CommandNameAttribute"/>.</description></item>
+    ///     </list>
+    /// </description></item>
+    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required,
+    ///                                 several such attributes are allowed to specify several alternative names for the same option or command
+    ///                                 (e.g. short and long names).</description></item>
     /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
-    /// <item><description><para>Every field must have documentation or be explicitly marked with <see cref="UndocumentedAttribute"/>. For enum-typed fields, the enum values must have documentation or <see cref="UndocumentedAttribute"/> instead.</para>
-    ///                                     <para>Documentation is provided in one of the following ways:</para>
-    ///    <list type="bullet">
-    ///        <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/> to specify documentation directly.</description></item>
-    ///        <item><description>Translatable applications must declare methods with the following signature: <c>static string FieldNameDoc(Translation)</c>.
-    ///                                            The first parameter must be of the same type as the object passed in for <see cref="ApplicationTr"/>.
-    ///                                            The name of the method is the name of the field or enum value followed by "Doc".
-    ///                                            The return value is the translated string.</description></item>
-    ///    </list>
+    /// <item><description><para>Every field must have documentation or be explicitly marked with
+    ///                                 <see cref="UndocumentedAttribute"/>, except for fields of an enum type, in which case the values in
+    ///                                 the enum type must have documentation or <see cref="UndocumentedAttribute"/>.</para>
+    ///                                 <para>Documentation is provided in one of the following ways:</para>
+    ///     <list type="bullet">
+    ///         <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/>
+    ///                                         to specify documentation directly.</description></item>
+    ///         <item><description><para>Translatable applications must declare methods with the following signature:</para>
+    ///                                         <code>static string FieldNameDoc(Translation)</code>.
+    ///                                         <para>The first parameter must be of the same type as the object passed in for <see cref="ApplicationTr"/>.
+    ///                                         The name of the method is the name of the field or enum value followed by "Doc".
+    ///                                         The return value is the translated string.</para></description></item>
+    ///     </list>
     /// </description></item>
     /// </list>
     /// </remarks>
@@ -92,6 +113,7 @@ namespace RT.Util.CommandLine
                 if (mandatory)
                     missingMandatories.Add(field);
 
+                // ### ENUM fields, positional
                 if (field.FieldType.IsEnum && positional)
                 {
                     positionals.Add(new positionalParameterInfo
@@ -118,7 +140,8 @@ namespace RT.Util.CommandLine
                         }
                     });
                 }
-                else if (field.FieldType.IsEnum)   // not positional
+                // ### ENUM fields, not positional
+                else if (field.FieldType.IsEnum)
                 {
                     foreach (var eForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.GetValue(null).Equals(defaultValue)))
                     {
@@ -139,12 +162,15 @@ namespace RT.Util.CommandLine
                         }
                     }
                 }
+                // ### BOOL fields
                 else if (field.FieldType == typeof(bool))
                 {
                     foreach (var o in field.GetOrderedOptionAttributeNames())
                         options[o] = () => { field.SetValue(ret, true); i++; missingMandatories.Remove(field); };
                 }
-                else if (field.FieldType == typeof(string) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType))
+                // ### STRING and INTEGER fields (including nullable)
+                else if (field.FieldType == typeof(string) || ExactConvert.IsTrueIntegerType(field.FieldType) || ExactConvert.IsTrueIntegerNullableType(field.FieldType) ||
+                    field.FieldType == typeof(float) || field.FieldType == typeof(float?) || field.FieldType == typeof(double) || field.FieldType == typeof(double?))
                 {
                     if (positional)
                     {
@@ -153,22 +179,22 @@ namespace RT.Util.CommandLine
                             ProcessParameter = () =>
                             {
                                 // The following code is also duplicated below
-                                if (ExactConvert.IsTrueIntegerType(field.FieldType))
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
-                                    field.SetValue(ret, res);
-                                }
-                                else if (ExactConvert.IsTrueIntegerNullableType(field.FieldType))
+                                if (field.FieldType == typeof(string))
+                                    field.SetValue(ret, args[i]);
+                                else if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>))
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
                                     field.SetValue(ret, res);
                                 }
                                 else
-                                    field.SetValue(ret, args[i]);
+                                {
+                                    object res;
+                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerType(field.FieldType) */);
+                                    field.SetValue(ret, res);
+                                }
 
                                 positionals.RemoveAt(0);
                                 missingMandatories.Remove(field);
@@ -191,23 +217,24 @@ namespace RT.Util.CommandLine
                                 i++;
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(e, getHelpGenerator(type));
+
                                 // The following code is also duplicated above
-                                if (ExactConvert.IsTrueIntegerType(field.FieldType))
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
-                                    field.SetValue(ret, res);
-                                }
-                                else if (ExactConvert.IsTrueIntegerNullableType(field.FieldType))
+                                if (field.FieldType == typeof(string))
+                                    field.SetValue(ret, args[i]);
+                                else if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>))
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidIntegerParameterException(field.Name, getHelpGenerator(type));
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
                                     field.SetValue(ret, res);
                                 }
                                 else
-                                    field.SetValue(ret, args[i]);
+                                {
+                                    object res;
+                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerType(field.FieldType)*/);
+                                    field.SetValue(ret, res);
+                                }
 
                                 i++;
                                 missingMandatories.Remove(field);
@@ -215,6 +242,7 @@ namespace RT.Util.CommandLine
                         }
                     }
                 }
+                // ### STRING[] fields
                 else if (field.FieldType == typeof(string[]))
                 {
                     if (positional)
@@ -260,6 +288,7 @@ namespace RT.Util.CommandLine
                         }
                     }
                 }
+                // ### Command-group classes
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
                     swallowingField = field;
@@ -287,7 +316,7 @@ namespace RT.Util.CommandLine
                 }
                 else
                     // This only happens if the post-build check didn't run
-                    throw new InternalErrorException("{0}.{1} is not of a recognized type.".Fmt(type.FullName, field.Name));
+                    throw new InternalErrorException("{0}.{1} is not of a supported type.".Fmt(type.FullName, field.Name));
             }
 
             bool suppressOptions = false;
@@ -498,6 +527,8 @@ namespace RT.Util.CommandLine
         {
             var anyCommandsWithSuboptions = false;
             var cmdName = new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan);
+
+            // ### ENUM fields, positional
             if (field.FieldType.IsEnum && positional)
             {
                 table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
@@ -509,6 +540,7 @@ namespace RT.Util.CommandLine
                     row++;
                 }
             }
+            // ### ENUM fields, not positional
             else if (field.FieldType.IsEnum)
             {
                 foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.GetValue(null).Equals(field.GetCustomAttributes<DefaultValueAttribute>().First().DefaultValue) && !e.IsDefined<UndocumentedAttribute>()))
@@ -519,6 +551,7 @@ namespace RT.Util.CommandLine
                     row++;
                 }
             }
+            // ### Command-group classes
             else if (field.FieldType.IsDefined<CommandGroupAttribute>())
             {
                 int origRow = row;
@@ -541,12 +574,14 @@ namespace RT.Util.CommandLine
                 }
                 table.SetCell(0, origRow, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), colSpan: 2, rowSpan: row - origRow, noWrap: true);
             }
+            // ### All other positional parameters
             else if (positional)
             {
                 table.SetCell(0, row, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), noWrap: true, colSpan: 2);
                 table.SetCell(2, row, getDocumentation(field, type), colSpan: 3);
                 row++;
             }
+            // ### All other non-positional parameters
             else
             {
                 table.SetCell(0, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
@@ -643,7 +678,7 @@ namespace RT.Util.CommandLine
                 else if (positional && !mandatory)
                     haveSeenOptionalPositional = true;
 
-                // (1) if it's a field of type enum:
+                // ### ENUM fields
                 if (field.FieldType.IsEnum)
                 {
                     var defaultAttr = field.GetCustomAttributes<DefaultValueAttribute>().FirstOrDefault();
@@ -685,6 +720,7 @@ namespace RT.Util.CommandLine
                         }
                     }
                 }
+                // ### BOOL fields
                 else if (field.FieldType == typeof(bool))
                 {
                     if (positional)
@@ -697,20 +733,23 @@ namespace RT.Util.CommandLine
                     checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
+                // ### STRING, STRING[], INTEGER and FLOATING fields (including nullable)
                 else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) ||
                     (ExactConvert.IsTrueIntegerType(field.FieldType) && !field.FieldType.IsEnum) ||
-                    (ExactConvert.IsTrueIntegerNullableType(field.FieldType) && !field.FieldType.GetGenericArguments()[0].IsEnum))
+                    (ExactConvert.IsTrueIntegerNullableType(field.FieldType) && !field.FieldType.GetGenericArguments()[0].IsEnum) ||
+                    field.FieldType == typeof(float) || field.FieldType == typeof(float?) || field.FieldType == typeof(double) || field.FieldType == typeof(double?))
                 {
                     var options = field.GetOrderedOptionAttributeNames();
                     if (!options.Any() && !positional)
-                        rep.Error(@"{0}.{1}: Field of type string, string[] or an integer type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: Field of type string, string[] or a numeric type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
+                // ### Command-group classes
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
                 {
-                    // Class-type fields must be positional parameters
+                    // Command-group class fields must be positional parameters
                     if (!positional)
                         rep.Error(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
@@ -732,7 +771,7 @@ namespace RT.Util.CommandLine
                     lastField = field;
                 }
                 else
-                    rep.Error(@"{0}.{1} is not of a recognised type. Currently accepted types are: enum types, bool, string, integer types (sbyte, short, int, long and unsigned variants), nullable integer types, and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1} is not of a supported type. Currently accepted types are: enum types, bool, string, string[], numeric types (byte, sbyte, short, ushort, int, uint, long, ulong, float and double), nullable numeric types, and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
             }
 
             // Warn if the method has unused documentation methods
@@ -907,7 +946,7 @@ namespace RT.Util.CommandLine
         public TrString
             IncompatibleCommandOrOption = @"The command or option, {0}, cannot be used in conjunction with {1}. Please specify only one of the two.",
             IncompleteOption = @"The {0} option must be followed by an additional parameter.",
-            InvalidInteger = @"The {0} option expects an integer. The specified parameter does not constitute a valid integer.",
+            InvalidNumber = @"The {0} option expects a number. The specified parameter does not constitute a valid number.",
             MissingOption = @"The option {0} is mandatory and must be specified.",
             MissingOptionBefore = @"The option {0} is mandatory and must be specified before the {1} parameter.",
             MissingParameter = @"The parameter {0} is mandatory and must be specified.",
@@ -1160,15 +1199,15 @@ namespace RT.Util.CommandLine
 
     /// <summary>Specifies that a parameter that expected an integer was passed a string by the user that doesn't parse as an integer.</summary>
     [Serializable]
-    public sealed class InvalidIntegerParameterException : CommandLineParseException
+    public sealed class InvalidNumericParameterException : CommandLineParseException
     {
         /// <summary>Contains the name of the field pertaining to the parameter that was missing.</summary>
         public string FieldName { get; private set; }
         /// <summary>Constructor.</summary>
-        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
+        public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public InvalidIntegerParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.InvalidInteger.Fmt("`*&<<{0}>>&*`".Fmt(EggsML.Escape(fieldName))), helpGenerator, inner)
+        public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => tr.InvalidNumber.Fmt("`*&<<{0}>>&*`".Fmt(EggsML.Escape(fieldName))), helpGenerator, inner)
         {
             FieldName = fieldName;
         }

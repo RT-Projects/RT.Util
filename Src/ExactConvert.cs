@@ -119,8 +119,7 @@ namespace RT.Util
         /// <param name="type">The type to be tested.</param>
         public static bool IsTrueIntegerType(Type type)
         {
-            var code = Type.GetTypeCode(type);
-            return IsTrueIntegerType(code);
+            return IsTrueIntegerType(Type.GetTypeCode(type));
         }
 
         /// <summary>
