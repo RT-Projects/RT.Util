@@ -39,7 +39,8 @@ namespace RT.Util.CommandLine
     /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required,
     ///                                 several such attributes are allowed to specify several alternative names for the same option or command
     ///                                 (e.g. short and long names).</description></item>
-    /// <item><description>Any field that is not positional can be made mandatory by using the <see cref="IsMandatoryAttribute"/>.</description></item>
+    /// <item><description>Any field can be made mandatory by using the <see cref="IsMandatoryAttribute"/>. A positional field
+    ///                                 can only be made mandatory if all the positional fields preceding it are also mandatory.</description></item>
     /// <item><description><para>Every field must have documentation or be explicitly marked with
     ///                                 <see cref="UndocumentedAttribute"/>, except for fields of an enum type, in which case the values in
     ///                                 the enum type must have documentation or <see cref="UndocumentedAttribute"/>.</para>
