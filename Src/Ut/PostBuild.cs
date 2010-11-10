@@ -33,7 +33,8 @@ namespace RT.Util
         ///            #if DEBUG
         ///                private static void PostBuildCheck(IPostBuildReporter rep)
         ///                {
-        ///                    // Replace "CommandLine" with the name of your command-line type, and "Translation" with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
+        ///                    // Replace “CommandLine” with the name of your command-line type, and “Translation”
+        ///                    // with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
         ///                    CommandLineParser&lt;CommandLine&gt;.PostBuildStep(rep, typeof(Translation));
         ///                }
         ///            #endif
