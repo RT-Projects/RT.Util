@@ -10,80 +10,106 @@ using RT.Util.Text;
 
 namespace RT.Util.CommandLine
 {
-    /// <summary>Implements a command-line parser that can turn the commands and options specified by the user on the command line into a strongly-typed instance of a specific class. See remarks for more details.</summary>
+    /// <summary>Implements a command-line parser that can turn the commands and options specified by the user on the
+    /// command line into a strongly-typed instance of a specific class. See remarks for more details.</summary>
     /// <typeparam name="T">The class containing the fields and attributes which define the command-line syntax.</typeparam>
     /// <remarks><para>The following conditions must be met by the class wishing to receive the options and parameters:</para>
     /// <list type="bullet">
     /// <item><description>It must be a reference type (a class) and it must have a parameterless constructor.</description></item>
-    /// <item><description>Each field in the class must be of one of the following types:
+    /// <item><description>Every field in the class must have one of the following custom attributes:
     ///     <list type="bullet">
-    ///         <item><description><c>string</c>, <c>string[]</c>, any integer type, <c>float</c>, <c>double</c>, or any
-    ///                                         nullable version of these. The field can be positional or not. If it is optional (not mandatory), it
-    ///                                         must have an <see cref="OptionAttribute"/>. If it is of type <c>string[]</c> and positional, it
-    ///                                         must be the last field in the class.</description></item>
-    ///         <item><description><c>bool</c>. The field must have an <see cref="OptionAttribute"/> and cannot be
-    ///                                         positional or mandatory.</description></item>
-    ///         <item><description>Any enum type.
-    ///             <list type="bullet">
-    ///                 <item><description>The field can be positional (marked with the <see cref="IsPositionalAttribute"/>) or
-    ///                                                 not, and it can be mandatory or not.</description></item>
-    ///                 <item><description>Every value of such an enum must have a <see cref="CommandNameAttribute"/> if
-    ///                                                 the field is positional, or an <see cref="OptionAttribute"/> if not.</description></item>
-    ///                 <item><description>If the field is optional, one enum value may have an <see cref="IsDefaultAttribute"/> instead.
-    ///                                                 In such a case, ensure that the field is initialised to the same enum value via a field
-    ///                                                 initialiser.</description></item>
-    ///             </list>
-    ///         </description></item>
-    ///         <item><description>An abstract class with the <see cref="CommandGroupAttribute"/>. The field must be the last field in
-    ///                                         the class and must be marked positional. The abstract class must have at least two derived classes with
-    ///                                         a <see cref="CommandNameAttribute"/>.</description></item>
+    ///         <item><description><see cref="IsPositionalAttribute"/> (allowed for all supported types except <c>bool</c>) —
+    ///                                         specifies that the field is a positional parameter; the user specifies this as a single parameter without
+    ///                                         any extra syntax.</description></item>
+    ///         <item><description><see cref="OptionAttribute"/> (allowed for all supported types except abstract classes) —
+    ///                                         specifies that the field is a parameter invoked by an option, e.g. “-x”. (This does not imply
+    ///                                         that the parameter is necessarily optional.)</description></item>
+    ///         <item><description><see cref="EnumOptionsAttribute"/> (allowed for enum types only) — specifies that the field is a
+    ///                                         parameter that can be invoked by one of several options, which are specified on the enum values
+    ///                                         in the enum type.</description></item>
+    ///         <item><description><see cref="IgnoreAttribute"/> — specifies that the field is completely ignored by
+    ///                                         CommandLineParser.</description></item>
     ///     </list>
     /// </description></item>
-    /// <item><description>Wherever an <see cref="OptionAttribute"/> or <see cref="CommandNameAttribute"/> is required,
-    ///                                 several such attributes are allowed to specify several alternative names for the same option or command
-    ///                                 (e.g. short and long names).</description></item>
-    /// <item><description>Any field (other than <c>bool</c> fields) can be made mandatory by using the
-    ///                                 <see cref="IsMandatoryAttribute"/>. A positional field can only be made mandatory if all the positional
-    ///                                 fields preceding it are also mandatory.</description></item>
+    /// <item><description>Each field may optionally have any of the following custom attributes:
+    ///     <list type="bullet">
+    ///         <item><description><see cref="IsMandatoryAttribute"/> (allowed for all supported types except <c>bool</c>) —
+    ///                                         specifies that the parameter must be specified by the user. For a <c>string[]</c> field, it means
+    ///                                         that at least one value must be specified.</description></item>
+    ///         <item><description><see cref="UndocumentedAttribute"/> — specifies that the option or command does not appear
+    ///                                         in the help screen generated by CommandLineParser.</description></item>
+    ///     </list>
+    /// </description></item>
+    /// <item><description>Each field in the class must be of one of the following types:
+    ///     <list type="bullet">
+    ///         <item><description><c>string</c>, any integer type, <c>float</c>, <c>double</c>, or any
+    ///                                         nullable version of these. The field can be positional (<see cref="IsPositionalAttribute"/>)
+    ///                                         or not (<see cref="OptionAttribute"/>).</description></item>
+    ///         <item><description><c>string[]</c>. The field can be positional (<see cref="IsPositionalAttribute"/>) or not
+    ///                                         (<see cref="OptionAttribute"/>), but if it is positional, it must be the last field in the
+    ///                                         class.</description></item>
+    ///         <item><description><c>bool</c>. The field must have an <see cref="OptionAttribute"/> and cannot be
+    ///                                         positional or mandatory.</description></item>
+    ///         <item><description>An abstract class with the <see cref="CommandGroupAttribute"/>. The field must be the last field in
+    ///                                         the class and must be marked positional. The abstract class must have at least two derived classes, each
+    ///                                         with a <see cref="CommandNameAttribute"/>.</description></item>
+    ///         <item><description>Any enum type. There are three ways that enum types can be used:
+    ///             <list type="bullet">
+    ///                 <item><description><see cref="IsPositionalAttribute"/> — The user can specify a single parameter to
+    ///                                                 select an enum value. Every value in the enum type must have a
+    ///                                                 <see cref="CommandNameAttribute"/> to specify the name by which that enum
+    ///                                                 value is selected.</description></item>
+    ///                 <item><description><see cref="OptionAttribute"/> — The user can select an enum value by specifying
+    ///                                                 an option (e.g. “-x”) followed by a parameter that identifies the enum value. As
+    ///                                                 above, every value in the enum type must have a
+    ///                                                 <see cref="CommandNameAttribute"/> to specify the name by which that enum
+    ///                                                 value is selected.</description></item>
+    ///                 <item><description><see cref="EnumOptionsAttribute"/> — The user can select an enum value by
+    ///                                                 specifying just an option (e.g. “-x”). Every value in the enum type must have an
+    ///                                                 <see cref="OptionAttribute"/> to specify the option by which that enum value
+    ///                                                 is selected. A parameter on the attribute determines whether the user is allowed to
+    ///                                                 specify only one enum value or multiple (which will be ORed like a
+    ///                                                 bitfield).</description></item>
+    ///                 <item><description>If the field is optional, one enum value may have an <see cref="IsDefaultAttribute"/>
+    ///                                                 instead of the required <see cref="CommandNameAttribute"/> or
+    ///                                                 <see cref="OptionAttribute"/>. In such a case, ensure that the field is initialised
+    ///                                                 to the same enum value via a field initialiser.</description></item>
+    ///             </list>
+    ///         </description></item>
+    ///     </list>
+    /// </description></item>
     /// <item><description><para>Every field must have documentation or be explicitly marked with
-    ///                                 <see cref="UndocumentedAttribute"/>, except for fields of an enum type, in which case the values in
-    ///                                 the enum type must have documentation or <see cref="UndocumentedAttribute"/>.</para>
+    ///                                 <see cref="UndocumentedAttribute"/>, except for fields that use <see cref="EnumOptionsAttribute"/>
+    ///                                 or <see cref="IgnoreAttribute"/>. For every field whose type is an enum type, the values in
+    ///                                 the enum type must also have documentation or <see cref="UndocumentedAttribute"/>, except
+    ///                                 for the enum value that has the <see cref="IsDefaultAttribute"/> (if any).</para>
     ///                                 <para>Documentation is provided in one of the following ways:</para>
     ///     <list type="bullet">
     ///         <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/>
     ///                                         to specify documentation directly.</description></item>
     ///         <item><description><para>Translatable applications must declare methods with the following signature:</para>
     ///                                         <code>static string FieldNameDoc(Translation)</code>
-    ///                                         <para>The first parameter must be of the same type as the object passed in for <see cref="ApplicationTr"/>.
-    ///                                         The name of the method is the name of the field or enum value followed by "Doc".
+    ///                                         <para>The first parameter must be of the same type as the object passed in for the “applicationTr”
+    ///                                         parameter of <see cref="Parse"/>.
+    ///                                         The name of the method is the name of the field or enum value followed by “Doc”.
     ///                                         The return value is the translated string.</para></description></item>
     ///     </list>
     /// </description></item>
+    /// <item><description><see cref="IsPositionalAttribute"/> and <see cref="IsMandatoryAttribute"/> can be used together.
+    ///                                 However, a positional field can only be made mandatory if all the positional fields preceding it are also
+    ///                                 mandatory.</description></item>
     /// </list>
     /// </remarks>
-    public sealed class CommandLineParser<[RummageKeepArgumentsReflectionSafe]T>
+    public static class CommandLineParser<[RummageKeepArgumentsReflectionSafe]T>
     {
-        /// <summary>
-        /// Gets or sets the application's translation object which contains the localised strings that document the command-line options and commands.
-        /// This object is passed in to the FieldNameDoc() methods described in the documentation for <see cref="CommandLineParser&lt;T&gt;"/>.
-        /// </summary>
-        public TranslationBase ApplicationTr { get; set; }
-
         /// <summary>Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the documentation for <see cref="CommandLineParser&lt;T&gt;"/> for features and limitations.</summary>
         /// <param name="args">The command-line arguments to be parsed.</param>
+        /// <param name="applicationTr">Specifies the application’s translation object which contains the localised strings that document the command-line options and commands.
+        /// This object is passed in to the FieldNameDoc() methods described in the documentation for <see cref="CommandLineParser&lt;T&gt;"/>. This should be null for monoligual applications.</param>
         /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
-        public T Parse(string[] args)
+        public static T Parse(string[] args, TranslationBase applicationTr = null)
         {
-            return (T) parseCommandLine(args, typeof(T), 0);
-        }
-
-        /// <summary>
-        /// Throws a <see cref="CommandLineValidationException"/> exception, passing it the top-level command line argument type.
-        /// </summary>
-        /// <param name="errorMessage">The error message to be displayed to the user, describing the validation error.</param>
-        public void ValidationError(string errorMessage)
-        {
-            throw new CommandLineValidationException(errorMessage, getHelpGenerator(typeof(T)));
+            return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
         }
 
         private sealed class positionalParameterInfo
@@ -92,7 +118,7 @@ namespace RT.Util.CommandLine
             public Action ProcessEndOfParameters;
         }
 
-        private object parseCommandLine(string[] args, Type type, int i)
+        private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
             var ret = type.GetConstructor(Type.EmptyTypes).Invoke(null);
             var options = new Dictionary<string, Action>();
@@ -142,12 +168,12 @@ namespace RT.Util.CommandLine
                                         return;
                                     }
                                 }
-                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
+                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                             },
                             ProcessEndOfParameters = () =>
                             {
                                 if (mandatory)
-                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type));
+                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
                             }
                         });
                     }
@@ -159,7 +185,7 @@ namespace RT.Util.CommandLine
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
                                 missingMandatories.Remove(field);
                                 foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                                 {
@@ -170,7 +196,7 @@ namespace RT.Util.CommandLine
                                         return;
                                     }
                                 }
-                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
+                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                             };
                     }
                     // ### ENUM fields, option scheme (“-x”)
@@ -214,7 +240,7 @@ namespace RT.Util.CommandLine
                                             foreach (var o2Foreach in enumField2.GetOrderedOptionAttributeNames())
                                             {
                                                 var o2 = o2Foreach;
-                                                options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type)); };
+                                                options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type, applicationTr)); };
                                             }
                                         // ... but don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
                                         options[o] = () => { i++; };
@@ -247,14 +273,14 @@ namespace RT.Util.CommandLine
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
                                     field.SetValue(ret, res);
                                 }
                                 else
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerType(field.FieldType) */);
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerType(field.FieldType) */);
                                     field.SetValue(ret, res);
                                 }
 
@@ -265,7 +291,7 @@ namespace RT.Util.CommandLine
                             ProcessEndOfParameters = () =>
                             {
                                 if (mandatory)
-                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type));
+                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
                             }
                         });
                     }
@@ -278,7 +304,7 @@ namespace RT.Util.CommandLine
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
 
                                 // The following code is also duplicated above
                                 if (field.FieldType == typeof(string))
@@ -287,14 +313,14 @@ namespace RT.Util.CommandLine
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
                                     field.SetValue(ret, res);
                                 }
                                 else
                                 {
                                     object res;
                                     if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type) /*, ExactConvert.IsTrueIntegerType(field.FieldType)*/);
+                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerType(field.FieldType)*/);
                                     field.SetValue(ret, res);
                                 }
 
@@ -338,7 +364,7 @@ namespace RT.Util.CommandLine
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
                                 prev = (prev == null || prev.Length == 0)
                                     ? new string[] { args[i] }
                                     : prev.Concat(args[i]).ToArray();
@@ -362,16 +388,16 @@ namespace RT.Util.CommandLine
                             foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(field.FieldType)))
                                 if (subclass.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
                                 {
-                                    field.SetValue(ret, parseCommandLine(args, subclass, i + 1));
+                                    field.SetValue(ret, parseCommandLine(args, subclass, i + 1, applicationTr));
                                     i = args.Length;
                                     return;
                                 }
-                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
+                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                         },
                         ProcessEndOfParameters = () =>
                         {
                             if (mandatory)
-                                throw new MissingParameterException(field, null, false, getHelpGenerator(type));
+                                throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
                         }
                     });
                 }
@@ -394,12 +420,12 @@ namespace RT.Util.CommandLine
                     if (options.ContainsKey(args[i]))
                         options[args[i]]();
                     else
-                        throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
+                        throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
                 }
                 else
                 {
                     if (positionals.Count == 0)
-                        throw new UnexpectedArgumentException(args.Subarray(i), getHelpGenerator(type));
+                        throw new UnexpectedArgumentException(args.Subarray(i), getHelpGenerator(type, applicationTr));
                     positionals[0].ProcessParameter();
                 }
             }
@@ -408,37 +434,37 @@ namespace RT.Util.CommandLine
                 positionals[0].ProcessEndOfParameters();
 
             if (missingMandatories.Count > 0)
-                throw new MissingParameterException(missingMandatories[0], swallowingField, !missingMandatories[0].IsDefined<IsPositionalAttribute>(), getHelpGenerator(type));
+                throw new MissingParameterException(missingMandatories[0], swallowingField, !missingMandatories[0].IsDefined<IsPositionalAttribute>(), getHelpGenerator(type, applicationTr));
 
             Type[] typeParam;
             string error = null;
             if (type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam))
             {
                 var tp = typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]);
-                if (typeParam[0] != ApplicationTr.GetType())
+                if (typeParam[0] != applicationTr.GetType())
                     throw new CommandLineValidationException(@"The type {0} implements {1}, but ApplicationTr is of type {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
                         type.FullName,
                         tp.FullName,
-                        ApplicationTr.GetType().FullName,
-                        typeof(ICommandLineValidatable<>).MakeGenericType(ApplicationTr.GetType()).FullName
-                    ), getHelpGenerator(type));
+                        applicationTr.GetType().FullName,
+                        typeof(ICommandLineValidatable<>).MakeGenericType(applicationTr.GetType()).FullName
+                    ), getHelpGenerator(type, applicationTr));
 
                 var meth = tp.GetMethod("Validate");
                 if (meth == null || !meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeParam[0] }))
-                    throw new CommandLineValidationException(@"Couldn’t find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type));
+                    throw new CommandLineValidationException(@"Couldn’t find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type, applicationTr));
 
-                error = (string) meth.Invoke(ret, new object[] { ApplicationTr });
+                error = (string) meth.Invoke(ret, new object[] { applicationTr });
             }
             else if (typeof(ICommandLineValidatable).IsAssignableFrom(type))
                 error = ((ICommandLineValidatable) ret).Validate();
 
             if (error != null)
-                throw new CommandLineValidationException(error, getHelpGenerator(type));
+                throw new CommandLineValidationException(error, getHelpGenerator(type, applicationTr));
 
             return ret;
         }
 
-        private Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type)
+        private static Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type, TranslationBase applicationTr)
         {
             return (tr, wrapWidth) =>
             {
@@ -521,12 +547,12 @@ namespace RT.Util.CommandLine
                 var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int requiredRow = 0;
                 foreach (var f in mandatoryOptions.Select(fld => new { Positional = false, Field = fld }).Concat(mandatoryPositional.Select(fld => new { Positional = true, Field = fld })))
-                    anyCommandsWithSuboptions |= createParameterHelpRow(ref requiredRow, requiredParamsTable, f.Field, f.Positional, type);
+                    anyCommandsWithSuboptions |= createParameterHelpRow(ref requiredRow, requiredParamsTable, f.Field, f.Positional, type, applicationTr);
 
                 var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int optionalRow = 0;
                 foreach (var f in optionalOptions.Select(fld => new { Positional = false, Field = fld }).Concat(optionalPositional.Select(fld => new { Positional = true, Field = fld })))
-                    anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type);
+                    anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type, applicationTr);
 
                 // Word-wrap the usage line
                 var helpString = new List<ConsoleColoredString>();
@@ -537,7 +563,7 @@ namespace RT.Util.CommandLine
                 }
 
                 // Word-wrap the documentation for the command (if any)
-                var doc = getDocumentation(type, type);
+                var doc = getDocumentation(type, type, applicationTr);
                 if (doc != null)
                 {
                     helpString.Add(ConsoleColoredString.NewLine);
@@ -585,7 +611,7 @@ namespace RT.Util.CommandLine
             };
         }
 
-        private bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type)
+        private static bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type, TranslationBase applicationTr)
         {
             var anyCommandsWithSuboptions = false;
             var cmdName = new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan);
@@ -600,7 +626,7 @@ namespace RT.Util.CommandLine
                     {
                         table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
                         table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
-                        table.SetCell(4, row, getDocumentation(el, type));
+                        table.SetCell(4, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
                 }
@@ -613,12 +639,12 @@ namespace RT.Util.CommandLine
                     {
                         table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
                         table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
-                        table.SetCell(4, row, getDocumentation(el, type));
+                        table.SetCell(4, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
                     table.SetCell(0, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
                     table.SetCell(1, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(2, topRow, getDocumentation(field, type), colSpan: 3);
+                    table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 3);
                 }
                 // ### ENUM fields, “-x” scheme
                 else
@@ -627,7 +653,7 @@ namespace RT.Util.CommandLine
                     {
                         table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                         table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                        table.SetCell(2, row, getDocumentation(el, type), colSpan: 3);
+                        table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 3);
                         row++;
                     }
                 }
@@ -650,7 +676,7 @@ namespace RT.Util.CommandLine
 
                     table.SetCell(2, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
                     table.SetCell(3, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
-                    table.SetCell(4, row, getDocumentation(ty, ty));
+                    table.SetCell(4, row, getDocumentation(ty, ty, applicationTr));
                     row++;
                 }
                 table.SetCell(0, origRow, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), colSpan: 2, rowSpan: row - origRow, noWrap: true);
@@ -659,7 +685,7 @@ namespace RT.Util.CommandLine
             else if (positional)
             {
                 table.SetCell(0, row, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), noWrap: true, colSpan: 2);
-                table.SetCell(2, row, getDocumentation(field, type), colSpan: 3);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 3);
                 row++;
             }
             // ### All other non-positional parameters
@@ -667,13 +693,13 @@ namespace RT.Util.CommandLine
             {
                 table.SetCell(0, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                 table.SetCell(1, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                table.SetCell(2, row, getDocumentation(field, type), colSpan: 3);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 3);
                 row++;
             }
             return anyCommandsWithSuboptions;
         }
 
-        private void getFieldsForHelp(Type type, out List<FieldInfo> optionalOptions, out List<FieldInfo> mandatoryOptions, out List<FieldInfo> optionalPositional, out List<FieldInfo> mandatoryPositional)
+        private static void getFieldsForHelp(Type type, out List<FieldInfo> optionalOptions, out List<FieldInfo> mandatoryOptions, out List<FieldInfo> optionalPositional, out List<FieldInfo> mandatoryPositional)
         {
             optionalOptions = new List<FieldInfo>();
             mandatoryOptions = new List<FieldInfo>();
@@ -687,19 +713,19 @@ namespace RT.Util.CommandLine
                 ).Add(field);
         }
 
-        private EggsNode getDocumentation(MemberInfo member, Type inType)
+        private static EggsNode getDocumentation(MemberInfo member, Type inType, TranslationBase applicationTr)
         {
             if (member.IsDefined<DocumentationLiteralAttribute>())
                 return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
-            if (ApplicationTr == null)
+            if (applicationTr == null)
                 return null;
 
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
-            var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { ApplicationTr.GetType() }, null);
+            var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTr.GetType() }, null);
             if (meth == null || meth.ReturnType != typeof(string))
                 return null;
-            var str = (string) meth.Invoke(null, new object[] { ApplicationTr });
+            var str = (string) meth.Invoke(null, new object[] { applicationTr });
             return str == null ? null : EggsML.Parse(str);
         }
 
@@ -709,7 +735,7 @@ namespace RT.Util.CommandLine
         /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid according to the criteria laid out in the documentation of <see cref="CommandLineParser&lt;T&gt;"/>.
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
         /// <param name="rep">Object to report post-build errors to.</param>
-        /// <param name="applicationTrType">The type of the translation object, derived from <see cref="TranslationBase"/>, which would be assigned to <see cref="ApplicationTr"/> at normal run-time.</param>
+        /// <param name="applicationTrType">The type of the translation object, derived from <see cref="TranslationBase"/>, which would be passed in for the “applicationTr” parameter of <see cref="Parse"/> at normal run-time.</param>
         public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
         {
             postBuildStep(rep, typeof(T), applicationTrType, false);
