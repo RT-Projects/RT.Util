@@ -165,7 +165,7 @@ namespace RT.Util
             return curTag;
         }
 
-        /// <summary>Escapes the input string such that it can be used in EggsML syntax.</summary>
+        /// <summary>Escapes the input string such that it can be used in EggsML syntax. The result will either have no special characters in it or be entirely enclosed in double-quotes.</summary>
         public static string Escape(string input)
         {
             if (!input.Any(ch => SpecialCharacters.Contains(ch)))

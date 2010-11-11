@@ -559,6 +559,12 @@ namespace RT.Util.Text
                     {
                         _cells[row].RemoveAt(col);
                     }
+                    for (int c = col + 1; c < _cells[row].Count; c++)
+                    {
+                        var cl = _cells[row][c] as surrogateCell;
+                        if (cl != null && cl.RealCol > col)
+                            cl.RealCol--;
+                    }
                 }
                 cols--;
             }

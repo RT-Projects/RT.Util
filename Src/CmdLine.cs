@@ -1,4 +1,4 @@
-﻿ using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,7 +53,7 @@ namespace RT.Util.CommandLine
     ///         <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/>
     ///                                         to specify documentation directly.</description></item>
     ///         <item><description><para>Translatable applications must declare methods with the following signature:</para>
-    ///                                         <code>static string FieldNameDoc(Translation)</code>.
+    ///                                         <code>static string FieldNameDoc(Translation)</code>
     ///                                         <para>The first parameter must be of the same type as the object passed in for <see cref="ApplicationTr"/>.
     ///                                         The name of the method is the name of the field or enum value followed by "Doc".
     ///                                         The return value is the translated string.</para></description></item>
@@ -104,7 +104,12 @@ namespace RT.Util.CommandLine
             foreach (var fieldForeach in type.GetFields())
             {
                 var field = fieldForeach; // This is necessary for the lambda expressions to work
+
+                if (field.IsDefined<IgnoreAttribute>())
+                    continue;
+
                 var positional = field.IsDefined<IsPositionalAttribute>();
+                var option = field.GetCustomAttributes<OptionAttribute>().FirstOrDefault();
                 var mandatory = field.IsDefined<IsMandatoryAttribute>();
 
                 if (positional && mandatory && haveSeenOptionalPositional)
@@ -116,52 +121,106 @@ namespace RT.Util.CommandLine
                 if (mandatory)
                     missingMandatories.Add(field);
 
-                // ### ENUM fields, positional
-                if (field.FieldType.IsEnum && positional)
+                // ### ENUM fields
+                if (field.FieldType.IsEnum)
                 {
-                    positionals.Add(new positionalParameterInfo
+                    // ### ENUM fields, positional
+                    if (positional)
                     {
-                        ProcessParameter = () =>
+                        positionals.Add(new positionalParameterInfo
                         {
-                            positionals.RemoveAt(0);
-                            missingMandatories.Remove(field);
-                            foreach (var e in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                            ProcessParameter = () =>
                             {
-                                foreach (var cmd in e.GetCustomAttributes<CommandNameAttribute>().Where(cmdAttr => cmdAttr.Name.Equals(args[i])))
+                                positionals.RemoveAt(0);
+                                missingMandatories.Remove(field);
+                                foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                                 {
-                                    field.SetValue(ret, e.GetValue(null));
-                                    i++;
-                                    return;
+                                    if (enumField.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        field.SetValue(ret, enumField.GetValue(null));
+                                        i++;
+                                        return;
+                                    }
                                 }
+                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
+                            },
+                            ProcessEndOfParameters = () =>
+                            {
+                                if (mandatory)
+                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type));
                             }
-                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
-                        },
-                        ProcessEndOfParameters = () =>
-                        {
-                            if (mandatory)
-                                throw new MissingParameterException(field, null, false, getHelpGenerator(type));
-                        }
-                    });
-                }
-                // ### ENUM fields, not positional
-                else if (field.FieldType.IsEnum)
-                {
-                    foreach (var eForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
+                        });
+                    }
+                    // ### ENUM fields, option+name scheme (“-x foo”)
+                    else if (option != null)
                     {
-                        var e = eForeach;
-                        foreach (var oForeach in e.GetOrderedOptionAttributeNames())
-                        {
-                            var o = oForeach;
+                        foreach (var o in option.Names)
                             options[o] = () =>
                             {
-                                field.SetValue(ret, e.GetValue(null));
                                 i++;
+                                if (i >= args.Length)
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
                                 missingMandatories.Remove(field);
-                                foreach (var e2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
-                                    foreach (var o2 in e2.GetOrderedOptionAttributeNames())
-                                        options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type)); };
-                                options[o] = () => { i++; };
+                                foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                                {
+                                    if (enumField.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        field.SetValue(ret, enumField.GetValue(null));
+                                        i++;
+                                        return;
+                                    }
+                                }
+                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type));
                             };
+                    }
+                    // ### ENUM fields, option scheme (“-x”)
+                    else
+                    {
+                        var behaviour = field.GetCustomAttributes<EnumOptionsAttribute>().First().Behaviour;
+                        var underlyingType = field.FieldType.GetEnumUnderlyingType();
+                        object prev = null;
+
+                        foreach (var enumFieldForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
+                        {
+                            var enumField = enumFieldForeach;
+                            foreach (var oForeach in enumField.GetOrderedOptionAttributeNames())
+                            {
+                                var o = oForeach;
+                                options[o] = () =>
+                                {
+                                    if (behaviour == EnumBehaviour.SingleValue)
+                                        field.SetValue(ret, enumField.GetValue(null));
+                                    else
+                                    {
+                                        if (prev == null)
+                                            // Have to use the underlying integer type rather than the enum type because otherwise
+                                            // the dynamic invocation of the “|” operator doesn’t work if the enum type isn’t public
+                                            // (https://connect.microsoft.com/VisualStudio/feedback/details/620805)
+                                            prev = Activator.CreateInstance(underlyingType);
+
+                                        // Dynamic invocation which uses the “|” operator at runtime for the enum type’s underlying integer type.
+                                        // Need to use GetRawConstantValue() in order to get a value that is typed as the underlying integer type.
+                                        // Need to use Convert.ChangeType() because (for example) “byte | byte” returns “int”.
+                                        prev = Convert.ChangeType((dynamic) prev | (dynamic) enumField.GetRawConstantValue(), underlyingType);
+                                        field.SetValue(ret, prev);
+                                    }
+                                    i++;
+                                    missingMandatories.Remove(field);
+
+                                    if (behaviour == EnumBehaviour.SingleValue)
+                                    {
+                                        // If only a single value is allowed, throw an error if another value is specified later
+                                        foreach (var enumField2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
+                                            foreach (var o2Foreach in enumField2.GetOrderedOptionAttributeNames())
+                                            {
+                                                var o2 = o2Foreach;
+                                                options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type)); };
+                                            }
+                                        // ... but don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
+                                        options[o] = () => { i++; };
+                                    }
+                                };
+                            }
                         }
                     }
                 }
@@ -212,14 +271,14 @@ namespace RT.Util.CommandLine
                     }
                     else
                     {
-                        foreach (var eForeach in field.GetOrderedOptionAttributeNames())
+                        foreach (var oForeach in field.GetOrderedOptionAttributeNames())
                         {
-                            var e = eForeach;
-                            options[e] = () =>
+                            var o = oForeach;
+                            options[o] = () =>
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(e, getHelpGenerator(type));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
 
                                 // The following code is also duplicated above
                                 if (field.FieldType == typeof(string))
@@ -271,20 +330,19 @@ namespace RT.Util.CommandLine
                     }
                     else
                     {
-                        field.SetValue(ret, new string[] { });
-                        foreach (var eForeach in field.GetOrderedOptionAttributeNames())
+                        string[] prev = null;
+                        foreach (var oForeach in field.GetOrderedOptionAttributeNames())
                         {
-                            var e = eForeach;
-                            options[e] = () =>
+                            var o = oForeach;
+                            options[o] = () =>
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(e, getHelpGenerator(type));
-                                var prev = (string[]) field.GetValue(ret);
-                                if (prev == null || prev.Length == 0)
-                                    field.SetValue(ret, new string[] { args[i] });
-                                else
-                                    field.SetValue(ret, prev.Concat(args[i]).ToArray());
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type));
+                                prev = (prev == null || prev.Length == 0)
+                                    ? new string[] { args[i] }
+                                    : prev.Concat(args[i]).ToArray();
+                                field.SetValue(ret, prev);
                                 i++;
                                 missingMandatories.Remove(field);
                             };
@@ -302,7 +360,7 @@ namespace RT.Util.CommandLine
                             missingMandatories.Remove(field);
                             positionals.RemoveAt(0);
                             foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(field.FieldType)))
-                                foreach (var cmdName in subclass.GetCustomAttributes<CommandNameAttribute>().Where(c => c.Name.Equals(args[i])))
+                                if (subclass.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
                                 {
                                     field.SetValue(ret, parseCommandLine(args, subclass, i + 1));
                                     i = args.Length;
@@ -331,7 +389,7 @@ namespace RT.Util.CommandLine
                     suppressOptions = true;
                     i++;
                 }
-                else if (!suppressOptions && args[i][0] == '-')
+                else if (!suppressOptions && args[i].StartsWith('-'))
                 {
                     if (options.ContainsKey(args[i]))
                         options[args[i]]();
@@ -390,8 +448,8 @@ namespace RT.Util.CommandLine
                 int leftMargin = 3;
 
                 var help = new List<ConsoleColoredString>();
-                string commandName = type.GetCustomAttributes<CommandNameAttribute>().Select(c => c.Name).OrderByDescending(c => c.Length).FirstOrDefault();
-                commandName = commandName == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandName;
+                var commandNameAttr = type.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
+                string commandName = commandNameAttr == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandNameAttr.Names.OrderByDescending(c => c.Length).First();
 
                 //
                 //  ##  CONSTRUCT THE “USAGE” LINE
@@ -406,14 +464,20 @@ namespace RT.Util.CommandLine
                 foreach (var f in mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld })))
                 {
                     IEnumerable<string> optionsRaw;
-                    if (f.Field.FieldType.IsEnum)
+                    bool hasParam;  // false if it’s just “-x”; true if it’s “-x foo”
+
+                    if (f.Field.FieldType.IsEnum && !f.Field.IsDefined<OptionAttribute>())
                     {
                         optionsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
                             .Where(fld => !fld.IsDefined<IsDefaultAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
                             .SelectMany(fi => fi.GetOrderedOptionAttributeNames());
+                        hasParam = false;
                     }
                     else
+                    {
                         optionsRaw = f.Field.GetOrderedOptionAttributeNames();
+                        hasParam = f.Field.FieldType != typeof(bool);
+                    }
 
                     help.Add(new ConsoleColoredString(f.Mandatory ? " " : " [", ConsoleColor.DarkGray));
                     var options = optionsRaw.Any(a => !a.StartsWith("--")) ? optionsRaw.Where(a => !a.StartsWith("--")) : optionsRaw;
@@ -423,9 +487,7 @@ namespace RT.Util.CommandLine
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
                         c = c + new ConsoleColoredString(option, ConsoleColor.Cyan);
                     }
-                    if ((f.Field.FieldType == typeof(string) || f.Field.FieldType == typeof(string[]) ||
-                        (ExactConvert.IsTrueIntegerType(f.Field.FieldType) && !f.Field.FieldType.IsEnum) ||
-                        (ExactConvert.IsTrueIntegerNullableType(f.Field.FieldType) && !f.Field.FieldType.GetGenericArguments()[0].IsEnum)))
+                    if (hasParam)
                         c = c + new ConsoleColoredString(" <" + f.Field.Name + ">", ConsoleColor.Cyan);
                     help.Add(c);
                     if (f.Field.FieldType.IsArray)
@@ -512,7 +574,7 @@ namespace RT.Util.CommandLine
                 if (anyCommandsWithSuboptions)
                 {
                     helpString.Add(ConsoleColoredString.NewLine);
-                    foreach (var line in (new ConsoleColoredString("* ", ConsoleColor.DarkYellow) + tr.AdditionalOptions.Translation).WordWrap(wrapWidth, 2))
+                    foreach (var line in (new ConsoleColoredString("* ", ConsoleColor.DarkYellow) + ConsoleColoredString.FromEggsNode(EggsML.Parse(tr.AdditionalOptions.Translation))).WordWrap(wrapWidth, 2))
                     {
                         helpString.Add(line);
                         helpString.Add(ConsoleColoredString.NewLine);
@@ -528,27 +590,46 @@ namespace RT.Util.CommandLine
             var anyCommandsWithSuboptions = false;
             var cmdName = new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan);
 
-            // ### ENUM fields, positional
-            if (field.FieldType.IsEnum && positional)
+            if (field.FieldType.IsEnum)
             {
-                table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
-                foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                // ### ENUM fields, positional
+                if (positional)
                 {
-                    var str = el.GetCustomAttributes<CommandNameAttribute>().Select(o => o.Name).OrderBy(c => c.Length).JoinString("\n");
-                    table.SetCell(2, row, new ConsoleColoredString(str, ConsoleColor.White), noWrap: true);
-                    table.SetCell(3, row, getDocumentation(el, type), colSpan: 2);
-                    row++;
+                    table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
+                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                    {
+                        table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
+                        table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
+                        table.SetCell(4, row, getDocumentation(el, type));
+                        row++;
+                    }
                 }
-            }
-            // ### ENUM fields, not positional
-            else if (field.FieldType.IsEnum)
-            {
-                foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
+                // ### ENUM fields, “-x foo” scheme
+                else if (field.IsDefined<OptionAttribute>())
                 {
-                    table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                    table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                    table.SetCell(2, row, getDocumentation(el, type), colSpan: 3);
+                    var topRow = row;
                     row++;
+                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
+                    {
+                        table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
+                        table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
+                        table.SetCell(4, row, getDocumentation(el, type));
+                        row++;
+                    }
+                    table.SetCell(0, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(1, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(2, topRow, getDocumentation(field, type), colSpan: 3);
+                }
+                // ### ENUM fields, “-x” scheme
+                else
+                {
+                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
+                    {
+                        table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                        table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
+                        table.SetCell(2, row, getDocumentation(el, type), colSpan: 3);
+                        row++;
+                    }
                 }
             }
             // ### Command-group classes
@@ -557,14 +638,14 @@ namespace RT.Util.CommandLine
                 int origRow = row;
                 foreach (var ty in field.FieldType.Assembly.GetTypes()
                     .Where(t => t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>() && !t.IsAbstract && !t.IsDefined<UndocumentedAttribute>())
-                    .OrderBy(t => t.GetCustomAttributes<CommandNameAttribute>().MinElement(c => c.Name.Length).Name))
+                    .OrderBy(t => t.GetCustomAttributes<CommandNameAttribute>().First().Names.MinElement(c => c.Length)))
                 {
                     var cell1 = ConsoleColoredString.Empty;
                     var cell2 = ConsoleColoredString.Empty;
                     var suboptions = ty.GetAllFields().Any(fld => !fld.IsDefined<UndocumentedAttribute>());
                     anyCommandsWithSuboptions |= suboptions;
                     var asterisk = suboptions ? new ConsoleColoredString("*", ConsoleColor.DarkYellow) + ConsoleColoredString.NewLine : ConsoleColoredString.NewLine;
-                    foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().OrderBy(c => c.Name).Select(c => new ConsoleColoredString(c.Name, ConsoleColor.White)))
+                    foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().First().Names.Order().Select(c => new ConsoleColoredString(c, ConsoleColor.White)))
                         if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
                     table.SetCell(2, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
@@ -646,7 +727,7 @@ namespace RT.Util.CommandLine
             {
                 Type[] typeParam;
                 if (commandLineType.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != applicationTrType)
-                    rep.Error(@"The type {0} implements {1}, but the ApplicationTrType is {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
+                    rep.Error(@"The type {0} implements {1}, but the ApplicationTr type is {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
                         commandLineType.FullName,
                         typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,
                         applicationTrType.FullName,
@@ -664,17 +745,39 @@ namespace RT.Util.CommandLine
 
             foreach (var field in commandLineType.GetFields())
             {
+                if (field.IsDefined<IgnoreAttribute>())
+                    continue;
+
                 if (lastField != null)
                     rep.Error(@"The type of {0}.{1} necessitates that it is the last one in the class.".Fmt(lastField.DeclaringType.FullName, lastField.Name), "class " + commandLineType.Name, field.Name);
 
+                // Every field must have one of the following
                 var positional = field.IsDefined<IsPositionalAttribute>();
+                var options = field.GetOrderedOptionAttributeNames();
+                var enumOpt = field.GetCustomAttributes<EnumOptionsAttribute>().FirstOrDefault();
+
+                if (!positional && options == null && enumOpt == null)
+                    rep.Error(@"{0}.{1}: Every field must have one of the following attributes: [IsPositional], [Option], [Enum] (fields of an enum type only), or [Ignore].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+
+                // Any combinations of multiple of the above are invalid, as is EnumAttribute on a non-enum field
+                if (enumOpt != null && !field.FieldType.IsEnum)
+                    rep.Error(@"{0}.{1}: Cannot use [Enum] attribute on a field whose type is not an enum type.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                else if (positional && options != null)
+                    rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [Option] attributes on the same field.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                else if (positional && enumOpt != null)
+                    rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [Enum] attributes on the same field. For a positional enum value, use only [IsPositional].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                else if (options != null && enumOpt != null)
+                    rep.Error(@"{0}.{1}: Cannot use [Option] and [Enum] attributes on the same field. To have the enum value specified by an option followed by a name, for example “-x foo”, use only [Option]. To have the enum value specified by a single option, for example “-x”, use only [Enum] and place the [Option] attributes on the enum values in the enum type instead.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                else if (options != null && options.Length == 0)
+                    rep.Error(@"{0}.{1}: An [Option] attribute must specify at least one option name.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+
                 var mandatory = field.IsDefined<IsMandatoryAttribute>();
 
                 if (mandatory && field.IsDefined<UndocumentedAttribute>())
                     rep.Error(@"{0}.{1}: Fields cannot simultaneously be mandatory and also undocumented.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                 if (positional && mandatory && haveSeenOptionalPositional)
-                    rep.Error(@"{0}.{1}: Field cannot be marked mandatory because a previous field was positional and not mandatory.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1}: Positional fields can only be marked mandatory if all preceding positional fields are also marked mandatory.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                 else if (positional && !mandatory)
                     haveSeenOptionalPositional = true;
 
@@ -682,10 +785,6 @@ namespace RT.Util.CommandLine
                 if (field.FieldType.IsEnum)
                 {
                     var commandsTaken = new Dictionary<string, FieldInfo>();
-
-                    // check that it doesn't have an [Option] or [CommandName] attribute, because the enum values are supposed to have that instead
-                    if (field.GetCustomAttributes<OptionAttribute>().Any() || field.GetCustomAttributes<CommandNameAttribute>().Any())
-                        rep.Error(@"{0}.{1}: Fields of an enum type cannot have [Option] or [CommandName] attributes; these attributes should go on the enum values in the enum type instead.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     bool haveDefault = false;
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
@@ -707,35 +806,38 @@ namespace RT.Util.CommandLine
                         // check that the enum values all have documentation
                         checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods);
 
-                        if (positional)
+                        if (enumOpt == null)
                         {
                             // check that the enum values all have at least one CommandName, and they do not clash
-                            var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>();
-                            if (!cmdNames.Any())
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [CommandName] attribute or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            checkCommandNamesUnique(rep, cmdNames, commandsTaken, commandLineType, field, enumField);
+                            var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
+                            if (cmdNames == null || cmdNames.Names.Length == 0)
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have either a [CommandName] attribute with at least one command name, or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            else
+                                checkCommandNamesUnique(rep, cmdNames.Names, commandsTaken, commandLineType, field, enumField);
                         }
                         else
                         {
                             // check that the non-default enum values’ Options are present and do not clash
-                            var options = enumField.GetOrderedOptionAttributeNames();
-                            if (!options.Any())
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have at least one [Option] attribute or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            checkOptionsUnique(rep, options, optionTaken, commandLineType, field, enumField);
+                            var optionNames = enumField.GetOrderedOptionAttributeNames();
+                            if (optionNames == null || !optionNames.Any())
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have either an [Option] attribute with at least one option name, or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                            else
+                                checkOptionsUnique(rep, optionNames, optionTaken, commandLineType, field, enumField);
                         }
                     }
+
+                    // If the enum field has an Option attribute, it needs documentation too
+                    if (options != null)
+                        checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
                 // ### BOOL fields
                 else if (field.FieldType == typeof(bool))
                 {
                     if (positional || mandatory)
                         rep.Error(@"{0}.{1}: Fields of type bool cannot be positional or mandatory.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
-
-                    var options = field.GetOrderedOptionAttributeNames();
-                    if (!options.Any())
-                        rep.Error(@"{0}.{1}: Boolean field must have at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
-
-                    checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
+                    else
+                        // Here we have checked that the field is not positional, not an enum, and not [Ignore]’d, so it must have an [Option] attribute
+                        checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
                 // ### STRING, STRING[], INTEGER and FLOATING fields (including nullable)
@@ -744,11 +846,9 @@ namespace RT.Util.CommandLine
                     (ExactConvert.IsTrueIntegerNullableType(field.FieldType) && !field.FieldType.GetGenericArguments()[0].IsEnum) ||
                     field.FieldType == typeof(float) || field.FieldType == typeof(float?) || field.FieldType == typeof(double) || field.FieldType == typeof(double?))
                 {
-                    var options = field.GetOrderedOptionAttributeNames();
-                    if (!options.Any() && !positional)
-                        rep.Error(@"{0}.{1}: Field of type string, string[] or a numeric type must have either [IsPositional] or at least one [Option] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
-
-                    checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
+                    // options is null if and only if this field is positional
+                    if (options != null)
+                        checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
                     checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
                 }
                 // ### Command-group classes
@@ -756,7 +856,7 @@ namespace RT.Util.CommandLine
                 {
                     // Command-group class fields must be positional parameters
                     if (!positional)
-                        rep.Error(@"{0}.{1}: CommandGroup fields must be declared positional.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                        rep.Error(@"{0}.{1}: CommandGroup fields must be declared [IsPositional].".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     // The class must have at least two subclasses with a [CommandName] attribute
                     var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>());
@@ -767,7 +867,7 @@ namespace RT.Util.CommandLine
 
                     foreach (var subclass in subclasses)
                     {
-                        checkCommandNamesUnique(rep, subclass.GetCustomAttributes<CommandNameAttribute>(), commandsTaken, subclass);
+                        checkCommandNamesUnique(rep, subclass.GetCustomAttributes<CommandNameAttribute>().First().Names, commandsTaken, subclass);
 
                         // Recursively check this class
                         postBuildStep(rep, subclass, applicationTrType, true);
@@ -779,10 +879,11 @@ namespace RT.Util.CommandLine
                     rep.Error(@"{0}.{1} is not of a supported type. Currently accepted types are: enum types, bool, string, string[], numeric types (byte, sbyte, short, ushort, int, uint, long, ulong, float and double), nullable numeric types, and classes with the [CommandGroup] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
             }
 
-            // Warn if the method has unused documentation methods
-            foreach (var meth in commandLineType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.EndsWith("Doc") && m.ReturnType == typeof(string) && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { applicationTrType })))
-                if (!sensibleDocMethods.Contains(meth))
-                    rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
+            if (applicationTrType != null)
+                // Warn if the class has unused documentation methods
+                foreach (var meth in commandLineType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.EndsWith("Doc") && m.ReturnType == typeof(string) && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { applicationTrType })))
+                    if (!sensibleDocMethods.Contains(meth))
+                        rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field, or the corresponding field does not require documentation because it is a positional enum or has an [Enum] or [IsDefault] attribute.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
         }
 
         private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<string> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
@@ -812,30 +913,30 @@ namespace RT.Util.CommandLine
             }
         }
 
-        private static void checkCommandNamesUnique(IPostBuildReporter rep, IEnumerable<CommandNameAttribute> commands, Dictionary<string, Type> commandsTaken, Type subclass)
+        private static void checkCommandNamesUnique(IPostBuildReporter rep, string[] commandNames, Dictionary<string, Type> commandsTaken, Type subclass)
         {
-            foreach (var cmd in commands)
+            foreach (var cmd in commandNames)
             {
-                if (commandsTaken.ContainsKey(cmd.Name))
+                if (commandsTaken.ContainsKey(cmd))
                 {
-                    rep.Error(@"CommandName ""{1}"" is used by {0}...".Fmt(subclass.FullName, cmd.Name), "class " + subclass.Name);
-                    rep.Error(@" -- ... and by {0}.".Fmt(commandsTaken[cmd.Name].FullName), "class " + commandsTaken[cmd.Name].Name);
+                    rep.Error(@"CommandName ""{1}"" is used by {0}...".Fmt(subclass.FullName, cmd), "class " + subclass.Name);
+                    rep.Error(@" -- ... and by {0}.".Fmt(commandsTaken[cmd].FullName), "class " + commandsTaken[cmd].Name);
                 }
-                commandsTaken[cmd.Name] = subclass;
+                commandsTaken[cmd] = subclass;
             }
         }
 
-        private static void checkCommandNamesUnique(IPostBuildReporter rep, IEnumerable<CommandNameAttribute> cmdNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
+        private static void checkCommandNamesUnique(IPostBuildReporter rep, string[] commandNames, Dictionary<string, FieldInfo> commandsTaken, Type type, FieldInfo field, FieldInfo enumField)
         {
-            foreach (var cmd in cmdNames)
+            foreach (var cmd in commandNames)
             {
-                if (commandsTaken.ContainsKey(cmd.Name))
+                if (commandsTaken.ContainsKey(cmd))
                 {
-                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, cmd.Name), "enum " + field.FieldType.Name, enumField.Name);
+                    rep.Error(@"{0}.{1}: Option ""{2}"" is used more than once.".Fmt(field.FieldType.FullName, enumField.Name, cmd), "enum " + field.FieldType.Name, enumField.Name);
                     rep.Error(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), "class " + type.Name, field.Name);
-                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(commandsTaken[cmd.Name].DeclaringType.FullName, commandsTaken[cmd.Name].Name), "class " + commandsTaken[cmd.Name].DeclaringType.Name, commandsTaken[cmd.Name].Name);
+                    rep.Error(@" -- ... and by {0}.{1}.".Fmt(commandsTaken[cmd].DeclaringType.FullName, commandsTaken[cmd].Name), "class " + commandsTaken[cmd].DeclaringType.Name, commandsTaken[cmd].Name);
                 }
-                commandsTaken[cmd.Name] = enumField;
+                commandsTaken[cmd] = enumField;
             }
         }
 
@@ -979,16 +1080,16 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>
-    /// Use this on a sub-class of an abstract class to specify the command the user must use to invoke that class.
+    /// Use this on a sub-class of an abstract class or on an enum value to specify the command the user must use to invoke that class or enum value.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, Inherited = false, AllowMultiple = true), RummageKeepUsersReflectionSafe]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class CommandNameAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
-        /// <param name="name">The command the user can specify to invoke this class.</param>
-        public CommandNameAttribute(string name) { Name = name; }
+        /// <param name="names">The command(s) the user can specify to invoke this class or enum value.</param>
+        public CommandNameAttribute(params string[] names) { Names = names; }
         /// <summary>The command the user can specify to invoke this class.</summary>
-        public string Name { get; private set; }
+        public string[] Names { get; private set; }
     }
 
     /// <summary>Use this to specify that a command-line parameter is mandatory.</summary>
@@ -1044,11 +1145,40 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>Specifies that a specific command-line option should not be printed in help pages, i.e. the option should explicitly be undocumented.</summary>
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class UndocumentedAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
         public UndocumentedAttribute() { }
+    }
+
+    /// <summary>Describes the behaviour of an enum-typed field with the <see cref="EnumOptionsAttribute"/>.</summary>
+    public enum EnumBehaviour
+    {
+        /// <summary>Specifies that an enum is considered to represent a single value.</summary>
+        SingleValue,
+        /// <summary>Specifies that an enum is considered to represent a bitfield containing multiple values.</summary>
+        MultipleValues
+    }
+
+    /// <summary>Specifies that a field of an enum type should be interpreted as multiple possible options, each specified
+    /// by an <see cref="OptionAttribute"/> on the enum values in the enum type.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class EnumOptionsAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public EnumOptionsAttribute(EnumBehaviour behaviour) { Behaviour = behaviour; }
+
+        /// <summary>Specifies whether the enum is considered to represent a single value or a bitfield containing multiple values.</summary>
+        public EnumBehaviour Behaviour { get; private set; }
+    }
+
+    /// <summary>Specifies that the command-line parser should ignore a field.</summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class IgnoreAttribute : Attribute
+    {
+        /// <summary>Constructor.</summary>
+        public IgnoreAttribute() { }
     }
 
     /// <summary>Represents any error encountered while parsing a command line. This class is abstract.</summary>
@@ -1147,7 +1277,7 @@ namespace RT.Util.CommandLine
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
+            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*%`{0}%*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
         }
@@ -1165,7 +1295,7 @@ namespace RT.Util.CommandLine
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*${0}$*`".Fmt(EggsML.Escape(later)), "`*${0}$*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
+            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*$`{0}$*`".Fmt(EggsML.Escape(later)), "`*$`{0}$*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
         {
             EarlierCommandOrOption = earlier;
             LaterCommandOrOption = later;
@@ -1182,7 +1312,7 @@ namespace RT.Util.CommandLine
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompleteOption.Fmt("`*${0}$*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
+            : base(tr => tr.IncompleteOption.Fmt("`*$`{0}$*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
         {
             OptionName = optionName;
         }
@@ -1198,7 +1328,7 @@ namespace RT.Util.CommandLine
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedArgs, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnexpectedParameter.Fmt("`*%{0}%*`".Fmt(EggsML.Escape(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
+            : base(tr => tr.UnexpectedParameter.Fmt("`*%`{0}%*`".Fmt(EggsML.Escape(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
         {
             UnexpectedParameters = unexpectedArgs;
         }
@@ -1241,29 +1371,33 @@ namespace RT.Util.CommandLine
             string fieldFormat;
             if (field.IsDefined<IsPositionalAttribute>())
                 fieldFormat = "`*&<<" + EggsML.Escape(field.Name) + ">>&*`";
-            else if (field.FieldType.IsEnum)
-                fieldFormat = "`*${{" + field.FieldType.GetFields().SelectMany(f => f.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o))).JoinString("||") + "}}$*`";
-            else
+            else if (field.IsDefined<OptionAttribute>())
             {
-                var options = field.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o)).ToArray();
+                var options = field.GetOrderedOptionAttributeNames();
                 if (options.Length > 1)
-                    fieldFormat = "`*${{" + options.JoinString("||") + "}}$*`";
+                    fieldFormat = "`*${{" + options.Select(o => EggsML.Escape(o)).JoinString("||") + "}}$*`";
                 else
-                    fieldFormat = "`*$" + options[0] + "$*`";
+                    fieldFormat = "`*$`" + EggsML.Escape(options[0]) + "$*`";
                 fieldFormat += " `*&<<" + EggsML.Escape(field.Name) + ">>&*`";
             }
+            else if (field.FieldType.IsEnum)
+                // You can’t get a MissingParameterException for something that isn’t mandatory, so none of these fields has an [IsDefault]
+                fieldFormat = "`*${{" + field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).SelectMany(f => f.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o))).JoinString("||") + "}}$*`";
+            else
+                throw new InternalErrorException("475927: unexpected field attributes");
 
-            return beforeField == null ? (isOption ? tr.MissingOption : tr.MissingParameter).Fmt(fieldFormat) : (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).Fmt(fieldFormat, "`*&<<" + EggsML.Escape(beforeField.Name) + ">>&*`");
+            return beforeField == null
+                ? (isOption ? tr.MissingOption : tr.MissingParameter).Fmt(fieldFormat)
+                : (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).Fmt(fieldFormat, "`*&<<" + EggsML.Escape(beforeField.Name) + ">>&*`");
         }
     }
 
     static class CmdLineExtensions
     {
-        public static IEnumerable<string> GetOrderedOptionAttributeNames(this MemberInfo member)
+        public static string[] GetOrderedOptionAttributeNames(this MemberInfo member)
         {
-            return member.GetCustomAttributes<OptionAttribute>()
-                .SelectMany(attr => attr.Names)
-                .OrderBy(compareOptionNames);
+            var attr = member.GetCustomAttributes<OptionAttribute>().FirstOrDefault();
+            return attr == null ? null : attr.Names.OrderBy(compareOptionNames).ToArray();
         }
 
         private static int compareOptionNames(string opt1, string opt2)

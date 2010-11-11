@@ -166,7 +166,6 @@ namespace RT.Util.Consoles
             }
             foreach (var line in message.WordWrap(width, hangingIndent))
                 ConsoleUtil.WriteLine(line);
-
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>
