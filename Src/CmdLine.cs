@@ -70,10 +70,9 @@ namespace RT.Util.CommandLine
     ///                                                 is selected. A parameter on the attribute determines whether the user is allowed to
     ///                                                 specify only one enum value or multiple (which will be ORed like a
     ///                                                 bitfield).</description></item>
-    ///                 <item><description>If the field is optional, one enum value may have an <see cref="IsDefaultAttribute"/>
-    ///                                                 instead of the required <see cref="CommandNameAttribute"/> or
-    ///                                                 <see cref="OptionAttribute"/>. In such a case, ensure that the field is initialised
-    ///                                                 to the same enum value via a field initialiser.</description></item>
+    ///                 <item><description>If the field is optional, the enum value that corresponds to the field’s initial (default)
+    ///                                                 value may omit the <see cref="CommandNameAttribute"/> or
+    ///                                                 <see cref="OptionAttribute"/>.</description></item>
     ///             </list>
     ///         </description></item>
     ///     </list>
@@ -82,7 +81,7 @@ namespace RT.Util.CommandLine
     ///                                 <see cref="UndocumentedAttribute"/>, except for fields that use <see cref="EnumOptionsAttribute"/>
     ///                                 or <see cref="IgnoreAttribute"/>. For every field whose type is an enum type, the values in
     ///                                 the enum type must also have documentation or <see cref="UndocumentedAttribute"/>, except
-    ///                                 for the enum value that has the <see cref="IsDefaultAttribute"/> (if any).</para>
+    ///                                 for the enum value that corresponds to the field’s default value if the field is not mandatory.</para>
     ///                                 <para>Documentation is provided in one of the following ways:</para>
     ///     <list type="bullet">
     ///         <item><description>Monolingual, translation-agnostic (unlocalisable) applications use the <see cref="DocumentationLiteralAttribute"/>
@@ -120,7 +119,7 @@ namespace RT.Util.CommandLine
 
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
-            var ret = type.GetConstructor(Type.EmptyTypes).Invoke(null);
+            var ret = Activator.CreateInstance(type, true);
             var options = new Dictionary<string, Action>();
             var positionals = new List<positionalParameterInfo>();
             var missingMandatories = new List<FieldInfo>();
@@ -206,47 +205,53 @@ namespace RT.Util.CommandLine
                         var underlyingType = field.FieldType.GetEnumUnderlyingType();
                         object prev = null;
 
-                        foreach (var enumFieldForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
+                        foreach (var enumFieldForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                         {
                             var enumField = enumFieldForeach;
-                            foreach (var oForeach in enumField.GetOrderedOptionAttributeNames())
-                            {
-                                var o = oForeach;
-                                options[o] = () =>
+                            var optionNames = enumField.GetOrderedOptionAttributeNames();
+                            if (optionNames != null)
+                                foreach (var oForeach in optionNames)
                                 {
-                                    if (behaviour == EnumBehaviour.SingleValue)
-                                        field.SetValue(ret, enumField.GetValue(null));
-                                    else
+                                    var o = oForeach;
+                                    options[o] = () =>
                                     {
-                                        if (prev == null)
-                                            // Have to use the underlying integer type rather than the enum type because otherwise
-                                            // the dynamic invocation of the “|” operator doesn’t work if the enum type isn’t public
-                                            // (https://connect.microsoft.com/VisualStudio/feedback/details/620805)
-                                            prev = Activator.CreateInstance(underlyingType);
+                                        if (behaviour == EnumBehaviour.SingleValue)
+                                            field.SetValue(ret, enumField.GetValue(null));
+                                        else
+                                        {
+                                            if (prev == null)
+                                                // Have to use the underlying integer type rather than the enum type because otherwise
+                                                // the dynamic invocation of the “|” operator doesn’t work if the enum type isn’t public
+                                                // (https://connect.microsoft.com/VisualStudio/feedback/details/620805)
+                                                prev = Activator.CreateInstance(underlyingType);
 
-                                        // Dynamic invocation which uses the “|” operator at runtime for the enum type’s underlying integer type.
-                                        // Need to use GetRawConstantValue() in order to get a value that is typed as the underlying integer type.
-                                        // Need to use Convert.ChangeType() because (for example) “byte | byte” returns “int”.
-                                        prev = Convert.ChangeType((dynamic) prev | (dynamic) enumField.GetRawConstantValue(), underlyingType);
-                                        field.SetValue(ret, prev);
-                                    }
-                                    i++;
-                                    missingMandatories.Remove(field);
+                                            // Dynamic invocation which uses the “|” operator at runtime for the enum type’s underlying integer type.
+                                            // Need to use GetRawConstantValue() in order to get a value that is typed as the underlying integer type.
+                                            // Need to use Convert.ChangeType() because (for example) “byte | byte” returns “int”.
+                                            prev = Convert.ChangeType((dynamic) prev | (dynamic) enumField.GetRawConstantValue(), underlyingType);
+                                            field.SetValue(ret, prev);
+                                        }
+                                        i++;
+                                        missingMandatories.Remove(field);
 
-                                    if (behaviour == EnumBehaviour.SingleValue)
-                                    {
-                                        // If only a single value is allowed, throw an error if another value is specified later
-                                        foreach (var enumField2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(fld => !fld.IsDefined<IsDefaultAttribute>()))
-                                            foreach (var o2Foreach in enumField2.GetOrderedOptionAttributeNames())
+                                        if (behaviour == EnumBehaviour.SingleValue)
+                                        {
+                                            // If only a single value is allowed, throw an error if another value is specified later
+                                            foreach (var enumField2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                                             {
-                                                var o2 = o2Foreach;
-                                                options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type, applicationTr)); };
+                                                var optionNames2 = enumField2.GetOrderedOptionAttributeNames();
+                                                if (optionNames2 != null)
+                                                    foreach (var o2Foreach in optionNames2)
+                                                    {
+                                                        var o2 = o2Foreach;
+                                                        options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type, applicationTr)); };
+                                                    }
                                             }
-                                        // ... but don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
-                                        options[o] = () => { i++; };
-                                    }
-                                };
-                            }
+                                            // ... but don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
+                                            options[o] = () => { i++; };
+                                        }
+                                    };
+                                }
                         }
                     }
                 }
@@ -495,7 +500,7 @@ namespace RT.Util.CommandLine
                     if (f.Field.FieldType.IsEnum && !f.Field.IsDefined<OptionAttribute>())
                     {
                         optionsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
-                            .Where(fld => !fld.IsDefined<IsDefaultAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
+                            .Where(fld => fld.IsDefined<OptionAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
                             .SelectMany(fi => fi.GetOrderedOptionAttributeNames());
                         hasParam = false;
                     }
@@ -635,10 +640,13 @@ namespace RT.Util.CommandLine
                 {
                     var topRow = row;
                     row++;
-                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
+                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<UndocumentedAttribute>()))
                     {
-                        table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
-                        table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
+                        var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
+                        if (attr == null)
+                            continue;
+                        table.SetCell(2, row, new ConsoleColoredString(attr.Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
+                        table.SetCell(3, row, new ConsoleColoredString(attr.Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
                         table.SetCell(4, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
@@ -649,7 +657,7 @@ namespace RT.Util.CommandLine
                 // ### ENUM fields, “-x” scheme
                 else
                 {
-                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<IsDefaultAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
+                    foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => e.IsDefined<OptionAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
                     {
                         table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
                         table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
@@ -746,8 +754,16 @@ namespace RT.Util.CommandLine
             if (!commandLineType.IsClass)
                 rep.Error(@"{0} is not a class.".Fmt(commandLineType.FullName), (commandLineType.IsEnum ? "enum " : commandLineType.IsInterface ? "interface " : typeof(Delegate).IsAssignableFrom(commandLineType) ? "delegate " : "struct ") + commandLineType.Name);
 
-            if (commandLineType.GetConstructor(Type.EmptyTypes) == null)
-                rep.Error(@"{0} does not have a default constructor.".Fmt(commandLineType.FullName), "class " + commandLineType.Name);
+            object instance;
+            try
+            {
+                instance = Activator.CreateInstance(commandLineType, true);
+            }
+            catch (Exception e)
+            {
+                rep.Error(@"{0} could not be instantiated ({1}). Does it have a default constructor?".Fmt(commandLineType.FullName, e.Message), "class " + commandLineType.Name);
+                return;
+            }
 
             if (applicationTrType != null)
             {
@@ -811,23 +827,15 @@ namespace RT.Util.CommandLine
                 if (field.FieldType.IsEnum)
                 {
                     var commandsTaken = new Dictionary<string, FieldInfo>();
+                    var defaultValue = field.GetValue(instance);
 
-                    bool haveDefault = false;
                     foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
-                        if (enumField.IsDefined<IsDefaultAttribute>())
-                        {
-                            if (mandatory)
-                                rep.Error("{0}.{1} (used by {2}.{3}): The [IsDefault] attribute cannot be used if the field is marked mandatory.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            if (haveDefault)
-                                rep.Error("{0}.{1} (used by {2}.{3}): There is more than one [IsDefault] attribute in this enum type. Only one such attribute is allowed.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            else if (positional && enumField.IsDefined<CommandNameAttribute>())
-                                rep.Error("{0}.{1} (used by {2}.{3}): Cannot have [IsDefault] and [CommandName] attribute on the same enum value.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            else if (!positional && enumField.IsDefined<OptionAttribute>())
-                                rep.Error("{0}.{1} (used by {2}.{3}): Cannot have [IsDefault] and [Option] attribute on the same enum value.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
-                            haveDefault = true;
+                        if (enumField.IsDefined<IgnoreAttribute>())
                             continue;
-                        }
+                        // If the field is not mandatory, it is allowed to have a default value
+                        if (!mandatory && enumField.GetValue(null).Equals(defaultValue))
+                            continue;
 
                         // check that the enum values all have documentation
                         checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods);
@@ -1134,15 +1142,6 @@ namespace RT.Util.CommandLine
     {
         /// <summary>Constructor.</summary>
         public IsPositionalAttribute() { }
-    }
-
-    /// <summary>Use this on an enum value to specify that it is the default value in case the option is not specified.
-    /// (Make sure that the relevant field is also initialised to the same enum value using a field initialiser.)</summary>
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
-    public sealed class IsDefaultAttribute : Attribute
-    {
-        /// <summary>Constructor.</summary>
-        public IsDefaultAttribute() { }
     }
 
     /// <summary>
