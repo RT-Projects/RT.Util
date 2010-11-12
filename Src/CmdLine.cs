@@ -799,17 +799,20 @@ namespace RT.Util.CommandLine
                 var enumOpt = field.GetCustomAttributes<EnumOptionsAttribute>().FirstOrDefault();
 
                 if (!positional && options == null && enumOpt == null)
-                    rep.Error(@"{0}.{1}: Every field must have one of the following attributes: [IsPositional], [Option], [Enum] (fields of an enum type only), or [Ignore].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                {
+                    rep.Error(@"{0}.{1}: Every field must have one of the following attributes: [IsPositional], [Option], [EnumOptions] (fields of an enum type only), or [Ignore].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    continue;
+                }
 
                 // Any combinations of multiple of the above are invalid, as is EnumAttribute on a non-enum field
                 if (enumOpt != null && !field.FieldType.IsEnum)
-                    rep.Error(@"{0}.{1}: Cannot use [Enum] attribute on a field whose type is not an enum type.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1}: Cannot use [EnumOptions] attribute on a field whose type is not an enum type.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                 else if (positional && options != null)
                     rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [Option] attributes on the same field.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                 else if (positional && enumOpt != null)
-                    rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [Enum] attributes on the same field. For a positional enum value, use only [IsPositional].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [EnumOptions] attributes on the same field. For a positional enum value, use only [IsPositional].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                 else if (options != null && enumOpt != null)
-                    rep.Error(@"{0}.{1}: Cannot use [Option] and [Enum] attributes on the same field. To have the enum value specified by an option followed by a name, for example “-x foo”, use only [Option]. To have the enum value specified by a single option, for example “-x”, use only [Enum] and place the [Option] attributes on the enum values in the enum type instead.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    rep.Error(@"{0}.{1}: Cannot use [Option] and [EnumOptions] attributes on the same field. To have the enum value specified by an option followed by a name, for example “-x foo”, use only [Option]. To have the enum value specified by a single option, for example “-x”, use only [EnumOptions] and place the [Option] attributes on the enum values in the enum type instead.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
                 else if (options != null && options.Length == 0)
                     rep.Error(@"{0}.{1}: An [Option] attribute must specify at least one option name.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
@@ -917,7 +920,7 @@ namespace RT.Util.CommandLine
                 // Warn if the class has unused documentation methods
                 foreach (var meth in commandLineType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.EndsWith("Doc") && m.ReturnType == typeof(string) && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { applicationTrType })))
                     if (!sensibleDocMethods.Contains(meth))
-                        rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field, or the corresponding field does not require documentation because it is a positional enum or has an [Enum] or [IsDefault] attribute.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
+                        rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field, or the corresponding field does not require documentation because it is a positional enum or has an [EnumOptions] or [IsDefault] attribute.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
         }
 
         private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<string> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
