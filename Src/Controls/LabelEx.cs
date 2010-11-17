@@ -19,6 +19,8 @@ namespace RT.Util.Controls
         private bool _wordWrap = false;
         private double _paragraphSpacing = 0d;
 
+        private const string BULLET = " • ";
+
         /// <summary>Constructor.</summary>
         public LabelEx()
         {
@@ -192,7 +194,7 @@ namespace RT.Util.Controls
                 if (bulletSizes == null)
                     bulletSizes = new Dictionary<FontStyle, int>();
                 if (!bulletSizes.ContainsKey(font.Style))
-                    bulletSizes[font.Style] = TextRenderer.MeasureText(g, " • ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+                    bulletSizes[font.Style] = TextRenderer.MeasureText(g, BULLET, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
                 return bulletSizes[font.Style];
             };
 
@@ -233,7 +235,7 @@ namespace RT.Util.Controls
                         case '[':
                             advance = bulletSize(font);
                             if (renderings != null)
-                                renderings.Add(Tuple.Create(" • ", font, new Point(x, y), foreColor));
+                                renderings.Add(Tuple.Create(BULLET, font, new Point(x, y), foreColor));
                             x += advance;
                             bulletIndent = state.BulletIndent + advance;
                             break;
