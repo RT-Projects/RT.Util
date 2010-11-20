@@ -262,13 +262,11 @@ namespace RT.Util.Text
             }
 
             // Word-wrap all the contents of all the cells
+            trueCell truCel;
             foreach (var row in _cells)
                 for (int col = 0; col < row.Count; col++)
-                    if (row[col] is trueCell)
-                    {
-                        var cel = (trueCell) row[col];
-                        cel.Wordwrap(columnWidths.Skip(col).Take(cel.ColSpan).Sum() + (cel.ColSpan - 1) * ColumnSpacing);
-                    }
+                    if ((truCel = row[col] as trueCell) != null)
+                        truCel.Wordwrap(columnWidths.Skip(col).Take(truCel.ColSpan).Sum() + (truCel.ColSpan - 1) * ColumnSpacing);
 
             // Calculate the string index for each column
             var strIndexByCol = new int[cols + 1];

@@ -605,6 +605,32 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>Transforms every element of an input collection using two selector functions and returns a collection containing all the results.</summary>
+        /// <typeparam name="TSource">Type of the elements in the source collection.</typeparam>
+        /// <typeparam name="TResult">Type of the results of the selector functions.</typeparam>
+        /// <param name="source">Input collection to transform.</param>
+        /// <param name="selector1">First selector function.</param>
+        /// <param name="selector2">Second selector function.</param>
+        /// <returns>A collection containing the transformed elements from both selectors, thus containing twice as many elements as the original collection.</returns>
+        public static IEnumerable<TResult> SelectTwo<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (selector1 == null)
+                throw new ArgumentNullException("selector1");
+            if (selector2 == null)
+                throw new ArgumentNullException("selector2");
+            return selectTwoIterator(source, selector1, selector2);
+        }
+        private static IEnumerable<TResult> selectTwoIterator<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
+        {
+            foreach (var elem in source)
+            {
+                yield return selector1(elem);
+                yield return selector2(elem);
+            }
+        }
+
         /// <summary>
         /// Turns all elements in the enumerable to strings and joins them using the specified string
         /// as the separator and the specified prefix and suffix for each string.
@@ -655,18 +681,6 @@ namespace RT.Util.ExtensionMethods
                         return false;
                 return true;
             }
-        }
-
-        /// <summary>Inserts spaces at the beginning of every line contained within the specified string.</summary>
-        /// <param name="str">String to add indentation to.</param>
-        /// <param name="by">Number of spaces to add.</param>
-        /// <param name="indentFirstLine">If true (default), all lines are indented; otherwise, all lines except the first.</param>
-        /// <returns>The indented string.</returns>
-        public static string Indent(this string str, int by, bool indentFirstLine = true)
-        {
-            if (indentFirstLine)
-                return Regex.Replace(str, "^", new string(' ', by), RegexOptions.Multiline);
-            return Regex.Replace(str, "(?<=\n)", new string(' ', by));
         }
     }
 }
