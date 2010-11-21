@@ -170,7 +170,7 @@ namespace RT.Util.Consoles
             List<ConsoleColor> colors = new List<ConsoleColor>();
             List<int> colorLengths = new List<int>();
 
-            eggWalk(node, text, colors, colorLengths, ConsoleColor.Gray, false);
+            eggWalk(node, text, colors, colorLengths, ConsoleColor.Gray);
 
             var colArr = new ConsoleColor[colorLengths.Sum()];
             var index = 0;
@@ -187,11 +187,12 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(text.ToString(), colArr);
         }
 
-        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colors, List<int> colorLengths, ConsoleColor curColor, bool curLight)
+        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colors, List<int> colorLengths, ConsoleColor curColor)
         {
             var tag = node as EggsTag;
             if (tag != null)
             {
+                bool curLight = curColor >= ConsoleColor.DarkGray;
                 switch (tag.Tag)
                 {
                     case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
@@ -205,7 +206,7 @@ namespace RT.Util.Consoles
                     case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
                 }
                 foreach (var child in tag.Children)
-                    eggWalk(child, text, colors, colorLengths, curColor, curLight);
+                    eggWalk(child, text, colors, colorLengths, curColor);
             }
             else if (node is EggsText)
             {
@@ -230,6 +231,7 @@ namespace RT.Util.Consoles
         /// <item><description><c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
         /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
         /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
+        /// <item><description><c>=</c> = dark gray (independent of <c>*</c> tag)</description></item>
         /// </list>
         /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
         /// <para>Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In other words, the contents of a <c>+</c> tag are treated as if they were a single word.
@@ -247,7 +249,7 @@ namespace RT.Util.Consoles
                     results.Add(new ConsoleColoredString(new string(' ', s), color));
                     return s;
                 },
-                (color, tag) =>
+                (color, tag, parameter) =>
                 {
                     bool curLight = color >= ConsoleColor.DarkGray;
                     switch (tag)

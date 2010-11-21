@@ -208,12 +208,13 @@ namespace RT.Util
         public delegate int EggNextLine<TState>(TState state, bool newParagraph, int indent);
 
         /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
-        /// changes for a given EggsML tag character.</summary>
+        /// changes for a given EggsML tag character. This delegate is called for all tags except for <c>+...+</c> and <c>&lt;...&gt;</c>.</summary>
         /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
         /// <param name="oldState">The previous state (for the parent tag).</param>
         /// <param name="eggTag">The EggsML tag character.</param>
+        /// <param name="parameter">The contents of the immediately preceding “&lt;...&gt;” tag (if any), which can be used to parameterize other tags.</param>
         /// <returns>The next state (return the old state for all tags that should not have a meaning) and an integer indicating the amount by which opening this tag has advanced the text position.</returns>
-        public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag);
+        public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag, string parameter);
 
         private sealed class eggWalkData<TState>
         {
@@ -222,11 +223,13 @@ namespace RT.Util
             public List<TState> WordPiecesState;
             public List<int> WordPiecesWidths;
             public int WordPiecesWidthsSum;
+            public TState SpaceState;
             public EggMeasure<TState> Measure;
             public EggRender<TState> Render;
             public EggNextLine<TState> AdvanceToNextLine;
             public EggNextState<TState> NextState;
             public int X, WrapWidth, ActualWidth, CurParagraphIndent;
+            public string CurParameter;
 
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
@@ -245,13 +248,19 @@ namespace RT.Util
                 if (tag != null)
                 {
                     var newState = state;
-                    if (tag.Tag != null)
+                    if (tag.Tag == '+')
+                        curNowrap = true;
+                    else if (tag.Tag == '<')
                     {
-                        var tup = NextState(state, tag.Tag.Value);
+                        CurParameter = tag.ToString(true);
+                        return;
+                    }
+                    else if (tag.Tag != null)
+                    {
+                        var tup = NextState(state, tag.Tag.Value, CurParameter);
+                        CurParameter = null;
                         newState = tup.Item1;
                         X += tup.Item2;
-                        if (tag.Tag == '+')
-                            curNowrap = true;
                     }
                     foreach (var child in tag.Children)
                         eggWalkWordWrapRecursive(child, newState, curNowrap);
@@ -321,6 +330,8 @@ namespace RT.Util
                             AtStartOfLine = false;
                         }
 
+                        SpaceState = state;
+
                         if (txt[i] == '\n')
                         {
                             // If the whitespace character is actually a newline, start a new paragraph.
@@ -358,7 +369,7 @@ namespace RT.Util
             {
                 // Add a space if we are not at the beginning of the line.
                 if (!AtStartOfLine)
-                    renderSpace(state);
+                    renderSpace(SpaceState);
                 for (int j = 0; j < WordPieces.Count; j++)
                     Render(WordPiecesState[j], WordPieces[j], WordPiecesWidths[j]);
                 X += WordPiecesWidthsSum;
@@ -370,7 +381,8 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Word-wraps a given piece of EggsML, assuming that it is linearly flowing text. Newline (\n) characters can be used to split the text into multiple paragraphs.</summary>
+        /// <summary>Word-wraps a given piece of EggsML, assuming that it is linearly flowing text. Newline (\n) characters can be used to split the text into multiple paragraphs.
+        /// See remarks for the special meaning of <c>+...+</c> and <c>&lt;...&gt;</c>.</summary>
         /// <typeparam name="TState">The type of the text state that an EggsML can change, e.g. font or color.</typeparam>
         /// <param name="node">The root node of the EggsML tree to word-wrap.</param>
         /// <param name="initialState">The initial text state.</param>
@@ -381,6 +393,13 @@ namespace RT.Util
         /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
         /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
         /// <returns>The maximum width of the text.</returns>
+        /// <remarks>
+        /// <list type="bullet">
+        ///     <item><description>The <c>+...+</c> tag marks text that may not be broken by wrapping (effectively turning all spaces into non-breaking spaces).</description></item>
+        ///     <item><description>The <c>&lt;...&gt;</c> tag marks a parameter to an immediately following tag. For example, if the input EggsML contains <c>&lt;X&gt;{Foo}</c>,
+        ///                                     the text “X” will be passed as the parameter to <paramref name="nextState"/> when the <c>{</c> tag is processed.</description></item>
+        /// </list>
+        /// </remarks>
         public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth,
             EggMeasure<TState> measure, EggRender<TState> render, EggNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
