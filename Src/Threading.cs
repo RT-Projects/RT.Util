@@ -6,143 +6,22 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     /// <summary>
-    /// Provides a thread with the ability to yield (sleep) for a specified interval in a cleanly
-    /// interruptible way.
-    /// </summary>
-    /// <remarks>This class itself is not entirely thread-safe - see individual members' restrictions.</remarks>
-    public sealed class ThreadSleeper
-    {
-        private readonly object _sleeplock = new object();
-        private volatile bool _preventSleep = false;
-        private volatile bool _preventSleepOnce = false;
-
-        /// <summary>
-        /// <para>Causes the calling thread to sleep for the specified interval or indefinitely, in a way that
-        /// can be interrupted or prevented altogether using other methods of this class.</para>
-        /// <para>Threading: may only be called on the thread that "owns" this instance.</para>
-        /// </summary>
-        /// <param name="milliseconds">Number of milliseconds to sleep, or use default value to sleep indefinitely.</param>
-        public void Sleep(int milliseconds = int.MinValue)
-        {
-            lock (_sleeplock)
-            {
-                try
-                {
-                    if (_preventSleep || _preventSleepOnce) return;
-                    if (milliseconds == int.MinValue)
-                        Monitor.Wait(_sleeplock);
-                    else
-                        Monitor.Wait(_sleeplock, milliseconds);
-                }
-                finally
-                {
-                    _preventSleepOnce = false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Permanently prevents all further calls to Sleep from waiting - they will return immediately.
-        /// If the owning thread is currently inside a Sleep, causes it to return immediately too.
-        /// <para>Threading: thread-safe (call from any thread)</para>
-        /// </summary>
-        public void PreventSleep()
-        {
-            _preventSleep = true;
-            lock (_sleeplock)
-                Monitor.Pulse(_sleeplock);
-        }
-
-        /// <summary>
-        /// If the owning thread is currently inside Sleep, will cause Sleep to return immediately;
-        /// otherwise will cause the next call to Sleep to return immediately.
-        /// <para>Threading: thread-safe (call from any thread)</para>
-        /// </summary>
-        public void PreventSleepOnce()
-        {
-            _preventSleepOnce = true;
-            lock (_sleeplock)
-                Monitor.Pulse(_sleeplock);
-        }
-    }
-
-    /// <summary>
-    /// Implements a threading primitive that allows a thread to easily expose methods that allow
-    /// the thread to be terminated in a cooperative way. See also: example.
-    /// </summary>
-    /// <example>
-    /// Intended use:
-    /// <code>
-    /// void ThreadProc()
-    /// {
-    ///     while (!myThreadExiter.ShouldExit)
-    ///     {
-    ///         // do work
-    ///     }
-    ///     myThreadExiter.SignalExited();
-    /// }
-    /// </code>
-    /// </example>
-    public class ThreadExiter
-    {
-        private readonly object _exitlock = new object();
-        private volatile bool _shouldExit = false;
-        private volatile bool _exited = false;
-
-        /// <summary>
-        /// Set this value to true to inform the thread that it should exit. Note that resetting this
-        /// value back to false quickly may or may not result in the thread actually exiting.
-        /// </summary>
-        public bool ShouldExit { get { return _shouldExit; } set { _shouldExit = value; } }
-
-        /// <summary>
-        /// Indicates whether the thread has signalled that it has exited.
-        /// </summary>
-        public bool Exited { get { return _exited; } }
-
-        /// <summary>
-        /// Blocks until the thread has indicated that it has exited. Note that this method does not
-        /// actually signal the thread to exit - see <see cref="ShouldExit"/> for that.
-        /// </summary>
-        public void WaitExited()
-        {
-            lock (_exitlock)
-            {
-                if (_exited) return;
-                Monitor.Wait(_exitlock);
-            }
-        }
-
-        /// <summary>
-        /// Used by a thread to indicate that it is about to return from its thread proc. Causes all calls to
-        /// <see cref="WaitExited"/>, if any, to return. Also makes <see cref="Exited"/> true.
-        /// </summary>
-        public void SignalExited()
-        {
-            _exited = true;
-            lock (_exitlock)
-                Monitor.PulseAll(_exitlock);
-        }
-    }
-
-    /// <summary>
     /// Encapsulates a class performing a certain activity periodically, which can be initiated once
     /// and then permanently shut down, but not paused/resumed. The class owns its own separate
-    /// _foreground_ thread, and manages this thread all by itself. The periodic task is executed on
-    /// this thread.
+    /// thread, and manages this thread all by itself. The periodic task is executed on this thread.
     /// <para>The chief differences to <see cref="System.Threading.Timer"/> are as follows. This
     /// class will never issue overlapping activities, even if an activity takes much longer than the interval;
     /// the interval is between the end of the previous occurrence of the activity and the start of the next.
-    /// The activity is executed on a foreground thread, and thus will complete once started, unless a
-    /// catastrophic abort occurs. When shutting down the activity, it's possible to wait until the last
-    /// occurrence, if any, has completed fully.</para>
+    /// The activity is executed on a foreground thread (by default), and thus will complete once started,
+    /// unless a catastrophic abort occurs. When shutting down the activity, it's possible to wait until the
+    /// last occurrence, if any, has completed fully.</para>
     /// <para>Threading: unsafe (call public methods on the creating thread only) - or is it?</para>
     /// </summary>
     public abstract class Periodic
     {
         private Thread _thread;
-        private ThreadExiter _exiter;
-        private ThreadSleeper _sleeper;
+        private CancellationTokenSource _cancellation;
+        private ManualResetEvent _exited;
 
         /// <summary>
         /// Override to indicate how long to wait between the call to <see cref="Start"/> and the first occurrence
@@ -173,7 +52,7 @@ namespace RT.Util
         /// Returns false before the first call to <see cref="Start"/> and after the first call to <see cref="Shutdown"/>;
         /// true between them.
         /// </summary>
-        public bool IsRunning { get { return _exiter != null && !_exiter.ShouldExit; } }
+        public bool IsRunning { get { return _cancellation != null && !_cancellation.IsCancellationRequested; } }
 
         /// <summary>
         /// Schedules the periodic activity to start occurring. This method may only be called once.
@@ -184,8 +63,8 @@ namespace RT.Util
             if (_thread != null)
                 throw new InvalidOperationException("\"Start\" called multiple times ({0})".Fmt(GetType().Name));
 
-            _exiter = new ThreadExiter();
-            _sleeper = new ThreadSleeper();
+            _exited = new ManualResetEvent(false);
+            _cancellation = new CancellationTokenSource();
             _thread = new Thread(threadProc) { IsBackground = backgroundThread };
             _thread.Start();
         }
@@ -201,12 +80,11 @@ namespace RT.Util
         {
             if (waitForExit && _periodicActivityRunning && Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
                 throw new InvalidOperationException("Cannot call Shutdown(true) from within PeriodicActivity() on the same thread (this would cause a deadlock).");
-            if (_exiter == null || _exiter.ShouldExit)
+            if (_cancellation == null || _cancellation.IsCancellationRequested)
                 return false;
-            _exiter.ShouldExit = true;
-            _sleeper.PreventSleep();
+            _cancellation.Cancel();
             if (waitForExit)
-                _exiter.WaitExited();
+                _exited.WaitOne();
             return true;
         }
 
@@ -214,19 +92,19 @@ namespace RT.Util
         {
             try
             {
-                _sleeper.Sleep((int) FirstInterval.TotalMilliseconds);
-                while (!_exiter.ShouldExit)
+                _cancellation.Token.SleepCancellable(FirstInterval);
+                while (!_cancellation.IsCancellationRequested)
                 {
                     _periodicActivityRunning = true;
                     PeriodicActivity();
                     _periodicActivityRunning = false;
-                    _sleeper.Sleep((int) SubsequentInterval.TotalMilliseconds);
+                    _cancellation.Token.SleepCancellable(SubsequentInterval);
                 }
             }
             finally
             {
                 try { LastActivity(); }
-                finally { _exiter.SignalExited(); }
+                finally { _exited.Set(); }
             }
         }
     }

@@ -83,10 +83,10 @@
     <Compile Include="EggsML.cs" />
     <Compile Include="ExactConvert.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
-    <Compile Include="ExtensionMethods\ControlExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\IQueryableExtensions.cs" />
+    <Compile Include="ExtensionMethods\MiscExtensions.cs" />
     <Compile Include="ExtensionMethods\NumericExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
     <Compile Include="ExtensionMethods\StreamExtensions.cs" />
