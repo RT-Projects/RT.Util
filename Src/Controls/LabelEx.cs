@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Controls
 {
@@ -28,6 +29,24 @@ namespace RT.Util.Controls
         public event LinkEventHandler LinkGotFocus;
         /// <summary>Occurs when a link within the label loses the keyboard focus.</summary>
         public event LinkEventHandler LinkLostFocus;
+
+        private static Cursor _cursorHandCache;
+        private static Cursor _cursorHand
+        {
+            get
+            {
+                if (_cursorHandCache == null)
+                {
+                    var handle = WinAPI.LoadCursor(IntPtr.Zero, 32649);
+                    if (handle == IntPtr.Zero)
+                        _cursorHandCache = Cursors.Hand;
+                    else
+                        try { _cursorHandCache = new Cursor(handle); }
+                        catch { _cursorHandCache = Cursors.Hand; }
+                }
+                return _cursorHandCache;
+            }
+        }
 
         /// <summary>Constructor.</summary>
         public LabelEx()
@@ -156,6 +175,10 @@ namespace RT.Util.Controls
         [DefaultValue(typeof(Color), "Red")]
         public virtual Color LinkActiveColor { get; set; }
 
+        /// <summary>Contains information about a parse error that describes in what way the current value of
+        /// <see cref="Text"/> is invalid EggsML, or null if it is valid.</summary>
+        public EggsMLParseException ParseError { get; private set; }
+
         private class renderingInfo
         {
             public string Text { get; private set; }
@@ -190,6 +213,7 @@ namespace RT.Util.Controls
         private bool _spaceIsDownOnLink;
         private List<Control> _parentChain = new List<Control>();
         private bool _formJustDeactivated;
+        private bool _lastHadFocus;
         private ColorConverter _colorConverter;
 
         private int? _keyboardFocusOnLinkNumber
@@ -226,20 +250,59 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Override; see base.</summary>
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            _cachedRendering = null;
+            Invalidate();
+            base.OnEnabledChanged(e);
+        }
+
+        /// <summary>Override; see base.</summary>
         protected override void OnTextChanged(EventArgs e)
         {
             _cachedPreferredSizes.Clear();
             _cachedRendering = null;
             base.OnTextChanged(e);
-            _parsed = EggsML.Parse(base.Text);
             _mnemonic = '\0';
             setTabStop(false);
-            extractMnemonicEtc(_parsed);
+            var origText = base.Text;
+            try
+            {
+                _parsed = EggsML.Parse(origText);
+                ParseError = null;
+
+                // We know there are no mnemonics or links in the exception message, so only do this if there was no parse error
+                extractMnemonicEtc(_parsed);
+            }
+            catch (EggsMLParseException epe)
+            {
+                ParseError = epe;
+                var msg = "";
+                int ind = 0;
+                if (epe.FirstIndex != null)
+                {
+                    ind = epe.FirstIndex.Value;
+                    msg += EggsML.Escape(origText.Substring(0, ind));
+                    msg += "<Red>={0}=".Fmt(EggsML.Escape(origText.Substring(ind, 1)));
+                    ind++;
+                }
+                msg += EggsML.Escape(origText.Substring(ind, epe.Index - ind));
+                ind = epe.Index;
+                if (epe.Length > 0)
+                {
+                    msg += "<Red>={0}=".Fmt(EggsML.Escape(origText.Substring(ind, epe.Length)));
+                    ind += epe.Length;
+                }
+                msg += "<Red>= ← (" + EggsML.Escape(epe.Message) + ")=";
+                msg += EggsML.Escape(origText.Substring(ind));
+                _parsed = EggsML.Parse(msg);
+            }
             autosize();
-            if (Focused && _linkLocations != null && _linkLocations.Count > 0)
+            if (Focused && TabStop)
                 _keyboardFocusOnLinkNumber = 0;
             else
                 _keyboardFocusOnLinkNumber = null;
+            Invalidate();
         }
 
         private void extractMnemonicEtc(EggsNode node)
@@ -257,10 +320,13 @@ namespace RT.Util.Controls
                     throw new ArgumentException("'&' mnemonic tag must not contain anything other than a single character.");
                 _mnemonic = char.ToUpperInvariant(((EggsText) tag.Children.First()).Text[0]);
             }
+            else if (tag.Tag == '{')
+            {
+                // Deliberately skip the inside of links: don’t wanna interpret their mnemonics as the main mnemonic
+                setTabStop(true);
+            }
             else
             {
-                if (tag.Tag == '{')
-                    setTabStop(true);
                 foreach (var child in tag.Children)
                 {
                     if (TabStop && _mnemonic != '\0')
@@ -313,7 +379,9 @@ namespace RT.Util.Controls
             }
             foreach (var item in _cachedRendering)
             {
-                TextRenderer.DrawText(g, item.Text, item.Font, item.Rectangle.Location,
+                TextRenderer.DrawText(g, item.Text,
+                    _mouseOnLinkNumber != null && _mouseOnLinkNumber == item.LinkNumber ? new Font(item.Font, item.Font.Style | FontStyle.Underline) : item.Font,
+                    item.Rectangle.Location,
                     (_mouseIsDownOnLink && _mouseOnLinkNumber == item.LinkNumber) ||
                     (_spaceIsDownOnLink && _keyboardFocusOnLinkNumber == item.LinkNumber)
                         ? LinkActiveColor : item.Color,
@@ -405,27 +473,40 @@ namespace RT.Util.Controls
                     var font = state.Font;
                     switch (tag)
                     {
+                        // ITALICS
                         case '/': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Italic)), 0);
+
+                        // BOLD
                         case '*': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Bold)), 0);
+
+                        // UNDERLINE
                         case '_': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
+
+                        // MAIN MNEMONIC
                         case '&':
                             if (ShowKeyboardCues)
                                 return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
-                            return Tuple.Create(state, 0);
+                            break;
+
+                        // BULLET POINT
                         case '[':
                             var advance = bulletSize(font);
-                            renderings.Add(new renderingInfo(BULLET, font, new Rectangle(x, y, advance, spaceSize(font).Height), initialForeColor, null));
+                            if (renderings != null)
+                                renderings.Add(new renderingInfo(BULLET, font, new Rectangle(x, y, advance, spaceSize(font).Height), initialForeColor, null));
                             x += advance;
                             return Tuple.Create(state.ChangeBlockIndent(state.BlockIndent + advance), advance);
+
+                        // LINK (e.g. <link target>{link text}, link target may be omitted)
                         case '{':
-                            if (linkRenderings != null)
-                            {
-                                linkRenderings.Add(new linkLocationInfo { LinkID = parameter });
-                                return Tuple.Create(state.ChangeLinkNumberAndColor(linkRenderings.Count - 1, LinkColor), 0);
-                            }
-                            break;
+                            if (linkRenderings == null)
+                                break;
+                            linkRenderings.Add(new linkLocationInfo { LinkID = parameter });
+                            return Tuple.Create(state.ChangeLinkNumberAndColor(linkRenderings.Count - 1, Enabled ? LinkColor : SystemColors.GrayText), 0);
+
+                        // COLOUR (e.g. <colour>=coloured text=, revert to default colour if no <colour> specified)
                         case '=':
-                            return Tuple.Create(state.ChangeColor((Color) (_colorConverter ?? (_colorConverter = new ColorConverter())).ConvertFromString(parameter)), 0);
+                            var color = parameter == null ? initialForeColor : (Color) (_colorConverter ?? (_colorConverter = new ColorConverter())).ConvertFromString(parameter);
+                            return Tuple.Create(state.ChangeColor(color), 0);
                     }
                     return Tuple.Create(state, 0);
                 });
@@ -435,19 +516,62 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnChangeUICues(UICuesEventArgs e)
         {
-            if (e.ChangeKeyboard && _mnemonic != '\0')
+            if (e.ChangeKeyboard && (_mnemonic != '\0' || TabStop))
+            {
                 _cachedRendering = null;
+                Invalidate();
+            }
         }
 
         /// <summary>Override; see base.</summary>
         protected override bool ProcessMnemonic(char charCode)
         {
-            if (Enabled && Visible && _mnemonic == char.ToUpperInvariant(charCode) && Parent != null)
+            if (!Enabled || !Visible)
+                return false;
+
+            // Main mnemonic, which takes focus to the next control in the form
+            if (_mnemonic == char.ToUpperInvariant(charCode) && Parent != null)
             {
                 OnMnemonic();
                 return true;
             }
-            return false;
+
+            // Mnemonics for links within the label, which trigger the link
+            Stack<int> links = new Stack<int>();
+            int linkNumber = -1;
+            Func<EggsNode, bool> recurse = null;
+            recurse = node =>
+            {
+                EggsTag tag;
+                if ((tag = node as EggsTag) != null)
+                {
+                    if (tag.Tag == '<')
+                        return false;
+                    else if (tag.Tag == '{')
+                    {
+                        linkNumber++;
+                        links.Push(linkNumber);
+                    }
+                    else if (tag.Tag == '&' && links.Count > 0 && tag.Children.Count == 1 && tag.Children.First() is EggsText &&
+                        char.ToUpperInvariant(tag.Children.First().ToString(true)[0]) == char.ToUpperInvariant(charCode))
+                    {
+                        var pop = links.Pop();
+                        _keyboardFocusOnLinkNumber = pop;
+                        Focus();
+                        if (LinkActivated != null)
+                            LinkActivated(this, new LinkEventArgs(_linkLocations[pop].LinkID, _linkLocations[pop].Rectangles));
+                        return true;
+                    }
+                    foreach (var child in tag.Children)
+                        if (recurse(child))
+                            return true;
+                    if (tag.Tag == '{')
+                        links.Pop();
+                }
+                return false;
+            };
+
+            return recurse(_parsed);
         }
 
         /// <summary>This method is called when the control responds to a mnemonic being pressed.</summary>
@@ -469,7 +593,7 @@ namespace RT.Util.Controls
                         {
                             if (_mouseOnLinkNumber != i)
                             {
-                                Cursor = Cursors.Hand;
+                                Cursor = _cursorHand;
                                 _mouseOnLinkNumber = i;
                                 Invalidate();
                             }
@@ -487,11 +611,24 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Override; see base.</summary>
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            if (_cachedRendering != null && TabStop)
+            {
+                _mouseOnLinkNumber = null;
+                Invalidate();
+            }
+            base.OnMouseLeave(e);
+        }
+
+        /// <summary>Override; see base.</summary>
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if (_mouseOnLinkNumber != null)
             {
                 _mouseIsDownOnLink = true;
+                _keyboardFocusOnLinkNumber = _mouseOnLinkNumber;
+                Focus();
                 Invalidate();
             }
             base.OnMouseDown(e);
@@ -525,6 +662,7 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnGotFocus(EventArgs e)
         {
+            _lastHadFocus = true;
             if (_keyboardFocusOnLinkNumber == null)
             {
                 if (_linkLocations == null)
@@ -542,6 +680,7 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnLostFocus(EventArgs e)
         {
+            _lastHadFocus = false;
             if (_formJustDeactivated)
                 _formJustDeactivated = false;
             else
@@ -636,7 +775,8 @@ namespace RT.Util.Controls
 
         private void formDeactivated(object sender, EventArgs e)
         {
-            _formJustDeactivated = true;
+            if (_lastHadFocus)
+                _formJustDeactivated = true;
         }
     }
 

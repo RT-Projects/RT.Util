@@ -89,9 +89,9 @@ namespace RT.Util
 
                 index += pos;
                 if (runLength > 3 && input[pos] != '"')
-                    throw new EggsMLParseException("Five or more consecutive same characters not allowed unless number is even.", index);
+                    throw new EggsMLParseException("Five or more consecutive same characters not allowed unless number is even.", index, runLength);
                 if (runLength == 3 && (alwaysCloses(input[pos]) || input[pos] == '`'))
-                    throw new EggsMLParseException("Three consecutive same closing-tag characters or backticks not allowed.", index);
+                    throw new EggsMLParseException("Three consecutive same closing-tag characters or backticks not allowed.", index, 3);
 
                 if (pos > 0)
                 {
@@ -110,12 +110,12 @@ namespace RT.Util
                     case '"':
                         pos = input.IndexOf('"', 1);
                         if (pos == -1)
-                            throw new EggsMLParseException(@"Closing '""' missing", index + 1);
+                            throw new EggsMLParseException(@"Closing ‘""’ missing", index, 1);
                         while (pos < input.Length - 1 && input[pos + 1] == '"')
                         {
                             pos = input.IndexOf('"', pos + 2);
                             if (pos == -1)
-                                throw new EggsMLParseException(@"Closing '""' missing", index + 1);
+                                throw new EggsMLParseException(@"Closing ‘""’ missing", index, 1);
                         }
                         curText += input.Substring(1, pos - 1).Replace("\"\"", "\"");
                         input = input.Substring(pos + 1);
@@ -151,13 +151,13 @@ namespace RT.Util
                             continue;
                         }
                         else if (alwaysCloses(input[0]))
-                            throw new EggsMLParseException(@"Tag '{0}' unexpected".Fmt(input[0]), index);
-                        throw new EggsMLParseException(@"Character '{0}' unexpected".Fmt(input[0]), index);
+                            throw new EggsMLParseException(@"Tag ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
+                        throw new EggsMLParseException(@"Character ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
                 }
             }
 
             if (stack.Count > 0)
-                throw new EggsMLParseException(@"Closing '{0}' missing".Fmt(opposite(curTag.Tag)), curTag.Index);
+                throw new EggsMLParseException(@"Closing ‘{0}’ missing".Fmt(opposite(curTag.Tag)), index, 0, curTag.Index);
 
             if (!string.IsNullOrEmpty(curText))
                 curTag.Add(new EggsText(curText, curTextIndex));
@@ -170,6 +170,8 @@ namespace RT.Util
         {
             if (!input.Any(ch => SpecialCharacters.Contains(ch)))
                 return input;
+            if (input.All(ch => ch == '"'))
+                return new string('"', input.Length * 2);
             return @"""" + input.Replace(@"""", @"""""") + @"""";
         }
 
@@ -244,14 +246,18 @@ namespace RT.Util
 
             private void eggWalkWordWrapRecursive(EggsNode node, TState state, bool curNowrap)
             {
-                var tag = node as EggsTag;
-                if (tag != null)
+                EggsTag tag;
+                EggsText text;
+
+                if ((tag = node as EggsTag) != null)
                 {
                     var newState = state;
                     if (tag.Tag == '+')
                         curNowrap = true;
                     else if (tag.Tag == '<')
                     {
+                        if (CurParameter != null)
+                            throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
                         CurParameter = tag.ToString(true);
                         return;
                     }
@@ -264,10 +270,14 @@ namespace RT.Util
                     }
                     foreach (var child in tag.Children)
                         eggWalkWordWrapRecursive(child, newState, curNowrap);
+                    if (CurParameter != null)
+                        throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
                 }
-                else if (node is EggsText)
+                else if ((text = node as EggsText) != null)
                 {
-                    var txt = ((EggsText) node).Text;
+                    if (CurParameter != null)
+                        throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
+                    var txt = text.Text;
                     for (int i = 0; i < txt.Length; i++)
                     {
                         // Check whether we are looking at a whitespace character or not, and if not, find the end of the word.
@@ -611,15 +621,16 @@ namespace RT.Util
         /// <summary>The character index into the original string where the error occurred.</summary>
         public int Index { get; private set; }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Message.</param>
-        /// <param name="index">The character index into the original string where the error occurred.</param>
-        public EggsMLParseException(string message, int index) : base(message) { Index = index; }
+        /// <summary>The length of the text in the original string where the error occurred.</summary>
+        public int Length { get; private set; }
+
+        /// <summary>The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</summary>
+        public int? FirstIndex { get; private set; }
 
         /// <summary>Constructor.</summary>
         /// <param name="message">Message.</param>
         /// <param name="index">The character index into the original string where the error occurred.</param>
         /// <param name="inner">An inner exception to pass to the base Exception class.</param>
-        public EggsMLParseException(string message, int index, Exception inner) : base(message, inner) { Index = index; }
+        public EggsMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
     }
 }
