@@ -280,6 +280,9 @@ namespace RT.Util
         {
         }
 
+        /// <summary>Set this to true to interpret all the messages as EggsML.</summary>
+        public bool InterpretMessagesAsEggsML = false;
+
         /// <summary>
         /// Gets a text color for each of the possible message types.
         /// </summary>
@@ -306,23 +309,38 @@ namespace RT.Util
                 string fmtInfo, indent;
                 GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
-                TextWriter consoleStream = Console.Out;
-                if (type == LogType.Error && ErrorsToStdErr)
-                    consoleStream = Console.Error;
-
                 var prevCol = Console.ForegroundColor;
-                Console.ForegroundColor = GetMessageTypeColor(type);
+                var col = GetMessageTypeColor(type);
 
+                TextWriter consoleStream = (type == LogType.Error && ErrorsToStdErr) ? Console.Error : Console.Out;
                 int wrapWidth = WordWrap ? ConsoleUtil.WrapToWidth() : int.MaxValue;
                 bool first = true;
-                foreach (var line in message.WordWrap(wrapWidth - fmtInfo.Length))
+                if (InterpretMessagesAsEggsML)
                 {
-                    consoleStream.Write(first ? fmtInfo : indent);
-                    first = false;
-                    consoleStream.WriteLine(line);
+                    foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(EggsML.Parse(message), wrapWidth - fmtInfo.Length))
+                    {
+                        Console.ForegroundColor = col;
+                        consoleStream.Write(first ? fmtInfo : indent);
+                        first = false;
+                        ConsoleUtil.WriteLine(line, type == LogType.Error && ErrorsToStdErr);
+                    }
                 }
+                else
+                {
+                    Console.ForegroundColor = col;
+                    foreach (var line in message.WordWrap(wrapWidth - fmtInfo.Length))
+                    {
+                        consoleStream.Write(first ? fmtInfo : indent);
+                        first = false;
+                        consoleStream.WriteLine(line);
+                    }
+                }
+
                 if (first)
+                {
+                    Console.ForegroundColor = col;
                     consoleStream.WriteLine(fmtInfo); // don't completely skip blank messages
+                }
 
                 Console.ForegroundColor = prevCol;
             }

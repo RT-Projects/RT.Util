@@ -175,10 +175,10 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
-        public static void WriteLine(ConsoleColoredString value)
+        public static void WriteLine(ConsoleColoredString value, bool stdErr = false)
         {
-            value.writeToConsole();
-            Console.WriteLine();
+            value.writeToConsole(stdErr);
+            (stdErr ? Console.Error : Console.Out).WriteLine();
         }
 
         /// <summary>Writes the specified or current stack trace to the console in pretty colors.</summary>

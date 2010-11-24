@@ -444,9 +444,10 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>Outputs the current <see cref="ConsoleColoredString"/> to the console.</summary>
-        internal void writeToConsole()
+        internal void writeToConsole(bool stdErr = false)
         {
             int index = 0;
+            var console = stdErr ? Console.Error : Console.Out;
             while (index < _text.Length)
             {
                 ConsoleColor cc = _colors[index];
@@ -454,9 +455,9 @@ namespace RT.Util.Consoles
                 var origIndex = index;
                 while (index < _text.Length && _colors[index] == cc)
                     index++;
-                Console.Write(_text.Substring(origIndex, index - origIndex));
+                console.Write(_text.Substring(origIndex, index - origIndex));
             }
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ResetColor();
         }
     }
 }
