@@ -71,7 +71,7 @@ namespace RT.Util.Controls
         ///     <item><description><c>/</c> = italics.</description></item>
         ///     <item><description><c>_</c> = underline.</description></item>
         ///     <item><description><c>+</c> = marks a section of text as nowrap.</description></item>
-        ///     <item><description><c>&lt;XYZ&gt;{ ... }</c> = make the text enclosed in curlies a link. XYZ can be any string and will be passed in for the <see cref="LinkActivate"/> event.</description></item>
+        ///     <item><description><c>&lt;XYZ&gt;{ ... }</c> = make the text enclosed in curlies a link. XYZ can be any string and will be passed in for the <see cref="LinkActivated"/> event.</description></item>
         ///     <item><description><c>&lt;XYZ&gt;= ... =</c> = colour the text enclosed in equals sign in the colour designated by XYZ (e.g. “Red”).</description></item>
         ///     <item><description><c>[ ... ]</c> = adds a bullet point to the beginning of a paragraph. (Enclose the entire paragraph without its trailing newline, otherwise behaviour is weird.)</description></item>
         /// </list>

@@ -630,6 +630,8 @@ namespace RT.Util
         /// <summary>Constructor.</summary>
         /// <param name="message">Message.</param>
         /// <param name="index">The character index into the original string where the error occurred.</param>
+        /// <param name="length">The length of the text in the original string where the error occurred.</param>
+        /// <param name="firstIndex">The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</param>
         /// <param name="inner">An inner exception to pass to the base Exception class.</param>
         public EggsMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
     }
