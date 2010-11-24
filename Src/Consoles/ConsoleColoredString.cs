@@ -7,7 +7,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Consoles
 {
     /// <summary>Encapsulates a string in which each character can have an associated <see cref="ConsoleColor"/>.</summary>
-    /// <remarks>Use <see cref="ConsoleUtil.Write(ConsoleColoredString)"/> and <see cref="ConsoleUtil.WriteLine(ConsoleColoredString)"/> to output the string to the console.</remarks>
+    /// <remarks>Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</remarks>
     public sealed class ConsoleColoredString
     {
         /// <summary>Represents an empty colored string. This field is read-only.</summary>

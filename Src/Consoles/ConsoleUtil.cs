@@ -169,9 +169,9 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>
-        public static void Write(ConsoleColoredString value)
+        public static void Write(ConsoleColoredString value, bool stdErr = false)
         {
-            value.writeToConsole();
+            value.writeToConsole(stdErr);
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
