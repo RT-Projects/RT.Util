@@ -376,6 +376,8 @@ namespace RT.Util.Controls
                 _cachedRenderingColor = initialColor;
                 _linkLocations = new List<linkLocationInfo>();
                 doPaintOrMeasure(g, _parsed, initialFont, initialColor, _cachedRenderingWidth, _cachedRendering, _linkLocations);
+                if (_keyboardFocusOnLinkNumber != null && _keyboardFocusOnLinkNumber.Value >= _linkLocations.Count)
+                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : _linkLocations.Count - 1;
             }
             foreach (var item in _cachedRendering)
             {
@@ -672,7 +674,7 @@ namespace RT.Util.Controls
                     System.Threading.Tasks.Task.Factory.StartNew(() => { Invoke(new Action(() => { OnGotFocus(e); })); });
                 }
                 else
-                    _keyboardFocusOnLinkNumber = Control.ModifierKeys.HasFlag(Keys.Shift) && _linkLocations != null ? _linkLocations.Count - 1 : 0;
+                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : Control.ModifierKeys.HasFlag(Keys.Shift) ? _linkLocations.Count - 1 : 0;
             }
             base.OnGotFocus(e);
         }
