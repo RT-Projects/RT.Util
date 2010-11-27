@@ -30,24 +30,6 @@ namespace RT.Util.Controls
         /// <summary>Occurs when a link within the label loses the keyboard focus.</summary>
         public event LinkEventHandler LinkLostFocus;
 
-        private static Cursor _cursorHandCache;
-        private static Cursor _cursorHand
-        {
-            get
-            {
-                if (_cursorHandCache == null)
-                {
-                    var handle = WinAPI.LoadCursor(IntPtr.Zero, 32649);
-                    if (handle == IntPtr.Zero)
-                        _cursorHandCache = Cursors.Hand;
-                    else
-                        try { _cursorHandCache = new Cursor(handle); }
-                        catch { _cursorHandCache = Cursors.Hand; }
-                }
-                return _cursorHandCache;
-            }
-        }
-
         /// <summary>Constructor.</summary>
         public LabelEx()
         {
@@ -110,6 +92,8 @@ namespace RT.Util.Controls
             get { return _wordWrap; }
             set
             {
+                if (_wordWrap == value)
+                    return;
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _wordWrap = value;
@@ -126,6 +110,10 @@ namespace RT.Util.Controls
             get { return _paragraphSpacing; }
             set
             {
+                if (_paragraphSpacing == value)
+                    return;
+                if (value < 0)
+                    throw new ArgumentException("ParagraphSpacing cannot be negative.");
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _paragraphSpacing = value;
@@ -143,6 +131,8 @@ namespace RT.Util.Controls
             get { return _hangingIndent; }
             set
             {
+                if (_hangingIndent == value)
+                    return;
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _hangingIndent = value;
@@ -159,6 +149,8 @@ namespace RT.Util.Controls
             get { return _hangingIndentUnit; }
             set
             {
+                if (_hangingIndentUnit == value)
+                    return;
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _hangingIndentUnit = value;
@@ -181,11 +173,11 @@ namespace RT.Util.Controls
 
         private class renderingInfo
         {
-            public string Text { get; private set; }
-            public Font Font { get; private set; }
-            public Rectangle Rectangle { get; private set; }
-            public Color Color { get; private set; }
-            public int? LinkNumber { get; private set; }
+            public string Text;
+            public Font Font;
+            public Rectangle Rectangle;
+            public Color Color;
+            public int? LinkNumber;
             public renderingInfo(string text, Font font, Rectangle location, Color color, int? linkNumber) { Text = text; Font = font; Rectangle = location; Color = color; LinkNumber = linkNumber; }
         }
 
@@ -195,44 +187,59 @@ namespace RT.Util.Controls
             public List<Rectangle> Rectangles = new List<Rectangle>();
         }
 
-        private EggsNode _parsed;
-        private char _mnemonic;
-        private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
-        private bool _wordWrap = false;
-        private double _paragraphSpacing = 0d;
-        private int _hangingIndent = 0;
-        private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
         private const string BULLET = " • ";
-        private int _cachedRenderingWidth;
-        private Color _cachedRenderingColor;
-        private List<renderingInfo> _cachedRendering;
-        private List<linkLocationInfo> _linkLocations;
-        private int? _mouseOnLinkNumber;
-        private bool _mouseIsDownOnLink;
-        private int? _keyboardFocusOnLinkNumberPrivate;
-        private bool _spaceIsDownOnLink;
-        private List<Control> _parentChain = new List<Control>();
-        private bool _formJustDeactivated;
-        private bool _lastHadFocus;
-        private ColorConverter _colorConverter;
-
-        private int? _keyboardFocusOnLinkNumber
+        private static ColorConverter _colorConverter;
+        private static Cursor _cursorHandCache;
+        private static Cursor _cursorHand
         {
             get
             {
-                return _keyboardFocusOnLinkNumberPrivate;
+                if (_cursorHandCache == null)
+                {
+                    var handle = WinAPI.LoadCursor(IntPtr.Zero, 32649);
+                    if (handle == IntPtr.Zero)
+                        _cursorHandCache = Cursors.Hand;
+                    else
+                        try { _cursorHandCache = new Cursor(handle); }
+                        catch { _cursorHandCache = Cursors.Hand; }
+                }
+                return _cursorHandCache;
             }
+        }
+
+        private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
+        private List<renderingInfo> _cachedRendering;
+        private Color _cachedRenderingColor;
+        private int _cachedRenderingWidth;
+        private bool _callGotFocusAfterPaint;
+        private bool _formJustDeactivated;
+        private int _hangingIndent = 0;
+        private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
+        private int? _keyboardFocusOnLinkNumberPrivate;
+        private bool _lastHadFocus;
+        private List<linkLocationInfo> _linkLocations;
+        private char _mnemonic;
+        private bool _mouseIsDownOnLink;
+        private int? _mouseOnLinkNumber;
+        private double _paragraphSpacing = 0d;
+        private List<Control> _parentChain = new List<Control>();
+        private EggsNode _parsed;
+        private bool _spaceIsDownOnLink;
+        private bool _wordWrap = false;
+
+        private int? _keyboardFocusOnLinkNumber
+        {
+            get { return _keyboardFocusOnLinkNumberPrivate; }
             set
             {
-                if (value != _keyboardFocusOnLinkNumberPrivate)
-                {
-                    if (LinkLostFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
-                        LinkLostFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
-                    _keyboardFocusOnLinkNumberPrivate = value;
-                    Invalidate();
-                    if (LinkGotFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
-                        LinkGotFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
-                }
+                if (_keyboardFocusOnLinkNumberPrivate == value)
+                    return;
+                if (LinkLostFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
+                    LinkLostFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
+                _keyboardFocusOnLinkNumberPrivate = value;
+                Invalidate();
+                if (LinkGotFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
+                    LinkGotFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
             }
         }
 
@@ -364,6 +371,11 @@ namespace RT.Util.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             PaintLabel(e.Graphics, Enabled ? ForeColor : SystemColors.GrayText, Font);
+            if (_callGotFocusAfterPaint)
+            {
+                OnGotFocus(e);
+                _callGotFocusAfterPaint = false;
+            }
         }
 
         /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
@@ -434,6 +446,7 @@ namespace RT.Util.Controls
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
             int hangingIndent = _hangingIndent * (_hangingIndentUnit == IndentUnit.Spaces ? spaceSize(initialFont).Width : 1);
+            bool atBeginningOfLine = false;
 
             int actualWidth = EggsML.WordWrap(node, new renderState(initialFont, initialForeColor), wrapWidth,
                 (state, text) => (text == " " ? spaceSize(state.Font) : TextRenderer.MeasureText(g, text, state.Font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
@@ -441,8 +454,19 @@ namespace RT.Util.Controls
                 {
                     if (renderings != null && !string.IsNullOrEmpty(text))
                     {
-                        renderingInfo info = new renderingInfo(text, state.Font, new Rectangle(x, y, width, spaceSize(state.Font).Height), state.Color, state.LinkNumber);
-                        renderings.Add(info);
+                        renderingInfo info;
+                        if (!atBeginningOfLine && renderings.Count > 0 && (info = renderings[renderings.Count - 1]).Color == state.Color && info.Font == state.Font && info.LinkNumber == state.LinkNumber)
+                        {
+                            info.Text += text;
+                            var rect = info.Rectangle;
+                            rect.Width += width;
+                            info.Rectangle = rect;
+                        }
+                        else
+                        {
+                            info = new renderingInfo(text, state.Font, new Rectangle(x, y, width, spaceSize(state.Font).Height), state.Color, state.LinkNumber);
+                            renderings.Add(info);
+                        }
                         if (state.LinkNumber != null)
                         {
                             var list = linkRenderings[state.LinkNumber.Value].Rectangles;
@@ -451,15 +475,17 @@ namespace RT.Util.Controls
                             else
                             {
                                 var rect = list[list.Count - 1];
-                                rect.Width += info.Rectangle.Width;
+                                rect.Width += width;
                                 list[list.Count - 1] = rect;
                             }
                         }
                     }
+                    atBeginningOfLine = false;
                     x += width;
                 },
                 (state, newParagraph, indent) =>
                 {
+                    atBeginningOfLine = true;
                     var sh = spaceSize(state.Font).Height;
                     y += sh;
                     if (newParagraph && _paragraphSpacing > 0)
@@ -617,6 +643,7 @@ namespace RT.Util.Controls
         {
             if (_cachedRendering != null && TabStop)
             {
+                Cursor = Cursors.Default;
                 _mouseOnLinkNumber = null;
                 Invalidate();
             }
@@ -669,14 +696,17 @@ namespace RT.Util.Controls
             {
                 if (_linkLocations == null)
                 {
-                    // Annoying: OnGotFocus can be called before the label has ever been painted, _linkLocations has not been populated yet.
+                    // Annoying: OnGotFocus can be called before the label has ever been painted and thus before _linkLocations has ever been populated.
                     // Use a kludgy workaround to get it to be called again later — hopefully then the label has been painted.
-                    System.Threading.Tasks.Task.Factory.StartNew(() => { Invoke(new Action(() => { OnGotFocus(e); })); });
+                    _callGotFocusAfterPaint = true;
                 }
                 else
                     _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : Control.ModifierKeys.HasFlag(Keys.Shift) ? _linkLocations.Count - 1 : 0;
             }
-            base.OnGotFocus(e);
+
+            // Only call the base if this is not the late invocation from the paint event
+            if (!(e is PaintEventArgs))
+                base.OnGotFocus(e);
         }
 
         /// <summary>Override; see base.</summary>
