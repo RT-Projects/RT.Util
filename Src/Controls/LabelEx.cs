@@ -171,22 +171,6 @@ namespace RT.Util.Controls
         /// <see cref="Text"/> is invalid EggsML, or null if it is valid.</summary>
         public EggsMLParseException ParseError { get; private set; }
 
-        private class renderingInfo
-        {
-            public string Text;
-            public Font Font;
-            public Rectangle Rectangle;
-            public Color Color;
-            public int? LinkNumber;
-            public renderingInfo(string text, Font font, Rectangle location, Color color, int? linkNumber) { Text = text; Font = font; Rectangle = location; Color = color; LinkNumber = linkNumber; }
-        }
-
-        private class linkLocationInfo
-        {
-            public string LinkID;
-            public List<Rectangle> Rectangles = new List<Rectangle>();
-        }
-
         private const string BULLET = " • ";
         private static ColorConverter _colorConverter;
         private static Cursor _cursorHandCache;
@@ -211,7 +195,6 @@ namespace RT.Util.Controls
         private List<renderingInfo> _cachedRendering;
         private Color _cachedRenderingColor;
         private int _cachedRenderingWidth;
-        private bool _callGotFocusAfterPaint;
         private bool _formJustDeactivated;
         private int _hangingIndent = 0;
         private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
@@ -246,6 +229,37 @@ namespace RT.Util.Controls
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
+        private class renderState
+        {
+            public Font Font { get; private set; }
+            public Color Color { get; private set; }
+            public int BlockIndent { get; private set; }
+            public int? LinkNumber { get; private set; }
+            public bool Mnemonic { get; private set; }
+
+            public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; LinkNumber = null; Mnemonic = false; }
+            private renderState(Font font, Color color, int blockIndent, int? linkNumber, bool mnemonic) { Font = font; Color = color; BlockIndent = blockIndent; LinkNumber = linkNumber; Mnemonic = mnemonic; }
+            public renderState ChangeFont(Font newFont) { return new renderState(newFont, Color, BlockIndent, LinkNumber, Mnemonic); }
+            public renderState ChangeColor(Color newColor) { return new renderState(Font, newColor, BlockIndent, LinkNumber, Mnemonic); }
+            public renderState ChangeBlockIndent(int newIndent) { return new renderState(Font, Color, newIndent, LinkNumber, Mnemonic); }
+            public renderState ChangeLinkNumberAndColor(int? newLinkNumber, Color newColor) { return new renderState(Font, newColor, BlockIndent, newLinkNumber, Mnemonic); }
+            public renderState SetMnemonic() { return new renderState(Font, Color, BlockIndent, LinkNumber, true); }
+        }
+
+        private class renderingInfo
+        {
+            public string Text;
+            public Rectangle Rectangle;
+            public renderState State;
+            public renderingInfo(string text, Rectangle location, renderState state) { Text = text; Rectangle = location; State = state; }
+        }
+
+        private class linkLocationInfo
+        {
+            public string LinkID;
+            public List<Rectangle> Rectangles = new List<Rectangle>();
+        }
+
         /// <summary>Override; see base.</summary>
         protected override void OnFontChanged(EventArgs e)
         {
@@ -267,6 +281,10 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnTextChanged(EventArgs e)
         {
+            // If a link has focus, trigger the LinkLostFocus event.
+            // OnPaint will trigger the LinkGotFocus event as appropriate
+            _keyboardFocusOnLinkNumber = null;
+
             _cachedPreferredSizes.Clear();
             _cachedRendering = null;
             base.OnTextChanged(e);
@@ -305,10 +323,6 @@ namespace RT.Util.Controls
                 _parsed = EggsML.Parse(msg);
             }
             autosize();
-            if (Focused && TabStop)
-                _keyboardFocusOnLinkNumber = 0;
-            else
-                _keyboardFocusOnLinkNumber = null;
             Invalidate();
         }
 
@@ -347,7 +361,8 @@ namespace RT.Util.Controls
         {
             if (!AutoSize)
                 return;
-            Size = PreferredSize;
+            if (Size != PreferredSize)
+                Size = PreferredSize;
         }
 
         private void setTabStop(bool tabStop)
@@ -370,54 +385,44 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnPaint(PaintEventArgs e)
         {
-            PaintLabel(e.Graphics, Enabled ? ForeColor : SystemColors.GrayText, Font);
-            if (_callGotFocusAfterPaint)
-            {
-                OnGotFocus(e);
-                _callGotFocusAfterPaint = false;
-            }
-        }
+            Color initialColor = Enabled ? ForeColor : SystemColors.GrayText;
 
-        /// <summary>Paints the formatted label text using the specified initial color and font for the text outside of any formatting tags.</summary>
-        protected void PaintLabel(Graphics g, Color initialColor, Font initialFont)
-        {
             if (_cachedRendering == null || _cachedRenderingWidth != ClientSize.Width || _cachedRenderingColor != initialColor)
             {
                 _cachedRendering = new List<renderingInfo>();
                 _cachedRenderingWidth = ClientSize.Width;
                 _cachedRenderingColor = initialColor;
                 _linkLocations = new List<linkLocationInfo>();
-                doPaintOrMeasure(g, _parsed, initialFont, initialColor, _cachedRenderingWidth, _cachedRendering, _linkLocations);
-                if (_keyboardFocusOnLinkNumber != null && _keyboardFocusOnLinkNumber.Value >= _linkLocations.Count)
-                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : _linkLocations.Count - 1;
+                doPaintOrMeasure(e.Graphics, _parsed, Font, initialColor, _cachedRenderingWidth, _cachedRendering, _linkLocations);
+
+                // If this control has focus and it has a link in it, focus the first link. (This triggers the LinkGotFocus event.)
+                if (!_lastHadFocus)
+                    _keyboardFocusOnLinkNumber = null;
+                else if (_keyboardFocusOnLinkNumber == null)
+                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : 0;
             }
+
             foreach (var item in _cachedRendering)
             {
-                TextRenderer.DrawText(g, item.Text,
-                    _mouseOnLinkNumber != null && _mouseOnLinkNumber == item.LinkNumber ? new Font(item.Font, item.Font.Style | FontStyle.Underline) : item.Font,
+                if (item.Rectangle.Bottom < e.ClipRectangle.Top || item.Rectangle.Right < e.ClipRectangle.Left || item.Rectangle.Left > e.ClipRectangle.Right)
+                    continue;
+                if (item.Rectangle.Top > e.ClipRectangle.Bottom)
+                    break;
+                var font = item.State.Font;
+                if ((item.State.Mnemonic && ShowKeyboardCues) || (_mouseOnLinkNumber != null && _mouseOnLinkNumber == item.State.LinkNumber))
+                    font = new Font(font, font.Style | FontStyle.Underline);
+                TextRenderer.DrawText(e.Graphics, item.Text,
+                    font,
                     item.Rectangle.Location,
-                    (_mouseIsDownOnLink && _mouseOnLinkNumber == item.LinkNumber) ||
-                    (_spaceIsDownOnLink && _keyboardFocusOnLinkNumber == item.LinkNumber)
-                        ? LinkActiveColor : item.Color,
+                    (_mouseIsDownOnLink && _mouseOnLinkNumber == item.State.LinkNumber) ||
+                    (_spaceIsDownOnLink && _keyboardFocusOnLinkNumber == item.State.LinkNumber)
+                        ? LinkActiveColor : item.State.Color,
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             }
+
             if (_keyboardFocusOnLinkNumber != null)
                 foreach (var rectangle in _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles)
-                    ControlPaint.DrawFocusRectangle(g, rectangle);
-        }
-
-        private class renderState
-        {
-            public Font Font { get; private set; }
-            public Color Color { get; private set; }
-            public int BlockIndent { get; private set; }
-            public int? LinkNumber { get; private set; }
-            public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; LinkNumber = null; }
-            private renderState(Font font, Color color, int blockIndent, int? linkNumber) { Font = font; Color = color; BlockIndent = blockIndent; LinkNumber = linkNumber; }
-            public renderState ChangeFont(Font newFont) { return new renderState(newFont, Color, BlockIndent, LinkNumber); }
-            public renderState ChangeColor(Color newColor) { return new renderState(Font, newColor, BlockIndent, LinkNumber); }
-            public renderState ChangeBlockIndent(int newIndent) { return new renderState(Font, Color, newIndent, LinkNumber); }
-            public renderState ChangeLinkNumberAndColor(int? newLinkNumber, Color newColor) { return new renderState(Font, newColor, BlockIndent, newLinkNumber); }
+                    ControlPaint.DrawFocusRectangle(e.Graphics, rectangle);
         }
 
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
@@ -455,7 +460,7 @@ namespace RT.Util.Controls
                     if (renderings != null && !string.IsNullOrEmpty(text))
                     {
                         renderingInfo info;
-                        if (!atBeginningOfLine && renderings.Count > 0 && (info = renderings[renderings.Count - 1]).Color == state.Color && info.Font == state.Font && info.LinkNumber == state.LinkNumber)
+                        if (!atBeginningOfLine && renderings.Count > 0 && (info = renderings[renderings.Count - 1]).State == state)
                         {
                             info.Text += text;
                             var rect = info.Rectangle;
@@ -464,7 +469,7 @@ namespace RT.Util.Controls
                         }
                         else
                         {
-                            info = new renderingInfo(text, state.Font, new Rectangle(x, y, width, spaceSize(state.Font).Height), state.Color, state.LinkNumber);
+                            info = new renderingInfo(text, new Rectangle(x, y, width, spaceSize(state.Font).Height), state);
                             renderings.Add(info);
                         }
                         if (state.LinkNumber != null)
@@ -510,17 +515,14 @@ namespace RT.Util.Controls
                         // UNDERLINE
                         case '_': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
 
-                        // MAIN MNEMONIC
-                        case '&':
-                            if (ShowKeyboardCues)
-                                return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
-                            break;
+                        // MNEMONICS
+                        case '&': return Tuple.Create(state.SetMnemonic(), 0);
 
                         // BULLET POINT
                         case '[':
                             var advance = bulletSize(font);
                             if (renderings != null)
-                                renderings.Add(new renderingInfo(BULLET, font, new Rectangle(x, y, advance, spaceSize(font).Height), initialForeColor, null));
+                                renderings.Add(new renderingInfo(BULLET, new Rectangle(x, y, advance, spaceSize(font).Height), new renderState(font, state.Color)));
                             x += advance;
                             return Tuple.Create(state.ChangeBlockIndent(state.BlockIndent + advance), advance);
 
@@ -545,10 +547,7 @@ namespace RT.Util.Controls
         protected override void OnChangeUICues(UICuesEventArgs e)
         {
             if (e.ChangeKeyboard && (_mnemonic != '\0' || TabStop))
-            {
-                _cachedRendering = null;
                 Invalidate();
-            }
         }
 
         /// <summary>Override; see base.</summary>
@@ -692,17 +691,8 @@ namespace RT.Util.Controls
         protected override void OnGotFocus(EventArgs e)
         {
             _lastHadFocus = true;
-            if (_keyboardFocusOnLinkNumber == null)
-            {
-                if (_linkLocations == null)
-                {
-                    // Annoying: OnGotFocus can be called before the label has ever been painted and thus before _linkLocations has ever been populated.
-                    // Use a kludgy workaround to get it to be called again later — hopefully then the label has been painted.
-                    _callGotFocusAfterPaint = true;
-                }
-                else
-                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : Control.ModifierKeys.HasFlag(Keys.Shift) ? _linkLocations.Count - 1 : 0;
-            }
+            if (_keyboardFocusOnLinkNumber == null && _linkLocations != null)
+                _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : Control.ModifierKeys.HasFlag(Keys.Shift) ? _linkLocations.Count - 1 : 0;
 
             // Only call the base if this is not the late invocation from the paint event
             if (!(e is PaintEventArgs))
@@ -723,6 +713,9 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnKeyDown(KeyEventArgs e)
         {
+            // This handles Enter and Space.
+            // The tab key is handled in ProcessDialogKey() instead.
+
             if (e.Modifiers == Keys.None)
             {
                 if (e.KeyCode == Keys.Enter)
@@ -739,26 +732,24 @@ namespace RT.Util.Controls
                     e.Handled = true;
                     return;
                 }
-                else if (e.KeyCode == Keys.Tab && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber.Value < _linkLocations.Count - 1))
-                {
-                    _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? -1) + 1;
-                    e.Handled = true;
-                    return;
-                }
             }
+
             base.OnKeyDown(e);
         }
 
         /// <summary>Override; see base.</summary>
         protected override bool ProcessDialogKey(Keys keyData)
         {
-            if (keyData == Keys.Tab && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber < _linkLocations.Count - 1))
+            // This handles Tab and Shift-Tab.
+            // The Enter and Space keys are handled in OnKeyDown() instead.
+
+            if (keyData == Keys.Tab && _linkLocations != null && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber < _linkLocations.Count - 1))
             {
                 _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? -1) + 1;
                 return true;
             }
 
-            if (keyData == (Keys.Tab | Keys.Shift) && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber > 0))
+            if (keyData == (Keys.Tab | Keys.Shift) && _linkLocations != null && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber > 0))
             {
                 _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? _linkLocations.Count) - 1;
                 return true;
@@ -789,16 +780,29 @@ namespace RT.Util.Controls
             base.OnParentChanged(e);
         }
 
+        /// <summary>Override; see base.</summary>
+        protected override void OnSystemColorsChanged(EventArgs e)
+        {
+            _cachedRendering = null;
+            Invalidate();
+            base.OnSystemColorsChanged(e);
+        }
+
         private void someParentChangedSomewhere(object sender, EventArgs e)
         {
+            Form form;
             foreach (var parent in _parentChain)
+            {
                 parent.ParentChanged -= someParentChangedSomewhere;
+                if ((form = parent as Form) != null)
+                    form.Deactivate -= formDeactivated;
+            }
             _parentChain.Clear();
             var control = Parent;
             while (control != null)
             {
+                _parentChain.Add(control);
                 control.ParentChanged += someParentChangedSomewhere;
-                Form form;
                 if ((form = control as Form) != null)
                     form.Deactivate += formDeactivated;
                 control = control.Parent;

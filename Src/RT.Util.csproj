@@ -65,6 +65,9 @@
     <Compile Include="Controls\NiceClosePanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\ScrollableLabelEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\Separator.cs">
       <SubType>UserControl</SubType>
     </Compile>
