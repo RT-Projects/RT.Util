@@ -77,7 +77,7 @@ namespace RT.Util.Controls
 
         private void scrollTo(int y)
         {
-            y = Math.Min(Math.Max(y, 0), Label.Height - ClientSize.Height);
+            y = Math.Max(Math.Min(y, Label.Height - ClientSize.Height), 0);
             SetDisplayRectLocation(0, -y);
             VerticalScroll.Value = y;
         }

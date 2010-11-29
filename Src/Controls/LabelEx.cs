@@ -743,13 +743,13 @@ namespace RT.Util.Controls
             // This handles Tab and Shift-Tab.
             // The Enter and Space keys are handled in OnKeyDown() instead.
 
-            if (keyData == Keys.Tab && _linkLocations != null && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber < _linkLocations.Count - 1))
+            if (keyData == Keys.Tab && _linkLocations != null && _linkLocations.Count > 0 && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber < _linkLocations.Count - 1))
             {
                 _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? -1) + 1;
                 return true;
             }
 
-            if (keyData == (Keys.Tab | Keys.Shift) && _linkLocations != null && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber > 0))
+            if (keyData == (Keys.Tab | Keys.Shift) && _linkLocations != null && _linkLocations.Count > 0 && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber > 0))
             {
                 _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? _linkLocations.Count) - 1;
                 return true;
