@@ -36,6 +36,20 @@ namespace RT.Util
         }
         private static char[] _specialCharacters = null;
 
+        /// <summary>Efficiently performs the equivalent of <see cref="Parse"/>(<see cref="Escape"/>(<paramref name="text"/>)).</summary>
+        /// <param name="text">Text to be quoted literally, without interpreting any EggsML syntax.</param>
+        /// <returns>The resulting parse-tree.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="input"/> was null.</exception>
+        public static EggsNode Quote(string text)
+        {
+            if (text == null)
+                throw new ArgumentNullException("text");
+
+            var node = new EggsTag(null, 0);
+            node.Add(new EggsText(text, 0));
+            return node;
+        }
+
         /// <summary>Parses the specified EggsML input.</summary>
         /// <param name="input">The EggsML text to parse.</param>
         /// <returns>The resulting parse-tree.</returns>
