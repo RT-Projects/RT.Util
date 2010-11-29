@@ -512,7 +512,7 @@ namespace RT.Util.CommandLine
 
                     help.Add(new ConsoleColoredString(f.Mandatory ? " " : " [", ConsoleColor.DarkGray));
                     var options = optionsRaw.Any(a => !a.StartsWith("--")) ? optionsRaw.Where(a => !a.StartsWith("--")) : optionsRaw;
-                    var c = new ConsoleColoredString(options.First(), ConsoleColor.Cyan);
+                    var c = new ConsoleColoredString(options.First(), ConsoleColor.White);
                     foreach (var option in options.Skip(1))
                     {
                         c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
@@ -1099,7 +1099,7 @@ namespace RT.Util.CommandLine
 
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
         public TrString
-            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by *$-?$* to list them.",
+            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by *-?* to list them.",
             Error = @"Error:",
             OptionsHeader = @"Optional parameters:",
             ParametersHeader = @"Required parameters:",
@@ -1305,7 +1305,7 @@ namespace RT.Util.CommandLine
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*%`{0}%*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
+            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
         }
@@ -1323,7 +1323,7 @@ namespace RT.Util.CommandLine
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*$`{0}$*`".Fmt(EggsML.Escape(later)), "`*$`{0}$*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
+            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(later)), "`*`{0}*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
         {
             EarlierCommandOrOption = earlier;
             LaterCommandOrOption = later;
@@ -1340,7 +1340,7 @@ namespace RT.Util.CommandLine
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompleteOption.Fmt("`*$`{0}$*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
+            : base(tr => tr.IncompleteOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
         {
             OptionName = optionName;
         }
