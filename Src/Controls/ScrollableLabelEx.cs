@@ -25,6 +25,8 @@ namespace RT.Util.Controls
             TabStop = false;
 
             Label.LinkGotFocus += linkGotFocus;
+
+            // For some reason KeyDown doesn’t receive the cursor keys, so use PreviewKeyDown
             Label.PreviewKeyDown += keyDown;
         }
 
@@ -61,6 +63,8 @@ namespace RT.Util.Controls
 
         private void linkGotFocus(object sender, LinkEventArgs e)
         {
+            // Scroll to the link that got focus if the link is partly outside the viewport,
+            // but leave a margin of 1/10th the height of the client area
             var y = -DisplayRectangle.Y;
             for (int i = e.LinkLocation.Length - 1; i >= 0; i--)
                 if (e.LinkLocation[i].Bottom > y + ClientSize.Height)
@@ -92,6 +96,10 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override Point ScrollToControl(Control activeControl)
         {
+            // For some strange reason, ScrollableControl feels the need occasionally to scroll to the 
+            // currently focused control (e.g. when the layout engine tells it to perform layout, even
+            // if the location and size of controls don’t actually chage). That would cause it to scroll
+            // to the top unwantedly. This prevents it.
             return DisplayRectangle.Location;
         }
     }
