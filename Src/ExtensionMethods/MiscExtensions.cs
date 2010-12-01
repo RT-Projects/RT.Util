@@ -50,7 +50,7 @@ namespace RT.Util.ExtensionMethods
             token.WaitHandle.WaitOne(time);
         }
 
-        /// <summary>Enumerates a chain of objects where each object refers to the next one. The chain ends when null is encountered.</summary>
+        /// <summary>Enumerates a chain of objects where each object refers to the next one. The chain starts with the specified object and ends when null is encountered.</summary>
         /// <typeparam name="T">Type of object to enumerate.</typeparam>
         /// <param name="obj">Initial object.</param>
         /// <param name="next">A function that returns the next object given the current one. If null is returned, enumeration will end.</param>
