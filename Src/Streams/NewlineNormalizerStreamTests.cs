@@ -11,7 +11,7 @@ namespace RT.Util.Streams
     [TestFixture]
     public sealed class NewlineNormalizerStreamTests
     {
-        [Test]
+        [Test, Timeout(30000)]
         public void TestNewlineNormalizerStream8bit()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf8(), "\r".ToUtf8(), "\r\n".ToUtf8() }.Permutations();
@@ -40,7 +40,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test]
+        [Test, Timeout(30000)]
         public void TestNewlineNormalizerStream16bitLittleEndian()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16(), "\r".ToUtf16(), "\r\n".ToUtf16() }.Permutations();
@@ -69,7 +69,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test]
+        [Test, Timeout(30000)]
         public void TestNewlineNormalizerStream16bitBigEndian()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16BE(), "\r".ToUtf16BE(), "\r\n".ToUtf16BE() }.Permutations();
