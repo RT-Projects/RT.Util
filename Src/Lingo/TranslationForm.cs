@@ -90,7 +90,8 @@ namespace RT.Util.Lingo
                 Orientation = Orientation.Vertical,
             };
 
-            _lstGroups = new TranslationGroupListBox { Dock = DockStyle.Fill };
+            _lstGroups = new TranslationGroupListBox { Dock = DockStyle.Fill, FormattingEnabled = true };
+            _lstGroups.Format += (s, e) => { e.Value = ((TranslationGroupListItem) e.ListItem).Label; };
             pnlSplit.Panel1.Controls.Add(_lstGroups);
 
             TTranslation orig = new TTranslation();
@@ -107,23 +108,23 @@ namespace RT.Util.Lingo
             foreach (var type in dicPanels.Select(kvp => kvp.Key.GetType()).Distinct())
                 foreach (var f in type.GetFields(BindingFlags.Static | BindingFlags.Public))
                     foreach (var attr in f.GetCustomAttributes<LingoGroupAttribute>())
-                        dic.Add(f.GetValue(null), Tuple.Create(attr.Name, attr.Description));
+                        dic.Add(f.GetValue(null), Tuple.Create(attr.GroupName, attr.Description));
 
             // Create all the list items
             foreach (var kvp in dic)
                 if (dicPanels.ContainsKey(kvp.Key))
                 {
-                    var li = new TranslationGroupListItem { Label = kvp.Value.Item1, Notes = kvp.Value.Item2, TranslationPanels = dicPanels[kvp.Key].ToArray() };
-                    _lstGroups.Items.Add(li);
+                    var listItem = new TranslationGroupListItem { Label = kvp.Value.Item1, Notes = kvp.Value.Item2, TranslationPanels = dicPanels[kvp.Key].ToArray() };
+                    _lstGroups.Items.Add(listItem);
                     foreach (var tp in dicPanels[kvp.Key])
-                        tp.ListItems.Add(li);
+                        tp.ListItems.Add(listItem);
                 }
             if (lstUngroupedPanels.Count > 0)
             {
-                var li = new TranslationGroupListItem { Label = "Ungrouped strings", Notes = "This group contains strings not found in any other group.", TranslationPanels = lstUngroupedPanels.ToArray() };
-                _lstGroups.Items.Add(li);
+                var listItem = new TranslationGroupListItem { Label = "Ungrouped strings", Notes = "This group contains strings not found in any other group.", TranslationPanels = lstUngroupedPanels.ToArray() };
+                _lstGroups.Items.Add(listItem);
                 foreach (var tp in lstUngroupedPanels)
-                    tp.ListItems.Add(li);
+                    tp.ListItems.Add(listItem);
             }
             _allTranslationPanels = lstAllPanels.ToArray();
 
@@ -308,47 +309,47 @@ namespace RT.Util.Lingo
 
         private void find(object sender, EventArgs e)
         {
-            using (Form ff = new Form())
+            using (Form findForm = new Form())
             {
-                ff.AutoSize = true;
-                ff.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                ff.Text = "Find";
-                ff.FormBorderStyle = FormBorderStyle.FixedDialog;
-                ff.MinimizeBox = false;
-                ff.MaximizeBox = false;
-                ff.ShowInTaskbar = false;
-                ff.Font = Font;
-                TableLayoutPanel tp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 5, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(5) };
-                tp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-                tp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                tp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                tp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                tp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                tp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                tp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                tp.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                findForm.AutoSize = true;
+                findForm.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                findForm.Text = "Find";
+                findForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                findForm.MinimizeBox = false;
+                findForm.MaximizeBox = false;
+                findForm.ShowInTaskbar = false;
+                findForm.Font = Font;
+                TableLayoutPanel tableLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 5, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(5) };
+                tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+                tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                tableLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tableLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tableLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tableLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tableLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
                 Label lbl = new Label { Text = "&Find text:", AutoSize = true, Anchor = AnchorStyles.Left };
-                tp.Controls.Add(lbl, 0, 0); tp.SetColumnSpan(lbl, 3);
+                tableLayout.Controls.Add(lbl, 0, 0); tableLayout.SetColumnSpan(lbl, 3);
                 TextBox txt = new TextBox { Text = _settings.LastFindQuery, Anchor = AnchorStyles.Left | AnchorStyles.Right };
-                tp.Controls.Add(txt, 0, 1); tp.SetColumnSpan(txt, 3);
+                tableLayout.Controls.Add(txt, 0, 1); tableLayout.SetColumnSpan(txt, 3);
                 CheckBox optOrig = new CheckBox { Text = "Search &English text", Checked = _settings.LastFindOrig, AutoSize = true, Anchor = AnchorStyles.Left };
-                tp.Controls.Add(optOrig, 0, 2); tp.SetColumnSpan(optOrig, 3);
+                tableLayout.Controls.Add(optOrig, 0, 2); tableLayout.SetColumnSpan(optOrig, 3);
                 CheckBox optTrans = new CheckBox { Text = "Search &Translations", Checked = _settings.LastFindTrans, AutoSize = true, Anchor = AnchorStyles.Left };
-                tp.Controls.Add(optTrans, 0, 3); tp.SetColumnSpan(optTrans, 3);
+                tableLayout.Controls.Add(optTrans, 0, 3); tableLayout.SetColumnSpan(optTrans, 3);
                 Button btnOK = new Button { Text = "OK", Anchor = AnchorStyles.Right };
                 EventHandler evh = (s, v) => { btnOK.Enabled = (optOrig.Checked || optTrans.Checked) && txt.TextLength > 0; };
                 optOrig.CheckedChanged += evh;
                 optTrans.CheckedChanged += evh;
                 txt.TextChanged += evh;
-                btnOK.Click += (s, v) => { ff.DialogResult = DialogResult.OK; };
-                tp.Controls.Add(btnOK, 1, 4);
+                btnOK.Click += (s, v) => { findForm.DialogResult = DialogResult.OK; };
+                tableLayout.Controls.Add(btnOK, 1, 4);
                 Button btnCancel = new Button { Text = "Cancel", Anchor = AnchorStyles.Right };
-                tp.Controls.Add(btnCancel, 2, 4);
-                ff.Controls.Add(tp);
-                ff.AcceptButton = btnOK;
-                ff.CancelButton = btnCancel;
-                ff.Load += (s, v) => { ff.Location = new Point((Screen.PrimaryScreen.WorkingArea.Width - ff.Width) / 2 + Screen.PrimaryScreen.WorkingArea.X, (Screen.PrimaryScreen.WorkingArea.Height - ff.Height) / 2 + Screen.PrimaryScreen.WorkingArea.Y); };
-                if (ff.ShowDialog() == DialogResult.OK)
+                tableLayout.Controls.Add(btnCancel, 2, 4);
+                findForm.Controls.Add(tableLayout);
+                findForm.AcceptButton = btnOK;
+                findForm.CancelButton = btnCancel;
+                findForm.Load += (s, v) => { findForm.Location = new Point((Screen.PrimaryScreen.WorkingArea.Width - findForm.Width) / 2 + Screen.PrimaryScreen.WorkingArea.X, (Screen.PrimaryScreen.WorkingArea.Height - findForm.Height) / 2 + Screen.PrimaryScreen.WorkingArea.Y); };
+                if (findForm.ShowDialog() == DialogResult.OK)
                 {
                     _settings.LastFindQuery = txt.Text;
                     _settings.LastFindOrig = optOrig.Checked;
@@ -441,7 +442,7 @@ namespace RT.Util.Lingo
 
         private void nextOutOfDate(object sender, EventArgs e)
         {
-            var refList = _lstGroups.Items.Cast<TranslationGroupListItem>().SelectMany(it => it.TranslationPanels.Select(tp => new { ListItem = it, TranslationPanel = tp })).ToArray();
+            var refList = _lstGroups.Items.Cast<TranslationGroupListItem>().SelectMany(listItem => listItem.TranslationPanels.Select(tp => new { ListItem = listItem, TranslationPanel = tp })).ToArray();
             int start = _lastFocusedPanel == null || _lstGroups.SelectedIndex == -1 ? 0 : refList.TakeWhile(r => r.TranslationPanel != _lastFocusedPanel || r.ListItem != _lstGroups.Items[_lstGroups.SelectedIndex]).Count() + 1;
             int finish = _lastFocusedPanel == null ? refList.Length - 1 : start - 1;
             for (int i = start % refList.Length; i != finish; i = (i + 1) % refList.Length)
@@ -820,7 +821,7 @@ namespace RT.Util.Lingo
             }
             protected abstract void acceptTranslation(object sender, EventArgs e);
 
-            public void SwitchToGroup(TranslationGroupListItem li)
+            public void SwitchToGroup(TranslationGroupListItem listItem)
             {
                 if (ListItems.Count < 2)
                 {
@@ -866,7 +867,7 @@ namespace RT.Util.Lingo
 
                 if (ListItems.Count == 2)
                 {
-                    TranslationGroupListItem otherLi = ListItems.First(l => l != li);
+                    TranslationGroupListItem otherLi = ListItems.First(l => l != listItem);
                     _lblOtherGroups.Text = @"This string is also in ""{0}"".".Fmt(otherLi.Label);
                     _lblOtherGroups.Click += (s, e) => fireGroupSwitch(otherLi);
                 }
@@ -876,7 +877,7 @@ namespace RT.Util.Lingo
                     _lblOtherGroups.Click += (s, e) =>
                     {
                         ContextMenuStrip dropDownMenu = new ContextMenuStrip();
-                        foreach (var li2 in ListItems.Where(l => l != li))
+                        foreach (var li2 in ListItems.Where(l => l != listItem))
                             dropDownMenu.Items.Add(new ToolStripMenuItem(li2.Label, null, (s2, e2) => fireGroupSwitch((TranslationGroupListItem) ((ToolStripMenuItem) s2).Tag)) { Tag = li2 });
                         dropDownMenu.Show(_lblOtherGroups, new Point(_lblOtherGroups.Width, _lblOtherGroups.Height), ToolStripDropDownDirection.BelowLeft);
                     };
@@ -1476,7 +1477,6 @@ namespace RT.Util.Lingo
             public TranslationPanel[] TranslationPanels;
             public string Label;
             public string Notes;
-            public override string ToString() { return Label; }
         }
 
         private sealed class TranslationGroupListBox : ListBox

@@ -16,10 +16,6 @@ namespace RT.Util.Lingo
         {
             public Language Language;
             public LanguageListItem(Language language) { Language = language; }
-            public override string ToString()
-            {
-                return Language.GetEnglishName();
-            }
         }
         private ComboBox _lstLanguages;
 
@@ -73,9 +69,10 @@ namespace RT.Util.Lingo
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-            _lstLanguages = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(5) };
+            _lstLanguages = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = new Padding(5), FormattingEnabled = true };
             _lstLanguages.Items.AddRange(Enum.GetValues(typeof(Language)).Cast<Language>().Select(l => new LanguageListItem(l)).OrderBy(l => l.Language.GetEnglishName()).ToArray());
             _lstLanguages.ClientSize = new Size(_lstLanguages.Items.Cast<LanguageListItem>().Max(l => TextRenderer.MeasureText(l.Language.GetEnglishName(), _lstLanguages.Font).Width) + 32, _lstLanguages.ClientSize.Height);
+            _lstLanguages.Format += (s, e) => { e.Value = ((LanguageListItem) e.ListItem).Language.GetEnglishName(); };
 
             tlpMain.Controls.Add(new Label { Text = "&Language:", Anchor = AnchorStyles.Left, AutoSize = true, Margin = new Padding(5) }, 0, 0);
             tlpMain.Controls.Add(_lstLanguages, 1, 0);

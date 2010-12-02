@@ -47,20 +47,20 @@ namespace RT.Util.Lingo
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class LingoGroupAttribute : Attribute
     {
-        private readonly string _name;
+        private readonly string _groupName;
         private readonly string _description;
 
         /// <summary>Constructor.</summary>
-        /// <param name="name">Specifies a short name for the group, to be used in the listbox in the translation window.</param>
+        /// <param name="groupName">Specifies a short name for the group, to be used in the listbox in the translation window.</param>
         /// <param name="description">Specifies a long description for the group, to be displayed above the list of string codes while the group is selected.</param>
-        public LingoGroupAttribute(string name, string description)
+        public LingoGroupAttribute(string groupName, string description)
         {
-            _name = name;
+            _groupName = groupName;
             _description = description;
         }
 
         /// <summary>Specifies a short name for the group, to be used in the listbox in the translation window.</summary>
-        public string Name { get { return _name; } }
+        public string GroupName { get { return _groupName; } }
         /// <summary>Specifies a long description for the group, to be displayed above the list of string codes while the group is selected.</summary>
         public string Description { get { return _description; } }
     }
