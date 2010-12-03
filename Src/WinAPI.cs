@@ -228,17 +228,17 @@ namespace RT.Util
         public struct MOUSEKEYBDHARDWAREINPUT
         {
             [FieldOffset(0)]
-            public MOUSEINPUT mi;
+            public MOUSEINPUT Mouse;
             [FieldOffset(0)]
-            public KEYBDINPUT ki;
+            public KEYBDINPUT Keyboard;
             [FieldOffset(0)]
-            public HARDWAREINPUT hi;
+            public HARDWAREINPUT Hardware;
         }
 
         public struct INPUT
         {
-            public int type;
-            public MOUSEKEYBDHARDWAREINPUT mkhi;
+            public int Type;
+            public MOUSEKEYBDHARDWAREINPUT SpecificInput;
         }
 
         [StructLayout(LayoutKind.Sequential)]

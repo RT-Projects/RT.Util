@@ -116,16 +116,16 @@ namespace RT.Util
                     throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys or char.", "keys");
                 var keyDown = new WinAPI.INPUT
                 {
-                    type = WinAPI.INPUT_KEYBOARD,
-                    mkhi = new WinAPI.MOUSEKEYBDHARDWAREINPUT
+                    Type = WinAPI.INPUT_KEYBOARD,
+                    SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
                     {
-                        ki = (arr[i] is Keys)
+                        Keyboard = (arr[i] is Keys)
                             ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) arr[i] }
                             : new WinAPI.KEYBDINPUT { wScan = (ushort) (char) arr[i], dwFlags = WinAPI.KEYEVENTF_UNICODE }
                     }
                 };
                 var keyUp = keyDown;
-                keyUp.mkhi.ki.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
+                keyUp.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
                 inputArr[2 * i] = keyDown;
                 inputArr[2 * i + 1] = keyUp;
             }
