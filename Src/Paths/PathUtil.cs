@@ -280,9 +280,7 @@ namespace RT.Util
         /// </summary>
         public static void CreatePathToFile(string filename)
         {
-            string dir = Path.GetDirectoryName(Path.Combine(".", filename));
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(".", filename)));
         }
     }
 }

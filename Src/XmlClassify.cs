@@ -81,17 +81,6 @@ namespace RT.Util.Xml
         /// <summary>
         /// Reconstructs an object of the specified type from the specified XML tree.
         /// </summary>
-        /// <param name="type">Type of the object to reconstruct.</param>
-        /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static object ObjectFromXElement(Type type, XElement elem)
-        {
-            return objectFromXElement(type, elem, null, null);
-        }
-
-        /// <summary>
-        /// Reconstructs an object of the specified type from the specified XML tree.
-        /// </summary>
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="elem">XML tree to reconstruct object from.</param>
         /// <param name="baseDir">The base directory from which to locate additional XML files
@@ -101,7 +90,18 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T ObjectFromXElement<[RummageKeepArgumentsReflectionSafe]T>(XElement elem, string baseDir = null, object parentNode = null)
         {
-            return (T) objectFromXElement(typeof(T), elem, baseDir, parentNode);
+            return (T) ObjectFromXElement(typeof(T), elem, baseDir, parentNode);
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree.
+        /// </summary>
+        /// <param name="type">Type of the object to reconstruct.</param>
+        /// <param name="elem">XML tree to reconstruct object from.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static object ObjectFromXElement(Type type, XElement elem, string baseDir = null, object parentNode = null)
+        {
+            return objectFromXElement(type, elem, baseDir, parentNode);
         }
 
         private static object objectFromXElement(Type type, XElement elem, string baseDir, object parentNode, Dictionary<string, object> remember = null)
@@ -360,10 +360,12 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of the object to store.</typeparam>
         /// <param name="saveObject">Object to store in an XML file.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
-        public static void SaveObjectToXmlFile<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string filename)
+        /// <param name="baseDir">The base directory from which to construct the paths for
+        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
+        public static void SaveObjectToXmlFile<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string filename, string baseDir = null, string tagName = null)
         {
-            string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            saveObjectToXmlFile(saveObject, typeof(T), filename, baseDir);
+            SaveObjectToXmlFile(saveObject, typeof(T), filename, baseDir, tagName);
         }
 
         /// <summary>
@@ -372,57 +374,21 @@ namespace RT.Util.Xml
         /// <param name="saveObject">Object to store in an XML file.</param>
         /// <param name="saveType">Type of the object to store.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
-        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename)
-        {
-            string baseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            saveObjectToXmlFile(saveObject, saveType, filename, baseDir);
-        }
-
-        /// <summary>
-        /// Stores the specified object in an XML file with the given path and filename.
-        /// </summary>
-        /// <typeparam name="T">Type of the object to store.</typeparam>
-        /// <param name="saveObject">Object to store in an XML file.</param>
-        /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="baseDir">The base directory from which to construct the paths for
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
-        public static void SaveObjectToXmlFile<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string filename, string baseDir)
+        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
+        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, string baseDir = null, string tagName = null)
         {
-            saveObjectToXmlFile(saveObject, typeof(T), filename, baseDir);
+            baseDir = baseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+            saveObjectToXmlFile(saveObject, saveType, filename, baseDir, tagName ?? "item");
         }
 
-        private static void saveObjectToXmlFile(object saveObject, Type declaredType, string filename, string baseDir)
+        private static void saveObjectToXmlFile(object saveObject, Type declaredType, string filename, string baseDir, string tagName)
         {
             int i = 0;
-            var x = objectToXElement(saveObject, declaredType, baseDir, "item", null, ref i);
+            var x = objectToXElement(saveObject, declaredType, baseDir, tagName, null, ref i);
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
-        }
-
-        /// <summary>
-        /// Converts the specified object into an XML tree.
-        /// </summary>
-        /// <typeparam name="T">Type of object to convert.</typeparam>
-        /// <param name="saveObject">Object to convert to an XML tree.</param>
-        /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<[RummageKeepArgumentsReflectionSafe]T>(T saveObject)
-        {
-            int i = 0;
-            return objectToXElement(saveObject, typeof(T), null, "item", null, ref i);
-        }
-
-        /// <summary>
-        /// Converts the specified object into an XML tree.
-        /// </summary>
-        /// <typeparam name="T">Type of object to convert.</typeparam>
-        /// <param name="saveObject">Object to convert to an XML tree.</param>
-        /// <param name="baseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
-        /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string baseDir)
-        {
-            int i = 0;
-            return objectToXElement(saveObject, typeof(T), baseDir, "item", null, ref i);
         }
 
         /// <summary>
@@ -435,10 +401,10 @@ namespace RT.Util.Xml
         /// <param name="tagName">Name of the top-level XML tag to use for this object.
         /// Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string baseDir, string tagName)
+        public static XElement ObjectToXElement<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string baseDir = null, string tagName = null)
         {
             int i = 0;
-            return objectToXElement(saveObject, typeof(T), baseDir, tagName, null, ref i);
+            return objectToXElement(saveObject, typeof(T), baseDir, tagName ?? "item", null, ref i);
         }
 
         private static XElement objectToXElement(object saveObject, Type declaredType, string baseDir, string tagName, Dictionary<object, XElement> remember, ref int nextId)
@@ -612,7 +578,7 @@ namespace RT.Util.Xml
                                 if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
                                 {
                                     var prop = field.FieldType.GetProperty("Value");
-                                    saveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir);
+                                    saveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), baseDir, "item");
                                 }
                             }
                             else
