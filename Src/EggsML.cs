@@ -151,7 +151,12 @@ namespace RT.Util
                             continue;
                         }
                         else if (alwaysCloses(input[0]))
-                            throw new EggsMLParseException(@"Tag ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
+                        {
+                            if (curTag.Tag == null)
+                                throw new EggsMLParseException(@"Tag ‘{0}’ unexpected.".Fmt(input[0]), index, 1);
+                            else
+                                throw new EggsMLParseException(@"Tag ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
+                        }
                         throw new EggsMLParseException(@"Character ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
                 }
             }
