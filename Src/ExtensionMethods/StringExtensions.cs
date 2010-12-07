@@ -893,5 +893,13 @@ namespace RT.Util.ExtensionMethods
                 return Regex.Replace(str, "^", new string(' ', by), RegexOptions.Multiline);
             return Regex.Replace(str, "(?<=\n)", new string(' ', by));
         }
+
+        /// <summary>Splits a string into chunks of equal size. The last chunk may be smaller than chunkSize, but all chunks, if any, will contain at least 1 character.</summary>
+        public static IEnumerable<string> Split(this string str, int chunkSize)
+        {
+            if (chunkSize <= 0) throw new ArgumentException("chunkSize must be greater than zero");
+            for (int offset = 0; offset < str.Length; offset += chunkSize)
+                yield return str.Substring(offset, Math.Min(chunkSize, str.Length - offset));
+        }
     }
 }

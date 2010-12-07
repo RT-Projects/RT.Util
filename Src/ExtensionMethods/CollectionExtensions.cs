@@ -388,21 +388,45 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Generates a representation of the specified byte array as hexadecimal numbers (“hexdump”).
         /// </summary>
-        public static string ToHex(this byte[] byteArray)
+        public static string ToHex(this byte[] data)
         {
-            if (byteArray == null)
+            if (data == null)
                 throw new ArgumentNullException("byteArray");
 
-            char[] charArr = new char[byteArray.Length * 2];
+            char[] charArr = new char[data.Length * 2];
             var j = 0;
-            for (int i = 0; i < byteArray.Length; i++)
+            for (int i = 0; i < data.Length; i++)
             {
-                byte b = (byte) (byteArray[i] >> 4);
+                byte b = (byte) (data[i] >> 4);
                 charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
                 j++;
-                b = (byte) (byteArray[i] & 0xf);
+                b = (byte) (data[i] & 0xf);
                 charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);
                 j++;
+            }
+            return new string(charArr);
+        }
+
+        /// <summary>
+        /// Generates a representation of the specified uint array as hexadecimal numbers (“hexdump”).
+        /// </summary>
+        public static string ToHex(this uint[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException("uintArray");
+
+            char[] charArr = new char[data.Length * 8];
+            var j = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                uint d = data[i];
+                for (int k = 0; k < 8; k++)
+                {
+                    byte b = (byte) (d >> 28);
+                    charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
+                    d <<= 4;
+                    j++;
+                }
             }
             return new string(charArr);
         }
