@@ -362,10 +362,15 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestToHex()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.ToHex(null); });
+            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.ToHex((byte[]) null); });
             Assert.AreEqual("", new byte[0].ToHex());
             Assert.AreEqual("20", " ".ToUtf8().ToHex());
             Assert.AreEqual("E28692", "→".ToUtf8().ToHex().ToUpperInvariant());
+
+            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.ToHex((uint[]) null); });
+            Assert.AreEqual("", new uint[0].ToHex());
+            Assert.AreEqual("DEADBEEF", new uint[] { 0xDEADBEEF }.ToHex().ToUpperInvariant());
+            Assert.AreEqual("000000010000000200000003", new uint[] { 1, 2, 3 }.ToHex().ToUpperInvariant());
         }
     }
 }
