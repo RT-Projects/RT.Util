@@ -897,7 +897,12 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Splits a string into chunks of equal size. The last chunk may be smaller than chunkSize, but all chunks, if any, will contain at least 1 character.</summary>
         public static IEnumerable<string> Split(this string str, int chunkSize)
         {
-            if (chunkSize <= 0) throw new ArgumentException("chunkSize must be greater than zero");
+            if (chunkSize <= 0)
+                throw new ArgumentException("chunkSize must be greater than zero.", "chunkSize");
+            return splitIterator(str, chunkSize);
+        }
+        private static IEnumerable<string> splitIterator(this string str, int chunkSize)
+        {
             for (int offset = 0; offset < str.Length; offset += chunkSize)
                 yield return str.Substring(offset, Math.Min(chunkSize, str.Length - offset));
         }

@@ -94,7 +94,7 @@ namespace RT.Util
         /// <summary>
         /// Sends the specified sequence of key strokes to the active application.
         /// </summary>
-        /// <param name="keys">A collection of objects of type <see cref="Keys"/> or <see cref="char"/>.</param>
+        /// <param name="keys">A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or Tuple&lt;Keys, bool&gt;.</param>
         /// <exception cref="ArgumentException">
         ///     <list type="bullet">
         ///         <item><description><paramref name="keys"/> was null.</description></item>
@@ -105,31 +105,47 @@ namespace RT.Util
         {
             if (keys == null)
                 throw new ArgumentException(@"The input collection cannot be null.", "keys");
-            var arr = keys.ToArray();
-            if (arr.Length < 1)
-                return;
 
-            var inputArr = new WinAPI.INPUT[arr.Length * 2];
-            for (int i = 0; i < arr.Length; i++)
+            var input = new List<WinAPI.INPUT>();
+            foreach (var elem in keys)
             {
-                if (!(arr[i] is Keys || arr[i] is char))
-                    throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys or char.", "keys");
-                var keyDown = new WinAPI.INPUT
+                Tuple<Keys, bool> t;
+                if ((t = elem as Tuple<Keys, bool>) != null)
                 {
-                    Type = WinAPI.INPUT_KEYBOARD,
-                    SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
+                    var keyEvent = new WinAPI.INPUT
                     {
-                        Keyboard = (arr[i] is Keys)
-                            ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) arr[i] }
-                            : new WinAPI.KEYBDINPUT { wScan = (ushort) (char) arr[i], dwFlags = WinAPI.KEYEVENTF_UNICODE }
-                    }
-                };
-                var keyUp = keyDown;
-                keyUp.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
-                inputArr[2 * i] = keyDown;
-                inputArr[2 * i + 1] = keyUp;
+                        Type = WinAPI.INPUT_KEYBOARD,
+                        SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
+                        {
+                            Keyboard = new WinAPI.KEYBDINPUT { wVk = (ushort) t.Item1 }
+                        }
+                    };
+                    if (t.Item2)
+                        keyEvent.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
+                    input.Add(keyEvent);
+                }
+                else
+                {
+                    if (!(elem is Keys || elem is char))
+                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, or Tuple<Keys, bool>.", "keys");
+                    var keyDown = new WinAPI.INPUT
+                    {
+                        Type = WinAPI.INPUT_KEYBOARD,
+                        SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
+                        {
+                            Keyboard = (elem is Keys)
+                                ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) elem }
+                                : new WinAPI.KEYBDINPUT { wScan = (ushort) (char) elem, dwFlags = WinAPI.KEYEVENTF_UNICODE }
+                        }
+                    };
+                    var keyUp = keyDown;
+                    keyUp.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
+                    input.Add(keyDown);
+                    input.Add(keyUp);
+                }
             }
-            WinAPI.SendInput((uint) (2 * arr.Length), inputArr, Marshal.SizeOf(inputArr[0]));
+            var inputArr = input.ToArray();
+            WinAPI.SendInput((uint) inputArr.Length, inputArr, Marshal.SizeOf(input[0]));
         }
 
         /// <summary>
