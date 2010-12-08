@@ -98,6 +98,10 @@ namespace RT.Util.Xml
         /// </summary>
         /// <param name="type">Type of the object to reconstruct.</param>
         /// <param name="elem">XML tree to reconstruct object from.</param>
+        /// <param name="baseDir">The base directory from which to locate additional XML files
+        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
+        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static object ObjectFromXElement(Type type, XElement elem, string baseDir = null, object parentNode = null)
         {
