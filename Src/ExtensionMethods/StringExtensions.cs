@@ -13,7 +13,7 @@ namespace RT.Util.ExtensionMethods
     /// </summary>
     public static class StringExtensions
     {
-        private const string _charsBase64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        public const string CharsBase64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
         private static int[] _invBase64Url; // inverse base-64-url lookup table
 
         /// <summary>
@@ -338,25 +338,25 @@ namespace RT.Util.ExtensionMethods
                 if (bytes.Length - i >= 3)
                 {
                     // 000000 001111 111122 222222
-                    result.Append(_charsBase64Url[bytes[i] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
-                    result.Append(_charsBase64Url[(bytes[i + 1] & 15) << 2 | bytes[i + 2] >> 6]);
-                    result.Append(_charsBase64Url[bytes[i + 2] & 63]);
+                    result.Append(CharsBase64Url[bytes[i] >> 2]);
+                    result.Append(CharsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
+                    result.Append(CharsBase64Url[(bytes[i + 1] & 15) << 2 | bytes[i + 2] >> 6]);
+                    result.Append(CharsBase64Url[bytes[i + 2] & 63]);
                     i += 3;
                 }
                 else if (bytes.Length - i == 2)
                 {
                     // 000000 001111 1111--
-                    result.Append(_charsBase64Url[bytes[i] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
-                    result.Append(_charsBase64Url[(bytes[i + 1] & 15) << 2]);
+                    result.Append(CharsBase64Url[bytes[i] >> 2]);
+                    result.Append(CharsBase64Url[(bytes[i] & 3) << 4 | bytes[i + 1] >> 4]);
+                    result.Append(CharsBase64Url[(bytes[i + 1] & 15) << 2]);
                     i += 2;
                 }
                 else /* if (bytes.Length - i == 1) -- always true here given the while condition */
                 {
                     // 000000 00----
-                    result.Append(_charsBase64Url[bytes[i] >> 2]);
-                    result.Append(_charsBase64Url[(bytes[i] & 3) << 4]);
+                    result.Append(CharsBase64Url[bytes[i] >> 2]);
+                    result.Append(CharsBase64Url[(bytes[i] & 3) << 4]);
                     i += 1;
                 }
             }
@@ -371,7 +371,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            if (input.Any(ch => !_charsBase64Url.Contains(ch)))
+            if (input.Any(ch => !CharsBase64Url.Contains(ch)))
                 throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
 
             if (_invBase64Url == null)
@@ -380,8 +380,8 @@ namespace RT.Util.ExtensionMethods
                 _invBase64Url = new int[256];
                 for (int j = 0; j < _invBase64Url.Length; j++)
                     _invBase64Url[j] = -1;
-                for (int j = 0; j < _charsBase64Url.Length; j++)
-                    _invBase64Url[(int) _charsBase64Url[j]] = j;
+                for (int j = 0; j < CharsBase64Url.Length; j++)
+                    _invBase64Url[(int) CharsBase64Url[j]] = j;
             }
 
             // See how many bytes are encoded at the end of the string
