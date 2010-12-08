@@ -13,7 +13,9 @@ namespace RT.Util.ExtensionMethods
     /// </summary>
     public static class StringExtensions
     {
+        /// <summary>Contains the set of characters that are used in base64-url encoding.</summary>
         public const string CharsBase64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
         private static int[] _invBase64Url; // inverse base-64-url lookup table
 
         /// <summary>
