@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -263,13 +263,19 @@ namespace RT.Util.Forms
             var dims = _settings.DimensionsByRes[_lastScreenResolution];
             if (!dims.Maximized)
             {
-                dims.Left = centerInForm.Left + (centerInForm.Width - dims.Width) / 2;
-                dims.Top = centerInForm.Top + (centerInForm.Height - dims.Height) / 2;
+                // Make sure that this window doesn’t go off the edge of the working area, unless of course it absolutely doesn’t fit
+                var scr = Screen.FromControl(centerInForm).WorkingArea;
+                dims.Left = Math.Max(scr.Left, Math.Min(scr.Right - dims.Width, centerInForm.Left + (centerInForm.Width - dims.Width) / 2));
+                dims.Top = Math.Max(scr.Top, Math.Min(scr.Bottom - dims.Height, centerInForm.Top + (centerInForm.Height - dims.Height) / 2));
             }
+            var prevRes = _lastScreenResolution;
+            var prevLeft = dims.Left;
+            var prevTop = dims.Top;
 
             var result = base.ShowDialog();
 
-            if (repositionParentAfterwards)
+            // Only reposition the parent if this form was moved by the user
+            if (repositionParentAfterwards && (prevLeft != _normalLeft || prevTop != _normalTop || prevRes != _lastScreenResolution))
             {
                 dims = _settings.DimensionsByRes[_lastScreenResolution];
                 if (!dims.Maximized)
