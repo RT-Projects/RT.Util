@@ -196,5 +196,22 @@ namespace RT.Util.ExtensionMethods
                 for (int j = 0; j < 256; j++)
                     assertBase64UrlArray(new byte[] { i, (byte) j, i, i, i, i, i, (byte) j });
         }
+
+        [Test]
+        public void TestStringReplace()
+        {
+            Assert.Throws<ArgumentNullException>(() => StringExtensions.Replace(null, null, null, StringComparison.CurrentCulture));
+            Assert.Throws<ArgumentNullException>(() => StringExtensions.Replace(null, "X", "", StringComparison.CurrentCulture));
+            Assert.Throws<ArgumentNullException>(() => StringExtensions.Replace("", null, "", StringComparison.CurrentCulture));
+            Assert.Throws<ArgumentNullException>(() => StringExtensions.Replace("", "X", null, StringComparison.CurrentCulture));
+            Assert.Throws<ArgumentException>(() => StringExtensions.Replace("", "", "", StringComparison.CurrentCulture));
+
+            Assert.AreEqual("", "".Replace("a", "b", StringComparison.OrdinalIgnoreCase));
+            Assert.AreEqual("b", "a".Replace("a", "b", StringComparison.OrdinalIgnoreCase));
+            Assert.AreEqual("b", "A".Replace("a", "b", StringComparison.OrdinalIgnoreCase));
+            Assert.AreEqual("Once Upon A Time There Was A Beau!!iful Princess.", "Once Upon A Time There Was A Beautiful Princess.".Replace("t", "!!", StringComparison.Ordinal));
+            Assert.AreEqual("But She Had An !!chantm!!t Upon Her Of A Fearful Sort,", "But She Had An Enchantment Upon Her Of A Fearful Sort,".Replace("en", "!!", StringComparison.OrdinalIgnoreCase));
+            Assert.AreEqual("Which Could Only Be Broken By Love’s First Kiss.", "Which Could Only Be Broken By Love’s First Kiss.".Replace("X", "Y", StringComparison.Ordinal));
+        }
     }
 }

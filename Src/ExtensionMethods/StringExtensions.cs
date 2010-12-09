@@ -908,5 +908,28 @@ namespace RT.Util.ExtensionMethods
             for (int offset = 0; offset < str.Length; offset += chunkSize)
                 yield return str.Substring(offset, Math.Min(chunkSize, str.Length - offset));
         }
+
+        /// <summary>Returns a new string in which all occurrences of <paramref name="oldValue"/> in the current instance,
+        /// identified using the specified string comparison, are replaced with <paramref name="newValue"/>.</summary>
+        public static string Replace(this string str, string oldValue, string newValue, StringComparison comparison)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (oldValue == null)
+                throw new ArgumentNullException("oldValue");
+            if (oldValue.Length == 0)
+                throw new ArgumentException("oldValue cannot be the empty string.", "oldValue");
+            if (newValue == null)
+                throw new ArgumentNullException("newValue");
+            var output = "";
+            while (true)
+            {
+                var p = str.IndexOf(oldValue, comparison);
+                if (p == -1)
+                    return output + str;
+                output += str.Substring(0, p) + newValue;
+                str = str.Substring(p + oldValue.Length);
+            }
+        }
     }
 }
