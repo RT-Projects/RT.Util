@@ -9,7 +9,7 @@ using System.ComponentModel;
 namespace RT.Util.Controls
 {
     /// <summary>Provides a <see cref="LabelEx"/> wrapped in a ScrollableControl that behaves properly.</summary>
-    public class ScrollableLabelEx : ScrollableControl
+    public class ScrollableLabelEx : Panel
     {
         /// <summary>Constructor.</summary>
         public ScrollableLabelEx()

@@ -40,13 +40,15 @@ namespace RT.Util.Controls
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 
             // Set default properties
-            setTabStop(false);
+            TabStop = false;
             AutoSize = true;
             LinkColor = SystemColors.HotTrack;
             LinkActiveColor = Color.Red;
         }
 
-        /// <summary>Text displayed in the label. See remarks for EggsML supported.</summary>
+        /// <summary>Text displayed in the label. See remarks for EggsML supported. Setting this property also changes
+        /// the value of the <see cref="TabStop"/> property depending on whether the text contains any links.
+        /// To achieve deviant behaviour, set TabStop immediately after setting Text.</summary>
         /// <remarks>
         /// <list type="bullet">
         ///     <item><description><c>*</c> = bold.</description></item>
@@ -166,6 +168,22 @@ namespace RT.Util.Controls
         /// <summary>Color of text when a link is in the “active” state, i.e. when the mouse button or Space is held down.</summary>
         [DefaultValue(typeof(Color), "Red")]
         public virtual Color LinkActiveColor { get; set; }
+
+        /// <summary>Gets or sets a value indicating whether the user can give the focus to this control using the TAB key.
+        /// This property’s value automatically changes every time Text changes; it is set to true if there is a link in the text, false otherwise.
+        /// To achieve deviant behaviour, set TabStop immediately after setting Text.</summary>
+        [DefaultValue(typeof(bool), "false")]
+        public new bool TabStop
+        {
+            get { return base.TabStop; }
+            set
+            {
+                if (value == base.TabStop)
+                    return;
+                base.TabStop = value;
+                SetStyle(ControlStyles.Selectable, value);
+            }
+        }
 
         /// <summary>Contains information about a parse error that describes in what way the current value of
         /// <see cref="Text"/> is invalid EggsML, or null if it is valid.</summary>
@@ -289,7 +307,7 @@ namespace RT.Util.Controls
             _cachedRendering = null;
             base.OnTextChanged(e);
             _mnemonic = '\0';
-            setTabStop(false);
+            TabStop = false;
             var origText = base.Text;
             try
             {
@@ -344,7 +362,7 @@ namespace RT.Util.Controls
             else if (tag.Tag == '{')
             {
                 // Deliberately skip the inside of links: don’t wanna interpret their mnemonics as the main mnemonic
-                setTabStop(true);
+                TabStop = true;
             }
             else
             {
@@ -363,14 +381,6 @@ namespace RT.Util.Controls
                 return;
             if (Size != PreferredSize)
                 Size = PreferredSize;
-        }
-
-        private void setTabStop(bool tabStop)
-        {
-            if (tabStop == TabStop)
-                return;
-            TabStop = tabStop;
-            SetStyle(ControlStyles.Selectable, tabStop);
         }
 
         /// <summary>Override; see base.</summary>
@@ -400,6 +410,8 @@ namespace RT.Util.Controls
                     _keyboardFocusOnLinkNumber = null;
                 else if (_keyboardFocusOnLinkNumber == null)
                     _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : 0;
+
+                fixMouseCursor(PointToClient(Control.MousePosition));
             }
 
             foreach (var item in _cachedRendering)
@@ -613,28 +625,30 @@ namespace RT.Util.Controls
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (_cachedRendering != null && e.Button == MouseButtons.None)
-            {
-                for (int i = 0; i < _linkLocations.Count; i++)
-                    foreach (var rectangle in _linkLocations[i].Rectangles)
-                        if (rectangle.Contains(e.Location))
-                        {
-                            if (_mouseOnLinkNumber != i)
-                            {
-                                Cursor = _cursorHand;
-                                _mouseOnLinkNumber = i;
-                                Invalidate();
-                            }
-                            goto Out;
-                        }
-                if (_mouseOnLinkNumber != null)
-                {
-                    Cursor = Cursors.Default;
-                    _mouseOnLinkNumber = null;
-                    Invalidate();
-                }
-            }
-            Out:
+                fixMouseCursor(e.Location);
             base.OnMouseMove(e);
+        }
+
+        private void fixMouseCursor(Point p)
+        {
+            for (int i = 0; i < _linkLocations.Count; i++)
+                foreach (var rectangle in _linkLocations[i].Rectangles)
+                    if (rectangle.Contains(p))
+                    {
+                        if (_mouseOnLinkNumber != i)
+                        {
+                            Cursor = _cursorHand;
+                            _mouseOnLinkNumber = i;
+                            Invalidate();
+                        }
+                        return;
+                    }
+            if (_mouseOnLinkNumber != null)
+            {
+                Cursor = Cursors.Default;
+                _mouseOnLinkNumber = null;
+                Invalidate();
+            }
         }
 
         /// <summary>Override; see base.</summary>
