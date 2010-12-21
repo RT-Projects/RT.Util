@@ -229,7 +229,7 @@ namespace RT.Util
         /// than the one invoking a Save* operation (but the same as the thread performing the save immediately after this
         /// method returns).
         /// </summary>
-        protected virtual void BeforeSave()
+        public virtual void BeforeSave()
         {
         }
 
@@ -317,7 +317,7 @@ namespace RT.Util
             Thread.Sleep(2000);
             lock (_lock)
             {
-                BeforeSave();
+                _saveObj.BeforeSave();
                 SettingsUtil.SaveSettings(_saveObj, _saveObj.GetType(), SettingsUtil.OnFailure.DoNothing);
                 _saveThread = null;
             }
