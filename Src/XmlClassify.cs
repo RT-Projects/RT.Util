@@ -530,8 +530,8 @@ namespace RT.Util.Xml
                 }
                 else
                 {
-                    bool ignoreIfDefault = saveType.IsDefined<XmlIgnoreIfDefaultAttribute>(true);
-                    bool ignoreIfEmpty = saveType.IsDefined<XmlIgnoreIfEmptyAttribute>(true);
+                    bool ignoreIfDefaultOnType = saveType.IsDefined<XmlIgnoreIfDefaultAttribute>(true);
+                    bool ignoreIfEmptyOnType = saveType.IsDefined<XmlIgnoreIfEmptyAttribute>(true);
 
                     foreach (var field in saveType.GetAllFields())
                     {
@@ -557,8 +557,9 @@ namespace RT.Util.Xml
                         else
                         {
                             object saveValue = field.GetValue(saveObject);
+                            bool ignoreIfDefault = ignoreIfDefaultOnType || getAttrsFrom.IsDefined<XmlIgnoreIfDefaultAttribute>(true);
 
-                            if ((ignoreIfDefault || getAttrsFrom.IsDefined<XmlIgnoreIfDefaultAttribute>(true)) && (saveValue == null || (saveValue.GetType().IsValueType && saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))))
+                            if (ignoreIfDefault && (saveValue == null || (saveValue.GetType().IsValueType && saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))))
                                 continue;
 
                             var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true);
@@ -566,14 +567,15 @@ namespace RT.Util.Xml
                                 continue;
 
                             // Arrays, List<>, and Dictionary<,> all implement ICollection
-                            if (saveValue != null && (ignoreIfEmpty || getAttrsFrom.IsDefined<XmlIgnoreIfEmptyAttribute>(true)) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
+                            bool ignoreIfEmpty = ignoreIfEmptyOnType || getAttrsFrom.IsDefined<XmlIgnoreIfEmptyAttribute>(true);
+                            if (saveValue != null && ignoreIfEmpty && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                                 continue;
 
                             // [XmlFollowId]
                             if (getAttrsFrom.IsDefined<XmlFollowIdAttribute>())
                             {
                                 if (field.FieldType.GetGenericTypeDefinition() != typeof(XmlDeferredObject<>))
-                                    throw new Exception("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
+                                    throw new InvalidOperationException("A field that uses the [XmlFollowId] attribute must have the type XmlDeferredObject<T> for some T.");
 
                                 Type innerType = field.FieldType.GetGenericArguments()[0];
                                 string id = (string) field.FieldType.GetProperty("Id").GetValue(saveValue, null);
@@ -587,7 +589,9 @@ namespace RT.Util.Xml
                             }
                             else
                             {
-                                elem.Add(objectToXElement(saveValue, field.FieldType, baseDir, rFieldName, remember, ref nextId));
+                                var xelem = objectToXElement(saveValue, field.FieldType, baseDir, rFieldName, remember, ref nextId);
+                                if (xelem.HasAttributes || xelem.HasElements || !ignoreIfEmpty)
+                                    elem.Add(xelem);
                             }
                         }
                     }
@@ -622,20 +626,20 @@ namespace RT.Util.Xml
 
     /// <summary>
     /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does
-    /// not generate a tag if the value is null, 0, or false. If it is used on a class or struct, it applies to all fields and
+    /// not generate a tag if the value is null, 0, false, etc. If it is used on a class or struct, it applies to all fields and
     /// automatically-implemented properties in the class or struct. Notice that using this together with
-    /// <see cref="XmlIgnoreIfEmptyAttribute"/> will cause the distinction between null and an empty collection
+    /// <see cref="XmlIgnoreIfEmptyAttribute"/> will cause the distinction between null and an empty element
     /// to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class XmlIgnoreIfDefaultAttribute : Attribute { }
 
     /// <summary>
-    /// If this attribute is used on a field or automatically-implemented property of a collection type (including
-    /// dictionaries), <see cref="XmlClassify"/> does not generate a tag if the collection is empty. If it is used on
+    /// If this attribute is used on a field or automatically-implemented property, <see cref="XmlClassify"/> does
+    /// not generate a tag if that tag would be completely empty (no attributes or subelements). If it is used on
     /// a class or struct, it applies to all collection-type fields in the class or struct. Notice that using this together
     /// with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty
-    /// collection to be lost. However, a collection containing only null elements is persisted correctly.
+    /// element to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class XmlIgnoreIfEmptyAttribute : Attribute { }
