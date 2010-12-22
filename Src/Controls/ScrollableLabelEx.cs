@@ -35,27 +35,27 @@ namespace RT.Util.Controls
             switch (e.KeyCode)
             {
                 case Keys.Up:
-                    scrollTo(-2 * VerticalScroll.SmallChange - DisplayRectangle.Y);
+                    ScrollTo(-2 * VerticalScroll.SmallChange - DisplayRectangle.Y);
                     e.IsInputKey = false;
                     break;
                 case Keys.Down:
-                    scrollTo(2 * VerticalScroll.SmallChange - DisplayRectangle.Y);
+                    ScrollTo(2 * VerticalScroll.SmallChange - DisplayRectangle.Y);
                     e.IsInputKey = false;
                     break;
                 case Keys.PageUp:
-                    scrollTo(-VerticalScroll.LargeChange - DisplayRectangle.Y);
+                    ScrollTo(-VerticalScroll.LargeChange - DisplayRectangle.Y);
                     e.IsInputKey = false;
                     break;
                 case Keys.PageDown:
-                    scrollTo(VerticalScroll.LargeChange - DisplayRectangle.Y);
+                    ScrollTo(VerticalScroll.LargeChange - DisplayRectangle.Y);
                     e.IsInputKey = false;
                     break;
                 case Keys.Home:
-                    scrollTo(0);
+                    ScrollTo(0);
                     e.IsInputKey = false;
                     break;
                 case Keys.End:
-                    scrollTo(Label.Height);
+                    ScrollTo(Label.Height);
                     e.IsInputKey = false;
                     break;
             }
@@ -72,10 +72,10 @@ namespace RT.Util.Controls
             for (int i = 0; i < e.LinkLocation.Length; i++)
                 if (e.LinkLocation[i].Top < y)
                     y = e.LinkLocation[i].Top - ClientSize.Height / 10;
-            scrollTo(y);
+            ScrollTo(y);
         }
 
-        private void scrollTo(int y)
+        public void ScrollTo(int y)
         {
             y = Math.Max(Math.Min(y, Label.Height - ClientSize.Height), 0);
             SetDisplayRectLocation(0, -y);
