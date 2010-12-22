@@ -29,23 +29,23 @@ namespace RT.Util.Dialogs
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DlgMessageForm));
-            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.layoutMain = new System.Windows.Forms.TableLayoutPanel();
+            this.layoutButtons = new System.Windows.Forms.TableLayoutPanel();
             this.Btn2 = new System.Windows.Forms.Button();
             this.Btn3 = new System.Windows.Forms.Button();
             this.Btn0 = new System.Windows.Forms.Button();
             this.Btn1 = new System.Windows.Forms.Button();
-            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.layoutMessage = new System.Windows.Forms.TableLayoutPanel();
             this.Message = new System.Windows.Forms.Label();
             this.img = new System.Windows.Forms.PictureBox();
+            this.pnlLine = new System.Windows.Forms.Panel();
             this.info = new System.Windows.Forms.PictureBox();
             this.question = new System.Windows.Forms.PictureBox();
             this.warning = new System.Windows.Forms.PictureBox();
             this.error = new System.Windows.Forms.PictureBox();
-            this.pnlLine = new System.Windows.Forms.Panel();
-            this.tableLayoutPanel3.SuspendLayout();
-            this.tableLayoutPanel1.SuspendLayout();
-            this.tableLayoutPanel2.SuspendLayout();
+            this.layoutMain.SuspendLayout();
+            this.layoutButtons.SuspendLayout();
+            this.layoutMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize) (this.img)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.info)).BeginInit();
             ((System.ComponentModel.ISupportInitialize) (this.question)).BeginInit();
@@ -53,46 +53,46 @@ namespace RT.Util.Dialogs
             ((System.ComponentModel.ISupportInitialize) (this.error)).BeginInit();
             this.SuspendLayout();
             // 
-            // tableLayoutPanel3
+            // layoutMain
             // 
-            this.tableLayoutPanel3.AutoSize = true;
-            this.tableLayoutPanel3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.tableLayoutPanel3.ColumnCount = 1;
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel1, 0, 2);
-            this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel2, 0, 0);
-            this.tableLayoutPanel3.Controls.Add(this.pnlLine, 0, 1);
-            this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel3.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel3.Margin = new System.Windows.Forms.Padding(0);
-            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
-            this.tableLayoutPanel3.RowCount = 3;
-            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1F));
-            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel3.Size = new System.Drawing.Size(728, 169);
-            this.tableLayoutPanel3.TabIndex = 14;
+            this.layoutMain.AutoSize = true;
+            this.layoutMain.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.layoutMain.ColumnCount = 1;
+            this.layoutMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutMain.Controls.Add(this.layoutButtons, 0, 2);
+            this.layoutMain.Controls.Add(this.layoutMessage, 0, 0);
+            this.layoutMain.Controls.Add(this.pnlLine, 0, 1);
+            this.layoutMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.layoutMain.Location = new System.Drawing.Point(0, 0);
+            this.layoutMain.Margin = new System.Windows.Forms.Padding(0);
+            this.layoutMain.Name = "layoutMain";
+            this.layoutMain.RowCount = 3;
+            this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1F));
+            this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.layoutMain.Size = new System.Drawing.Size(728, 169);
+            this.layoutMain.TabIndex = 14;
             // 
-            // tableLayoutPanel1
+            // layoutButtons
             // 
-            this.tableLayoutPanel1.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.tableLayoutPanel1.AutoSize = true;
-            this.tableLayoutPanel1.ColumnCount = 4;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.Controls.Add(this.Btn2, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.Btn3, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.Btn0, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.Btn1, 0, 0);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(345, 111);
-            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 1;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(464, 68);
-            this.tableLayoutPanel1.TabIndex = 19;
+            this.layoutButtons.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.layoutButtons.AutoSize = true;
+            this.layoutButtons.ColumnCount = 4;
+            this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutButtons.Controls.Add(this.Btn2, 0, 0);
+            this.layoutButtons.Controls.Add(this.Btn3, 0, 0);
+            this.layoutButtons.Controls.Add(this.Btn0, 0, 0);
+            this.layoutButtons.Controls.Add(this.Btn1, 0, 0);
+            this.layoutButtons.Location = new System.Drawing.Point(345, 111);
+            this.layoutButtons.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.layoutButtons.Name = "layoutButtons";
+            this.layoutButtons.RowCount = 1;
+            this.layoutButtons.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.layoutButtons.Size = new System.Drawing.Size(464, 68);
+            this.layoutButtons.TabIndex = 19;
             // 
             // Btn2
             // 
@@ -162,26 +162,26 @@ namespace RT.Util.Dialogs
             this.Btn1.Visible = false;
             this.Btn1.Click += new System.EventHandler(this.Btn_Click);
             // 
-            // tableLayoutPanel2
+            // layoutMessage
             // 
-            this.tableLayoutPanel2.Anchor = ((System.Windows.Forms.AnchorStyles) ((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel2.AutoSize = true;
-            this.tableLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.tableLayoutPanel2.BackColor = System.Drawing.Color.White;
-            this.tableLayoutPanel2.ColumnCount = 2;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel2.Controls.Add(this.Message, 0, 0);
-            this.tableLayoutPanel2.Controls.Add(this.img, 0, 0);
-            this.tableLayoutPanel2.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
-            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
-            this.tableLayoutPanel2.RowCount = 1;
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(812, 106);
-            this.tableLayoutPanel2.TabIndex = 14;
+            this.layoutMessage.Anchor = ((System.Windows.Forms.AnchorStyles) ((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.layoutMessage.AutoSize = true;
+            this.layoutMessage.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.layoutMessage.BackColor = System.Drawing.Color.White;
+            this.layoutMessage.ColumnCount = 2;
+            this.layoutMessage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutMessage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.layoutMessage.Controls.Add(this.Message, 0, 0);
+            this.layoutMessage.Controls.Add(this.img, 0, 0);
+            this.layoutMessage.Location = new System.Drawing.Point(0, 0);
+            this.layoutMessage.Margin = new System.Windows.Forms.Padding(0);
+            this.layoutMessage.Name = "layoutMessage";
+            this.layoutMessage.RowCount = 1;
+            this.layoutMessage.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.layoutMessage.Size = new System.Drawing.Size(812, 106);
+            this.layoutMessage.TabIndex = 14;
             // 
             // Message
             // 
@@ -194,7 +194,7 @@ namespace RT.Util.Dialogs
             this.Message.Size = new System.Drawing.Size(736, 96);
             this.Message.TabIndex = 16;
             this.Message.Text = "This\r\nis\r\nsome\r\nlong\r\ntext\r\nBut the message is the longest thing ever. But the me" +
-    "ssage is the longest thing ever. But the message is the longest thing ever.";
+                "ssage is the longest thing ever. But the message is the longest thing ever.";
             // 
             // img
             // 
@@ -208,6 +208,18 @@ namespace RT.Util.Dialogs
             this.img.TabIndex = 17;
             this.img.TabStop = false;
             this.img.Visible = false;
+            // 
+            // pnlLine
+            // 
+            this.pnlLine.AutoSize = true;
+            this.pnlLine.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.pnlLine.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.pnlLine.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlLine.Location = new System.Drawing.Point(0, 106);
+            this.pnlLine.Margin = new System.Windows.Forms.Padding(0);
+            this.pnlLine.Name = "pnlLine";
+            this.pnlLine.Size = new System.Drawing.Size(812, 1);
+            this.pnlLine.TabIndex = 20;
             // 
             // info
             // 
@@ -265,19 +277,7 @@ namespace RT.Util.Dialogs
             this.error.TabStop = false;
             this.error.Visible = false;
             // 
-            // pnlLine
-            // 
-            this.pnlLine.AutoSize = true;
-            this.pnlLine.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.pnlLine.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            this.pnlLine.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlLine.Location = new System.Drawing.Point(0, 106);
-            this.pnlLine.Margin = new System.Windows.Forms.Padding(0);
-            this.pnlLine.Name = "pnlLine";
-            this.pnlLine.Size = new System.Drawing.Size(812, 1);
-            this.pnlLine.TabIndex = 20;
-            // 
-            // DlgMessage
+            // DlgMessageForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -288,23 +288,22 @@ namespace RT.Util.Dialogs
             this.Controls.Add(this.warning);
             this.Controls.Add(this.question);
             this.Controls.Add(this.info);
-            this.Controls.Add(this.tableLayoutPanel3);
+            this.Controls.Add(this.layoutMain);
             this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "DlgMessage";
+            this.Name = "DlgMessageForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DlgMessage";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DlgMessage_FormClosing);
-            this.tableLayoutPanel3.ResumeLayout(false);
-            this.tableLayoutPanel3.PerformLayout();
-            this.tableLayoutPanel1.ResumeLayout(false);
-            this.tableLayoutPanel1.PerformLayout();
-            this.tableLayoutPanel2.ResumeLayout(false);
-            this.tableLayoutPanel2.PerformLayout();
+            this.layoutMain.ResumeLayout(false);
+            this.layoutMain.PerformLayout();
+            this.layoutButtons.ResumeLayout(false);
+            this.layoutButtons.PerformLayout();
+            this.layoutMessage.ResumeLayout(false);
+            this.layoutMessage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize) (this.img)).EndInit();
             ((System.ComponentModel.ISupportInitialize) (this.info)).EndInit();
             ((System.ComponentModel.ISupportInitialize) (this.question)).EndInit();
@@ -317,13 +316,13 @@ namespace RT.Util.Dialogs
 
         #endregion
 
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.TableLayoutPanel layoutMain;
+        private System.Windows.Forms.TableLayoutPanel layoutButtons;
         public System.Windows.Forms.Button Btn2;
         public System.Windows.Forms.Button Btn3;
         public System.Windows.Forms.Button Btn0;
         public System.Windows.Forms.Button Btn1;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
+        private System.Windows.Forms.TableLayoutPanel layoutMessage;
         public System.Windows.Forms.Label Message;
         public System.Windows.Forms.PictureBox img;
         public System.Windows.Forms.PictureBox info;

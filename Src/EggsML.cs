@@ -572,7 +572,7 @@ namespace RT.Util
                 case '<': tagName = "angle"; break;
                 case '|': tagName = "pipe"; break;
                 default:
-                    throw new ArgumentException("Unexpected tag character ‘{0}’.".Fmt(Tag), "Tag");
+                    throw new ArgumentException("Unexpected tag character ‘{0}’.".Fmt(Tag));
             }
             return new XElement(tagName, _children.Select(child => child.ToXml()));
         }
