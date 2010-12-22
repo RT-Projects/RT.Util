@@ -12,7 +12,7 @@ namespace RT.Util.Controls
     /// Implements a label control that supports basic formatting of the displayed text.
     /// Text alignment and right-to-left text are not supported.
     /// </summary>
-    public class LabelEx : Control
+    public class LabelEx : Control, IButtonControl
     {
         /// <summary>Contains values that specify the unit in which the value of the <see cref="HangingIndent"/> property is measured.</summary>
         public enum IndentUnit
@@ -433,9 +433,15 @@ namespace RT.Util.Controls
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             }
 
-            if (_keyboardFocusOnLinkNumber != null)
-                foreach (var rectangle in _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles)
-                    ControlPaint.DrawFocusRectangle(e.Graphics, rectangle);
+            if (_keyboardFocusOnLinkNumber != null && _linkLocations != null)
+            {
+                // This should never happen, but I encountered it once and couldn’t reproduce it, so better put in a workaround...
+                if (_linkLocations.Count <= _keyboardFocusOnLinkNumber.Value)
+                    _keyboardFocusOnLinkNumberPrivate = null;   // set the private one so that no event is triggered
+                else
+                    foreach (var rectangle in _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles)
+                        ControlPaint.DrawFocusRectangle(e.Graphics, rectangle);
+            }
         }
 
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
@@ -733,15 +739,12 @@ namespace RT.Util.Controls
         {
             // This handles Enter and Space.
             // The tab key is handled in ProcessDialogKey() instead.
-
             if (e.Modifiers == Keys.None)
             {
                 if (e.KeyCode == Keys.Enter)
                 {
-                    if (_keyboardFocusOnLinkNumber != null && LinkActivated != null)
-                        LinkActivated(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumber.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles));
+                    PerformClick();
                     e.Handled = true;
-                    return;
                 }
                 else if (e.KeyCode == Keys.Space)
                 {
@@ -783,8 +786,7 @@ namespace RT.Util.Controls
             {
                 _spaceIsDownOnLink = false;
                 Invalidate();
-                if (_keyboardFocusOnLinkNumber != null && LinkActivated != null)
-                    LinkActivated(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumber.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles));
+                PerformClick();
                 e.Handled = true;
                 return;
             }
@@ -831,6 +833,21 @@ namespace RT.Util.Controls
         {
             if (_lastHadFocus)
                 _formJustDeactivated = true;
+        }
+
+        DialogResult IButtonControl.DialogResult
+        {
+            get { return DialogResult.None; }
+            set { }
+        }
+
+        void IButtonControl.NotifyDefault(bool value) { }
+
+        /// <summary>Pretends as if the user pressed Enter. Has no effect if there is no link that has keyboard focus.</summary>
+        public void PerformClick()
+        {
+            if (_keyboardFocusOnLinkNumber != null && LinkActivated != null)
+                LinkActivated(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumber.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles));
         }
     }
 
