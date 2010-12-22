@@ -17,7 +17,9 @@ namespace RT.Util.Lingo
             public Language Language;
             public LanguageListItem(Language language) { Language = language; }
         }
+
         private ComboBox _lstLanguages;
+        private Button _btnOk, _btnCancel;
 
         /// <summary>Gets the language selected by the user.</summary>
         public Language SelectedLanguage { get { return ((LanguageListItem) _lstLanguages.SelectedItem).Language; } }
@@ -90,12 +92,12 @@ namespace RT.Util.Lingo
                 Margin = new Padding(5)
             };
 
-            Button btnOK = new Button { Text = "OK", Margin = new Padding(5), Anchor = AnchorStyles.Left, Enabled = false };
-            btnOK.Click += (s, v) => { DialogResult = DialogResult.OK; };
-            Button btnCancel = new Button { Text = "Cancel", Margin = new Padding(5), Anchor = AnchorStyles.Left };
-            btnCancel.Click += (s, v) => { DialogResult = DialogResult.Cancel; };
-            tlpButtons.Controls.Add(btnOK, 1, 0);
-            tlpButtons.Controls.Add(btnCancel, 2, 0);
+            _btnOk = new Button { Text = "OK", Margin = new Padding(5), Anchor = AnchorStyles.Left, Enabled = false };
+            _btnOk.Click += (s, v) => { DialogResult = DialogResult.OK; };
+            _btnCancel = new Button { Text = "Cancel", Margin = new Padding(5), Anchor = AnchorStyles.Left };
+            _btnCancel.Click += (s, v) => { DialogResult = DialogResult.Cancel; };
+            tlpButtons.Controls.Add(_btnOk, 1, 0);
+            tlpButtons.Controls.Add(_btnCancel, 2, 0);
             tlpButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             tlpButtons.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             tlpButtons.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -103,7 +105,7 @@ namespace RT.Util.Lingo
 
             _lstLanguages.SelectedIndexChanged += (s, v) =>
             {
-                btnOK.Enabled = _lstLanguages.SelectedItem != null;
+                _btnOk.Enabled = _lstLanguages.SelectedItem != null;
                 lblNativeName.Text = (_lstLanguages.SelectedItem != null) ? ((LanguageListItem) _lstLanguages.SelectedItem).Language.GetNativeName() : "";
             };
             _lstLanguages.SelectedIndex = 0;
@@ -127,8 +129,8 @@ namespace RT.Util.Lingo
                     (Screen.PrimaryScreen.WorkingArea.Height - Height) / 2 + Screen.PrimaryScreen.WorkingArea.Y
                 );
             };
-            AcceptButton = btnOK;
-            CancelButton = btnCancel;
+            AcceptButton = _btnOk;
+            CancelButton = _btnCancel;
         }
     }
 }

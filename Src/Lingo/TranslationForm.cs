@@ -180,13 +180,13 @@ namespace RT.Util.Lingo
 
             Load += (s, e) =>
             {
-                pnlSplit.SplitterDistance = settings.SplitterDistance;
+                pnlSplit.SplitterDistance = _settings.SplitterDistance;
                 if (_settings.FontName != null)
                     Font = new Font(_settings.FontName, _settings.FontSize, FontStyle.Regular);
             };
             FormClosing += (s, e) =>
             {
-                settings.SplitterDistance = pnlSplit.SplitterDistance;
+                _settings.SplitterDistance = pnlSplit.SplitterDistance;
                 if (AnyChanges)
                 {
                     var result = DlgMessage.Show("Do you wish to save the changes you made to the translation?", "Close translation", DlgType.Warning, "&Save changes", "&Discard changes", "&Cancel");
@@ -336,17 +336,17 @@ namespace RT.Util.Lingo
                 tableLayout.Controls.Add(optOrig, 0, 2); tableLayout.SetColumnSpan(optOrig, 3);
                 CheckBox optTrans = new CheckBox { Text = "Search &Translations", Checked = _settings.LastFindTrans, AutoSize = true, Anchor = AnchorStyles.Left };
                 tableLayout.Controls.Add(optTrans, 0, 3); tableLayout.SetColumnSpan(optTrans, 3);
-                Button btnOK = new Button { Text = "OK", Anchor = AnchorStyles.Right };
-                EventHandler evh = (s, v) => { btnOK.Enabled = (optOrig.Checked || optTrans.Checked) && txt.TextLength > 0; };
+                Button btnOk = new Button { Text = "OK", Anchor = AnchorStyles.Right };
+                EventHandler evh = (s, v) => { btnOk.Enabled = (optOrig.Checked || optTrans.Checked) && txt.TextLength > 0; };
                 optOrig.CheckedChanged += evh;
                 optTrans.CheckedChanged += evh;
                 txt.TextChanged += evh;
-                btnOK.Click += (s, v) => { findForm.DialogResult = DialogResult.OK; };
-                tableLayout.Controls.Add(btnOK, 1, 4);
+                btnOk.Click += (s, v) => { findForm.DialogResult = DialogResult.OK; };
+                tableLayout.Controls.Add(btnOk, 1, 4);
                 Button btnCancel = new Button { Text = "Cancel", Anchor = AnchorStyles.Right };
                 tableLayout.Controls.Add(btnCancel, 2, 4);
                 findForm.Controls.Add(tableLayout);
-                findForm.AcceptButton = btnOK;
+                findForm.AcceptButton = btnOk;
                 findForm.CancelButton = btnCancel;
                 findForm.Load += (s, v) => { findForm.Location = new Point((Screen.PrimaryScreen.WorkingArea.Width - findForm.Width) / 2 + Screen.PrimaryScreen.WorkingArea.X, (Screen.PrimaryScreen.WorkingArea.Height - findForm.Height) / 2 + Screen.PrimaryScreen.WorkingArea.Y); };
                 if (findForm.ShowDialog() == DialogResult.OK)

@@ -1389,10 +1389,10 @@ namespace RT.Util.CommandLine
         /// <summary>Specifies whether the missing parameter was a missing option (true) or a missing positional parameter (false).</summary>
         public bool IsOption { get; private set; }
         /// <summary>Constructor.</summary>
-        public MissingParameterException(FieldInfo field, FieldInfo beforeField, bool isOption, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(field, beforeField, isOption, helpGenerator, null) { }
+        public MissingParameterException(FieldInfo paramField, FieldInfo beforeField, bool isOption, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(paramField, beforeField, isOption, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public MissingParameterException(FieldInfo field, FieldInfo beforeField, bool isOption, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => getMessage(tr, field, beforeField, isOption), helpGenerator, inner) { Field = field; BeforeField = beforeField; IsOption = isOption; }
+        public MissingParameterException(FieldInfo paramField, FieldInfo beforeField, bool isOption, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => getMessage(tr, paramField, beforeField, isOption), helpGenerator, inner) { Field = paramField; BeforeField = beforeField; IsOption = isOption; }
 
         private static string getMessage(Translation tr, FieldInfo field, FieldInfo beforeField, bool isOption)
         {
