@@ -294,6 +294,7 @@ namespace RT.Util.Controls
             _cachedRendering = null;
             Invalidate();
             base.OnEnabledChanged(e);
+            fixMouseCursor(PointToClient(Control.MousePosition));
         }
 
         /// <summary>Override; see base.</summary>
@@ -631,18 +632,21 @@ namespace RT.Util.Controls
 
         private void fixMouseCursor(Point p)
         {
-            for (int i = 0; i < _linkLocations.Count; i++)
-                foreach (var rectangle in _linkLocations[i].Rectangles)
-                    if (rectangle.Contains(p))
-                    {
-                        if (_mouseOnLinkNumber != i)
+            if (Enabled)
+            {
+                for (int i = 0; i < _linkLocations.Count; i++)
+                    foreach (var rectangle in _linkLocations[i].Rectangles)
+                        if (rectangle.Contains(p))
                         {
-                            Cursor = _cursorHand;
-                            _mouseOnLinkNumber = i;
-                            Invalidate();
+                            if (_mouseOnLinkNumber != i)
+                            {
+                                Cursor = _cursorHand;
+                                _mouseOnLinkNumber = i;
+                                Invalidate();
+                            }
+                            return;
                         }
-                        return;
-                    }
+            }
             if (_mouseOnLinkNumber != null)
             {
                 Cursor = Cursors.Default;
