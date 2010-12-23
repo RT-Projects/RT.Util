@@ -638,7 +638,7 @@ namespace RT.Util.Controls
 
         private void fixMouseCursor(Point p)
         {
-            if (Enabled)
+            if (Enabled && _linkLocations != null)
             {
                 for (int i = 0; i < _linkLocations.Count; i++)
                     foreach (var rectangle in _linkLocations[i].Rectangles)
