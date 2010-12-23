@@ -562,8 +562,8 @@ namespace RT.Util.Xml
                             if (ignoreIfDefault && (saveValue == null || (saveValue.GetType().IsValueType && saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))))
                                 continue;
 
-                            var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true);
-                            if (def.Any() && saveValue.Equals(def.First().Value))
+                            var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true).FirstOrDefault();
+                            if (def != null && saveValue != null && saveValue.Equals(def.Value))
                                 continue;
 
                             // Arrays, List<>, and Dictionary<,> all implement ICollection
@@ -590,7 +590,7 @@ namespace RT.Util.Xml
                             else
                             {
                                 var xelem = objectToXElement(saveValue, field.FieldType, baseDir, rFieldName, remember, ref nextId);
-                                if (xelem.HasAttributes || xelem.HasElements || !ignoreIfEmpty)
+                                if (xelem.HasAttributes || xelem.HasElements || xelem.FirstNode != null || !ignoreIfEmpty)
                                     elem.Add(xelem);
                             }
                         }
