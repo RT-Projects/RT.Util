@@ -75,6 +75,8 @@ namespace RT.Util.Controls
             ScrollTo(y);
         }
 
+        /// <summary>Scrolls the label to the specified y co-ordinate.</summary>
+        /// <param name="y">Position to scroll the label to (0 for top).</param>
         public void ScrollTo(int y)
         {
             y = Math.Max(Math.Min(y, Label.Height - ClientSize.Height), 0);

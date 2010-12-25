@@ -208,6 +208,7 @@ namespace RT.Util.Controls
                 return _cursorHandCache;
             }
         }
+        private static Dictionary<Font, Dictionary<string, Size>> _measureCache = new Dictionary<Font, Dictionary<string, Size>>();
 
         private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
         private List<renderingInfo> _cachedRendering;
@@ -444,36 +445,29 @@ namespace RT.Util.Controls
             }
         }
 
+        private Size measure(Font font, string text, Graphics g)
+        {
+            Dictionary<string, Size> dic;
+            Size result;
+
+            if (!_measureCache.TryGetValue(font, out dic))
+                _measureCache[font] = dic = new Dictionary<string, Size>();
+            if (!dic.TryGetValue(text, out result))
+                dic[text] = result = TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+            return result;
+        }
+
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
             List<renderingInfo> renderings = null, List<linkLocationInfo> linkRenderings = null)
         {
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
-
-            var spaceSizes = new Dictionary<FontStyle, Size>();
-            Func<Font, Size> spaceSize = font =>
-            {
-                if (!spaceSizes.ContainsKey(font.Style))
-                    spaceSizes[font.Style] = TextRenderer.MeasureText(g, " ", font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                return spaceSizes[font.Style];
-            };
-
-            Dictionary<FontStyle, int> bulletSizes = null;
-            Func<Font, int> bulletSize = font =>
-            {
-                if (bulletSizes == null)
-                    bulletSizes = new Dictionary<FontStyle, int>();
-                if (!bulletSizes.ContainsKey(font.Style))
-                    bulletSizes[font.Style] = TextRenderer.MeasureText(g, BULLET, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
-                return bulletSizes[font.Style];
-            };
-
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
-            int hangingIndent = _hangingIndent * (_hangingIndentUnit == IndentUnit.Spaces ? spaceSize(initialFont).Width : 1);
+            int hangingIndent = _hangingIndent * (_hangingIndentUnit == IndentUnit.Spaces ? measure(initialFont, " ", g).Width : 1);
             bool atBeginningOfLine = false;
 
             int actualWidth = EggsML.WordWrap(node, new renderState(initialFont, initialForeColor), wrapWidth,
-                (state, text) => (text == " " ? spaceSize(state.Font) : TextRenderer.MeasureText(g, text, state.Font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix)).Width,
+                (state, text) => measure(state.Font, text, g).Width,
                 (state, text, width) =>
                 {
                     if (renderings != null && !string.IsNullOrEmpty(text))
@@ -488,7 +482,7 @@ namespace RT.Util.Controls
                         }
                         else
                         {
-                            info = new renderingInfo(text, new Rectangle(x, y, width, spaceSize(state.Font).Height), state);
+                            info = new renderingInfo(text, new Rectangle(x, y, width, measure(state.Font, " ", g).Height), state);
                             renderings.Add(info);
                         }
                         if (state.LinkNumber != null)
@@ -510,7 +504,7 @@ namespace RT.Util.Controls
                 (state, newParagraph, indent) =>
                 {
                     atBeginningOfLine = true;
-                    var sh = spaceSize(state.Font).Height;
+                    var sh = measure(state.Font, " ", g).Height;
                     y += sh;
                     if (newParagraph && _paragraphSpacing > 0)
                         y += (int) (_paragraphSpacing * sh);
@@ -539,9 +533,10 @@ namespace RT.Util.Controls
 
                         // BULLET POINT
                         case '[':
-                            var advance = bulletSize(font);
+                            var bulletSize = measure(font, BULLET, g);
+                            var advance = bulletSize.Width;
                             if (renderings != null)
-                                renderings.Add(new renderingInfo(BULLET, new Rectangle(x, y, advance, spaceSize(font).Height), new renderState(font, state.Color)));
+                                renderings.Add(new renderingInfo(BULLET, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
                             x += advance;
                             return Tuple.Create(state.ChangeBlockIndent(state.BlockIndent + advance), advance);
 
@@ -559,7 +554,7 @@ namespace RT.Util.Controls
                     }
                     return Tuple.Create(state, 0);
                 });
-            return new Size(actualWidth + glyphOverhang.Width, y + spaceSize(initialFont).Height + glyphOverhang.Height);
+            return new Size(actualWidth + glyphOverhang.Width, y + measure(initialFont, " ", g).Height + glyphOverhang.Height);
         }
 
         /// <summary>Override; see base.</summary>
