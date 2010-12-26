@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -25,6 +24,15 @@ namespace RT.Util.ExtensionMethods
                 control = control.Parent;
             }
             return null;
+        }
+
+        /// <summary>Same as Control.Invoke, except that the action is not invoked immediately
+        /// if we are on the GUI thread. Instead, it is scheduled to be run the next time the GUI thread is idle.</summary>
+        /// <param name="invokable">Control to invoke action on.</param>
+        /// <param name="action">Action to invoke.</param>
+        public static void InvokeLater(this Control invokable, Action action)
+        {
+            Task.Factory.StartNew(() => { invokable.Invoke(action); });
         }
 
         /// <summary>Blocks this thread until this token is cancelled.</summary>

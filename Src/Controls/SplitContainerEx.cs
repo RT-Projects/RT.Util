@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -13,13 +14,11 @@ namespace RT.Util.Controls
         /// </summary>
         public SplitContainerEx()
         {
-            InitializeComponent();
-
-            Paint += new PaintEventHandler(SplitContainerEx_Paint);
-            SplitterMoved += new SplitterEventHandler(SplitContainerEx_SplitterMoved);
+            base.SplitterMoved += splitterMoved;
         }
 
-        private bool _paintSplitter = true;
+        /// <summary>Occurs when the splitter control is moved.</summary>
+        public event SplitterEventHandler SplitterMoved;
 
         /// <summary>
         /// Specifies whether the splitter should be painted.
@@ -33,8 +32,9 @@ namespace RT.Util.Controls
                 Invalidate();
             }
         }
+        private bool _paintSplitter = true;
 
-        void SplitContainerEx_Paint(object sender, PaintEventArgs e)
+        protected override void OnPaint(PaintEventArgs e)
         {
             if (!_paintSplitter)
                 return;
@@ -62,10 +62,12 @@ namespace RT.Util.Controls
             }
         }
 
-        void SplitContainerEx_SplitterMoved(object sender, SplitterEventArgs e)
+        private void splitterMoved(object sender, SplitterEventArgs e)
         {
             if (_settings != null && Visible)
                 _settings.PositionPercent = (double) SplitterDistance / Width;
+            if (SplitterMoved != null)
+                SplitterMoved(sender, e);
         }
 
         /// <summary>Holds the settings of the <see cref="SplitContainerEx"/>.</summary>
@@ -85,11 +87,36 @@ namespace RT.Util.Controls
         public void SetSettings(Settings settings)
         {
             _settings = settings;
-            if (_settings != null)
+            updateSplitterDistance();
+        }
+
+        /// <summary>Override; see base.</summary>
+        protected override void OnResize(EventArgs e)
+        {
+            updateSplitterDistance();
+        }
+
+        private void updateSplitterDistance()
+        {
+            if (_settings != null && Visible && _settings.PositionPercent != null)
+                SplitterDistance = (int) (_settings.PositionPercent.Value * Width);
+        }
+
+        /// <summary>Override; see base.</summary>
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == (Orientation == Orientation.Vertical ? Keys.Left : Keys.Up))
             {
-                if (_settings.PositionPercent != null)
-                    SplitterDistance = (int) (_settings.PositionPercent.Value * Width);
+                SplitterDistance -= 10;
+                e.Handled = true;
             }
+            if (e.Control && e.KeyCode == (Orientation == Orientation.Vertical ? Keys.Right : Keys.Down))
+            {
+                SplitterDistance += 10;
+                e.Handled = true;
+            }
+
+            base.OnKeyDown(e);
         }
     }
 }

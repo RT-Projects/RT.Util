@@ -72,9 +72,9 @@ namespace RT.Util.Xml
 
         private static object loadObjectFromXmlFile(Type type, string filename, string baseDir, object parentNode)
         {
-            var strRead = new StreamReader(filename, Encoding.UTF8);
-            XElement elem = XElement.Load(strRead);
-            strRead.Close();
+            XElement elem;
+            using (var strRead = new StreamReader(filename, Encoding.UTF8))
+                elem = XElement.Load(strRead);
             return objectFromXElement(type, elem, baseDir, parentNode);
         }
 

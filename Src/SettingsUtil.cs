@@ -277,7 +277,7 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Like <see cref="SettingsBase"/>, but implements and additional save method.
+    /// Like <see cref="SettingsBase"/>, but implements an additional save method.
     /// </summary>
     public abstract class SettingsThreadedBase : SettingsBase
     {

@@ -74,9 +74,6 @@
     <Compile Include="Controls\SplitContainerEx.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Controls\SplitContainerEx.Designer.cs">
-      <DependentUpon>SplitContainerEx.cs</DependentUpon>
-    </Compile>
     <Compile Include="Controls\TextBoxAutoHeight.cs">
       <SubType>Component</SubType>
     </Compile>
