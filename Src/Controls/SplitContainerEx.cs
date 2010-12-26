@@ -18,7 +18,7 @@ namespace RT.Util.Controls
         }
 
         /// <summary>Occurs when the splitter control is moved.</summary>
-        public event SplitterEventHandler SplitterMoved;
+        public new event SplitterEventHandler SplitterMoved;
 
         /// <summary>
         /// Specifies whether the splitter should be painted.
@@ -34,6 +34,7 @@ namespace RT.Util.Controls
         }
         private bool _paintSplitter = true;
 
+        /// <summary>Override; see base.</summary>
         protected override void OnPaint(PaintEventArgs e)
         {
             if (!_paintSplitter)
