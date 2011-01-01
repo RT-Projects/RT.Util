@@ -95,6 +95,7 @@ namespace RT.Util.Controls
         protected override void OnResize(EventArgs e)
         {
             updateSplitterDistance();
+            base.OnResize(e);
         }
 
         private void updateSplitterDistance()

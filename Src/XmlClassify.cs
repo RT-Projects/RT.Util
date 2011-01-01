@@ -535,6 +535,10 @@ namespace RT.Util.Xml
 
                     foreach (var field in saveType.GetAllFields())
                     {
+                        // Ignore the backing field for events
+                        if (typeof(Delegate).IsAssignableFrom(field.FieldType) && saveType.GetEvent(field.Name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance) != null)
+                            continue;
+
                         string rFieldName = field.Name.TrimStart('_');
                         MemberInfo getAttrsFrom = field;
 
