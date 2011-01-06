@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -32,7 +33,24 @@ namespace RT.Util.Controls
         /// Gets or sets a value indicating whether the panel should automatically refresh
         /// its contents (i.e. call the PaintBuffer event) every time it is resized.
         /// </summary>
+        [DefaultValue(typeof(bool), "true")]
         public bool RefreshOnResize { get; set; }
+
+        /// <summary>Gets or sets a value indicating whether the user can give the focus to this control using the TAB key.
+        /// This property’s value automatically changes every time Text changes; it is set to true if there is a link in the text, false otherwise.
+        /// To achieve deviant behaviour, set TabStop immediately after setting Text.</summary>
+        [DefaultValue(typeof(bool), "false")]
+        public new bool TabStop
+        {
+            get { return base.TabStop; }
+            set
+            {
+                if (value == base.TabStop)
+                    return;
+                base.TabStop = value;
+                SetStyle(ControlStyles.Selectable, value);
+            }
+        }
 
         /// <summary>Constructor.</summary>
         public DoubleBufferedPanel()

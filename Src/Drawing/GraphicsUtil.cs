@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 
 namespace RT.Util.Drawing
 {
@@ -41,9 +42,7 @@ namespace RT.Util.Drawing
                 new float[] {0, 0, 0, 0, 1}
             });
             ImageAttributes attr = new ImageAttributes();
-            attr.SetColorMatrix(matrix,
-                ColorMatrixFlag.Default,
-                ColorAdjustType.Bitmap);
+            attr.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
@@ -81,6 +80,7 @@ namespace RT.Util.Drawing
             g.AddArc(x + width - 2 * radius, y, 2 * radius, 2 * radius, 270, 90);
             g.AddArc(x + width - 2 * radius, y + height - 2 * radius, 2 * radius, 2 * radius, 360, 90);
             g.AddArc(x, y + height - 2 * radius, 2 * radius, 2 * radius, 450, 90);
+            g.CloseFigure();
             return g;
         }
 
@@ -103,6 +103,16 @@ namespace RT.Util.Drawing
                     low = trySize;
             }
             return low;
+        }
+
+        /// <summary>Sets the interpolation mode, smoothing mode, text rendering hint and compositing quality for the
+        /// specified Graphics object to high quality.</summary>
+        public static void SetHighQuality(this Graphics g)
+        {
+            g.InterpolationMode = InterpolationMode.High;
+            g.SmoothingMode = SmoothingMode.HighQuality;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            g.CompositingQuality = CompositingQuality.HighQuality;
         }
     }
 }
