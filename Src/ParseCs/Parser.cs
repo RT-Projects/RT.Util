@@ -2020,7 +2020,7 @@ namespace RT.KitchenSink.ParseCs
                     throw new ParseException(e.Message, e.Index, decl);
                 }
 
-                // This function does not consume the trailing ';' of the statement, so that 'using' and 'for' can use it (where the statement can end with a ')' or ',' instead).
+                // This function does not consume the trailing ‘;’ of the statement, so that ‘using’ and ‘for’ can use it (where the statement can end with a ‘)’ or ‘,’ instead).
                 return decl;
             }
 
@@ -2042,7 +2042,7 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException(msg, e.Index, e.IncompleteResult);
             }
 
-            // This function does not consume the trailing ';' of the statement, so that 'using' and 'for' can use it (where the statement can end with a ')' or ',' instead).
+            // This function does not consume the trailing ‘;’ of the statement, so that ‘using’ and ‘for’ can use it (where the statement can end with a ‘)’ or ‘,’ instead).
             return exprStat;
         }
         #endregion

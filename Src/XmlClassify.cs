@@ -395,9 +395,7 @@ namespace RT.Util.Xml
             x.Save(filename);
         }
 
-        /// <summary>
-        /// Converts the specified object into an XML tree.
-        /// </summary>
+        /// <summary>Converts the specified object into an XML tree.</summary>
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="baseDir">The base directory from which to construct the paths for

@@ -157,6 +157,10 @@ namespace RT.Util
         public const uint LOAD_IGNORE_CODE_AUTHZ_LEVEL = 0x00000010;
         public const uint LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE = 0x00000040;
 
+        // ListBox
+        public const uint LB_SETCARETINDEX = 0x019E;
+        public const uint LB_GETCARETINDEX = 0x019F;
+
         #endregion
 
         #region Structs
@@ -431,6 +435,9 @@ namespace RT.Util
 
         [DllImport("user32.dll")]
         public static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern uint SendMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
 
         #endregion
 

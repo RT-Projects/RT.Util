@@ -1,12 +1,16 @@
 using System;
+using System.Drawing;
 
 namespace RT.Util.Geometry
 {
     /// <summary>
     /// A double-precision rectangle struct, representing an axis-aligned rectangle.
     /// </summary>
-    public struct RectangleD:IEquatable<RectangleD>
+    public struct RectangleD : IEquatable<RectangleD>
     {
+        /// <summary>Represents an instance of the <see cref="RectangleD"/> class with its members uninitialized.</summary>
+        public static readonly RectangleD Empty = new RectangleD();
+
         /// <summary>X coordinate of the minimal-X boundary</summary>
         public double X;
         /// <summary>Y coordinate of the minimal-Y boundary</summary>
@@ -33,25 +37,35 @@ namespace RT.Util.Geometry
         public double Right { get { return X + Width; } }
         /// <summary>Gets the Y coordinate of the maximal-Y boundary.</summary>
         public double Bottom { get { return Y + Height; } }
+        /// <summary>Returns true if this rectangle has zero extent.</summary>
+        public bool IsEmpty { get { return Width == 0 && Height == 0; } }
 
-        /// <summary>
-        /// Checks if the perimeter of this rectangle intersects with that of another specified rectangle.
-        /// </summary>
-        /// <param name="r">Other rectangle to check against.</param>
-        /// <returns>Returns true if the perimeter of this rectangle intersects with that of r.</returns>
-        public bool IntersectsWith(RectangleD r)
+        /// <summary>Checks if the perimeter of this rectangle intersects with that of <paramref name="rect"/>.</summary>
+        /// <param name="rect">Other rectangle to check against.</param>
+        /// <returns>Returns true if the perimeter of this rectangle intersects with that of <paramref name="rect"/>.</returns>
+        public bool PerimeterIntersectsWith(RectangleD rect)
         {
-            return ContainsPoint(r.Left, r.Top) || ContainsPoint(r.Left, r.Bottom)
-                || ContainsPoint(r.Right, r.Top) || ContainsPoint(r.Right, r.Bottom)
-                || (r.Left >= Left && r.Right <= Right && r.Top <= Top && r.Bottom >= Bottom)
-                || (r.Left <= Left && r.Right >= Right && r.Top >= Top && r.Bottom <= Bottom);
+            return Contains(rect.Left, rect.Top) || Contains(rect.Left, rect.Bottom)
+                || Contains(rect.Right, rect.Top) || Contains(rect.Right, rect.Bottom)
+                || rect.Contains(Left, Top) || rect.Contains(Left, Bottom)
+                || rect.Contains(Right, Top) || rect.Contains(Right, Bottom)
+                || (rect.Left >= Left && rect.Right <= Right && rect.Top <= Top && rect.Bottom >= Bottom)
+                || (rect.Left <= Left && rect.Right >= Right && rect.Top >= Top && rect.Bottom <= Bottom);
+        }
+
+        /// <summary>Determines if this rectangle intersects with <paramref name="rect"/>.</summary>
+        /// <param name="rect">The rectangle to test.</param>
+        /// <returns>Returns true if there is any intersection, otherwise false.</returns>
+        public bool IntersectsWith(RectangleD rect)
+        {
+            return (rect.X < X + Width) && (rect.X + rect.Width > X) && (rect.Y < Y + Height) && (rect.Y + rect.Height > Y);
         }
 
         /// <summary>
         /// Returns true if the specified point is contained within the rectangle
         /// (or lies exactly on a boundary).
         /// </summary>
-        public bool ContainsPoint(double x, double y)
+        public bool Contains(double x, double y)
         {
             return (x >= Left) && (x <= Right) && (y >= Top) && (y <= Bottom);
         }
@@ -75,7 +89,7 @@ namespace RT.Util.Geometry
         /// <summary>
         /// Compares two rectangles for inequality using <see cref="Equals(RectangleD)"/>.
         /// </summary>
-        public static bool operator!=(RectangleD one, RectangleD other)
+        public static bool operator !=(RectangleD one, RectangleD other)
         {
             return !one.Equals(other);
         }
@@ -102,8 +116,34 @@ namespace RT.Util.Geometry
         public override bool Equals(object obj)
         {
             if (obj is RectangleD)
-                return Equals((RectangleD)obj);
+                return Equals((RectangleD) obj);
             return base.Equals(obj);
         }
+
+        /// <summary>Creates the smallest possible third rectangle that can contain both of two rectangles that form a union.</summary>
+        /// <param name="a">A rectangle to union.</param>
+        /// <param name="b">A rectangle to union.</param>
+        /// <returns>A third <see cref="RectangleD"/> structure that contains both of the two rectangles that form the union.</returns>
+        public static RectangleD Union(RectangleD a, RectangleD b)
+        {
+            double left = Math.Min(a.X, b.X);
+            double right = Math.Max(a.X + a.Width, b.X + b.Width);
+            double top = Math.Min(a.Y, b.Y);
+            double bottom = Math.Max(a.Y + a.Height, b.Y + b.Height);
+            return new RectangleD(left, top, right - left, bottom - top);
+        }
+
+        /// <summary>Converts the current <see cref="RectangleD"/> to a <c>System.Drawing.Rectangle</c>
+        /// by rounding the double-precision values to the nearest integer values.</summary>
+        /// <returns>A <c>System.Drawing.Rectangle</c>.</returns>
+        public Rectangle Round()
+        {
+            return new Rectangle((int) Math.Round(X), (int) Math.Round(Y), (int) Math.Round(Width), (int) Math.Round(Height));
+        }
+
+        /// <summary>Converts the specified <c>System.Drawing.Rectangle</c> structure to a <see cref="RectangleD"/> structure.</summary>
+        /// <param name="self">The <c>System.Drawing.Rectangle</c> structure to convert.</param>
+        /// <returns>The <see cref="RectangleD"/> structure that is converted from the specified <c>System.Drawing.Rectangle</c> structure.</returns>
+        public static implicit operator RectangleD(Rectangle self) { return new RectangleD(self.X, self.Y, self.Width, self.Height); }
     }
 }
