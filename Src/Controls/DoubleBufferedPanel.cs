@@ -62,11 +62,11 @@ namespace RT.Util.Controls
             );
 
             RefreshOnResize = true;
-            Paint += new PaintEventHandler(DoubleBufferedPanel_Paint);
-            Resize += new EventHandler(DoubleBufferedPanel_Resize);
+            Paint += paint;
+            Resize += resize;
         }
 
-        private void DoubleBufferedPanel_Resize(object sender, EventArgs e)
+        private void resize(object sender, EventArgs e)
         {
             if (RefreshOnResize)
                 Refresh();
@@ -93,7 +93,7 @@ namespace RT.Util.Controls
             base.Refresh();
         }
 
-        private void DoubleBufferedPanel_Paint(object sender, PaintEventArgs e)
+        private void paint(object sender, PaintEventArgs e)
         {
             if (Buffer == null || PaintBuffer != _previousPaintBuffer)
                 Refresh();

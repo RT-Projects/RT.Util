@@ -141,6 +141,16 @@ namespace RT.Util.Geometry
             return new Rectangle((int) Math.Round(X), (int) Math.Round(Y), (int) Math.Round(Width), (int) Math.Round(Height));
         }
 
+        /// <summary>Returns the smallest <c>System.Drawing.Rectangle</c> that entirely
+        /// contains the current <see cref="RectangleD"/>.</summary>
+        /// <returns>A <c>System.Drawing.Rectangle</c>.</returns>
+        public Rectangle RoundOutward()
+        {
+            int x = (int) Math.Floor(X);
+            int y = (int) Math.Floor(Y);
+            return new Rectangle(x, y, (int) Math.Ceiling(X + Width) - x, (int) Math.Ceiling(Y + Height) - y);
+        }
+
         /// <summary>Converts the specified <c>System.Drawing.Rectangle</c> structure to a <see cref="RectangleD"/> structure.</summary>
         /// <param name="self">The <c>System.Drawing.Rectangle</c> structure to convert.</param>
         /// <returns>The <see cref="RectangleD"/> structure that is converted from the specified <c>System.Drawing.Rectangle</c> structure.</returns>

@@ -209,5 +209,12 @@ namespace RT.Util
                 throw new InternalErrorException("Assertion failure");
             }
         }
+
+        /// <summary>Determines whether the Ctrl key is pressed.</summary>
+        public static bool Ctrl { get { return Control.ModifierKeys.HasFlag(Keys.Control); } }
+        /// <summary>Determines whether the Alt key is pressed.</summary>
+        public static bool Alt { get { return Control.ModifierKeys.HasFlag(Keys.Alt); } }
+        /// <summary>Determines whether the Shift key is pressed.</summary>
+        public static bool Shift { get { return Control.ModifierKeys.HasFlag(Keys.Shift); } }
     }
 }
