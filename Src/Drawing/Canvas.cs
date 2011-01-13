@@ -328,7 +328,7 @@ namespace RT.KitchenSink.Drawing
         /// </summary>
         public void DrawRectangle(Pen pen, double xMin, double yMin, double width, double height)
         {
-            Graphics.DrawRectangle(pen, SX(xMin), sTop(yMin, yMin + height), SW(width), SH(height));
+            Graphics.DrawRectangle(pen, SX(xMin), sTop(yMin, yMin + height), SW(width) + 1, SH(height) + 1);
         }
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace RT.KitchenSink.Drawing
         /// </summary>
         public void DrawRectangle(Pen pen, ref BoundingBoxD box)
         {
-            Graphics.DrawRectangle(pen, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin), SH(box.Ymax - box.Ymin));
+            Graphics.DrawRectangle(pen, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin) + 1, SH(box.Ymax - box.Ymin) + 1);
         }
 
         /// <summary>
@@ -346,7 +346,7 @@ namespace RT.KitchenSink.Drawing
         /// </summary>
         public void FillRectangle(Brush brush, double xMin, double yMin, double width, double height)
         {
-            Graphics.FillRectangle(brush, SX(xMin), sTop(yMin, yMin + height), SW(width), SH(height));
+            Graphics.FillRectangle(brush, SX(xMin), sTop(yMin, yMin + height), SW(width) + 1, SH(height) + 1);
         }
 
         /// <summary>
@@ -354,7 +354,7 @@ namespace RT.KitchenSink.Drawing
         /// </summary>
         public void FillRectangle(Brush brush, ref BoundingBoxD box)
         {
-            Graphics.FillRectangle(brush, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin), SH(box.Ymax - box.Ymin));
+            Graphics.FillRectangle(brush, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin) + 1, SH(box.Ymax - box.Ymin) + 1);
         }
 
         /// <summary>
@@ -540,7 +540,7 @@ namespace RT.KitchenSink.Drawing
 
         #endregion
 
-        public void SetViewportHorz(double worldLeft, double worldRight, float screenLeft, float screenRight, bool maintainAspect)
+        public void SetViewportHorz(double worldLeft, double worldRight, float screenLeft, float screenRight, bool maintainAspect = false)
         {
             _scaleX = (screenRight - screenLeft) / (worldRight - worldLeft);
             _offsetX = screenLeft - worldLeft * _scaleX;
@@ -548,22 +548,20 @@ namespace RT.KitchenSink.Drawing
                 _scaleY = _scaleX;
         }
 
-        public void SetViewportVert(double worldTop, double worldBottom, float screenTop, float screenBottom, bool maintainAspect)
+        public void SetViewportVert(double worldTop, double worldBottom, float screenTop, float screenBottom, bool maintainAspect = false)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightDown)
             {
                 _scaleY = (screenBottom - screenTop) / (worldBottom - worldTop);
                 _offsetY = screenTop - worldTop * _scaleY;
-                if (maintainAspect)
-                    _scaleX = _scaleY;
             }
             else
             {
                 _scaleY = (screenTop - screenBottom) / (worldBottom - worldTop);
                 _offsetY = screenTop + worldTop * _scaleY;
-                if (maintainAspect)
-                    _scaleX = _scaleY;
             }
+            if (maintainAspect)
+                _scaleX = _scaleY;
         }
 
         public void SetViewportHorz(double worldX, float screenX)
@@ -578,6 +576,21 @@ namespace RT.KitchenSink.Drawing
             else
                 _offsetY = screenY - worldY * _scaleY;
         }
+
+        public void SetViewportWidth(double worldWidth, float screenWidth, bool maintainAspect = false)
+        {
+            _scaleX = screenWidth / worldWidth;
+            if (maintainAspect)
+                _scaleY = _scaleX;
+        }
+
+        public void SetViewportHeight(double worldHeight, float screenHeight, bool maintainAspect = false)
+        {
+            _scaleY = screenHeight / worldHeight;
+            if (maintainAspect)
+                _scaleX = _scaleY;
+        }
+
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 }
