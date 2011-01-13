@@ -558,7 +558,12 @@ namespace RT.KitchenSink.Drawing
                     _scaleX = _scaleY;
             }
             else
-                throw new NotImplementedException();
+            {
+                _scaleY = (screenTop - screenBottom) / (worldBottom - worldTop);
+                _offsetY = screenTop + worldTop * _scaleY;
+                if (maintainAspect)
+                    _scaleX = _scaleY;
+            }
         }
 
         public void SetViewportHorz(double worldX, float screenX)
