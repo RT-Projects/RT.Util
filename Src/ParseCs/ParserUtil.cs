@@ -12,7 +12,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.ParseCs
 {
-    public static class ParserUtil
+    static class ParserUtil
     {
         private enum Suffix { None, U, L, UL }
         public static object ParseNumericLiteral(string literal)
@@ -70,7 +70,10 @@ namespace RT.KitchenSink.ParseCs
                 throw new InvalidOperationException("Integer literal too large (or too small, since it’s negative).");
             }
 
-            // Assume decimal
+            // Assume decimal. If there is a decimal point, default to double
+            if (literal.Contains('.') && suffix == Suffix.None)
+                return double.Parse(literal);
+
             if (literal.StartsWith("-"))
             {
                 var deci = literal.Substring(1);
@@ -244,7 +247,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if ((parameterInfo[j].Attributes & ParameterAttributes.HasDefault) != 0)
                     {
-                        evaluatedArguments[j] = new ResolveContextExpression(Expression.Constant(parameterInfo[j].DefaultValue, parameterInfo[j].ParameterType), wasAnonymousFunction: false);
+                        evaluatedArguments[j] = new ResolveContextConstant(parameterInfo[j].DefaultValue, parameterInfo[j].ParameterType);
                         evaluatedParameterTypes[j] = parameterInfo[j].ParameterType;
                         evaluatedArgumentIndex[j] = -1;
                     }

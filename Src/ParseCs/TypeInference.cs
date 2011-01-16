@@ -11,7 +11,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.ParseCs
 {
-    public class TypeInferer
+    class TypeInferer
     {
         public static CandidateInfo<T> TypeInference<T>(CandidateInfo<T> candidateInfo, NameResolver resolver) where T : MemberInfo
         {
@@ -134,7 +134,7 @@ namespace RT.KitchenSink.ParseCs
                         if (lambda == null)
                             continue;
                         var dlgParameterTypes = ParserUtil.GetDelegateParameterTypes(_parameters[p].ParameterType);
-                        var linqExpr = lambda.Lambda.ToLinqExpression(_resolver, dlgParameterTypes.Select(dlgp => substituteFixed(dlgp)).ToArray());
+                        var linqExpr = lambda.Lambda.ToLinqExpression(_resolver, dlgParameterTypes.Select(dlgp => substituteFixed(dlgp)).ToArray(), false);
                         _arguments[p] = new ResolveContextExpression(linqExpr, wasAnonymousFunction: true);
                     }
                     return true;
@@ -169,7 +169,7 @@ namespace RT.KitchenSink.ParseCs
                         }
 
                         // Generate the lambda expression so it becomes explicitly typed and determine its return type
-                        var linqExpr = arg.Lambda.ToLinqExpression(_resolver, dlgParameterTypes.Select(dlgp => substituteFixed(dlgp)).ToArray());
+                        var linqExpr = arg.Lambda.ToLinqExpression(_resolver, dlgParameterTypes.Select(dlgp => substituteFixed(dlgp)).ToArray(), false);
                         var argReturnType = ((LambdaExpression) linqExpr).ReturnType;
                         _arguments[p] = new ResolveContextExpression(linqExpr, wasAnonymousFunction: true);
                         if (!lowerBoundInference(argReturnType, dlgReturnType))

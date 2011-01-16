@@ -8,45 +8,53 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.ParseCs
 {
-    public abstract class ResolveContext
+    abstract class ResolveContext
     {
-        public static implicit operator ResolveContext(Type type) { return type == null ? null : new ResolveContextType(type); }
         public virtual Type ExpressionType { get { throw new InvalidOperationException("{0} does not have a type.".Fmt(this.GetType())); } }
         public virtual Expression ToExpression() { throw new InvalidOperationException("{0} does not have a translation to LINQ expressions.".Fmt(this.GetType())); }
     }
 
-    public class ResolveContextGlobal : ResolveContext { }
-    public class ResolveContextNamespace : ResolveContext
+    class ResolveContextGlobal : ResolveContext { }
+    class ResolveContextNamespace : ResolveContext
     {
         public string Namespace { get; private set; }
         public ResolveContextNamespace(string namespacе) { Namespace = namespacе; }
     }
-    public class ResolveContextType : ResolveContext
+    class ResolveContextType : ResolveContext
     {
         public Type Type { get; private set; }
         public ResolveContextType(Type type) { Type = type; }
         public override Type ExpressionType { get { return Type; } }
     }
-    public class ResolveContextExpression : ResolveContext
+    class ResolveContextConstant : ResolveContext
+    {
+        public object Constant { get; private set; }
+        public Type Type { get; private set; }
+        public ResolveContextConstant(object constant, Type type = null)
+        {
+            if (constant == null && type == null)
+                throw new ArgumentNullException("constant", "constant and type cannot both be null.");
+            Constant = constant;
+            Type = type ?? constant.GetType();
+        }
+        public override Type ExpressionType { get { return Type; } }
+        public override Expression ToExpression() { return Expression.Constant(Constant, Type); }
+    }
+    class ResolveContextExpression : ResolveContext
     {
         public Expression Expression { get; private set; }
         public bool WasAnonymousFunction { get; private set; }
-        public ResolveContextExpression(Expression expression, bool wasAnonymousFunction) { Expression = expression; WasAnonymousFunction = wasAnonymousFunction; }
+        public ResolveContextExpression(Expression expression, bool wasAnonymousFunction = false) { Expression = expression; WasAnonymousFunction = wasAnonymousFunction; }
         public override Type ExpressionType { get { return Expression.Type; } }
         public override Expression ToExpression() { return Expression; }
     }
-    public class ResolveContextLambda : ResolveContext
+    class ResolveContextLambda : ResolveContext
     {
         public CsSimpleLambdaExpression Lambda { get; private set; }
         public ResolveContextLambda(CsSimpleLambdaExpression lambda) { Lambda = lambda; }
     }
-    public class ResolveContextNullLiteral : ResolveContext { }
-    public abstract class ChildResolveContext : ResolveContext
-    {
-        public ResolveContext Parent { get; private set; }
-        public ChildResolveContext(ResolveContext parent) { Parent = parent; }
-    }
-    public class MethodGroupMember
+    class ResolveContextNullLiteral : ResolveContext { }
+    class MethodGroupMember
     {
         public MethodInfo Method;
         public bool IsExtensionMethod;
@@ -56,11 +64,12 @@ namespace RT.KitchenSink.ParseCs
             IsExtensionMethod = isExtensionMethod;
         }
     }
-    public class ResolveContextMethodGroup : ChildResolveContext
+    class ResolveContextMethodGroup : ResolveContext
     {
+        public ResolveContext Parent { get; private set; }
         public List<MethodGroupMember> MethodGroup { get; private set; }
         public string MethodName { get; private set; }
-        public ResolveContextMethodGroup(ResolveContext parent, List<MethodGroupMember> methodGroup, string name) : base(parent) { MethodGroup = methodGroup; MethodName = name; }
+        public ResolveContextMethodGroup(ResolveContext parent, List<MethodGroupMember> methodGroup, string name) : base() { Parent = parent; MethodGroup = methodGroup; MethodName = name; }
         public override Type ExpressionType { get { throw new InvalidOperationException("Method overloads have not been resolved yet."); } }
         public override Expression ToExpression() { throw new InvalidOperationException("Method overloads have not been resolved yet."); }
     }

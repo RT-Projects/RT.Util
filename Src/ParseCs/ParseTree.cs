@@ -947,9 +947,9 @@ namespace RT.KitchenSink.ParseCs
     #region Expressions
     public abstract class CsExpression : CsNode
     {
-        protected virtual ResolveContext toResolveContext(NameResolver resolver) { return new ResolveContextExpression(ToLinqExpression(resolver), wasAnonymousFunction: false); }
-        protected static ResolveContext toResolveContext(CsExpression expr, NameResolver resolver) { return expr.toResolveContext(resolver); }
-        public abstract Expression ToLinqExpression(NameResolver resolver);
+        internal virtual ResolveContext ToResolveContext(NameResolver resolver, bool isChecked) { return new ResolveContextExpression(ToLinqExpression(resolver, isChecked)); }
+        internal static ResolveContext ToResolveContext(CsExpression expr, NameResolver resolver, bool isChecked) { return expr.ToResolveContext(resolver, isChecked); }
+        public abstract Expression ToLinqExpression(NameResolver resolver, bool isChecked);
     }
     public enum AssignmentOperator { Eq, TimesEq, DivEq, ModEq, PlusEq, MinusEq, ShlEq, ShrEq, AndEq, XorEq, OrEq }
     public sealed class CsAssignmentExpression : CsExpression
@@ -973,7 +973,7 @@ namespace RT.KitchenSink.ParseCs
                 Operator == AssignmentOperator.OrEq ? " |= " : null,
                 Right.ToString());
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsConditionalExpression : CsExpression
     {
@@ -982,7 +982,7 @@ namespace RT.KitchenSink.ParseCs
         {
             return string.Concat(Left.ToString(), " ? ", Middle.ToString(), " : ", Right.ToString());
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public enum BinaryOperator
     {
@@ -997,7 +997,63 @@ namespace RT.KitchenSink.ParseCs
         public BinaryOperator Operator;
         public CsExpression Left, Right;
         public override string ToString() { return string.Concat(Left.ToString(), ' ', Operator.ToCs(), ' ', Right.ToString()); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked)
+        {
+            var left = Left.ToLinqExpression(resolver, isChecked);
+            var right = Right.ToLinqExpression(resolver, isChecked);
+            if (left.Type != right.Type)
+            {
+                var conv = Conversion.Implicit(left.Type, right.Type);
+                if (conv != null)
+                    left = Expression.Convert(left, right.Type);
+                else if ((conv = Conversion.Implicit(right.Type, left.Type)) != null)
+                    right = Expression.Convert(right, left.Type);
+            }
+
+            switch (Operator)
+            {
+                case BinaryOperator.Times:
+                    return isChecked ? Expression.MultiplyChecked(left, right) : Expression.Multiply(left, right);
+                case BinaryOperator.Div:
+                    return Expression.Divide(left, right);
+                case BinaryOperator.Mod:
+                    return Expression.Modulo(left, right);
+                case BinaryOperator.Plus:
+                    return isChecked ? Expression.AddChecked(left, right) : Expression.Add(left, right);
+                case BinaryOperator.Minus:
+                    return isChecked ? Expression.SubtractChecked(left, right) : Expression.Subtract(left, right);
+                case BinaryOperator.Shl:
+                    return Expression.LeftShift(left, right);
+                case BinaryOperator.Shr:
+                    return Expression.RightShift(left, right);
+                case BinaryOperator.Less:
+                    return Expression.LessThan(left, right);
+                case BinaryOperator.Greater:
+                    return Expression.GreaterThan(left, right);
+                case BinaryOperator.LessEq:
+                    return Expression.LessThanOrEqual(left, right);
+                case BinaryOperator.GreaterEq:
+                    return Expression.GreaterThanOrEqual(left, right);
+                case BinaryOperator.Eq:
+                    return Expression.Equal(left, right);
+                case BinaryOperator.NotEq:
+                    return Expression.NotEqual(left, right);
+                case BinaryOperator.And:
+                    return Expression.And(left, right);
+                case BinaryOperator.Xor:
+                    return Expression.ExclusiveOr(left, right);
+                case BinaryOperator.Or:
+                    return Expression.Or(left, right);
+                case BinaryOperator.AndAnd:
+                    return Expression.AndAlso(left, right);
+                case BinaryOperator.OrOr:
+                    return Expression.OrElse(left, right);
+                case BinaryOperator.Coalesce:
+                    return Expression.Coalesce(left, right);
+                default:
+                    throw new InvalidOperationException("Unexpected binary operator: " + Operator);
+            }
+        }
     }
     public enum BinaryTypeOperator { Is, As }
     public sealed class CsBinaryTypeOperatorExpression : CsExpression
@@ -1014,7 +1070,7 @@ namespace RT.KitchenSink.ParseCs
                 Right.ToString()
             );
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public enum UnaryOperator
     {
@@ -1039,7 +1095,7 @@ namespace RT.KitchenSink.ParseCs
                 return Operand.ToString() + "--";
             return Operator.ToCs() + Operand.ToString();
         }
-        public override Expression ToLinqExpression(NameResolver resolver)
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked)
         {
             // Special case: if this is a unary minus operator that operates on a CsNumberLiteralExpression,
             // simply add the "-" and parse the number directly
@@ -1053,9 +1109,9 @@ namespace RT.KitchenSink.ParseCs
         public CsTypeName Type;
         public CsExpression Operand;
         public override string ToString() { return string.Concat('(', Type.ToString(), ") ", Operand.ToString()); }
-        public override Expression ToLinqExpression(NameResolver resolver)
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked)
         {
-            var operand = toResolveContext(Operand, resolver);
+            var operand = ToResolveContext(Operand, resolver, isChecked);
             var type = resolver.ResolveType(Type);
             if (operand is ResolveContextLambda)
                 throw new NotImplementedException();
@@ -1069,12 +1125,12 @@ namespace RT.KitchenSink.ParseCs
         public CsExpression Left;
         public CsSimpleName Right;
         public override string ToString() { return string.Concat(Left.ToString(), AccessType == MemberAccessType.PointerDeref ? "->" : ".", Right.ToString()); }
-        public override Expression ToLinqExpression(NameResolver resolver) { return toResolveContext(resolver).ToExpression(); }
-        protected override ResolveContext toResolveContext(NameResolver resolver)
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return ToResolveContext(resolver, isChecked).ToExpression(); }
+        internal override ResolveContext ToResolveContext(NameResolver resolver, bool isChecked)
         {
             if (AccessType == MemberAccessType.PointerDeref)
                 throw new InvalidOperationException("Pointer dereference is not supported in LINQ expressions.");
-            return resolver.ResolveSimpleName(Right, toResolveContext(Left, resolver));
+            return resolver.ResolveSimpleName(Right, ToResolveContext(Left, resolver, isChecked));
         }
     }
     public sealed class CsFunctionCallExpression : CsExpression
@@ -1083,14 +1139,14 @@ namespace RT.KitchenSink.ParseCs
         public CsExpression Left;
         public List<CsArgument> Arguments = new List<CsArgument>();
         public override string ToString() { return string.Concat(Left.ToString(), IsIndexer ? '[' : '(', Arguments.Select(p => p.ToString()).JoinString(", "), IsIndexer ? ']' : ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { return toResolveContext(resolver).ToExpression(); }
-        protected override ResolveContext toResolveContext(NameResolver resolver)
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return ToResolveContext(resolver, isChecked).ToExpression(); }
+        internal override ResolveContext ToResolveContext(NameResolver resolver, bool isChecked)
         {
             if (Arguments.Any(a => a.ArgumentMode != ArgumentMode.In))
                 throw new NotImplementedException("out and ref parameters are not implemented.");
 
-            var left = toResolveContext(Left, resolver);
-            var resolvedArguments = Arguments.Select(a => new ArgumentInfo(a.ArgumentName, toResolveContext(a.ArgumentExpression, resolver), a.ArgumentMode));
+            var left = ToResolveContext(Left, resolver, isChecked);
+            var resolvedArguments = Arguments.Select(a => new ArgumentInfo(a.ArgumentName, ToResolveContext(a.ArgumentExpression, resolver, isChecked), a.ArgumentMode));
 
             if (IsIndexer)
             {
@@ -1126,41 +1182,41 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsTypeofExpression : CsTypeOperatorExpression
     {
         public override string ToString() { return string.Concat("typeof(", Type.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsSizeofExpression : CsTypeOperatorExpression
     {
         public override string ToString() { return string.Concat("sizeof(", Type.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsDefaultExpression : CsTypeOperatorExpression
     {
         public override string ToString() { return string.Concat("default(", Type.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public abstract class CsCheckedUncheckedExpression : CsExpression { public CsExpression Subexpression; }
     public sealed class CsCheckedExpression : CsCheckedUncheckedExpression
     {
         public override string ToString() { return string.Concat("checked(", Subexpression.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsUncheckedExpression : CsCheckedUncheckedExpression
     {
         public override string ToString() { return string.Concat("unchecked(", Subexpression.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsSimpleNameExpression : CsExpression
     {
         public CsSimpleName SimpleName;
         public override string ToString() { return SimpleName.ToString(); }
-        public override Expression ToLinqExpression(NameResolver resolver) { return toResolveContext(resolver).ToExpression(); }
-        protected override ResolveContext toResolveContext(NameResolver resolver) { return resolver.ResolveSimpleName(SimpleName); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return ToResolveContext(resolver, isChecked).ToExpression(); }
+        internal override ResolveContext ToResolveContext(NameResolver resolver, bool isChecked) { return resolver.ResolveSimpleName(SimpleName); }
     }
     public sealed class CsParenthesizedExpression : CsExpression
     {
         public CsExpression Subexpression;
         public override string ToString() { return string.Concat('(', Subexpression.ToString(), ')'); }
-        public override Expression ToLinqExpression(NameResolver resolver) { return Subexpression.ToLinqExpression(resolver); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return Subexpression.ToLinqExpression(resolver, isChecked); }
     }
     public sealed class CsStringLiteralExpression : CsExpression
     {
@@ -1184,40 +1240,40 @@ namespace RT.KitchenSink.ParseCs
             else
                 return string.Concat('"', Literal.Select(ch => ch.CsEscape(false, true)).JoinString(), '"');
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { return Expression.Constant(Literal); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return Expression.Constant(Literal); }
     }
     public sealed class CsCharacterLiteralExpression : CsExpression
     {
         public char Literal;
         public override string ToString() { return string.Concat('\'', Literal.CsEscape(true, false), '\''); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNumberLiteralExpression : CsExpression
     {
         public string Literal;  // Could break this down further, but this is the safest
         public override string ToString() { return Literal; }
-        public override Expression ToLinqExpression(NameResolver resolver) { return Expression.Constant(ParserUtil.ParseNumericLiteral(Literal)); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { return Expression.Constant(ParserUtil.ParseNumericLiteral(Literal)); }
     }
     public sealed class CsBooleanLiteralExpression : CsExpression
     {
         public bool Literal;
         public override string ToString() { return Literal ? "true" : "false"; }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNullExpression : CsExpression
     {
         public override string ToString() { return "null"; }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsThisExpression : CsExpression
     {
         public override string ToString() { return "this"; }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsBaseExpression : CsExpression
     {
         public override string ToString() { return "base"; }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNewConstructorExpression : CsExpression
     {
@@ -1242,19 +1298,19 @@ namespace RT.KitchenSink.ParseCs
             }
             return sb.ToString();
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNewAnonymousTypeExpression : CsExpression
     {
         public List<CsExpression> Initializers = new List<CsExpression>();
         public override string ToString() { return string.Concat("new { ", Initializers.Select(ini => ini.ToString()).JoinString(", "), " }"); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNewImplicitlyTypedArrayExpression : CsExpression
     {
         public List<CsExpression> Items = new List<CsExpression>();
         public override string ToString() { return Items.Count == 0 ? "new[] { }" : string.Concat("new[] { ", Items.Select(p => p.ToString()).JoinString(", "), " }"); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsNewArrayExpression : CsExpression
     {
@@ -1283,7 +1339,7 @@ namespace RT.KitchenSink.ParseCs
             }
             return sb.ToString();
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public abstract class CsLambdaExpression : CsExpression
     {
@@ -1311,14 +1367,14 @@ namespace RT.KitchenSink.ParseCs
         {
             return Parameters.Count > 0 && Parameters[0].Type == null;
         }
-        protected override ResolveContext toResolveContext(NameResolver resolver)
+        internal override ResolveContext ToResolveContext(NameResolver resolver, bool isChecked)
         {
             // If parameter types are not specified, cannot turn into expression yet
             if (isImplicit())
                 return new ResolveContextLambda(this);
-            return new ResolveContextExpression(ToLinqExpression(resolver), wasAnonymousFunction: true);
+            return new ResolveContextExpression(ToLinqExpression(resolver, isChecked), wasAnonymousFunction: true);
         }
-        public override Expression ToLinqExpression(NameResolver resolver)
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked)
         {
             if (isImplicit())
                 throw new InvalidOperationException("The implicitly-typed lambda expression “{0}” cannot be translated to a LINQ expression without knowing the types of its parameters. Use the ToLinqExpression(NameResolver,Type[]) overload to specify the parameter types.".Fmt(ToString()));
@@ -1326,9 +1382,9 @@ namespace RT.KitchenSink.ParseCs
             var prmTypes = new Type[Parameters.Count];
             for (int i = 0; i < Parameters.Count; i++)
                 prmTypes[i] = resolver.ResolveType(Parameters[i].Type);
-            return ToLinqExpression(resolver, prmTypes);
+            return ToLinqExpression(resolver, prmTypes, isChecked);
         }
-        public Expression ToLinqExpression(NameResolver resolver, Type[] parameterTypes)
+        public Expression ToLinqExpression(NameResolver resolver, Type[] parameterTypes, bool isChecked)
         {
             if (parameterTypes.Length != Parameters.Count)
                 throw new ArgumentException("Number of supplied parameter types does not match number of parameters on the lambda.");
@@ -1340,7 +1396,7 @@ namespace RT.KitchenSink.ParseCs
                 resolver.AddLocalName(Parameters[i].Name, prmExprs[i]);
             }
 
-            var body = Body.ToLinqExpression(resolver);
+            var body = Body.ToLinqExpression(resolver, isChecked);
             var lambda = Expression.Lambda(body, prmExprs);
 
             for (int i = 0; i < Parameters.Count; i++)
@@ -1353,7 +1409,7 @@ namespace RT.KitchenSink.ParseCs
     {
         public CsBlock Block;
         public override string ToString() { return string.Concat(parametersCs(), '\n', Block.ToString().Trim()); }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsAnonymousMethodExpression : CsExpression
     {
@@ -1366,7 +1422,7 @@ namespace RT.KitchenSink.ParseCs
             else
                 return string.Concat("delegate(", Parameters.Select(p => p.ToString()).JoinString(", "), ")\n", Block.ToString().Trim());
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsArrayLiteralExpression : CsExpression
     {
@@ -1388,7 +1444,7 @@ namespace RT.KitchenSink.ParseCs
             sb.Append(" }");
             return sb.ToString();
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public sealed class CsLinqExpression : CsExpression
     {
@@ -1404,7 +1460,7 @@ namespace RT.KitchenSink.ParseCs
             }
             return sb.ToString();
         }
-        public override Expression ToLinqExpression(NameResolver resolver) { throw new NotImplementedException(); }
+        public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
     public abstract class CsLinqElement : CsNode { }
     public sealed class CsLinqFromClause : CsLinqElement

@@ -7,12 +7,12 @@ using System.Linq.Expressions;
 
 namespace RT.KitchenSink.ParseCs
 {
-    public abstract class Conversion
+    abstract class Conversion
     {
-        public bool IsImplicit;
-        public Type From, To;
+        public Type To { get; private set; }
+        public bool IsImplicit { get; private set; }
 
-        public Conversion(bool isImplicit) { IsImplicit = isImplicit; }
+        protected Conversion(Type to, bool isImplicit) { To = to; IsImplicit = isImplicit; }
 
         private static readonly Dictionary<Type, List<Type>> implicitNumericConversions = new Dictionary<Type, List<Type>>
         {
@@ -32,11 +32,11 @@ namespace RT.KitchenSink.ParseCs
         {
             // 6.1.1 Identity conversion
             if (from == to)
-                return new IdentityConversion(true);
+                return new IdentityConversion(to, true);
 
             // 6.1.2 Implicit numeric conversions
             if (implicitNumericConversions.ContainsKey(from) && implicitNumericConversions[from].Contains(to))
-                return new NumericConversion(true);
+                return new NumericConversion(to, true);
 
             // 6.1.4 Implicit nullable conversions
             var fromNullable = from.IsGenericType && from.GetGenericTypeDefinition() == typeof(Nullable<>);
@@ -44,19 +44,19 @@ namespace RT.KitchenSink.ParseCs
             if (toNullable)
             {
                 var underlying = Conversion.Implicit(fromNullable ? from.GetGenericArguments()[0] : from, to.GetGenericArguments()[0]);
-                return underlying == null ? null : new NullableConversion(true, underlying);
+                return underlying == null ? null : new NullableConversion(to, true, underlying);
             }
             if (fromNullable && !to.IsValueType)
             {
                 var underlying = Conversion.Implicit(from.GetGenericArguments()[0], to);
-                return underlying == null ? null : new NullableConversion(true, underlying);
+                return underlying == null ? null : new NullableConversion(to, true, underlying);
             }
 
             // 6.1.6 Implicit reference conversions + 6.1.7 Boxing conversions
             if (to.IsAssignableFrom(from))
-                return from.IsValueType ? (Conversion) new BoxingConversion(true) : new ReferenceConversion(true);
+                return from.IsValueType ? (Conversion) new BoxingConversion(to, true) : new ReferenceConversion(to, true);
             if (fromNullable && to.IsAssignableFrom(from.GetGenericArguments()[0]))
-                return new BoxingConversion(true);
+                return new BoxingConversion(to, true);
 
             // 6.1.10 Implicit conversions involving type parameters
             if (from.IsGenericParameter)
@@ -76,7 +76,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     var constExpr = fromExpr.Expression as ConstantExpression;
                     if (constExpr != null && constExpr.Value is int && ((int) constExpr.Value) == 0)
-                        return new EnumConversion(true);
+                        return new EnumConversion(to, true);
                 }
             }
 
@@ -88,31 +88,31 @@ namespace RT.KitchenSink.ParseCs
                 {
                     var integer = (int) constExpr.Value;
                     if (to == typeof(sbyte) && integer >= sbyte.MinValue && integer <= sbyte.MaxValue)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                     if (to == typeof(byte) && integer >= byte.MinValue && integer <= byte.MaxValue)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                     if (to == typeof(short) && integer >= short.MinValue && integer <= short.MaxValue)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                     if (to == typeof(ushort) && integer >= ushort.MinValue && integer <= ushort.MaxValue)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                     if (to == typeof(uint) && integer >= 0)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                     if (to == typeof(ulong) && integer >= 0)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                 }
                 else if (constExpr != null && constExpr.Value is long && to == typeof(ulong))
                 {
                     var integer = (long) constExpr.Value;
                     if (integer >= 0)
-                        return new ConstantExpressionConversion(true);
+                        return new ConstantExpressionConversion(to, true);
                 }
             }
 
             // 6.1.5 Null literal conversions
             if (to.IsGenericType && to.GetGenericTypeDefinition() == typeof(Nullable<>) && from is ResolveContextNullLiteral)
-                return new NullLiteralConversion(true);
+                return new NullLiteralConversion(to, true);
             if (!to.IsValueType && from is ResolveContextNullLiteral)
-                return new NullLiteralConversion(true);
+                return new NullLiteralConversion(to, true);
 
             if (from is ResolveContextLambda)
                 return null;
@@ -121,21 +121,21 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
-    public class NullableConversion : Conversion
+    class NullableConversion : Conversion
     {
         public Conversion UnderlyingConversion;
-        public NullableConversion(bool isImplicit, Conversion underlying)
-            : base(isImplicit)
+        public NullableConversion(Type to, bool isImplicit, Conversion underlying)
+            : base(to, isImplicit)
         {
             UnderlyingConversion = underlying;
         }
     }
 
-    public class IdentityConversion : Conversion { public IdentityConversion(bool isImplicit) : base(isImplicit) { } }
-    public class NumericConversion : Conversion { public NumericConversion(bool isImplicit) : base(isImplicit) { } }
-    public class EnumConversion : Conversion { public EnumConversion(bool isImplicit) : base(isImplicit) { } }
-    public class NullLiteralConversion : Conversion { public NullLiteralConversion(bool isImplicit) : base(isImplicit) { } }
-    public class ReferenceConversion : Conversion { public ReferenceConversion(bool isImplicit) : base(isImplicit) { } }
-    public class BoxingConversion : Conversion { public BoxingConversion(bool isImplicit) : base(isImplicit) { } }
-    public class ConstantExpressionConversion : Conversion { public ConstantExpressionConversion(bool isImplicit) : base(isImplicit) { } }
+    class IdentityConversion : Conversion { public IdentityConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class NumericConversion : Conversion { public NumericConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class EnumConversion : Conversion { public EnumConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class NullLiteralConversion : Conversion { public NullLiteralConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class ReferenceConversion : Conversion { public ReferenceConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class BoxingConversion : Conversion { public BoxingConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
+    class ConstantExpressionConversion : Conversion { public ConstantExpressionConversion(Type to, bool isImplicit) : base(to, isImplicit) { } }
 }

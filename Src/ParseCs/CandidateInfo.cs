@@ -8,7 +8,7 @@ using RT.Util;
 
 namespace RT.KitchenSink.ParseCs
 {
-    public class CandidateParameterInfo
+    class CandidateParameterInfo
     {
         public Type ParameterType;
         public Type UninstantiatedParameterType;
@@ -16,7 +16,7 @@ namespace RT.KitchenSink.ParseCs
         public int ArgumentIndex;       // -1 if it’s an unspecified optional parameter
         public ArgumentMode Mode;
     }
-    public class CandidateInfo<T> where T : MemberInfo
+    class CandidateInfo<T> where T : MemberInfo
     {
         public T Member;
         public CandidateParameterInfo[] Parameters;
@@ -175,7 +175,7 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
-    public class ArgumentInfo
+    class ArgumentInfo
     {
         public string Name;     // null for positional arguments
         public ResolveContext Argument;

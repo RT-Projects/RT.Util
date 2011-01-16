@@ -37,7 +37,7 @@ namespace RT.KitchenSink.ParseCs
             return new NameResolver(type.Namespace, type, instance, assemblies);
         }
 
-        public ResolveContext ResolveSimpleName(CsSimpleName simpleName, ResolveContext context = null)
+        internal ResolveContext ResolveSimpleName(CsSimpleName simpleName, ResolveContext context = null)
         {
             if (context is ResolveContextMethodGroup)
                 throw new NotImplementedException("Access to method groups is not supported.");
@@ -50,32 +50,32 @@ namespace RT.KitchenSink.ParseCs
 
                 switch (simpleNameBuiltin.Builtin)
                 {
-                    case "string": return typeof(string);
-                    case "sbyte": return typeof(sbyte);
-                    case "byte": return typeof(byte);
-                    case "short": return typeof(short);
-                    case "ushort": return typeof(ushort);
-                    case "int": return typeof(int);
-                    case "uint": return typeof(uint);
-                    case "long": return typeof(long);
-                    case "ulong": return typeof(ulong);
-                    case "object": return typeof(object);
-                    case "bool": return typeof(bool);
-                    case "char": return typeof(char);
-                    case "float": return typeof(float);
-                    case "double": return typeof(double);
-                    case "decimal": return typeof(decimal);
+                    case "string": return new ResolveContextType(typeof(string));
+                    case "sbyte": return new ResolveContextType(typeof(sbyte));
+                    case "byte": return new ResolveContextType(typeof(byte));
+                    case "short": return new ResolveContextType(typeof(short));
+                    case "ushort": return new ResolveContextType(typeof(ushort));
+                    case "int": return new ResolveContextType(typeof(int));
+                    case "uint": return new ResolveContextType(typeof(uint));
+                    case "long": return new ResolveContextType(typeof(long));
+                    case "ulong": return new ResolveContextType(typeof(ulong));
+                    case "object": return new ResolveContextType(typeof(object));
+                    case "bool": return new ResolveContextType(typeof(bool));
+                    case "char": return new ResolveContextType(typeof(char));
+                    case "float": return new ResolveContextType(typeof(float));
+                    case "double": return new ResolveContextType(typeof(double));
+                    case "decimal": return new ResolveContextType(typeof(decimal));
 
                     case "this":
                         if (_currentInstance == null)
-                            throw new InvalidOperationException("Cannot use 'this' pointer when no current instance exists.");
-                        return new ResolveContextExpression(Expression.Constant(_currentInstance), wasAnonymousFunction: false);
+                            throw new InvalidOperationException("Cannot use ‘this’ pointer when no current instance exists.");
+                        return new ResolveContextConstant(_currentInstance);
 
                     case "base":
                         throw new InvalidOperationException("Base method calls are not supported.");
 
                     default:
-                        throw new NotImplementedException();
+                        throw new InvalidOperationException("Unexpected built-in: {0}.".Fmt(simpleNameBuiltin.ToString()));
                 }
             }
 
@@ -106,7 +106,7 @@ namespace RT.KitchenSink.ParseCs
             }
 
             // Is it a namespace?
-            if (simpleNameIdentifier.GenericTypeArguments == null && (context == null || context is ResolveContextNamespace))
+            if (simpleNameIdentifier.GenericTypeArguments == null && (context == null || context is ResolveContextNamespace) && _assemblies != null)
             {
                 foreach (var prefix in candidatePrefixes)
                 {
@@ -116,6 +116,12 @@ namespace RT.KitchenSink.ParseCs
                         return new ResolveContextNamespace(prefixWithName);
                 }
             }
+
+            // Custom resolver
+            ICustomResolver icr;
+            ResolveContextConstant rcc;
+            if ((context == null && (icr = _currentInstance as ICustomResolver) != null) || ((rcc = context as ResolveContextConstant) != null && (icr = rcc.Constant as ICustomResolver) != null))
+                return new ResolveContextConstant(icr.Resolve(simpleNameIdentifier.Name));
 
             // Is it a type?
             if (context == null || context is ResolveContextNamespace || context is ResolveContextType)
@@ -128,10 +134,10 @@ namespace RT.KitchenSink.ParseCs
                 foreach (var type in searchTypes.Where(t => t.Name == simpleNameIdentifier.Name))
                 {
                     if (simpleNameIdentifier.GenericTypeArguments == null && !type.IsGenericType)
-                        return type;
+                        return new ResolveContextType(type);
 
                     if (simpleNameIdentifier.GenericTypeArguments != null && type.IsGenericType && type.GetGenericArguments().Length == simpleNameIdentifier.GenericTypeArguments.Count)
-                        return type.MakeGenericType(simpleNameIdentifier.GenericTypeArguments.Select(tn => ResolveType(tn)).ToArray());
+                        return new ResolveContextType(type.MakeGenericType(simpleNameIdentifier.GenericTypeArguments.Select(tn => ResolveType(tn)).ToArray()));
                 }
             }
 
@@ -139,7 +145,7 @@ namespace RT.KitchenSink.ParseCs
 
             if (typeInContext != null)
             {
-                var parent = context ?? (_currentInstance != null ? (ResolveContext) new ResolveContextExpression(Expression.Constant(_currentInstance), wasAnonymousFunction: false) : new ResolveContextType(_currentType));
+                var parent = context ?? (_currentInstance != null ? (ResolveContext) new ResolveContextConstant(_currentInstance) : new ResolveContextType(_currentType));
                 if (simpleNameIdentifier.GenericTypeArguments == null)
                 {
                     bool expectStatic = (context == null && _currentInstance == null) || (context is ResolveContextType);
@@ -149,7 +155,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (field.IsStatic != expectStatic)
                             throw new InvalidOperationException("Cannot access instance field through type name or static field through instance.");
-                        return new ResolveContextExpression(Expression.Field(field.IsStatic ? null : parent.ToExpression(), field), wasAnonymousFunction: false);
+                        return new ResolveContextExpression(Expression.Field(field.IsStatic ? null : parent.ToExpression(), field));
                     }
 
                     // Is it a non-indexed property?
@@ -158,7 +164,7 @@ namespace RT.KitchenSink.ParseCs
                         bool isStatic = property.GetGetMethod() != null ? property.GetGetMethod().IsStatic : property.GetSetMethod().IsStatic;
                         if (isStatic != expectStatic)
                             throw new InvalidOperationException("Cannot access instance property through type name or static property through instance.");
-                        return new ResolveContextExpression(Expression.Property(isStatic ? null : parent.ToExpression(), property),wasAnonymousFunction:false);
+                        return new ResolveContextExpression(Expression.Property(isStatic ? null : parent.ToExpression(), property));
                     }
                 }
 
@@ -223,7 +229,7 @@ namespace RT.KitchenSink.ParseCs
         {
             if (_localNames.ContainsKey(name))
                 throw new InvalidOperationException("The variable “{0}” cannot be redeclared because it is already used (perhaps in a parent scope) to denote something else.".Fmt(name));
-            _localNames[name] = new ResolveContextExpression(resolveToExpression, wasAnonymousFunction: false);
+            _localNames[name] = new ResolveContextExpression(resolveToExpression);
         }
 
         public void AddLocalName(string name, Type resolveToType)
@@ -242,5 +248,10 @@ namespace RT.KitchenSink.ParseCs
         {
             _usingNamespaces.Add(@namespace);
         }
+    }
+
+    public interface ICustomResolver
+    {
+        object Resolve(string str);
     }
 }
