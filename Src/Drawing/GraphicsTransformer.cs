@@ -41,10 +41,24 @@ namespace RT.Util.Drawing
         /// <summary>Translates the graphics by the specified amount.</summary>
         public GraphicsTransformer Translate(float offsetX, float offsetY)
         {
-            _currentTransform.Translate(offsetX, offsetY);
+            _currentTransform.Translate(offsetX, offsetY, MatrixOrder.Append);
             _graphics.Transform = _currentTransform;
             return this;
         }
+
+        /// <summary>Translates the graphics by the specified amount.</summary>
+        public GraphicsTransformer Translate(double offsetX, double offsetY) { return Translate((float) offsetX, (float) offsetY); }
+
+        /// <summary>Scales the graphics by the specified factors.</summary>
+        public GraphicsTransformer Scale(float scaleX, float scaleY)
+        {
+            _currentTransform.Scale(scaleX, scaleY, MatrixOrder.Append);
+            _graphics.Transform = _currentTransform;
+            return this;
+        }
+
+        /// <summary>Scales the graphics by the specified factors.</summary>
+        public GraphicsTransformer Scale(double scaleX, double scaleY) { return Scale((float) scaleX, (float) scaleY); }
 
         /// <summary>Returns the Transform of the Graphics object back to its original value.</summary>
         public void Dispose()
