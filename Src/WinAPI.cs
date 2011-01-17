@@ -94,6 +94,7 @@ namespace RT.Util
         public const int WM_CHAR = 0x102;
         public const int WM_SYSKEYDOWN = 0x104;
         public const int WM_SYSKEYUP = 0x105;
+        public const int WM_COPYDATA = 0x4A;
 
         public const int HWND_TOPMOST = -1;
         public const int HWND_NOTOPMOST = -2;
@@ -160,6 +161,8 @@ namespace RT.Util
         // ListBox
         public const uint LB_SETCARETINDEX = 0x019E;
         public const uint LB_GETCARETINDEX = 0x019F;
+
+        public static readonly IntPtr HWND_BROADCAST = (IntPtr) 0xffff;
 
         #endregion
 
@@ -438,6 +441,12 @@ namespace RT.Util
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern uint SendMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "SendMessage")]
+        public static extern uint SendMessage2(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern uint RegisterWindowMessage(string lpString);
 
         #endregion
 
