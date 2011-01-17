@@ -24,6 +24,12 @@ namespace RT.Util
     {
     }
 
+    /// <summary>Instructs Rummage to keep the original name of a specific type, all of its members, and all the members in all of its nested types.</summary>
+    [AttributeUsage(AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageNoRenameAnythingAttribute : Attribute
+    {
+    }
+
     /// <summary>Instructs rummage to avoid un-nesting the specified type.</summary>
     [AttributeUsage(AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoUnnestAttribute : Attribute
