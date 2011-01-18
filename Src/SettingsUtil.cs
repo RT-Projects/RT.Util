@@ -332,24 +332,31 @@ namespace RT.Util
     {
         /// <summary>
         /// These settings are specific to a particular computer.
-        /// In normal mode, AppData folder common to all users will be used to store the settings file.
-        /// In portable mode, the settings filename will contain the machine name, so "machine-name-specific" is more precise.
+        /// In normal mode: shared among all user accounts, and do not roam.
+        /// In portable mode: separate settings stored for every machine name; user account doesn't matter.
         /// </summary>
         MachineSpecific,
 
         /// <summary>
         /// These settings are specific to a particular user.
-        /// In normal mode, user's roaming AppData folder will be used to store the settings file.
-        /// In portable mode, the settings filename will contain the user's name, so "user-name-specific" is more precise.
+        /// In normal mode: separate settings for each user account; will roam to other machines if roaming is configured.
+        /// In portable mode: always shared; user account and machine name do not matter.
         /// </summary>
         UserSpecific,
 
         /// <summary>
         /// These settings are specific to a particular combination of user and machine.
-        /// In normal mode, user's non-roaming (local) AppData folder will be used to store the settings file.
-        /// In portable mode, the settings filename will contain both the machine name and the user's name.
+        /// In normal mode: separate settings for each user account on each machine; will not roam.
+        /// In portable mode: separate settings stored for every machine name; user account doesn't matter.
         /// </summary>
         UserAndMachineSpecific,
+
+        /// <summary>
+        /// These settings are intended to be global, with constraints imposed by reality.
+        /// In normal mode: shared among all user accounts, and do not roam.
+        /// In portable mode: always shared; user account and machine name do not matter.
+        /// </summary>
+        Global,
     }
 
     /// <summary>
@@ -365,8 +372,9 @@ namespace RT.Util
         /// Creates an instance of this attribute.
         /// </summary>
         /// <param name="appName">The name of the settings file is formed from this <paramref name="appName"/>
-        /// according to certain rules. This should normally be a string equal to the name of the application. Paths and
-        /// extensions should be omitted.</param>
+        /// according to certain rules. This should be a string equal to the name of the application. Paths and extensions
+        /// should be omitted. It is important to specify the same name for settings of different <paramref name="kind"/>,
+        /// because this allows their portability to be controlled with the same {name}.IsPortable.txt file.</param>
         /// <param name="kind">Specifies what the settings in this settings class are logically "attached" to.</param>
         public SettingsAttribute(string appName, SettingsKind kind)
         {
@@ -408,6 +416,10 @@ namespace RT.Util
                     // AppName.AllUsers.SIRIUS.settings.xml is a rare special case for a portable app
                     filename += ".AllUsers." + Environment.MachineName;
                     break;
+                case SettingsKind.Global:
+                    // AppName.Global.settings.xml - need a separate name to user-specific, so add the suffix.
+                    filename += ".Global";
+                    break;
                 default:
                     throw new InternalErrorException("unreachable (97628)");
             }
@@ -421,6 +433,7 @@ namespace RT.Util
             {
                 switch (Kind)
                 {
+                    case SettingsKind.Global:
                     case SettingsKind.MachineSpecific:
                         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
                     case SettingsKind.UserSpecific:
