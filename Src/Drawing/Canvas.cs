@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using RT.Util;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
-namespace RT.KitchenSink.Drawing
+namespace RT.Util.Drawing
 {
     /// <summary>
     /// Encodes axes direction mode for <see cref="Canvas"/>.
@@ -160,6 +158,17 @@ namespace RT.KitchenSink.Drawing
                 _scaleY = Math.Min(_scaleX, _scaleY);
                 MoveViewport((float) ScreenSize.Width / 2f, (float) ScreenSize.Height / 2f, (leftWX + rightWX) / 2, (topWY + bottomWY) / 2);
             }
+        }
+
+        public void SetViewport(double leftWX, double topWY, double rightWX, double bottomWY, double aspectXY)
+        {
+            SetViewport(leftWX, topWY, rightWX, bottomWY, false);
+            double asp = _scaleX / _scaleY;
+            if (asp < aspectXY)
+                _scaleY = _scaleX / aspectXY;
+            else
+                _scaleX = _scaleY * aspectXY;
+            MoveViewport((float) ScreenSize.Width / 2f, (float) ScreenSize.Height / 2f, (leftWX + rightWX) / 2, (topWY + bottomWY) / 2);
         }
 
         /// <summary>
@@ -590,6 +599,11 @@ namespace RT.KitchenSink.Drawing
             if (maintainAspect)
                 _scaleX = _scaleY;
         }
+
+        public float ViewportCenterSX { get { return ScreenSize.Width / 2f; } }
+        public float ViewportCenterSY { get { return ScreenSize.Height / 2f; } }
+        public double ViewportCenterWX { get { return WX(ViewportCenterSX); } }
+        public double ViewportCenterWY { get { return WY(ViewportCenterSY); } }
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }

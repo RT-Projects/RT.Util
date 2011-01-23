@@ -82,6 +82,7 @@
     </Compile>
     <Compile Include="CustomComparer.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
+    <Compile Include="Drawing\Canvas.cs" />
     <Compile Include="Drawing\GraphicsTransformer.cs" />
     <Compile Include="Drawing\GraphicsUtil.cs" />
     <Compile Include="EggsML.cs" />
