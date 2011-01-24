@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
@@ -383,6 +384,25 @@ namespace RT.Util.ExtensionMethods
             foreach (var kvp in second)
                 dict.Add(kvp.Key, kvp.Value);
             return dict;
+        }
+
+        /// <summary>
+        /// Generates a representation of the specified byte sequence as hexadecimal numbers (“hexdump”).
+        /// </summary>
+        public static string ToHex(this IEnumerable<byte> data)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            var result = new StringBuilder();
+            foreach (var bb in data)
+            {
+                byte b = (byte) (bb >> 4);
+                result.Append((char) (b < 10 ? '0' + b : 'W' + b));   // 'a'-10 = 'W'
+                b = (byte) (bb & 0xf);
+                result.Append((char) (b < 10 ? '0' + b : 'W' + b));
+            }
+            return result.ToString();
         }
 
         /// <summary>
