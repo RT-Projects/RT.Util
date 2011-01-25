@@ -48,13 +48,7 @@ namespace RT.Util.Forms
             try
             {
                 // This call also sets _lastScreenResolution
-                if (!setDimensionsForCurrentScreenResolution())
-                {
-                    Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
-                    Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
-                    _normalWidth = Width;
-                    _normalHeight = Height;
-                }
+                setDimensionsForCurrentScreenResolution(true);
             }
             catch
             { }
@@ -87,21 +81,39 @@ namespace RT.Util.Forms
             }
         }
 
-        private bool setDimensionsForCurrentScreenResolution()
+        private void setDimensionsForCurrentScreenResolution(bool firstShow)
         {
             var vs = SystemInformation.VirtualScreen;
             _lastScreenResolution = vs.Width + "x" + vs.Height;
             if (!_settings.DimensionsByRes.ContainsKey(_lastScreenResolution))
-                return false;
-
-            var dimensions = _settings.DimensionsByRes[_lastScreenResolution];
-            Left = _normalLeft = dimensions.Left;
-            Top = _normalTop = dimensions.Top;
-            Width = _normalWidth = dimensions.Width;
-            Height = _normalHeight = dimensions.Height;
-            Maximized = dimensions.Maximized;
-            return true;
+            {
+                Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
+                Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
+                _normalWidth = Width;
+                _normalHeight = Height;
+            }
+            else
+            {
+                var dimensions = _settings.DimensionsByRes[_lastScreenResolution];
+                Left = _normalLeft = dimensions.Left;
+                Top = _normalTop = dimensions.Top;
+                Width = _normalWidth = dimensions.Width;
+                Height = _normalHeight = dimensions.Height;
+                Maximized = dimensions.Maximized;
+            }
+            ResizeAndReposition(firstShow);
+            processMove();
+            processResize();
+            updateDimensionsForLastScreenResolution();
         }
+
+        /// <summary>
+        /// Override to alter the window size, maximize state and/or position on first show and screen resolution changes.
+        /// At the time of call, the current position/state/size are already set to the preferred ones, so it is possible to change
+        /// them with respect to the "saved" values. If this method does nothing then the last saved values will be in effect.
+        /// </summary>
+        /// <param name="firstShow">True if this is the first time the form is displayed; false if it's a screen resolution change.</param>
+        protected virtual void ResizeAndReposition(bool firstShow) { }
 
         private void displaySettingsChanged(object sender, EventArgs e)
         {
@@ -110,10 +122,10 @@ namespace RT.Util.Forms
 
             // Set the dimensions for the new resolution. This call also updates _lastScreenResolution.
             // If no dimensions for the new resolution are stored, this does nothing and relies on the OS to position the window meaningfully.
-            setDimensionsForCurrentScreenResolution();
+            setDimensionsForCurrentScreenResolution(false);
         }
 
-        private void processResize(object sender, EventArgs e)
+        private void processResize(object sender = null, EventArgs e = null)
         {
             // Update normal size
             if (WindowState == FormWindowState.Normal)
@@ -156,7 +168,7 @@ namespace RT.Util.Forms
             }
         }
 
-        private void processMove(object sender, EventArgs e)
+        private void processMove(object sender = null, EventArgs e = null)
         {
             // A move event can happen when the user changes the screen resolution, but before the DisplaySettingsChanging and DisplaySettingsChanged events occur.
             // We need to ignore that spurious move event.
