@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.ComponentModel;
 using System.Drawing;
-using System.ComponentModel;
+using System.Windows.Forms;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Controls
 {
@@ -79,7 +76,8 @@ namespace RT.Util.Controls
         /// <param name="y">Position to scroll the label to (0 for top).</param>
         public void ScrollTo(int y)
         {
-            y = Math.Max(Math.Min(y, Label.Height - ClientSize.Height), 0);
+            // Ensure that 0 is used if the label is smaller than the client size (using .Clip() would throw)
+            y = y.ClipMax(Label.Height - ClientSize.Height).ClipMin(0);
             SetDisplayRectLocation(0, -y);
             VerticalScroll.Value = y;
         }

@@ -22,6 +22,11 @@ namespace RT.Util.ExtensionMethods
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
 
+        /// <summary>Clips this value so that it is no less than the minimum value specified.</summary>
+        public static int ClipMin(this int value, int minimumValue) { return value <= minimumValue ? minimumValue : value; }
+        /// <summary>Clips this value so that it is no greater than the maximum value specified.</summary>
+        public static int ClipMax(this int value, int maxnimumValue) { return value >= maxnimumValue ? maxnimumValue : value; }
+
         /// <summary>
         /// Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
         /// The returned number will be no less than the minimum value and no greater than the maximum value. Throws
@@ -33,6 +38,11 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentException("Clip: minimumValue is greater than maximumValue");
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
+
+        /// <summary>Clips this value so that it is no less than the minimum value specified.</summary>
+        public static double ClipMin(this double value, double minimumValue) { return value <= minimumValue ? minimumValue : value; }
+        /// <summary>Clips this value so that it is no greater than the maximum value specified.</summary>
+        public static double ClipMax(this double value, double maxnimumValue) { return value >= maxnimumValue ? maxnimumValue : value; }
 
         /// <summary>
         /// Attempts to parse this string as an int, returning null if the parse fails.

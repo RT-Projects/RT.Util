@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Forms
 {
@@ -277,8 +278,9 @@ namespace RT.Util.Forms
             {
                 // Make sure that this window doesn’t go off the edge of the working area, unless of course it absolutely doesn’t fit
                 var scr = Screen.FromControl(centerInForm).WorkingArea;
-                dims.Left = Math.Max(scr.Left, Math.Min(scr.Right - dims.Width, centerInForm.Left + (centerInForm.Width - dims.Width) / 2));
-                dims.Top = Math.Max(scr.Top, Math.Min(scr.Bottom - dims.Height, centerInForm.Top + (centerInForm.Height - dims.Height) / 2));
+                // Ensure that scr.Left/Top is used if the window is larger than the screen (using .Clip() would throw)
+                dims.Left = (centerInForm.Left + (centerInForm.Width - dims.Width) / 2).ClipMax(scr.Right - dims.Width).ClipMin(scr.Left);
+                dims.Top = (centerInForm.Top + (centerInForm.Height - dims.Height) / 2).ClipMax(scr.Bottom - dims.Height).ClipMin(scr.Top);
             }
             var prevRes = _lastScreenResolution;
             var prevLeft = dims.Left;
