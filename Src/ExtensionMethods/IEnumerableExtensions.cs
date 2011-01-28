@@ -650,10 +650,28 @@ namespace RT.Util.ExtensionMethods
             {
                 if (!enumerator.MoveNext())
                     return "";
+
+                // Optimise the case where there is only one element
+                var one = enumerator.Current;
+                if (!enumerator.MoveNext())
+                    return prefix + one + suffix;
+
+                // Optimise the case where there are only two elements
+                var two = enumerator.Current;
+                if (!enumerator.MoveNext())
+                {
+                    // Optimise the (common) case where there is no prefix/suffix; this prevents an array allocation when calling string.Concat()
+                    if (prefix == null && suffix == null)
+                        return one + separator + two;
+                    return prefix + one + suffix + separator + prefix + two + suffix;
+                }
+
                 StringBuilder sb = new StringBuilder();
-                sb.Append(prefix).Append(enumerator.Current == null ? null : enumerator.Current.ToString()).Append(suffix);
+                sb.Append(prefix).Append(one).Append(suffix).Append(separator)
+                    .Append(prefix).Append(two).Append(suffix).Append(separator)
+                    .Append(prefix).Append(enumerator.Current).Append(suffix);
                 while (enumerator.MoveNext())
-                    sb.Append(separator).Append(prefix).Append(enumerator.Current == null ? null : enumerator.Current.ToString()).Append(suffix);
+                    sb.Append(separator).Append(prefix).Append(enumerator.Current).Append(suffix);
                 return sb.ToString();
             }
         }
