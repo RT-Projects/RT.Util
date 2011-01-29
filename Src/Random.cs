@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 
 namespace RT.Util
 {
@@ -81,6 +82,33 @@ namespace RT.Util
             lock (_rnd)
                 _rnd.NextBytes(buffer);
             return buffer;
+        }
+    }
+
+    /// <summary>
+    /// This class offers static functions which generate cryptographically-strong random numbers in a thread-safe manner.
+    /// </summary>
+    public static class RndCrypto
+    {
+        /// <summary>This class is documented to be completely thread-safe, so no locking is required.</summary>
+        private static RNGCryptoServiceProvider _rnd = new RNGCryptoServiceProvider();
+
+        /// <summary>
+        /// Fills the specified buffer with cryptographically-strong random bytes.
+        /// </summary>
+        public static void NextBytes(byte[] buffer)
+        {
+            _rnd.GetBytes(buffer);
+        }
+
+        /// <summary>
+        /// Returns a new array with the specified number of elements, filled with cryptographically-strong random bytes.
+        /// </summary>
+        public static byte[] NextBytes(int count)
+        {
+            var bytes = new byte[count];
+            _rnd.GetBytes(bytes);
+            return bytes;
         }
     }
 }
