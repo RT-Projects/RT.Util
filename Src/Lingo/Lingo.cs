@@ -21,7 +21,7 @@ namespace RT.Util.Lingo
     /// </summary>
     /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
     /// <param name="translation">The new translation to be used by the program.</param>
-    public delegate void SetLanguage<[RummageKeepArgumentsReflectionSafe]in TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
+    public delegate void SetLanguage<in TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
 
     /// <summary>
     /// Static class with helper methods to support multi-language applications.
@@ -36,7 +36,7 @@ namespace RT.Util.Lingo
         /// <param name="module">The name of the module whose translation to load.</param>
         /// <param name="language">The language code of the language to load. This is set to the default language if the specified language cannot be loaded.</param>
         /// <returns>The loaded or default translation.</returns>
-        public static TTranslation LoadTranslationOrDefault<[RummageKeepArgumentsReflectionSafe]TTranslation>(string module, ref Language language) where TTranslation : TranslationBase, new()
+        public static TTranslation LoadTranslationOrDefault<TTranslation>(string module, ref Language language) where TTranslation : TranslationBase, new()
         {
             try
             {
@@ -56,7 +56,7 @@ namespace RT.Util.Lingo
         /// <param name="module">The name of the module whose translation to load.</param>
         /// <param name="language">The language code of the language to load.</param>
         /// <returns>The loaded translation.</returns>
-        public static TTranslation LoadTranslation<[RummageKeepArgumentsReflectionSafe]TTranslation>(string module, Language language) where TTranslation : TranslationBase, new()
+        public static TTranslation LoadTranslation<TTranslation>(string module, Language language) where TTranslation : TranslationBase, new()
         {
             string path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
             var trans = XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
@@ -73,7 +73,7 @@ namespace RT.Util.Lingo
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
         /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="MenuItem"/>[] containing the generated menu items.</returns>
-        public static MenuItem[] LanguageMenuItems<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
+        public static MenuItem[] LanguageMenuItems<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             MenuItem selected = null;
 
@@ -107,7 +107,7 @@ namespace RT.Util.Lingo
         /// object for the selected language. The second parameter is the string identifying the language, or null for the application's native language.</param>
         /// <param name="curLanguage">The currently-selected language. (The relevant menu item is automatically checked.)</param>
         /// <returns>A <see cref="ToolStripMenuItem"/>[] containing the generated menu items.</returns>
-        public static ToolStripMenuItem[] LanguageToolStripMenuItems<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
+        public static ToolStripMenuItem[] LanguageToolStripMenuItems<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, Language curLanguage) where TTranslation : TranslationBase, new()
         {
             ToolStripMenuItem selected = null;
 
@@ -136,7 +136,7 @@ namespace RT.Util.Lingo
         /// <typeparam name="TTranslation">Translation class to write.</typeparam>
         /// <param name="moduleName">Name of the module for which this is a translation.</param>
         /// <param name="translation">The translation to save.</param>
-        public static void SaveTranslation<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName, TTranslation translation) where TTranslation : TranslationBase, new()
+        public static void SaveTranslation<TTranslation>(string moduleName, TTranslation translation) where TTranslation : TranslationBase, new()
         {
             XmlClassify.SaveObjectToXmlFile(translation, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
         }
@@ -147,7 +147,7 @@ namespace RT.Util.Lingo
             public bool IsDefault;
         }
 
-        private static IEnumerable<translationInfo> languageMenuItems<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName) where TTranslation : TranslationBase, new()
+        private static IEnumerable<translationInfo> languageMenuItems<TTranslation>(string moduleName) where TTranslation : TranslationBase, new()
         {
             yield return new translationInfo { IsDefault = true, Language = new TTranslation().Language };
             var path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations");

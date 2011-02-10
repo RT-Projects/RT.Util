@@ -64,7 +64,7 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<[RummageKeepArgumentsReflectionSafe]T>(string filename, string baseDir = null, object parentNode = null)
+        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir = null, object parentNode = null)
         {
             baseDir = baseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
             return (T) loadObjectFromXmlFile(typeof(T), filename, baseDir, parentNode);
@@ -88,7 +88,7 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<[RummageKeepArgumentsReflectionSafe]T>(XElement elem, string baseDir = null, object parentNode = null)
+        public static T ObjectFromXElement<T>(XElement elem, string baseDir = null, object parentNode = null)
         {
             return (T) ObjectFromXElement(typeof(T), elem, baseDir, parentNode);
         }
@@ -262,7 +262,7 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="xml">XML tree to reconstruct object from.</param>
         /// <param name="intoObject">Object to assign values to in order to reconstruct the original object.</param>
-        public static void XmlIntoObject<[RummageKeepArgumentsReflectionSafe]T>(XElement xml, T intoObject)
+        public static void XmlIntoObject<T>(XElement xml, T intoObject)
         {
             xmlIntoObject(xml, intoObject, typeof(T), ".", null);
         }
@@ -367,7 +367,7 @@ namespace RT.Util.Xml
         /// <param name="baseDir">The base directory from which to construct the paths for
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
-        public static void SaveObjectToXmlFile<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string filename, string baseDir = null, string tagName = null)
+        public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir = null, string tagName = null)
         {
             SaveObjectToXmlFile(saveObject, typeof(T), filename, baseDir, tagName);
         }
@@ -403,7 +403,7 @@ namespace RT.Util.Xml
         /// <param name="tagName">Name of the top-level XML tag to use for this object.
         /// Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<[RummageKeepArgumentsReflectionSafe]T>(T saveObject, string baseDir = null, string tagName = null)
+        public static XElement ObjectToXElement<T>(T saveObject, string baseDir = null, string tagName = null)
         {
             int i = 0;
             return objectToXElement(saveObject, typeof(T), baseDir, tagName ?? "item", null, ref i);

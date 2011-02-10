@@ -31,7 +31,7 @@ namespace RT.Util.Lingo
         /// <param name="fontName">Specifies the name of the font to use in this dialog, or null for the default font.</param>
         /// <param name="fontSize">Specifies the size of the font to use in this dialog. Ignored if <paramref name="fontName"/> is null.</param>
         /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
-        public static TTranslation CreateTranslation<[RummageKeepArgumentsReflectionSafe]TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, string fontName, float fontSize) where TTranslation : TranslationBase, new()
+        public static TTranslation CreateTranslation<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, string fontName, float fontSize) where TTranslation : TranslationBase, new()
         {
             using (TranslationCreateForm tcf = new TranslationCreateForm())
             {
