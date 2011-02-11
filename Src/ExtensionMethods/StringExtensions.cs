@@ -806,7 +806,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Returns true if and only if this string is equal to the other string under the
-        /// invariant-culture case-insensitive comparison.
+        /// case-insensitive comparison (ordinal).
         /// </summary>
         public static bool EqualsNoCase(this string strthis, string str)
         {
@@ -931,5 +931,36 @@ namespace RT.Util.ExtensionMethods
                 str = str.Substring(p + oldValue.Length);
             }
         }
+
+        /// <summary>
+        /// Returns a string array that contains the substrings in this string that are delimited by elements of
+        /// a specified string array.
+        /// </summary>
+        /// <param name="str">String to be split.</param>
+        /// <param name="separator">Strings that delimit the substrings in this string.</param>
+        /// <returns>
+        /// An array whose elements contain the substrings in this string that are delimited by
+        /// one or more strings in separator. For more information, see the Remarks section.
+        /// </returns>
+        public static string[] Split(this string str, params string[] separator)
+        {
+            return str.Split(separator, StringSplitOptions.None);
+        }
+
+        /// <summary>
+        /// Returns a string array that contains the substrings in this string that are delimited by elements of
+        /// a specified string array. Empty items (zero-length strings) are filtered out.
+        /// </summary>
+        /// <param name="str">String to be split.</param>
+        /// <param name="separator">Strings that delimit the substrings in this string.</param>
+        /// <returns>
+        /// An array whose elements contain the substrings in this string that are delimited by
+        /// one or more strings in separator. For more information, see the Remarks section.
+        /// </returns>
+        public static string[] SplitNoEmpty(this string str, params string[] separator)
+        {
+            return str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+        }
+
     }
 }

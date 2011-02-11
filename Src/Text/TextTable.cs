@@ -567,5 +567,14 @@ namespace RT.Util.Text
                 cols--;
             }
         }
+
+        /// <summary>Adds a new row to the end of the table, using default cell settings for each cell.</summary>
+        /// <param name="values">Values to add, one for each column.</param>
+        public void AddRow(params string[] values)
+        {
+            var row = _cells.Count;
+            for (int col = 0; col < values.Length; col++)
+                SetCell(col, row, values[col]);
+        }
     }
 }

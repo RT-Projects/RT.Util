@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Collections
@@ -29,6 +30,13 @@ namespace RT.Util.Collections
         public QueueViewable(int initialCapacity)
         {
             _data = new T[initialCapacity];
+        }
+
+        /// <summary>Constructor.</summary>
+        ///<param name="items">Items that the new queue should contain. The first item of the enumerable will be at the head of the queue.</param>
+        public QueueViewable(IEnumerable<T> items)
+        {
+            _data = items.ToArray();
         }
 
         /// <summary>Adds an item at the tail of the queue.</summary>
