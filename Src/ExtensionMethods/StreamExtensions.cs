@@ -61,6 +61,12 @@ namespace RT.Util.ExtensionMethods
             return buf;
         }
 
+        /// <summary>Writes the specified data to the current stream.</summary>
+        public static void Write(this Stream stream, byte[] data)
+        {
+            stream.Write(data, 0, data.Length);
+        }
+
         /// <summary>
         /// Attempts to fill the buffer with the specified number of bytes from the stream. If there are
         /// fewer bytes left in the stream than requested then all available bytes will be read into the buffer.
