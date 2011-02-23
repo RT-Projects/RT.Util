@@ -81,6 +81,7 @@
     <Compile Include="Controls\TextBoxAutoHeight.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CuteML.cs" />
     <Compile Include="CustomComparer.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\Canvas.cs" />
