@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using RT.Util.Collections;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -99,16 +100,63 @@ namespace RT.Util
                         continue;
 
                     case ']':
-                        if (!string.IsNullOrEmpty(curText))
-                        {
-                            curTag.Add(new CuteText(curText, curTextIndex));
-                            curText = "";
-                        }
                         var prevTag = stack.Pop();
-                        prevTag.Add(curTag);
+                        CuteText text;
+                        switch (curTag.Tag)
+                        {
+                            case ' ':
+                                string newText = "";
+                                int newTextIndex = curTag.Index;
+                                if (prevTag.Children.Count > 0 && (text = prevTag.Children.Last() as CuteText) != null)
+                                {
+                                    newText = text.Text;
+                                    newTextIndex = text.Index;
+                                    prevTag.RemoveLast();
+                                }
+                                newText += "[";
+                                if (curTag.Children.Count > 0 && (text = curTag.Children.First() as CuteText) != null)
+                                {
+                                    newText += text.Text;
+                                    curTag.RemoveFirst();
+                                }
+                                if (curTag.Children.Count > 0)
+                                {
+                                    prevTag.Add(new CuteText(newText, newTextIndex));
+                                    prevTag.AddRange(curTag.Children);
+                                }
+                                else
+                                {
+                                    curText = newText + curText;
+                                    curTextIndex = newTextIndex;
+                                }
+                                curText += "]";
+                                break;
+
+                            case '(':
+                            case ')':
+                                curText = "";
+                                curTextIndex = curTag.Index;
+                                if (prevTag.Children.Count > 0 && (text = prevTag.Children.Last() as CuteText) != null)
+                                {
+                                    curText = text.Text;
+                                    curTextIndex = text.Index;
+                                    prevTag.RemoveLast();
+                                }
+                                curText += curTag.Tag == '(' ? "[" : "]";
+                                break;
+
+                            default:
+                                if (!string.IsNullOrEmpty(curText))
+                                {
+                                    curTag.Add(new CuteText(curText, curTextIndex));
+                                    curText = "";
+                                }
+                                prevTag.Add(curTag);
+                                curTextIndex = index + 1;
+                                break;
+                        }
                         curTag = prevTag;
                         index++;
-                        curTextIndex = index;
                         input = input.Substring(1);
                         continue;
 
@@ -409,6 +457,71 @@ namespace RT.Util
         }
 
         internal abstract void textify(StringBuilder builder);
+
+        /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from a CuteML parse tree by word-wrapping the output at a specified character width.</summary>
+        /// <param name="node">The root node of the CuteML parse tree.</param>
+        /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
+        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
+        /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the CuteML parse tree.</returns>
+        /// <remarks><para>The following CuteML tags are processed:</para>
+        /// <list type="bullet">
+        /// <item><description><c>[&lt;color&gt;:...]</c> = use the specified console color, for example <c>[&lt;darkred&gt;:...]</c>.</description></item>
+        /// <item><description><c>[*blah]</c> = Brightens the current color, for example turning dark-red into red or light-gray into white.</description></item>
+        /// <item><description><c>[-blah]</c> = Darkens the current color, for example turning red into dark-red or white into light-gray.</description></item>
+        /// <item><description><c>[.blah]</c> = Creates a bullet point. Surround a whole paragraph with this to add the bullet point and indent the paragraph. Use this to create bulleted lists. The default bullet point character is <c>*</c>; you can use an attribute to specify another one, for example <c>[&lt;-&gt;.blah]</c>.</description></item>
+        /// <item><description><c>[+blah]</c> = Suppresses word-wrapping within a certain stretch of text. In other words, the contents of a <c>[+...]</c> tag are treated as if they were a single word.
+        /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</description></item>
+        /// </list>
+        /// <para>Text which is not inside a color tag defaults to light gray.</para>
+        /// </para>
+        /// </remarks>
+        public IEnumerable<ConsoleColoredString> ToConsoleColoredStrings(int wrapWidth = int.MaxValue, int hangingIndent = 0)
+        {
+            var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
+            CuteML.WordWrap(this, new cuteWordWrapState(ConsoleColor.Gray, 0), wrapWidth,
+                (state, text) => text.Length,
+                (state, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, state.Color); },
+                (state, newParagraph, indent) =>
+                {
+                    var s = (newParagraph ? 0 : indent + hangingIndent) + state.Indent;
+                    results.Add(new ConsoleColoredString(new string(' ', s), state.Color));
+                    return s;
+                },
+                (state, tag, parameter) =>
+                {
+                    bool curLight = state.Color >= ConsoleColor.DarkGray;
+                    switch (tag)
+                    {
+                        case ':':
+                            ConsoleColor color;
+                            if (!Enum.TryParse(parameter, true, out color))
+                                throw new InvalidOperationException("“{0}” is not a valid ConsoleColor value.".Fmt(parameter));
+                            return Tuple.Create(state.SetColor(color), 0);
+                        case '*':
+                            return Tuple.Create(curLight ? state : state.SetColor((ConsoleColor) ((int) state.Color + 8)), 0);
+                        case '-':
+                            return Tuple.Create(curLight ? state.SetColor((ConsoleColor) ((int) state.Color - 8)) : state, 0);
+                        case '.':
+                            var bullet = (parameter ?? "*") + " ";
+                            results[results.Count - 1] += new ConsoleColoredString(bullet, state.Color);
+                            return Tuple.Create(state.SetIndent(state.Indent + bullet.Length), 2);
+                    }
+                    return Tuple.Create(state, 0);
+                });
+            if (results.Last().Length == 0)
+                results.RemoveAt(results.Count - 1);
+            return results;
+        }
+
+        private class cuteWordWrapState
+        {
+            public ConsoleColor Color { get; private set; }
+            public int Indent { get; private set; }
+            public cuteWordWrapState(ConsoleColor color, int indent) { Color = color; Indent = indent; }
+            public cuteWordWrapState SetColor(ConsoleColor color) { return new cuteWordWrapState(color, Indent); }
+            public cuteWordWrapState SetIndent(int indent) { return new cuteWordWrapState(Color, indent); }
+            public override string ToString() { return "Color={0}, Indent={1}".Fmt(Color, Indent); }
+        }
     }
 
     /// <summary>Represents a node in the CuteML parse tree that corresponds to a CuteML tag or the top-level node.</summary>
@@ -417,6 +530,23 @@ namespace RT.Util
         /// <summary>Adds a new child node to this tag’s children.</summary>
         /// <param name="child">The child node to add.</param>
         internal void Add(CuteNode child) { child.Parent = this; _children.Add(child); }
+
+        /// <summary>Adds the specified child nodes to this tag’s children.</summary>
+        /// <param name="children">The child nodes to add.</param>
+        internal void AddRange(IEnumerable<CuteNode> children)
+        {
+            foreach (var child in children)
+            {
+                child.Parent = this;
+                _children.Add(child);
+            }
+        }
+
+        /// <summary>Removes the first child node.</summary>
+        internal void RemoveFirst() { _children.RemoveAt(0); }
+
+        /// <summary>Removes the last child node.</summary>
+        internal void RemoveLast() { _children.RemoveAt(_children.Count - 1); }
 
         /// <summary>The children of this node.</summary>
         public ReadOnlyCollection<CuteNode> Children { get { return _children.AsReadOnly(ref _childrenCache); } }
