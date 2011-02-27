@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -56,9 +55,9 @@ namespace RT.Util.ExtensionMethods
         private static IEnumerable<Tuple<T, T>> uniquePairsIterator<T>(IEnumerable<T> source)
         {
             // Make sure that 'source' is evaluated only once
-            T[] arr = source.ToArray();
-            for (int i = 0; i < arr.Length - 1; i++)
-                for (int j = i + 1; j < arr.Length; j++)
+            IList<T> arr = source as IList<T> ?? source.ToList();
+            for (int i = 0; i < arr.Count - 1; i++)
+                for (int j = i + 1; j < arr.Count; j++)
                     yield return new Tuple<T, T>(arr[i], arr[j]);
         }
 
