@@ -390,7 +390,7 @@ namespace RT.Util.CommandLine
                         {
                             missingMandatories.Remove(field);
                             positionals.RemoveAt(0);
-                            foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => t.IsSubclassOf(field.FieldType)))
+                            foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType)))
                                 if (subclass.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
                                 {
                                     field.SetValue(ret, parseCommandLine(args, subclass, i + 1, applicationTr));
@@ -896,7 +896,7 @@ namespace RT.Util.CommandLine
                         rep.Error(@"{0}.{1}: CommandGroup fields must be declared [IsPositional].".Fmt(commandLineType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
                     // The class must have at least two subclasses with a [CommandName] attribute
-                    var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType) && t.IsDefined<CommandNameAttribute>());
+                    var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType));
                     if (subclasses.Count() < 2)
                         rep.Error(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + field.FieldType.Name);
 
@@ -904,7 +904,10 @@ namespace RT.Util.CommandLine
 
                     foreach (var subclass in subclasses)
                     {
-                        checkCommandNamesUnique(rep, subclass.GetCustomAttributes<CommandNameAttribute>().First().Names, commandsTaken, subclass);
+                        if (!subclass.IsDefined<CommandNameAttribute>())
+                            rep.Error(@"{0}: This subclass of {1} must have a [CommandName] attribute or be marked abstract.".Fmt(subclass.FullName, field.FieldType.FullName), "class " + subclass.Name);
+                        else
+                            checkCommandNamesUnique(rep, subclass.GetCustomAttributes<CommandNameAttribute>().First().Names, commandsTaken, subclass);
 
                         // Recursively check this class
                         postBuildStep(rep, subclass, applicationTrType, true);
