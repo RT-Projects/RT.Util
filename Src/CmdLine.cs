@@ -1264,6 +1264,9 @@ namespace RT.Util.CommandLine
         /// only if your application is definitely monolingual (unlocalisable).</param>
         public void WriteUsageInfoToConsole(Translation tr = null)
         {
+            if (tr == null)
+                tr = new Translation();
+
             ConsoleUtil.Write(GenerateHelp(tr, ConsoleUtil.WrapToWidth()));
 
             if (!WasCausedByHelpRequest())

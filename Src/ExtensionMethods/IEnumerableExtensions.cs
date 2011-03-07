@@ -665,8 +665,8 @@ namespace RT.Util.ExtensionMethods
                     return prefix + one + suffix + separator + prefix + two + suffix;
                 }
 
-                StringBuilder sb = new StringBuilder();
-                sb.Append(prefix).Append(one).Append(suffix).Append(separator)
+                StringBuilder sb = new StringBuilder()
+                    .Append(prefix).Append(one).Append(suffix).Append(separator)
                     .Append(prefix).Append(two).Append(suffix).Append(separator)
                     .Append(prefix).Append(enumerator.Current).Append(suffix);
                 while (enumerator.MoveNext())
