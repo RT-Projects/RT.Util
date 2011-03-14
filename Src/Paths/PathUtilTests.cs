@@ -36,18 +36,18 @@ namespace RT.Util.Paths
             assertPathToggle(@"C:\", @"C:\", @".");
             assertPathToggle(@"C:\", @"C:\thing", @"thing");
             assertPathToggle(@"C:\", @"C:\thing\stuff", @"thing\stuff");
-            assertPathToggle(@"C:\", @"D:\", ToggleRelativeException.Prob.PathsOnDifferentDrives);
-            assertPathToggle(@"C:\thing", @"D:\stuff", ToggleRelativeException.Prob.PathsOnDifferentDrives);
+            assertPathToggle(@"C:\", @"D:\", ToggleRelativeProblem.PathsOnDifferentDrives);
+            assertPathToggle(@"C:\thing", @"D:\stuff", ToggleRelativeProblem.PathsOnDifferentDrives);
 
             // Base path is not absolute
-            assertPathToggle(@"blah\thing", @"stuff", ToggleRelativeException.Prob.BasePathNotAbsolute);
+            assertPathToggle(@"blah\thing", @"stuff", ToggleRelativeProblem.BasePathNotAbsolute);
             // C:blah is so rare that we'll just call this "undefined behaviour"...
 
             // Invalid paths
-            assertPathToggle(@"C:\blah\thing", @"", ToggleRelativeException.Prob.InvalidToggledPath);
-            assertPathToggle(@"", @"thing\blah", ToggleRelativeException.Prob.InvalidBasePath);
-            assertPathToggle(@"C:\blah\thing", @"thing\*\blah", ToggleRelativeException.Prob.InvalidToggledPath);
-            assertPathToggle(@"C:\blah\*\thing", @"thing\blah", ToggleRelativeException.Prob.InvalidBasePath);
+            assertPathToggle(@"C:\blah\thing", @"", ToggleRelativeProblem.InvalidToggledPath);
+            assertPathToggle(@"", @"thing\blah", ToggleRelativeProblem.InvalidBasePath);
+            assertPathToggle(@"C:\blah\thing", @"thing\*\blah", ToggleRelativeProblem.InvalidToggledPath);
+            assertPathToggle(@"C:\blah\*\thing", @"thing\blah", ToggleRelativeProblem.InvalidBasePath);
             // UNC paths
             assertPathToggle(@"\\serv\share\blah\thing", @"..\stuff\more", @"\\serv\share\blah\stuff\more");
             assertPathToggle(@"\\serv\share\blah\thing", @"\\serv\share\blah\stuff\more", @"..\stuff\more");
@@ -66,7 +66,7 @@ namespace RT.Util.Paths
             Assert.AreEqual(expectedResult, PathUtil.ToggleRelative(basePath, toggledPath + "\\"));
         }
 
-        private void assertPathToggle(string basePath, string toggledPath, ToggleRelativeException.Prob expectedProblem)
+        private void assertPathToggle(string basePath, string toggledPath, ToggleRelativeProblem expectedProblem)
         {
             try { PathUtil.ToggleRelative(basePath, toggledPath); }
             catch (ToggleRelativeException e) { Assert.AreEqual(expectedProblem, e.Problem, "ToggleRelativeException has the wrong Problem"); return; }
