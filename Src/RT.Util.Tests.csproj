@@ -58,6 +58,7 @@
     <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
     <Compile Include="Geometry\GeomUtTests.cs" />
     <Compile Include="Geometry\IntersectTests.cs" />
+    <Compile Include="Paths\PathUtilTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="ExactConvertTests.cs" />
     <Compile Include="Streams\DynamicContentStreamTests.cs" />

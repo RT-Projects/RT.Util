@@ -282,5 +282,86 @@ namespace RT.Util
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(".", filename)));
         }
+
+        /// <summary>
+        /// Strips a single trailing directory separator, whether it's the forward- or backslash. Preserves the single separator at the end of
+        /// paths referring to the root of a drive, such as "C:\". Removes at most a single separator, never more.
+        /// </summary>
+        public static string StripTrailingSeparator(string path)
+        {
+            if (path.EndsWith('/') || path.EndsWith('\\'))
+                return (path.Length == 3 && path[1] == ':') ? path : path.Substring(0, path.Length - 1);
+            else
+                return path;
+        }
+
+        /// <summary>
+        /// Changes a relative <paramref name="toggledPath"/> to an absolute and vice versa, with respect to <paramref name="basePath"/>.
+        /// Neither path must be an empty string. Any trailing slashes are ignored and the result won't have one except for root "C:\"-style paths.
+        /// Forward slashes, multiple repeated slashes, and any redundant "." or ".." elements are correctly interpreted and eliminated.
+        /// See Remarks for some special cases.
+        /// </summary>
+        /// <remarks>
+        /// Relative paths that specify a drive letter "C:thing" are not supported and result in undefined behaviour. If the toggled path is relative
+        /// then all ".." levels that expand beyond the root directory are silently discarded.
+        /// </remarks>
+        /// <param name="basePath">An absolute path to the directory which serves as the base for absolute/relative conversion.</param>
+        /// <param name="toggledPath">An absolute or a relative path to be converted.</param>
+        /// <returns>The converted path.</returns>
+        /// <exception cref="ToggleRelativeException">Conversion could not be performed for the reason specified in the exception object.</exception>
+        public static string ToggleRelative(string basePath, string toggledPath)
+        {
+            if (basePath.Length == 0)
+                throw new ToggleRelativeException(ToggleRelativeException.Prob.InvalidBasePath);
+            if (toggledPath.Length == 0)
+                throw new ToggleRelativeException(ToggleRelativeException.Prob.InvalidToggledPath);
+            if (!Path.IsPathRooted(basePath))
+                throw new ToggleRelativeException(ToggleRelativeException.Prob.BasePathNotAbsolute);
+
+            try { basePath = Path.GetFullPath(basePath + "\\"); }
+            catch { throw new ToggleRelativeException(ToggleRelativeException.Prob.InvalidBasePath); }
+
+            if (!Path.IsPathRooted(toggledPath))
+                try { return PathUtil.StripTrailingSeparator(Path.GetFullPath(Path.Combine(basePath, toggledPath))); }
+                catch { throw new ToggleRelativeException(ToggleRelativeException.Prob.InvalidToggledPath); }
+
+            // Both basePath and toggledPath are absolute. Need to relativize toggledPath.
+            try { toggledPath = Path.GetFullPath(toggledPath + "\\"); }
+            catch { throw new ToggleRelativeException(ToggleRelativeException.Prob.InvalidToggledPath); }
+            int prevPos = -1;
+            int pos = toggledPath.IndexOf(Path.DirectorySeparatorChar);
+            while (pos != -1 && pos < basePath.Length && basePath.Substring(0, pos + 1).Equals(toggledPath.Substring(0, pos + 1), StringComparison.OrdinalIgnoreCase))
+            {
+                prevPos = pos;
+                pos = toggledPath.IndexOf(Path.DirectorySeparatorChar, pos + 1);
+            }
+            if (prevPos == -1)
+                throw new ToggleRelativeException(ToggleRelativeException.Prob.PathsOnDifferentDrives);
+            var piece = basePath.Substring(prevPos + 1);
+            var result = PathUtil.StripTrailingSeparator((".." + Path.DirectorySeparatorChar).Repeat(piece.Count(ch => ch == Path.DirectorySeparatorChar)) + toggledPath.Substring(prevPos + 1));
+            return result.Length == 0 ? "." : result;
+        }
+
+    }
+
+    /// <summary>Indicates an error in <see cref="PathUtil.ToggleRelative"/>.</summary>
+    public class ToggleRelativeException : ArgumentException
+    {
+        /// <summary>Details the problem that occurred.</summary>
+        public enum Prob
+        {
+            /// <summary>The "basePath" parameter was not an absolute path.</summary>
+            BasePathNotAbsolute,
+            /// <summary>The two paths are both absolute and on different drives, making it impossible to make one of them relative to the other.</summary>
+            PathsOnDifferentDrives,
+            /// <summary>The base path is not a valid path and/or contains invalid characters.</summary>
+            InvalidBasePath,
+            /// <summary>The toggled path is not a valid path and/or contains invalid characters.</summary>
+            InvalidToggledPath
+        }
+        /// <summary>Details the problem that occurred.</summary>
+        public Prob Problem { get; private set; }
+        /// <summary>Constructor.</summary>
+        public ToggleRelativeException(Prob problem) : base(problem.ToString()) { Problem = problem; }
     }
 }
