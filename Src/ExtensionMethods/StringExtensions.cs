@@ -962,5 +962,13 @@ namespace RT.Util.ExtensionMethods
             return str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
         }
 
+        /// <summary>Determines whether the string contains only the characters 0-9.</summary>
+        public static bool IsNumeric(this string str)
+        {
+            for (int i = 0; i < str.Length; i++)
+                if (str[i] < '0' || str[i] > '9')
+                    return false;
+            return true;
+        }
     }
 }

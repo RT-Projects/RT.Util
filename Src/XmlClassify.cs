@@ -356,6 +356,9 @@ namespace RT.Util.Xml
                         field.SetValue(intoObject, objectFromXElement(field.FieldType, tag.First(), baseDir, intoObject, remember));
                 }
             }
+
+            if (intoObject is IXmlClassifyProcess)
+                ((IXmlClassifyProcess) intoObject).AfterXmlDeclassify();
         }
 
         /// <summary>
@@ -493,6 +496,9 @@ namespace RT.Util.Xml
                 }
                 remember.Add(saveObject, elem);
 
+                if (saveObject is IXmlClassifyProcess)
+                    ((IXmlClassifyProcess) saveObject).BeforeXmlClassify();
+
                 Type keyType = null, valueType = null;
                 Type[] typeParameters;
 
@@ -607,6 +613,18 @@ namespace RT.Util.Xml
         {
             return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
         }
+    }
+
+    /// <summary>Contains a method to post-process an object after <see cref="XmlClassify"/> has restored it from XML.</summary>
+    public interface IXmlClassifyProcess
+    {
+        /// <summary>When overridden in a derived class, pre-processes this object before <see cref="XmlClassify"/> turns it into XML.
+        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        void BeforeXmlClassify();
+
+        /// <summary>When overridden in a derived class, post-processes this object after <see cref="XmlClassify"/> has restored it from XML.
+        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        void AfterXmlDeclassify();
     }
 
     /// <summary>

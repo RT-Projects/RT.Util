@@ -459,7 +459,6 @@ namespace RT.Util
         internal abstract void textify(StringBuilder builder);
 
         /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from a CuteML parse tree by word-wrapping the output at a specified character width.</summary>
-        /// <param name="node">The root node of the CuteML parse tree.</param>
         /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
         /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
         /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the CuteML parse tree.</returns>
@@ -473,7 +472,6 @@ namespace RT.Util
         /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</description></item>
         /// </list>
         /// <para>Text which is not inside a color tag defaults to light gray.</para>
-        /// </para>
         /// </remarks>
         public IEnumerable<ConsoleColoredString> ToConsoleColoredStrings(int wrapWidth = int.MaxValue, int hangingIndent = 0)
         {
@@ -566,6 +564,7 @@ namespace RT.Util
 
         /// <summary>Constructs a new CuteML parse-tree node that represents a CuteML tag.</summary>
         /// <param name="tag">The character that constitutes the tag name (e.g. <c>*</c>).</param>
+        /// <param name="attribute">The attribute string provided with the tag, or null if none.</param>
         /// <param name="index">The index in the original string where this tag was opened.</param>
         public CuteTag(char? tag, string attribute, int index) : base(index) { Tag = tag; Attribute = attribute; _children = new List<CuteNode>(); }
 
@@ -580,6 +579,7 @@ namespace RT.Util
             return elem;
         }
 
+        /// <summary>Converts the CuteML parse tree back into CuteML mark-up.</summary>
         public override string ToString()
         {
             var builder = new StringBuilder();
@@ -622,6 +622,7 @@ namespace RT.Util
         /// <summary>Determines whether this node contains any textual content.</summary>
         public override bool HasText { get { return Text != null && Text.Length > 0; } }
 
+        /// <summary>Returns the contained text in CuteML-escaped form.</summary>
         public override string ToString() { return Text.EscapeCuteML(); }
 
         internal override void textify(StringBuilder builder) { builder.Append(Text); }
