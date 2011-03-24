@@ -309,7 +309,8 @@ namespace RT.Util.Lingo
                         else if (choice == 2)
                             Debugger.Break();
                     }
-                    File.SetAttributes(_filename, File.GetAttributes(_filename) & ~FileAttributes.ReadOnly);
+                    if (File.Exists(_filename))
+                        File.SetAttributes(_filename, File.GetAttributes(_filename) & ~FileAttributes.ReadOnly);
                     File.WriteAllText(_filename, newOutput);
                     if (filenameGenerated != null)
                         File.Delete(filenameGenerated);
@@ -433,20 +434,23 @@ namespace RT.Util.Lingo
 
             foreach (var mod in assemblies.SelectMany(a => a.GetModules(false)))
             {
-                foreach (var meth in mod.GetTypes().SelectMany(t =>
-                    t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(m => m.DeclaringType == t).Cast<MethodBase>().Concat(
-                    t.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(c => c.DeclaringType == t).Cast<MethodBase>())))
+                foreach (var typ in mod.GetTypes())
                 {
-                    foreach (var instr in reader.ReadIL(meth))
+                    foreach (var meth in
+                        typ.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(m => m.DeclaringType == typ).Cast<MethodBase>().Concat(
+                        typ.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(c => c.DeclaringType == typ).Cast<MethodBase>()))
                     {
-                        if (instr.OpCode == OpCodes.Ldfld || instr.OpCode == OpCodes.Ldflda)
+                        foreach (var instr in reader.ReadIL(meth))
                         {
-                            var field = mod.ResolveField((int) instr.Argument.Value);
-                            if (field != null)
+                            if (instr.OpCode == OpCodes.Ldfld || instr.OpCode == OpCodes.Ldflda)
                             {
-                                fields.Remove(field);
-                                if (fields.Count == 0)
-                                    return;
+                                var field = mod.ResolveField((int) instr.Argument.Value, typ.GetGenericArguments(), meth.IsConstructor ? Type.EmptyTypes : meth.GetGenericArguments());
+                                if (field != null)
+                                {
+                                    fields.Remove(field);
+                                    if (fields.Count == 0)
+                                        return;
+                                }
                             }
                         }
                     }
