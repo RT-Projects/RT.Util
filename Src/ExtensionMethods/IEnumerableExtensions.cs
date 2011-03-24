@@ -699,5 +699,28 @@ namespace RT.Util.ExtensionMethods
                 return true;
             }
         }
+
+        /// <summary>Splits a collection into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>, but all chunks, if any, will contain at least one item.</summary>
+        public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, int chunkSize)
+        {
+            if (chunkSize <= 0)
+                throw new ArgumentException("chunkSize must be greater than zero.", "chunkSize");
+            return splitIterator(source, chunkSize);
+        }
+        private static IEnumerable<IEnumerable<T>> splitIterator<T>(this IEnumerable<T> source, int chunkSize)
+        {
+            var list = new List<T>(chunkSize);
+            foreach (var item in source)
+            {
+                list.Add(item);
+                if (list.Count == chunkSize)
+                {
+                    yield return list;
+                    list = new List<T>(chunkSize);
+                }
+            }
+            if (list.Count > 0)
+                yield return list;
+        }
     }
 }
