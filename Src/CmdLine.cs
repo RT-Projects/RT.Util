@@ -782,8 +782,8 @@ namespace RT.Util.CommandLine
             FieldInfo lastField = null;
             bool haveSeenOptionalPositional = false;
 
-            if (checkClassDoc)
-                checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
+                if (checkClassDoc)
+                    checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
 
             foreach (var field in commandLineType.GetFields())
             {
@@ -1047,7 +1047,12 @@ namespace RT.Util.CommandLine
             try { var result = EggsML.Parse(toCheck); }
             catch (EggsMLParseException e) { eggsError = e.Message; }
             if (eggsError != null)
-                rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
+            {
+                if (member is Type)
+                    rep.Error(@"{0}: Type documentation is not valid EggsML: {1}".Fmt(((Type) member).FullName, eggsError), "class " + member.Name);
+                else
+                    rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
+            }
         }
 #endif
 
