@@ -73,7 +73,10 @@ namespace RT.Util
                             var st = new StackTrace(realException, true);
                             string fileLine = null;
                             if (st.FrameCount > 0)
-                                fileLine = st.GetFrame(1).GetFileName() + "(" + st.GetFrame(1).GetFileLineNumber() + "," + st.GetFrame(1).GetFileColumnNumber() + "): ";
+                            {
+                                var frame = st.GetFrame(0);
+                                fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
+                            }
 
                             Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
                             rep.AnyErrors = true;

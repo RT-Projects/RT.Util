@@ -9,9 +9,7 @@ namespace RT.Util.ExtensionMethods
     /// </summary>
     public static class StreamExtensions
     {
-        /// <summary>
-        /// Reads all bytes until the end of stream and returns them in a byte array.
-        /// </summary>
+        /// <summary>Reads all bytes until the end of stream and returns them in a byte array.</summary>
         public static byte[] ReadAllBytes(this Stream stream)
         {
             if (stream.CanSeek)
@@ -34,9 +32,25 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>
-        /// Reads all bytes from the current Stream and converts them into text using the specified encoding.
-        /// </summary>
+        /// <summary>Reads all bytes until the end of stream and returns the number
+        /// of bytes thus read without allocating too much memory.</summary>
+        public static long ReadAllBytesGetLength(this Stream stream)
+        {
+            if (stream.CanSeek)
+                return stream.Length - stream.Position;
+
+            byte[] buffer = new byte[32768];
+            long lengthSoFar = 0;
+            while (true)
+            {
+                int read = stream.Read(buffer, 0, buffer.Length);
+                if (read <= 0)
+                    return lengthSoFar;
+                lengthSoFar += read;
+            }
+        }
+
+        /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="encoding">Encoding to expect the text to be in.</param>
         /// <returns>The text read from the stream.</returns>
