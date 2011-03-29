@@ -289,6 +289,30 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Converts the specified raw UTF-16 (little-endian) data to a string.
+        /// </summary>
+        /// <param name="input">Data to interpret as UTF-16 text.</param>
+        /// <returns>A string containing the characters represented by the UTF-16-encoded input.</returns>
+        public static string FromUtf16(this byte[] input)
+        {
+            if (input == null)
+                throw new ArgumentNullException("input");
+            return Encoding.Unicode.GetString(input);
+        }
+
+        /// <summary>
+        /// Converts the specified raw UTF-16 (big-endian) data to a string.
+        /// </summary>
+        /// <param name="input">Data to interpret as UTF-16BE text.</param>
+        /// <returns>A string containing the characters represented by the UTF-16BE-encoded input.</returns>
+        public static string FromUtf16BE(this byte[] input)
+        {
+            if (input == null)
+                throw new ArgumentNullException("input");
+            return Encoding.BigEndianUnicode.GetString(input);
+        }
+
+        /// <summary>
         /// Determines the length of the UTF-8 encoding of the specified string.
         /// </summary>
         /// <param name="input">String to determined UTF-8 length of.</param>

@@ -79,7 +79,14 @@ namespace RT.Util.Streams
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            _stream.Write(buffer, offset, count);
+            while (count > 0)
+            {
+                if (SleepInterval > 0) Thread.Sleep(SleepInterval);
+                var len = Math.Min(count, ChunkSize);
+                _stream.Write(buffer, offset, len);
+                offset += len;
+                count -= len;
+            }
         }
 
         public override void Close()

@@ -13,8 +13,6 @@ namespace RT.Util.Streams
     {
         /// <summary>Returns false.</summary>
         public override bool CanSeek { get { return false; } }
-        /// <summary>Returns false.</summary>
-        public override bool CanWrite { get { return false; } }
         /// <summary>Does nothing.</summary>
         public override void Flush() { }
         /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
@@ -25,12 +23,13 @@ namespace RT.Util.Streams
         public override long Seek(long offset, SeekOrigin origin) { throw new NotSupportedException(); }
         /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
         public override void SetLength(long value) { throw new NotSupportedException(); }
-        /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
-        public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
 
-        /// <summary>Returns false.</summary>
+        /// <summary>Returns true.</summary>
         public override bool CanRead { get { return true; } }
+        /// <summary>Returns true.</summary>
+        public override bool CanWrite { get { return true; } }
 
+        #region Stuff for reading
         private byte[] _lastBuffer;
         private int _lastBufferIndex;
         private int _lastBufferLength;
@@ -39,7 +38,7 @@ namespace RT.Util.Streams
         private byte[] _stillToOutput;
         private int _stillToOutputIndex;
         private int _stillToOutputLength;
-        private bool _ignoreOneLF = false;
+        private bool _ignoreOneLFRead = false;
 
         /// <summary>Constructs a <see cref="NewlineNormalizerStream8bit"/>.</summary>
         /// <param name="underlyingStream">Stream to read textual data from.</param>
@@ -87,27 +86,29 @@ namespace RT.Util.Streams
             if (count < 1)
                 throw new ArgumentOutOfRangeException("count", "count cannot be zero or negative.");
 
+            // If there is stuff left to output, output as much of it as possible
             if (_stillToOutput != null && _stillToOutputLength > 0)
                 return outputAsMuchAsPossible(ref _stillToOutput, ref _stillToOutputIndex, ref _stillToOutputLength, buffer, offset, count);
 
             if (_lastBuffer != null && _lastBufferLength > 0)
             {
+                // Find where the next newline is
                 var index = _lastBufferIndex;
                 while (index < _lastBufferIndex + _lastBufferLength && _lastBuffer[index] != 10 && _lastBuffer[index] != 13)
                     index++;
 
+                // If there is no more newline, output as much of this buffer as possible
                 if (index == _lastBufferIndex + _lastBufferLength)
                     return outputAsMuchAsPossible(ref _lastBuffer, ref _lastBufferIndex, ref _lastBufferLength, buffer, offset, count);
 
                 int nlCount = index - _lastBufferIndex;
                 if (nlCount == 0)
                 {
-                    // Output just the newline
+                    // There is a newline right at the beginning of the buffer. Output just the (normalised) newline and then skip it in the buffer
                     _stillToOutput = new byte[_newline.Length];
                     Buffer.BlockCopy(_newline, 0, _stillToOutput, 0, _newline.Length);
                     _stillToOutputIndex = 0;
                     _stillToOutputLength = _newline.Length;
-                    var result = outputAsMuchAsPossible(ref _stillToOutput, ref _stillToOutputIndex, ref _stillToOutputLength, buffer, offset, count);
 
                     byte b = _lastBuffer[_lastBufferIndex];
                     _lastBufferIndex++;
@@ -120,7 +121,7 @@ namespace RT.Util.Streams
                         if (_lastBufferLength == 0)
                         {
                             // Can't look at the next byte yet, remember for later that we need to ignore a \n
-                            _ignoreOneLF = true;
+                            _ignoreOneLFRead = true;
                         }
                         else if (_lastBuffer[_lastBufferIndex] == 10)
                         {
@@ -129,11 +130,11 @@ namespace RT.Util.Streams
                         }
                     }
 
-                    return result;
+                    return outputAsMuchAsPossible(ref _stillToOutput, ref _stillToOutputIndex, ref _stillToOutputLength, buffer, offset, count);
                 }
                 else if (nlCount < count)
                 {
-                    // Output everything up to the newline
+                    // There is a newline, but it’s not at the beginning of the buffer. Output everything up to the newline
                     Buffer.BlockCopy(_lastBuffer, _lastBufferIndex, buffer, offset, nlCount);
                     _lastBufferIndex += nlCount;
                     _lastBufferLength -= nlCount;
@@ -141,11 +142,12 @@ namespace RT.Util.Streams
                 }
                 else
                 {
-                    // Output everything we can
+                    // There is a newline, but it’s not at the beginning of the buffer and it’s further into the buffer than “count”, so we can safely just output “count” bytes.
                     return outputAsMuchAsPossible(ref _lastBuffer, ref _lastBufferIndex, ref _lastBufferLength, buffer, offset, count);
                 }
             }
 
+            // We ran out of data; need to read more stuff from the underlying stream.
             if (_lastBuffer == null)
                 _lastBuffer = new byte[65536];
             _lastBufferIndex = 0;
@@ -153,7 +155,7 @@ namespace RT.Util.Streams
             if (_lastBufferLength == 0)
                 return 0;
 
-            if (_ignoreOneLF)
+            if (_ignoreOneLFRead)
             {
                 if (_lastBuffer[_lastBufferIndex] == 10)
                 {
@@ -162,12 +164,64 @@ namespace RT.Util.Streams
                     _lastBufferIndex++;
                     _lastBufferLength--;
                 }
-                _ignoreOneLF = false;
+                _ignoreOneLFRead = false;
             }
 
             // Now that we have populated _lastBuffer, use a tail-recursive call.
             return Read(buffer, offset, count);
         }
+        #endregion
+
+        #region Stuff for writing
+        private bool _ignoreOneLFWrite = false;
+
+        /// <summary>Writes a sequence of bytes to the current stream and advances the
+        /// current position within this stream by the number of bytes written.</summary>
+        /// <param name="buffer">An array of bytes. This method copies <paramref name="count"/> bytes from <paramref name="buffer"/> to the current stream.</param>
+        /// <param name="offset">The zero-based byte offset in <paramref name="buffer"/> at which to begin copying bytes to the current stream.</param>
+        /// <param name="count">The number of bytes to be written to the current stream.</param>
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            if (count < 0)
+                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+
+            while (count > 0)
+            {
+                if (_ignoreOneLFWrite && buffer[offset] == 10)
+                {
+                    offset++;
+                    count--;
+                    _ignoreOneLFWrite = false;
+                    continue;
+                }
+                _ignoreOneLFWrite = false;
+
+                // Find where the next newline is
+                var index = offset;
+                while (index < offset + count && buffer[index] != 10 && buffer[index] != 13)
+                    index++;
+
+                if (index > offset)
+                {
+                    // Output everything up to the newline
+                    _underlyingStream.Write(buffer, offset, index - offset);
+                    count -= index - offset;
+                    offset = index;
+                }
+
+                // If there is anything left in the buffer, it must begin with a newline; output it
+                if (count > 0)
+                {
+                    _underlyingStream.Write(_newline, 0, _newline.Length);
+                    // ... and skip it
+                    if (buffer[offset] == 13)
+                        _ignoreOneLFWrite = true;
+                    offset++;
+                    count--;
+                }
+            }
+        }
+        #endregion
     }
 
     /// <summary>Provides functionality to replace the three different newlines (\r, \n, and \r\n) while reading from a stream containing textual data,
@@ -176,8 +230,6 @@ namespace RT.Util.Streams
     {
         /// <summary>Returns false.</summary>
         public override bool CanSeek { get { return false; } }
-        /// <summary>Returns false.</summary>
-        public override bool CanWrite { get { return false; } }
         /// <summary>Does nothing.</summary>
         public override void Flush() { }
         /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
@@ -188,12 +240,13 @@ namespace RT.Util.Streams
         public override long Seek(long offset, SeekOrigin origin) { throw new NotSupportedException(); }
         /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
         public override void SetLength(long value) { throw new NotSupportedException(); }
-        /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
-        public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
 
-        /// <summary>Return false.</summary>
+        /// <summary>Returns true.</summary>
         public override bool CanRead { get { return true; } }
+        /// <summary>Returns true.</summary>
+        public override bool CanWrite { get { return true; } }
 
+        #region Stuff for reading
         private byte[] _lastBuffer;
         private int _lastBufferIndex;
         private int _lastBufferLength;
@@ -202,7 +255,7 @@ namespace RT.Util.Streams
         private byte[] _stillToOutput;
         private int _stillToOutputIndex;
         private int _stillToOutputLength;
-        private bool _ignoreOneLF = false;
+        private bool _ignoreOneLFRead = false;
         private byte? _singleByteToOutput = null;
         private bool _bigEndian;
         private byte? _lastByteToOutput = null;
@@ -224,9 +277,9 @@ namespace RT.Util.Streams
 
         private int outputAsMuchAsPossible(ref byte[] fromBuffer, ref int fromOffset, ref int fromCount, byte[] intoBuffer, int intoOffset, int intoCount)
         {
-            // Whoa, someone requested a single byte!
             if (intoCount == 1)
             {
+                // Whoa, someone requested a single byte!
                 intoBuffer[intoOffset] = fromBuffer[fromOffset];
                 _singleByteToOutput = fromBuffer[fromOffset + 1];
                 fromOffset += 2;
@@ -306,20 +359,20 @@ namespace RT.Util.Streams
                     Buffer.BlockCopy(_newline, 0, _stillToOutput, 0, _newline.Length);
                     _stillToOutputIndex = 0;
                     _stillToOutputLength = _newline.Length;
-                    var result = outputAsMuchAsPossible(ref _stillToOutput, ref _stillToOutputIndex, ref _stillToOutputLength, buffer, offset, count);
 
-                    byte b = _bigEndian ? _lastBuffer[_lastBufferIndex + 1] : _lastBuffer[_lastBufferIndex];
+                    byte b1 = _lastBuffer[_lastBufferIndex];
+                    byte b2 = _lastBuffer[_lastBufferIndex + 1];
                     _lastBufferIndex += 2;
                     _lastBufferLength -= 2;
 
                     // \n is always a single-character newline, but...
-                    if (b == 13)
+                    if (b1 == (_bigEndian ? 0 : 13) && b2 == (_bigEndian ? 13 : 0))
                     {
                         // ... if it's a \r, look at the next character after it
                         if (_lastBufferLength == 0)
                         {
                             // Can't look at the next character yet, remember for later that we need to ignore a \n
-                            _ignoreOneLF = true;
+                            _ignoreOneLFRead = true;
                         }
                         else if (_lastBuffer[_lastBufferIndex] == (_bigEndian ? 0 : 10) && _lastBuffer[_lastBufferIndex + 1] == (_bigEndian ? 10 : 0))
                         {
@@ -328,7 +381,7 @@ namespace RT.Util.Streams
                         }
                     }
 
-                    return result;
+                    return outputAsMuchAsPossible(ref _stillToOutput, ref _stillToOutputIndex, ref _stillToOutputLength, buffer, offset, count);
                 }
                 else if (nlCount < count)
                 {
@@ -380,7 +433,7 @@ namespace RT.Util.Streams
                 _lastBufferLength--;
             }
 
-            if (_ignoreOneLF)
+            if (_ignoreOneLFRead)
             {
                 if (_lastBuffer[_lastBufferIndex] == (_bigEndian ? 0 : 10) && _lastBuffer[_lastBufferIndex + 1] == (_bigEndian ? 10 : 0))
                 {
@@ -389,11 +442,86 @@ namespace RT.Util.Streams
                     _lastBufferIndex += 2;
                     _lastBufferLength -= 2;
                 }
-                _ignoreOneLF = false;
+                _ignoreOneLFRead = false;
             }
 
             // Now that we have populated _lastBuffer, use a tail-recursive call.
             return Read(buffer, offset, count);
         }
+        #endregion
+
+        #region Stuff for writing
+        private bool _ignoreOneLFWrite = false;
+        private byte? _extraByteWritten = null;
+
+        /// <summary>Writes a sequence of bytes to the current stream and advances the
+        /// current position within this stream by the number of bytes written.</summary>
+        /// <param name="buffer">An array of bytes. This method copies <paramref name="count"/> bytes from <paramref name="buffer"/> to the current stream.</param>
+        /// <param name="offset">The zero-based byte offset in <paramref name="buffer"/> at which to begin copying bytes to the current stream.</param>
+        /// <param name="count">The number of bytes to be written to the current stream.</param>
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            if (count < 0)
+                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+            if (count == 0)
+                return;
+
+            byte[] realBuffer = buffer;
+            if (_extraByteWritten != null)
+            {
+                realBuffer = new byte[count + 1];
+                realBuffer[0] = _extraByteWritten.Value;
+                Buffer.BlockCopy(buffer, offset, realBuffer, 1, count);
+                offset = 0;
+                count++;
+            }
+
+            while (count > 1)
+            {
+                if (_ignoreOneLFWrite && realBuffer[offset] == (_bigEndian ? 0 : 10) && realBuffer[offset + 1] == (_bigEndian ? 10 : 0))
+                {
+                    offset += 2;
+                    count -= 2;
+                    _ignoreOneLFWrite = false;
+                    continue;
+                }
+                _ignoreOneLFWrite = false;
+
+                // Find where the next newline is
+                var index = offset;
+                if (_bigEndian)
+                {
+                    while (index < offset + count - 1 && (realBuffer[index] != 0 || realBuffer[index + 1] != 10) && (realBuffer[index] != 0 || realBuffer[index + 1] != 13))
+                        index += 2;
+                }
+                else
+                {
+                    while (index < offset + count - 1 && (realBuffer[index] != 10 || realBuffer[index + 1] != 0) && (realBuffer[index] != 13 || realBuffer[index + 1] != 0))
+                        index += 2;
+                }
+
+                if (index > offset)
+                {
+                    // Output everything up to the newline
+                    _underlyingStream.Write(realBuffer, offset, index - offset);
+                    count -= index - offset;
+                    offset = index;
+                }
+
+                // If there is anything left in the buffer, it must begin with a newline; output it
+                if (count > 1)
+                {
+                    _underlyingStream.Write(_newline, 0, _newline.Length);
+                    // ... and skip it
+                    if (realBuffer[offset] == (_bigEndian ? 0 : 13) && realBuffer[offset + 1] == (_bigEndian ? 13 : 0))
+                        _ignoreOneLFWrite = true;
+                    offset += 2;
+                    count -= 2;
+                }
+            }
+
+            _extraByteWritten = count == 1 ? (byte?) realBuffer[offset] : null;
+        }
+        #endregion
     }
 }

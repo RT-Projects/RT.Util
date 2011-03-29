@@ -92,8 +92,8 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the first element in <paramref name="source"/>.</returns>
         public static T FirstOrDefault<T>(this IQueryable<T> source, T @default)
         {
-            var arr = source.Take(1).ToArray();
-            return arr.Length == 1 ? arr[0] : @default;
+            using (var e = source.Take(1).GetEnumerator())
+                return e.MoveNext() ? e.Current : @default;
         }
 
         /// <summary>
@@ -107,8 +107,8 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static T FirstOrDefault<T>(this IQueryable<T> source, Expression<Func<T, bool>> predicate, T @default)
         {
-            var arr = source.Where(predicate).Take(1).ToArray();
-            return arr.Length == 1 ? arr[0] : @default;
+            using (var e = source.Where(predicate).Take(1).GetEnumerator())
+                return e.MoveNext() ? e.Current : @default;
         }
 
         /// <summary>
@@ -124,8 +124,8 @@ namespace RT.Util.ExtensionMethods
         /// otherwise, the transformed first element in <paramref name="source"/> that passes the test specified by <paramref name="predicate"/>.</returns>
         public static TResult FirstOrDefault<TSource, TResult>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate, Func<TSource, TResult> resultSelector, TResult @default)
         {
-            var arr = source.Where(predicate).Select(resultSelector).Take(1).ToArray();
-            return arr.Length == 1 ? arr[0] : @default;
+            using (var e = source.Where(predicate).Select(resultSelector).Take(1).GetEnumerator())
+                return e.MoveNext() ? e.Current : @default;
         }
     }
 }

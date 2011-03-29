@@ -8,22 +8,31 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Streams
 {
     /// <summary>
-    /// Provides a read-only stream that can "read from" an <c>IEnumerable&lt;string&gt;</c>.
-    /// In particular, an intended application is to "read from" a method that uses <c>yield return</c> to return strings as execution proceeds.
+    /// Provides a read-only stream that can “read from” an <c>IEnumerable&lt;string&gt;</c> or <c>IEnumerable&lt;byte[]&gt;</c>.
+    /// In particular, an intended application is to “read from” a method that uses <c>yield return</c> to return strings or data as execution proceeds.
     /// This enables generation of, for example, HTML for dynamic web pages.
     /// </summary>
     public sealed class DynamicContentStream : Stream
     {
-        private IEnumerator<string> _enumerator = null;
+        private IEnumerator<byte[]> _enumerator = null;
         private byte[] _lastUnprocessedBytes = null;
         private int _lastUnprocessedBytesIndex = 0;
 
-        /// <summary>
-        /// Instantiates a <see cref="DynamicContentStream"/> and lets you configure whether it's buffered or not.
-        /// </summary>
+        /// <summary>Instantiates a <see cref="DynamicContentStream"/> that reads strings (which are converted to UTF-8)
+        /// and lets you configure whether it’s buffered or not.</summary>
         /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
         /// <param name="buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
         public DynamicContentStream(IEnumerable<string> enumerable, bool buffered = true)
+        {
+            _enumerator = enumerable.Select(s => s.ToUtf8()).GetEnumerator();
+            Buffered = buffered;
+        }
+
+        /// <summary>Instantiates a <see cref="DynamicContentStream"/> that reads raw bytes
+        /// and lets you configure whether it’s buffered or not.</summary>
+        /// <param name="enumerable">The object that provides the content for this stream to read from.</param>
+        /// <param name="buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
+        public DynamicContentStream(IEnumerable<byte[]> enumerable, bool buffered = true)
         {
             _enumerator = enumerable.GetEnumerator();
             Buffered = buffered;
@@ -85,20 +94,20 @@ namespace RT.Util.Streams
                         break;
                     if (_enumerator.Current.Length == 0)
                         continue;
-                    var encodedString = _enumerator.Current.ToUtf8();
-                    if (encodedString.Length + bytesSoFar >= count)
+                    var byteArray = _enumerator.Current;
+                    if (byteArray.Length + bytesSoFar >= count)
                     {
-                        Buffer.BlockCopy(encodedString, 0, buffer, offset + bytesSoFar, count - bytesSoFar);
-                        if (encodedString.Length + bytesSoFar > count)
+                        Buffer.BlockCopy(byteArray, 0, buffer, offset + bytesSoFar, count - bytesSoFar);
+                        if (byteArray.Length + bytesSoFar > count)
                         {
-                            _lastUnprocessedBytes = encodedString;
+                            _lastUnprocessedBytes = byteArray;
                             _lastUnprocessedBytesIndex = count - bytesSoFar;
                         }
                         return count;
                     }
                     else
-                        Buffer.BlockCopy(encodedString, 0, buffer, offset + bytesSoFar, encodedString.Length);
-                    bytesSoFar += encodedString.Length;
+                        Buffer.BlockCopy(byteArray, 0, buffer, offset + bytesSoFar, byteArray.Length);
+                    bytesSoFar += byteArray.Length;
                 }
                 return bytesSoFar;
             }
@@ -110,18 +119,18 @@ namespace RT.Util.Streams
                         return 0;
                 }
                 while (_enumerator.Current.Length == 0);
-                byte[] encoded = _enumerator.Current.ToUtf8();
-                if (encoded.Length > count)
+                var byteArray = _enumerator.Current;
+                if (byteArray.Length > count)
                 {
-                    Buffer.BlockCopy(encoded, 0, buffer, 0, count);
-                    _lastUnprocessedBytes = encoded;
+                    Buffer.BlockCopy(byteArray, 0, buffer, 0, count);
+                    _lastUnprocessedBytes = byteArray;
                     _lastUnprocessedBytesIndex = count;
                     return count;
                 }
                 else
                 {
-                    Buffer.BlockCopy(encoded, 0, buffer, 0, encoded.Length);
-                    return encoded.Length;
+                    Buffer.BlockCopy(byteArray, 0, buffer, 0, byteArray.Length);
+                    return byteArray.Length;
                 }
             }
         }
@@ -132,21 +141,15 @@ namespace RT.Util.Streams
         public override bool CanWrite { get { return false; } }
         public override void Flush() { }
 
-        // Things you can't do
+        // Things you can’t do
         public override long Length { get { throw new NotSupportedException(); } }
         public override long Seek(long offset, SeekOrigin origin) { throw new NotSupportedException(); }
         public override void SetLength(long value) { throw new NotSupportedException(); }
         public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
         public override long Position
         {
-            get
-            {
-                throw new NotSupportedException();
-            }
-            set
-            {
-                throw new NotSupportedException();
-            }
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
         }
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
