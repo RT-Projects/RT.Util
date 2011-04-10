@@ -70,5 +70,11 @@ namespace RT.Util.ExtensionMethods
                 obj = next(obj);
             }
         }
+
+        /// <summary>Returns a new comparer, which is compares items in the opposite order to this one.</summary>
+        public static IComparer<T> Inverted<T>(this IComparer<T> comparer)
+        {
+            return new CustomComparer<T>((a, b) => -comparer.Compare(a, b));
+        }
     }
 }
