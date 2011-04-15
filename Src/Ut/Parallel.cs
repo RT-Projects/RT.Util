@@ -20,11 +20,26 @@ namespace RT.Util
         /// <param name="actions">Actions to run.</param>
         public static void Parallel(int maxSimultaneous, params Action[] actions)
         {
-            if (actions == null)
-                return;
-
             if (maxSimultaneous < 1)
                 throw new ArgumentException("maxSimultaneous cannot be zero or negative.", "maxSimultaneous");
+
+            if (actions == null || actions.Length == 0)
+                return;
+
+            var exceptionLock = new object();
+            Exception exception = null;
+            actions = actions.Select(act => new Action(() =>
+            {
+                try
+                {
+                    act();
+                }
+                catch (Exception e)
+                {
+                    lock (exceptionLock)
+                        exception = e;
+                }
+            })).ToArray();
 
             var threads = new List<Thread>(actions.Length);
 
@@ -63,7 +78,12 @@ namespace RT.Util
                 }
             }
             foreach (var thread in threads)
+            {
                 thread.Join();
+                lock (exceptionLock)
+                    if (exception != null)
+                        throw exception;
+            }
         }
 
         /// <summary>Runs the specified action in parallel for each item in the input collection.</summary>
@@ -83,7 +103,7 @@ namespace RT.Util
         public static void ParallelForEach<T>(this IEnumerable<T> items, int maxSimultaneous, Action<T> action)
         {
             var actions = items.Select(item => new Action(() => action(item))).ToArray();
-            Parallel(actions);
+            Parallel(maxSimultaneous, actions);
         }
 
         /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the concatenation of all the results of the function calls.</summary>

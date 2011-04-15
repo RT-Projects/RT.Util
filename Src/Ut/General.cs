@@ -210,6 +210,15 @@ namespace RT.Util
             }
         }
 
+        /// <summary>Throws the specified exception.</summary>
+        /// <typeparam name="TResult">The type to return.</typeparam>
+        /// <param name="exception">The exception to throw.</param>
+        /// <returns>This method never returns a value. It always throws.</returns>
+        public static TResult Throw<TResult>(Exception exception)
+        {
+            throw exception;
+        }
+
         /// <summary>Determines whether the Ctrl key is pressed.</summary>
         public static bool Ctrl { get { return Control.ModifierKeys.HasFlag(Keys.Control); } }
         /// <summary>Determines whether the Alt key is pressed.</summary>

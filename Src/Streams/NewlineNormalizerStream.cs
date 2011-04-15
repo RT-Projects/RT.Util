@@ -29,6 +29,13 @@ namespace RT.Util.Streams
         /// <summary>Returns true.</summary>
         public override bool CanWrite { get { return true; } }
 
+        /// <summary>Closes the underlying stream.</summary>
+        public override void Close()
+        {
+            _underlyingStream.Close();
+            base.Close();
+        }
+
         #region Stuff for reading
         private byte[] _lastBuffer;
         private int _lastBufferIndex;
@@ -245,6 +252,13 @@ namespace RT.Util.Streams
         public override bool CanRead { get { return true; } }
         /// <summary>Returns true.</summary>
         public override bool CanWrite { get { return true; } }
+
+        /// <summary>Closes the underlying stream.</summary>
+        public override void Close()
+        {
+            _underlyingStream.Close();
+            base.Close();
+        }
 
         #region Stuff for reading
         private byte[] _lastBuffer;
