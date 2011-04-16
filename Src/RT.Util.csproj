@@ -150,6 +150,7 @@
     <Compile Include="Streams\SocketStreams.cs" />
     <Compile Include="Streams\TimeoutableStream.cs" />
     <Compile Include="Text\OffsetToLineCol.cs" />
+    <Compile Include="Ut\OnException.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
