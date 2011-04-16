@@ -111,6 +111,24 @@ namespace RT.Util.CommandLine
             return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
         }
 
+        /// <summary>Parses the specified command-line arguments into an instance of the specified type. In case of failure, prints usage information to the console and returns <c>default(T)</c>. See the remarks section of the documentation for <see cref="CommandLineParser&lt;T&gt;"/> for features and limitations.</summary>
+        /// <param name="args">The command-line arguments to be parsed.</param>
+        /// <param name="applicationTr">Specifies the application’s translation object which contains the localised strings that document the command-line options and commands.
+        /// This object is passed in to the FieldNameDoc() methods described in the documentation for <see cref="CommandLineParser&lt;T&gt;"/>. This should be null for monoligual applications.</param>
+        /// <returns>An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on the command line.</returns>
+        public static T ParseOrWriteUsageToConsole(string[] args, TranslationBase applicationTr = null)
+        {
+            try
+            {
+                return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
+            }
+            catch (CommandLineParseException e)
+            {
+                e.WriteUsageInfoToConsole();
+                return default(T);
+            }
+        }
+
         private sealed class positionalParameterInfo
         {
             public Action ProcessParameter;
@@ -569,14 +587,11 @@ namespace RT.Util.CommandLine
 
                 // Word-wrap the documentation for the command (if any)
                 var doc = getDocumentation(type, type, applicationTr);
-                if (doc != null)
+                helpString.Add(ConsoleColoredString.NewLine);
+                foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(doc, wrapWidth))
                 {
+                    helpString.Add(line);
                     helpString.Add(ConsoleColoredString.NewLine);
-                    foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(doc, wrapWidth))
-                    {
-                        helpString.Add(line);
-                        helpString.Add(ConsoleColoredString.NewLine);
-                    }
                 }
 
                 // Table of required parameters
@@ -726,15 +741,15 @@ namespace RT.Util.CommandLine
             if (member.IsDefined<DocumentationLiteralAttribute>())
                 return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
             if (applicationTr == null)
-                return null;
+                return new EggsText("");
 
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
             var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTr.GetType() }, null);
             if (meth == null || meth.ReturnType != typeof(string))
-                return null;
+                return new EggsText("");
             var str = (string) meth.Invoke(null, new object[] { applicationTr });
-            return str == null ? null : EggsML.Parse(str);
+            return str == null ? new EggsText("") : EggsML.Parse(str);
         }
 
         #region Post-build step check
@@ -782,8 +797,8 @@ namespace RT.Util.CommandLine
             FieldInfo lastField = null;
             bool haveSeenOptionalPositional = false;
 
-                if (checkClassDoc)
-                    checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
+            if (checkClassDoc)
+                checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
 
             foreach (var field in commandLineType.GetFields())
             {
@@ -1024,7 +1039,7 @@ namespace RT.Util.CommandLine
             {
                 if (member is Type)
                 {
-                    rep.Error((@"{0} does not have any documentation. " +
+                    rep.Warning((@"{0} does not have any documentation. " +
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(((Type) member).FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
@@ -1033,7 +1048,7 @@ namespace RT.Util.CommandLine
                 }
                 else
                 {
-                    rep.Error((@"{0}.{1} does not have any documentation. " +
+                    rep.Warning((@"{0}.{1} does not have any documentation. " +
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(member.DeclaringType.FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),

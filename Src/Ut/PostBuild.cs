@@ -103,12 +103,11 @@ namespace RT.Util
             private string _path;
             public bool AnyErrors { get; set; }
             public postBuildReporter(string path) { _path = path; AnyErrors = false; }
-            public void Error(string message, params string[] tokens) { output("Error: ", message, tokens); }
+            public void Error(string message, params string[] tokens) { AnyErrors = true; output("Error: ", message, tokens); }
             public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
 
             private void output(string errorOrWarning, string message, params string[] tokens)
             {
-                AnyErrors = true;
                 if (tokens == null || tokens.Length == 0)
                 {
                     Console.Error.WriteLine(errorOrWarning + message);

@@ -238,20 +238,6 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns a path to "fullpath", relative to "root".
-        /// Throws an exception if "fullpath" is not a subpath of "root".
-        /// </summary>
-        public static string ExtractRelativePath(string root, string fullpath)
-        {
-            root = PathUtil.NormPath(root);
-            if (root.ToLower() == PathUtil.NormPath(fullpath).ToLower())
-                return "";
-            if (!fullpath.ToLower().StartsWith(root.ToLower()))
-                throw new PathException("Path \"{0}\" is not a subpath of \"{1}\"".Fmt(fullpath, root));
-            return fullpath.Substring(root.Length);
-        }
-
-        /// <summary>
         /// Joins the two paths using the OS separator character. If the second path is absolute,
         /// only the second path is returned.
         /// </summary>
