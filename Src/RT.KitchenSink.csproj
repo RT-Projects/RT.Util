@@ -88,6 +88,7 @@
     <Compile Include="Tcp\TcpClient.cs" />
     <Compile Include="Tcp\TcpEvents.cs" />
     <Compile Include="Tcp\TcpServer.cs" />
+    <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
   </ItemGroup>
   <ItemGroup>

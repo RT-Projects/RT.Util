@@ -10,10 +10,11 @@ namespace RT.Util
         /// If the code throws any exceptions, catches and suppresses them.
         /// </summary>
         /// <param name="method">The code to be executed.</param>
-        public static void OnExceptionIgnore(Action method)
+        /// <returns>True if the method returned without exceptions, false otherwise.</returns>
+        public static bool OnExceptionIgnore(Action method)
         {
-            try { method(); }
-            catch { }
+            try { method(); return true; }
+            catch { return false; }
         }
 
         /// <summary>
@@ -22,10 +23,11 @@ namespace RT.Util
         /// Doesn't catch any other exceptions.
         /// </summary>
         /// <param name="method">The code to be executed.</param>
-        public static void OnExceptionIgnore<TException>(Action method) where TException : Exception
+        /// <returns>True if the method returned without exceptions, false if <typeparamref name="TException"/> was caught and suppressed.</returns>
+        public static bool OnExceptionIgnore<TException>(Action method) where TException : Exception
         {
-            try { method(); }
-            catch (TException) { }
+            try { method(); return true; }
+            catch (TException) { return false; }
         }
 
         /// <summary>
@@ -101,17 +103,18 @@ namespace RT.Util
         /// <param name="method">The code to be executed.</param>
         /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
         /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
-        public static void OnExceptionRetryThenIgnore(Action method, int attempts = 3, int delayMs = 333)
+        /// <returns>True if the method returned without exceptions, false if an exception was caught and suppressed on every attempt.</returns>
+        public static bool OnExceptionRetryThenIgnore(Action method, int attempts = 3, int delayMs = 333)
         {
             while (attempts > 1)
             {
                 attempts--;
-                try { method(); }
+                try { method(); return true; }
                 catch { }
                 Thread.Sleep(delayMs);
             }
-            try { method(); }
-            catch { }
+            try { method(); return true; }
+            catch { return false; }
         }
 
         /// <summary>
@@ -123,17 +126,18 @@ namespace RT.Util
         /// <param name="method">The code to be executed.</param>
         /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
         /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
-        public static void OnExceptionRetryThenIgnore<TException>(Action method, int attempts = 3, int delayMs = 333) where TException : Exception
+        /// <returns>True if the method returned without exceptions, false if <typeparamref name="TException"/> was caught and suppressed on every attempt.</returns>
+        public static bool OnExceptionRetryThenIgnore<TException>(Action method, int attempts = 3, int delayMs = 333) where TException : Exception
         {
             while (attempts > 1)
             {
                 attempts--;
-                try { method(); }
+                try { method(); return true; }
                 catch (TException) { }
                 Thread.Sleep(delayMs);
             }
-            try { method(); }
-            catch (TException) { }
+            try { method(); return true; }
+            catch (TException) { return false; }
         }
 
         /// <summary>
@@ -170,7 +174,7 @@ namespace RT.Util
         /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
         public static TResult OnExceptionRetryThenDefault<TResult, TException>(Func<TResult> method, TResult @default, int attempts = 3, int delayMs = 333) where TException : Exception
         {
-            while (attempts >= 1)
+            while (attempts > 1)
             {
                 attempts--;
                 try { return method(); }

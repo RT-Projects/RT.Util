@@ -363,10 +363,10 @@ namespace RT.Util.Json
         /// <summary>Parses the specified string as a JSON string.</summary>
         /// <param name="json">JSON string to parse.</param>
         /// <returns>A parsed representation of the string.</returns>
-        public static JsonDict Parse(string json)
+        public static JsonValue Parse(string json)
         {
             var ps = new JsonParserState(json);
-            var result = new JsonDict(ps);
+            var result = JsonValue.ParseValue(ps);
             if (ps.CurSym != Sym.EOF)
                 throw new JsonParseException(ps, "expected end of input");
             return result;
