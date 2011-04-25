@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace RT.Util.Controls
@@ -55,6 +56,7 @@ namespace RT.Util.Controls
         /// <para>The list item may be selected or not.</para>
         /// <para>Changing this property does not fire a SelectedIndexChanged event.</para>
         /// </remarks>
+        [DefaultValue(0)]
         public int OutlineIndex
         {
             get
