@@ -56,6 +56,46 @@ namespace RT.Util
         }
 
         /// <summary>
+        /// Evaluates the specified code.
+        /// If the code throws any exceptions, retries the specified number of times.
+        /// The final attempt is executed without any exception handlers.
+        /// </summary>
+        /// <param name="method">The code to be executed.</param>
+        /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
+        /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
+        public static void OnExceptionRetry(Action method, int attempts = 3, int delayMs = 333)
+        {
+            while (attempts > 1)
+            {
+                attempts--;
+                try { method(); return; }
+                catch { }
+                Thread.Sleep(delayMs);
+            }
+            method();
+        }
+
+        /// <summary>
+        /// Evaluates the specified code.
+        /// If the code throws <typeparamref name="TException"/>, retries the specified number of times.
+        /// The final attempt is executed without any exception handlers.
+        /// </summary>
+        /// <param name="method">The code to be executed.</param>
+        /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
+        /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
+        public static void OnExceptionRetry<TException>(Action method, int attempts = 3, int delayMs = 333) where TException : Exception
+        {
+            while (attempts > 1)
+            {
+                attempts--;
+                try { method(); return; }
+                catch (TException) { }
+                Thread.Sleep(delayMs);
+            }
+            method();
+        }
+
+        /// <summary>
         /// Evaluates the specified code and returns its result.
         /// If the code throws any exceptions, retries the specified number of times.
         /// The final attempt is executed without any exception handlers.
