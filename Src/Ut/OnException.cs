@@ -6,6 +6,18 @@ namespace RT.Util
     public static partial class Ut
     {
         /// <summary>
+        /// Evaluates the specified code and returns its result.
+        /// If the code throws an exception of the specified type, runs <paramref name="onException"/> instead.
+        /// </summary>
+        /// <param name="method">The code to be executed.</param>
+        /// <param name="onException">The code to be executed in case of failure.</param>
+        public static TResult OnException<TException, TResult>(Func<TResult> method, Func<TException, TResult> onException) where TException : Exception
+        {
+            try { return method(); }
+            catch (TException e) { return onException(e); }
+        }
+
+        /// <summary>
         /// Evaluates the specified code.
         /// If the code throws any exceptions, catches and suppresses them.
         /// </summary>
