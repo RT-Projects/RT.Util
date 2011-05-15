@@ -44,100 +44,85 @@ namespace RT.Util
 
             IEqualityComparer<T> comparer = options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
 
-            var olda = old.ToArray();
-            var newa = @new.ToArray();
+            var olda = old as IList<T> ?? old.ToArray();
+            var newa = @new as IList<T> ?? @new.ToArray();
 
             var startMatchIndex = 0;
-            while (startMatchIndex < olda.Length && startMatchIndex < newa.Length && comparer.Equals(olda[startMatchIndex], newa[startMatchIndex]))
+            while (startMatchIndex < olda.Count && startMatchIndex < newa.Count && comparer.Equals(olda[startMatchIndex], newa[startMatchIndex]))
+            {
+                yield return Tuple.Create(olda[startMatchIndex], DiffOp.None);
                 startMatchIndex++;
-            if (startMatchIndex > 0)
-            {
-                foreach (var x in olda.Take(startMatchIndex))
-                    yield return Tuple.Create(x, DiffOp.None);
-                olda = olda.Skip(startMatchIndex).ToArray();
-                newa = newa.Skip(startMatchIndex).ToArray();
             }
 
-            IEnumerable<T> endmatch = null;
-            if (olda.Length > 0 && newa.Length > 0)
-            {
-                int endMatchIndex = 0;
-                while (endMatchIndex < olda.Length && endMatchIndex < newa.Length && comparer.Equals(olda[olda.Length - 1 - endMatchIndex], newa[newa.Length - 1 - endMatchIndex]))
-                    endMatchIndex++;
-                if (endMatchIndex > 0)
-                {
-                    endmatch = olda.Skip(olda.Length - endMatchIndex);
-                    olda = olda.Take(olda.Length - endMatchIndex).ToArray();
-                    newa = newa.Take(newa.Length - endMatchIndex).ToArray();
-                }
-            }
+            int endMatchIndex = 0;
+            while (endMatchIndex < olda.Count - startMatchIndex && endMatchIndex < newa.Count - startMatchIndex && comparer.Equals(olda[olda.Count - 1 - endMatchIndex], newa[newa.Count - 1 - endMatchIndex]))
+                endMatchIndex++;
 
-            if (olda.Length > 0 && newa.Length > 0)
-                foreach (var x in diff(olda, newa, comparer, options.Predicate, options.PostProcessor))
+            if (olda.Count > startMatchIndex + endMatchIndex && newa.Count > startMatchIndex + endMatchIndex)
+                foreach (var x in diff(olda, newa, comparer, options.Predicate, options.PostProcessor, startMatchIndex, endMatchIndex))
                     yield return x;
-            else if (olda.Length > 0)
-                foreach (var x in olda)
-                    yield return Tuple.Create(x, DiffOp.Del);
-            else if (newa.Length > 0)
-                foreach (var x in newa)
-                    yield return Tuple.Create(x, DiffOp.Ins);
+            else
+            {
+                for (int i = startMatchIndex; i < olda.Count - endMatchIndex; i++)
+                    yield return Tuple.Create(olda[i], DiffOp.Del);
+                for (int i = startMatchIndex; i < newa.Count - endMatchIndex; i++)
+                    yield return Tuple.Create(newa[i], DiffOp.Ins);
+            }
 
-            if (endmatch != null)
-                foreach (var x in endmatch)
-                    yield return Tuple.Create(x, DiffOp.None);
+            for (int i = olda.Count - endMatchIndex; i < olda.Count; i++)
+                yield return Tuple.Create(olda[i], DiffOp.None);
         }
 
         private sealed class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
-        private static IEnumerable<Tuple<T, DiffOp>> diff<T>(T[] olda, T[] newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor)
+        private static IEnumerable<Tuple<T, DiffOp>> diff<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
         {
-            var newhash = new Dictionary<T, List<int>>();
-            for (int i = 0; i < newa.Length; i++)
+            var newhash = new Dictionary<T, List<int>>(comparer);
+            for (int i = startMatch; i < newa.Count - endMatch; i++)
                 if (predicate == null || predicate(newa[i]))
                     newhash.AddSafe(newa[i], i);
 
-            Dictionary<int, diffSeqLink> sequences = new Dictionary<int, diffSeqLink> { { 0, new diffSeqLink { y = -1 } } };
-            for (int xindex = 0; xindex < olda.Length; xindex++)
+            var sequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
+            var seqCount = 0;
+
+            for (int xindex = startMatch; xindex < olda.Count - endMatch; xindex++)
             {
                 var xpiece = olda[xindex];
                 if (!newhash.ContainsKey(xpiece))
                     continue;
 
                 int k = 0;
-                Dictionary<int, diffSeqLink> newSequences = new Dictionary<int, diffSeqLink>(sequences); // creates a copy
-                int maxk = sequences.Count - 1;
 
                 foreach (var yindex in newhash[xpiece])
                 {
-                    while (k < maxk && yindex > sequences[k + 1].y)
+                    while (k < seqCount && yindex > sequences[k].y)
                         k++;
-                    if (((k == maxk) || (yindex < sequences[k + 1].y)) &&
-                        ((k == 0) || (yindex > sequences[k].y)))
+                    var last = k > 0 ? sequences[k - 1] : null;
+                    if (((k == seqCount) || (yindex < sequences[k].y)) &&
+                        ((k == 0) || (yindex > last.y)))
                     {
+                        sequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = last };
                         k++;
-                        if (k > 1)
-                            newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = sequences[k - 1] };
-                        else
-                            newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = null };
-
-                        if (k > maxk)
+                        if (k > seqCount)
+                        {
+                            seqCount = k;
                             break;
+                        }
                     }
                 }
-                sequences = newSequences;
             }
 
-            diffSeqLink origSequenceRev = new diffSeqLink { x = olda.Length, y = newa.Length, prev = sequences.Count > 1 ? sequences[sequences.Count - 1] : null };
-
-            var length = 0;
-            for (var sequenceRev = origSequenceRev; sequenceRev != null; sequenceRev = sequenceRev.prev)
-                length++;
-            diffSeqLink[] sequence = new diffSeqLink[length];
+            diffSeqLink[] sequence = new diffSeqLink[seqCount + 1];
             var index = 0;
-            for (var sequenceRev = origSequenceRev; sequenceRev != null; sequenceRev = sequenceRev.prev)
-                sequence[length - 1 - (index++)] = sequenceRev;
+            var sequenceRev = new diffSeqLink { x = olda.Count - endMatch, y = newa.Count - endMatch, prev = seqCount > 0 ? sequences[seqCount - 1] : null };
+            while (sequenceRev != null)
+            {
+                sequence[seqCount - index] = sequenceRev;
+                sequenceRev = sequenceRev.prev;
+                index++;
+            }
 
-            int curold = 0;
-            int curnew = 0;
+            int curold = startMatch;
+            int curnew = startMatch;
             foreach (var match in sequence)
             {
                 while (curold < match.x && curnew < match.y && comparer.Equals(olda[curold], newa[curnew]))
@@ -181,7 +166,7 @@ namespace RT.Util
                     curold++;
                     curnew++;
                 }
-                if (curold < olda.Length && curnew < newa.Length)
+                if (curold < olda.Count - endMatch && curnew < newa.Count - endMatch)
                 {
                     yield return Tuple.Create(olda[curold], DiffOp.None);
                     curold++;
