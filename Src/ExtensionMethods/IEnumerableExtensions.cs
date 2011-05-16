@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RT.Util.Consoles;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -18,28 +19,21 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return source.Join(source);
+            // Make sure that ‘source’ is evaluated only once
+            var sourceArr = source as IList<T> ?? source.ToArray();
+            return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => new Tuple<T, T>(item1, item2)));
         }
 
         /// <summary>
-        /// Returns an enumeration of tuples containing all ordered pairs of elements from the two source collections.
-        /// For example, [1, 2].Join(["one", "two"]) results in the tuples [1, "one"], [1, "two"], [2, "one"] and [2, "two"].
+        /// Returns an enumeration of objects computed from all pairs of elements from the source collection.
         /// </summary>
-        public static IEnumerable<Tuple<T, U>> Join<T, U>(this IEnumerable<T> source, IEnumerable<U> with)
+        public static IEnumerable<TResult> AllPairs<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TSource, TResult> selector)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            if (with == null)
-                throw new ArgumentNullException("with");
-            return joinIterator(source, with);
-        }
-        private static IEnumerable<Tuple<T, U>> joinIterator<T, U>(IEnumerable<T> source, IEnumerable<U> with)
-        {
-            // Make sure that 'with' is evaluated only once
-            U[] withArr = with.ToArray();
-            foreach (T item1 in source)
-                foreach (U item2 in withArr)
-                    yield return new Tuple<T, U>(item1, item2);
+            // Make sure that ‘source’ is evaluated only once
+            var sourceArr = source as IList<TSource> ?? source.ToArray();
+            return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => selector(item1, item2)));
         }
 
         /// <summary>
@@ -54,8 +48,8 @@ namespace RT.Util.ExtensionMethods
         }
         private static IEnumerable<Tuple<T, T>> uniquePairsIterator<T>(IEnumerable<T> source)
         {
-            // Make sure that 'source' is evaluated only once
-            IList<T> arr = source as IList<T> ?? source.ToList();
+            // Make sure that ‘source’ is evaluated only once
+            IList<T> arr = source as IList<T> ?? source.ToArray();
             for (int i = 0; i < arr.Count - 1; i++)
                 for (int j = i + 1; j < arr.Count; j++)
                     yield return new Tuple<T, T>(arr[i], arr[j]);
@@ -631,8 +625,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Turns all elements in the enumerable to strings and joins them using the specified string
-        /// as the separator and the specified prefix and suffix for each string.
+        /// <para>Turns all elements in the enumerable to strings and joins them using the specified string
+        /// as the separator and the specified prefix and suffix for each string.</para>
         /// <example>
         ///     <code>
         ///         var a = (new[] { "Paris", "London", "Tokyo" }).Join("[", "]", ", ");
@@ -672,6 +666,36 @@ namespace RT.Util.ExtensionMethods
                 while (enumerator.MoveNext())
                     sb.Append(separator).Append(prefix).Append(enumerator.Current).Append(suffix);
                 return sb.ToString();
+            }
+        }
+
+        /// <summary>Equivalent to <see cref="JoinString{T}(IEnumerable{T},string,string,string)"/>, but for <see cref="ConsoleColoredString"/>s.</summary>
+        public static ConsoleColoredString JoinColoredString<T>(this IEnumerable<T> values, ConsoleColoredString separator = null, ConsoleColoredString prefix = null, ConsoleColoredString suffix = null, ConsoleColor defaultColor = ConsoleColor.Gray)
+        {
+            if (values == null)
+                throw new ArgumentNullException("values");
+
+            using (var enumerator = values.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                    return ConsoleColoredString.Empty;
+
+                var list = new List<ConsoleColoredString>(values is ICollection<T> ? ((ICollection<T>) values).Count * 4 : 8);
+                bool first = true;
+                do
+                {
+                    if (!first && separator != null)
+                        list.Add(separator);
+                    first = false;
+                    if (prefix != null)
+                        list.Add(prefix);
+                    if (enumerator.Current != null)
+                        list.Add(enumerator.Current.ToConsoleColoredString(defaultColor));
+                    if (suffix != null)
+                        list.Add(suffix);
+                }
+                while (enumerator.MoveNext());
+                return new ConsoleColoredString(list);
             }
         }
 

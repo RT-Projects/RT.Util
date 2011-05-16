@@ -872,6 +872,17 @@ namespace RT.Util.ExtensionMethods
             return new ConsoleColoredString(str, color);
         }
 
+        /// <summary>Returns the specified object as a coloured string.</summary>
+        /// <param name="str">The object to convert.</param>
+        /// <param name="defaultColor">The colour to colour the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
+        /// <returns>A potentially colourful string.</returns>
+        public static ConsoleColoredString ToConsoleColoredString(this object obj, ConsoleColor defaultColor = ConsoleColor.Gray)
+        {
+            if (obj == null)
+                return ConsoleColoredString.Empty;
+            return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultColor);
+        }
+
         /// <summary>
         /// Reconstructs a byte array from its hexadecimal representation ("hexdump").
         /// </summary>

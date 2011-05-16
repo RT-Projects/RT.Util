@@ -14,12 +14,9 @@ namespace RT.Util
         [Test]
         public void DiffTest()
         {
-            try { diffTest(null, null); Assert.Fail(); }
-            catch (ArgumentNullException) { }
-            try { diffTest("", null); Assert.Fail(); }
-            catch (ArgumentNullException) { }
-            try { diffTest(null, ""); Assert.Fail(); }
-            catch (ArgumentNullException) { }
+            Assert.Throws<ArgumentNullException>(() => { diffTest(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { diffTest("", null); });
+            Assert.Throws<ArgumentNullException>(() => { diffTest(null, ""); });
 
             diffTest("", "");
             diffTest("a", "");
@@ -27,6 +24,7 @@ namespace RT.Util
             diffTest("aba", "b");
             diffTest("abcde", "abXde");
             diffTest("abcdef", "aXcdeY");
+            diffTest("XYZAXYZ", "WYZAAXYW");
         }
 
         private void diffTest(string a, string b)

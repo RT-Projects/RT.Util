@@ -32,30 +32,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestJoin()
-        {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Join<string, string>(null, new string[0]); });
-
-            var one = new int[] { 4, 9, 14, 32, 8, 1, 2, 1001, 93, 529 };
-            var two = new string[] { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
-            using (var iter = one.Join(two).GetEnumerator())
-            {
-                foreach (int i in one)
-                {
-                    foreach (string j in two)
-                    {
-                        Assert.IsTrue(iter.MoveNext());
-                        Assert.AreEqual(i, iter.Current.Item1);
-                        Assert.AreEqual(j, iter.Current.Item2);
-                    }
-                }
-                Assert.IsFalse(iter.MoveNext());
-            }
-        }
-
-        [Test]
         public void TestOrder()
         {
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Order<string>(null); });
