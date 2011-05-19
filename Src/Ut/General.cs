@@ -246,5 +246,8 @@ namespace RT.Util
         public static Func<T1, T2, T3, TResult> Lambda<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method) { return method; }
         /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<T1, T2, T3, T4, TResult> Lambda<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method) { return method; }
+
+        /// <summary>Allows the use of type inference when creating .NET's KeyValuePair&lt;TK,TV&gt;.</summary>
+        public static KeyValuePair<TKey, TValue> KeyValuePair<TKey, TValue>(TKey key, TValue value) { return new KeyValuePair<TKey, TValue>(key, value); }
     }
 }
