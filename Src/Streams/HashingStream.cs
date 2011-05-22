@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace RT.Util.Streams
 {
     /// <summary>
     /// Calculates MD5 checksum of all values that are read/written via this stream.
     /// </summary>
-    public sealed class MD5Stream : Stream
+    public sealed class HashingStream : Stream
     {
         private Stream _stream = null;
-        private System.Security.Cryptography.MD5 _md5;
+        private HashAlgorithm _hasher;
         private byte[] _result;
 
         /// <summary>
@@ -20,16 +21,17 @@ namespace RT.Util.Streams
         /// </summary>
         public Stream BaseStream { get { return _stream; } }
 
-        private MD5Stream() { }
+        private HashingStream() { }
 
         /// <summary>
-        /// Initialises an MD5 calculation stream, with the specified stream as the
-        /// underlying stream.
+        /// Initialises a hash calculation stream, with the specified stream as the underlying stream.
         /// </summary>
-        public MD5Stream(Stream stream)
+        /// <param name="stream">The underlying stream.</param>
+        /// <param name="hasher">The hash algorithm to use. For example, <c>System.Security.Cryptography.MD5.Create("MD5")</c>.</param>
+        public HashingStream(Stream stream, HashAlgorithm hasher)
         {
             _stream = stream;
-            _md5 = System.Security.Cryptography.MD5.Create("MD5");
+            _hasher = hasher;
             _result = null;
         }
 
@@ -62,45 +64,45 @@ namespace RT.Util.Streams
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
-        /// Reads data from the underlying stream. Updates the MD5 with the bytes read.
+        /// Reads data from the underlying stream. Updates the hash with the bytes read.
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (_md5 == null)
-                throw new InvalidOperationException("MD5 stream cannot hash further data since the value of the hash has been read already.");
+            if (_hasher == null)
+                throw new InvalidOperationException("Hashing stream cannot hash further data since the value of the hash has been read already.");
 
             int numread = _stream.Read(buffer, offset, count);
-            _md5.TransformBlock(buffer, offset, numread, buffer, offset);
+            _hasher.TransformBlock(buffer, offset, numread, buffer, offset);
 
             return numread;
         }
 
         /// <summary>
-        /// Writes data to the underlying stream. Updates the MD5 with the bytes written.
+        /// Writes data to the underlying stream. Updates the hash with the bytes written.
         /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (_md5 == null)
-                throw new InvalidOperationException("MD5 stream cannot hash further data since the value of the hash has been read already.");
+            if (_hasher == null)
+                throw new InvalidOperationException("Hashing stream cannot hash further data since the value of the hash has been read already.");
 
             _stream.Write(buffer, offset, count);
-            _md5.TransformBlock(buffer, offset, count, buffer, offset);
+            _hasher.TransformBlock(buffer, offset, count, buffer, offset);
         }
 
         /// <summary>
-        /// Retrieves the MD5 hash of all data that has been read/written through this
-        /// stream so far. Due to the implementation of the underlying MD5 algorithm this
+        /// Retrieves the hash of all data that has been read/written through this
+        /// stream so far. Due to the implementation of the underlying hash algorithm this
         /// must be called only after all data has been hashed. No further calls to Read/Write
         /// are allowed after a single call to this.
         /// </summary>
-        public byte[] MD5
+        public byte[] Hash
         {
             get
             {
-                if (_md5 != null)
+                if (_hasher != null)
                 {
-                    _md5.TransformFinalBlock(new byte[] { }, 0, 0);
-                    _result = _md5.Hash;
+                    _hasher.TransformFinalBlock(new byte[] { }, 0, 0);
+                    _result = _hasher.Hash;
                 }
 
                 return _result;

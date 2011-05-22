@@ -182,6 +182,105 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) val);
         }
 
+        /// <summary>Encodes a decimal in a variable number of bytes, using fewer bytes for frequently-occurring low-precision values.</summary>
+        /// <remarks>
+        /// <para>The first byte is a "header" byte. Its top bit indicates the sign of the value, while the remaining 7 bits encode the scale
+        /// and the length, in bytes, of the mantissa component. Since the scale can be anything between 0..28 and the length can be up to 12,
+        /// this number is simply an index into a lookup table which contains specific combinations of both values. These combinations were
+        /// selected by analyzing the actual distribution of mantissa length + exponent pairs making a few assumptions about the likely inputs
+        /// into arithmetic operations. The encoder makes sure to select a value representing the exact scale and the minimum representable
+        /// mantissa length.</para>
+        /// <para>The result is always at most 13 bytes long, which is the same as discarding the three unused bytes of the raw representation.</para>
+        /// </remarks>
+        public static void WriteDecimalOptim(this Stream stream, decimal val)
+        {
+            // .NET allows int[] to be cast to uint[] so just fool C# compiler into accepting this.
+            uint[] bits = (uint[]) (object) decimal.GetBits(val);
+            uint exponent = (bits[3] >> 16) & 31;
+            bool negative = (bits[3] & 0x80000000U) != 0;
+
+            var bytes = new byte[12];
+            bytes[0] = (byte) (bits[0]);
+            bytes[1] = (byte) (bits[0] >> 8);
+            bytes[2] = (byte) (bits[0] >> 16);
+            bytes[3] = (byte) (bits[0] >> 24);
+            if (bits[1] != 0 || bits[2] != 0)
+            {
+                bytes[4] = (byte) (bits[1]);
+                bytes[5] = (byte) (bits[1] >> 8);
+                bytes[6] = (byte) (bits[1] >> 16);
+                bytes[7] = (byte) (bits[1] >> 24);
+            }
+            if (bits[2] != 0)
+            {
+                bytes[8] = (byte) (bits[2]);
+                bytes[9] = (byte) (bits[2] >> 8);
+                bytes[10] = (byte) (bits[2] >> 16);
+                bytes[11] = (byte) (bits[2] >> 24);
+            }
+
+            // Count the bytes we need to save. This is 12 minus the number of trailing (most significant) zero bytes.
+            int dataBytes = 0;
+            for (int i = 0; i < 12; i++)
+                if (bytes[i] != 0)
+                    dataBytes = i + 1;
+
+            var lut = decimalOptimEncodeLUT[exponent];
+            // Locate the next representable data bytes count which is at least as large as what we need.
+            int dataBytesRepresentable = dataBytes;
+            for (; dataBytesRepresentable <= 12; dataBytesRepresentable++)
+                if (lut[dataBytesRepresentable] != 255)
+                    break;
+
+            byte header = lut[dataBytesRepresentable];
+            if (negative)
+                header |= 0x80;
+            stream.WriteByte(header);
+            stream.Write(bytes, 0, dataBytesRepresentable);
+        }
+
+        private static byte[][] _decimalOptimEncodeLUT;
+
+        private static byte[][] decimalOptimEncodeLUT
+        {
+            get
+            {
+                if (_decimalOptimEncodeLUT == null)
+                    _decimalOptimEncodeLUT = new[] {
+                        new byte[] { 0,1,2,3,4,5,6,7,8,9,10,11,12 },
+                        new byte[] { 255,13,14,15,16,17,255,255,255,255,255,255,18 },
+                        new byte[] { 255,19,20,21,22,23,255,255,255,255,255,255,24 },
+                        new byte[] { 255,25,26,27,28,29,255,255,255,255,255,255,30 },
+                        new byte[] { 255,31,32,33,34,35,36,255,255,255,255,255,37 },
+                        new byte[] { 255,38,39,40,41,42,43,255,255,255,255,255,44 },
+                        new byte[] { 255,255,45,46,47,48,49,255,255,255,255,255,50 },
+                        new byte[] { 255,255,51,52,53,54,55,255,255,255,255,255,56 },
+                        new byte[] { 255,255,255,57,58,255,255,59,255,255,255,255,60 },
+                        new byte[] { 255,255,255,61,62,255,255,255,63,255,255,255,64 },
+                        new byte[] { 255,255,255,65,255,66,255,255,67,255,255,255,68 },
+                        new byte[] { 255,255,255,69,255,255,70,255,71,255,255,255,72 },
+                        new byte[] { 255,255,255,73,255,255,74,255,75,255,255,255,76 },
+                        new byte[] { 255,255,255,77,255,255,78,255,79,255,255,255,80 },
+                        new byte[] { 255,255,255,81,255,255,82,255,83,255,255,255,84 },
+                        new byte[] { 255,255,255,85,255,255,255,86,255,87,255,255,88 },
+                        new byte[] { 255,255,255,89,255,255,255,255,255,90,255,255,91 },
+                        new byte[] { 255,255,255,255,92,255,255,255,255,93,255,255,94 },
+                        new byte[] { 255,255,255,255,255,95,255,255,255,96,255,255,97 },
+                        new byte[] { 255,255,255,255,255,255,98,255,255,255,255,99,100 },
+                        new byte[] { 255,255,255,255,255,255,101,255,255,255,255,102,103 },
+                        new byte[] { 255,255,255,255,255,255,104,255,255,255,255,105,106 },
+                        new byte[] { 255,255,255,255,255,255,255,107,255,255,255,108,109 },
+                        new byte[] { 255,255,255,255,255,255,255,255,110,255,255,111,112 },
+                        new byte[] { 255,255,255,255,255,255,255,255,113,255,255,114,115 },
+                        new byte[] { 255,255,255,255,255,255,255,255,116,255,117,255,118 },
+                        new byte[] { 255,255,255,255,255,255,255,255,119,255,120,255,121 },
+                        new byte[] { 255,255,255,255,255,255,255,255,122,255,123,255,124 },
+                        new byte[] { 255,255,255,255,255,255,255,255,125,255,126,255,127 },
+                    };
+                return _decimalOptimEncodeLUT;
+            }
+        }
+
         #endregion
 
         #region Optim read
@@ -260,6 +359,43 @@ namespace RT.Util.ExtensionMethods
                 shifts += 7;
             }
             return res;
+        }
+
+        /// <summary>Decodes a decimal encoded by <see cref="StreamExtensions.WriteDecimalOptim"/>.</summary>
+        public static decimal ReadDecimalOptim(this Stream stream)
+        {
+            int header = stream.ReadByte();
+            if (header < 0) throw new InvalidOperationException("Unexpected end of stream (#94313)");
+            bool negative = (header & 0x80) != 0;
+            short expolen = decimalOptimDecodeLUT[header & 127];
+            int len = expolen >> 8;
+
+            var bytes = new byte[12];
+            int read = stream.FillBuffer(bytes, 0, (byte) len);
+            if (read != len) throw new InvalidOperationException("Unexpected end of stream (#94314)");
+
+            return new decimal(BitConverter.ToInt32(bytes, 0), BitConverter.ToInt32(bytes, 4), BitConverter.ToInt32(bytes, 8), negative, (byte) expolen);
+        }
+
+        private static short[] _decimalOptimDecodeLUT;
+
+        private static short[] decimalOptimDecodeLUT
+        {
+            get
+            {
+                if (_decimalOptimDecodeLUT == null)
+                    _decimalOptimDecodeLUT = new short[] {
+                        0, 256, 512, 768, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 257, 513, 769, 1025, 1281, 3073, 
+                        258, 514, 770, 1026, 1282, 3074, 259, 515, 771, 1027, 1283, 3075, 
+                        260, 516, 772, 1028, 1284, 1540, 3076, 261, 517, 773, 1029, 1285, 1541, 3077, 
+                        518, 774, 1030, 1286, 1542, 3078, 519, 775, 1031, 1287, 1543, 3079, 776, 1032, 1800, 3080, 
+                        777, 1033, 2057, 3081, 778, 1290, 2058, 3082, 779, 1547, 2059, 3083, 780, 1548, 2060, 3084, 
+                        781, 1549, 2061, 3085, 782, 1550, 2062, 3086, 783, 1807, 2319, 3087, 784, 2320, 3088, 
+                        1041, 2321, 3089, 1298, 2322, 3090, 1555, 2835, 3091, 1556, 2836, 3092, 1557, 2837, 3093, 1814, 2838, 3094, 
+                        2071, 2839, 3095, 2072, 2840, 3096, 2073, 2585, 3097, 2074, 2586, 3098, 2075, 2587, 3099, 2076, 2588, 3100, 
+                    };
+                return _decimalOptimDecodeLUT;
+            }
         }
 
         #endregion

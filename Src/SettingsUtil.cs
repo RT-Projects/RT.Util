@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Xml;
 using RT.Util.Dialogs;
@@ -57,16 +59,11 @@ namespace RT.Util
             {
                 try
                 {
-                    settings = XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
+                    settings = deserialize<TSettings>(filename);
                 }
-                catch (XmlException)
-                {
-                    settings = new TSettings();
-                }
-                catch (IOException)
-                {
-                    settings = new TSettings();
-                }
+                catch (XmlException) { settings = new TSettings(); }
+                catch (IOException) { settings = new TSettings(); }
+                catch (SerializationException) { settings = new TSettings(); }
             }
         }
 
@@ -100,11 +97,11 @@ namespace RT.Util
         {
             if (onFailure == OnFailure.Throw)
             {
-                XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
+                serialize(settings, settingsType, filename);
             }
             else if (onFailure == OnFailure.DoNothing)
             {
-                try { XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename); }
+                try { serialize(settings, settingsType, filename); }
                 catch { }
             }
             else
@@ -113,7 +110,7 @@ namespace RT.Util
                 {
                     try
                     {
-                        XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
+                        serialize(settings, settingsType, filename);
                         break;
                     }
                     catch (Exception e)
@@ -175,6 +172,40 @@ namespace RT.Util
         {
             SaveSettings(settings, typeof(TSettings), onFailure);
         }
+
+        private static void serialize(object settings, Type settingsType, string filename)
+        {
+            var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
+            switch (attr.Serializer)
+            {
+                case SettingsSerializer.XmlClassify:
+                    XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
+                    break;
+                case SettingsSerializer.DotNetBinary:
+                    var bf = new BinaryFormatter();
+                    using (var fs = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                        bf.Serialize(fs, settings);
+                    break;
+                default:
+                    throw new InternalErrorException("4968453");
+            }
+        }
+
+        private static TSettings deserialize<TSettings>(string filename) where TSettings : new()
+        {
+            var attr = typeof(TSettings).GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
+            switch (attr.Serializer)
+            {
+                case SettingsSerializer.XmlClassify:
+                    return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
+                case SettingsSerializer.DotNetBinary:
+                    var bf = new BinaryFormatter();
+                    using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        return (TSettings) bf.Deserialize(fs);
+                default:
+                    throw new InternalErrorException("6843184");
+            }
+        }
     }
 
     /// <summary>
@@ -212,14 +243,15 @@ namespace RT.Util
     /// <para><see cref="SettingsThreadedBase"/> implements an extra method to enable settings to be
     /// queued for a save on a separate thread, to reduce the performance impact of less important saves.</para>
     /// </remarks>
+    [Serializable]
     public abstract class SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        [XmlIgnore]
+        [XmlIgnore, NonSerialized]
         protected internal object _lock = new object();
-        [XmlIgnore]
+        [XmlIgnore, NonSerialized]
         protected internal Thread _saveThread;
-        [XmlIgnore]
+        [XmlIgnore, NonSerialized]
         protected internal SettingsBase _saveObj;
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
@@ -250,7 +282,7 @@ namespace RT.Util
                     _saveThread = null;
                 }
                 BeforeSave();
-                SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.ShowRetryOnly);
+                SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.Throw);
             }
         }
 
@@ -360,14 +392,22 @@ namespace RT.Util
     }
 
     /// <summary>
+    /// Determines which serializer the settings are read/written by.
+    /// </summary>
+    public enum SettingsSerializer
+    {
+        /// <summary>Use the XmlClassify serializer.</summary>
+        XmlClassify,
+        /// <summary>Use the .NET binary serializer.</summary>
+        DotNetBinary,
+    }
+
+    /// <summary>
     /// Describes the intended usage of a "settings" class to <see cref="SettingsUtil"/> methods.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class SettingsAttribute : Attribute
     {
-        private string _appName;
-        private SettingsKind _kind;
-
         /// <summary>
         /// Creates an instance of this attribute.
         /// </summary>
@@ -376,10 +416,12 @@ namespace RT.Util
         /// should be omitted. It is important to specify the same name for settings of different <paramref name="kind"/>,
         /// because this allows their portability to be controlled with the same {name}.IsPortable.txt file.</param>
         /// <param name="kind">Specifies what the settings in this settings class are logically "attached" to.</param>
-        public SettingsAttribute(string appName, SettingsKind kind)
+        /// <param name="serializer">Specifies which serializer to use.</param>
+        public SettingsAttribute(string appName, SettingsKind kind, SettingsSerializer serializer = SettingsSerializer.XmlClassify)
         {
-            _appName = appName;
-            _kind = kind;
+            AppName = appName;
+            Kind = kind;
+            Serializer = serializer;
         }
 
         /// <summary>
@@ -387,12 +429,17 @@ namespace RT.Util
         /// This should normally be a string equal to the name of the application. Paths and
         /// extensions should be omitted.
         /// </summary>
-        public string AppName { get { return _appName; } }
+        public string AppName { get; private set; }
 
         /// <summary>
         /// Specifies what the settings in this settings class are logically "attached" to.
         /// </summary>
-        public SettingsKind Kind { get { return _kind; } }
+        public SettingsKind Kind { get; private set; }
+
+        /// <summary>
+        /// Specifies which serializer is used to read/write the settings file.
+        /// </summary>
+        public SettingsSerializer Serializer { get; private set; }
 
         /// <summary>
         /// Returns the file name that should be used to store the settings class marked with this attribute. Note that
@@ -423,7 +470,7 @@ namespace RT.Util
                 default:
                     throw new InternalErrorException("unreachable (97628)");
             }
-            filename = filename.FilenameCharactersEscape() + ".Settings.xml";
+            filename = filename.FilenameCharactersEscape() + ".Settings." + (Serializer == SettingsSerializer.XmlClassify ? "xml" : "bin");
 
             if (File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
             {
