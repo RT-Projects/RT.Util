@@ -1005,5 +1005,13 @@ namespace RT.Util.ExtensionMethods
                     return false;
             return true;
         }
+
+        /// <summary>Adds the specified line to the end of the current string. Returns the line if the current string is null.</summary>
+        public static string AddLine(this string str, string line)
+        {
+            if (str == null)
+                return line;
+            return str + Environment.NewLine + line;
+        }
     }
 }

@@ -111,8 +111,34 @@ namespace RT.Util.Drawing
         {
             g.InterpolationMode = InterpolationMode.High;
             g.SmoothingMode = SmoothingMode.HighQuality;
-            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             g.CompositingQuality = CompositingQuality.HighQuality;
+        }
+
+        /// <summary>Returns a rectangle that has the same aspect ratio as <paramref name="fitWhat"/> but fits into <paramref name="fitInto"/>.</summary>
+        /// <param name="fitWhat">Specifies the aspect ratio of the desired rectangle.</param>
+        /// <param name="fitInto">The rectangle into which to fit the result rectangle.</param>
+        /// <returns>The result rectangle which fits into <paramref name="fitInto"/>.</returns>
+        public static Rectangle FitIntoMaintainAspectRatio(this Size fitWhat, Rectangle fitInto)
+        {
+            int x, y, w, h;
+
+            if ((double) fitWhat.Width / (double) fitWhat.Height > (double) fitInto.Width / (double) fitInto.Height)
+            {
+                w = fitInto.Width;
+                x = fitInto.Left;
+                h = (int) ((double) fitWhat.Height / (double) fitWhat.Width * (double) fitInto.Width);
+                y = fitInto.Top + fitInto.Height / 2 - h / 2;
+            }
+            else
+            {
+                h = fitInto.Height;
+                y = fitInto.Top;
+                w = (int) ((double) fitWhat.Width / (double) fitWhat.Height * (double) fitInto.Height);
+                x = fitInto.Left + fitInto.Width / 2 - w / 2;
+            }
+
+            return new Rectangle(x, y, w, h);
         }
     }
 }
