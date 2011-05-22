@@ -7,8 +7,10 @@ using System.Windows.Markup;
 
 namespace RT.KitchenSink.Fonts
 {
+    /// <summary>Provides some assorted functionality relating to fonts.</summary>
     public static class FontUtil
     {
+        /// <summary>Returns a list of all monospace fonts installed in the system.</summary>
         public static IEnumerable<string> GetMonospaceFonts()
         {
             if (_monospaceFontNames == null)
@@ -43,6 +45,7 @@ namespace RT.KitchenSink.Fonts
 
         private static HashSet<string> _monospaceFontNames;
 
+        /// <summary>Returns a list of all installed font families that contain a glyph for all of the specified Unicode characters.</summary>
         public static IEnumerable<string> GetFontFamiliesContaining(params int[] charactersToCheck)
         {
             ICollection<System.Windows.Media.FontFamily> fontFamilies = System.Windows.Media.Fonts.GetFontFamilies(@"C:\Windows\Fonts\");
@@ -67,7 +70,10 @@ namespace RT.KitchenSink.Fonts
             }
         }
 
-        public static IEnumerable<int> GetSupportedCharacters(string fontFamily, IEnumerable<int> characters)
+        /// <summary>Returns a list of Unicode codepoints for which the specified font family has a glyph.</summary>
+        /// <param name="fontFamily">The font family to check.</param>
+        /// <param name="characters">A list of Unicode codepoints of the characters to check, or null to check all characters.</param>
+        public static IEnumerable<int> GetSupportedCharacters(string fontFamily, IEnumerable<int> characters = null)
         {
             var family = new System.Windows.Media.FontFamily(fontFamily);
             var typeface = family.GetTypefaces().First();
@@ -75,7 +81,7 @@ namespace RT.KitchenSink.Fonts
             System.Windows.Media.GlyphTypeface glyph;
             if (!typeface.TryGetGlyphTypeface(out glyph))
                 yield break;
-            foreach (var ch in characters)
+            foreach (var ch in characters ?? Enumerable.Range(0, 0x110000))
                 if (glyph.CharacterToGlyphMap.TryGetValue(ch, out glyphIndex))
                     yield return ch;
         }
@@ -219,6 +225,8 @@ namespace RT.KitchenSink.Fonts
             public int ntmCellHeight;
             public int ntmAvgWidth;
         }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         private struct FONTSIGNATURE
         {
             [MarshalAs(UnmanagedType.ByValArray)]
@@ -226,6 +234,8 @@ namespace RT.KitchenSink.Fonts
             [MarshalAs(UnmanagedType.ByValArray)]
             public int[] fsCsb;
         }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         private struct NEWTEXTMETRICEX
         {
             public NEWTEXTMETRIC ntmTm;
