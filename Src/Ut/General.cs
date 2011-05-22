@@ -249,5 +249,30 @@ namespace RT.Util
 
         /// <summary>Allows the use of type inference when creating .NET's KeyValuePair&lt;TK,TV&gt;.</summary>
         public static KeyValuePair<TKey, TValue> KeyValuePair<TKey, TValue>(TKey key, TValue value) { return new KeyValuePair<TKey, TValue>(key, value); }
+
+        /// <summary>Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
+        /// <typeparam name="T">Type of the array element.</typeparam>
+        public static T[][] NewArray<T>(int size1, int size2)
+        {
+            var result = new T[size1][];
+            for (int i = 0; i < size1; i++)
+                result[i] = new T[size2];
+            return result;
+        }
+
+        /// <summary>Instantiates a fully-initialized "rectangular" jagged array with the specified dimensions.</summary>
+        /// <typeparam name="T">Type of the array element.</typeparam>
+        public static T[][][] NewArray<T>(int size1, int size2, int size3)
+        {
+            var result = new T[size1][][];
+            for (int i = 0; i < size1; i++)
+            {
+                var arr = new T[size2][];
+                result[i] = arr;
+                for (int j = 0; j < size2; j++)
+                    arr[j] = new T[size3];
+            }
+            return result;
+        }
     }
 }
