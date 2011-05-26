@@ -71,11 +71,12 @@ namespace RT.Util
         /// <param name="msg">Message to log.</param>
         public override void Log(string msg)
         {
-            Elements.Add(new StopwatchElement
-            {
-                Event = msg,
-                Milliseconds = (DateTime.Now - StartTime).TotalMilliseconds
-            });
+            lock (Elements)
+                Elements.Add(new StopwatchElement
+                {
+                    Event = msg,
+                    Milliseconds = (DateTime.Now - StartTime).TotalMilliseconds
+                });
         }
 
         /// <summary>
