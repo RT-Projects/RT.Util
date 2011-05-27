@@ -30,10 +30,6 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EQATEC.Analytics.Monitor, Version=2.0.41.0, Culture=neutral, PublicKeyToken=213c7c68adb58a17, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\ThirdParty\EQATEC.Analytics.Monitor.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
@@ -92,7 +88,6 @@
     <Compile Include="Drawing\GraphicsTransformer.cs" />
     <Compile Include="Drawing\GraphicsUtil.cs" />
     <Compile Include="EggsML.cs" />
-    <Compile Include="EqatecAnalytics.cs" />
     <Compile Include="ExactConvert.cs" />
     <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
