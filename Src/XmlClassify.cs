@@ -403,13 +403,25 @@ namespace RT.Util.Xml
         /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="baseDir">The base directory from which to construct the paths for
         /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
-        /// <param name="tagName">Name of the top-level XML tag to use for this object.
-        /// Default is "item".</param>
+        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
         public static XElement ObjectToXElement<T>(T saveObject, string baseDir = null, string tagName = null)
         {
             int i = 0;
             return objectToXElement(saveObject, typeof(T), baseDir, tagName ?? "item", null, ref i);
+        }
+
+        /// <summary>Converts the specified object into an XML tree.</summary>
+        /// <param name="saveObject">Object to convert to an XML tree.</param>
+        /// <param name="saveType">Type of object to convert.</param>
+        /// <param name="baseDir">The base directory from which to construct the paths for
+        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
+        /// <returns>XML tree generated from the object.</returns>
+        public static XElement ObjectToXElement(object saveObject, Type saveType, string baseDir = null, string tagName = null)
+        {
+            int i = 0;
+            return objectToXElement(saveObject, saveType, baseDir, tagName ?? "item", null, ref i);
         }
 
         private static XElement objectToXElement(object saveObject, Type declaredType, string baseDir, string tagName, Dictionary<object, XElement> remember, ref int nextId)
@@ -613,6 +625,52 @@ namespace RT.Util.Xml
         {
             return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
         }
+
+        #region Post-build step check
+
+#if DEBUG
+        /// <summary>Performs safety checks to ensure that a specific type doesn't cause XmlClassify exceptions. Note that this doesn't guarantee that the data is preserved correctly.
+        /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
+        /// <param name="rep">Object to report post-build errors to.</param>
+        /// <param name="typeToCheck">The type that must be XmlClassify-able.</param>
+        public static void PostBuildStep(IPostBuildReporter rep, Type typeToCheck)
+        {
+            object obj;
+            try
+            {
+                obj = Activator.CreateInstance(typeToCheck, nonPublic: true);
+            }
+            catch (Exception e)
+            {
+                rep.Error("Unable to instantiate type {0}, required by XmlClassify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(typeToCheck, e.Message),
+                    "class", typeToCheck.Name);
+                return;
+            }
+            XElement xel;
+            try
+            {
+                xel = ObjectToXElement(obj, typeToCheck);
+            }
+            catch (Exception e)
+            {
+                rep.Error("Unable to XmlClassify type {0}. {1}".Fmt(typeToCheck, e.Message),
+                    "class", typeToCheck.Name);
+                return;
+            }
+            try
+            {
+                ObjectFromXElement(typeToCheck, xel);
+            }
+            catch (Exception e)
+            {
+                rep.Error("Unable to de-XmlClassify type {0}. {1}".Fmt(typeToCheck, e.Message),
+                    "class", typeToCheck.Name);
+                return;
+            }
+        }
+#endif
+
+        #endregion
     }
 
     /// <summary>Contains a method to post-process an object after <see cref="XmlClassify"/> has restored it from XML.</summary>
