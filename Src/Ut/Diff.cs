@@ -82,6 +82,7 @@ namespace RT.Util
                     newhash.AddSafe(newa[i], i);
 
             var sequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
+            var newSequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
             var seqCount = 0;
 
             for (int xindex = startMatch; xindex < olda.Count - endMatch; xindex++)
@@ -100,7 +101,7 @@ namespace RT.Util
                     if (((k == seqCount) || (yindex < sequences[k].y)) &&
                         ((k == 0) || (yindex > last.y)))
                     {
-                        sequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = last };
+                        newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = last };
                         k++;
                         if (k > seqCount)
                         {
@@ -109,6 +110,9 @@ namespace RT.Util
                         }
                     }
                 }
+
+                if (k > 0)
+                    Array.Copy(newSequences, sequences, k);
             }
 
             diffSeqLink[] sequence = new diffSeqLink[seqCount + 1];
