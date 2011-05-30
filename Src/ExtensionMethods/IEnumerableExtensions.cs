@@ -571,6 +571,14 @@ namespace RT.Util.ExtensionMethods
             return new Stack<T>(source);
         }
 
+        /// <summary>Creates a <see cref="HashSet&lt;T&gt;"/> from an enumerable collection.</summary>
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return new HashSet<T>(source);
+        }
+
         /// <summary>Returns a collection of integer containing the indexes at which the elements of the source collection match the given predicate.</summary>
         /// <typeparam name="T">The type of elements in the collection.</typeparam>
         /// <param name="source">The source collection whose elements are tested using <paramref name="predicate"/>.</param>
