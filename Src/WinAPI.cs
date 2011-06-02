@@ -282,6 +282,8 @@ namespace RT.Util
 
         [DllImport("Kernel32.dll")]
         public static extern bool QueryPerformanceCounter(out long lpPerformanceCount);
+        public static long QueryPerformanceCounter() { long result; if (!QueryPerformanceCounter(out result)) throw new InvalidOperationException("QueryPerformanceCounter failed"); return result; }
+        public static double QueryPerformanceCounterSec() { long result; if (!QueryPerformanceCounter(out result)) throw new InvalidOperationException("QueryPerformanceCounter failed"); return result / (double) WinAPI.PerformanceFreq; }
 
         [DllImport("Kernel32.dll")]
         private static extern bool QueryPerformanceFrequency(out long lpFrequency);
@@ -309,7 +311,7 @@ namespace RT.Util
 
         [DllImport("kernel32.dll")]
         public static extern uint SuspendThread(IntPtr hThread);
-        
+
         [DllImport("kernel32.dll")]
         public static extern int ResumeThread(IntPtr hThread);
 
