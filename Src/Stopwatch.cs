@@ -122,6 +122,17 @@ namespace RT.Util
     }
 
     /// <summary>
+    /// Implementation of <see cref="Stopwatch"/> that logs messages to the console.
+    /// </summary>
+    public sealed class StopwatchConsole : Stopwatch
+    {
+        /// <summary>Logs the message to the console.</summary>
+        public override void Log(string msg) { Console.WriteLine(msg); }
+        /// <summary>Doesn't do anything.</summary>
+        public override void SaveToFile(string filePath) { }
+    }
+
+    /// <summary>
     /// Implementation of <see cref="Stopwatch"/> that doesn't do anything.
     /// </summary>
     public sealed class StopwatchDummy : Stopwatch
