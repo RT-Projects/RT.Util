@@ -90,6 +90,7 @@
     <Compile Include="Tcp\TcpServer.cs" />
     <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
+    <Compile Include="Waiter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="RT.Util.csproj">
