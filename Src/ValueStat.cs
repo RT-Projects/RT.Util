@@ -36,6 +36,14 @@ namespace RT.KitchenSink
             Min = Max = double.NaN;
         }
 
+        /// <summary>Removes all observations and resets the class to its initial state.</summary>
+        public void Clear()
+        {
+            Min = Max = double.NaN;
+            ObservationCount = 0;
+            Mean = _m2 = 0;
+        }
+
         /// <summary>Adds a new observation, updating all statistics as appropriate.</summary>
         public void AddObservation(double value)
         {
