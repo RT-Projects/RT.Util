@@ -17,40 +17,55 @@ namespace RT.Util
     /// </summary>
     public static class SettingsUtil
     {
-        /// <summary>
-        /// Specifies what to do in case of operation failing.
-        /// </summary>
-        public enum OnFailure
+        /// <summary>Retrieves the mandatory <see cref="SettingsAttribute"/> for the specified settings class type. Throws if the type doesn't have it specified.</summary>
+        /// <param name="settingsType">Type of the settings class whose attribute is to be retrieved</param>
+        public static SettingsAttribute GetAttribute(Type settingsType)
         {
-            /// <summary>Just ignore the failure: no exceptions thrown, no dialogs shown</summary>
-            DoNothing,
-            /// <summary>Throw an exception in case of failure</summary>
-            Throw,
-            /// <summary>Ask the user to retry or to skip operation. No exceptions thrown.</summary>
-            ShowRetryOnly,
-            /// <summary>Ask the user to retry, skip operation or cancel. <see cref="CancelException"/> thrown on cancel.</summary>
-            ShowRetryWithCancel,
+            var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
+            if (attr == null)
+                throw new ArgumentException("The type {0} must have a {1} on it to be used with SettingsUtil.".Fmt(settingsType.FullName, typeof(SettingsAttribute).FullName));
+            return attr;
         }
 
-        /// <summary>
-        /// Indicates that the user chose to cancel the current operation.
-        /// </summary>
-        public sealed class CancelException : RTException
+        /// <summary>Retrieves the mandatory <see cref="SettingsAttribute"/> for the type <typeparamref name="TSettings"/>. Throws if the type doesn't have it specified.</summary>
+        /// <typeparam name="TSettings">Type of the settings class whose attribute is to be retrieved</typeparam>
+        public static SettingsAttribute GetAttribute<TSettings>() where TSettings : SettingsBase, new()
         {
-            /// <summary>Creates an exception instance with the specified message.</summary>
-            public CancelException()
-                : base("User chose to cancel the operation")
-            { }
+            return GetAttribute(typeof(TSettings));
         }
 
+#if DEBUG
         /// <summary>
-        /// Loads settings into the specified class, or, if not available, creates
-        /// a new instance of the class.
+        /// Performs safety checks to ensure that a settings object conforms to various requirements imposed by SettingsUtil methods. Run this method as a post-build
+        /// step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.
         /// </summary>
+        /// <param name="rep">Object to report post-build errors to.</param>
+        /// <param name="settingsType">The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil methods at normal run-time.</param>
+        public static void PostBuildStep(IPostBuildReporter rep, Type settingsType)
+        {
+            if (!settingsType.IsSubclassOf(typeof(SettingsBase)))
+                rep.Error("The type {0} must be derived from {1} in order to be used with SettingsUtil.".Fmt(settingsType.FullName, typeof(SettingsBase).FullName), "class", settingsType.Name);
+
+            try { GetAttribute(settingsType); }
+            catch (Exception e) { rep.Error(e.Message, "class", settingsType.Name); }
+
+            XmlClassify.PostBuildStep(rep, settingsType);
+        }
+#endif
+
+        /// <summary>Loads settings into the specified class, or, if not available, creates a new instance of the class.</summary>
         /// <param name="settings">Destination - the settings class will be placed here</param>
-        /// <param name="filename">The name of the file to load the settings from</param>
-        private static void LoadSettings<TSettings>(out TSettings settings, string filename) where TSettings : new()
+        /// <param name="filename">If specified, overrides the filename that is normally derived from the values specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
+        /// <param name="serializer">If specified, overrides the serializer specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
+        /// <returns>true if loaded an existing file, false if created a new one.</returns>
+        public static bool LoadSettings<TSettings>(out TSettings settings, string filename = null, SettingsSerializer? serializer = null) where TSettings : SettingsBase, new()
         {
+            var attr = GetAttribute<TSettings>();
+            if (filename == null)
+                filename = attr.GetFileName();
+            if (serializer == null)
+                serializer = attr.Serializer;
+
             if (!File.Exists(filename))
             {
                 settings = new TSettings();
@@ -59,49 +74,34 @@ namespace RT.Util
             {
                 try
                 {
-                    settings = deserialize<TSettings>(filename);
+                    settings = deserialize<TSettings>(filename, serializer.Value);
+                    return true;
                 }
                 catch (XmlException) { settings = new TSettings(); }
                 catch (IOException) { settings = new TSettings(); }
                 catch (SerializationException) { settings = new TSettings(); }
             }
+            return false;
         }
 
-        /// <summary>
-        /// Loads settings into the specified class, or, if not available, creates
-        /// a new instance of the class.
-        /// </summary>
-        /// <remarks>
-        /// The type <typeparamref name="TSettings"/> must have the <see cref="SettingsAttribute"/>specified,
-        /// otherwise an exception will be thrown.
-        /// </remarks>
-        /// <param name="settings">Destination - the settings class will be placed here.</param>
-        /// <typeparam name="TSettings">The type of the settings class.</typeparam>
-        public static void LoadSettings<TSettings>(out TSettings settings) where TSettings : new()
+        internal static void save(SettingsBase settings, string filename, SettingsSerializer? serializer, SettingsOnFailure onFailure)
         {
-            var type = typeof(TSettings);
-            var attr = type.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
-            if (attr == null)
-                throw new ArgumentException("In order to use this overload of LoadSettings on type {0}, the type must have a {1} on it".Fmt(type.FullName, typeof(SettingsAttribute).FullName), "TSettings");
-            LoadSettings(out settings, attr.GetFileName());
-        }
+            var settingsType = settings.GetType();
+            var attr = GetAttribute(settingsType);
+            if (filename == null)
+                filename = attr.GetFileName();
+            if (serializer == null)
+                serializer = attr.Serializer;
 
-        /// <summary>
-        /// Saves the specified settings class into the appropriate location.
-        /// </summary>
-        /// <param name="settings">The settings class to be saved</param>
-        /// <param name="settingsType">The type of the settings object.</param>
-        /// <param name="filename">The name of the file to load the settings from</param>
-        /// <param name="onFailure">Specifies how failures should be handled</param>
-        private static void SaveSettings(object settings, Type settingsType, string filename, OnFailure onFailure)
-        {
-            if (onFailure == OnFailure.Throw)
+            settings.BeforeSave();
+
+            if (onFailure == SettingsOnFailure.Throw)
             {
-                serialize(settings, settingsType, filename);
+                serialize(settings, settingsType, filename, serializer.Value);
             }
-            else if (onFailure == OnFailure.DoNothing)
+            else if (onFailure == SettingsOnFailure.DoNothing)
             {
-                try { serialize(settings, settingsType, filename); }
+                try { serialize(settings, settingsType, filename, serializer.Value); }
                 catch { }
             }
             else
@@ -110,73 +110,27 @@ namespace RT.Util
                 {
                     try
                     {
-                        serialize(settings, settingsType, filename);
+                        serialize(settings, settingsType, filename, serializer.Value);
                         break;
                     }
                     catch (Exception e)
                     {
                         var choices = new List<string>() { "Try &again", "&Don't save settings" };
-                        if (onFailure == OnFailure.ShowRetryWithCancel)
+                        if (onFailure == SettingsOnFailure.ShowRetryWithCancel)
                             choices.Add("&Cancel");
                         int choice = DlgMessage.ShowWarning("Program settings could not be saved.\n({0})\n\nWould you like to try again?".Fmt(e.Message), choices.ToArray());
                         if (choice == 1)
                             return;
                         if (choice == 2)
-                            throw new CancelException();
+                            throw new SettingsCancelException();
                     }
                 };
             }
         }
 
-        /// <summary>
-        /// Saves the specified settings class into the appropriate location.
-        /// </summary>
-        /// <remarks>
-        /// The type <paramref name="settingsType"/> must have the <see cref="SettingsAttribute"/>specified,
-        /// otherwise an exception will be thrown.
-        /// </remarks>
-        /// <param name="settings">The settings class to be saved</param>
-        /// <param name="settingsType">The type of the settings object.</param>
-        /// <param name="onFailure">Specifies how failures should be handled</param>
-        internal static void SaveSettings(object settings, Type settingsType, OnFailure onFailure)
+        internal static void serialize(object settings, Type settingsType, string filename, SettingsSerializer serializer)
         {
-            var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
-            if (attr == null)
-                throw new ArgumentException("In order to use this overload of SaveSettings on type {0}, the type must have a {1} on it".Fmt(settingsType.FullName, typeof(SettingsAttribute).FullName), "TSettings");
-            SaveSettings(settings, settingsType, attr.GetFileName(), onFailure);
-        }
-
-        /// <summary>
-        /// Saves the specified settings class into the appropriate location.
-        /// </summary>
-        /// <typeparam name="TSettings">The type of the settings object.</typeparam>
-        /// <param name="settings">The settings class to be saved</param>
-        /// <param name="filename">The name of the file to load the settings from</param>
-        /// <param name="onFailure">Specifies how failures should be handled</param>
-        internal static void SaveSettings<TSettings>(TSettings settings, string filename, OnFailure onFailure)
-        {
-            SaveSettings(settings, typeof(TSettings), filename, onFailure);
-        }
-
-        /// <summary>
-        /// Saves the specified settings class into the appropriate location.
-        /// </summary>
-        /// <remarks>
-        /// The type <typeparamref name="TSettings"/> must have the <see cref="SettingsAttribute"/>specified,
-        /// otherwise an exception will be thrown.
-        /// </remarks>
-        /// <typeparam name="TSettings">The type of the settings object.</typeparam>
-        /// <param name="settings">The settings class to be saved</param>
-        /// <param name="onFailure">Specifies how failures should be handled</param>
-        public static void SaveSettings<TSettings>(TSettings settings, OnFailure onFailure)
-        {
-            SaveSettings(settings, typeof(TSettings), onFailure);
-        }
-
-        private static void serialize(object settings, Type settingsType, string filename)
-        {
-            var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
-            switch (attr.Serializer)
+            switch (serializer)
             {
                 case SettingsSerializer.XmlClassify:
                     XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
@@ -191,10 +145,9 @@ namespace RT.Util
             }
         }
 
-        private static TSettings deserialize<TSettings>(string filename) where TSettings : new()
+        private static TSettings deserialize<TSettings>(string filename, SettingsSerializer serializer) where TSettings : SettingsBase, new()
         {
-            var attr = typeof(TSettings).GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
-            switch (attr.Serializer)
+            switch (serializer)
             {
                 case SettingsSerializer.XmlClassify:
                     return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
@@ -214,10 +167,9 @@ namespace RT.Util
     /// </summary>
     /// <remarks>
     /// <para>Derive a class from this one and add the fields you wish to persist. Mark those you don't want stored
-    /// with the <see cref="XmlIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>
-    /// to specify the name for the settings file.</para>
+    /// with the <see cref="XmlIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>.</para>
     /// <para>Once the above is done, the settings can be saved by calling <see cref="Save"/>/<see cref="SaveQuiet"/>,
-    /// depending on intent. To load, call <see cref="SettingsUtil.LoadSettings&lt;T&gt;(out T)"/>, making sure that the
+    /// depending on intent. To load, call <see cref="SettingsUtil.LoadSettings&lt;T&gt;"/>, making sure that the
     /// generic type is the type of your descendant class. For example:
     /// </para>
     /// <code>
@@ -233,7 +185,7 @@ namespace RT.Util
     ///     }
     /// }
     /// 
-    /// [Settings("MyApplicationName")]
+    /// [Settings("MyApplicationName", SettingsKind.UserSpecific)]
     /// class MySettings : SettingsBase
     /// {
     ///     public string SomeSetting = "initial/default value";
@@ -251,8 +203,6 @@ namespace RT.Util
         protected internal object _lock = new object();
         [XmlIgnore, NonSerialized]
         protected internal Thread _saveThread;
-        [XmlIgnore, NonSerialized]
-        protected internal SettingsBase _saveObj;
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
@@ -266,12 +216,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// <para>Saves the settings. Intended to be used whenever it is absolutely vital to save the settings and
-        /// bug the user if this fails.</para>
-        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>,
-        /// and will cancel any pending earlier (older) saves.</para>
+        /// <para>Saves the settings.</para>
+        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
         /// </summary>
-        public virtual void Save()
+        public virtual void Save(string filename = null, SettingsSerializer? serializer = null, SettingsOnFailure onFailure = SettingsOnFailure.Throw)
         {
             // Save must not be interrupted or superseded by a SaveThreaded
             lock (_lock)
@@ -281,35 +229,30 @@ namespace RT.Util
                     _saveThread.Abort();
                     _saveThread = null;
                 }
-                BeforeSave();
-                SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.Throw);
+                SettingsUtil.save(this, filename, serializer, onFailure);
             }
         }
 
         /// <summary>
-        /// <para>Saves the settings. Intended to be used whenever it is important to make sure the settings
-        /// hit the disk, but the settings are not important enough to bug the user if this fails.</para>
-        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>,
-        /// and will cancel any pending earlier (older) saves.</para>
+        /// <para>Saves the settings. Intended to be used whenever the settings are important enough to bug the user if this fails.</para>
+        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
         /// </summary>
-        public virtual void SaveQuiet()
+        public virtual void SaveLoud(string filename = null, SettingsSerializer? serializer = null)
         {
-            // SaveQuiet must not be interrupted or superseded by a SaveThreaded
-            lock (_lock)
-            {
-                if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
-                {
-                    _saveThread.Abort();
-                    _saveThread = null;
-                }
-                BeforeSave();
-                SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.DoNothing);
-            }
+            Save(filename, serializer, onFailure: SettingsOnFailure.ShowRetryOnly);
         }
 
+
         /// <summary>
-        /// Gets the <see cref="SettingsAttribute"/> instance specified on this settings class, or null if none are specified.
+        /// <para>Saves the settings. Intended to be used whenever the settings are not important enough to bug the user if this fails.</para>
+        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
         /// </summary>
+        public virtual void SaveQuiet(string filename = null, SettingsSerializer? serializer = null)
+        {
+            Save(filename, serializer, onFailure: SettingsOnFailure.DoNothing);
+        }
+
+        /// <summary>Gets the <see cref="SettingsAttribute"/> instance specified on this settings class, or null if none are specified.</summary>
         public SettingsAttribute Attribute
         {
             get { return this.GetType().GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault(); }
@@ -321,6 +264,15 @@ namespace RT.Util
     /// </summary>
     public abstract class SettingsThreadedBase : SettingsBase
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+        [XmlIgnore, NonSerialized]
+        private SettingsBase _saveObj;
+        [XmlIgnore, NonSerialized]
+        private string _saveFilename;
+        [XmlIgnore, NonSerialized]
+        private SettingsSerializer? _saveSerializer;
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+
         /// <summary>
         /// Must return a deep clone of this class. This will be used to create a snapshot of the settings
         /// at the time when <see cref="SaveThreaded"/> is called.
@@ -336,11 +288,13 @@ namespace RT.Util
         /// you call <see cref="SettingsBase.Save"/> when you want to guarantee a save, especially just before the
         /// program terminates.</para>
         /// </summary>
-        public virtual void SaveThreaded()
+        public virtual void SaveThreaded(string filename = null, SettingsSerializer? serializer = null)
         {
             lock (_lock)
             {
                 _saveObj = CloneForSaveThreaded();
+                _saveFilename = filename;
+                _saveSerializer = serializer;
                 if (_saveObj == null)
                     throw new InvalidOperationException("CloneForSaveThreaded returned null.");
                 if (_saveThread == null)
@@ -357,8 +311,7 @@ namespace RT.Util
             Thread.Sleep(2000);
             lock (_lock)
             {
-                _saveObj.BeforeSave();
-                SettingsUtil.SaveSettings(_saveObj, _saveObj.GetType(), SettingsUtil.OnFailure.DoNothing);
+                SettingsUtil.save(_saveObj, _saveFilename, _saveSerializer, SettingsOnFailure.DoNothing);
                 _saveThread = null;
             }
         }
@@ -400,6 +353,21 @@ namespace RT.Util
     }
 
     /// <summary>
+    /// Specifies what to do in case of operation failing.
+    /// </summary>
+    public enum SettingsOnFailure
+    {
+        /// <summary>Just ignore the failure: no exceptions thrown, no dialogs shown</summary>
+        DoNothing,
+        /// <summary>Throw an exception in case of failure</summary>
+        Throw,
+        /// <summary>Ask the user to retry or to skip operation. No exceptions thrown.</summary>
+        ShowRetryOnly,
+        /// <summary>Ask the user to retry, skip operation or cancel. <see cref="SettingsCancelException"/> thrown on cancel.</summary>
+        ShowRetryWithCancel,
+    }
+
+    /// <summary>
     /// Determines which serializer the settings are read/written by.
     /// </summary>
     public enum SettingsSerializer
@@ -408,6 +376,17 @@ namespace RT.Util
         XmlClassify,
         /// <summary>Use the .NET binary serializer.</summary>
         DotNetBinary,
+    }
+
+    /// <summary>
+    /// Indicates that the user chose to cancel the current operation.
+    /// </summary>
+    public sealed class SettingsCancelException : RTException
+    {
+        /// <summary>Creates an exception instance with the specified message.</summary>
+        public SettingsCancelException()
+            : base("User chose to cancel the operation")
+        { }
     }
 
     /// <summary>
