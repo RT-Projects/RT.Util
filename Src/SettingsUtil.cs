@@ -306,6 +306,14 @@ namespace RT.Util
                 SettingsUtil.SaveSettings(this, this.GetType(), SettingsUtil.OnFailure.DoNothing);
             }
         }
+
+        /// <summary>
+        /// Gets the <see cref="SettingsAttribute"/> instance specified on this settings class, or null if none are specified.
+        /// </summary>
+        public SettingsAttribute Attribute
+        {
+            get { return this.GetType().GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault(); }
+        }
     }
 
     /// <summary>
