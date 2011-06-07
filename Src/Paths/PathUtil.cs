@@ -67,6 +67,14 @@ namespace RT.Util
             return Path.Combine(morePaths);
         }
 
+        /// <summary>
+        /// Makes all AppPath* functions of PathUtil use the specified value as the application path.
+        /// </summary>
+        public static void OverrideAppPath(string path)
+        {
+            _cachedAppPath = Path.GetFullPath(path);
+        }
+
         /// <summary>Normalises the specified path. A "normalised path" is a path to a
         /// directory (not a file!) which always ends with a slash.</summary>
         /// <param name="path">Path to be normalised.</param>
