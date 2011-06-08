@@ -142,6 +142,7 @@
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Paths\PathUtil.cs" />
+    <Compile Include="RTSmtpClient.cs" />
     <Compile Include="RummageAttributes.cs" />
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
