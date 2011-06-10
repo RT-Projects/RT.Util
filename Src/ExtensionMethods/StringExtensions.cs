@@ -333,7 +333,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("</", "<\"+\"/") + "\"";
+            return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + "\"";
         }
 
         /// <summary>
