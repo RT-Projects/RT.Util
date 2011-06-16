@@ -328,12 +328,13 @@ namespace RT.Util.ExtensionMethods
         /// Returns a JavaScript-compatible representation of the string in double-quotes with the appropriate characters escaped.
         /// </summary>
         /// <param name="input">String to escape.</param>
+        /// <param name="omitQuotes">If true, the string is not enclosed in double quotes.</param>
         /// <returns>JavaScript-compatible representation of the input string.</returns>
-        public static string JsEscape(this string input)
+        public static string JsEscape(this string input, bool omitQuotes = false)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return "\"" + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + "\"";
+            return (omitQuotes ? "" : "\"") + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "\"");
         }
 
         /// <summary>
