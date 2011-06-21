@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -226,51 +226,70 @@ namespace RT.Util
         /// <summary>Determines whether the Shift key is pressed.</summary>
         public static bool Shift { get { return Control.ModifierKeys.HasFlag(Keys.Shift); } }
 
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Action Lambda(Action method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Action<T> Lambda<T>(Action<T> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Action<T1, T2> Lambda<T1, T2>(Action<T1, T2> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Action<T1, T2, T3> Lambda<T1, T2, T3>(Action<T1, T2, T3> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Action<T1, T2, T3, T4> Lambda<T1, T2, T3, T4>(Action<T1, T2, T3, T4> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<TResult> Lambda<TResult>(Func<TResult> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<T, TResult> Lambda<T, TResult>(Func<T, TResult> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<T1, T2, TResult> Lambda<T1, T2, TResult>(Func<T1, T2, TResult> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<T1, T2, T3, TResult> Lambda<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method) { return method; }
-        /// <summary>Allows the use of C#'s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
         public static Func<T1, T2, T3, T4, TResult> Lambda<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method) { return method; }
 
-        /// <summary>Allows the use of type inference when creating .NET's KeyValuePair&lt;TK,TV&gt;.</summary>
+        /// <summary>Allows the use of type inference when creating .NET’s KeyValuePair&lt;TK,TV&gt;.</summary>
         public static KeyValuePair<TKey, TValue> KeyValuePair<TKey, TValue>(TKey key, TValue value) { return new KeyValuePair<TKey, TValue>(key, value); }
 
         /// <summary>Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
+        /// <param name="size1">Size of the first dimension.</param>
+        /// <param name="size2">Size of the second dimension.</param>
+        /// <param name="initialiser">Optional function to initialise the value of every element.</param>
         /// <typeparam name="T">Type of the array element.</typeparam>
-        public static T[][] NewArray<T>(int size1, int size2)
+        public static T[][] NewArray<T>(int size1, int size2, Func<int, int, T> initialiser = null)
         {
             var result = new T[size1][];
             for (int i = 0; i < size1; i++)
-                result[i] = new T[size2];
+            {
+                var arr = new T[size2];
+                if (initialiser != null)
+                    for (int j = 0; j < size2; j++)
+                        arr[j] = initialiser(i, j);
+                result[i] = arr;
+            }
             return result;
         }
 
         /// <summary>Instantiates a fully-initialized "rectangular" jagged array with the specified dimensions.</summary>
+        /// <param name="size1">Size of the first dimension.</param>
+        /// <param name="size2">Size of the second dimension.</param>
+        /// <param name="size3">Size of the third dimension.</param>
+        /// <param name="initialiser">Optional function to initialise the value of every element.</param>
         /// <typeparam name="T">Type of the array element.</typeparam>
-        public static T[][][] NewArray<T>(int size1, int size2, int size3)
+        public static T[][][] NewArray<T>(int size1, int size2, int size3, Func<int, int, int, T> initialiser = null)
         {
             var result = new T[size1][][];
             for (int i = 0; i < size1; i++)
             {
                 var arr = new T[size2][];
-                result[i] = arr;
                 for (int j = 0; j < size2; j++)
-                    arr[j] = new T[size3];
+                {
+                    var arr2 = new T[size3];
+                    if (initialiser != null)
+                        for (int k = 0; k < size2; k++)
+                            arr2[k] = initialiser(i, j, k);
+                    arr[j] = arr2;
+                }
+                result[i] = arr;
             }
             return result;
         }
