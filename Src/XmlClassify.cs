@@ -579,8 +579,15 @@ namespace RT.Util.Xml
                             object saveValue = field.GetValue(saveObject);
                             bool ignoreIfDefault = ignoreIfDefaultOnType || getAttrsFrom.IsDefined<XmlIgnoreIfDefaultAttribute>(true);
 
-                            if (ignoreIfDefault && (saveValue == null || (saveValue.GetType().IsValueType && saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))))
-                                continue;
+                            if (ignoreIfDefault)
+                            {
+                                if (saveValue == null)
+                                    continue;
+                                if (saveValue.GetType().IsValueType &&
+                                    !(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>)) &&
+                                    saveValue.Equals(Activator.CreateInstance(saveValue.GetType())))
+                                    continue;
+                            }
 
                             var def = getAttrsFrom.GetCustomAttributes<XmlIgnoreIfAttribute>(true).FirstOrDefault();
                             if (def != null && saveValue != null && saveValue.Equals(def.Value))
