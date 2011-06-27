@@ -19,6 +19,13 @@ namespace RT.Util.Drawing
         RightUp
     }
 
+    public enum TextAnchor
+    {
+        Center,
+        TopLeft, TopRight, BottomLeft, BottomRight,
+        TopCenter, LeftCenter, BottomCenter, RightCenter,
+    }
+
     /// <summary>
     /// <para>Wraps a <see cref="System.Drawing.Graphics"/> to provide a hopefully more convenient interface.
     /// The major bits of functionality are:</para>
@@ -458,6 +465,33 @@ namespace RT.Util.Drawing
         public void DrawText(string text, Brush brush, double centerX, double centerY)
         {
             DrawText(text, brush, DefaultFont, centerX, centerY);
+        }
+
+        private void convertAnchor(TextAnchor anchor, out int horzAlign, out int vertAlign)
+        {
+            switch (anchor)
+            {
+                case TextAnchor.Center: horzAlign = 0; vertAlign = 0; return;
+                case TextAnchor.TopLeft: horzAlign = -1; vertAlign = -1; return;
+                case TextAnchor.TopRight: horzAlign = 1; vertAlign = -1; return;
+                case TextAnchor.BottomLeft: horzAlign = -1; vertAlign = 1; return;
+                case TextAnchor.BottomRight: horzAlign = 1; vertAlign = 1; return;
+                case TextAnchor.TopCenter: horzAlign = 0; vertAlign = -1; return;
+                case TextAnchor.LeftCenter: horzAlign = -1; vertAlign = 0; return;
+                case TextAnchor.BottomCenter: horzAlign = 0; vertAlign = 1; return;
+                case TextAnchor.RightCenter: horzAlign = 1; vertAlign = 0; return;
+                default: throw new InternalErrorException("72634hfdj");
+            }
+        }
+
+        public void DrawText2(string text, Brush brush, double x, double y, Font font = null, TextAnchor anchor = TextAnchor.Center)
+        {
+            if (font == null)
+                font = DefaultFont;
+            SizeF size = Graphics.MeasureString(text, font);
+            int horzAlign, vertAlign;
+            convertAnchor(anchor, out horzAlign, out vertAlign);
+            Graphics.DrawString(text, font, brush, SX(x) - (size.Width / 2) * (horzAlign + 1), SY(y) - (size.Height / 2) * (vertAlign + 1));
         }
 
         public void DrawTextOutline(string text, Pen pen, Font font, double centerX, double centerY)
