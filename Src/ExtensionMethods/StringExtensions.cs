@@ -644,7 +644,7 @@ namespace RT.Util.ExtensionMethods
                             yield return sb.ToString();
                         yield return args[argNumber];
                         // Reset the buffer
-                        sb = new StringBuilder(formatString.Length);
+                        sb.Clear();
                     }
                 }
                 else if (formatString[i] == '}')

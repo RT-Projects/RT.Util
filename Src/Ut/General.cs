@@ -250,6 +250,10 @@ namespace RT.Util
         /// <summary>Allows the use of type inference when creating .NET’s KeyValuePair&lt;TK,TV&gt;.</summary>
         public static KeyValuePair<TKey, TValue> KeyValuePair<TKey, TValue>(TKey key, TValue value) { return new KeyValuePair<TKey, TValue>(key, value); }
 
+        /// <summary>Returns the parameters as a new array.</summary>
+        /// <remarks>Useful to circumvent Visual Studio’s bug where multi-line literal arrays are not auto-formatted.</remarks>
+        public static T[] NewArray<T>(params T[] parameters) { return parameters; }
+
         /// <summary>Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
         /// <param name="size1">Size of the first dimension.</param>
         /// <param name="size2">Size of the second dimension.</param>

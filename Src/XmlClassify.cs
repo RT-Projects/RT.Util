@@ -108,6 +108,8 @@ namespace RT.Util.Xml
             return objectFromXElement(type, elem, baseDir, parentNode);
         }
 
+        private static Type[] _tupleTypes = new[] { typeof(KeyValuePair<,>), typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>) };
+
         private static object objectFromXElement(Type type, XElement elem, string baseDir, object parentNode, Dictionary<string, object> remember = null)
         {
             if (elem.Attribute("null") != null)
@@ -145,8 +147,8 @@ namespace RT.Util.Xml
                     remember = new Dictionary<string, object>();
 
                 // If it’s a nullable type, just determine the inner type and start again
-                if (type.TryGetInterfaceGenericParameters(typeof(Nullable<>), out typeParameters))
-                    return objectFromXElement(typeParameters[0], elem, baseDir, parentNode, remember);
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    return objectFromXElement(type.GetGenericArguments()[0], elem, baseDir, parentNode, remember);
 
                 var refAttr = elem.Attribute("ref");
                 if (refAttr != null)
@@ -154,6 +156,26 @@ namespace RT.Util.Xml
                     if (!remember.ContainsKey(refAttr.Value))
                         throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).");
                     return remember[refAttr.Value];
+                }
+
+                // Check if it’s a Tuple or KeyValuePair
+                var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
+                if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
+                {
+                    var genericArguments = type.GetGenericArguments();
+                    var tupleParams = new object[genericArguments.Length];
+                    for (int i = 0; i < genericArguments.Length; i++)
+                    {
+                        var tagName = genericDefinition == typeof(KeyValuePair<,>) ? (i == 0 ? "key" : "value") : "item" + (i + 1);
+                        var subElem = elem.Element(tagName);
+                        if (subElem == null)
+                            continue;
+                        tupleParams[i] = objectFromXElement(genericArguments[i], subElem, baseDir, parentNode, remember);
+                    }
+                    var constructor = type.GetConstructor(genericArguments);
+                    if (constructor == null)
+                        throw new InvalidOperationException("Could not find expected Tuple constructor.");
+                    return constructor.Invoke(tupleParams);
                 }
 
                 // Check if it’s an array, collection or dictionary
@@ -511,6 +533,23 @@ namespace RT.Util.Xml
                 if (saveObject is IXmlClassifyProcess)
                     ((IXmlClassifyProcess) saveObject).BeforeXmlClassify();
 
+                // Tuples and KeyValuePairs
+                var genericDefinition = saveType.IsGenericType ? saveType.GetGenericTypeDefinition() : null;
+                if (genericDefinition != null && _tupleTypes.Contains(genericDefinition))
+                {
+                    var genericArguments = saveType.GetGenericArguments();
+                    for (int i = 0; i < genericArguments.Length; i++)
+                    {
+                        var propertyName = genericDefinition == typeof(KeyValuePair<,>) ? (i == 0 ? "Key" : "Value") : "Item" + (i + 1);
+                        var property = saveType.GetProperty(propertyName);
+                        if (property == null)
+                            throw new InvalidOperationException("Cannot find expected item property in Tuple type.");
+                        elem.Add(objectToXElement(property.GetValue(saveObject, null), genericArguments[i], baseDir, propertyName.ToLowerInvariant(), remember, ref nextId));
+                    }
+                    return elem;
+                }
+
+                // Arrays, collections, dictionaries
                 Type keyType = null, valueType = null;
                 Type[] typeParameters;
 
