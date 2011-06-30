@@ -409,33 +409,32 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
+        /// <exception cref="InvalidOperationException">The input collection is empty.</exception>
         public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (valueSelector == null)
-                throw new ArgumentNullException("valueSelector");
-            using (var enumerator = source.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                    throw new InvalidOperationException("source contains no elements.");
-                T minElem = enumerator.Current;
-                TValue minValue = valueSelector(minElem);
-                while (enumerator.MoveNext())
-                {
-                    TValue value = valueSelector(enumerator.Current);
-                    if (value.CompareTo(minValue) < 0)
-                    {
-                        minValue = value;
-                        minElem = enumerator.Current;
-                    }
-                }
-                return minElem;
-            }
+            return minMaxElement(source, valueSelector, true, true, default(T));
+        }
+
+        /// <summary>Returns the first element from the input sequence for which the value selector returns the smallest value, or a default value if the collection is empty.</summary>
+        public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, true, false, defaultValue);
         }
 
         /// <summary>Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
+        /// <exception cref="InvalidOperationException">The input collection is empty.</exception>
         public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, false, true, default(T));
+        }
+
+        /// <summary>Returns the first element from the input sequence for which the value selector returns the largest value, or a default value if the collection is empty.</summary>
+        public static T MaxElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, false, false, defaultValue);
+        }
+
+        private static T minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow, T defaultValue) where TValue : IComparable<TValue>
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -444,19 +443,23 @@ namespace RT.Util.ExtensionMethods
             using (var enumerator = source.GetEnumerator())
             {
                 if (!enumerator.MoveNext())
-                    throw new InvalidOperationException("source contains no elements.");
-                T maxElem = enumerator.Current;
-                TValue maxValue = valueSelector(maxElem);
+                {
+                    if (doThrow)
+                        throw new InvalidOperationException("source contains no elements.");
+                    return defaultValue;
+                }
+                T minMaxElem = enumerator.Current;
+                TValue minMaxValue = valueSelector(minMaxElem);
                 while (enumerator.MoveNext())
                 {
                     TValue value = valueSelector(enumerator.Current);
-                    if (value.CompareTo(maxValue) > 0)
+                    if (min ? (value.CompareTo(minMaxValue) < 0) : (value.CompareTo(minMaxValue) > 0))
                     {
-                        maxValue = value;
-                        maxElem = enumerator.Current;
+                        minMaxValue = value;
+                        minMaxElem = enumerator.Current;
                     }
                 }
-                return maxElem;
+                return minMaxElem;
             }
         }
 
