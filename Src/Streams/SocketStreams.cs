@@ -104,6 +104,7 @@ namespace RT.Util.Streams
         private byte[] _lastRead;
         private int _lastReadOffset;
         private int _lastReadCount;
+        private bool _myBuffer;
 
         /// <summary>
         /// Constructs a <see cref="SocketReaderStream"/> object that can read input from a <see cref="System.Net.Sockets.Socket"/>.
@@ -117,10 +118,11 @@ namespace RT.Util.Streams
             _lastRead = null;
             _lastReadOffset = 0;
             _lastReadCount = 0;
+            _myBuffer = false;
         }
 
         /// <summary>
-        /// Constructs a <see cref="SocketReaderStream"/> object that reads from a given bit of initial data, and then continues on to read from a <see cref="System.Net.Sockets.Socket"/> 
+        /// Constructs a <see cref="SocketReaderStream"/> object that reads from a given bit of initial data, and then continues on to read from a <see cref="System.Net.Sockets.Socket"/>.
         /// </summary>
         /// <param name="socket">The socket to read the input from.</param>
         /// <param name="maxBytesToRead">Maximum number of bytes to read from the initial data plus the socket. After this, the stream pretends to have reached the end.</param>
@@ -130,6 +132,7 @@ namespace RT.Util.Streams
         public SocketReaderStream(Socket socket, long maxBytesToRead, byte[] initialBuffer, int initialBufferOffset, int initialBufferCount)
         {
             _socket = socket;
+            _myBuffer = false;
 
             if (initialBufferCount <= 0)
             {
@@ -143,7 +146,7 @@ namespace RT.Util.Streams
                 _lastRead = initialBuffer;
                 _lastReadOffset = initialBufferOffset;
                 // The conversion to int here is safe because we know it's smaller than initialBufferCount, which is an int
-                _lastReadCount = (int) maxBytesToRead;  
+                _lastReadCount = (int) maxBytesToRead;
                 _maxBytesToRead = 0;
             }
             else
@@ -175,12 +178,15 @@ namespace RT.Util.Streams
         public override int Read(byte[] buffer, int offset, int count)
         {
             // If we have something left from the last socket-receive operation, return as much of that as possible
-            if (_lastRead != null)
+            if (_lastRead != null && _lastReadCount > 0)
             {
                 if (count >= _lastReadCount)
                 {
                     Buffer.BlockCopy(_lastRead, _lastReadOffset, buffer, offset, _lastReadCount);
-                    _lastRead = null;
+                    if (_myBuffer)
+                        _lastReadCount = 0;
+                    else
+                        _lastRead = null;
                     return _lastReadCount;
                 }
                 else
@@ -197,11 +203,14 @@ namespace RT.Util.Streams
                 if (_maxBytesToRead <= 0)
                     return 0;
 
-                // Read at most _maxBytesToRead bytes from the socket
-                var size = (int) Math.Min(65536, _maxBytesToRead);
-                _lastRead = new byte[size];
+                if (!_myBuffer)
+                {
+                    // Read at most _maxBytesToRead bytes from the socket
+                    _lastRead = new byte[(int) Math.Min(65536, _maxBytesToRead)];
+                    _myBuffer = true;
+                }
                 _lastReadOffset = 0;
-                _lastReadCount = _socket.Receive(_lastRead, _lastReadOffset, size, SocketFlags.None);
+                _lastReadCount = _socket.Receive(_lastRead, _lastReadOffset, (int) Math.Min(_lastRead.Length, _maxBytesToRead), SocketFlags.None);
                 _maxBytesToRead -= _lastReadCount;
 
                 // Socket error?
@@ -212,7 +221,7 @@ namespace RT.Util.Streams
                     return 0;
                 }
 
-                // We've populated _lastRead; use a tail-recursive call to actually return the data
+                // We’ve populated _lastRead; use a tail-recursive call to actually return the data
                 return Read(buffer, offset, count);
             }
         }

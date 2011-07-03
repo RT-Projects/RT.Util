@@ -729,7 +729,7 @@ namespace RT.Util.CommandLine
             optionalPositional = new List<FieldInfo>();
             mandatoryPositional = new List<FieldInfo>();
 
-            foreach (var field in type.GetAllFields().Where(f => !f.IsDefined<UndocumentedAttribute>()))
+            foreach (var field in type.GetFields().Where(f => !f.IsDefined<UndocumentedAttribute>()))
                 (field.IsDefined<IsMandatoryAttribute>()
                     ? (field.IsDefined<IsPositionalAttribute>() ? mandatoryPositional : mandatoryOptions)
                     : (field.IsDefined<IsPositionalAttribute>() ? optionalPositional : optionalOptions)
