@@ -184,9 +184,12 @@ namespace RT.Util.Streams
                 {
                     Buffer.BlockCopy(_lastRead, _lastReadOffset, buffer, offset, _lastReadCount);
                     if (_myBuffer)
+                    {
+                        var tmp = _lastReadCount;
                         _lastReadCount = 0;
-                    else
-                        _lastRead = null;
+                        return tmp;
+                    }
+                    _lastRead = null;
                     return _lastReadCount;
                 }
                 else

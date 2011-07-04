@@ -334,7 +334,10 @@ namespace RT.Util.ExtensionMethods
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return (omitQuotes ? "" : "\"") + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "\"");
+            if (input.Count(ch => ch == '\'') > input.Count(ch => ch == '"'))
+                return (omitQuotes ? "" : "\"") + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "\"");
+            else
+                return (omitQuotes ? "" : "'") + input.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "'");
         }
 
         /// <summary>
@@ -810,7 +813,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Same as <see cref="string.Substring(int, int)"/> but does not throw exceptions when the start index
-        ///  or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
+        /// or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
         /// </summary>
         public static string SubstringSafe(this string source, int startIndex, int length)
         {

@@ -34,16 +34,16 @@ namespace RT.KitchenSink.Tcp
         {
             while (true)
             {
-                byte[] Buffer = new byte[65536];
-                int BytesReceived = _socket.Receive(Buffer);
-                if (BytesReceived == 0)
+                byte[] buffer = new byte[65536];
+                int bytesReceived = _socket.Receive(buffer);
+                if (bytesReceived == 0)
                 {
                     if (ConnectionClose != null)
                         ConnectionClose(this, new EventArgs());
                     return;
                 }
                 if (IncomingData != null)
-                    IncomingData(this, Buffer, BytesReceived);
+                    IncomingData(this, buffer, bytesReceived);
             }
         }
 
