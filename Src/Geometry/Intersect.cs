@@ -249,6 +249,40 @@ namespace RT.Util.Geometry
 
         #endregion
 
+        #region RayWithArc
+
+        /// <summary>
+        /// Finds the points of intersection between a ray and an arc. The
+        /// resulting lambdas along the ray are sorted in ascending order, so
+        /// the "first" intersection is always in lambda1 (if any). Lambda may
+        /// be NaN if there is no intersection (or no "second" intersection).
+        /// </summary>
+        public static void RayWithArc(ref EdgeD ray, ref ArcD arc,
+                                         out double lambda1, out double lambda2)
+        {
+            RayWithCircle(ref ray, ref arc.Circle, out lambda1, out lambda2);
+            var sweepdir = Math.Sign(arc.AngleSweep);
+            if (!double.IsNaN(lambda1))
+            {
+                var dir = ((ray.Start + lambda1 * (ray.End - ray.Start)) - arc.Circle.Center).Theta();
+                if (!(GeomUt.AngleDifference(arc.AngleStart, dir) * sweepdir > 0 && GeomUt.AngleDifference(arc.AngleStart + arc.AngleSweep, dir) * sweepdir < 0))
+                    lambda1 = double.NaN;
+            }
+            if (!double.IsNaN(lambda2))
+            {
+                var dir = ((ray.Start + lambda2 * (ray.End - ray.Start)) - arc.Circle.Center).Theta();
+                if (!(GeomUt.AngleDifference(arc.AngleStart, dir) * sweepdir > 0 && GeomUt.AngleDifference(arc.AngleStart + arc.AngleSweep, dir) * sweepdir < 0))
+                    lambda2 = double.NaN;
+            }
+            if (double.IsNaN(lambda1) && !double.IsNaN(lambda2))
+            {
+                lambda1 = lambda2;
+                lambda2 = double.NaN;
+            }
+        }
+
+        #endregion
+
         #region RayWithRectangle
 
         /// <summary>
@@ -286,7 +320,7 @@ namespace RT.Util.Geometry
                     else if (lambda != lambda1)
                     {
                         if (lambda > lambda1)
-                            lambda2 = lambda1;
+                            lambda2 = lambda;
                         else
                         {
                             lambda2 = lambda1;

@@ -149,6 +149,7 @@ namespace RT.Util.Geometry
 
         /// <summary>
         /// Returns the Z-component of the cross product of this vector with the other one.
+        /// The Z-component is equal to the product of: the lengths of the two vectors and the sin of the angle between them.
         /// Note that the X and Y components of a cross product of 2-vectors are always zero.
         /// </summary>
         public double CrossZ(PointD other)
@@ -215,6 +216,16 @@ namespace RT.Util.Geometry
         {
             PointD unitVector = vector.Unit();
             return Dot(unitVector) * unitVector;
+        }
+
+        /// <summary>
+        /// Returns a vector of the same length as this vector, but rotated by the specified angle.
+        /// </summary>
+        public PointD Rotated(double angle)
+        {
+            var sina = Math.Sin(angle);
+            var cosa = Math.Cos(angle);
+            return new PointD(X * cosa + Y * sina, Y * cosa - X * sina);
         }
     }
 }

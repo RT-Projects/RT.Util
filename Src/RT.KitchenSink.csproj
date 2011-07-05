@@ -61,7 +61,6 @@
     <Compile Include="EventSim\EventEngine.cs" />
     <Compile Include="EventSim\EventTask.cs" />
     <Compile Include="Fonts\FontUtil.cs" />
-    <Compile Include="FpsCounter.cs" />
     <Compile Include="IL.cs" />
     <Compile Include="Lex\LexException.cs" />
     <Compile Include="Lex\LexPosition.cs" />

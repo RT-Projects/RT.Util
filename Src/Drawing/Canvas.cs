@@ -414,6 +414,18 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
+        /// Draws an arc using the specified pen.
+        /// </summary>
+        public void DrawArc(Pen pen, PointD center, double radius, double startAngle, double sweepAngle)
+        {
+            // DrawArc angles are in fricken degrees! I bet they are converted to radians internally before use...
+            Graphics.DrawArc(pen,
+                SX(center.X) - SW(radius), SY(center.Y) - SH(radius),
+                SW(2 * radius), SH(2 * radius),
+                sa(startAngle / Math.PI * 180), sa(sweepAngle / Math.PI * 180));
+        }
+
+        /// <summary>
         /// Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are
         /// connected to the centre with straight lines.
         /// </summary>
