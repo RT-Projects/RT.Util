@@ -325,19 +325,16 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns a JavaScript-compatible representation of the string in double-quotes with the appropriate characters escaped.
+        /// Returns a JavaScript-compatible representation of the string in single quotes with the appropriate characters escaped.
         /// </summary>
         /// <param name="input">String to escape.</param>
-        /// <param name="omitQuotes">If true, the string is not enclosed in double quotes.</param>
+        /// <param name="omitQuotes">If true, the string is not enclosed in single quotes.</param>
         /// <returns>JavaScript-compatible representation of the input string.</returns>
         public static string JsEscape(this string input, bool omitQuotes = false)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            if (input.Count(ch => ch == '\'') > input.Count(ch => ch == '"'))
-                return (omitQuotes ? "" : "\"") + input.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "\"");
-            else
-                return (omitQuotes ? "" : "'") + input.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "'");
+            return (omitQuotes ? "" : "'") + input.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "'");
         }
 
         /// <summary>
