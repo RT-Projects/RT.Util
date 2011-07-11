@@ -8,9 +8,7 @@ using RT.Util.Geometry;
 
 namespace RT.Util.Drawing
 {
-    /// <summary>
-    /// Encodes axes direction mode for <see cref="Canvas"/>.
-    /// </summary>
+    /// <summary>Encodes axes direction mode for <see cref="Canvas"/>.</summary>
     public enum CoordinateAxesDirection
     {
         /// <summary>X axis grows towards the right and Y axis grows downwards (normal computer screen coordinate direction)</summary>
@@ -19,11 +17,14 @@ namespace RT.Util.Drawing
         RightUp
     }
 
+    /// <summary>Specifies text alignment for <see cref="Canvas"/>.</summary>
     public enum TextAnchor
     {
+#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
         Center,
         TopLeft, TopRight, BottomLeft, BottomRight,
         TopCenter, LeftCenter, BottomCenter, RightCenter,
+#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }
 
     /// <summary>

@@ -10,10 +10,16 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
+    /// <summary>Encapsulates an error condition that occurred during an SMTP exchange.</summary>
     [Serializable]
     public sealed class RTSmtpException : RTException
     {
+        /// <summary>Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</summary>
         public List<string> Conversation { get; private set; }
+        /// <summary>Constructor.</summary>
+        /// <param name="message">Error message.</param>
+        /// <param name="conversation">Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</param>
+        /// <param name="inner">Inner exception.</param>
         public RTSmtpException(string message, List<string> conversation, Exception inner = null)
             : base(message, inner)
         {
@@ -21,6 +27,7 @@ namespace RT.Util
         }
     }
 
+    /// <summary>Provides methods to send e-mails via an SMTP server.</summary>
     public sealed class RTSmtpClient : IDisposable
     {
         private TcpClient _tcp;
@@ -29,6 +36,12 @@ namespace RT.Util
         private TextReader _reader;
         private List<string> _conversation;
 
+        /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
+        /// <param name="host">SMTP host name.</param>
+        /// <param name="port">SMTP host port.</param>
+        /// <param name="username">SMTP username.</param>
+        /// <param name="password">SMTP password.</param>
+        /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
         public RTSmtpClient(string host, int port, string username, string password)
         {
             _tcp = new TcpClient(host, port);
@@ -72,6 +85,12 @@ namespace RT.Util
             return response;
         }
 
+        /// <summary>Sends an e-mail.</summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="subject"></param>
+        /// <param name="plainText"></param>
+        /// <param name="html"></param>
         public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string plainText, string html)
         {
             if (plainText == null && html == null)
@@ -226,6 +245,7 @@ namespace RT.Util
 
         private bool _disposed;
 
+        /// <summary>Closes the SMTP connection and frees all associated resources.</summary>
         public void Dispose()
         {
             if (_disposed)

@@ -9,41 +9,32 @@ namespace RT.Util
     public static partial class Ut
     {
         /// <summary>
-        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the
-        /// generic type parameter's default equality comparer.
-        /// </summary>
-        /// <typeparam name="T">The type of items to compare.</typeparam>
-        /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
-        /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
-        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
-        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
-        /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
-        /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
-        public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new)
-        {
-            return Diff(old, @new, new DiffOptions<T>());
-        }
-
-        /// <summary>
         /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the specified options.
         /// </summary>
         /// <typeparam name="T">The type of items to compare.</typeparam>
         /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
         /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
-        /// <param name="options">An instance of <see cref="DiffOptions&lt;T&gt;"/> which specifies additional options.</param>
+        /// <param name="comparer">The equality comparer to use to compare items in the two sequences, or null to use the default comparer.</param>
+        /// <param name="predicate">If not null, determines which elements are "hard matches" (true) and which are "soft matches" (false).
+        /// A "hard match" element is one that can always be matched. A "soft match" element is only matched if it is 
+        /// completely surrounded by hard matches.</param>
+        /// <param name="postProcessor">If not null, provides a post-processing step for parts of the diff in between consecutive matches.
+        /// Without a post-processing step, these parts are returned as a sequence of deletes followed by a sequence of
+        /// inserts.</param>
         /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
         /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
         /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
         /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
-        public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new, DiffOptions<T> options)
+        public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new,
+            IEqualityComparer<T> comparer = null, Func<T, bool> predicate = null,
+            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor = null)
         {
             if (old == null)
                 throw new ArgumentNullException("old");
             if (@new == null)
                 throw new ArgumentNullException("new");
 
-            IEqualityComparer<T> comparer = options.Comparer == null ? EqualityComparer<T>.Default : options.Comparer;
-
+            comparer = comparer ?? EqualityComparer<T>.Default;
             var olda = old as IList<T> ?? old.ToArray();
             var newa = @new as IList<T> ?? @new.ToArray();
 
@@ -59,7 +50,7 @@ namespace RT.Util
                 endMatchIndex++;
 
             if (olda.Count > startMatchIndex + endMatchIndex && newa.Count > startMatchIndex + endMatchIndex)
-                foreach (var x in diff(olda, newa, comparer, options.Predicate, options.PostProcessor, startMatchIndex, endMatchIndex))
+                foreach (var x in diff(olda, newa, comparer, predicate, postProcessor, startMatchIndex, endMatchIndex))
                     yield return x;
             else
             {
@@ -180,30 +171,7 @@ namespace RT.Util
         }
     }
 
-    /// <summary>
-    /// Specifies various options for <see cref="Ut.Diff&lt;T&gt;(IEnumerable&lt;T&gt;, IEnumerable&lt;T&gt;, DiffOptions&lt;T&gt;)"/>.
-    /// This class cannot be inherited.
-    /// </summary>
-    /// <typeparam name="T">The type of elements in the sequences to compare.</typeparam>
-    public struct DiffOptions<T>
-    {
-        /// <summary>The equality comparer to use to compare items in the two sequences.</summary>
-        public IEqualityComparer<T> Comparer;
-
-        /// <summary>If not null, determines which elements are "hard matches" (true) and which are "soft matches" (false).
-        /// A "hard match" element is one that can always be matched. A "soft match" element is only matched if it is 
-        /// completely surrounded by hard matches.</summary>
-        public Func<T, bool> Predicate;
-
-        /// <summary>If not null, provides a post-processing step for parts of the diff in between consecutive matches.
-        /// Without a post-processing step, these parts are returned as a sequence of deletes followed by a sequence of
-        /// inserts.</summary>
-        public Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> PostProcessor;
-    }
-
-    /// <summary>Indicates insertions and deletions in the output of
-    /// <see cref="Ut.Diff&lt;T&gt;(IEnumerable&lt;T&gt;, IEnumerable&lt;T&gt;, DiffOptions&lt;T&gt;)"/>.
-    /// </summary>
+    /// <summary>Indicates insertions and deletions in the output of <see cref="Ut.Diff{T}"/>. </summary>
     public enum DiffOp
     {
         /// <summary>
