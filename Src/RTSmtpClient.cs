@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Mail;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
@@ -65,7 +64,7 @@ namespace RT.Util
                 if (encryption == SmtpEncryption.Ssl)
                     _sslStream = new SslStream(_tcpStream);
                 else
-                    _sslStream = new SslStream(_tcpStream, false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
+                    _sslStream = new SslStream(_tcpStream, false, (_, __, ___, ____) => true);
                 _sslStream.AuthenticateAsClient(host);
             }
             _writer = new StreamWriter(_sslStream ?? _tcpStream, new UTF8Encoding(false)) { NewLine = "\r\n", AutoFlush = true };
@@ -98,8 +97,10 @@ namespace RT.Util
             {
                 var line = _reader.ReadLine();
                 _conversation.Add("< " + line);
-                m = Regex.Match(line, @"^(\d+)(-| |$)?(.*)?$".Fmt(statusCode));
-                if (!m.Success || int.Parse(m.Groups[1].Value) != statusCode)
+                m = Regex.Match(line, @"^(\d+)(-| |$)?(.*)?$");
+                if (!m.Success)
+                    throw new RTSmtpException("Expected status code '{0}', got unexpected line: {1}".Fmt(statusCode, line), _conversation);
+                if (int.Parse(m.Groups[1].Value) != statusCode)
                     throw new RTSmtpException("Expected status code '{0}', got '{1}'.".Fmt(statusCode, m.Groups[1].Value), _conversation);
                 response += m.Groups[3].Value.Trim() + Environment.NewLine;
             }
@@ -108,15 +109,21 @@ namespace RT.Util
         }
 
         /// <summary>Sends an e-mail.</summary>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <param name="subject"></param>
-        /// <param name="plainText"></param>
-        /// <param name="html"></param>
+        /// <param name="from">From address.</param>
+        /// <param name="to">Recipient address(es).</param>
+        /// <param name="subject">Subject line.</param>
+        /// <param name="plainText">Plain-text version of the e-mail.</param>
+        /// <param name="html">HTML version of the e-mail.</param>
         public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string plainText, string html)
         {
+            if (from == null)
+                throw new ArgumentNullException("from");
+            if (to == null)
+                throw new ArgumentNullException("to");
             if (plainText == null && html == null)
-                throw new InvalidOperationException("You must have either a plain-text or an HTML to your e-mail (or both).");
+                throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "html");
+            if (subject == null)
+                subject = "";
             if (plainText == null)
                 plainText = "This e-mail is only available in HTML format.";
 
