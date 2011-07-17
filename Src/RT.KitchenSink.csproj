@@ -81,6 +81,7 @@
     <Compile Include="PathManager.cs" />
     <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
+    <Compile Include="RateCalculator.cs" />
     <Compile Include="Regex2.cs" />
     <Compile Include="ParseCs\Token.cs" />
     <Compile Include="Streams\ControlCodedStream.cs" />

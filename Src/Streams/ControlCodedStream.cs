@@ -82,6 +82,22 @@ namespace RT.Util.Streams
             }
         }
 
+        /// <summary>
+        /// Determines if the stream has ended. Note that this method may block, potentially indefinitely, in cases where
+        /// it isn't known yet if the stream has ended (for example, a NetworkStream for a socket that is idle but not closed).
+        /// </summary>
+        public bool IsEnded
+        {
+            get
+            {
+                using (var peek = _stream.GetPeekStream())
+                {
+                    byte[] read = peek.Read(1);
+                    return read.Length == 0;
+                }
+            }
+        }
+
         /// <summary>Writes the specified data to the underlying stream.</summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
