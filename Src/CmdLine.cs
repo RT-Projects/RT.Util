@@ -764,7 +764,7 @@ namespace RT.Util.CommandLine
             postBuildStep(rep, typeof(T), applicationTrType, false);
         }
 
-        private static void postBuildStep(IPostBuildReporter rep, Type commandLineType, Type applicationTrType, bool checkClassDoc)
+        private static void postBuildStep(IPostBuildReporter rep, Type commandLineType, Type applicationTrType, bool classDocRecommended)
         {
             if (!commandLineType.IsClass)
                 rep.Error(@"{0} is not a class.".Fmt(commandLineType.FullName), (commandLineType.IsEnum ? "enum " : commandLineType.IsInterface ? "interface " : typeof(Delegate).IsAssignableFrom(commandLineType) ? "delegate " : "struct ") + commandLineType.Name);
@@ -797,8 +797,7 @@ namespace RT.Util.CommandLine
             FieldInfo lastField = null;
             bool haveSeenOptionalPositional = false;
 
-            if (checkClassDoc)
-                checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods);
+            checkDocumentation(rep, commandLineType, commandLineType, applicationTrType, sensibleDocMethods, classDocRecommended);
 
             foreach (var field in commandLineType.GetFields())
             {
@@ -856,7 +855,7 @@ namespace RT.Util.CommandLine
                             continue;
 
                         // check that the enum values all have documentation
-                        checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods);
+                        checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods, true);
 
                         if (enumOpt == null)
                         {
@@ -880,7 +879,7 @@ namespace RT.Util.CommandLine
 
                     // If the enum field has an Option attribute, it needs documentation too
                     if (options != null)
-                        checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
+                        checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods, true);
                 }
                 // ### BOOL fields
                 else if (field.FieldType == typeof(bool))
@@ -890,7 +889,7 @@ namespace RT.Util.CommandLine
                     else
                         // Here we have checked that the field is not positional, not an enum, and not [Ignore]’d, so it must have an [Option] attribute
                         checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
-                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
+                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods, true);
                 }
                 // ### STRING, STRING[], INTEGER and FLOATING fields (including nullable)
                 else if (field.FieldType == typeof(string) || field.FieldType == typeof(string[]) ||
@@ -901,7 +900,7 @@ namespace RT.Util.CommandLine
                     // options is null if and only if this field is positional
                     if (options != null)
                         checkOptionsUnique(rep, options, optionTaken, commandLineType, field);
-                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods);
+                    checkDocumentation(rep, field, commandLineType, applicationTrType, sensibleDocMethods, true);
                 }
                 // ### Command-group classes
                 else if (field.FieldType.IsClass && field.FieldType.IsDefined<CommandGroupAttribute>())
@@ -1006,7 +1005,7 @@ namespace RT.Util.CommandLine
             }
         }
 
-        private static void checkDocumentation(IPostBuildReporter rep, MemberInfo member, Type inType, Type applicationTrType, List<MethodInfo> sensibleDocMethods)
+        private static void checkDocumentation(IPostBuildReporter rep, MemberInfo member, Type inType, Type applicationTrType, List<MethodInfo> sensibleDocMethods, bool classDocRecommended)
         {
             if (member.IsDefined<UndocumentedAttribute>())
                 return;
@@ -1035,7 +1034,7 @@ namespace RT.Util.CommandLine
                 }
             }
 
-            if (toCheck == null)
+            if (classDocRecommended && toCheck == null)
             {
                 if (member is Type)
                 {
@@ -1059,14 +1058,17 @@ namespace RT.Util.CommandLine
             }
 
             string eggsError = null;
-            try { var result = EggsML.Parse(toCheck); }
-            catch (EggsMLParseException e) { eggsError = e.Message; }
-            if (eggsError != null)
+            if (toCheck != null)
             {
-                if (member is Type)
-                    rep.Error(@"{0}: Type documentation is not valid EggsML: {1}".Fmt(((Type) member).FullName, eggsError), "class " + member.Name);
-                else
-                    rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
+                try { var result = EggsML.Parse(toCheck); }
+                catch (EggsMLParseException e) { eggsError = e.Message; }
+                if (eggsError != null)
+                {
+                    if (member is Type)
+                        rep.Error(@"{0}: Type documentation is not valid EggsML: {1}".Fmt(((Type) member).FullName, eggsError), "class " + member.Name);
+                    else
+                        rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
+                }
             }
         }
 #endif
