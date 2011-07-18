@@ -56,10 +56,10 @@ namespace RT.Util.Streams
         public bool Buffered { get; set; }
 
         /// <summary>
-        /// Reads some text into the specified buffer. The behaviour depends on the <see cref="Buffered"/> property.
-        /// The bytes returned respresent the text returned by the underlying enumerator, UTF-8-encoded.
-        /// Although DynamicContentStream makes no effort to keep multi-byte characters within a single invocation
-        /// of Read(), all output will be valid UTF-8 when concatenated.
+        /// Reads some text or data into the specified buffer. The behaviour depends on the <see cref="Buffered"/> property.
+        /// The bytes returned respresent the text or data returned by the underlying enumerator. In the case of UTF-8-encoded
+        /// text, DynamicContentStream may potentially return incomplete multi-byte sequences; however, all output will be
+        /// valid UTF-8 when concatenated.
         /// </summary>
         /// <param name="buffer">The buffer to copy the data into.</param>
         /// <param name="offset">The offset at which to start copying into buffer.</param>
