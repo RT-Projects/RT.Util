@@ -90,7 +90,9 @@ namespace RT.Util.Streams
         /// </summary>
         public override void Close()
         {
+            Socket.NoDelay = true;
             Socket.Send(new byte[] { (byte) '0', 13, 10, 13, 10 }); // "0\r\n\r\n"
+            Socket.NoDelay = false;
         }
     }
 
