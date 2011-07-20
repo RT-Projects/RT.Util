@@ -336,11 +336,21 @@ namespace RT.Util.ExtensionMethods
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetween<string>(null, null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetween<string>(null, ", "); });
             Assert.DoesNotThrow(() => { IEnumerableExtensions.InsertBetween<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetweenWithAnd<string>(null, null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetweenWithAnd<string>(null, "|", null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetweenWithAnd<string>(null, null, "~"); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.InsertBetweenWithAnd<string>(null, "|", "~"); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.InsertBetweenWithAnd<string>(new string[0], null, null); });
 
             Assert.IsTrue(new[] { "1", "2", "3", "4", "5" }.InsertBetween("|").SequenceEqual(new[] { "1", "|", "2", "|", "3", "|", "4", "|", "5" }));
             Assert.IsTrue(new[] { "1" }.InsertBetween("|").SequenceEqual(new[] { "1" }));
             Assert.IsTrue(new string[0].InsertBetween("|").SequenceEqual(new string[0]));
             Assert.IsTrue(new[] { "1", "2", "3" }.InsertBetween(null).SequenceEqual(new[] { "1", null, "2", null, "3" }));
+
+            Assert.IsTrue(new[] { "1", "2", "3", "4", "5" }.InsertBetweenWithAnd("|", "~").SequenceEqual(new[] { "1", "|", "2", "|", "3", "|", "4", "~", "5" }));
+            Assert.IsTrue(new[] { "1" }.InsertBetweenWithAnd("|", "~").SequenceEqual(new[] { "1" }));
+            Assert.IsTrue(new string[0].InsertBetweenWithAnd("|", "~").SequenceEqual(new string[0]));
+            Assert.IsTrue(new[] { "1", "2", "3" }.InsertBetweenWithAnd(null, null).SequenceEqual(new[] { "1", null, "2", null, "3" }));
         }
     }
 }

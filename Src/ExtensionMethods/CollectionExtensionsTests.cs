@@ -372,5 +372,15 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual("DEADBEEF", new uint[] { 0xDEADBEEF }.ToHex().ToUpperInvariant());
             Assert.AreEqual("000000010000000200000003", new uint[] { 1, 2, 3 }.ToHex().ToUpperInvariant());
         }
+
+        [Test]
+        public void TestSumUnchecked()
+        {
+            var list = new[] { int.MaxValue, int.MaxValue - 1 };
+            Assert.AreEqual(-3, list.SumUnchecked());
+
+            var longList = new[] { long.MaxValue, long.MaxValue - 1 };
+            Assert.AreEqual(-3, longList.SumUnchecked(lng => unchecked((int) lng)));
+        }
     }
 }

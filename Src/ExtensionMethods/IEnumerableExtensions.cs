@@ -771,7 +771,11 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
+            return insertBetweenWithAndIterator(source, comma, and);
+        }
 
+        private static IEnumerable<T> insertBetweenWithAndIterator<T>(IEnumerable<T> source, T comma, T and)
+        {
             using (var enumerator = source.GetEnumerator())
             {
                 if (!enumerator.MoveNext())
