@@ -761,6 +761,37 @@ namespace RT.Util.ExtensionMethods
             return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
         }
 
+        /// <summary>Inserts the <paramref name="comma"/> item in between each element in the input collection except between the second-last and last, where it inserts <paramref name="and"/> instead.</summary>
+        /// <param name="source">The input collection.</param>
+        /// <param name="comma">The element to insert between each consecutive pair of elements in the input collection except between the second-last and last.</param>
+        /// <param name="and">The element to insert between the second-last and last element of the input collection.</param>
+        /// <returns>A collection containing the original collection with the extra element inserted.
+        /// For example, new[] { "a", "b", "c" }.InsertBetweenWithAnd(", ", " and ") returns { "a", ", ", "b", " and ", "c" }.</returns>
+        public static IEnumerable<T> InsertBetweenWithAnd<T>(this IEnumerable<T> source, T comma, T and)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                    yield break;
+                yield return enumerator.Current;
+                if (!enumerator.MoveNext())
+                    yield break;
+
+                var prev = enumerator.Current;
+                while (enumerator.MoveNext())
+                {
+                    yield return comma;
+                    yield return prev;
+                    prev = enumerator.Current;
+                }
+                yield return and;
+                yield return prev;
+            }
+        }
+
         /// <summary>Determines whether all the input sequences are equal according to SequenceEquals.</summary>
         public static bool AllSequencesEqual<T>(this IEnumerable<IEnumerable<T>> sources)
         {
