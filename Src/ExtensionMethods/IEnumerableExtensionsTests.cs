@@ -213,16 +213,36 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestIndexOf()
+        public void TestIndexOfPredicate()
         {
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, str => str != null); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.IndexOf<string>(new string[0], str => str != null); });
 
             var input = new[] { 1, 2, 3, 4 };
             Assert.AreEqual(2, input.IndexOf(i => i == 3));
             Assert.AreEqual(2, input.IndexOf(i => i > 2));
             Assert.AreEqual(-1, input.IndexOf(i => i > 5));
+        }
+
+        [Test]
+        public void TestIndexOfComparer()
+        {
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], null, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, "", null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null, StringComparer.OrdinalIgnoreCase); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], "", null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, "", StringComparer.OrdinalIgnoreCase); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.IndexOf<string>(new string[0], null, StringComparer.OrdinalIgnoreCase); });
+
+            var input = new[] { "abc", "aBc", "ABC", "abcd", "abcD" };
+            Assert.AreEqual(2, input.IndexOf("ABC", StringComparer.Ordinal));
+            Assert.AreEqual(0, input.IndexOf("ABC", StringComparer.OrdinalIgnoreCase));
+            Assert.AreEqual(3, input.IndexOf("abcd", StringComparer.Ordinal));
+            Assert.AreEqual(3, input.IndexOf("abcd", StringComparer.OrdinalIgnoreCase));
+            Assert.AreEqual(-1, input.IndexOf("xyz", StringComparer.OrdinalIgnoreCase));
         }
 
         [Test]

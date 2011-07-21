@@ -397,11 +397,32 @@ namespace RT.Util.ExtensionMethods
             if (source == null)
                 throw new ArgumentNullException("source");
             if (predicate == null)
-                throw new ArgumentNullException("condition");
+                throw new ArgumentNullException("predicate");
             int index = 0;
             foreach (var v in source)
             {
                 if (predicate(v))
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Returns the index of the first element in this <paramref name="source"/> that is equal to
+        /// the specified <paramref name="element"/> as determined by the specified <paramref name="comparer"/>.
+        /// If no such elements are found, returns -1.
+        /// </summary>
+        public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (comparer == null)
+                throw new ArgumentNullException("comparer");
+            int index = 0;
+            foreach (var v in source)
+            {
+                if (comparer.Equals(v, element))
                     return index;
                 index++;
             }
