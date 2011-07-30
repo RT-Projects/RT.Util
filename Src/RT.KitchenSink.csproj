@@ -92,8 +92,17 @@
     <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
     <Compile Include="Waiter.cs" />
+    <Compile Include="WebForm.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
+      <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
+      <Name>Servers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.TagSoup\Src\RT.TagSoup.csproj">
+      <Project>{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}</Project>
+      <Name>TagSoup</Name>
+    </ProjectReference>
     <ProjectReference Include="RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
       <Name>Util</Name>
