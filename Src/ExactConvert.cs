@@ -1013,7 +1013,7 @@ namespace RT.Util
         {
             TypeCode code = GetTypeCode(value);
 
-            if (code == TypeCode.String) // fast track if it's already the right type
+            if (code == TypeCode.String || value == null) // fast track if it's already the right type
             {
                 result = (string) value;
                 return true;
@@ -1676,7 +1676,7 @@ namespace RT.Util
         {
             TypeCode from = ExactConvert.GetTypeCode(value);
             TypeCode to = Type.GetTypeCode(targetType);
-            _message = string.Format("Cannot do an exact conversion from value \"{2}\" of type \"{0}\" to type \"{1}\").", from, to, value);
+            _message = string.Format("Cannot do an exact conversion from value \"{2}\" of type \"{0}\" to type \"{1}\".", from, to, value);
         }
     }
 

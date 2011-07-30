@@ -55,6 +55,20 @@ namespace RT.KitchenSink
                 return input;
             return new object[] { input, new DIV(error) { class_ = "error" } };
         }
+
+        protected object hidden(Expression<Func<string>> fieldExpr)
+        {
+            var expr = fieldExpr.Body as MemberExpression;
+            if (expr == null)
+                throw new InvalidOperationException("Expression must be a field access expression.");
+            var field = expr.Member as FieldInfo;
+            if (field == null)
+                throw new InvalidOperationException("Expression must be a field access expression.");
+            var value = field.GetValue(this);
+            if (value == null)
+                return null;
+            return new INPUT { type = itype.hidden, name = field.Name, value = (string) value };
+        }
     }
 
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
