@@ -40,7 +40,6 @@ namespace RT.KitchenSink
 
         protected virtual void BeforeFromRequest(HttpRequest req) { }
         protected virtual void AfterFromRequest(HttpRequest req) { }
-        public abstract object GetHtml(HttpRequest req);
 
         protected object textbox(Expression<Func<string>> fieldExpr, string error = null, int size = 60, bool password = false)
         {
