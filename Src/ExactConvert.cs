@@ -676,36 +676,46 @@ namespace RT.Util
             else if (code == TypeCode.String)
             {
                 string val = (string) value;
-                result = false;
+
                 if (string.Equals(val, "True", StringComparison.OrdinalIgnoreCase))
-                    result = true; // result = true, return true
-                else if (!string.Equals(val, "False", StringComparison.OrdinalIgnoreCase))
-                    return false;  // result = default(bool), return false
-                return true;       // result = false, return true
+                {
+                    result = true;
+                    return true;
+                }
+                else if (string.Equals(val, "False", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = false;
+                    return true;
+                }
+
+                // conversion failed
+                result = default(bool);
+                return false;
             }
 
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                result = false;
-                if (val == 1)
-                    result = true;
-                else if (val != 0)
-                    return false; ;
-                return true;
+                switch (val)
+                {
+                    case 0: result = false; return true;
+                    case 1: result = true; return true;
+                    default: result = false; return false;  // conversion failed
+                }
             }
 
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                result = false;
-                if (val == 1)
-                    result = true;
-                else if (val != 0)
-                    return false;
-                return true;
+                switch (val)
+                {
+                    case 0: result = false; return true;
+                    case 1: result = true; return true;
+                    default: result = false; return false;  // conversion failed
+                }
             }
 
+            // conversion failed
             result = default(bool);
             return false;
         }
@@ -1660,6 +1670,17 @@ namespace RT.Util
             {
                 if (value == null) return null;
                 else return ToChar(value);
+            }
+
+            /// <summary>
+            /// Converts the specified object to a nullable string.
+            /// Returns null if <paramref name="value"/> is null.
+            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
+            /// </summary>
+            public static string String(object value)
+            {
+                if (value == null) return null;
+                else return ExactConvert.ToString(value);
             }
         }
     }
