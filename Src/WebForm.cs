@@ -29,8 +29,11 @@ namespace RT.KitchenSink
                 if (!f.IsDefined<FormFieldAttribute>())
                     continue;
 
-                if (ExactConvert.IsSupportedType(f.FieldType))
-                    f.SetValue(ret, ExactConvert.To(f.FieldType, req.Post[f.Name].Value));
+                var value = req.Post[f.Name].Value;
+                if (value == null)  // ExactConvert doesn’t support converting null
+                    f.SetValue(ret, value);
+                else if (ExactConvert.IsSupportedType(f.FieldType))
+                    f.SetValue(ret, ExactConvert.To(f.FieldType, value));
                 else
                     throw new InvalidOperationException("Type {0} not supported.".Fmt(f.FieldType));
             }
