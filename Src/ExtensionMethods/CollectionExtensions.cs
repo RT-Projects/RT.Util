@@ -125,14 +125,15 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <typeparam name="T">Type of elements in the list.</typeparam>
         /// <param name="list">List to shuffle.</param>
+        /// <param name="rnd">Random number generator, or null to use <see cref="Rnd"/>.</param>
         /// <returns>The list operated on.</returns>
-        public static IList<T> Shuffle<T>(this IList<T> list)
+        public static IList<T> Shuffle<T>(this IList<T> list, Random rnd = null)
         {
             if (list == null)
                 throw new ArgumentNullException("list");
             for (int j = list.Count; j >= 1; j--)
             {
-                int item = Rnd.Next(0, j);
+                int item = rnd == null ? Rnd.Next(0, j) : rnd.Next(0, j);
                 if (item < j - 1)
                 {
                     var t = list[item];
