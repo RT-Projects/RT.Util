@@ -413,12 +413,12 @@ namespace RT.Util.ExtensionMethods
         /// the specified <paramref name="element"/> as determined by the specified <paramref name="comparer"/>.
         /// If no such elements are found, returns -1.
         /// </summary>
-        public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer)
+        public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
             if (comparer == null)
-                throw new ArgumentNullException("comparer");
+                comparer = EqualityComparer<T>.Default;
             int index = 0;
             foreach (var v in source)
             {
