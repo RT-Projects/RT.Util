@@ -240,13 +240,18 @@ namespace RT.Util.Json
         internal JsonNumber(JsonParserState ps)
         {
             StringBuilder sb = new StringBuilder();
-            while (ps.CurSym == Sym.Number)
+            while (ps.CurSym == Sym.Number || ps.Cur == 'e')
             {
                 sb.Append(ps.Cur);
                 ps.Pos++;
             }
             if (!decimal.TryParse(sb.ToString(), out _value))
-                throw new JsonParseException(ps, "not a number");
+            {
+                double d;
+                if (!double.TryParse(sb.ToString(), out d))
+                    throw new JsonParseException(ps, "not a number");
+                _value = (decimal) d;
+            }
             ps.ConsumeWhitespace();
         }
     }

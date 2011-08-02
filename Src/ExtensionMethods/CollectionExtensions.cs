@@ -460,7 +460,7 @@ namespace RT.Util.ExtensionMethods
         /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
         /// <param name="dict">Dictionary to operate on.</param>
         /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
-        public static void RemoveAll<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<KeyValuePair<TKey, TVal>> predicate)
+        public static void RemoveAll<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<KeyValuePair<TKey, TVal>, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp)).ToArray())
                 dict.Remove(kvp.Key);
@@ -471,7 +471,7 @@ namespace RT.Util.ExtensionMethods
         /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
         /// <param name="dict">Dictionary to operate on.</param>
         /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
-        public static void RemoveAllByKey<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<TKey> predicate)
+        public static void RemoveAllByKey<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<TKey, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp.Key)).ToArray())
                 dict.Remove(kvp.Key);
@@ -482,7 +482,7 @@ namespace RT.Util.ExtensionMethods
         /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
         /// <param name="dict">Dictionary to operate on.</param>
         /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
-        public static void RemoveAllByValue<TKey, TVal>(this IDictionary<TKey, TVal> dict, Predicate<TVal> predicate)
+        public static void RemoveAllByValue<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<TVal, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp.Value)).ToArray())
                 dict.Remove(kvp.Key);
