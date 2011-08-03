@@ -76,12 +76,5 @@ namespace RT.Util.ExtensionMethods
         {
             return new CustomComparer<T>((a, b) => -comparer.Compare(a, b));
         }
-
-        /// <summary>Applies the specified action to this object, and returns the object.</summary>
-        public static T Apply<T>(this T subject, Action<T> action)
-        {
-            action(subject);
-            return subject;
-        }
     }
 }
