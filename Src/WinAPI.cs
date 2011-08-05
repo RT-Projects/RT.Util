@@ -473,6 +473,14 @@ namespace RT.Util
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern uint RegisterWindowMessage(string lpString);
 
+        [DllImport("user32.dll")]
+        public static extern int ToUnicodeEx(uint virtualKeyCode, uint scanCode, byte[] keyboardState,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder receivingBuffer, int bufferSize, uint flags, IntPtr inputLocaleIdentifier);
+
+        [DllImport("user32.dll")]
+        public static extern int ToUnicode(uint virtualKeyCode, uint scanCode, byte[] keyboardState,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder receivingBuffer, int bufferSize, uint flags);
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
