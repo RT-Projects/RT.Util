@@ -200,13 +200,13 @@ namespace RT.Util
         }
 
         /// <summary>Checks the specified condition and causes the debugger to break if it is false. Throws an <see cref="InternalErrorException"/> afterwards.</summary>
-        public static void Assert(bool assertion)
+        public static void Assert(bool assertion, string message = null)
         {
             if (!assertion)
             {
                 if (System.Diagnostics.Debugger.IsAttached)
                     System.Diagnostics.Debugger.Break();
-                throw new InternalErrorException("Assertion failure");
+                throw new InternalErrorException(message ?? "Assertion failure");
             }
         }
 

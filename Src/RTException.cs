@@ -84,7 +84,7 @@ namespace RT.Util
 
         /// <summary>Creates an exception instance with the specified message and inner exception.</summary>
         public InternalErrorException(string message, Exception innerException)
-            : base(null, innerException)
+            : base(message, innerException)
         { }
     }
 }
