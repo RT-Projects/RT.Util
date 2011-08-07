@@ -60,9 +60,7 @@ namespace RT.Util.ExtensionMethods
             return (baseType == null) ? properties : GetAllProperties(baseType).Concat(properties);
         }
 
-        /// <summary>
-        /// Returns a proper statically-typed collection of the custom attributes on the current member.
-        /// </summary>
+        /// <summary>Returns a proper statically-typed collection of the custom attributes on this member.</summary>
         /// <param name="member">Member whose custom attributes to return.</param>
         /// <param name="inherit">Specifies whether to search this member's inheritance chain to find the attributes.</param>
         /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
@@ -71,9 +69,7 @@ namespace RT.Util.ExtensionMethods
             return member.GetCustomAttributes(typeof(T), inherit).Cast<T>();
         }
 
-        /// <summary>
-        /// Returns a proper statically-typed collection of the custom attributes on the current assembly.
-        /// </summary>
+        /// <summary>Returns a proper statically-typed collection of the custom attributes on this assembly.</summary>
         /// <param name="assembly">Assembly whose custom attributes to return.</param>
         /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
         public static IEnumerable<T> GetCustomAttributes<T>(this Assembly assembly)
@@ -81,9 +77,15 @@ namespace RT.Util.ExtensionMethods
             return assembly.GetCustomAttributes(typeof(T), false).Cast<T>();
         }
 
-        /// <summary>
-        /// Indicates whether one or more instance of the specified attribute type is applied to this member.
-        /// </summary>
+        /// <summary>Returns a proper statically-typed collection of the custom attributes on this parameter.</summary>
+        /// <param name="parameter">Parameter whose custom attributes to return.</param>
+        /// <typeparam name="T">The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
+        public static IEnumerable<T> GetCustomAttributes<T>(this ParameterInfo parameter)
+        {
+            return parameter.GetCustomAttributes(typeof(T), false).Cast<T>();
+        }
+
+        /// <summary>Indicates whether one or more instance of the specified attribute type is applied to this member.</summary>
         /// <typeparam name="T">The type of attribute to search for.</typeparam>
         /// <param name="member">Member whose custom attributes to search.</param>
         /// <param name="inherit">Specifies whether to search this member's inheritance chain to find the attributes.</param>
@@ -92,9 +94,7 @@ namespace RT.Util.ExtensionMethods
             return member.IsDefined(typeof(T), inherit);
         }
 
-        /// <summary>
-        /// Indicates whether one or more instance of the specified attribute type is applied to this parameter.
-        /// </summary>
+        /// <summary>Indicates whether one or more instance of the specified attribute type is applied to this parameter.</summary>
         /// <typeparam name="T">The type of attribute to search for.</typeparam>
         /// <param name="parameter">Parameter whose custom attributes to search.</param>
         public static bool IsDefined<T>(this ParameterInfo parameter)
