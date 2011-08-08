@@ -644,8 +644,11 @@ namespace RT.Util.CommandLine
                     table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
-                        table.SetCell(2, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length <= 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
-                        table.SetCell(3, row, new ConsoleColoredString(el.GetCustomAttributes<CommandNameAttribute>().First().Names.Where(n => n.Length > 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
+                        var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
+                        if (attr == null)   // skip the default value
+                            continue;
+                        table.SetCell(2, row, new ConsoleColoredString(attr.Names.Where(n => n.Length <= 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
+                        table.SetCell(3, row, new ConsoleColoredString(attr.Names.Where(n => n.Length > 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
                         table.SetCell(4, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
@@ -658,7 +661,7 @@ namespace RT.Util.CommandLine
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => !e.IsDefined<UndocumentedAttribute>()))
                     {
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
-                        if (attr == null)
+                        if (attr == null)   // skip the default value
                             continue;
                         table.SetCell(2, row, new ConsoleColoredString(attr.Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
                         table.SetCell(3, row, new ConsoleColoredString(attr.Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
@@ -862,7 +865,7 @@ namespace RT.Util.CommandLine
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                             if (cmdNames == null || cmdNames.Names.Length == 0)
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have either a [CommandName] attribute with at least one command name, or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have a [CommandName] attribute (unless it is the field's default value and the field is optional).".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
                             else
                                 checkCommandNamesUnique(rep, cmdNames.Names, commandsTaken, commandLineType, field, enumField);
                         }
@@ -871,7 +874,7 @@ namespace RT.Util.CommandLine
                             // check that the non-default enum values’ Options are present and do not clash
                             var optionNames = enumField.GetOrderedOptionAttributeNames();
                             if (optionNames == null || !optionNames.Any())
-                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have either an [Option] attribute with at least one option name, or an [IsDefault] attribute.".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
+                                rep.Error(@"{0}.{1} (used by {2}.{3}): Enum value must have an [Option] attribute with at least one option name (unless it is the field's default value and the field is optional).".Fmt(field.FieldType.FullName, enumField.Name, commandLineType.FullName, field.Name), "enum " + field.FieldType.Name, enumField.Name);
                             else
                                 checkOptionsUnique(rep, optionNames, optionTaken, commandLineType, field, enumField);
                         }
@@ -937,7 +940,7 @@ namespace RT.Util.CommandLine
                 // Warn if the class has unused documentation methods
                 foreach (var meth in commandLineType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(m => m.Name.EndsWith("Doc") && m.ReturnType == typeof(string) && m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { applicationTrType })))
                     if (!sensibleDocMethods.Contains(meth))
-                        rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field, or the corresponding field does not require documentation because it is a positional enum or has an [EnumOptions] or [IsDefault] attribute.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
+                        rep.Error(@"{0}.{1} looks like a documentation method, but has no corresponding field, or the corresponding field does not require documentation because it is a positional enum or has an [EnumOptions] attribute.".Fmt(commandLineType.FullName, meth.Name), "class " + commandLineType.Name, meth.Name);
         }
 
         private static void checkOptionsUnique(IPostBuildReporter rep, IEnumerable<string> options, Dictionary<string, MemberInfo> optionTaken, Type type, FieldInfo field, FieldInfo enumField)
@@ -1434,7 +1437,7 @@ namespace RT.Util.CommandLine
                 fieldFormat += " `*&<<" + EggsML.Escape(field.Name) + ">>&*`";
             }
             else if (field.FieldType.IsEnum)
-                // You can’t get a MissingParameterException for something that isn’t mandatory, so none of these fields has an [IsDefault]
+                // You can’t get a MissingParameterException for something that isn’t mandatory, so all of these fields must have [Option] attributes
                 fieldFormat = "`*${{" + field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).SelectMany(f => f.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o))).JoinString("||") + "}}$*`";
             else
                 throw new InternalErrorException("475927: unexpected field attributes");
