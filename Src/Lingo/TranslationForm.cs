@@ -154,7 +154,7 @@ namespace RT.Util.Lingo
             };
             _lstGroups.SelectedIndex = 0;
 
-            ToolStrip ts = new MenuStrip { Dock = DockStyle.Top };
+            ToolStrip ts = new MenuStrip { Dock = DockStyle.Top, Renderer = new NativeToolStripRenderer(), Padding = new Padding(0) };
             ts.Items.Add(new ToolStripMenuItem("&Translation", null,
                 _mnuApply = new ToolStripMenuItem("&Save and apply", null, saveAndApply) { ShortcutKeys = Keys.Control | Keys.S },
                 new ToolStripMenuItem("&Close", null, (s, e) => Close())
