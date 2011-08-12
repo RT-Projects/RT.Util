@@ -914,6 +914,8 @@ namespace RT.Util.Lingo
                     !string.IsNullOrEmpty(trans.Old) && trans.Old != orig.Translation
                 )
             {
+                SuspendLayout();
+
                 _translation = trans;
                 _original = orig;
 
@@ -956,6 +958,8 @@ namespace RT.Util.Lingo
                 _btnAccept.KeyDown += new KeyEventHandler(keyDown);
                 _txtTranslation.TabIndex = 0;
                 _btnAccept.TabIndex = 1;
+
+                ResumeLayout(false);
             }
 
             protected override void acceptTranslation(object sender, EventArgs e)
@@ -1136,6 +1140,8 @@ namespace RT.Util.Lingo
                     trans.Old != null && !trans.Old.SequenceEqual(orig.Translations)
                 )
             {
+                SuspendLayout();
+
                 int nn = trans.IsNumber.Where(b => b).Count();
                 int rowsOrig = (int) Math.Pow(origNumberSystem.NumStrings, nn);
                 int rowsTrans = (int) Math.Pow(transNumberSystem.NumStrings, nn);
@@ -1167,6 +1173,8 @@ namespace RT.Util.Lingo
 
                 _btnAccept.KeyDown += new KeyEventHandler(keyDown);
                 _btnAccept.TabIndex = 1;
+
+                ResumeLayout(false);
             }
 
             private Panel createTablePanel(TrStringNum str, string[] display, NumberSystem ns, bool textBoxes, int nn, int rows)
@@ -1183,6 +1191,7 @@ namespace RT.Util.Lingo
                     ColumnCount = 1 + nn,
                     RowCount = 1 + rows
                 };
+                pnlTranslations.SuspendLayout();
                 pnlTranslations.Click += new EventHandler(focusTranslationBox);
                 for (int i = 0; i < nn; i++)
                     pnlTranslations.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -1264,6 +1273,7 @@ namespace RT.Util.Lingo
                         pnlTranslations.Controls.Add(lbl, col, row + 1);
                     }
                 }
+                pnlTranslations.ResumeLayout(false);
                 return pnlTranslations;
             }
 

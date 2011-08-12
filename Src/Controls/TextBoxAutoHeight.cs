@@ -16,16 +16,30 @@ namespace RT.Util.Controls
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
         static extern IntPtr SendMessage(IntPtr hWnd, Int32 Msg, IntPtr wParam, IntPtr lParam);
 
+        private int _lastWidth;
+        private int _lastWidthResult;
+
         /// <summary>Sets the specified bounds of the System.Windows.Forms.TextBoxBase control.</summary>
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
-            if (Multiline && WordWrap)
+            if (x != Left || y != Top || width != Width || height != Height)
             {
-                Size s = SizeFromClientSize(TextRenderer.MeasureText(Text.Length > 0 ? Text : "Wg", Font, new Size(width - Margin.Horizontal - Padding.Horizontal, height), TextFormatFlags.WordBreak));
-                base.SetBoundsCore(x, y, width, s.Height + Margin.Vertical, BoundsSpecified.All);
+                if (Multiline && WordWrap)
+                {
+                    int newHeight;
+                    if (_lastWidth != 0 && width == _lastWidth)
+                        newHeight = _lastWidthResult;
+                    else
+                    {
+                        newHeight = SizeFromClientSize(TextRenderer.MeasureText(Text.Length > 0 ? Text : "Wg", Font, new Size(width - Margin.Horizontal - Padding.Horizontal, height), TextFormatFlags.WordBreak)).Height;
+                        _lastWidthResult = newHeight;
+                        _lastWidth = width;
+                    }
+                    base.SetBoundsCore(x, y, width, newHeight + Margin.Vertical, BoundsSpecified.All);
+                }
+                else
+                    base.SetBoundsCore(x, y, width, height, specified);
             }
-            else
-                base.SetBoundsCore(x, y, width, height, specified);
         }
 
         /// <summary>Overrides the base class's WndProc message to capture mouse-wheel messages and pass them on to the GUI parent instead.</summary>
@@ -56,6 +70,38 @@ namespace RT.Util.Controls
             if (Multiline && WordWrap)
                 SetBoundsCore(Left, Top, Width, Height, BoundsSpecified.Size);
             base.OnSizeChanged(e);
+        }
+
+        public override string Text
+        {
+            get { return base.Text; }
+            set
+            {
+                _lastWidth = 0;
+                base.Text = value;
+            }
+        }
+
+        public override Font Font
+        {
+            get { return base.Font; }
+            set
+            {
+                _lastWidth = 0;
+                base.Font = value;
+            }
+        }
+
+        protected override void OnMarginChanged(EventArgs e)
+        {
+            _lastWidth = 0;
+            base.OnMarginChanged(e);
+        }
+
+        protected override void OnPaddingChanged(EventArgs e)
+        {
+            _lastWidth = 0;
+            base.OnPaddingChanged(e);
         }
     }
 }
