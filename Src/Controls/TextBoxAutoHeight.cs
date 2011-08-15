@@ -72,6 +72,7 @@ namespace RT.Util.Controls
             base.OnSizeChanged(e);
         }
 
+        /// <summary>Gets or sets the current text in the <see cref="TextBoxAutoHeight"/>.</summary>
         public override string Text
         {
             get { return base.Text; }
@@ -82,6 +83,7 @@ namespace RT.Util.Controls
             }
         }
 
+        /// <summary>Gets or sets the font of the text displayed by the control.</summary>
         public override Font Font
         {
             get { return base.Font; }
@@ -92,12 +94,14 @@ namespace RT.Util.Controls
             }
         }
 
+        /// <summary>Override; see base.</summary>
         protected override void OnMarginChanged(EventArgs e)
         {
             _lastWidth = 0;
             base.OnMarginChanged(e);
         }
 
+        /// <summary>Override; see base.</summary>
         protected override void OnPaddingChanged(EventArgs e)
         {
             _lastWidth = 0;

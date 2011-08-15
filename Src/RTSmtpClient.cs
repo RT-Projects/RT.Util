@@ -57,7 +57,9 @@ namespace RT.Util
         /// <summary>The decrypted password.</summary>
         public string PasswordDecrypted { get { return Password ?? DecryptPassword(PasswordEncrypted); } }
 
+        /// <summary>When implemented in a derived class, decrypts the specified encrypted password.</summary>
         protected abstract string DecryptPassword(string encrypted);
+        /// <summary>When implemented in a derived class, encrypts the specified clear-text password.</summary>
         protected abstract string EncryptPassword(string decrypted);
 
         private void encryptPassword()
