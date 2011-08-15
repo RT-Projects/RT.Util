@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
+using RT.Util.Xml;
 
 namespace RT.Util
 {
@@ -39,7 +40,7 @@ namespace RT.Util
     }
 
     /// <summary>Holds all settings required to connect to an SMTP server.</summary>
-    public abstract class RTSmtpSettings
+    public abstract class RTSmtpSettings : IXmlClassifyProcess
     {
         /// <summary>Server host name or IP address.</summary>
         public string Host = "smtp.example.com";
@@ -49,22 +50,33 @@ namespace RT.Util
         public SmtpEncryption Encryption = SmtpEncryption.None;
         /// <summary>SMTP username for login - for "me@example.com" this is typically "me" or "me@example.com", but can be anything.</summary>
         public string Username = "example_user";
-        /// <summary>Unencrypted password. Use <see cref="SyncPassword"/> to encrypt the password, which sets this field to null so that the settings file doesn't hold a password in plaintext.</summary>
+        /// <summary>Unencrypted password to be automatically encrypted by XmlClassify whenever the settings are loaded or saved.</summary>
         public string Password = "password";
         /// <summary>The encrypted password.</summary>
         public string PasswordEncrypted;
         /// <summary>The decrypted password.</summary>
         public string PasswordDecrypted { get { return Password ?? DecryptPassword(PasswordEncrypted); } }
 
-        /// <summary>If an unencrypted password is stored in <see cref="Password"/>, encrypts it and erases the plaintext.</summary>
-        public void SyncPassword()
+        protected abstract string DecryptPassword(string encrypted);
+        protected abstract string EncryptPassword(string decrypted);
+
+        private void encryptPassword()
         {
+            if (Password == null)
+                return;
             PasswordEncrypted = EncryptPassword(PasswordDecrypted);
             Password = null;
         }
 
-        protected abstract string DecryptPassword(string encrypted);
-        protected abstract string EncryptPassword(string decrypted);
+        void IXmlClassifyProcess.BeforeXmlClassify()
+        {
+            encryptPassword();
+        }
+
+        void IXmlClassifyProcess.AfterXmlDeclassify()
+        {
+            encryptPassword();
+        }
     }
 
     /// <summary>Provides methods to send e-mails via an SMTP server.</summary>
