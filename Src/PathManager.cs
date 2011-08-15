@@ -253,31 +253,46 @@ namespace RT.KitchenSink.Paths
                 return ReportFail(DirName, Message);
         }
 
-        /// <summary>
-        /// Enumerates all files and folders visible to the PathManager, according to which
-        /// paths were added using <see cref="AddIncludePath"/> and <see cref="AddExcludePath"/>. If any paths cannot be
-        /// enumerated, they are added to <see cref="FailedFiles"/> list, which is cleared before
-        /// enumeration begins.
-        /// </summary>
-        /// <param name="includeDirs">If true, directories will be enumerated as <see cref="DirectoryInfo"/> structures.</param>
-        /// <param name="includeFiles">If true, files will be enumerated as <see cref="FileInfo"/> structures. Otherwise files
-        /// won't be listed, which is considerably faster (but also considerably less useful...)</param>
-        public IEnumerable<FileSystemInfo> GetFiles(bool includeDirs, bool includeFiles)
+        /// <summary>Enumerates all files and directories according to the paths that were added using <see cref="AddIncludePath"/>
+        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
+        /// which is cleared before enumeration begins.</summary>
+        public IEnumerable<FileSystemInfo> GetEntries()
+        {
+            return get(true, true);
+        }
+
+        /// <summary>Enumerates all files (not folders) according to the paths that were added using <see cref="AddIncludePath"/>
+        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
+        /// which is cleared before enumeration begins.</summary>
+        public IEnumerable<FileInfo> GetFiles()
+        {
+            return get(false, true).Cast<FileInfo>();
+        }
+
+        /// <summary>Enumerates all directories (not files) according to the paths that were added using <see cref="AddIncludePath"/>
+        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
+        /// which is cleared before enumeration begins.</summary>
+        public IEnumerable<DirectoryInfo> GetDirectories()
+        {
+            return get(false, true).Cast<DirectoryInfo>();
+        }
+
+        private IEnumerable<FileSystemInfo> get(bool includeDirs, bool includeFiles)
         {
             FailedFiles = new List<string>();
-            Stack<DirectoryInfo> toScan = new Stack<DirectoryInfo>();
-            List<string> toExclude = new List<string>();
+            var toScan = new Stack<DirectoryInfo>();
+            var toExclude = new List<string>();
 
-            List<string> l = new List<string>(); // so that we queue items in proper order
+            var list = new List<string>(); // so that we queue items in proper order
             for (int i = 0; i < Paths.Count; i++)
             {
                 if (Paths[i].Include)
-                    l.Add(Paths[i].Path);
+                    list.Add(Paths[i].Path);
                 else
                     toExclude.Add(Paths[i].Path.ToLowerInvariant());
             }
-            for (int i = l.Count - 1; i >= 0; i--)
-                toScan.Push(new DirectoryInfo(l[i]));
+            for (int i = list.Count - 1; i >= 0; i--)
+                toScan.Push(new DirectoryInfo(list[i]));
 
             // Scan all paths
             while (toScan.Count > 0)
@@ -291,9 +306,9 @@ namespace RT.KitchenSink.Paths
                         files = curDir.GetFiles();
                     dirs = curDir.GetDirectories();
                 }
-                catch (Exception E)
+                catch (Exception e)
                 {
-                    if (DoReportFail(curDir.FullName, E.Message))
+                    if (DoReportFail(curDir.FullName, e.Message))
                         continue;
                     else
                         yield break;
