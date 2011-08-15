@@ -38,6 +38,35 @@ namespace RT.Util
         SslIgnoreCert,
     }
 
+    /// <summary>Holds all settings required to connect to an SMTP server.</summary>
+    public abstract class RTSmtpSettings
+    {
+        /// <summary>Server host name or IP address.</summary>
+        public string Host = "smtp.example.com";
+        /// <summary>Server port. Standard ports: 25 for no encryption, 465 for SSL.</summary>
+        public int Port = 25;
+        /// <summary>Encryption to use.</summary>
+        public SmtpEncryption Encryption = SmtpEncryption.None;
+        /// <summary>SMTP username for login - for "me@example.com" this is typically "me" or "me@example.com", but can be anything.</summary>
+        public string Username = "example_user";
+        /// <summary>Unencrypted password. Use <see cref="SyncPassword"/> to encrypt the password, which sets this field to null so that the settings file doesn't hold a password in plaintext.</summary>
+        public string Password = "password";
+        /// <summary>The encrypted password.</summary>
+        public string PasswordEncrypted;
+        /// <summary>The decrypted password.</summary>
+        public string PasswordDecrypted { get { return Password ?? DecryptPassword(PasswordEncrypted); } }
+
+        /// <summary>If an unencrypted password is stored in <see cref="Password"/>, encrypts it and erases the plaintext.</summary>
+        public void SyncPassword()
+        {
+            PasswordEncrypted = EncryptPassword(PasswordDecrypted);
+            Password = null;
+        }
+
+        protected abstract string DecryptPassword(string encrypted);
+        protected abstract string EncryptPassword(string decrypted);
+    }
+
     /// <summary>Provides methods to send e-mails via an SMTP server.</summary>
     public sealed class RTSmtpClient : IDisposable
     {
@@ -82,6 +111,14 @@ namespace RT.Util
             if (resultDec != "Password:")
                 throw new RTSmtpException("Expected 'Password:', got: '{0}'".Fmt(resultDec), _conversation);
             sendAndExpect(Convert.ToBase64String(password.ToUtf8()), 235);
+        }
+
+        /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
+        /// <param name="settings">An object containing the relevant SMTP settings.</param>
+        /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
+        public RTSmtpClient(RTSmtpSettings settings)
+            : this(settings.Host, settings.Port, settings.Username, settings.PasswordDecrypted, settings.Encryption)
+        {
         }
 
         private string sendAndExpect(string toSend, int statusCode)
