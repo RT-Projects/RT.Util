@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -133,34 +132,40 @@ namespace RT.Util
 
         internal static void serialize(object settings, Type settingsType, string filename, SettingsSerializer serializer)
         {
-            switch (serializer)
+            Ut.WaitSharingVio(() =>
             {
-                case SettingsSerializer.XmlClassify:
-                    XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
-                    break;
-                case SettingsSerializer.DotNetBinary:
-                    var bf = new BinaryFormatter();
-                    using (var fs = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
-                        bf.Serialize(fs, settings);
-                    break;
-                default:
-                    throw new InternalErrorException("4968453");
-            }
+                switch (serializer)
+                {
+                    case SettingsSerializer.XmlClassify:
+                        XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
+                        break;
+                    case SettingsSerializer.DotNetBinary:
+                        var bf = new BinaryFormatter();
+                        using (var fs = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                            bf.Serialize(fs, settings);
+                        break;
+                    default:
+                        throw new InternalErrorException("4968453");
+                }
+            }, TimeSpan.FromSeconds(5));
         }
 
         private static TSettings deserialize<TSettings>(string filename, SettingsSerializer serializer) where TSettings : SettingsBase, new()
         {
-            switch (serializer)
+            return Ut.WaitSharingVio(() =>
             {
-                case SettingsSerializer.XmlClassify:
-                    return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
-                case SettingsSerializer.DotNetBinary:
-                    var bf = new BinaryFormatter();
-                    using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        return (TSettings) bf.Deserialize(fs);
-                default:
-                    throw new InternalErrorException("6843184");
-            }
+                switch (serializer)
+                {
+                    case SettingsSerializer.XmlClassify:
+                        return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
+                    case SettingsSerializer.DotNetBinary:
+                        var bf = new BinaryFormatter();
+                        using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            return (TSettings) bf.Deserialize(fs);
+                    default:
+                        throw new InternalErrorException("6843184");
+                }
+            }, TimeSpan.FromSeconds(5));
         }
 
         /// <summary>Encrypts a password using AES. The result is encoded into base 64 for easy storage.</summary>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
 
@@ -296,6 +297,56 @@ namespace RT.Util
                 result[i] = arr;
             }
             return result;
+        }
+
+        /// <summary>
+        /// Executes the specified action. If the action results in a file sharing violation exception, the action will be
+        /// repeatedly retried after a short delay (which increases after every failed attempt).
+        /// </summary>
+        /// <param name="action">The action to be attempted and possibly retried.</param>
+        /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
+        /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
+        public static void WaitSharingVio(Action action, TimeSpan? maximum = null)
+        {
+            WaitSharingVio<bool>(() => { action(); return true; }, maximum);
+        }
+
+        /// <summary>
+        /// Executes the specified function. If the function results in a file sharing violation exception, the function will be
+        /// repeatedly retried after a short delay (which increases after every failed attempt).
+        /// </summary>
+        /// <param name="func">The function to be attempted and possibly retried.</param>
+        /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
+        /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
+        public static T WaitSharingVio<T>(Func<T> func, TimeSpan? maximum = null)
+        {
+            var started = DateTime.UtcNow;
+            int sleep = 279;
+            while (true)
+            {
+                try
+                {
+                    return func();
+                }
+                catch (IOException ex)
+                {
+                    if (!ex.IsSharingViolation())
+                        throw;
+                }
+
+                if (maximum != null)
+                {
+                    int leftMs = (int) (DateTime.UtcNow - started - maximum.Value).TotalMilliseconds;
+                    if (sleep > leftMs)
+                    {
+                        Thread.Sleep(leftMs);
+                        return func(); // or throw the sharing vio exception
+                    }
+                }
+
+                Thread.Sleep(sleep);
+                sleep = Math.Min((sleep * 3) >> 1, 10000);
+            }
         }
     }
 }

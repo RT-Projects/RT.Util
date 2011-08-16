@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -75,6 +77,34 @@ namespace RT.Util.ExtensionMethods
         public static IComparer<T> Inverted<T>(this IComparer<T> comparer)
         {
             return new CustomComparer<T>((a, b) => -comparer.Compare(a, b));
+        }
+
+        /// <summary>Gets the HRESULT of the specified I/O exception.</summary>
+        /// <param name="exception">The exception to test. Must not be null.</param>
+        /// <param name="defaultValue">The default value to return if the HRESULT value cannot be obtained.</param>
+        public static int GetHResult(this IOException exception, int defaultValue)
+        {
+            if (exception == null)
+                throw new ArgumentNullException("exception");
+
+            try
+            {
+                return (int) exception.GetType().GetProperty("HResult",
+                    BindingFlags.NonPublic | BindingFlags.Instance).GetValue(exception, null);
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        /// <summary>Determines whether the specified I/O exception is a sharing violation exception.</summary>
+        /// <param name="exception">The exception. Must not be null.</param>
+        public static bool IsSharingViolation(this IOException exception)
+        {
+            if (exception == null)
+                throw new ArgumentNullException("exception");
+            return exception.GetHResult(0) == -2147024864; // 0x80070020 ERROR_SHARING_VIOLATION
         }
     }
 }
