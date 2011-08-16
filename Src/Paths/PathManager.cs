@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using RT.Util;
 
-namespace RT.KitchenSink.Paths
+namespace RT.Util.Paths
 {
     /// <summary>
     /// PathManager builds a list of paths via calls to <see cref="AddIncludePath"/> and

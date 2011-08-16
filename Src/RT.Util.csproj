@@ -142,6 +142,7 @@
     </Compile>
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="RTSmtpClient.cs" />
     <Compile Include="RummageAttributes.cs" />

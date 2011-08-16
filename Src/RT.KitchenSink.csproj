@@ -78,7 +78,6 @@
     <Compile Include="ParseCs\ParseTree.cs" />
     <Compile Include="ParseCs\ResolveContext.cs" />
     <Compile Include="ParseCs\TypeInference.cs" />
-    <Compile Include="PathManager.cs" />
     <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
     <Compile Include="RateCalculator.cs" />
