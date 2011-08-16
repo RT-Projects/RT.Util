@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util
 {
@@ -16,6 +14,98 @@ namespace RT.Util
         /// <summary>Compares two elements.</summary>
         /// <remarks>This method implements <see cref="IComparer&lt;T&gt;.Compare(T,T)"/>.</remarks>
         public int Compare(T x, T y) { return _comparison(x, y); }
+
+        /// <summary>Creates and returns a CustomComparer which compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        public static CustomComparer<T> By<TBy>(Func<T, TBy> selector) where TBy : IComparable<TBy>
+        {
+            return new CustomComparer<T>((a, b) => selector(a).CompareTo(selector(b)));
+        }
+
+        /// <summary>Creates and returns a CustomComparer which compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        /// <param name="selectedComparer">Comparer to use for comparing the results of the selector function.</param>
+        public static CustomComparer<T> By<TBy>(Func<T, TBy> selector, IComparer<TBy> selectedComparer)
+        {
+            return new CustomComparer<T>((a, b) => selectedComparer.Compare(selector(a), selector(b)));
+        }
+
+        /// <summary>Creates and returns a CustomComparer which compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        /// <param name="selectedComparison">Comparison to use for comparing the results of the selector function.</param>
+        public static CustomComparer<T> By<TBy>(Func<T, TBy> selector, Comparison<TBy> selectedComparison)
+        {
+            return new CustomComparer<T>((a, b) => selectedComparison(selector(a), selector(b)));
+        }
+
+        /// <summary>Creates and returns a CustomComparer which compares items by comparing the results of a string selector function, ignoring case.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        public static CustomComparer<T> ByStringNoCase(Func<T, string> selector)
+        {
+            return new CustomComparer<T>((a, b) => StringComparer.OrdinalIgnoreCase.Compare(selector(a), selector(b)));
+        }
+
+        /// <summary>Creates and returns a CustomComparer which uses the current comparer first, and if the current comparer says the
+        /// items are equal, further compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector) where TBy : IComparable<TBy>
+        {
+            return new CustomComparer<T>((a, b) =>
+            {
+                int result = Compare(a, b);
+                if (result != 0)
+                    return result;
+                else
+                    return selector(a).CompareTo(selector(b));
+            });
+        }
+
+        /// <summary>Creates and returns a CustomComparer which uses the current comparer first, and if the current comparer says the
+        /// items are equal, further compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        /// <param name="selectedComparer">Comparer to use for comparing the results of the selector function.</param>
+        public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector, IComparer<TBy> selectedComparer)
+        {
+            return new CustomComparer<T>((a, b) =>
+            {
+                int result = Compare(a, b);
+                if (result != 0)
+                    return result;
+                else
+                    return selectedComparer.Compare(selector(a), selector(b));
+            });
+        }
+
+        /// <summary>Creates and returns a CustomComparer which uses the current comparer first, and if the current comparer says the
+        /// items are equal, further compares items by comparing the results of a selector function.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        /// <param name="selectedComparison">Comparison to use for comparing the results of the selector function.</param>
+        public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector, Comparison<TBy> selectedComparison)
+        {
+            return new CustomComparer<T>((a, b) =>
+            {
+                int result = Compare(a, b);
+                if (result != 0)
+                    return result;
+                else
+                    return selectedComparison(selector(a), selector(b));
+            });
+        }
+
+        /// <summary>Creates and returns a CustomComparer which uses the current comparer first, and if the current comparer says the
+        /// items are equal, further compares items by comparing the results of a string selector function, ignoring case.</summary>
+        /// <param name="selector">Function selecting the actual value to be compared.</param>
+        public CustomComparer<T> ThenByStringNoCase(Func<T, string> selector)
+        {
+            return new CustomComparer<T>((a, b) =>
+            {
+                int result = Compare(a, b);
+                if (result != 0)
+                    return result;
+                else
+                    return StringComparer.OrdinalIgnoreCase.Compare(selector(a), selector(b));
+            });
+        }
     }
 
     /// <summary>Encapsulates an IEqualityComparer&lt;T&gt; that uses an equality comparison function provided as a delegate.</summary>
