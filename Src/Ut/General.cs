@@ -336,7 +336,7 @@ namespace RT.Util
 
                 if (maximum != null)
                 {
-                    int leftMs = (int) (DateTime.UtcNow - started - maximum.Value).TotalMilliseconds;
+                    int leftMs = (int) (maximum.Value - (DateTime.UtcNow - started)).TotalMilliseconds;
                     if (sleep > leftMs)
                     {
                         Thread.Sleep(leftMs);
