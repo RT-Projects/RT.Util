@@ -325,16 +325,45 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns a JavaScript-compatible representation of the string in single quotes with the appropriate characters escaped.
+        /// Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.
         /// </summary>
         /// <param name="input">String to escape.</param>
-        /// <param name="omitQuotes">If true, the string is not enclosed in single quotes.</param>
-        /// <returns>JavaScript-compatible representation of the input string.</returns>
-        public static string JsEscape(this string input, bool omitQuotes = false)
+        /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
+        /// <returns>JavaScript- or JSON-compatible representation of the input string.</returns>
+        public static string JsEscape(this string input, JsQuotes quotes)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return (omitQuotes ? "" : "'") + input.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("<", "\\u003c").Replace(">", "\\u003e") + (omitQuotes ? "" : "'");
+            var sb = new StringBuilder();
+
+            if (quotes != JsQuotes.None)
+                sb.Append(quotes == JsQuotes.Double ? '"' : '\'');
+            foreach (var c in input)
+            {
+                switch (c)
+                {
+                    case '"': if (quotes == JsQuotes.Single) sb.Append(c); else sb.Append("\\\""); break;
+                    case '\'': if (quotes == JsQuotes.Double) sb.Append(c); else if (quotes == JsQuotes.Single) sb.Append("\\'"); else sb.Append("\\u0027"); break;
+                    case '\\': sb.Append("\\\\"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    default:
+                        if (c <= 31)
+                        {
+                            sb.Append("\\u");
+                            sb.Append(((int) c).ToString("X4"));
+                        }
+                        else
+                            sb.Append(c);
+                        break;
+                }
+            }
+            if (quotes != JsQuotes.None)
+                sb.Append(quotes == JsQuotes.Double ? '"' : '\'');
+            return sb.ToString();
         }
 
         /// <summary>
@@ -1014,5 +1043,16 @@ namespace RT.Util.ExtensionMethods
                 return line;
             return str + Environment.NewLine + line;
         }
+    }
+
+    /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
+    public enum JsQuotes
+    {
+        /// <summary>Put single quotes around the output. Single quotes are allowed in JavaScript only, but not in JSON.</summary>
+        Single,
+        /// <summary>Put double quotes around the output. Double quotes are allowed both in JavaScript and JSON.</summary>
+        Double,
+        /// <summary>Do not put any quotes around the output. The escaped output may be surrounded with either type of quotes.</summary>
+        None
     }
 }

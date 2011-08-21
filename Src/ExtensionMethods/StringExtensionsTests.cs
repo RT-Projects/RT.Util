@@ -30,7 +30,9 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual("One man&#39;s &quot;&lt;&quot; is another one&#39;s &quot;&gt;&quot;.", @"One man's ""<"" is another one's "">"".".HtmlEscape());
             Assert.AreEqual("One%20man's%20%22%3C%22%20is%20another%20one's%20%22%3E%22.", @"One man's ""<"" is another one's "">"".".UrlEscape());
             Assert.AreEqual(@"One man's ""<"" is another one's "">"".", "One%20man's%20%22%3C%22%20is%20another%20one's%20%22%3E%22.".UrlUnescape());
-            Assert.AreEqual(@"'One man\'s ""\u003c"" is another one\'s ""\u003e"".\n'", "One man's \"<\" is another one's \">\".\n".JsEscape());
+            Assert.AreEqual(@"'One man\'s ""\n"" is another one\'s ""\r\n"".'", "One man's \"\n\" is another one's \"\r\n\".".JsEscape(JsQuotes.Single));
+            Assert.AreEqual(@"""One man's \""\n\"" is another one's \""\r\n\"".""", "One man's \"\n\" is another one's \"\r\n\".".JsEscape(JsQuotes.Double));
+            Assert.AreEqual(@"One man\u0027s \""\n\"" is another one\u0027s \""\r\n\"".", "One man's \"\n\" is another one's \"\r\n\".".JsEscape(JsQuotes.None));
 
             Assert.AreEqual(2, "á".ToUtf8().Length);
             Assert.AreEqual(0xc3, "á".ToUtf8()[0]);

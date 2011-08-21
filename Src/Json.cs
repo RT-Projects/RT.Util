@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
+
+#pragma warning disable 1591
 
 namespace RT.Util.Json
 {
@@ -26,9 +29,6 @@ namespace RT.Util.Json
         /// <summary>A snippet of the JSON string at which the parse error occurred.</summary>
         public string Snippet { get { return _state.Snippet; } }
     }
-
-    /// <summary>Represents one of the JSON symbols for parsing purposes.</summary>
-    internal enum Sym { DictStart, ListStart, StringStart, Number, Letter, Other, EOF }
 
     /// <summary>Keeps track of the JSON parser state.</summary>
     internal class JsonParserState
@@ -63,22 +63,7 @@ namespace RT.Util.Json
                 Pos++;
         }
 
-        public char Cur { get { return Json[Pos]; } }
-
-        public Sym CurSym
-        {
-            get
-            {
-                if (Pos >= Json.Length) return Sym.EOF;
-                char cur = Cur;
-                if (cur == '{') return Sym.DictStart;
-                else if (cur == '[') return Sym.ListStart;
-                else if (cur == '"' || cur == '\'') return Sym.StringStart;
-                else if (cur >= '0' && cur <= '9' || cur == '.' || cur == '-') return Sym.Number;
-                else if (cur >= 'A' && cur <= 'Z' || cur >= 'a' && cur <= 'z') return Sym.Letter;
-                else return Sym.Other;
-            }
-        }
+        public char? Cur { get { return Pos >= Json.Length ? null : (char?) Json[Pos]; } }
 
         public string Snippet
         {
@@ -86,7 +71,7 @@ namespace RT.Util.Json
             {
                 int line, col;
                 OffsetConverter.GetLineAndColumn(Pos, out line, out col);
-                return "[" + line + "," + col + "] " + Json.SubstringSafe(Pos, 15);
+                return "Before: {2}   After: {3}   At: {0},{1}".Fmt(line, col, Json.SubstringSafe(Pos - 15, 15), Json.SubstringSafe(Pos, 15));
             }
         }
 
@@ -94,287 +79,1052 @@ namespace RT.Util.Json
         {
             return Snippet;
         }
+
+        public JsonValue ParseValue()
+        {
+            var cn = Cur;
+            switch (cn)
+            {
+                case null: throw new JsonParseException(this, "unexpected end of input");
+                case '{': return ParseDict();
+                case '[': return ParseList();
+                case '"': return ParseString();
+                default:
+                    var c = Cur.Value;
+                    if (c == '-' || (c >= '0' && c <= '9'))
+                        return ParseNumber();
+                    else if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')
+                        return parseWord();
+                    else
+                        throw new JsonParseException(this, "unexpected character");
+            }
+        }
+
+        private JsonValue parseWord()
+        {
+            string word = Regex.Match(Json.Substring(Pos), @"^\w+").Captures[0].Value;
+            if (word == "true" || word == "false") return ParseBool();
+            else if (word == "null") { Pos += 4; ConsumeWhitespace(); return null; }
+            else throw new JsonParseException(this, "unknown keyword: \"{0}\"".Fmt(word));
+        }
+
+        public JsonString ParseString()
+        {
+            var sb = new StringBuilder();
+            if (Cur != '"')
+                throw new JsonParseException(this, "expected a string");
+            Pos++;
+            while (true)
+            {
+                switch (Cur)
+                {
+                    case null: throw new JsonParseException(this, "unexpected end of string");
+                    case '"': Pos++; goto while_break; // break out of the while... argh.
+                    case '\\':
+                        {
+                            Pos++;
+                            switch (Cur)
+                            {
+                                case null: throw new JsonParseException(this, "unexpected end of string");
+                                case '"': sb.Append('"'); break;
+                                case '\\': sb.Append('\\'); break;
+                                case '/': sb.Append('/'); break;
+                                case 'b': sb.Append('\b'); break;
+                                case 'f': sb.Append('\f'); break;
+                                case 'n': sb.Append('\n'); break;
+                                case 'r': sb.Append('\r'); break;
+                                case 't': sb.Append('\t'); break;
+                                case 'u':
+                                    var hex = Json.SubstringSafe(Pos + 1, 4);
+                                    if (hex.Length != 4)
+                                        throw new JsonParseException(this, "unexpected end of a \\u escape sequence");
+                                    int code;
+                                    if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, null, out code))
+                                        throw new JsonParseException(this, "expected a four-digit hex code");
+                                    sb.Append((char) code);
+                                    Pos += 4;
+                                    break;
+                                default:
+                                    throw new JsonParseException(this, "unknown escape sequence");
+                            }
+                        }
+                        break;
+                    default:
+                        sb.Append(Cur.Value);
+                        break;
+                }
+                Pos++;
+            }
+            while_break: ;
+            ConsumeWhitespace();
+            return new JsonString(sb.ToString());
+        }
+
+        public JsonBool ParseBool()
+        {
+            JsonBool result;
+            if (Regex.IsMatch(Json.Substring(Pos), @"^true\b"))
+            {
+                result = true;
+                Pos += 4;
+                ConsumeWhitespace();
+            }
+            else if (Regex.IsMatch(Json.Substring(Pos), @"^false\b"))
+            {
+                result = false;
+                Pos += 5;
+                ConsumeWhitespace();
+            }
+            else
+                throw new JsonParseException(this, "expected a bool");
+            return result;
+        }
+
+        public JsonNumber ParseNumber()
+        {
+            int fromPos = Pos;
+
+            if (Cur == '-') // optional minus
+                Pos++;
+
+            if (Cur == '0') // either a single zero...
+                Pos++;
+            else if (Cur >= '1' && Cur <= '9') // ...or a non-zero followed by any number of digits
+                while (Cur >= '0' && Cur <= '9')
+                    Pos++;
+            else
+                throw new JsonParseException(this, "expected a single zero or a sequence of digits starting with a non-zero.");
+
+            if (Cur == '.') // a decimal point followed by at least one digit
+            {
+                Pos++;
+                if (!(Cur >= '0' && Cur <= '9'))
+                    throw new JsonParseException(this, "expected at least one digit following the decimal point");
+                while (Cur >= '0' && Cur <= '9')
+                    Pos++;
+            }
+
+            if (Cur == 'e' || Cur == 'E')
+            {
+                Pos++;
+                if (Cur == '+' || Cur == '-') // optional plus/minus
+                    Pos++;
+                if (!(Cur >= '0' && Cur <= '9'))
+                    throw new JsonParseException(this, "expected at least one digit following the exponent letter");
+                while (Cur >= '0' && Cur <= '9')
+                    Pos++;
+            }
+
+            JsonNumber result;
+            string number = Json.Substring(fromPos, Pos - fromPos);
+            decimal dec;
+            if (!decimal.TryParse(number, out dec))
+            {
+                double dbl;
+                if (!double.TryParse(number, out dbl))
+                    throw new JsonParseException(this, "expected a number");
+                result = dbl;
+            }
+            else
+                result = dec;
+            ConsumeWhitespace();
+            return result;
+        }
+
+        public JsonList ParseList()
+        {
+            var result = new JsonList();
+            if (Cur != '[')
+                throw new JsonParseException(this, "expected a list");
+            Pos++;
+            ConsumeWhitespace();
+            while (true)
+            {
+                if (Cur == null)
+                    throw new JsonParseException(this, "unexpected end of list");
+                if (Cur == ']')
+                    break;
+                result.Add(ParseValue());
+                if (Cur == null)
+                    throw new JsonParseException(this, "unexpected end of dict");
+                if (Cur == ',')
+                {
+                    Pos++;
+                    ConsumeWhitespace();
+                    if (Cur == ']')
+                        throw new JsonParseException(this, "a list can't end with a comma");
+                }
+                else if (Cur != ']')
+                    throw new JsonParseException(this, "expected a comma to separate list items");
+            }
+            Pos++;
+            ConsumeWhitespace();
+            return result;
+        }
+
+        public JsonDict ParseDict()
+        {
+            var result = new JsonDict();
+            if (Cur != '{')
+                throw new JsonParseException(this, "expected a dict");
+            Pos++;
+            ConsumeWhitespace();
+            while (true)
+            {
+                if (Cur == null)
+                    throw new JsonParseException(this, "unexpected end of dict");
+                if (Cur == '}')
+                    break;
+                var name = ParseString();
+                if (Cur != ':')
+                    throw new JsonParseException(this, "expected a colon to separate dict key/value");
+                Pos++;
+                ConsumeWhitespace();
+                if (Cur == null)
+                    throw new JsonParseException(this, "unexpected end of dict");
+                result.Add(name, ParseValue());
+                if (Cur == null)
+                    throw new JsonParseException(this, "unexpected end of dict");
+                if (Cur == ',')
+                {
+                    Pos++;
+                    ConsumeWhitespace();
+                    if (Cur == '}')
+                        throw new JsonParseException(this, "a dict can't end with a comma");
+                }
+                else if (Cur != '}')
+                    throw new JsonParseException(this, "expected a comma to separate dict entries");
+            }
+            Pos++;
+            ConsumeWhitespace();
+            return result;
+        }
     }
 
-    /// <summary>Represents a JSON value.</summary>
-    public abstract class JsonValue
+    public abstract class JsonValue : IEquatable<JsonValue>
     {
-        internal static JsonValue ParseValue(JsonParserState ps)
+        public static JsonValue Parse(string jsonValue)
         {
-            switch (ps.CurSym)
-            {
-                case Sym.DictStart: return new JsonDict(ps);
-                case Sym.ListStart: return new JsonList(ps);
-                case Sym.StringStart: return new JsonString(ps);
-                case Sym.Number: return new JsonNumber(ps);
-                case Sym.Letter:
-                    string word = Regex.Match(ps.Json.Substring(ps.Pos), @"^\w+").Captures[0].Value;
-                    if (word == "true" || word == "false") return new JsonBool(ps);
-                    else if (word == "null") return new JsonNull(ps);
-                    else throw new JsonParseException(ps, "unknown keyword: \"{0}\"".Fmt(word));
-                case Sym.Other: throw new JsonParseException(ps, "unexpected character");
-                case Sym.EOF: throw new JsonParseException(ps, "unexpected end of input");
-            }
-            throw new JsonParseException(ps, "internal error");
+            var ps = new JsonParserState(jsonValue);
+            var result = ps.ParseValue();
+            if (ps.Cur != null)
+                throw new JsonParseException(ps, "expected end of input");
+            return result;
         }
 
-        /// <summary>Treats the value as a <see cref="JsonDict"/>, and gets the value with the specified key.</summary>
-        public JsonValue this[string key]
+        public static bool TryParse(string jsonValue, out JsonValue result)
         {
-            get
+            try
             {
-                if (this is JsonDict) return ((JsonDict) this).Value[key];
-                else throw new Exception("This JSON value is not a dict");
+                result = Parse(jsonValue);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
             }
         }
 
-        /// <summary>Treats the value as a <see cref="JsonList"/>, and gets the value with the specified key.</summary>
-        public JsonValue this[int index]
+        public static implicit operator JsonValue(string value)
         {
-            get
-            {
-                if (this is JsonList) return ((JsonList) this).Value[index];
-                else throw new Exception("This value is not a list");
-            }
+            return value == null ? null : new JsonString(value);
         }
 
-        /// <summary>Treats the value as a <see cref="JsonDict"/>, and gets the underlying dictionary of values.</summary>
-        public Dictionary<string, JsonValue> AsDict
+        public static implicit operator JsonValue(bool? value)
         {
-            get
-            {
-                if (this is JsonDict) return ((JsonDict) this).Value;
-                else throw new Exception("This JSON value is not a dict");
-            }
+            return value == null ? null : new JsonBool(value.Value);
         }
 
-        /// <summary>Treats the value as a <see cref="JsonList"/>, and gets the underlying list of values.</summary>
-        public List<JsonValue> AsList
+        public static implicit operator JsonValue(decimal? value)
         {
-            get
-            {
-                if (this is JsonList) return ((JsonList) this).Value;
-                else throw new Exception("This JSON value is not a list");
-            }
+            return value == null ? null : new JsonNumber(value.Value);
         }
 
-        /// <summary>Treats the value as a <see cref="JsonBool"/>, and gets the underlying boolean value.</summary>
-        public bool AsBool
+        public static implicit operator JsonValue(double? value)
+        {
+            return value == null ? null : new JsonNumber(value.Value);
+        }
+
+        public static implicit operator JsonValue(long? value)
+        {
+            return value == null ? null : new JsonNumber(value.Value);
+        }
+
+        public static implicit operator JsonValue(int? value)
+        {
+            return value == null ? null : new JsonNumber(value.Value);
+        }
+
+        public JsonList AsList
         {
             get
             {
-                if (this is JsonBool) return ((JsonBool) this).Value;
-                else throw new Exception("This JSON value is not a bool");
+                var v = this as JsonList;
+                if (v == null)
+                    throw new NotSupportedException("Only list values can be interpreted as list.");
+                return v;
             }
         }
 
-        /// <summary>Treats the value as a <see cref="JsonNumber"/>, and gets the underlying numeric value.</summary>
-        public decimal AsNumber
+        public JsonDict AsDict
         {
             get
             {
-                if (this is JsonNumber) return ((JsonNumber) this).Value;
-                else throw new Exception("This JSON value is not a number");
+                var v = this as JsonDict;
+                if (v == null)
+                    throw new NotSupportedException("Only dict values can be interpreted as dict.");
+                return v;
             }
         }
 
-        /// <summary>Treats the value as a <see cref="JsonString"/>, and gets the underlying string value.</summary>
         public string AsString
         {
             get
             {
-                if (this is JsonString) return ((JsonString) this).Value;
-                else throw new Exception("This JSON value is not a string");
+                var v = this as JsonString;
+                if (v == null)
+                    throw new NotSupportedException("Only string values can be interpreted as string.");
+                return v;
             }
         }
-    }
 
-    /// <summary>Represents a JSON "null" value.</summary>
-    public class JsonNull : JsonValue
-    {
-        internal JsonNull(JsonParserState ps)
+        public bool AsBool
         {
-            if (Regex.IsMatch(ps.Json.Substring(ps.Pos), @"^null\b"))
+            get
             {
-                ps.Pos += 4;
-                ps.ConsumeWhitespace();
+                var v = this as JsonBool;
+                if (v == null)
+                    throw new NotSupportedException("Only bool values can be interpreted as bool.");
+                return v;
             }
+        }
+
+        public decimal AsDecimal
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                    throw new NotSupportedException("Only numeric values can be interpreted as decimal.");
+                return v;
+            }
+        }
+
+        public double AsDouble
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                    throw new NotSupportedException("Only numeric values can be interpreted as double.");
+                return v;
+            }
+        }
+
+        public long AsLong
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                    throw new NotSupportedException("Only numeric values can be interpreted as long.");
+                return v;
+            }
+        }
+
+        public int AsInt
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                    throw new NotSupportedException("Only numeric values can be interpreted as int.");
+                return v;
+            }
+        }
+
+        #region Both IList and IDictionary
+
+        public void Clear()
+        {
+            if (this is JsonList)
+                (this as JsonList).List.Clear();
+            else if (this is JsonDict)
+                (this as JsonDict).Dict.Clear();
             else
-                throw new JsonParseException(ps, "not a 'null'");
+                throw new NotSupportedException("This method is only supported on dictionary and list values.");
         }
-    }
 
-    /// <summary>Represents a JSON boolean value.</summary>
-    public class JsonBool : JsonValue
-    {
-        private bool _value;
-        /// <summary>Gets the underlying bool value.</summary>
-        public bool Value { get { return _value; } }
-
-        internal JsonBool(JsonParserState ps)
+        public int Count
         {
-            if (Regex.IsMatch(ps.Json.Substring(ps.Pos), @"^true\b"))
+            get
             {
-                _value = true;
-                ps.Pos += 4;
-                ps.ConsumeWhitespace();
-            }
-            else if (Regex.IsMatch(ps.Json.Substring(ps.Pos), @"^false\b"))
-            {
-                _value = false;
-                ps.Pos += 5;
-                ps.ConsumeWhitespace();
-            }
-            else
-                throw new JsonParseException(ps, "not a bool");
-        }
-    }
-
-    /// <summary>Represents a JSON numeric value.</summary>
-    public class JsonNumber : JsonValue
-    {
-        private decimal _value;
-        /// <summary>Gets the underlying decimal value.</summary>
-        public decimal Value { get { return _value; } }
-
-        internal JsonNumber(JsonParserState ps)
-        {
-            StringBuilder sb = new StringBuilder();
-            while (ps.CurSym == Sym.Number || ps.Cur == 'e')
-            {
-                sb.Append(ps.Cur);
-                ps.Pos++;
-            }
-            if (!decimal.TryParse(sb.ToString(), out _value))
-            {
-                double d;
-                if (!double.TryParse(sb.ToString(), out d))
-                    throw new JsonParseException(ps, "not a number");
-                _value = (decimal) d;
-            }
-            ps.ConsumeWhitespace();
-        }
-    }
-
-    /// <summary>Represents a JSON string value.</summary>
-    public class JsonString : JsonValue
-    {
-        private string _value;
-        /// <summary>Gets the underlying string value.</summary>
-        public string Value { get { return _value; } }
-
-        internal JsonString(JsonParserState ps)
-        {
-            StringBuilder sb = new StringBuilder();
-            if (ps.CurSym != Sym.StringStart)
-                throw new JsonParseException(ps, "not a string");
-            var quotechar = ps.Cur;
-            ps.Pos++;
-            while (ps.Pos < ps.Json.Length && ps.Cur != quotechar)
-            {
-                if (ps.Cur == '\\')
-                {
-                    ps.Pos++;
-                    if (ps.Pos >= ps.Json.Length)
-                        throw new JsonParseException(ps, "unexpected end of string");
-                    switch (ps.Cur)
-                    {
-                        case 'n': sb.Append('\n'); break;
-                        case 'r': sb.Append('\r'); break;
-                        case 't': sb.Append('\t'); break;
-                        case '"': sb.Append('"'); break;
-                        case '\'': sb.Append('\''); break;
-                        default: sb.Append(ps.Cur); break;
-                    }
-                }
+                if (this is JsonList)
+                    return (this as JsonList).List.Count;
+                else if (this is JsonDict)
+                    return (this as JsonDict).Dict.Count;
                 else
-                {
-                    sb.Append(ps.Cur);
-                }
-                ps.Pos++;
+                    throw new NotSupportedException("This method is only supported on dictionary and list values.");
             }
-            if (ps.Cur != quotechar)
-                throw new JsonParseException(ps, "unexpected end of string");
-            ps.Pos++;
-            ps.ConsumeWhitespace();
-            _value = sb.ToString();
         }
-    }
 
-    /// <summary>Represents a JSON list value - which is a sequence of JSON values.</summary>
-    public class JsonList : JsonValue
-    {
-        private List<JsonValue> _value;
-        /// <summary>Gets the underlying list of values.</summary>
-        public List<JsonValue> Value { get { return _value; } }
+        public bool IsReadOnly { get { return !(this is JsonDict || this is JsonList); } }
 
-        internal JsonList(JsonParserState ps)
+        #endregion
+
+        #region IList
+
+        public JsonValue this[int index]
         {
-            _value = new List<JsonValue>();
-            if (ps.CurSym != Sym.ListStart)
-                throw new JsonParseException(ps, "not a list");
-            ps.Pos++;
-            ps.ConsumeWhitespace();
-            while (ps.Cur != ']')
+            get
             {
-                _value.Add(JsonValue.ParseValue(ps));
-                if (ps.Cur == ',')
-                {
-                    ps.Pos++;
-                    ps.ConsumeWhitespace();
-                }
+                var list = this as JsonList;
+                if (list == null)
+                    throw new NotSupportedException("This method is only supported on list values.");
+                return list.List[index];
             }
-            ps.Pos++;
-            ps.ConsumeWhitespace();
-        }
-    }
-
-    /// <summary>Represents a JSON dictionary value - which is a mapping from strings to JSON values (case-sensitive).</summary>
-    public class JsonDict : JsonValue
-    {
-        private Dictionary<string, JsonValue> _value;
-        /// <summary>Gets the underlying dictionary of values.</summary>
-        public Dictionary<string, JsonValue> Value { get { return _value; } }
-
-        internal JsonDict(JsonParserState ps)
-        {
-            _value = new Dictionary<string, JsonValue>();
-            if (ps.CurSym != Sym.DictStart)
-                throw new JsonParseException(ps, "not a dict");
-            ps.Pos++;
-            ps.ConsumeWhitespace();
-            while (ps.Cur != '}')
+            set
             {
-                var name = new JsonString(ps);
-                if (ps.Cur != ':')
-                    throw new JsonParseException(ps, "expected :");
-                ps.Pos++;
-                ps.ConsumeWhitespace();
-                _value.Add(name.Value, JsonValue.ParseValue(ps));
-                if (ps.Cur == ',')
-                {
-                    ps.Pos++;
-                    ps.ConsumeWhitespace();
-                }
+                var list = this as JsonList;
+                if (list == null)
+                    throw new NotSupportedException("This method is only supported on list values.");
+                list.List[index] = value;
             }
-            ps.Pos++;
-            ps.ConsumeWhitespace();
+        }
+
+        public void Add(JsonValue item)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            list.List.Add(item);
+        }
+
+        public bool Remove(JsonValue item)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            return list.List.Remove(item);
+        }
+
+        public bool Contains(JsonValue item)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            return list.List.Contains(item);
+        }
+
+        public void Insert(int index, JsonValue item)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            list.List.Insert(index, item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            list.List.RemoveAt(index);
+        }
+
+        public int IndexOf(JsonValue item)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            return list.List.IndexOf(item);
+        }
+
+        public void CopyTo(JsonValue[] array, int arrayIndex)
+        {
+            var list = this as JsonList;
+            if (list == null)
+                throw new NotSupportedException("This method is only supported on list values.");
+            list.List.CopyTo(array, arrayIndex);
+        }
+
+        #endregion
+
+        #region IDictionary
+
+        public JsonValue this[string key]
+        {
+            get
+            {
+                var dict = this as JsonDict;
+                if (dict == null)
+                    throw new NotSupportedException("This method is only supported on dictionary values.");
+                return dict.Dict[key];
+            }
+            set
+            {
+                var dict = this as JsonDict;
+                if (dict == null)
+                    throw new NotSupportedException("This method is only supported on dictionary values.");
+                dict.Dict[key] = value;
+            }
+        }
+
+        public ICollection<string> Keys
+        {
+            get
+            {
+                var dict = this as JsonDict;
+                if (dict == null)
+                    throw new NotSupportedException("This method is only supported on dictionary values.");
+                return dict.Dict.Keys;
+            }
+        }
+
+        public ICollection<JsonValue> Values
+        {
+            get
+            {
+                var dict = this as JsonDict;
+                if (dict == null)
+                    throw new NotSupportedException("This method is only supported on dictionary values.");
+                return dict.Dict.Values;
+            }
+        }
+
+        public bool TryGetValue(string key, out JsonValue value)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            return dict.Dict.TryGetValue(key, out value);
+        }
+
+        public void Add(string key, JsonValue value)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            dict.Dict.Add(key, value);
+        }
+
+        public bool Remove(string key)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            return dict.Dict.Remove(key);
+        }
+
+        public bool ContainsKey(string key)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            return dict.Dict.ContainsKey(key);
+        }
+
+        #endregion
+
+        public override bool Equals(object other)
+        {
+            return other is JsonValue ? Equals((JsonValue) other) : false;
+        }
+
+        public bool Equals(JsonValue other)
+        {
+            if (other == null) return false;
+            if (this is JsonBool && other is JsonBool)
+                return (this as JsonBool).Equals(other as JsonBool);
+            else if (this is JsonString && other is JsonString)
+                return (this as JsonString).Equals(other as JsonString);
+            else if (this is JsonNumber && other is JsonNumber)
+                return (this as JsonNumber).Equals(other as JsonNumber);
+            else if (this is JsonList && other is JsonList)
+                return (this as JsonList).Equals(other as JsonList);
+            else if (this is JsonDict && other is JsonDict)
+                return (this as JsonDict).Equals(other as JsonDict);
+            else
+                return false;
+        }
+
+        /// <summary>Always throws.</summary>
+        public override int GetHashCode()
+        {
+            // the compiler doesn't realise that every descendant overrides GetHashCode anyway. This method
+            // is just to shut it up.
+            throw new NotSupportedException();
         }
     }
 
-    /// <summary>Offers methods to parse JSON.</summary>
-    public static class Json
+    public class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
-        /// <summary>Parses the specified string as a JSON string.</summary>
-        /// <param name="json">JSON string to parse.</param>
-        /// <returns>A parsed representation of the string.</returns>
-        public static JsonValue Parse(string json)
+        internal List<JsonValue> List = new List<JsonValue>();
+
+        public JsonList()
         {
-            var ps = new JsonParserState(json);
-            var result = JsonValue.ParseValue(ps);
-            if (ps.CurSym != Sym.EOF)
+        }
+
+        public JsonList(IEnumerable<JsonValue> items)
+        {
+            List.AddRange(items);
+        }
+
+        public static new JsonList Parse(string jsonList)
+        {
+            var ps = new JsonParserState(jsonList);
+            var result = ps.ParseList();
+            if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
             return result;
+        }
+
+        public static bool TryParse(string jsonNumber, out JsonList result)
+        {
+            try
+            {
+                result = Parse(jsonNumber);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public IEnumerator<JsonValue> GetEnumerator()
+        {
+            return List.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is JsonList ? Equals((JsonList) other) : false;
+        }
+
+        public bool Equals(JsonList other)
+        {
+            if (other == null) return false;
+            if (this.Count != other.Count) return false;
+            return this.Zip(other, (v1, v2) => (v1 == null) == (v2 == null) && (v1 == null || v1.Equals(v2))).All(b => b);
+        }
+
+        public override int GetHashCode()
+        {
+            int result = 977;
+            unchecked
+            {
+                foreach (var item in this)
+                    result ^= result * 211 + (item == null ? 1979 : item.GetHashCode());
+            }
+            return result;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append('[');
+            bool first = true;
+            foreach (var value in List)
+            {
+                if (!first)
+                    sb.Append(',');
+                sb.Append(value == null ? "null" : value.ToString());
+                first = false;
+            }
+            sb.Append(']');
+            return sb.ToString();
+        }
+    }
+
+    public class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
+    {
+        internal Dictionary<string, JsonValue> Dict = new Dictionary<string, JsonValue>();
+
+        public JsonDict()
+        {
+        }
+
+        public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
+        {
+            foreach (var item in items)
+                Dict.Add(item.Key, item.Value);
+        }
+
+        public static new JsonDict Parse(string jsonDict)
+        {
+            var ps = new JsonParserState(jsonDict);
+            var result = ps.ParseDict();
+            if (ps.Cur != null)
+                throw new JsonParseException(ps, "expected end of input");
+            return result;
+        }
+
+        public static bool TryParse(string jsonDict, out JsonDict result)
+        {
+            try
+            {
+                result = Parse(jsonDict);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator()
+        {
+            return Dict.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        #region Unused unimplemented IEnumerable<KeyValuePair> methods
+
+        void ICollection<KeyValuePair<string, JsonValue>>.Add(KeyValuePair<string, JsonValue> item)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            throw new NotImplementedException();
+        }
+        bool ICollection<KeyValuePair<string, JsonValue>>.Remove(KeyValuePair<string, JsonValue> item)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            throw new NotImplementedException();
+        }
+        bool ICollection<KeyValuePair<string, JsonValue>>.Contains(KeyValuePair<string, JsonValue> item)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            throw new NotImplementedException();
+        }
+        void ICollection<KeyValuePair<string, JsonValue>>.CopyTo(KeyValuePair<string, JsonValue>[] array, int arrayIndex)
+        {
+            var dict = this as JsonDict;
+            if (dict == null)
+                throw new NotSupportedException("This method is only supported on dictionary values.");
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        public override bool Equals(object other)
+        {
+            return other is JsonDict ? Equals((JsonDict) other) : false;
+        }
+
+        public bool Equals(JsonDict other)
+        {
+            if (other == null) return false;
+            if (this.Count != other.Count) return false;
+            foreach (var kvp in this)
+            {
+                JsonValue val;
+                if (!other.TryGetValue(kvp.Key, out val))
+                    return false;
+                if ((kvp.Value == null) != (val == null))
+                    return false;
+                if (kvp.Value != null && !kvp.Value.Equals(val))
+                    return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int result = 1307;
+            unchecked
+            {
+                foreach (var kvp in this)
+                    result ^= result * 647 + (kvp.Value == null ? 1979 : kvp.Value.GetHashCode()) + kvp.Key.GetHashCode();
+            }
+            return result;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append('{');
+            bool first = true;
+            foreach (var kvp in Dict)
+            {
+                if (!first)
+                    sb.Append(',');
+                sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
+                sb.Append(':');
+                sb.Append(kvp.Value == null ? "null" : kvp.Value.ToString());
+                first = false;
+            }
+            sb.Append('}');
+            return sb.ToString();
+        }
+    }
+
+    public class JsonString : JsonValue, IEquatable<JsonString>
+    {
+        private string _value;
+        public JsonString(string value) { if (value == null) throw new ArgumentNullException(); _value = value; }
+
+        public static new JsonString Parse(string jsonString)
+        {
+            var ps = new JsonParserState(jsonString);
+            var result = ps.ParseString();
+            if (ps.Cur != null)
+                throw new JsonParseException(ps, "expected end of input");
+            return result;
+        }
+
+        public static bool TryParse(string jsonString, out JsonString result)
+        {
+            try
+            {
+                result = Parse(jsonString);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public static implicit operator string(JsonString value)
+        {
+            return value._value;
+        }
+
+        public static implicit operator JsonString(string value)
+        {
+            return new JsonString(value);
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is JsonString ? Equals((JsonString) other) : false;
+        }
+
+        public bool Equals(JsonString other)
+        {
+            if (other == null) return false;
+            return this._value == other._value;
+        }
+
+        public override int GetHashCode()
+        {
+            return _value.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return _value.JsEscape(JsQuotes.Double);
+        }
+
+        public string ToString(JsQuotes quotes)
+        {
+            return _value.JsEscape(quotes);
+        }
+    }
+
+    public class JsonBool : JsonValue, IEquatable<JsonBool>
+    {
+        private bool _value;
+        public JsonBool(bool value) { _value = value; }
+
+        public static new JsonBool Parse(string jsonBool)
+        {
+            var ps = new JsonParserState(jsonBool);
+            var result = ps.ParseBool();
+            if (ps.Cur != null)
+                throw new JsonParseException(ps, "expected end of input");
+            return result;
+        }
+
+        public static bool TryParse(string jsonBool, out JsonBool result)
+        {
+            try
+            {
+                result = Parse(jsonBool);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public static implicit operator bool(JsonBool value)
+        {
+            return value._value;
+        }
+
+        public static implicit operator JsonBool(bool value)
+        {
+            return new JsonBool(value);
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is JsonBool ? Equals((JsonBool) other) : false;
+        }
+
+        public bool Equals(JsonBool other)
+        {
+            if (other == null) return false;
+            return this._value == other._value;
+        }
+
+        public override int GetHashCode()
+        {
+            return _value ? 13259 : 22093;
+        }
+
+        public override string ToString()
+        {
+            return _value ? "true" : "false";
+        }
+    }
+
+    public class JsonNumber : JsonValue, IEquatable<JsonNumber>
+    {
+        private decimal _decimal;
+        private double _double = double.NaN;
+        public JsonNumber(decimal value) { _decimal = value; }
+        public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException(); }
+        public JsonNumber(long value) { _decimal = value; }
+        public JsonNumber(int value) { _double = value; }
+
+        public static new JsonNumber Parse(string jsonNumber)
+        {
+            var ps = new JsonParserState(jsonNumber);
+            var result = ps.ParseNumber();
+            if (ps.Cur != null)
+                throw new JsonParseException(ps, "expected end of input");
+            return result;
+        }
+
+        public static bool TryParse(string jsonNumber, out JsonNumber result)
+        {
+            try
+            {
+                result = Parse(jsonNumber);
+                return true;
+            }
+            catch (JsonParseException)
+            {
+                result = null;
+                return false;
+            }
+        }
+
+        public static implicit operator decimal(JsonNumber value)
+        {
+            return double.IsNaN(value._double) ? value._decimal : (decimal) value._double;
+        }
+
+        public static implicit operator double(JsonNumber value)
+        {
+            return double.IsNaN(value._double) ? (double) value._decimal : value._double;
+        }
+
+        public static implicit operator long(JsonNumber value)
+        {
+            if (double.IsNaN(value._double))
+            {
+                if (value._decimal != Math.Truncate(value._decimal))
+                    throw new InvalidCastException("Only integer values can be interpreted as long.");
+                if (value._decimal < long.MinValue || value._decimal > long.MaxValue)
+                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+                return (long) value._decimal;
+            }
+            else
+            {
+                if (value._double != Math.Truncate(value._double))
+                    throw new InvalidCastException("Only integer values can be interpreted as long.");
+                if (value._double < long.MinValue || value._double > long.MaxValue)
+                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+                return (long) value._double;
+            }
+        }
+
+        public static implicit operator int(JsonNumber value)
+        {
+            if (double.IsNaN(value._double))
+            {
+                if (value._decimal != Math.Truncate(value._decimal))
+                    throw new InvalidCastException("Only integer values can be interpreted as int.");
+                if (value._decimal < int.MinValue || value._decimal > int.MaxValue)
+                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+                return (int) value._decimal;
+            }
+            else
+            {
+                if (value._double != Math.Truncate(value._double))
+                    throw new InvalidCastException("Only integer values can be interpreted as int.");
+                if (value._double < int.MinValue || value._double > int.MaxValue)
+                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+                return (int) value._double;
+            }
+        }
+
+        public static implicit operator JsonNumber(decimal value)
+        {
+            return new JsonNumber(value);
+        }
+
+        public static implicit operator JsonNumber(double value)
+        {
+            return new JsonNumber(value);
+        }
+
+        public static implicit operator JsonNumber(long value)
+        {
+            return new JsonNumber(value);
+        }
+
+        public static implicit operator JsonNumber(int value)
+        {
+            return new JsonNumber(value);
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is JsonNumber ? Equals((JsonNumber) other) : false;
+        }
+
+        public bool Equals(JsonNumber other)
+        {
+            if (other == null) return false;
+            if (double.IsNaN(this._double) && double.IsNaN(other._double))
+                return this._decimal == other._decimal;
+            else
+                return (double) this == (double) other;
+        }
+
+        public override int GetHashCode()
+        {
+            return double.IsNaN(_double) ? _decimal.GetHashCode() : _double.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return double.IsNaN(_double) ? _decimal.ToString() : _double.ToString();
         }
     }
 }
