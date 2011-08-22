@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -6,9 +6,7 @@ using System.Collections.Generic;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// A class that manages a global low-level keyboard hook
-    /// </summary>
+    /// <summary>Manages a global low-level keyboard hook.</summary>
     public sealed class GlobalKeyboardListener
     {
         /// <summary>
@@ -31,11 +29,11 @@ namespace RT.Util
         /// <summary>
         /// Occurs when one of the hooked keys is pressed.
         /// </summary>
-        public event KeyEventHandler KeyDown;
+        public event GlobalKeyEventHandler KeyDown;
         /// <summary>
         /// Occurs when one of the hooked keys is released.
         /// </summary>
-        public event KeyEventHandler KeyUp;
+        public event GlobalKeyEventHandler KeyUp;
         #endregion
 
         #region Constructors and Destructors
@@ -78,13 +76,10 @@ namespace RT.Util
             WinAPI.UnhookWindowsHookEx(_hHook);
         }
 
-        /// <summary>
-        /// The callback for the keyboard hook
-        /// </summary>
-        /// <param name="code">The hook code, if it isn't >= 0, the function shouldn't do anyting</param>
-        /// <param name="wParam">The event type</param>
-        /// <param name="lParam">The keyhook event information</param>
-        /// <returns></returns>
+        /// <summary>The callback for the keyboard hook.</summary>
+        /// <param name="code">The hook code. If this is &lt; 0, the callback shouldn’t do anyting.</param>
+        /// <param name="wParam">The event type. Only <c>WM_(SYS)?KEY(DOWN|UP)</c> events are handled.</param>
+        /// <param name="lParam">Information about the key pressed/released.</param>
         private int hookProc(int code, int wParam, ref WinAPI.KeyboardHookStruct lParam)
         {
             if (code >= 0)
@@ -93,7 +88,7 @@ namespace RT.Util
 
                 if (HookAllKeys || _hookedKeys.Contains(key))
                 {
-                    KeyEventArgs kea = new KeyEventArgs(key);
+                    var kea = new GlobalKeyEventArgs(key, lParam.scanCode);
                     if ((wParam == WinAPI.WM_KEYDOWN || wParam == WinAPI.WM_SYSKEYDOWN) && (KeyDown != null))
                     {
                         KeyDown(this, kea);
@@ -110,4 +105,26 @@ namespace RT.Util
         }
         #endregion
     }
+
+    /// <summary>Contains arguments for the KeyUp/KeyDown event in a <see cref="GlobalKeyboardListener"/>.</summary>
+    public sealed class GlobalKeyEventArgs : EventArgs
+    {
+        /// <summary>The virtual-key code of the key being pressed or released.</summary>
+        public Keys VirtualKeyCode { get; private set; }
+        /// <summary>The scancode of the key being pressed or released.</summary>
+        public int ScanCode { get; private set; }
+        /// <summary>Set this to ‘true’ to prevent further processing of the keystroke (i.e. to ‘swallow’ it).</summary>
+        public bool Handled { get; set; }
+
+        /// <summary>Constructor.</summary>
+        public GlobalKeyEventArgs(Keys virtualKeyCode, int scanCode)
+        {
+            VirtualKeyCode = virtualKeyCode;
+            ScanCode = scanCode;
+            Handled = false;
+        }
+    }
+
+    /// <summary>Used to trigger the KeyUp/KeyDown events in <see cref="GlobalKeyboardListener"/>.</summary>
+    public delegate void GlobalKeyEventHandler(object sender, GlobalKeyEventArgs e);
 }

@@ -161,6 +161,12 @@ namespace RT.Util
         public const int KEYEVENTF_KEYUP = 0x2;
         public const int KEYEVENTF_UNICODE = 0x4;
 
+        // For mouse_event
+        public const int MOUSEEVENTF_LEFTDOWN = 0x02;
+        public const int MOUSEEVENTF_LEFTUP = 0x04;
+        public const int MOUSEEVENTF_RIGHTDOWN = 0x08;
+        public const int MOUSEEVENTF_RIGHTUP = 0x10;
+
         // For the 'type' field in the INPUT struct
         public const int INPUT_MOUSE = 0;
         public const int INPUT_KEYBOARD = 1;
@@ -480,6 +486,12 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern int ToUnicode(uint virtualKeyCode, uint scanCode, byte[] keyboardState,
             [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder receivingBuffer, int bufferSize, uint flags);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr LoadKeyboardLayout(string pwszKLID, uint flags);
+
+        [DllImport("user32.dll")]
+        public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
 
         #endregion
 
