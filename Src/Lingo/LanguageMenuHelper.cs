@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using RT.Util.Controls;
 using RT.Util.Dialogs;
 
 namespace RT.Util.Lingo
@@ -146,7 +147,7 @@ namespace RT.Util.Lingo
         /// <param name="position">The menu's desired position relative to <paramref name="positionControl"/>.</param>
         public void ShowContextMenu(Control positionControl, Point position)
         {
-            var menu = new ContextMenuStrip();
+            var menu = new ContextMenuStrip() { Renderer = new NativeToolStripRenderer() };
             foreach (var item in createDropDownItems())
                 menu.Items.Add(item);
             menu.Show(positionControl, position);
