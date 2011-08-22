@@ -65,6 +65,43 @@ namespace RT.KitchenSink
             Mean = Mean + delta / ObservationCount;
             _m2 = _m2 + delta * (value - Mean);
         }
+
+        /// <summary>Adds a number of observations, updating all statistics as appropriate. The nature of the statistics
+        /// collected by the class enable this operation by only having similar statistics about the observations being added.</summary>
+        /// <param name="count">Number of observations added.</param>
+        /// <param name="mean">The sample mean of the added observations.</param>
+        /// <param name="min">The minimum of the added observations.</param>
+        /// <param name="max">The maximum of the added observations.</param>
+        /// <param name="variance">The sample variance of the added observations.</param>
+        public void AddObservations(int count, double mean, double min, double max, double variance)
+        {
+            if (ObservationCount == 0)
+            {
+                ObservationCount = count;
+                Mean = mean;
+                Min = min;
+                Max = max;
+                _m2 = variance * ObservationCount;
+            }
+            else
+            {
+                var mean1 = Mean;
+                var count1 = ObservationCount;
+                var variance1 = Variance;
+
+                Mean = (Mean * ObservationCount + mean * count) / (ObservationCount + count);
+                if (Min > min)
+                    Min = min;
+                if (Max < max)
+                    Max = max;
+                ObservationCount += count;
+
+                var varianceTotal = (count1 * (variance1 + mean1 * mean1) + count * (variance + mean * mean)) / ObservationCount - Mean * Mean;
+                _m2 = varianceTotal * ObservationCount;
+                if (_m2 < 0)
+                    _m2 = 0;
+            }
+        }
     }
 
     /// <summary>

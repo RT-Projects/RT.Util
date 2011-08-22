@@ -15,7 +15,8 @@
     <OutputPath>..\Builds\$(Configuration)</OutputPath>
     <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</IntermediateOutputPath>
     <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -53,6 +54,7 @@
     <Compile Include="Properties\KitchenSink\KitchenSinkTestsAssemblyInfo.cs" />
     <Compile Include="Streams\ControlCodedStreamTests.cs" />
     <Compile Include="Streams\PeekableStreamTests.cs" />
+    <Compile Include="ValueStatTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RT.NUnitDirect\Src\RT.NUnitDirect.csproj">
