@@ -255,6 +255,22 @@ namespace RT.Util
         /// <remarks>Useful to circumvent Visual Studio’s bug where multi-line literal arrays are not auto-formatted.</remarks>
         public static T[] NewArray<T>(params T[] parameters) { return parameters; }
 
+        /// <summary>Instantiates a fully-initialized array with the specified dimensions.</summary>
+        /// <param name="size">Size of the first dimension.</param>
+        /// <param name="initialiser">Function to initialise the value of every element.</param>
+        /// <typeparam name="T">Type of the array element.</typeparam>
+        public static T[] NewArray<T>(int size, Func<int, T> initialiser)
+        {
+            if (initialiser == null)
+                throw new ArgumentNullException("initialiser");
+            var result = new T[size];
+            for (int i = 0; i < size; i++)
+            {
+                result[i] = initialiser(i);
+            }
+            return result;
+        }
+
         /// <summary>Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
         /// <param name="size1">Size of the first dimension.</param>
         /// <param name="size2">Size of the second dimension.</param>
