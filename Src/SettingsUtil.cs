@@ -132,15 +132,16 @@ namespace RT.Util
 
         internal static void serialize(object settings, Type settingsType, string filename, SettingsSerializer serializer)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(filename));
             Ut.WaitSharingVio(() =>
             {
                 switch (serializer)
                 {
                     case SettingsSerializer.XmlClassify:
+                        // SaveObjectToXmlFile automatically creates the folder if necessary
                         XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
                         break;
                     case SettingsSerializer.DotNetBinary:
+                        PathUtil.CreatePathToFile(filename);
                         var bf = new BinaryFormatter();
                         using (var fs = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
                             bf.Serialize(fs, settings);
