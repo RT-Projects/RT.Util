@@ -330,7 +330,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="input">String to escape.</param>
         /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
         /// <returns>JavaScript- or JSON-compatible representation of the input string.</returns>
-        public static string JsEscape(this string input, JsQuotes quotes)
+        public static string JsEscape(this string input, JsQuotes quotes = JsQuotes.Double)
         {
             if (input == null)
                 throw new ArgumentNullException("input");

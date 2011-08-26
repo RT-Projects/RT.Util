@@ -132,6 +132,7 @@ namespace RT.Util
 
         internal static void serialize(object settings, Type settingsType, string filename, SettingsSerializer serializer)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(filename));
             Ut.WaitSharingVio(() =>
             {
                 switch (serializer)
