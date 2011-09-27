@@ -324,9 +324,16 @@ namespace RT.Util.ExtensionMethods
             return Encoding.UTF8.GetByteCount(input);
         }
 
-        /// <summary>
-        /// Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.
-        /// </summary>
+        /// <summary>Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped. Returns "null" if the input is null.</summary>
+        /// <param name="input">String to escape.</param>
+        /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
+        /// <returns>JavaScript- or JSON-compatible representation of the input string, or the "null" keyword if the input is null.</returns>
+        public static string JsEscapeNull(this string input, JsQuotes quotes = JsQuotes.Double)
+        {
+            return input == null ? "null" : input.JsEscape(quotes);
+        }
+
+        /// <summary>Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.</summary>
         /// <param name="input">String to escape.</param>
         /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
         /// <returns>JavaScript- or JSON-compatible representation of the input string.</returns>
