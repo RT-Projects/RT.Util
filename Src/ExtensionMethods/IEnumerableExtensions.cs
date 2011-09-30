@@ -86,6 +86,23 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>
+        /// Pairs up consecutive items of this enumerable an enumerates them as tuples.
+        /// </summary>
+        public static IEnumerable<Tuple<T, T>> Pairs<T>(this IEnumerable<T> source)
+        {
+            using (var e = source.GetEnumerator())
+                while (true)
+                {
+                    if (!e.MoveNext())
+                        yield break;
+                    var prev = e.Current;
+                    if (!e.MoveNext())
+                        throw new ArgumentException("The number of elements in input sequence is not divisible by 2.");
+                    yield return Tuple.Create(prev, e.Current);
+                }
+        }
+
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
