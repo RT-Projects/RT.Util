@@ -18,19 +18,18 @@ namespace RT.KitchenSink.Geometry
         RemoveOffboundsSites = 2
     }
 
-    /// <summary>
-    /// Static class providing methods for generating Voronoi diagrams from a set of input points.
-    /// </summary>
-    public static class VoronoiDiagram
+    /// <summary>Represents a Voronoi diagrams.</summary>
+    public sealed class VoronoiDiagram
     {
-        /// <summary>
-        /// Generates a Voronoi diagram from a set of input points.
-        /// </summary>
+        public List<EdgeD> Edges;
+        public Dictionary<PointD, PolygonD> Polygons;
+
+        /// <summary>Generates a Voronoi diagram from a set of input points.</summary>
         /// <param name="sites">Input points (sites) to generate diagram from.</param>
         /// <param name="size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <param name="flags">Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
         /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags)
+        public static VoronoiDiagram GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags = 0)
         {
             data d = new data(sites, size.Width, size.Height, flags);
 
@@ -46,23 +45,11 @@ namespace RT.KitchenSink.Geometry
                     dic.Add(kvp.Key, Poly);
             }
 
-            return Tuple.Create(edgeList, dic);
+            return new VoronoiDiagram { Edges = edgeList, Polygons = dic };
         }
 
         /// <summary>
-        /// Generates a Voronoi diagram from a set of input points.
-        /// </summary>
-        /// <param name="sites">Input points (sites) to generate diagram from.
-        /// If two points (sites) have identical co-ordinates, an exception is raised.</param>
-        /// <param name="size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
-        /// <returns>A list of line segments describing the Voronoi diagram.</returns>
-        public static Tuple<List<EdgeD>, Dictionary<PointD, PolygonD>> GenerateVoronoiDiagram(PointD[] sites, SizeF size)
-        {
-            return GenerateVoronoiDiagram(sites, size, 0);
-        }
-
-        /// <summary>
-        /// Internal class to generate Voronoi diagrams using Fortune's algorithm. Contains internal data structures and methods.
+        /// Internal class to generate Voronoi diagrams using Fortune’s algorithm. Contains internal data structures and methods.
         /// </summary>
         private sealed class data
         {
