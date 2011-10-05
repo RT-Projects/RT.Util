@@ -678,15 +678,19 @@ namespace RT.Util.ExtensionMethods
         /// as the separator and the specified prefix and suffix for each string.</para>
         /// <example>
         ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).JoinString("[", "]", ", ");
+        ///         var a = (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]");
         ///         // a contains "[Paris], [London], [Tokyo]"
+        ///         ...JoinString(", ", "[", "]", " and ");
+        ///         // a contains "[Paris], [London] and [Tokyo]"
         ///     </code>
         /// </example>
         /// </summary>
-        public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null)
+        public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)
         {
             if (values == null)
                 throw new ArgumentNullException("values");
+            if (lastSeparator == null)
+                lastSeparator = separator;
 
             using (var enumerator = values.GetEnumerator())
             {
@@ -704,57 +708,20 @@ namespace RT.Util.ExtensionMethods
                 {
                     // Optimise the (common) case where there is no prefix/suffix; this prevents an array allocation when calling string.Concat()
                     if (prefix == null && suffix == null)
-                        return one + separator + two;
-                    return prefix + one + suffix + separator + prefix + two + suffix;
+                        return one + lastSeparator + two;
+                    return prefix + one + suffix + lastSeparator + prefix + two + suffix;
                 }
 
                 StringBuilder sb = new StringBuilder()
                     .Append(prefix).Append(one).Append(suffix).Append(separator)
-                    .Append(prefix).Append(two).Append(suffix).Append(separator)
-                    .Append(prefix).Append(enumerator.Current).Append(suffix);
-                while (enumerator.MoveNext())
-                    sb.Append(separator).Append(prefix).Append(enumerator.Current).Append(suffix);
-                return sb.ToString();
-            }
-        }
-
-        /// <summary>
-        /// <para>Turns all elements in the enumerable to strings and joins them using the specified separators.</para>
-        /// <example>
-        ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).JoinStringWithAnd(", ", " and ");
-        ///         // a contains "Paris, London and Tokyo"
-        ///     </code>
-        /// </example>
-        /// </summary>
-        public static string JoinStringWithAnd<T>(this IEnumerable<T> values, string commaSeparator, string andSeparator)
-        {
-            if (values == null)
-                throw new ArgumentNullException("values");
-
-            using (var enumerator = values.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                    return "";
-
-                // Optimise the case where there is only one element
-                var one = enumerator.Current;
-                if (!enumerator.MoveNext())
-                    return one.ToString();
-
-                // Optimise the case where there are only two elements
-                var two = enumerator.Current;
-                if (!enumerator.MoveNext())
-                    return one + andSeparator + two;
-
-                StringBuilder sb = new StringBuilder().Append(one).Append(commaSeparator).Append(two);
+                    .Append(prefix).Append(two).Append(suffix);
                 var prev = enumerator.Current;
                 while (enumerator.MoveNext())
                 {
-                    sb.Append(commaSeparator).Append(prev);
+                    sb.Append(separator).Append(prefix).Append(prev).Append(suffix);
                     prev = enumerator.Current;
                 }
-                sb.Append(andSeparator).Append(prev);
+                sb.Append(lastSeparator).Append(prefix).Append(prev).Append(suffix);
                 return sb.ToString();
             }
         }

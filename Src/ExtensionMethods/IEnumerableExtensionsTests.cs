@@ -340,8 +340,12 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual("London, Paris, Tokyo", new[] { "London", "Paris", "Tokyo" }.JoinString(", "));
             Assert.AreEqual("London|Paris|Tokyo", new[] { "London", "Paris", "Tokyo" }.JoinString("|"));
 
+            Assert.AreEqual("London, Paris and Tokyo", new[] { "London", "Paris", "Tokyo" }.JoinString(", ", lastSeparator: " and "));
+            Assert.AreEqual("London and Paris", new[] { "London", "Paris" }.JoinString(", ", lastSeparator: " and "));
+
             Assert.AreEqual("[London], [Paris], [Tokyo]", new[] { "London", "Paris", "Tokyo" }.JoinString(", ", "[", "]"));
             Assert.AreEqual("<London><Paris><Tokyo>", new[] { "London", "Paris", "Tokyo" }.JoinString(null, "<", ">"));
+            Assert.AreEqual("<London><Paris>and<Tokyo>", new[] { "London", "Paris", "Tokyo" }.JoinString(null, "<", ">", "and"));
 
             Assert.AreEqual("", new string[] { }.JoinString("|"));
             Assert.AreEqual("London", new[] { "London" }.JoinString("|"));
