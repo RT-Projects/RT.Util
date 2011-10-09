@@ -46,14 +46,13 @@ namespace RT.Util.Drawing
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
-        /// <summary>
-        /// Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.
-        /// </summary>
+        /// <summary>Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
         /// <param name="rectangle">Position of the rectangle.</param>
         /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        public static GraphicsPath RoundedRectangle(RectangleF rectangle, float radius)
+        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        public static GraphicsPath RoundedRectangle(RectangleF rectangle, float radius, bool tolerant = false)
         {
-            return RoundedRectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, radius);
+            return RoundedRectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, radius, tolerant);
         }
 
         /// <summary>
@@ -64,7 +63,8 @@ namespace RT.Util.Drawing
         /// <param name="width">Width of the rounded rectangle.</param>
         /// <param name="height">Height of the rounded rectangle.</param>
         /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        public static GraphicsPath RoundedRectangle(float x, float y, float width, float height, float radius)
+        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        public static GraphicsPath RoundedRectangle(float x, float y, float width, float height, float radius, bool tolerant = false)
         {
             if (width <= 0)
                 throw new ArgumentException("'width' must be positive.", "width");
@@ -73,7 +73,11 @@ namespace RT.Util.Drawing
             if (radius <= 0)
                 throw new ArgumentException("'radius' must be positive.", "radius");
             if (width < 2 * radius || height < 2 * radius)
-                throw new ArgumentException("'radius' is too large to fit into the width and/or height.", "radius");
+            {
+                if (!tolerant)
+                    throw new ArgumentException("'radius' is too large to fit into the width and/or height.", "radius");
+                radius = Math.Min(width / 2, height / 2);
+            }
 
             GraphicsPath g = new GraphicsPath();
             g.AddArc(x, y, 2 * radius, 2 * radius, 180, 90);
