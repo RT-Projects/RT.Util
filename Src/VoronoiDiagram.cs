@@ -21,7 +21,9 @@ namespace RT.KitchenSink.Geometry
     /// <summary>Represents a Voronoi diagrams.</summary>
     public sealed class VoronoiDiagram
     {
+        /// <summary>Edges of the diagram.</summary>
         public List<EdgeD> Edges;
+        /// <summary>Polygons corresponding to each of the input points.</summary>
         public Dictionary<PointD, PolygonD> Polygons;
 
         /// <summary>Generates a Voronoi diagram from a set of input points.</summary>
