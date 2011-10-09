@@ -726,7 +726,7 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Equivalent to <see cref="JoinString{T}(IEnumerable{T},string,string,string)"/>, but for <see cref="ConsoleColoredString"/>s.</summary>
+        /// <summary>Equivalent to <see cref="JoinString{T}"/>, but for <see cref="ConsoleColoredString"/>s.</summary>
         public static ConsoleColoredString JoinColoredString<T>(this IEnumerable<T> values, ConsoleColoredString separator = null, ConsoleColoredString prefix = null, ConsoleColoredString suffix = null, ConsoleColor defaultColor = ConsoleColor.Gray)
         {
             if (values == null)
