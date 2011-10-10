@@ -21,6 +21,16 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnKeyDown(KeyEventArgs e)
         {
+            if (e.KeyData == (Keys.Control | Keys.A))
+            {
+                if (SelectionMode == SelectionMode.MultiExtended || SelectionMode == SelectionMode.MultiSimple)
+                    for (int i = 0; i < Items.Count; i++)
+                        SetSelected(i, true);
+                e.Handled = true;
+                _ignoreOneKeyPress = true;
+                return;
+            }
+
             if (SelectionMode != SelectionMode.MultiExtended)
             {
                 base.OnKeyDown(e);
@@ -49,6 +59,19 @@ namespace RT.Util.Controls
             }
             else
                 base.OnKeyDown(e);
+        }
+
+        private bool _ignoreOneKeyPress = false;
+
+        protected override void OnKeyPress(KeyPressEventArgs e)
+        {
+            if (_ignoreOneKeyPress)
+            {
+                e.Handled = true;
+                _ignoreOneKeyPress = false;
+            }
+            else
+                base.OnKeyPress(e);
         }
 
         /// <summary>Gets or sets the zero-based index of the list item that has the dotted outline.</summary>
