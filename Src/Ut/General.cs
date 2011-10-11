@@ -315,6 +315,22 @@ namespace RT.Util
             return result;
         }
 
+        /// <summary>Returns the integer represented by the specified string, or null if the string does not represent a valid 32-bit integer.</summary>
+        public static int? ParseInt32(string value) { int result; return int.TryParse(value, out result) ? (int?) result : null; }
+        /// <summary>Returns the integer represented by the specified string, or null if the string does not represent a valid 64-bit integer.</summary>
+        public static long? ParseInt64(string value) { long result; return long.TryParse(value, out result) ? (long?) result : null; }
+        /// <summary>Returns the floating-point number represented by the specified string, or null if the string does not represent a valid double-precision floating-point number.</summary>
+        public static double? ParseDouble(string value) { double result; return double.TryParse(value, out result) ? (double?) result : null; }
+        /// <summary>Returns the date/time stamp represented by the specified string, or null if the string does not represent a valid date/time stamp.</summary>
+        public static DateTime? ParseDateTime(string value) { DateTime result; return DateTime.TryParse(value, out result) ? (DateTime?) result : null; }
+        /// <summary>Returns the enum value represented by the specified string, or null if the string does not represent a valid enum value.</summary>
+        public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct { T result; return Enum.TryParse<T>(value, ignoreCase, out result) ? (T?) result : null; }
+
+        /// <summary>Returns the earlier of the two specified date/time stamps.</summary>
+        public static DateTime Min(DateTime one, DateTime two) { return one < two ? one : two; }
+        /// <summary>Returns the later of the two specified date/time stamps.</summary>
+        public static DateTime Max(DateTime one, DateTime two) { return one < two ? two : one; }
+
         /// <summary>
         /// Executes the specified action. If the action results in a file sharing violation exception, the action will be
         /// repeatedly retried after a short delay (which increases after every failed attempt).
