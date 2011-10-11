@@ -63,6 +63,7 @@ namespace RT.Util.Controls
 
         private bool _ignoreOneKeyPress = false;
 
+        /// <summary>Override; see base.</summary>
         protected override void OnKeyPress(KeyPressEventArgs e)
         {
             if (_ignoreOneKeyPress)
