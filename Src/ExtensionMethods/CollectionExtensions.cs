@@ -82,25 +82,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by 1. If the specified key does
-        /// not exist in the current dictionary, the value 1 is inserted.
-        /// </summary>
-        /// <typeparam name="K">Type of the key of the dictionary.</typeparam>
-        /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key">Key at which the list is located in the dictionary.</param>
-        public static void IncSafe<K>(this IDictionary<K, int> dic, K key)
-        {
-            if (dic == null)
-                throw new ArgumentNullException("dic");
-            if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
-            if (!dic.ContainsKey(key))
-                dic[key] = 1;
-            else
-                dic[key] = dic[key] + 1;
-        }
-
-        /// <summary>
         /// Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by the specified amount.
         /// If the specified key does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.
         /// </summary>
@@ -108,7 +89,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="dic">Dictionary to operate on.</param>
         /// <param name="key">Key at which the list is located in the dictionary.</param>
         /// <param name="amount">The amount by which to increment the integer.</param>
-        public static void IncSafe<K>(this IDictionary<K, int> dic, K key, int amount)
+        public static void IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
         {
             if (dic == null)
                 throw new ArgumentNullException("dic");
