@@ -335,6 +335,68 @@ namespace RT.Util
         /// <summary>Returns the later of the two specified date/time stamps.</summary>
         public static DateTime Max(DateTime one, DateTime two) { return one < two ? two : one; }
 
+        public static Delegate CreateDelegate(object firstArgument, MethodInfo method)
+        {
+            var param = method.GetParameters();
+            return Delegate.CreateDelegate(
+                method.ReturnType == typeof(void)
+                    ? param.Length == 0 ? typeof(Action) : actionType(param.Length).MakeGenericType(param.Select(p => p.ParameterType).ToArray())
+                    : funcType(param.Length).MakeGenericType(param.Select(p => p.ParameterType).Concat(method.ReturnType).ToArray()),
+                firstArgument,
+                method
+            );
+        }
+
+        private static Type funcType(int numParameters)
+        {
+            switch (numParameters)
+            {
+                case 0: return typeof(Func<>);
+                case 1: return typeof(Func<,>);
+                case 2: return typeof(Func<,,>);
+                case 3: return typeof(Func<,,,>);
+                case 4: return typeof(Func<,,,,>);
+                case 5: return typeof(Func<,,,,,>);
+                case 6: return typeof(Func<,,,,,,>);
+                case 7: return typeof(Func<,,,,,,,>);
+                case 8: return typeof(Func<,,,,,,,,>);
+                case 9: return typeof(Func<,,,,,,,,,>);
+                case 10: return typeof(Func<,,,,,,,,,,>);
+                case 11: return typeof(Func<,,,,,,,,,,,>);
+                case 12: return typeof(Func<,,,,,,,,,,,,>);
+                case 13: return typeof(Func<,,,,,,,,,,,,,>);
+                case 14: return typeof(Func<,,,,,,,,,,,,,,>);
+                case 15: return typeof(Func<,,,,,,,,,,,,,,,>);
+                case 16: return typeof(Func<,,,,,,,,,,,,,,,,>);
+            }
+            throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
+        }
+
+        private static Type actionType(int numParameters)
+        {
+            switch (numParameters)
+            {
+                case 0: return typeof(Action);
+                case 1: return typeof(Action<>);
+                case 2: return typeof(Action<,>);
+                case 3: return typeof(Action<,,>);
+                case 4: return typeof(Action<,,,>);
+                case 5: return typeof(Action<,,,,>);
+                case 6: return typeof(Action<,,,,,>);
+                case 7: return typeof(Action<,,,,,,>);
+                case 8: return typeof(Action<,,,,,,,>);
+                case 9: return typeof(Action<,,,,,,,,>);
+                case 10: return typeof(Action<,,,,,,,,,>);
+                case 11: return typeof(Action<,,,,,,,,,,>);
+                case 12: return typeof(Action<,,,,,,,,,,,>);
+                case 13: return typeof(Action<,,,,,,,,,,,,>);
+                case 14: return typeof(Action<,,,,,,,,,,,,,>);
+                case 15: return typeof(Action<,,,,,,,,,,,,,,>);
+                case 16: return typeof(Action<,,,,,,,,,,,,,,,>);
+            }
+            throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
+        }
+
         /// <summary>
         /// Executes the specified action. If the action results in a file sharing violation exception, the action will be
         /// repeatedly retried after a short delay (which increases after every failed attempt).
