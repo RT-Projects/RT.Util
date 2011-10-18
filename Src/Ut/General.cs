@@ -335,6 +335,9 @@ namespace RT.Util
         /// <summary>Returns the later of the two specified date/time stamps.</summary>
         public static DateTime Max(DateTime one, DateTime two) { return one < two ? two : one; }
 
+        /// <summary>Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the specified method.</summary>
+        /// <param name="firstArgument">Object to call the method on, or null for static methods.</param>
+        /// <param name="method">The method to call.</param>
         public static Delegate CreateDelegate(object firstArgument, MethodInfo method)
         {
             var param = method.GetParameters();
