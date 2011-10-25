@@ -695,7 +695,12 @@ namespace RT.Util.Json
                     var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].AsString == name);
                     if (index == -1)
                         throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
-                    str.Append(JsonValue.ToString(namevalues[2 * index + 1]));
+                    var value = JsonValue.ToString(namevalues[2 * index + 1]);
+                    if (value.Length > 0 && (
+                        ((char.IsLetter(str[str.Length - 1]) || char.IsDigit(str[str.Length - 1]) || str[str.Length - 1] == '_') && (char.IsLetter(value[0]) || char.IsDigit(value[0]) || value[0] == '_')) ||
+                        (str[str.Length - 1] == '-' && value[0] == '-')))
+                        str.Append(" ");
+                    str.Append(value);
                 }
                 else if (m.Groups["required_whitespace"].Success)
                     str.Append(" ");
