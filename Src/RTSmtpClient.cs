@@ -241,85 +241,25 @@ namespace RT.Util
 
         private static string toQuotedPrintable(string input)
         {
-            var lines = input.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            // Encode the input as UTF-8 and then encode all non-printable bytes as '='+hex.
+            // Then change =0D=0A back into \r\n (but leave a lone =0D or =0A encoded)
+            var encoded = input.ToUtf8().Select(ch => ch < 32 || ch == '=' || ch > 126 ? '=' + ch.ToString("X2") : new string((char) ch, 1)).JoinString().Replace("=0D=0A", "\r\n");
+
+            // Encode spaces before newlines as required by the encoding
+            encoded = Regex.Replace(encoded, @"( +)\r", m => "=20".Repeat(m.Groups[1].Length) + "\r");
+
+            // Break lines that are longer than 76 characters
             var sb = new StringBuilder();
-            foreach (var line in lines)
+            Match match;
+            while ((match = Regex.Match(encoded, "^[^\r]{77}", RegexOptions.Multiline)).Success)
             {
-                var lineLength = 0;
-                var numSpaces = 0;
-                var lineUtf8 = line.ToUtf8();
-                for (int i = 0; i < lineUtf8.Length; i++)
-                {
-                    var byt = lineUtf8[i];
-                    if (lineLength > 72)
-                    {
-                        sb.Append("=\r\n");
-                        lineLength = 0;
-                    }
-                    if (byt == 32)
-                        numSpaces++;
-                    else
-                    {
-                        if (numSpaces > 0)
-                        {
-                            if (lineLength + numSpaces > 72)
-                            {
-                                do
-                                {
-                                    if (lineLength > 72)
-                                    {
-                                        sb.Append("=\r\n");
-                                        lineLength = 0;
-                                    }
-                                    sb.Append("=20");
-                                    lineLength += 3;
-                                    numSpaces--;
-                                }
-                                while (numSpaces > 0);
-                            }
-                            else
-                            {
-                                sb.Append(new string(' ', numSpaces));
-                                lineLength += numSpaces;
-                                numSpaces = 0;
-                            }
-                        }
-
-                        if (byt <= 32 || byt > 126 || byt == '=')
-                        {
-                            sb.Append('=');
-                            var n = byt >> 4;
-                            sb.Append((char) (n < 10 ? '0' + n : 'A' + n - 10));
-                            n = byt & 0xf;
-                            sb.Append((char) (n < 10 ? '0' + n : 'A' + n - 10));
-                            lineLength += 3;
-                        }
-                        else
-                        {
-                            sb.Append((char) byt);
-                            lineLength++;
-                        }
-                    }
-                }
-
-                if (numSpaces > 0)
-                {
-                    do
-                    {
-                        if (lineLength > 72)
-                        {
-                            sb.Append("=\r\n");
-                            lineLength = 0;
-                        }
-                        sb.Append("=20");
-                        lineLength += 3;
-                        numSpaces--;
-                    }
-                    while (numSpaces > 0);
-                }
-
-                sb.Append("\r\n");
+                var p = match.Value.IndexOf('=', 73);
+                if (p == -1 || p == 76)
+                    p = 75;
+                sb.Append(encoded.Substring(0, match.Index + p)).Append("=\r\n");
+                encoded = encoded.Substring(match.Index + p);
             }
+            sb.Append(encoded);
             return sb.ToString();
         }
 
