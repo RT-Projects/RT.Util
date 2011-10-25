@@ -656,6 +656,12 @@ namespace RT.Util.Json
             // is just to shut it up.
             throw new NotSupportedException();
         }
+
+        /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
+        public static string ToString(JsonValue value)
+        {
+            return value == null ? "null" : value.ToString();
+        }
     }
 
     public class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
@@ -736,7 +742,7 @@ namespace RT.Util.Json
             {
                 if (!first)
                     sb.Append(',');
-                sb.Append(value == null ? "null" : value.ToString());
+                sb.Append(JsonValue.ToString(value));
                 first = false;
             }
             sb.Append(']');
@@ -868,7 +874,7 @@ namespace RT.Util.Json
                     sb.Append(',');
                 sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
                 sb.Append(':');
-                sb.Append(kvp.Value == null ? "null" : kvp.Value.ToString());
+                sb.Append(JsonValue.ToString(kvp.Value));
                 first = false;
             }
             sb.Append('}');
