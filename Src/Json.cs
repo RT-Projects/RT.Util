@@ -215,20 +215,12 @@ namespace RT.Util.Json
                     Pos++;
             }
 
-            JsonNumber result;
-            string number = Json.Substring(fromPos, Pos - fromPos);
-            decimal dec;
-            if (!decimal.TryParse(number, out dec))
-            {
-                double dbl;
-                if (!double.TryParse(number, out dbl))
-                    throw new JsonParseException(this, "expected a number");
-                result = dbl;
-            }
-            else
-                result = dec;
+            double dbl;
+            if (!double.TryParse(Json.Substring(fromPos, Pos - fromPos), out dbl))
+                throw new JsonParseException(this, "expected a number");
+
             ConsumeWhitespace();
-            return result;
+            return dbl;
         }
 
         public JsonList ParseList()
@@ -338,7 +330,7 @@ namespace RT.Util.Json
 
         public static implicit operator JsonValue(decimal? value)
         {
-            return value == null ? null : new JsonNumber(value.Value);
+            return value == null ? null : new JsonNumber((double) value.Value);
         }
 
         public static implicit operator JsonValue(double? value)
@@ -661,6 +653,58 @@ namespace RT.Util.Json
         public static string ToString(JsonValue value)
         {
             return value == null ? "null" : value.ToString();
+        }
+
+        /// <summary>
+        /// Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and comments.
+        /// Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are only replaced
+        /// outside of JavaScript literal strings and regexes.
+        /// </summary>
+        /// <param name="js">JavaScript code with placeholders.</param>
+        /// <param name="namevalues">Alternating names and associated values, for example ["user", "abc"] specifies one value named "user".</param>
+        /// <example>
+        /// <para>The following code:</para>
+        /// <code>JsonValue.Fmt(@"Foo({{userid}}, {{username}}, {{options}});", "userid", userid, "username", username, "options", null)</code>
+        /// <para>might return the following string:</para>
+        /// <code>Foo(123, "Matthew Stranger", null);</code>
+        /// </example>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="namevalues"/> has an odd number of values. OR
+        /// <paramref name="js"/> contains a {{placeholder}} whose name is not listed in <paramref name="namevalues"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="js"/> is null. OR <paramref name="namevalues"/> is null.</exception>
+        public static string Fmt(string js, params JsonValue[] namevalues)
+        {
+            if (js == null)
+                throw new ArgumentNullException("js");
+            if (namevalues == null)
+                throw new ArgumentNullException("namevalues");
+            if (namevalues.Length % 2 != 0)
+                throw new ArgumentException("namevalues must have an even number of values.", "namevalues");
+
+            var str = new StringBuilder();
+            foreach (Match m in Regex.Matches(js, @"
+                \{\{(?<placeholder>[^\{\}]*?)\}\}|
+                (?<required_whitespace>(?<=\p{L}|\p{Nd}|_)\s+(?=\p{L}|\p{Nd}|_)|(?<=\+)\s+(?=\+))|
+                (?<comment>//[^\n]*|/\*.*?\*/)|
+                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|(?<!(?:\p{L}|\p{Nd}|[_\)\]\}])\s*)/(?:[^/\\]|\\.)*/|
+                .", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace))
+            {
+                if (m.Groups["placeholder"].Success)
+                {
+                    var name = m.Groups["placeholder"].Value;
+                    var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].AsString == name);
+                    if (index == -1)
+                        throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
+                    str.Append(JsonValue.ToString(namevalues[2 * index + 1]));
+                }
+                else if (m.Groups["required_whitespace"].Success)
+                    str.Append(" ");
+                else if (m.Groups["comment"].Success || (m.Value.Length == 1 && char.IsWhiteSpace(m.Value, 0)))
+                    continue;
+                else
+                    str.Append(m.Value);
+            }
+            return str.ToString();
         }
     }
 
@@ -1009,12 +1053,15 @@ namespace RT.Util.Json
 
     public class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
-        private decimal _decimal;
-        private double _double = double.NaN;
-        public JsonNumber(decimal value) { _decimal = value; }
-        public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException(); }
-        public JsonNumber(long value) { _decimal = value; }
-        public JsonNumber(int value) { _double = value; }
+        private double _double;
+        public JsonNumber(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                throw new ArgumentException("value cannot be infinity or NaN.", "value");
+            _double = value;
+        }
+        public JsonNumber(long value) : this((double) value) { }
+        public JsonNumber(int value) : this((double) value) { }
 
         public static new JsonNumber Parse(string jsonNumber)
         {
@@ -1041,57 +1088,35 @@ namespace RT.Util.Json
 
         public static implicit operator decimal(JsonNumber value)
         {
-            return double.IsNaN(value._double) ? value._decimal : (decimal) value._double;
+            return (decimal) value._double;
         }
 
         public static implicit operator double(JsonNumber value)
         {
-            return double.IsNaN(value._double) ? (double) value._decimal : value._double;
+            return value._double;
         }
 
         public static implicit operator long(JsonNumber value)
         {
-            if (double.IsNaN(value._double))
-            {
-                if (value._decimal != Math.Truncate(value._decimal))
-                    throw new InvalidCastException("Only integer values can be interpreted as long.");
-                if (value._decimal < long.MinValue || value._decimal > long.MaxValue)
-                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
-                return (long) value._decimal;
-            }
-            else
-            {
-                if (value._double != Math.Truncate(value._double))
-                    throw new InvalidCastException("Only integer values can be interpreted as long.");
-                if (value._double < long.MinValue || value._double > long.MaxValue)
-                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
-                return (long) value._double;
-            }
+            if (value._double != Math.Truncate(value._double))
+                throw new InvalidCastException("Only integer values can be interpreted as long.");
+            if (value._double < long.MinValue || value._double > long.MaxValue)
+                throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+            return (long) value._double;
         }
 
         public static implicit operator int(JsonNumber value)
         {
-            if (double.IsNaN(value._double))
-            {
-                if (value._decimal != Math.Truncate(value._decimal))
-                    throw new InvalidCastException("Only integer values can be interpreted as int.");
-                if (value._decimal < int.MinValue || value._decimal > int.MaxValue)
-                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-                return (int) value._decimal;
-            }
-            else
-            {
-                if (value._double != Math.Truncate(value._double))
-                    throw new InvalidCastException("Only integer values can be interpreted as int.");
-                if (value._double < int.MinValue || value._double > int.MaxValue)
-                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-                return (int) value._double;
-            }
+            if (value._double != Math.Truncate(value._double))
+                throw new InvalidCastException("Only integer values can be interpreted as int.");
+            if (value._double < int.MinValue || value._double > int.MaxValue)
+                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+            return (int) value._double;
         }
 
         public static implicit operator JsonNumber(decimal value)
         {
-            return new JsonNumber(value);
+            return new JsonNumber((double) value);
         }
 
         public static implicit operator JsonNumber(double value)
@@ -1116,21 +1141,17 @@ namespace RT.Util.Json
 
         public bool Equals(JsonNumber other)
         {
-            if (other == null) return false;
-            if (double.IsNaN(this._double) && double.IsNaN(other._double))
-                return this._decimal == other._decimal;
-            else
-                return (double) this == (double) other;
+            return other != null && this._double == other._double;
         }
 
         public override int GetHashCode()
         {
-            return double.IsNaN(_double) ? _decimal.GetHashCode() : _double.GetHashCode();
+            return _double.GetHashCode();
         }
 
         public override string ToString()
         {
-            return double.IsNaN(_double) ? _decimal.ToString() : _double.ToString();
+            return _double.ToString();
         }
     }
 }
