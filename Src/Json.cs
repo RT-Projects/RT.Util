@@ -417,6 +417,22 @@ namespace RT.Util.Json
             }
         }
 
+        public long AsLongParse
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                {
+                    var s = this as JsonString;
+                    if (s == null)
+                        throw new NotSupportedException("Only strings and numeric values can be parsed into a long.");
+                    return long.Parse((JsonString) s);
+                }
+                return (long) v;
+            }
+        }
+
         public int AsInt
         {
             get
@@ -427,6 +443,23 @@ namespace RT.Util.Json
                 return (int) v;
             }
         }
+
+        public int AsIntParse
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                {
+                    var s = this as JsonString;
+                    if (s == null)
+                        throw new NotSupportedException("Only strings and numeric values can be parsed into a int.");
+                    return int.Parse((JsonString) s);
+                }
+                return (int) v;
+            }
+        }
+
 
         #region Both IList and IDictionary
 
@@ -676,9 +709,9 @@ namespace RT.Util.Json
             var str = new StringBuilder();
             foreach (Match m in Regex.Matches(js, @"
                 \{\{(?<placeholder>[^\{\}]*?)\}\}|
-                (?<required_whitespace>(?<=\p{L}|\p{Nd}|_)\s+(?=\p{L}|\p{Nd}|_)|(?<=\+)\s+(?=\+))|
+                (?<required_whitespace>(?<=\p{L}|\p{Nd}|[_\$])\s+(?=\p{L}|\p{Nd}|[_\$])|(?<=\+)\s+(?=\+))|
                 (?<comment>//[^\n]*|/\*.*?\*/)|
-                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|(?<!(?:\p{L}|\p{Nd}|[_\)\]\}])\s*)/(?:[^/\\]|\\.)*/|
+                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|(?<!(?:\p{L}|\p{Nd}|[_\)\]\}\$])\s*)/(?:[^/\\]|\\.)*/|
                 .", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace))
             {
                 if (m.Groups["placeholder"].Success)
@@ -689,7 +722,7 @@ namespace RT.Util.Json
                         throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
                     var value = JsonValue.ToString(namevalues[2 * index + 1]);
                     if (value.Length > 0 && (
-                        ((char.IsLetter(str[str.Length - 1]) || char.IsDigit(str[str.Length - 1]) || str[str.Length - 1] == '_') && (char.IsLetter(value[0]) || char.IsDigit(value[0]) || value[0] == '_')) ||
+                        ((char.IsLetter(str[str.Length - 1]) || char.IsDigit(str[str.Length - 1]) || "_$".Contains(str[str.Length - 1])) && (char.IsLetter(value[0]) || char.IsDigit(value[0]) || "_$".Contains(value[0]))) ||
                         (str[str.Length - 1] == '-' && value[0] == '-')))
                         str.Append(" ");
                     str.Append(value);
