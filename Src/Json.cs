@@ -215,12 +215,20 @@ namespace RT.Util.Json
                     Pos++;
             }
 
-            double dbl;
-            if (!double.TryParse(Json.Substring(fromPos, Pos - fromPos), out dbl))
-                throw new JsonParseException(this, "expected a number");
-
+            JsonNumber result;
+            string number = Json.Substring(fromPos, Pos - fromPos);
+            long lng;
+            if (!long.TryParse(number, out lng))
+            {
+                double dbl;
+                if (!double.TryParse(number, out dbl))
+                    throw new JsonParseException(this, "expected a number");
+                result = dbl;
+            }
+            else
+                result = lng;
             ConsumeWhitespace();
-            return dbl;
+            return result;
         }
 
         public JsonList ParseList()
@@ -328,11 +336,6 @@ namespace RT.Util.Json
             return value == null ? null : new JsonBool(value.Value);
         }
 
-        public static implicit operator JsonValue(decimal? value)
-        {
-            return value == null ? null : new JsonNumber((double) value.Value);
-        }
-
         public static implicit operator JsonValue(double? value)
         {
             return value == null ? null : new JsonNumber(value.Value);
@@ -392,17 +395,6 @@ namespace RT.Util.Json
             }
         }
 
-        public decimal AsDecimal
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                    throw new NotSupportedException("Only numeric values can be interpreted as decimal.");
-                return v;
-            }
-        }
-
         public double AsDouble
         {
             get
@@ -410,7 +402,7 @@ namespace RT.Util.Json
                 var v = this as JsonNumber;
                 if (v == null)
                     throw new NotSupportedException("Only numeric values can be interpreted as double.");
-                return v;
+                return (double) v;
             }
         }
 
@@ -421,7 +413,7 @@ namespace RT.Util.Json
                 var v = this as JsonNumber;
                 if (v == null)
                     throw new NotSupportedException("Only numeric values can be interpreted as long.");
-                return v;
+                return (long) v;
             }
         }
 
@@ -432,7 +424,7 @@ namespace RT.Util.Json
                 var v = this as JsonNumber;
                 if (v == null)
                     throw new NotSupportedException("Only numeric values can be interpreted as int.");
-                return v;
+                return (int) v;
             }
         }
 
@@ -1058,15 +1050,11 @@ namespace RT.Util.Json
 
     public class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
-        private double _double;
-        public JsonNumber(double value)
-        {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new ArgumentException("value cannot be infinity or NaN.", "value");
-            _double = value;
-        }
-        public JsonNumber(long value) : this((double) value) { }
-        public JsonNumber(int value) : this((double) value) { }
+        private long _long;
+        private double _double = double.NaN;
+        public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException("JSON disallows NaNs and infinities."); }
+        public JsonNumber(long value) { _long = value; }
+        public JsonNumber(int value) { _double = value; }
 
         public static new JsonNumber Parse(string jsonNumber)
         {
@@ -1091,37 +1079,43 @@ namespace RT.Util.Json
             }
         }
 
-        public static implicit operator decimal(JsonNumber value)
+        public static explicit operator double(JsonNumber value)
         {
-            return (decimal) value._double;
+            return double.IsNaN(value._double) ? (double) value._long : value._double;
         }
 
-        public static implicit operator double(JsonNumber value)
+        public static explicit operator long(JsonNumber value)
         {
-            return value._double;
+            if (double.IsNaN(value._double))
+            {
+                return (long) value._long;
+            }
+            else
+            {
+                if (value._double != Math.Truncate(value._double))
+                    throw new InvalidCastException("Only integer values can be interpreted as long.");
+                if (value._double < long.MinValue || value._double > long.MaxValue)
+                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+                return (long) value._double;
+            }
         }
 
-        public static implicit operator long(JsonNumber value)
+        public static explicit operator int(JsonNumber value)
         {
-            if (value._double != Math.Truncate(value._double))
-                throw new InvalidCastException("Only integer values can be interpreted as long.");
-            if (value._double < long.MinValue || value._double > long.MaxValue)
-                throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
-            return (long) value._double;
-        }
-
-        public static implicit operator int(JsonNumber value)
-        {
-            if (value._double != Math.Truncate(value._double))
-                throw new InvalidCastException("Only integer values can be interpreted as int.");
-            if (value._double < int.MinValue || value._double > int.MaxValue)
-                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-            return (int) value._double;
-        }
-
-        public static implicit operator JsonNumber(decimal value)
-        {
-            return new JsonNumber((double) value);
+            if (double.IsNaN(value._double))
+            {
+                if (value._long < int.MinValue || value._long > int.MaxValue)
+                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+                return (int) value._long;
+            }
+            else
+            {
+                if (value._double != Math.Truncate(value._double))
+                    throw new InvalidCastException("Only integer values can be interpreted as int.");
+                if (value._double < int.MinValue || value._double > int.MaxValue)
+                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+                return (int) value._double;
+            }
         }
 
         public static implicit operator JsonNumber(double value)
@@ -1146,17 +1140,21 @@ namespace RT.Util.Json
 
         public bool Equals(JsonNumber other)
         {
-            return other != null && this._double == other._double;
+            if (other == null) return false;
+            if (double.IsNaN(this._double) && double.IsNaN(other._double))
+                return this._long == other._long;
+            else
+                return (double) this == (double) other;
         }
 
         public override int GetHashCode()
         {
-            return _double.GetHashCode();
+            return double.IsNaN(_double) ? _long.GetHashCode() : _double.GetHashCode();
         }
 
         public override string ToString()
         {
-            return _double.ToString();
+            return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
         }
     }
 }
