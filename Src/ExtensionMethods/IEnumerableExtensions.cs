@@ -515,6 +515,11 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
             if (count == 0)
                 return source;
+
+            var collection = source as ICollection<T>;
+            if (collection != null)
+                return collection.Take(Math.Max(0, collection.Count - count));
+
             return skipLastIterator(source, count);
         }
         private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count)
@@ -554,6 +559,10 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
             if (count == 0)
                 return new T[0];
+
+            var collection = source as ICollection<T>;
+            if (collection != null)
+                return collection.Skip(Math.Max(0, collection.Count - count));
 
             var queue = new Queue<T>(count + 1);
             foreach (var item in source)
