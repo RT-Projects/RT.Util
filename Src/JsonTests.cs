@@ -15,14 +15,19 @@ namespace RT.Util
         {
             Assert.DoesNotThrow(() => new JsonBool(true));
             Assert.DoesNotThrow(() => new JsonNumber(25));
+            Assert.DoesNotThrow(() => new JsonNumber(25L));
+            Assert.DoesNotThrow(() => new JsonNumber(25.1));
             Assert.DoesNotThrow(() => new JsonString("abc"));
             Assert.DoesNotThrow(() => new JsonList());
             Assert.DoesNotThrow(() => new JsonDict());
 
             Assert.Throws<ArgumentNullException>(() => new JsonString(null));
+            Assert.Throws<ArgumentNullException>(() => new JsonList(null));
+            Assert.Throws<ArgumentNullException>(() => new JsonDict(null));
 
             Assert.Throws<ArgumentException>(() => new JsonNumber(double.NaN));
             Assert.Throws<ArgumentException>(() => new JsonNumber(double.PositiveInfinity));
+            Assert.Throws<ArgumentException>(() => new JsonNumber(double.NegativeInfinity));
         }
 
         [Test]
@@ -57,8 +62,10 @@ namespace RT.Util
             // Normal comparisons: number
             Assert.IsTrue(new JsonNumber(47.0).Equals(new JsonNumber(47)));
             Assert.IsTrue(new JsonNumber(47.0).Equals(new JsonNumber(47L)));
+            Assert.IsTrue(new JsonNumber(47).Equals(new JsonNumber(47L)));
             Assert.IsFalse(new JsonNumber(47.47).Equals(new JsonNumber(47)));
             Assert.IsTrue((double) new JsonNumber(47) == 47.0);
+            Assert.IsTrue((int) new JsonNumber(47.0) == 47);
             Assert.Throws<InvalidCastException>(() => { var dummy = (int) new JsonNumber(47.4); });
 
             // Normal comparisons: list
@@ -231,13 +238,14 @@ namespace RT.Util
             assertBoolParseSucc("   true    ", true);
             assertStringParseSucc("     \"  thingy  \"   ", "  thingy  ");
             assertNumberParseSucc("     -47.3e-5    ", -47.3e-5, null);
-            assertListParseSucc("    [25]    ", new JsonList { 25 });
+            assertListParseSucc("    [ 25 ]    ", new JsonList { 25 });
             assertDictParseSucc("    {    \" here \"    :     25   }     ", new JsonDict { { " here ", 25 } });
         }
 
         private void assertBoolParseSucc(string json, bool val)
         {
-            var t = JsonBool.Parse(json);
+            JsonBool t = null;
+            Assert.DoesNotThrow(() => { t = JsonBool.Parse(json); });
             Assert.AreEqual(val, (bool) t);
             Assert.IsTrue(JsonBool.TryParse(json, out t));
             Assert.AreEqual(val, (bool) t);
@@ -253,7 +261,8 @@ namespace RT.Util
 
         private void assertStringParseSucc(string json, string val)
         {
-            var t = JsonString.Parse(json);
+            JsonString t = null;
+            Assert.DoesNotThrow(() => { t = JsonString.Parse(json); });
             Assert.AreEqual(val, (string) t);
             Assert.IsTrue(JsonString.TryParse(json, out t));
             Assert.AreEqual(val, (string) t);
@@ -269,7 +278,8 @@ namespace RT.Util
 
         private void assertNumberParseSucc(string json, double? valD, long? valL)
         {
-            var t = JsonNumber.Parse(json);
+            JsonNumber t = null;
+            Assert.DoesNotThrow(() => { t = JsonNumber.Parse(json); });
             if (valD != null)
                 Assert.AreEqual(valD.Value, (double) t);
             if (valL != null)
@@ -283,14 +293,22 @@ namespace RT.Util
 
         private void assertNumberParseSucc(string json, int val)
         {
-            var t = JsonNumber.Parse(json);
+            JsonNumber t = null;
+            Assert.DoesNotThrow(() => { t = JsonNumber.Parse(json); });
             Assert.AreEqual(val, (int) t);
+            Assert.AreEqual((long) val, (long) t);
             Assert.AreEqual((double) val, (double) t);
-            Assert.AreEqual((decimal) val, (decimal) t);
+            Assert.AreEqual((int?) val, (int?) t);
+            Assert.AreEqual((long?) val, (long?) t);
+            Assert.AreEqual((double?) val, (double?) t);
+
             Assert.IsTrue(JsonNumber.TryParse(json, out t));
             Assert.AreEqual(val, (int) t);
+            Assert.AreEqual((long) val, (long) t);
             Assert.AreEqual((double) val, (double) t);
-            Assert.AreEqual((decimal) val, (decimal) t);
+            Assert.AreEqual((int?) val, (int?) t);
+            Assert.AreEqual((long?) val, (long?) t);
+            Assert.AreEqual((double?) val, (double?) t);
         }
 
         private void assertNumberParseFail(string json)
@@ -303,7 +321,8 @@ namespace RT.Util
 
         private void assertListParseSucc(string json, JsonList expected)
         {
-            var t = JsonList.Parse(json);
+            JsonList t = null;
+            Assert.DoesNotThrow(() => { t = JsonList.Parse(json); });
             Assert.IsTrue(expected.Equals(t));
             Assert.IsTrue(JsonList.TryParse(json, out t));
             Assert.IsTrue(expected.Equals(t));
@@ -319,7 +338,8 @@ namespace RT.Util
 
         private void assertDictParseSucc(string json, JsonDict expected)
         {
-            var t = JsonDict.Parse(json);
+            JsonDict t = null;
+            Assert.DoesNotThrow(() => { t = JsonDict.Parse(json); });
             Assert.IsTrue(expected.Equals(t));
             Assert.IsTrue(JsonDict.TryParse(json, out t));
             Assert.IsTrue(expected.Equals(t));
@@ -336,22 +356,35 @@ namespace RT.Util
         [Test]
         public void TestJsonComplexAndToString()
         {
-            var parsed = JsonValue.Parse("{ \"thingy\": 47, \"bla\": null, \"sub\": { \"wah\": \"gah\", \"em\": [], \"fu\": [1, null, { \"wow\": {} }, \"2\"] }, \"more\": true }");
             var constructed = new JsonDict
             {
                 { "thingy", 47 },
+                { "stuff", 47.1 },
                 { "bla", null },
                 { "sub", new JsonDict
                 {
                     { "wah", "gah" },
-                    { "em", new JsonList{}},
-                    { "fu", new JsonList { 1, null, new JsonDict { { "wow", new JsonDict {} } }, "2" } }
-                }},
+                    { "em", new JsonList { } },
+                    { "fu", new JsonList { 1, null, new JsonDict { { "wow", new JsonDict { } } }, "2" } }
+                } },
                 { "more", true }
             };
+
+            JsonValue parsed = null;
+            Assert.DoesNotThrow(() => { parsed = JsonValue.Parse("{  \"bla\": null, \"stuff\": 47.1, \"more\": true, \"sub\": { \"em\": [], \"fu\": [1, null, { \"wow\": {} }, \"2\"], \"wah\": \"gah\" }, \"thingy\": 47 }"); });
+            Assert.IsNotNull(parsed);
+
+            JsonValue reparsed = null;
+            Assert.DoesNotThrow(() => { reparsed = JsonValue.Parse(parsed.ToString()); });
+            Assert.IsNotNull(reparsed);
+
+            JsonValue reparsed2 = null;
+            Assert.DoesNotThrow(() => { reparsed2 = JsonValue.Parse(constructed.ToString()); });
+            Assert.IsNotNull(reparsed2);
+
             Assert.IsTrue(parsed.Equals(constructed));
-            Assert.IsTrue(parsed.Equals(JsonValue.Parse(parsed.ToString())));
-            Assert.IsTrue(constructed.Equals(JsonValue.Parse(constructed.ToString())));
+            Assert.IsTrue(parsed.Equals(reparsed));
+            Assert.IsTrue(constructed.Equals(reparsed2));
         }
     }
 }

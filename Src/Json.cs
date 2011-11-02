@@ -751,12 +751,15 @@ namespace RT.Util.Json
 
     public class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
-        internal List<JsonValue> List = new List<JsonValue>();
+        internal List<JsonValue> List;
 
-        public JsonList() { }
+        public JsonList() { List = new List<JsonValue>(); }
 
         public JsonList(IEnumerable<JsonValue> items)
         {
+            if (items == null)
+                throw new ArgumentNullException("items");
+            List = new List<JsonValue>(items is ICollection<JsonValue> ? ((ICollection<JsonValue>) items).Count + 2 : 4);
             List.AddRange(items);
         }
 
@@ -835,12 +838,15 @@ namespace RT.Util.Json
 
     public class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
     {
-        internal Dictionary<string, JsonValue> Dict = new Dictionary<string, JsonValue>();
+        internal Dictionary<string, JsonValue> Dict;
 
-        public JsonDict() { }
+        public JsonDict() { Dict = new Dictionary<string, JsonValue>(); }
 
         public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
         {
+            if (items == null)
+                throw new ArgumentNullException("items");
+            Dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> ? ((ICollection<KeyValuePair<string, JsonValue>>) items).Count + 2 : 4);
             foreach (var item in items)
                 Dict.Add(item.Key, item.Value);
         }
@@ -901,7 +907,7 @@ namespace RT.Util.Json
 
         public override bool Equals(object other)
         {
-            return other is JsonDict ? Equals((JsonDict) other) : false;
+            return other is JsonDict && Equals((JsonDict) other);
         }
 
         public bool Equals(JsonDict other)
