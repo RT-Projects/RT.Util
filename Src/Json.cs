@@ -326,30 +326,25 @@ namespace RT.Util.Json
             }
         }
 
-        public static implicit operator JsonValue(string value)
-        {
-            return value == null ? null : new JsonString(value);
-        }
+        public static implicit operator JsonValue(string value) { return value == null ? null : new JsonString(value); }
+        public static implicit operator JsonValue(bool value) { return new JsonBool(value); }
+        public static implicit operator JsonValue(bool? value) { return value == null ? null : new JsonBool(value.Value); }
+        public static implicit operator JsonValue(double value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(double? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(long value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(long? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(int value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(int? value) { return value == null ? null : new JsonNumber(value.Value); }
 
-        public static implicit operator JsonValue(bool? value)
-        {
-            return value == null ? null : new JsonBool(value.Value);
-        }
-
-        public static implicit operator JsonValue(double? value)
-        {
-            return value == null ? null : new JsonNumber(value.Value);
-        }
-
-        public static implicit operator JsonValue(long? value)
-        {
-            return value == null ? null : new JsonNumber(value.Value);
-        }
-
-        public static implicit operator JsonValue(int? value)
-        {
-            return value == null ? null : new JsonNumber(value.Value);
-        }
+        public static explicit operator string(JsonValue value) { return value.AsString; }
+        public static explicit operator bool(JsonValue value) { return value.AsBool; }
+        public static explicit operator bool?(JsonValue value) { return value == null ? (bool?) null : value.AsBool; }
+        public static explicit operator double(JsonValue value) { return value.AsDouble; }
+        public static explicit operator double?(JsonValue value) { return value == null ? (double?) null : value.AsDouble; }
+        public static explicit operator long(JsonValue value) { return value.AsLong; }
+        public static explicit operator long?(JsonValue value) { return value == null ? (long?) null : value.AsLong; }
+        public static explicit operator int(JsonValue value) { return value.AsInt; }
+        public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.AsInt; }
 
         public JsonList AsList
         {
@@ -402,6 +397,22 @@ namespace RT.Util.Json
                 var v = this as JsonNumber;
                 if (v == null)
                     throw new NotSupportedException("Only numeric values can be interpreted as double.");
+                return (double) v;
+            }
+        }
+
+        public double AsDoubleParse
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                {
+                    var s = this as JsonString;
+                    if (s == null)
+                        throw new NotSupportedException("Only strings and numeric values can be parsed into a long.");
+                    return double.Parse((JsonString) s);
+                }
                 return (double) v;
             }
         }
@@ -652,16 +663,16 @@ namespace RT.Util.Json
         public bool Equals(JsonValue other)
         {
             if (other == null) return false;
-            if (this is JsonBool && other is JsonBool)
-                return (this as JsonBool).Equals(other as JsonBool);
-            else if (this is JsonString && other is JsonString)
-                return (this as JsonString).Equals(other as JsonString);
-            else if (this is JsonNumber && other is JsonNumber)
-                return (this as JsonNumber).Equals(other as JsonNumber);
-            else if (this is JsonList && other is JsonList)
-                return (this as JsonList).Equals(other as JsonList);
-            else if (this is JsonDict && other is JsonDict)
-                return (this as JsonDict).Equals(other as JsonDict);
+            if (this is JsonBool)
+                return other is JsonBool && (this as JsonBool).Equals(other as JsonBool);
+            else if (this is JsonString)
+                return other is JsonString && (this as JsonString).Equals(other as JsonString);
+            else if (this is JsonNumber)
+                return other is JsonNumber && (this as JsonNumber).Equals(other as JsonNumber);
+            else if (this is JsonList)
+                return other is JsonList && (this as JsonList).Equals(other as JsonList);
+            else if (this is JsonDict)
+                return other is JsonDict && (this as JsonDict).Equals(other as JsonDict);
             else
                 return false;
         }
@@ -742,9 +753,7 @@ namespace RT.Util.Json
     {
         internal List<JsonValue> List = new List<JsonValue>();
 
-        public JsonList()
-        {
-        }
+        public JsonList() { }
 
         public JsonList(IEnumerable<JsonValue> items)
         {
@@ -828,9 +837,7 @@ namespace RT.Util.Json
     {
         internal Dictionary<string, JsonValue> Dict = new Dictionary<string, JsonValue>();
 
-        public JsonDict()
-        {
-        }
+        public JsonDict() { }
 
         public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
         {
@@ -871,35 +878,23 @@ namespace RT.Util.Json
             return GetEnumerator();
         }
 
-        #region Unused unimplemented IEnumerable<KeyValuePair> methods
+        #region IEnumerable<KeyValuePair> methods
 
         void ICollection<KeyValuePair<string, JsonValue>>.Add(KeyValuePair<string, JsonValue> item)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            throw new NotImplementedException();
+            ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Add(item);
         }
         bool ICollection<KeyValuePair<string, JsonValue>>.Remove(KeyValuePair<string, JsonValue> item)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            throw new NotImplementedException();
+            return ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Remove(item);
         }
         bool ICollection<KeyValuePair<string, JsonValue>>.Contains(KeyValuePair<string, JsonValue> item)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            throw new NotImplementedException();
+            return ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Contains(item);
         }
         void ICollection<KeyValuePair<string, JsonValue>>.CopyTo(KeyValuePair<string, JsonValue>[] array, int arrayIndex)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            throw new NotImplementedException();
+            ((ICollection<KeyValuePair<string, JsonValue>>) Dict).CopyTo(array, arrayIndex);
         }
 
         #endregion
@@ -984,15 +979,8 @@ namespace RT.Util.Json
             }
         }
 
-        public static implicit operator string(JsonString value)
-        {
-            return value._value;
-        }
-
-        public static implicit operator JsonString(string value)
-        {
-            return new JsonString(value);
-        }
+        public static implicit operator string(JsonString value) { return value == null ? null : value._value; }
+        public static implicit operator JsonString(string value) { return value == null ? null : new JsonString(value); }
 
         public override bool Equals(object other)
         {
@@ -1049,15 +1037,10 @@ namespace RT.Util.Json
             }
         }
 
-        public static implicit operator bool(JsonBool value)
-        {
-            return value._value;
-        }
-
-        public static implicit operator JsonBool(bool value)
-        {
-            return new JsonBool(value);
-        }
+        public static implicit operator bool(JsonBool value) { return value._value; }
+        public static implicit operator bool?(JsonBool value) { return value == null ? (bool?) null : value._value; }
+        public static implicit operator JsonBool(bool value) { return new JsonBool(value); }
+        public static implicit operator JsonBool(bool? value) { return value == null ? null : new JsonBool(value.Value); }
 
         public override bool Equals(object other)
         {
@@ -1112,10 +1095,8 @@ namespace RT.Util.Json
             }
         }
 
-        public static explicit operator double(JsonNumber value)
-        {
-            return double.IsNaN(value._double) ? (double) value._long : value._double;
-        }
+        public static explicit operator double(JsonNumber value) { return double.IsNaN(value._double) ? (double) value._long : value._double; }
+        public static explicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
 
         public static explicit operator long(JsonNumber value)
         {
@@ -1132,6 +1113,7 @@ namespace RT.Util.Json
                 return (long) value._double;
             }
         }
+        public static explicit operator long?(JsonNumber value) { return value == null ? (long?) null : (long) value; }
 
         public static explicit operator int(JsonNumber value)
         {
@@ -1150,21 +1132,14 @@ namespace RT.Util.Json
                 return (int) value._double;
             }
         }
+        public static explicit operator int?(JsonNumber value) { return value == null ? (int?) null : (int) value; }
 
-        public static implicit operator JsonNumber(double value)
-        {
-            return new JsonNumber(value);
-        }
-
-        public static implicit operator JsonNumber(long value)
-        {
-            return new JsonNumber(value);
-        }
-
-        public static implicit operator JsonNumber(int value)
-        {
-            return new JsonNumber(value);
-        }
+        public static implicit operator JsonNumber(double value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(double? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonNumber(long value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(long? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonNumber(int value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(int? value) { return value == null ? null : new JsonNumber(value.Value); }
 
         public override bool Equals(object other)
         {
