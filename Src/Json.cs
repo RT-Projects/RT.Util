@@ -765,6 +765,8 @@ namespace RT.Util.Json
 
         public static new JsonList Parse(string jsonList)
         {
+            if (jsonList == null)
+                throw new ArgumentNullException("jsonList");
             var ps = new JsonParserState(jsonList);
             var result = ps.ParseList();
             if (ps.Cur != null)

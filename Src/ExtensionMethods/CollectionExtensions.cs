@@ -32,6 +32,26 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Adds an element to a HashSet&lt;V&gt; stored in the current IDictionary&lt;K, HashSet&lt;V&gt;&gt;.
+        /// If the specified key does not exist in the current IDictionary, a new HashSet is created.
+        /// </summary>
+        /// <typeparam name="K">Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">Type of the values in the HashSets.</typeparam>
+        /// <param name="dic">IDictionary to operate on.</param>
+        /// <param name="key">Key at which the HashSet is located in the IDictionary.</param>
+        /// <param name="value">Value to add to the HashSet located at the specified Key.</param>
+        public static bool AddSafe<K, V>(this IDictionary<K, HashSet<V>> dic, K key, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+            if (!dic.ContainsKey(key))
+                dic[key] = new HashSet<V>();
+            return dic[key].Add(value);
+        }
+
+        /// <summary>
         /// Adds an element to a two-level Dictionary&lt;,&gt;.
         /// If the specified key does not exist in the outer Dictionary, a new Dictionary is created.
         /// </summary>
@@ -99,6 +119,16 @@ namespace RT.Util.ExtensionMethods
                 dic[key] = amount;
             else
                 dic[key] = dic[key] + amount;
+        }
+
+        /// <summary>Determines whether the current HashSet-in-a-Dictionary contains the specified key and value.</summary>
+        public static bool Contains<TKey, TValue>(this IDictionary<TKey, HashSet<TValue>> source, TKey key, TValue value)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+            return source.ContainsKey(key) && source[key].Contains(value);
         }
 
         /// <summary>
