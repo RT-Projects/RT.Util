@@ -21,25 +21,45 @@ namespace RT.Util.ExtensionMethods
             // **  void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
             // **
             {
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>(null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>(null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, "", null); });
                 Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), null, null); });
                 Assert.DoesNotThrow(() => { CollectionExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), "", null); });
+                Assert.DoesNotThrow(() => { CollectionExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), "", null); });
 
-                var dic = new Dictionary<string, List<GenericParameter>>();
+                var dicWithList = new Dictionary<string, List<GenericParameter>>();
 
-                Assert.AreEqual(0, dic.Count);
-                Assert.Throws<KeyNotFoundException>(() => { var x = dic["someKey"]; });
-                dic.AddSafe("someKey", new GenericParameter { SomeString = "someValue" });
-                Assert.AreEqual(1, dic.Count);
-                var x2 = dic["someKey"];
-                Assert.AreEqual(1, x2.Count);
+                Assert.AreEqual(0, dicWithList.Count);
+                Assert.Throws<KeyNotFoundException>(() => { var x = dicWithList["someKey"]; });
+                dicWithList.AddSafe("someKey", new GenericParameter { SomeString = "someValue" });
+                Assert.AreEqual(1, dicWithList.Count);
+                var xList = dicWithList["someKey"];
+                Assert.AreEqual(1, xList.Count);
 
-                dic.AddSafe("someKey", new GenericParameter { SomeString = "someOtherValue" });
-                Assert.AreEqual(1, dic.Count);
-                Assert.AreEqual(2, x2.Count);
+                dicWithList.AddSafe("someKey", new GenericParameter { SomeString = "someOtherValue" });
+                Assert.AreEqual(1, dicWithList.Count);
+                Assert.AreEqual(2, xList.Count);
 
-                Assert.IsTrue(x2.Select(g => g.SomeString).SequenceEqual(new string[] { "someValue", "someOtherValue" }));
+                Assert.IsTrue(xList.Select(g => g.SomeString).SequenceEqual(new string[] { "someValue", "someOtherValue" }));
+
+
+                var dicWithHash = new Dictionary<string, HashSet<GenericParameter>>();
+
+                Assert.AreEqual(0, dicWithHash.Count);
+                Assert.Throws<KeyNotFoundException>(() => { var x = dicWithHash["someKey"]; });
+                dicWithHash.AddSafe("someKey", new GenericParameter { SomeString = "someValue" });
+                Assert.AreEqual(1, dicWithHash.Count);
+                var xHash = dicWithHash["someKey"];
+                Assert.AreEqual(1, xHash.Count);
+
+                dicWithHash.AddSafe("someKey", new GenericParameter { SomeString = "someOtherValue" });
+                Assert.AreEqual(1, dicWithHash.Count);
+                Assert.AreEqual(2, xHash.Count);
+
+                Assert.IsTrue(xHash.Select(g => g.SomeString).OrderBy(e => e).SequenceEqual(new string[] { "someOtherValue", "someValue" }));
             }
 
             // **

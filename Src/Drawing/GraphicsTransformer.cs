@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
@@ -26,23 +24,27 @@ namespace RT.Util.Drawing
     public class GraphicsTransformer : IDisposable
     {
         private Graphics _graphics;
-        private Matrix _previousTransform;
-        private Matrix _currentTransform;
+        private static Dictionary<Graphics, Stack<Matrix>> _transforms = new Dictionary<Graphics, Stack<Matrix>>();
 
         /// <summary>Instantiates a new <see cref="GraphicsTransformer"/> instance. Use this in a “using” statement.</summary>
         /// <param name="g">The Graphics object whose Transform to modify.</param>
         public GraphicsTransformer(Graphics g)
         {
             _graphics = g;
-            _previousTransform = g.Transform.Clone();
-            _currentTransform = g.Transform.Clone();
+            if (!_transforms.ContainsKey(g))
+            {
+                _transforms[g] = new Stack<Matrix>();
+                _transforms[g].Push(g.Transform.Clone());
+            }
+            _transforms[g].Push(_transforms[g].Peek().Clone());
         }
 
         /// <summary>Translates the graphics by the specified amount.</summary>
         public GraphicsTransformer Translate(float offsetX, float offsetY)
         {
-            _currentTransform.Translate(offsetX, offsetY, MatrixOrder.Append);
-            _graphics.Transform = _currentTransform;
+            var m = _transforms[_graphics].Peek();
+            m.Translate(offsetX, offsetY, MatrixOrder.Append);
+            _graphics.Transform = m;
             return this;
         }
 
@@ -52,18 +54,43 @@ namespace RT.Util.Drawing
         /// <summary>Scales the graphics by the specified factors.</summary>
         public GraphicsTransformer Scale(float scaleX, float scaleY)
         {
-            _currentTransform.Scale(scaleX, scaleY, MatrixOrder.Append);
-            _graphics.Transform = _currentTransform;
+            var m = _transforms[_graphics].Peek();
+            m.Scale(scaleX, scaleY, MatrixOrder.Append);
+            _graphics.Transform = m;
             return this;
         }
 
         /// <summary>Scales the graphics by the specified factors.</summary>
         public GraphicsTransformer Scale(double scaleX, double scaleY) { return Scale((float) scaleX, (float) scaleY); }
 
+        /// <summary>Rotates the graphics by the specified angle in radians.</summary>
+        public GraphicsTransformer Rotate(float angle)
+        {
+            var m = _transforms[_graphics].Peek();
+            m.Rotate(angle, MatrixOrder.Append);
+            _graphics.Transform = m;
+            return this;
+        }
+
+        /// <summary>Rotates the graphics clockwise by the specified angle in radians about the specified center point.</summary>
+        public GraphicsTransformer RotateAt(float angle, PointF point)
+        {
+            var m = _transforms[_graphics].Peek();
+            m.RotateAt(angle, point, MatrixOrder.Append);
+            _graphics.Transform = m;
+            return this;
+        }
+
+        /// <summary>Rotates the graphics clockwise by the specified angle in radians about the specified center point.</summary>
+        public GraphicsTransformer RotateAt(float angle, float x, float y) { return RotateAt(angle, new PointF(x, y)); }
+
         /// <summary>Returns the Transform of the Graphics object back to its original value.</summary>
         public void Dispose()
         {
-            _graphics.Transform = _previousTransform;
+            _transforms[_graphics].Pop();
+            _graphics.Transform = _transforms[_graphics].Peek();
+            if (_transforms[_graphics].Count == 1)
+                _transforms.Remove(_graphics);
         }
     }
 }

@@ -154,7 +154,7 @@ namespace RT.Util.Xml
                 if (refAttr != null)
                 {
                     if (!remember.ContainsKey(refAttr.Value))
-                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).");
+                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).".Fmt(refAttr.Value));
                     return remember[refAttr.Value];
                 }
 

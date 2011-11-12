@@ -95,6 +95,13 @@ namespace RT.Util.Drawing
         /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
         public static float GetMaximumFontSize(this Graphics graphics, SizeF maximumSize, FontFamily font, string text)
         {
+            if (graphics == null)
+                throw new ArgumentNullException("graphics");
+            if (maximumSize.Width < 1 || maximumSize.Height < 1)
+                throw new ArgumentException("maximumSize cannot be zero or negative.", "maximumSize");
+            if (string.IsNullOrEmpty(text))
+                throw new ArgumentException("text cannot be null or empty.", "text");
+
             float low = 1;
             float? high = null;
             while (high == null || high.Value - low > 0.1)
