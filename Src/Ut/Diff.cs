@@ -175,18 +175,18 @@ namespace RT.Util
     public enum DiffOp
     {
         /// <summary>
+        /// Indicates that the relevant item has been deleted.
+        /// </summary>
+        Del = -1,
+
+        /// <summary>
         /// Indicates that the relevant item has not changed.
         /// </summary>
-        None,
+        None = 0,
 
         /// <summary>
         /// Indicates that the relevant item has been inserted.
         /// </summary>
-        Ins,
-
-        /// <summary>
-        /// Indicates that the relevant item has been deleted.
-        /// </summary>
-        Del
+        Ins = 1
     };
 }
