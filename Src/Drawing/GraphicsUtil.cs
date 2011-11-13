@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace RT.Util.Drawing
 {
@@ -91,24 +93,70 @@ namespace RT.Util.Drawing
         /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
         /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
         /// <param name="maximumSize">Maximum size (in pixels) the text should have.</param>
-        /// <param name="font">The font to measure.</param>
+        /// <param name="fontFamily">The font to measure.</param>
         /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
-        public static float GetMaximumFontSize(this Graphics graphics, SizeF maximumSize, FontFamily font, string text)
+        /// <param name="style">Font style to apply.</param>
+        /// <param name="allowWordWrapping">True if the text is allowed to word-wrap within the specified bounds.</param>
+        public static float GetMaximumFontSize(this Graphics graphics, SizeF maximumSize, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false)
+        {
+            return GetMaximumFontSize(graphics, fontFamily, text, style, allowWordWrapping, maximumSize.Width, maximumSize.Height);
+        }
+
+        /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
+        /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
+        /// <param name="maximumSize">Maximum size (in pixels) the text should have.</param>
+        /// <param name="fontFamily">The font to measure.</param>
+        /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
+        /// <param name="style">Font style to apply.</param>
+        /// <param name="allowWordWrapping">True if the text is allowed to word-wrap within the specified bounds.</param>
+        /// <param name="maxWidth">Maximum width the text may have, or null if only the maximum height should apply. If <paramref name="allowWordWrapping"/> is true, this cannot be null.</param>
+        /// <param name="maxHeight">Maximum width the text may have, or null if only the maximum width should apply. If <paramref name="maxWidth"/> is null, this cannot be null.</param>
+        public static float GetMaximumFontSize(this Graphics graphics, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false, float? maxWidth = null, float? maxHeight = null)
         {
             if (graphics == null)
                 throw new ArgumentNullException("graphics");
-            if (maximumSize.Width < 1 || maximumSize.Height < 1)
-                throw new ArgumentException("maximumSize cannot be zero or negative.", "maximumSize");
             if (string.IsNullOrEmpty(text))
                 throw new ArgumentException("text cannot be null or empty.", "text");
+            if (maxWidth != null && maxWidth.Value < 1)
+                throw new ArgumentException("Maximum width cannot be zero or negative.", "maxWidth");
+            if (maxHeight != null && maxHeight.Value < 1)
+                throw new ArgumentException("Maximum height cannot be zero or negative.", "maxHeight");
+            if (maxWidth == null && maxHeight == null)
+                throw new ArgumentException("maxWidth and maxHeight cannot both be null.", "maxHeight");
+            if (maxWidth == null && allowWordWrapping)
+                throw new ArgumentException("maxWidth cannot be null if allowWordWrapping is true.", "maxWidth");
 
             float low = 1;
             float? high = null;
+            string[] words = allowWordWrapping ? Regex.Matches(text, @"\S+", RegexOptions.Singleline).Cast<Match>().Select(m => m.Value).ToArray() : null;
             while (high == null || high.Value - low > 0.1)
             {
                 float trySize = high == null ? low + 1024 : (low + high.Value) / 2;
-                SizeF sz = graphics.MeasureString(text, new Font(font, trySize, FontStyle.Bold));
-                if (sz.Width > maximumSize.Width || sz.Height > maximumSize.Height)
+                var font = new Font(fontFamily, trySize, style);
+
+                float width, height;
+                if (allowWordWrapping)
+                {
+                    var sz = graphics.MeasureString(text, font, (int) maxWidth.Value);
+                    width = sz.Width;
+                    height = sz.Height;
+                    foreach (var word in words)
+                    {
+                        var sz2 = graphics.MeasureString(word, font);
+                        if (sz2.Width > width)
+                            width = sz2.Width;
+                        if (sz2.Height > height)
+                            height = sz2.Height;
+                    }
+                }
+                else
+                {
+                    var sz = graphics.MeasureString(text, font);
+                    width = sz.Width;
+                    height = sz.Height;
+                }
+
+                if ((maxWidth != null && width > maxWidth.Value) || (maxHeight != null && height > maxHeight.Value))
                     high = trySize;
                 else
                     low = trySize;
