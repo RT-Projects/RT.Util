@@ -449,5 +449,55 @@ namespace RT.Util
                 sleep = Math.Min((sleep * 3) >> 1, 10000);
             }
         }
+
+        /// <summary>
+        /// Given a set of values and a function that returns true when given this set, will efficiently remove values from this
+        /// set which are not essential for making the function return true. The relative order of values is preserved.
+        /// </summary>
+        /// <typeparam name="T">Type of the values in the set.</typeparam>
+        /// <param name="values">The set of values to reduce.</param>
+        /// <param name="test">The function that examines the set. Must always return the same value for the same set.</param>
+        /// <returns>A hopefully smaller set of values that still causes the function to return true.</returns>
+        public static T[] ReduceRequiredSet<T>(T[] values, Func<T[], bool> test)
+        {
+            var required = new List<Tuple<int, int>>();
+            required.Add(Tuple.Create(0, values.Length - 1));
+
+            var makeList = Ut.Lambda((Tuple<int, int> extraRange) =>
+            {
+                return required
+                    .Concat(extraRange == null ? Enumerable.Empty<Tuple<int, int>>() : new[] { extraRange })
+                    .SelectMany(range => Enumerable.Range(range.Item1, range.Item2 - range.Item1 + 1))
+                    .Order()
+                    .Select(i => values[i])
+                    .ToArray();
+            });
+
+            if (!test(makeList(null)))
+                throw new Exception("The function does not return true for the original set.");
+
+            while (required.Any(t => t.Item2 > t.Item1))
+            {
+                if (!test(makeList(null)))
+                    throw new Exception("The function is not consistently returning the same value for the same set, or there is an internal error in this algorithm.");
+
+                var largest = required.MaxElement(t => t.Item2 - t.Item1);
+                required.Remove(largest);
+                int mid = (largest.Item1 + largest.Item2) / 2;
+                var split1 = Tuple.Create(largest.Item1, mid);
+                var split2 = Tuple.Create(mid + 1, largest.Item2);
+                if (test(makeList(split1)))
+                    required.Add(split1);
+                else if (test(makeList(split2)))
+                    required.Add(split2);
+                else
+                {
+                    required.Add(split1);
+                    required.Add(split2);
+                }
+            }
+
+            return makeList(null);
+        }
     }
 }
