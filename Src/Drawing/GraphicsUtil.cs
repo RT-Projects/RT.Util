@@ -104,9 +104,8 @@ namespace RT.Util.Drawing
 
         /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
         /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
-        /// <param name="maximumSize">Maximum size (in pixels) the text should have.</param>
         /// <param name="fontFamily">The font to measure.</param>
-        /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
+        /// <param name="text">The text whose size mustn't exceed <paramref name="maxWidth"/> and <paramref name="maxHeight"/>.</param>
         /// <param name="style">Font style to apply.</param>
         /// <param name="allowWordWrapping">True if the text is allowed to word-wrap within the specified bounds.</param>
         /// <param name="maxWidth">Maximum width the text may have, or null if only the maximum height should apply. If <paramref name="allowWordWrapping"/> is true, this cannot be null.</param>

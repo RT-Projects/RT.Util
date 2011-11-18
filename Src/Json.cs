@@ -401,22 +401,6 @@ namespace RT.Util.Json
             }
         }
 
-        public double AsDoubleParse
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                {
-                    var s = this as JsonString;
-                    if (s == null)
-                        throw new NotSupportedException("Only strings and numeric values can be parsed into a long.");
-                    return double.Parse((JsonString) s);
-                }
-                return (double) v;
-            }
-        }
-
         public long AsLong
         {
             get
@@ -424,22 +408,6 @@ namespace RT.Util.Json
                 var v = this as JsonNumber;
                 if (v == null)
                     throw new NotSupportedException("Only numeric values can be interpreted as long.");
-                return (long) v;
-            }
-        }
-
-        public long AsLongParse
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                {
-                    var s = this as JsonString;
-                    if (s == null)
-                        throw new NotSupportedException("Only strings and numeric values can be parsed into a long.");
-                    return long.Parse((JsonString) s);
-                }
                 return (long) v;
             }
         }
@@ -454,23 +422,6 @@ namespace RT.Util.Json
                 return (int) v;
             }
         }
-
-        public int AsIntParse
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                {
-                    var s = this as JsonString;
-                    if (s == null)
-                        throw new NotSupportedException("Only strings and numeric values can be parsed into a int.");
-                    return int.Parse((JsonString) s);
-                }
-                return (int) v;
-            }
-        }
-
 
         #region Both IList and IDictionary
 
