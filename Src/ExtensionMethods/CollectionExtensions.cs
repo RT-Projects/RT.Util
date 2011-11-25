@@ -131,9 +131,7 @@ namespace RT.Util.ExtensionMethods
             return source.ContainsKey(key) && source[key].Contains(value);
         }
 
-        /// <summary>
-        /// Brings the elements of the given list into a random order
-        /// </summary>
+        /// <summary>Brings the elements of the given list into a random order.</summary>
         /// <typeparam name="T">Type of elements in the list.</typeparam>
         /// <param name="list">List to shuffle.</param>
         /// <param name="rnd">Random number generator, or null to use <see cref="Rnd"/>.</param>

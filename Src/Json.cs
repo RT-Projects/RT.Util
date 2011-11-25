@@ -642,6 +642,27 @@ namespace RT.Util.Json
             return value == null ? "null" : value.ToString();
         }
 
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToString()
+        {
+            return ToEnumerable().JoinString();
+        }
+
+        /// <summary>Lazy-converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
+        public static IEnumerable<string> ToEnumerable(JsonValue value)
+        {
+            if (value == null)
+            {
+                yield return "null";
+                yield break;
+            }
+            foreach (var piece in value.ToEnumerable())
+                yield return piece;
+        }
+
+        /// <summary>Lazy-converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public abstract IEnumerable<string> ToEnumerable();
+
         /// <summary>
         /// Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and comments.
         /// Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are only replaced
@@ -772,20 +793,19 @@ namespace RT.Util.Json
             return result;
         }
 
-        public override string ToString()
+        public override IEnumerable<string> ToEnumerable()
         {
-            var sb = new StringBuilder();
-            sb.Append('[');
+            yield return "[";
             bool first = true;
             foreach (var value in List)
             {
                 if (!first)
-                    sb.Append(',');
-                sb.Append(JsonValue.ToString(value));
+                    yield return ",";
+                foreach (var piece in JsonValue.ToEnumerable(value))
+                    yield return piece;
                 first = false;
             }
-            sb.Append(']');
-            return sb.ToString();
+            yield return "]";
         }
     }
 
@@ -891,22 +911,21 @@ namespace RT.Util.Json
             return result;
         }
 
-        public override string ToString()
+        public override IEnumerable<string> ToEnumerable()
         {
-            var sb = new StringBuilder();
-            sb.Append('{');
+            yield return "{";
             bool first = true;
             foreach (var kvp in Dict)
             {
                 if (!first)
-                    sb.Append(',');
-                sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
-                sb.Append(':');
-                sb.Append(JsonValue.ToString(kvp.Value));
+                    yield return ",";
+                yield return kvp.Key.JsEscape(JsQuotes.Double);
+                yield return ":";
+                foreach (var piece in JsonValue.ToEnumerable(kvp.Value))
+                    yield return piece;
                 first = false;
             }
-            sb.Append('}');
-            return sb.ToString();
+            yield return "}";
         }
     }
 
@@ -957,9 +976,9 @@ namespace RT.Util.Json
             return _value.GetHashCode();
         }
 
-        public override string ToString()
+        public override IEnumerable<string> ToEnumerable()
         {
-            return _value.JsEscape(JsQuotes.Double);
+            yield return _value.JsEscape(JsQuotes.Double);
         }
 
         public string ToString(JsQuotes quotes)
@@ -1017,9 +1036,9 @@ namespace RT.Util.Json
             return _value ? 13259 : 22093;
         }
 
-        public override string ToString()
+        public override IEnumerable<string> ToEnumerable()
         {
-            return _value ? "true" : "false";
+            yield return _value ? "true" : "false";
         }
     }
 
@@ -1119,9 +1138,9 @@ namespace RT.Util.Json
             return double.IsNaN(_double) ? _long.GetHashCode() : _double.GetHashCode();
         }
 
-        public override string ToString()
+        public override IEnumerable<string> ToEnumerable()
         {
-            return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
+            yield return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
         }
     }
 }
