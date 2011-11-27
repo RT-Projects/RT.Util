@@ -48,6 +48,37 @@ namespace RT.Util.Drawing
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
+        /// <summary>Modifies the current bitmap’s transparency layer by setting it to the data from another bitmap.</summary>
+        /// <param name="source">The bitmap to be modified.</param>
+        /// <param name="transparencyLayer">The bitmap containing the transparency channel. Must be the same size as the source bitmap.</param>
+        /// <param name="channel">Which channel from <paramref name="transparencyLayer"/> to use: 0 for blue, 1 for green, 2 for red, and 3 for the alpha channel.</param>
+        /// <param name="invert">If true, the selected channel is inverted.</param>
+        /// <returns>A reference to the same bitmap that was modified.</returns>
+        public static unsafe Bitmap SetTransparencyChannel(this Bitmap source, Bitmap transparencyLayer, int channel, bool invert = false)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (transparencyLayer == null)
+                throw new ArgumentNullException("transparencyLayer");
+            if (source.Width != transparencyLayer.Width || source.Height != transparencyLayer.Height)
+                throw new ArgumentException("transparencyLayer must be the same size as opaqueLayer.");
+            if (channel < 0 || channel > 3)
+                throw new ArgumentException("channel must be 0, 1, 2 or 3.");
+
+            var sBits = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            var tBits = transparencyLayer.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            for (int y = 0; y < source.Height; y++)
+            {
+                byte* trn = (byte*) tBits.Scan0 + y * tBits.Stride;
+                byte* src = (byte*) sBits.Scan0 + y * sBits.Stride;
+                for (int x = 0; x < source.Width; x++)
+                    src[4 * x + 3] = Math.Min(src[4 * x + 3], (byte) (invert ? 255 - trn[4 * x + channel] : trn[4 * x + channel]));
+            }
+            source.UnlockBits(sBits);
+            transparencyLayer.UnlockBits(tBits);
+            return source;
+        }
+
         /// <summary>Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
         /// <param name="rectangle">Position of the rectangle.</param>
         /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
