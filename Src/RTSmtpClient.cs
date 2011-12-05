@@ -91,6 +91,9 @@ namespace RT.Util
         private TextReader _reader;
         private List<string> _conversation;
 
+        /// <summary>The SMTP client logs various messages to this log at various verbosity levels.</summary>
+        public LoggerBase Log = new NullLogger();
+
         /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
         /// <param name="host">SMTP host name.</param>
         /// <param name="port">SMTP host port.</param>
@@ -100,6 +103,7 @@ namespace RT.Util
         /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
         public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None)
         {
+            Log.Debug(1, "Connecting to {0}:{1}...".Fmt(host, port));
             _tcp = new TcpClient(host, port);
             _tcpStream = _tcp.GetStream();
             if (encryption == SmtpEncryption.Ssl || encryption == SmtpEncryption.SslIgnoreCert)
@@ -109,6 +113,7 @@ namespace RT.Util
                 else
                     _sslStream = new SslStream(_tcpStream, false, (_, __, ___, ____) => true);
                 _sslStream.AuthenticateAsClient(host);
+                Log.Debug(2, "SSL: authenticated as client");
             }
             _writer = new StreamWriter(_sslStream ?? _tcpStream, new UTF8Encoding(false)) { NewLine = "\r\n", AutoFlush = true };
             _reader = new StreamReader(_sslStream ?? _tcpStream, Encoding.UTF8);
@@ -125,6 +130,7 @@ namespace RT.Util
             if (resultDec != "Password:")
                 throw new RTSmtpException("Expected 'Password:', got: '{0}'".Fmt(resultDec), _conversation);
             sendAndExpect(Convert.ToBase64String(password.ToUtf8()), 235);
+            Log.Debug(2, "Connected.");
         }
 
         /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
@@ -141,6 +147,7 @@ namespace RT.Util
             {
                 _writer.Write(toSend + "\r\n");
                 _conversation.Add("> " + toSend);
+                Log.Debug(8, "> " + toSend);
             }
             string response = "";
             Match m;
@@ -148,6 +155,7 @@ namespace RT.Util
             {
                 var line = _reader.ReadLine();
                 _conversation.Add("< " + line);
+                Log.Debug(8, "< " + line);
                 m = Regex.Match(line, @"^(\d+)(-| |$)?(.*)?$");
                 if (!m.Success)
                     throw new RTSmtpException("Expected status code '{0}', got unexpected line: {1}".Fmt(statusCode, line), _conversation);
@@ -178,6 +186,9 @@ namespace RT.Util
             if (plainText == null)
                 plainText = "This e-mail is only available in HTML format.";
 
+            var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
+            Log.Info(1, "Sending email to " + toHeader);
+
             sendAndExpect(@"MAIL FROM: ""{0}"" <{1}>".Fmt(from.DisplayName, from.Address), 250);
             foreach (var toAddr in to)
                 sendAndExpect(@"RCPT TO: ""{0}"" <{1}>".Fmt(toAddr.DisplayName, toAddr.Address), 250);
@@ -188,6 +199,7 @@ namespace RT.Util
                 if (str.StartsWith("."))
                     str = "." + str;
                 _writer.WriteLine(str);
+                Log.Debug(9, ">> " + str);
             };
             Action<string> sendAsQuotedPrintable = str =>
             {
@@ -196,7 +208,7 @@ namespace RT.Util
             };
 
             sendLine(@"From: ""{0}"" <{1}>".Fmt(from.DisplayName, from.Address));
-            sendLine(@"To: {0}".Fmt(to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ")));
+            sendLine(@"To: {0}".Fmt(toHeader));
             sendLine(@"Date: {0}".Fmt(DateTime.UtcNow.ToString("r"))); // "r" appends "GMT" even when the timestamp is known not to be GMT...
             sendLine(@"Subject: =?utf-8?B?{0}?=".Fmt(Convert.ToBase64String(subject.ToUtf8())));
 
@@ -237,6 +249,7 @@ namespace RT.Util
                 sendAsQuotedPrintable(plainText);
             }
             sendAndExpect(".", 250);
+            Log.Debug(1, "Sent successfully.");
         }
 
         private static string toQuotedPrintable(string input)
