@@ -90,9 +90,7 @@ namespace RT.Util
         private TextWriter _writer;
         private TextReader _reader;
         private List<string> _conversation;
-
-        /// <summary>The SMTP client logs various messages to this log at various verbosity levels.</summary>
-        public LoggerBase Log = new NullLogger();
+        private LoggerBase _log;
 
         /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
         /// <param name="host">SMTP host name.</param>
@@ -100,10 +98,12 @@ namespace RT.Util
         /// <param name="username">SMTP username.</param>
         /// <param name="password">SMTP password.</param>
         /// <param name="encryption">Encryption mode.</param>
+        /// <param name="log">The SMTP client logs various messages to this log at various verbosity levels.</param>
         /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
-        public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None)
+        public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null)
         {
-            Log.Debug(1, "Connecting to {0}:{1}...".Fmt(host, port));
+            _log = log ?? new NullLogger();
+            _log.Debug(1, "Connecting to {0}:{1}...".Fmt(host, port));
             _tcp = new TcpClient(host, port);
             _tcpStream = _tcp.GetStream();
             if (encryption == SmtpEncryption.Ssl || encryption == SmtpEncryption.SslIgnoreCert)
@@ -113,7 +113,7 @@ namespace RT.Util
                 else
                     _sslStream = new SslStream(_tcpStream, false, (_, __, ___, ____) => true);
                 _sslStream.AuthenticateAsClient(host);
-                Log.Debug(2, "SSL: authenticated as client");
+                _log.Debug(2, "SSL: authenticated as client");
             }
             _writer = new StreamWriter(_sslStream ?? _tcpStream, new UTF8Encoding(false)) { NewLine = "\r\n", AutoFlush = true };
             _reader = new StreamReader(_sslStream ?? _tcpStream, Encoding.UTF8);
@@ -130,14 +130,15 @@ namespace RT.Util
             if (resultDec != "Password:")
                 throw new RTSmtpException("Expected 'Password:', got: '{0}'".Fmt(resultDec), _conversation);
             sendAndExpect(Convert.ToBase64String(password.ToUtf8()), 235);
-            Log.Debug(2, "Connected.");
+            _log.Debug(2, "Connected.");
         }
 
         /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
         /// <param name="settings">An object containing the relevant SMTP settings.</param>
+        /// <param name="log">The SMTP client logs various messages to this log at various verbosity levels.</param>
         /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
-        public RTSmtpClient(RTSmtpSettings settings)
-            : this(settings.Host, settings.Port, settings.Username, settings.PasswordDecrypted, settings.Encryption)
+        public RTSmtpClient(RTSmtpSettings settings, LoggerBase log = null)
+            : this(settings.Host, settings.Port, settings.Username, settings.PasswordDecrypted, settings.Encryption, log)
         {
         }
 
@@ -147,7 +148,7 @@ namespace RT.Util
             {
                 _writer.Write(toSend + "\r\n");
                 _conversation.Add("> " + toSend);
-                Log.Debug(8, "> " + toSend);
+                _log.Debug(8, "> " + toSend);
             }
             string response = "";
             Match m;
@@ -155,7 +156,7 @@ namespace RT.Util
             {
                 var line = _reader.ReadLine();
                 _conversation.Add("< " + line);
-                Log.Debug(8, "< " + line);
+                _log.Debug(8, "< " + line);
                 m = Regex.Match(line, @"^(\d+)(-| |$)?(.*)?$");
                 if (!m.Success)
                     throw new RTSmtpException("Expected status code '{0}', got unexpected line: {1}".Fmt(statusCode, line), _conversation);
@@ -187,7 +188,7 @@ namespace RT.Util
                 plainText = "This e-mail is only available in HTML format.";
 
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
-            Log.Info(1, "Sending email to " + toHeader);
+            _log.Info(1, "Sending email to " + toHeader);
 
             sendAndExpect(@"MAIL FROM: ""{0}"" <{1}>".Fmt(from.DisplayName, from.Address), 250);
             foreach (var toAddr in to)
@@ -199,7 +200,7 @@ namespace RT.Util
                 if (str.StartsWith("."))
                     str = "." + str;
                 _writer.WriteLine(str);
-                Log.Debug(9, ">> " + str);
+                _log.Debug(9, ">> " + str);
             };
             Action<string> sendAsQuotedPrintable = str =>
             {
@@ -249,7 +250,7 @@ namespace RT.Util
                 sendAsQuotedPrintable(plainText);
             }
             sendAndExpect(".", 250);
-            Log.Debug(1, "Sent successfully.");
+            _log.Debug(1, "Sent successfully.");
         }
 
         private static string toQuotedPrintable(string input)
