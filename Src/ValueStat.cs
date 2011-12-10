@@ -62,8 +62,8 @@ namespace RT.KitchenSink
 
             ObservationCount += 1;
             double delta = value - Mean;
-            Mean = Mean + delta / ObservationCount;
-            _m2 = _m2 + delta * (value - Mean);
+            Mean += delta / ObservationCount;
+            _m2 += delta * (value - Mean);
         }
 
         /// <summary>Adds a number of observations, updating all statistics as appropriate. The nature of the statistics
