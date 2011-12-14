@@ -48,6 +48,7 @@ namespace RT.Util.Drawing
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
+#if UNSAFE
         /// <summary>Modifies the current bitmap’s transparency layer by setting it to the data from another bitmap.</summary>
         /// <param name="source">The bitmap to be modified.</param>
         /// <param name="transparencyLayer">The bitmap containing the transparency channel. Must be the same size as the source bitmap.</param>
@@ -78,6 +79,7 @@ namespace RT.Util.Drawing
             transparencyLayer.UnlockBits(tBits);
             return source;
         }
+#endif
 
         /// <summary>Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
         /// <param name="rectangle">Position of the rectangle.</param>
