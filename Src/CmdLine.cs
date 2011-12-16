@@ -833,6 +833,10 @@ namespace RT.Util.CommandLine
                 else if (options != null && options.Length == 0)
                     rep.Error(@"{0}.{1}: An [Option] attribute must specify at least one option name.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
+                // Option names must start with a dash
+                if (options != null && options.Any(o => !o.StartsWith('-')))
+                    rep.Error(@"{0}.{1}: All names in an [Option] attribute must start with at least one dash ('-'). Offending option name: ""{2}""".Fmt(field.DeclaringType.FullName, field.Name, options.First(o => !o.StartsWith('-'))), "class " + commandLineType.Name, field.Name);
+
                 var mandatory = field.IsDefined<IsMandatoryAttribute>();
 
                 if (mandatory && field.IsDefined<UndocumentedAttribute>())
