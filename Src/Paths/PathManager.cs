@@ -236,21 +236,21 @@ namespace RT.Util.Paths
         /// enumerated, e.g. due to being unreadable etc. This function must return
         /// "false" in order to terminate scanning or "true" to continue.
         /// </summary>
-        public Func<string, string, bool> ReportFail = null;
+        public Func<FileSystemInfo, Exception, bool> ReportFail = null;
 
         /// <summary>
         /// Paths which could not be read while enumerating PathManager. This is automatically
         /// cleared for each enumeration.
         /// </summary>
-        public List<string> FailedFiles;
+        public List<FileSystemInfo> FailedFiles;
 
-        private bool DoReportFail(string DirName, string Message)
+        private bool doReportFail(FileSystemInfo filedir, Exception excp)
         {
-            FailedFiles.Add(DirName);
+            FailedFiles.Add(filedir);
             if (ReportFail == null)
                 return true;
             else
-                return ReportFail(DirName, Message);
+                return ReportFail(filedir, excp);
         }
 
         /// <summary>Enumerates all files and directories according to the paths that were added using <see cref="AddIncludePath"/>
@@ -274,12 +274,12 @@ namespace RT.Util.Paths
         /// which is cleared before enumeration begins.</summary>
         public IEnumerable<DirectoryInfo> GetDirectories()
         {
-            return get(false, true).Cast<DirectoryInfo>();
+            return get(true, false).Cast<DirectoryInfo>();
         }
 
         private IEnumerable<FileSystemInfo> get(bool includeDirs, bool includeFiles)
         {
-            FailedFiles = new List<string>();
+            FailedFiles = new List<FileSystemInfo>();
             var toScan = new Stack<DirectoryInfo>();
             var toExclude = new List<string>();
 
@@ -300,6 +300,11 @@ namespace RT.Util.Paths
                 DirectoryInfo curDir = toScan.Pop();
                 FileInfo[] files = null;
                 DirectoryInfo[] dirs;
+
+                // Until we can handle this properly, skip all reparse points to be safe.
+                if (curDir.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                    continue;
+
                 try
                 {
                     if (includeFiles)
@@ -308,7 +313,7 @@ namespace RT.Util.Paths
                 }
                 catch (Exception e)
                 {
-                    if (DoReportFail(curDir.FullName, e.Message))
+                    if (doReportFail(curDir, e))
                         continue;
                     else
                         yield break;
@@ -322,11 +327,21 @@ namespace RT.Util.Paths
                 // Directories
                 foreach (DirectoryInfo di in dirs)
                 {
-                    if (toExclude.Contains(PathUtil.NormPath(di.FullName).ToLowerInvariant()))
+                    try
                     {
-                        // Remove this item to save searching time later?
-                        toExclude.Remove(PathUtil.NormPath(di.FullName).ToLowerInvariant());
-                        continue;
+                        if (toExclude.Contains(PathUtil.NormPath(di.FullName).ToLowerInvariant()))
+                        {
+                            // Remove this item to save searching time later?
+                            toExclude.Remove(PathUtil.NormPath(di.FullName).ToLowerInvariant());
+                            continue;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (doReportFail(di, e))
+                            continue;
+                        else
+                            yield break;
                     }
                     toScan.Push(di);
                     if (includeDirs)
