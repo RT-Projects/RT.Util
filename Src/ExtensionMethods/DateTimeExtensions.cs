@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -24,141 +22,6 @@ namespace RT.Util.ExtensionMethods
         #region ISO 8601 conversion
 
         /// <summary>
-        /// Lists all the datetime formats acceptable when converting a string containing a UTC
-        /// datetime to a DateTime structure. The first three formats are also used for converting
-        /// the other way.
-        /// </summary>
-        private static string[] _datetimeFormatsUtc
-        {
-            get
-            {
-                if (_datetimeFormatsUtcCache == null)
-                    _datetimeFormatsUtcCache = new string[]
-                    {
-                        // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.fffZ",    // also used for to-full & to-optimal
-                        "yyyy-MM-dd HH:mm:ssZ",         // also used for to-optimal
-                        "yyyy-MM-ddZ",                  // also used for to-optimal
-                        // The following strings are only here to enable conversion from
-                        // the many possible formats defined in the ISO.
-                        "yyyy-MM-dd HH:mm:ss.ffffffZ",
-                        "yyyy-MM-dd HH:mm:ss.fffffZ",
-                        "yyyy-MM-dd HH:mm:ss.ffffZ",
-                        "yyyy-MM-dd HH:mm:ss.fffZ",
-                        "yyyy-MM-dd HH:mm:ss.ffZ",
-                        "yyyy-MM-dd HH:mm:ss.fZ",
-                        "yyyyMMddTHHmmss.fffffffZ",
-                        "yyyyMMddTHHmmss.ffffffZ",
-                        "yyyyMMddTHHmmss.fffffZ",
-                        "yyyyMMddTHHmmss.ffffZ",
-                        "yyyyMMddTHHmmss.fffZ",
-                        "yyyyMMddTHHmmss.ffZ",
-                        "yyyyMMddTHHmmss.fZ",
-                        "yyyyMMddTHHmmssZ",
-                        "yyyyMMddZ",
-                        // The even less common strings: their presense does not
-                        // affect the speed at which the common strings get parsed.
-                        "yyyy-MM-dd HH:mmZ",
-                        "yyyy-MM-dd HHZ",
-                        "yyyyMMddTHHmmZ",
-                        "yyyyMMddTHHZ",
-                    };
-                return _datetimeFormatsUtcCache;
-            }
-        }
-        private static string[] _datetimeFormatsUtcCache = null;
-
-        /// <summary>
-        /// Lists all the datetime formats acceptable when converting a string containing a Local
-        /// datetime to a DateTime structure. The first three formats are also used for converting
-        /// the other way.
-        /// </summary>
-        private static string[] _datetimeFormatsLocal
-        {
-            get
-            {
-                if (_datetimeFormatsLocalCache == null)
-                    _datetimeFormatsLocalCache = new string[] 
-                    {
-                        // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.ffffzzz",    // also used for to-full & to-optimal
-                        "yyyy-MM-dd HH:mm:sszzz",         // also used for to-optimal
-                        "yyyy-MM-ddzzz",                  // also used for to-optimal
-                        // The following strings are only here to enable conversion from
-                        // the many possible formats defined in the ISO.
-                        "yyyy-MM-dd HH:mm:ss.ffffffzzz",
-                        "yyyy-MM-dd HH:mm:ss.fffffzzz",
-                        "yyyy-MM-dd HH:mm:ss.ffffzzz",
-                        "yyyy-MM-dd HH:mm:ss.fffzzz",
-                        "yyyy-MM-dd HH:mm:ss.ffzzz",
-                        "yyyy-MM-dd HH:mm:ss.fzzz",
-                        "yyyyMMddTHHmmss.fffffffzzz",
-                        "yyyyMMddTHHmmss.ffffffzzz",
-                        "yyyyMMddTHHmmss.fffffzzz",
-                        "yyyyMMddTHHmmss.ffffzzz",
-                        "yyyyMMddTHHmmss.fffzzz",
-                        "yyyyMMddTHHmmss.ffzzz",
-                        "yyyyMMddTHHmmss.fzzz",
-                        "yyyyMMddTHHmmsszzz",
-                        "yyyyMMddzzz",
-                        // The even less common strings: their presense does not
-                        // affect the speed at which the common strings get parsed.
-                        "yyyyMMddTHHmmzzz",
-                        "yyyyMMddTHHzzz",
-                        "yyyy-MM-dd HH:mmzzz",
-                        "yyyy-MM-dd HHzzz",
-                    };
-                return _datetimeFormatsLocalCache;
-            }
-        }
-        private static string[] _datetimeFormatsLocalCache = null;
-
-        /// <summary>
-        /// Lists all the datetime formats acceptable when converting a string containing an Unspecified
-        /// datetime to a DateTime structure. The first three formats are also used for converting
-        /// the other way.
-        /// </summary>
-        private static string[] _datetimeFormatsUnspecified
-        {
-            get
-            {
-                if (_datetimeFormatsUnspecifiedCache == null)
-                    _datetimeFormatsUnspecifiedCache = new string[]
-                    {
-                        // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.fff",     // also used for to-full & to-optimal
-                        "yyyy-MM-dd HH:mm:ss",         // also used for to-optimal
-                        "yyyy-MM-dd",                  // also used for to-optimal
-                        // The following strings are only here to enable conversion from
-                        // the many possible formats defined in the ISO.
-                        "yyyy-MM-dd HH:mm:ss.ffffff",
-                        "yyyy-MM-dd HH:mm:ss.fffff",
-                        "yyyy-MM-dd HH:mm:ss.ffff",
-                        "yyyy-MM-dd HH:mm:ss.fff",
-                        "yyyy-MM-dd HH:mm:ss.ff",
-                        "yyyy-MM-dd HH:mm:ss.f",
-                        "yyyyMMddTHHmmss.fffffff",
-                        "yyyyMMddTHHmmss.ffffff",
-                        "yyyyMMddTHHmmss.fffff",
-                        "yyyyMMddTHHmmss.ffff",
-                        "yyyyMMddTHHmmss.fff",
-                        "yyyyMMddTHHmmss.ff",
-                        "yyyyMMddTHHmmss.f",
-                        "yyyyMMddTHHmmss",
-                        "yyyyMMdd",
-                        // The even less common strings: their presense does not
-                        // affect the speed at which the common strings get parsed.
-                        "yyyy-MM-dd HH:mm",
-                        "yyyy-MM-dd HH",
-                        "yyyyMMddTHHmm",
-                        "yyyyMMddTHH",
-                    };
-                return _datetimeFormatsUnspecifiedCache;
-            }
-        }
-        private static string[] _datetimeFormatsUnspecifiedCache = null;
-
-        /// <summary>
         /// Converts the specified DateTime to a string representing the datetime in
         /// ISO format. The resulting string holds all the information necessary to
         /// convert back to the original DateTime. Example string:
@@ -170,11 +33,11 @@ namespace RT.Util.ExtensionMethods
             switch (datetime.Kind)
             {
                 case DateTimeKind.Utc:
-                    return datetime.ToString(_datetimeFormatsUtc[0]);
+                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffffZ");
                 case DateTimeKind.Local:
-                    return datetime.ToString(_datetimeFormatsLocal[0]);
+                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffffzzz");
                 case DateTimeKind.Unspecified:
-                    return datetime.ToString(_datetimeFormatsUnspecified[0]);
+                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffff");
                 default:
                     // to keep the compiler happy
                     throw new Exception("Unexpected DateTime.Kind");
@@ -187,10 +50,16 @@ namespace RT.Util.ExtensionMethods
         /// convert back to the original DateTime, but unlike <see cref="ToIsoStringFull"/>,
         /// some of the redundant zeros are omitted (as permitted by the ISO format).
         /// </summary>
+        /// <param name="datetime">The value to convert.</param>
+        /// <param name="betweenDateAndTime">If set to space (the default), the "extended" (human-readable) format will be used.
+        /// If set to any other character, will use the basic (no separators) format within date/time, and this character between them.
+        /// Use 'T' or '-' to make it compatible with <see cref="TryParseIso"/></param>
         /// <remarks>
         /// <list type="bullet">
-        /// <item><description>Example 1: "2007-12-31 21:00:00Z" - the nanoseconds are all 0</description></item>
-        /// <item><description>Example 2: "2007-12-31Z" - the hours, minutes, seconds, nanoseconds are all 0</description></item>
+        /// <item><description>Example 1: "2007-12-31 21:00:15.993Z" - the micro/nanoseconds are all 0 but the milliseconds aren't</description></item>
+        /// <item><description>Example 1: "2007-12-31 21:00:15Z" - the sub-second are all 0</description></item>
+        /// <item><description>Example 2: "2007-12-31 21:15Z" - the seconds, nanoseconds are all 0</description></item>
+        /// <item><description>Example 3: "2007-12-31Z" - the hours, minutes, seconds, nanoseconds are all 0</description></item>
         /// </list>
         /// <para>
         /// Note that in the first example the ISO format allows the minutes and seconds
@@ -198,56 +67,155 @@ namespace RT.Util.ExtensionMethods
         /// resulting string looks too ambiguous and hard to interpret.
         /// </para>
         /// </remarks>
-        public static string ToIsoStringOptimal(this DateTime datetime)
+        public static string ToIsoStringOptimal(this DateTime datetime, char betweenDateAndTime = ' ')
         {
-            int formatIndex = 2;
+            int fmt;
             if (datetime.Nanosecond() != 0)
-                formatIndex = 0;
-            else if (datetime.Second != 0 || datetime.Minute != 0 || datetime.Hour != 0)
-                formatIndex = 1;
-
-            switch (datetime.Kind)
             {
-                case DateTimeKind.Utc:
-                    return datetime.ToString(_datetimeFormatsUtc[formatIndex]);
-                case DateTimeKind.Local:
-                    return datetime.ToString(_datetimeFormatsLocal[formatIndex]);
-                case DateTimeKind.Unspecified:
-                    return datetime.ToString(_datetimeFormatsUnspecified[formatIndex]);
-                default:
-                    // to keep the compiler happy
-                    throw new Exception("Unexpected DateTime.Kind");
+                if (datetime.Nanosecond() % 1000000 != 0)
+                    fmt = 1; // everything
+                else
+                    fmt = 2; // up to milliseconds
+            }
+            else if (datetime.Second != 0)
+                fmt = 3; // up to seconds
+            else if (datetime.Minute != 0 || datetime.Hour != 0)
+                fmt = 4; // up to minutes
+            else
+                fmt = 5; // up to days
+
+            var result = new StringBuilder();
+            result.AppendFormat("{0:0000}", datetime.Year);
+            if (betweenDateAndTime == ' ') result.Append('-');
+            result.AppendFormat("{0:00}", datetime.Month);
+            if (betweenDateAndTime == ' ') result.Append('-');
+            result.AppendFormat("{0:00}", datetime.Day);
+
+            if (fmt < 5)
+            {
+                if (betweenDateAndTime == ' ') result.Append(betweenDateAndTime);
+                result.AppendFormat("{0:00}", datetime.Hour);
+                if (betweenDateAndTime == ' ') result.Append(':');
+                result.AppendFormat("{0:00}", datetime.Minute);
+                if (fmt < 4)
+                {
+                    if (betweenDateAndTime == ' ') result.Append(':');
+                    result.AppendFormat("{0:00}", datetime.Second);
+                    if (fmt == 2) result.AppendFormat(".{0:000}", datetime.Millisecond);
+                    if (fmt == 1) result.AppendFormat(".{0:0000000}", datetime.Nanosecond() / 100);
+                }
+            }
+
+            if (datetime.Kind == DateTimeKind.Utc)
+                result.Append('Z');
+            else if (datetime.Kind == DateTimeKind.Local)
+            {
+                var suffix = datetime.ToString("zzz");
+                if (suffix.EndsWith("00"))
+                    suffix = suffix.Substring(0, suffix.Length - 3);
+                else if (betweenDateAndTime != ' ')
+                    suffix = suffix.Replace(":", "");
+                result.Append(suffix);
+            }
+
+            return result.ToString();
+        }
+
+        private static Regex _cachedIsoRegexBasic;
+        private static Regex isoRegexBasic
+        {
+            get
+            {
+                if (_cachedIsoRegexBasic == null)
+                    _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?)?$", RegexOptions.ExplicitCapture);
+                return _cachedIsoRegexBasic;
+            }
+        }
+
+        private static Regex _cachedIsoRegexExtended;
+        private static Regex isoRegexExtended
+        {
+            get
+            {
+                if (_cachedIsoRegexExtended == null)
+                    _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?)?)?)?$", RegexOptions.ExplicitCapture);
+                return _cachedIsoRegexExtended;
             }
         }
 
         /// <summary>
-        /// Attempts to parse the specified string as an ISO-formatted DateTime. Only a subset of string formats defined by ISO 8601 is supported.
+        /// Attempts to parse the specified string as an ISO-formatted DateTime. The formats supported are guided by ISO-8601, but do not match
+        /// it exactly. Strings with no timezone information are parsed into DateTimeKind.Unspecified.
+        /// <para>ISO-8601 features not supported: day numbers; week numbers; time offsets; comma for decimal separation.</para>
+        /// <para>Features supported not in ISO-8601: '-' separator for the basic format; date shortening.</para>
         /// </summary>
-        /// <remarks>
-        /// <para>The following string formats defined by ISO 8601 are supported:</para>
-        /// <list type="bullet">
-        /// <item><description>2008-12-31 22:15:56.1234567</description></item><item><description>20081231T221556.1234567</description></item>
-        /// <item><description>2008-12-31 22:15:56.1</description></item><item><description>20081231T221556.1</description></item>
-        /// <item><description>2008-12-31 22:15:56</description></item><item><description>20081231T221556</description></item>
-        /// <item><description>2008-12-31 22:15</description></item><item><description>20081231T2215</description></item>
-        /// <item><description>2008-12-31 22</description></item><item><description>20081231T22</description></item>
-        /// <item><description>2008-12-31</description></item><item><description>20081231</description></item>
-        /// </list>
-        /// <para>
-        /// plus all of the above with the suffix "Z" (to signify UTC time) or a suffix like "+01:30" (to signify a local time at the specified offset from UTC time).
-        /// Without the suffix a string is parsed into a DateTimeKind.Unspecified kind of date.
-        /// </para>
-        /// </remarks>
         public static bool TryParseIso(string str, out DateTime result)
         {
-            if (DateTime.TryParseExact(str, _datetimeFormatsUtc, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
-                return true;
-            else if (DateTime.TryParseExact(str, _datetimeFormatsLocal, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
-                return true;
-            else if (DateTime.TryParseExact(str, _datetimeFormatsUnspecified, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out result))
-                return true;
-            else
+            result = default(DateTime);
+            var match = isoRegexBasic.Match(str);
+            if (!match.Success)
+                match = isoRegexExtended.Match(str);
+            if (!match.Success)
                 return false;
+
+            int yr = int.Parse(match.Groups["yr"].Value);
+            int mo = match.Groups["mo"].Success ? int.Parse(match.Groups["mo"].Value) : 1;
+            if (mo < 1 || mo > 12)
+                return false;
+            int da = match.Groups["da"].Success ? int.Parse(match.Groups["da"].Value) : 1;
+            if (da < 1 || da > 31)
+                return false;
+
+            int hr = match.Groups["hr"].Success ? int.Parse(match.Groups["hr"].Value) : 0;
+            if (hr > 24)
+                return false;
+            int mi = match.Groups["mi"].Success ? int.Parse(match.Groups["mi"].Value) : 0;
+            if (mi > 59)
+                return false;
+            int se = match.Groups["se"].Success ? int.Parse(match.Groups["se"].Value) : 0;
+            if (se > 59)
+                return false;
+
+            if (match.Groups["tzz"].Success)
+            {
+                try { result = new DateTime(yr, mo, da, hr, mi, se, DateTimeKind.Utc); }
+                catch { return false; }
+            }
+            else if (!match.Groups["tzs"].Success)
+            {
+                try { result = new DateTime(yr, mo, da, hr, mi, se, DateTimeKind.Unspecified); }
+                catch { return false; }
+            }
+            else
+            {
+                int tzh = int.Parse(match.Groups["tzh"].Value);
+                if (tzh > 24)
+                    return false;
+                int tzm = match.Groups["tzm"].Success ? int.Parse(match.Groups["tzm"].Value) : 0;
+                if (tzm > 59)
+                    return false;
+
+                int totalMinutes = tzh * 60 + tzm;
+                if (match.Groups["tzs"].Value == "-")
+                    totalMinutes = -totalMinutes;
+
+                try { result = new DateTime(yr, mo, da, hr, mi, se, DateTimeKind.Utc); } // yes, UTC initially
+                catch { return false; }
+                result = (result - TimeSpan.FromMinutes(totalMinutes)).ToLocalTime();
+            }
+
+            if (match.Groups["frac"].Success)
+            {
+                int frac = int.Parse(match.Groups["frac"].Value.Substring(1).PadRight(7, '0')); // 7 is special because that makes this the number of ticks in a second for the second fraction
+                if (!match.Groups["mi"].Success)
+                    result = new DateTime(result.Ticks + frac * (TimeSpan.TicksPerHour / TimeSpan.TicksPerSecond), result.Kind);
+                else if (!match.Groups["se"].Success)
+                    result = new DateTime(result.Ticks + frac * (TimeSpan.TicksPerMinute / TimeSpan.TicksPerSecond), result.Kind);
+                else
+                    result = new DateTime(result.Ticks + frac, result.Kind);
+            }
+
+            return true;
         }
 
         /// <summary>Parse the specified string as an ISO-formatted DateTime. See <see cref="TryParseIso"/> for more info.</summary>

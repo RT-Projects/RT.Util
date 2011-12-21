@@ -73,23 +73,30 @@ namespace RT.Util.ExtensionMethods
         public void TestToIsoStringHelper(DateTimeKind kind, string expectedSuffix)
         {
             DateTime dt;
+            string expectedSuffixOptimal = expectedSuffix.EndsWith(":00") ? expectedSuffix.Substring(0, expectedSuffix.Length - 3) : expectedSuffix;
             // Some normal dates
+            dt = new DateTime(new DateTime(2008, 03, 25, 14, 35, 54, 456, kind).Ticks + 1234, kind);
+            Assert.AreEqual("2008-03-25 14:35:54.4561234" + expectedSuffix, dt.ToIsoStringFull());
+            Assert.AreEqual("2008-03-25 14:35:54.4561234" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
             dt = new DateTime(2008, 03, 25, 14, 35, 54, 456, kind);
             Assert.AreEqual("2008-03-25 14:35:54.4560000" + expectedSuffix, dt.ToIsoStringFull());
-            Assert.AreEqual("2008-03-25 14:35:54.4560000" + expectedSuffix, dt.ToIsoStringOptimal());
+            Assert.AreEqual("2008-03-25 14:35:54.456" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
             dt = new DateTime(2008, 03, 25, 14, 35, 54, 0, kind);
             Assert.AreEqual("2008-03-25 14:35:54.0000000" + expectedSuffix, dt.ToIsoStringFull());
-            Assert.AreEqual("2008-03-25 14:35:54" + expectedSuffix, dt.ToIsoStringOptimal());
+            Assert.AreEqual("2008-03-25 14:35:54" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
+            dt = new DateTime(2008, 03, 25, 14, 35, 0, 0, kind);
+            Assert.AreEqual("2008-03-25 14:35:00.0000000" + expectedSuffix, dt.ToIsoStringFull());
+            Assert.AreEqual("2008-03-25 14:35" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
             dt = new DateTime(2008, 03, 25, 0, 0, 0, 0, kind);
             Assert.AreEqual("2008-03-25 00:00:00.0000000" + expectedSuffix, dt.ToIsoStringFull());
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringOptimal());
+            Assert.AreEqual("2008-03-25" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
             // Some corner cases
             dt = new DateTime(1, 1, 1, 14, 35, 54, 0, kind);
             Assert.AreEqual("0001-01-01 14:35:54.0000000" + expectedSuffix, dt.ToIsoStringFull());
-            Assert.AreEqual("0001-01-01 14:35:54" + expectedSuffix, dt.ToIsoStringOptimal());
+            Assert.AreEqual("0001-01-01 14:35:54" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
             dt = new DateTime(9999, 12, 30, 14, 35, 54, 0, kind);
             Assert.AreEqual("9999-12-30 14:35:54.0000000" + expectedSuffix, dt.ToIsoStringFull());
-            Assert.AreEqual("9999-12-30 14:35:54" + expectedSuffix, dt.ToIsoStringOptimal());
+            Assert.AreEqual("9999-12-30 14:35:54" + expectedSuffixOptimal, dt.ToIsoStringOptimal());
         }
 
         #endregion
@@ -111,7 +118,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestTryParseIsoLocal()
         {
-            TestTryParseIsoValidHelper2(DateTimeKind.Local, GetLocalSuffixAndEnsureItsValid());
+            string localsuf = GetLocalSuffixAndEnsureItsValid();
+            TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf);
+            if (localsuf.EndsWith(":00"))
+                TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf.Substring(0, localsuf.Length - 3));
         }
 
         public void TestTryParseIsoValidHelper1(string str, int year, int month, int day, int hour, int minute, int second, int nanosecond, DateTimeKind kind)
@@ -132,10 +142,20 @@ namespace RT.Util.ExtensionMethods
             TestTryParseIsoValidHelper1("2008-12-31 23:45:53.14" + suffix, 2008, 12, 31, 23, 45, 53, 140000000, kind);
             TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1" + suffix, 2008, 12, 31, 23, 45, 53, 100000000, kind);
             TestTryParseIsoValidHelper1("2008-12-31 23:45:53" + suffix, 2008, 12, 31, 23, 45, 53, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45.75000" + suffix, 2008, 12, 31, 23, 45, 45, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45.5" + suffix, 2008, 12, 31, 23, 45, 30, 0, kind);
             TestTryParseIsoValidHelper1("2008-12-31 23:45" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23.75000" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23.5" + suffix, 2008, 12, 31, 23, 30, 0, 0, kind);
             TestTryParseIsoValidHelper1("2008-12-31 23" + suffix, 2008, 12, 31, 23, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
+            if (suffix == "")
+            {
+                TestTryParseIsoValidHelper1("2008-12-31" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
+                TestTryParseIsoValidHelper1("2008-12" + suffix, 2008, 12, 1, 0, 0, 0, 0, kind);
+                TestTryParseIsoValidHelper1("2008" + suffix, 2008, 1, 1, 0, 0, 0, 0, kind);
+            }
             // Valid conversions 2
+            suffix = suffix.Replace(":", "");
             TestTryParseIsoValidHelper1("20081231T234553.1415926" + suffix, 2008, 12, 31, 23, 45, 53, 141592600, kind);
             TestTryParseIsoValidHelper1("20081231T234553.141592" + suffix, 2008, 12, 31, 23, 45, 53, 141592000, kind);
             TestTryParseIsoValidHelper1("20081231T234553.14159" + suffix, 2008, 12, 31, 23, 45, 53, 141590000, kind);
@@ -144,9 +164,14 @@ namespace RT.Util.ExtensionMethods
             TestTryParseIsoValidHelper1("20081231T234553.14" + suffix, 2008, 12, 31, 23, 45, 53, 140000000, kind);
             TestTryParseIsoValidHelper1("20081231T234553.1" + suffix, 2008, 12, 31, 23, 45, 53, 100000000, kind);
             TestTryParseIsoValidHelper1("20081231T234553" + suffix, 2008, 12, 31, 23, 45, 53, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T2345.75000" + suffix, 2008, 12, 31, 23, 45, 45, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T2345.5" + suffix, 2008, 12, 31, 23, 45, 30, 0, kind);
             TestTryParseIsoValidHelper1("20081231T2345" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T23.75000" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T23.5" + suffix, 2008, 12, 31, 23, 30, 0, 0, kind);
             TestTryParseIsoValidHelper1("20081231T23" + suffix, 2008, 12, 31, 23, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("20081231" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
+            if (suffix == "")
+                TestTryParseIsoValidHelper1("20081231" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
 
             // Invalid conversions... not quite sure how to test these but something
             // is definitely better than nothing in this case.
@@ -168,6 +193,9 @@ namespace RT.Util.ExtensionMethods
             Assert.IsFalse(DateTimeExtensions.TryParseIso("2008-01-01 25:00:00", out dt));
             Assert.IsFalse(DateTimeExtensions.TryParseIso("2008-01-01 12:61:00", out dt));
             Assert.IsFalse(DateTimeExtensions.TryParseIso("2008-01-01 12:30:61", out dt));
+            Assert.IsFalse(DateTimeExtensions.TryParseIso("200812", out dt)); // explicitly forbidden due to confusability with 2-digit years
+            Assert.IsFalse(DateTimeExtensions.TryParseIso("2008-12-01 12:35:20.12345678", out dt)); // too much resolution
+            Assert.IsFalse(DateTimeExtensions.TryParseIso("2008-12-01 12:35:20.", out dt)); // dangling dec point
         }
 
         #endregion
