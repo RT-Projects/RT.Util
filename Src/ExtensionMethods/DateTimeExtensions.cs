@@ -36,7 +36,7 @@ namespace RT.Util.ExtensionMethods
                     _datetimeFormatsUtcCache = new string[]
                     {
                         // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.fffffffZ", // also used for to-full & to-optimal
+                        "yyyy-MM-dd HH:mm:ss.fffZ",    // also used for to-full & to-optimal
                         "yyyy-MM-dd HH:mm:ssZ",         // also used for to-optimal
                         "yyyy-MM-ddZ",                  // also used for to-optimal
                         // The following strings are only here to enable conversion from
@@ -81,7 +81,7 @@ namespace RT.Util.ExtensionMethods
                     _datetimeFormatsLocalCache = new string[] 
                     {
                         // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.fffffffzzz", // also used for to-full & to-optimal
+                        "yyyy-MM-dd HH:mm:ss.ffffzzz",    // also used for to-full & to-optimal
                         "yyyy-MM-dd HH:mm:sszzz",         // also used for to-optimal
                         "yyyy-MM-ddzzz",                  // also used for to-optimal
                         // The following strings are only here to enable conversion from
@@ -126,7 +126,7 @@ namespace RT.Util.ExtensionMethods
                     _datetimeFormatsUnspecifiedCache = new string[]
                     {
                         // The most likely formats should be near the top for speed reasons
-                        "yyyy-MM-dd HH:mm:ss.fffffff", // also used for to-full & to-optimal
+                        "yyyy-MM-dd HH:mm:ss.fff",     // also used for to-full & to-optimal
                         "yyyy-MM-dd HH:mm:ss",         // also used for to-optimal
                         "yyyy-MM-dd",                  // also used for to-optimal
                         // The following strings are only here to enable conversion from
@@ -248,6 +248,15 @@ namespace RT.Util.ExtensionMethods
                 return true;
             else
                 return false;
+        }
+
+        /// <summary>Parse the specified string as an ISO-formatted DateTime. See <see cref="TryParseIso"/> for more info.</summary>
+        public static DateTime ParseIso(string str)
+        {
+            DateTime result;
+            if (!TryParseIso(str, out result))
+                throw new FormatException("The string is not in a recognized date/time format.");
+            return result;
         }
 
         #endregion
