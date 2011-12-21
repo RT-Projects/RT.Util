@@ -19,8 +19,6 @@ namespace RT.Util.ExtensionMethods
             return ((int) (datetime.Ticks % 10000000)) * 100;
         }
 
-        #region ISO 8601 conversion
-
         /// <summary>
         /// Converts the specified DateTime to a string representing the datetime in
         /// ISO format. The resulting string holds all the information necessary to
@@ -54,6 +52,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="betweenDateAndTime">If set to space (the default), the "extended" (human-readable) format will be used.
         /// If set to any other character, will use the basic (no separators) format within date/time, and this character between them.
         /// Use 'T' or '-' to make it compatible with <see cref="TryParseIso"/></param>
+        /// <param name="omitSuffix">Set to true to omit the timezone suffix for UTC and local times. Use this if the result is intended
+        /// for human to read, rather than for <see cref="TryParseIso"/>, because the latter won't know whether the time is local or UTC.</param>
         /// <remarks>
         /// <list type="bullet">
         /// <item><description>Example 1: "2007-12-31 21:00:15.993Z" - the micro/nanoseconds are all 0 but the milliseconds aren't</description></item>
@@ -67,7 +67,7 @@ namespace RT.Util.ExtensionMethods
         /// resulting string looks too ambiguous and hard to interpret.
         /// </para>
         /// </remarks>
-        public static string ToIsoStringOptimal(this DateTime datetime, char betweenDateAndTime = ' ')
+        public static string ToIsoStringOptimal(this DateTime datetime, char betweenDateAndTime = ' ', bool omitSuffix = false)
         {
             int fmt;
             if (datetime.Nanosecond() != 0)
@@ -93,7 +93,7 @@ namespace RT.Util.ExtensionMethods
 
             if (fmt < 5)
             {
-                if (betweenDateAndTime == ' ') result.Append(betweenDateAndTime);
+                result.Append(betweenDateAndTime);
                 result.AppendFormat("{0:00}", datetime.Hour);
                 if (betweenDateAndTime == ' ') result.Append(':');
                 result.AppendFormat("{0:00}", datetime.Minute);
@@ -106,16 +106,19 @@ namespace RT.Util.ExtensionMethods
                 }
             }
 
-            if (datetime.Kind == DateTimeKind.Utc)
-                result.Append('Z');
-            else if (datetime.Kind == DateTimeKind.Local)
+            if (!omitSuffix)
             {
-                var suffix = datetime.ToString("zzz");
-                if (suffix.EndsWith("00"))
-                    suffix = suffix.Substring(0, suffix.Length - 3);
-                else if (betweenDateAndTime != ' ')
-                    suffix = suffix.Replace(":", "");
-                result.Append(suffix);
+                if (datetime.Kind == DateTimeKind.Utc)
+                    result.Append('Z');
+                else if (datetime.Kind == DateTimeKind.Local)
+                {
+                    var suffix = datetime.ToString("zzz");
+                    if (suffix.EndsWith("00"))
+                        suffix = suffix.Substring(0, suffix.Length - 3);
+                    else if (betweenDateAndTime != ' ')
+                        suffix = suffix.Replace(":", "");
+                    result.Append(suffix);
+                }
             }
 
             return result.ToString();
@@ -227,24 +230,28 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
-        #endregion
-
-        /// <summary>
-        /// Returns a copy of this DateTime, truncated to whole seconds. Useful with
-        /// <see cref="ToIsoStringOptimal"/>.
-        /// </summary>
-        public static DateTime TruncatedToSeconds(this DateTime datetime)
+        /// <summary>Returns a copy of this DateTime, truncated to whole milliseconds. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        public static DateTime TruncatedToMilliseconds(this DateTime datetime)
         {
-            return new DateTime(datetime.Ticks - datetime.Ticks % 10000000, datetime.Kind);
+            return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerMillisecond, datetime.Kind);
         }
 
-        /// <summary>
-        /// Returns a copy of this DateTime, truncated to whole days. Useful with
-        /// <see cref="ToIsoStringOptimal"/>.
-        /// </summary>
+        /// <summary>Returns a copy of this DateTime, truncated to whole seconds. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        public static DateTime TruncatedToSeconds(this DateTime datetime)
+        {
+            return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerSecond, datetime.Kind);
+        }
+
+        /// <summary>Returns a copy of this DateTime, truncated to whole minutes. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        public static DateTime TruncatedToMinutes(this DateTime datetime)
+        {
+            return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerMinute, datetime.Kind);
+        }
+
+        /// <summary>Returns a copy of this DateTime, truncated to whole days. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
         public static DateTime TruncatedToDays(this DateTime datetime)
         {
-            return new DateTime(datetime.Ticks - datetime.Ticks % 864000000000, datetime.Kind);
+            return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerDay, datetime.Kind);
         }
     }
 }
