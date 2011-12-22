@@ -4,6 +4,34 @@ using System.Text.RegularExpressions;
 
 namespace RT.Util.ExtensionMethods
 {
+    /// <summary>Defines one of several common date/time formats which are either ISO-8601 compatible or very slight deviations from it.</summary>
+    public enum IsoDateFormat
+    {
+        /// <summary>A delimited, readable format. Known as "extended" in ISO-8601. Example: <c>2007-12-31 21:15</c>.</summary>
+        HumanReadable,
+        /// <summary>A non-delimited compact format. Known as "basic" in ISO-8601. Example: <c>20071231T2115</c>.</summary>
+        Compact,
+        /// <summary>A non-delimited compact format with '-' instead of 'T'. Not ISO-8601, but supported by <see cref="DateTimeExtensions.TryParseIso"/>. Example: <c>20071231-2115</c>.</summary>
+        CompactReadable,
+        /// <summary>A delimited, readable format without spaces usable in filenames. Not ISO-8601, and not supported by <see cref="DateTimeExtensions.TryParseIso"/>. Example: <c>2007.12.31-21.15</c>.</summary>
+        FilenameReadable,
+    }
+
+    /// <summary>Defines a precision for a date/time stamp.</summary>
+    public enum IsoDatePrecision
+    {
+        /// <summary>Day precision: <c>2011-12-31</c></summary>
+        Days = 10,
+        /// <summary>Minute precision: <c>2011-12-31 18:03</c></summary>
+        Minutes = 20,
+        /// <summary>Second precision: <c>2011-12-31 18:03:15</c></summary>
+        Seconds = 30,
+        /// <summary>Millisecond precision: <c>2011-12-31 18:03:15.123</c></summary>
+        Milliseconds = 40,
+        /// <summary>The full .NET DateTime precision, which is seconds to 7 d.p. (100-nanosecond intervals): <c>2011-12-31 18:03:15.1234567</c></summary>
+        Full = 50,
+    }
+
     /// <summary>
     /// Provides extension methods on the <see cref="DateTime"/> type.
     /// </summary>
@@ -20,108 +48,122 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified DateTime to a string representing the datetime in
-        /// ISO format. The resulting string holds all the information necessary to
-        /// convert back to the original DateTime. Example string:
-        /// "2007-12-31 21:00:00.0000000Z" - where the Z suffix indicates that this
-        /// time is in UTC.
+        /// Returns a string representation of the date/time in an ISO-8601-like format. The date/time components are always ordered from
+        /// largest (year) to smallest (nanoseconds), and they are always specified as a fixed-width numeric value. The separators between
+        /// the parts can be customized.
         /// </summary>
-        public static string ToIsoStringFull(this DateTime datetime)
+        /// <param name="datetime">Date/time to convert.</param>
+        /// <param name="precision">Which date/time components are to be included. The values are truncated, not rounded.</param>
+        /// <param name="charInDate">The character to insert between years, months and days, or null for none.</param>
+        /// <param name="charInTime">The character to insert between hours, minutes and seconds (including timezone offset), or null for none.</param>
+        /// <param name="charBetween">The character to insert between the date and the time part, or null for none (which is never valid in ISO-8601).</param>
+        /// <param name="includeTimezone">Specifies whether a suffix indicating date/time kind (local/utc/unspecified) and, for local times, a UTC offset, is appended.</param>
+        public static string ToIsoStringCustom(this DateTime datetime, IsoDatePrecision precision = IsoDatePrecision.Full,
+            char? charInDate = '-', char? charInTime = ':', char? charBetween = ' ', bool includeTimezone = false)
         {
-            switch (datetime.Kind)
-            {
-                case DateTimeKind.Utc:
-                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffffZ");
-                case DateTimeKind.Local:
-                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffffzzz");
-                case DateTimeKind.Unspecified:
-                    return datetime.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss'.'fffffff");
-                default:
-                    // to keep the compiler happy
-                    throw new Exception("Unexpected DateTime.Kind");
-            }
-        }
-
-        /// <summary>
-        /// Converts the specified DateTime to a string representing the datetime in
-        /// ISO format. The resulting string holds all the information necessary to
-        /// convert back to the original DateTime, but unlike <see cref="ToIsoStringFull"/>,
-        /// some of the redundant zeros are omitted (as permitted by the ISO format).
-        /// </summary>
-        /// <param name="datetime">The value to convert.</param>
-        /// <param name="betweenDateAndTime">If set to space (the default), the "extended" (human-readable) format will be used.
-        /// If set to any other character, will use the basic (no separators) format within date/time, and this character between them.
-        /// Use 'T' or '-' to make it compatible with <see cref="TryParseIso"/></param>
-        /// <param name="omitSuffix">Set to true to omit the timezone suffix for UTC and local times. Use this if the result is intended
-        /// for human to read, rather than for <see cref="TryParseIso"/>, because the latter won't know whether the time is local or UTC.</param>
-        /// <remarks>
-        /// <list type="bullet">
-        /// <item><description>Example 1: "2007-12-31 21:00:15.993Z" - the micro/nanoseconds are all 0 but the milliseconds aren't</description></item>
-        /// <item><description>Example 1: "2007-12-31 21:00:15Z" - the sub-second are all 0</description></item>
-        /// <item><description>Example 2: "2007-12-31 21:15Z" - the seconds, nanoseconds are all 0</description></item>
-        /// <item><description>Example 3: "2007-12-31Z" - the hours, minutes, seconds, nanoseconds are all 0</description></item>
-        /// </list>
-        /// <para>
-        /// Note that in the first example the ISO format allows the minutes and seconds
-        /// to be skipped as well - this is not implemented at the moment because the
-        /// resulting string looks too ambiguous and hard to interpret.
-        /// </para>
-        /// </remarks>
-        public static string ToIsoStringOptimal(this DateTime datetime, char betweenDateAndTime = ' ', bool omitSuffix = false)
-        {
-            int fmt;
-            if (datetime.Nanosecond() != 0)
-            {
-                if (datetime.Nanosecond() % 1000000 != 0)
-                    fmt = 1; // everything
-                else
-                    fmt = 2; // up to milliseconds
-            }
-            else if (datetime.Second != 0)
-                fmt = 3; // up to seconds
-            else if (datetime.Minute != 0 || datetime.Hour != 0)
-                fmt = 4; // up to minutes
-            else
-                fmt = 5; // up to days
-
             var result = new StringBuilder();
             result.AppendFormat("{0:0000}", datetime.Year);
-            if (betweenDateAndTime == ' ') result.Append('-');
+            if (charInDate != null) result.Append(charInDate.Value);
             result.AppendFormat("{0:00}", datetime.Month);
-            if (betweenDateAndTime == ' ') result.Append('-');
+            if (charInDate != null) result.Append(charInDate.Value);
             result.AppendFormat("{0:00}", datetime.Day);
 
-            if (fmt < 5)
+            if (precision > IsoDatePrecision.Days)
             {
-                result.Append(betweenDateAndTime);
+                if (charBetween != null) result.Append(charBetween.Value);
                 result.AppendFormat("{0:00}", datetime.Hour);
-                if (betweenDateAndTime == ' ') result.Append(':');
+                if (charInTime != null) result.Append(charInTime.Value);
                 result.AppendFormat("{0:00}", datetime.Minute);
-                if (fmt < 4)
+                if (precision > IsoDatePrecision.Minutes)
                 {
-                    if (betweenDateAndTime == ' ') result.Append(':');
+                    if (charInTime != null) result.Append(charInTime.Value);
                     result.AppendFormat("{0:00}", datetime.Second);
-                    if (fmt == 2) result.AppendFormat(".{0:000}", datetime.Millisecond);
-                    if (fmt == 1) result.AppendFormat(".{0:0000000}", datetime.Nanosecond() / 100);
+                    if (precision == IsoDatePrecision.Milliseconds) result.AppendFormat(".{0:000}", datetime.Millisecond);
+                    if (precision == IsoDatePrecision.Full) result.AppendFormat(".{0:0000000}", datetime.Nanosecond() / 100);
                 }
             }
 
-            if (!omitSuffix)
+            if (includeTimezone)
             {
                 if (datetime.Kind == DateTimeKind.Utc)
                     result.Append('Z');
                 else if (datetime.Kind == DateTimeKind.Local)
                 {
-                    var suffix = datetime.ToString("zzz");
-                    if (suffix.EndsWith("00"))
-                        suffix = suffix.Substring(0, suffix.Length - 3);
-                    else if (betweenDateAndTime != ' ')
-                        suffix = suffix.Replace(":", "");
-                    result.Append(suffix);
+                    var offset = TimeZone.CurrentTimeZone.GetUtcOffset(datetime);
+                    result.Append(offset >= TimeSpan.Zero ? '+' : '-');
+                    result.AppendFormat("{0:00}", offset.Hours);
+                    if (offset.Minutes != 0)
+                    {
+                        if (charInTime != null) result.Append(charInTime.Value);
+                        result.AppendFormat("{0:00}", offset.Minutes);
+                    }
                 }
             }
 
             return result.ToString();
+        }
+
+        /// <summary>Returns a string representation of the date/time in an ISO-8601 compatible (or very close) format.</summary>
+        /// <param name="datetime">Date/time to convert.</param>
+        /// <param name="precision">Which date/time components are to be included. The values are truncated, not rounded.</param>
+        /// <param name="format">One of the several pre-defined formats to use.</param>
+        /// <param name="includeTimezone">Specifies whether a suffix indicating date/time kind (local/utc/unspecified) and, for local times, a UTC offset, is appended.</param>
+        public static string ToIsoString(this DateTime datetime, IsoDatePrecision precision = IsoDatePrecision.Seconds, IsoDateFormat format = IsoDateFormat.HumanReadable, bool includeTimezone = false)
+        {
+            switch (format)
+            {
+                case IsoDateFormat.HumanReadable: return datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: ' ', includeTimezone: includeTimezone);
+                case IsoDateFormat.Compact: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: 'T', includeTimezone: includeTimezone);
+                case IsoDateFormat.CompactReadable: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: '-', includeTimezone: includeTimezone);
+                case IsoDateFormat.FilenameReadable: return datetime.ToIsoStringCustom(precision, charInDate: '.', charInTime: '.', charBetween: '-', includeTimezone: includeTimezone);
+                default: throw new InternalErrorException("usbwdg");
+            }
+        }
+
+        /// <summary>
+        /// Returns a string representation of the date/time in an ISO-8601-like format. The function will
+        /// omit higher-precision parts whose values are zeroes, as permitted by the standard.
+        /// </summary>
+        /// <param name="datetime">Date/time to convert.</param>
+        /// <param name="format">One of the several pre-defined formats to use.</param>
+        /// <param name="minPrecision">Minimum precision of the resulting string. The actual precision is determined by what's available in the date/time, bounded by this parameter.</param>
+        /// <param name="maxPrecision">Maximum precision of the resulting string. Any higher-precision parts are truncated.</param>
+        /// <param name="includeTimezone">Specifies whether a suffix indicating date/time kind (local/utc/unspecified) and, for local times, a UTC offset, is appended.</param>
+        public static string ToIsoStringOptimal(this DateTime datetime, IsoDateFormat format = IsoDateFormat.HumanReadable,
+            IsoDatePrecision minPrecision = IsoDatePrecision.Days, IsoDatePrecision maxPrecision = IsoDatePrecision.Full, bool includeTimezone = false)
+        {
+            if (minPrecision > maxPrecision)
+                throw new ArgumentException("Minimum precision must not exceed maximum precision.");
+            IsoDatePrecision precision;
+            if (datetime.Nanosecond() % 1000000 != 0 && maxPrecision > IsoDatePrecision.Milliseconds)
+                precision = IsoDatePrecision.Full;
+            else if (datetime.Millisecond != 0 && maxPrecision > IsoDatePrecision.Seconds)
+                precision = IsoDatePrecision.Milliseconds;
+            else if (datetime.Second != 0 && maxPrecision > IsoDatePrecision.Minutes)
+                precision = IsoDatePrecision.Seconds;
+            else if (datetime.Minute != 0 || datetime.Hour != 0 && maxPrecision > IsoDatePrecision.Days)
+                precision = IsoDatePrecision.Minutes;
+            else
+                precision = IsoDatePrecision.Days;
+
+            if (precision < minPrecision)
+                precision = minPrecision;
+            if (precision > maxPrecision)
+                precision = maxPrecision;
+
+            return datetime.ToIsoString(precision, format, includeTimezone: includeTimezone);
+        }
+
+        /// <summary>
+        /// Returns a string representation of the date/time in an ISO-8601-like format. Use this if the result must be round-trippable
+        /// without losing any information. The function will omit higher-precision parts whose values are zeroes, as permitted by the standard.
+        /// </summary>
+        /// <param name="datetime">Date/time to convert.</param>
+        /// <param name="format">One of the several pre-defined formats to use.</param>
+        /// <param name="minPrecision">Minimum precision of the resulting string. The actual precision is determined by what's available in the date/time, bounded by this parameter.</param>
+        public static string ToIsoStringRoundtrip(this DateTime datetime, IsoDateFormat format = IsoDateFormat.HumanReadable, IsoDatePrecision minPrecision = IsoDatePrecision.Days)
+        {
+            return datetime.ToIsoStringOptimal(format, minPrecision: minPrecision, maxPrecision: IsoDatePrecision.Full, includeTimezone: true);
         }
 
         private static Regex _cachedIsoRegexBasic;
@@ -130,7 +172,7 @@ namespace RT.Util.ExtensionMethods
             get
             {
                 if (_cachedIsoRegexBasic == null)
-                    _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?)?$", RegexOptions.ExplicitCapture);
+                    _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture);
                 return _cachedIsoRegexBasic;
             }
         }
@@ -141,16 +183,16 @@ namespace RT.Util.ExtensionMethods
             get
             {
                 if (_cachedIsoRegexExtended == null)
-                    _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?)?)?)?$", RegexOptions.ExplicitCapture);
+                    _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?)?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture);
                 return _cachedIsoRegexExtended;
             }
         }
 
         /// <summary>
-        /// Attempts to parse the specified string as an ISO-formatted DateTime. The formats supported are guided by ISO-8601, but do not match
-        /// it exactly. Strings with no timezone information are parsed into DateTimeKind.Unspecified.
+        /// <para>Attempts to parse the specified string as an ISO-formatted DateTime. The formats supported are guided by ISO-8601, but do not match
+        /// it exactly. Strings with no timezone information are parsed into DateTimeKind.Unspecified.</para>
         /// <para>ISO-8601 features not supported: day numbers; week numbers; time offsets; comma for decimal separation.</para>
-        /// <para>Features supported not in ISO-8601: '-' separator for the basic format; date shortening.</para>
+        /// <para>Features supported not in ISO-8601: '-' separator for the basic format; date shortening; timezone marker for date-only strings.</para>
         /// </summary>
         public static bool TryParseIso(string str, out DateTime result)
         {
@@ -230,25 +272,25 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
-        /// <summary>Returns a copy of this DateTime, truncated to whole milliseconds. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        /// <summary>Returns a copy of this DateTime, truncated to whole milliseconds.</summary>
         public static DateTime TruncatedToMilliseconds(this DateTime datetime)
         {
             return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerMillisecond, datetime.Kind);
         }
 
-        /// <summary>Returns a copy of this DateTime, truncated to whole seconds. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        /// <summary>Returns a copy of this DateTime, truncated to whole seconds.</summary>
         public static DateTime TruncatedToSeconds(this DateTime datetime)
         {
             return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerSecond, datetime.Kind);
         }
 
-        /// <summary>Returns a copy of this DateTime, truncated to whole minutes. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        /// <summary>Returns a copy of this DateTime, truncated to whole minutes.</summary>
         public static DateTime TruncatedToMinutes(this DateTime datetime)
         {
             return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerMinute, datetime.Kind);
         }
 
-        /// <summary>Returns a copy of this DateTime, truncated to whole days. Useful with <see cref="ToIsoStringOptimal"/>.</summary>
+        /// <summary>Returns a copy of this DateTime, truncated to whole days.</summary>
         public static DateTime TruncatedToDays(this DateTime datetime)
         {
             return new DateTime(datetime.Ticks - datetime.Ticks % TimeSpan.TicksPerDay, datetime.Kind);

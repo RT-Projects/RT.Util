@@ -1196,6 +1196,8 @@ namespace RT.Util
             CheckRoundtrip((ulong) 27947334897972);
             CheckRoundtrip('\u1234');
             CheckRoundtrip(DateTime.Now);
+            CheckRoundtrip(DateTime.UtcNow);
+            CheckRoundtrip(new DateTime(DateTime.UtcNow.Ticks, DateTimeKind.Unspecified));
             CheckRoundtrip(-24729379473972000f);
             CheckRoundtrip(279473348979720000000d);
             CheckRoundtrip(27947334897972.2769862m);
@@ -1313,7 +1315,7 @@ namespace RT.Util
                     {
                         DateTime val;
                         Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
+                        Assert.AreEqual(value, val); Assert.AreEqual(((DateTime) value).Kind, ((DateTime) val).Kind);
                         break;
                     }
                 default:

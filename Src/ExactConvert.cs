@@ -1066,7 +1066,7 @@ namespace RT.Util
             }
             else if (code == TypeCode.DateTime)
             {
-                result = ((DateTime) value).ToIsoStringOptimal();
+                result = ((DateTime) value).ToIsoStringRoundtrip();
                 return true;
             }
             else if (!_isUnsupportedType[(int) code])
