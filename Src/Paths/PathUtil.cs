@@ -335,6 +335,14 @@ namespace RT.Util
             var result = PathUtil.StripTrailingSeparator((".." + Path.DirectorySeparatorChar).Repeat(piece.Count(ch => ch == Path.DirectorySeparatorChar)) + toggledPath.Substring(prevPos + 1));
             return result.Length == 0 ? "." : result;
         }
+
+        /// <summary>Appends the specified value to the filename part before extension.</summary>
+        /// <param name="filename">Filename to which the value should be appended.</param>
+        /// <param name="value">The value to append.</param>
+        public static string AppendBeforeExtension(string filename, string value)
+        {
+            return Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + value + Path.GetExtension(filename));
+        }
     }
 
     /// <summary>Details a problem that occurred while using <see cref="PathUtil.ToggleRelative"/>.</summary>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
@@ -172,20 +173,20 @@ namespace RT.Util
         /// <param name="from">From address.</param>
         /// <param name="to">Recipient address(es).</param>
         /// <param name="subject">Subject line.</param>
-        /// <param name="plainText">Plain-text version of the e-mail.</param>
-        /// <param name="html">HTML version of the e-mail.</param>
-        public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string plainText, string html)
+        /// <param name="bodyPlain">Plain-text version of the e-mail.</param>
+        /// <param name="bodyHtml">HTML version of the e-mail.</param>
+        public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string bodyPlain, string bodyHtml)
         {
             if (from == null)
                 throw new ArgumentNullException("from");
             if (to == null)
                 throw new ArgumentNullException("to");
-            if (plainText == null && html == null)
+            if (bodyPlain == null && bodyHtml == null)
                 throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "html");
             if (subject == null)
                 subject = "";
-            if (plainText == null)
-                plainText = "This e-mail is only available in HTML format.";
+            if (bodyPlain == null)
+                bodyPlain = "This e-mail is only available in HTML format.";
 
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
             _log.Info(1, "Sending email to " + toHeader);
@@ -213,7 +214,7 @@ namespace RT.Util
             sendLine(@"Date: {0}".Fmt(DateTime.UtcNow.ToString("r"))); // "r" appends "GMT" even when the timestamp is known not to be GMT...
             sendLine(@"Subject: =?utf-8?B?{0}?=".Fmt(Convert.ToBase64String(subject.ToUtf8())));
 
-            if (html != null)
+            if (bodyHtml != null)
             {
                 string boundary1 = new string(Enumerable.Range(0, 64).Select(dummy => { var i = Rnd.Next(62); return (char) (i < 10 ? '0' + i : i < 36 ? 'a' + i - 10 : 'A' + i - 36); }).ToArray());
                 string boundary2 = new string(Enumerable.Range(0, 64).Select(dummy => { var i = Rnd.Next(62); return (char) (i < 10 ? '0' + i : i < 36 ? 'a' + i - 10 : 'A' + i - 36); }).ToArray());
@@ -230,12 +231,12 @@ namespace RT.Util
                 sendLine(@"Content-Type: text/plain; charset=UTF-8");
                 sendLine(@"Content-Transfer-Encoding: quoted-printable");
                 sendLine("");
-                sendAsQuotedPrintable(plainText);
+                sendAsQuotedPrintable(bodyPlain);
                 sendLine(@"--{0}".Fmt(boundary3));
                 sendLine(@"Content-Type: text/html; charset=UTF-8");
                 sendLine(@"Content-Transfer-Encoding: quoted-printable");
                 sendLine("");
-                sendAsQuotedPrintable(html);
+                sendAsQuotedPrintable(bodyHtml);
                 sendLine(@"--{0}--".Fmt(boundary3));
                 sendLine("");
                 sendLine(@"--{0}--".Fmt(boundary2));
@@ -247,7 +248,7 @@ namespace RT.Util
                 sendLine(@"Content-Type: text/plain; charset=UTF-8");
                 sendLine(@"Content-Transfer-Encoding: quoted-printable");
                 sendLine("");
-                sendAsQuotedPrintable(plainText);
+                sendAsQuotedPrintable(bodyPlain);
             }
             sendAndExpect(".", 250);
             _log.Debug(1, "Sent successfully.");
@@ -295,6 +296,86 @@ namespace RT.Util
             if (_reader != null)
                 ((IDisposable) _reader).Dispose();
             _disposed = true;
+        }
+    }
+
+    /// <summary>
+    /// Implements a simple interface for sending an email that shares a global repository of SMTP settings.
+    /// This repository is stored using <see cref="SettingsUtil"/> using the name "RT.Emailer". The repository
+    /// contains a list of SMTP accounts with a unique name. One of the accounts may be designated as the
+    /// default one if the application doesn't specify any. The "From" address is fixed per account, but the
+    /// name may be overridden by the application.
+    /// </summary>
+    public static class Emailer
+    {
+#pragma warning disable 649 // field never assigned to
+        [Settings("RT.Emailer", SettingsKind.Global)]
+        private class settings : SettingsBase
+        {
+            public string DefaultAccount;
+            public Dictionary<string, account> Accounts = new Dictionary<string, account>();
+        }
+#pragma warning restore 649
+
+        private class account : RTSmtpSettings
+        {
+            public string FromAddress = "me@example.com";
+            public string FromName = "Me Smith (can be null to use process name)";
+
+            private static byte[] _key = "303d1c9608d4323edccaa207ceb15bfe66603b5e361e0450fd5e38a0fc629c7a".FromHex(); // exactly 32 bytes
+
+            protected override string DecryptPassword(string encrypted)
+            {
+                return SettingsUtil.DecryptPassword(encrypted, _key);
+            }
+
+            protected override string EncryptPassword(string decrypted)
+            {
+                return SettingsUtil.EncryptPassword(decrypted, _key);
+            }
+        }
+
+        /// <summary>If set, the SMTP client will log various messages to this log at various verbosity levels.</summary>
+        public static LoggerBase Log = null;
+
+        /// <summary>
+        /// Sends an email using one of the pre-configured RT.Emailer SMTP accounts. If none are configured on this computer,
+        /// an exception will be thrown, describing what the user needs to do - though this requires a pretty technical user.
+        /// </summary>
+        /// <param name="to">The recipients of the email.</param>
+        /// <param name="subject">Subject line.</param>
+        /// <param name="bodyPlain">Body of the message in plaintext format, or null to omit this MIME type.</param>
+        /// <param name="bodyHtml">Body of the message in HTML format, or null to omit this MIME type.</param>
+        /// <param name="account">The name of one of the RT.Emailer accounts to use (case-sensitive), or null to use the default one.</param>
+        /// <param name="fromName">The text to use as the "from" name. If null, will use the executable name. This setting
+        /// has no effect if the specified RT.Emailer account specifies a FromName of its own.</param>
+        public static void SendEmail(IEnumerable<MailAddress> to, string subject, string bodyPlain = null, string bodyHtml = null, string account = null, string fromName = null)
+        {
+            var settingsFile = SettingsUtil.GetAttribute<settings>().GetFileName();
+            settings settings;
+            SettingsUtil.LoadSettings(out settings);
+            if (!settings.Accounts.Any())
+            {
+                settings.Accounts.Add("example", new account());
+                settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".example"));
+                throw new InvalidOperationException("There are no RT.Emailer accounts defined on this computer. Please configure them in the file \"{0}\".".Fmt(settingsFile));
+            }
+            else
+                settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".rewrite"));
+
+            if (account == null)
+                account = settings.DefaultAccount ?? settings.Accounts.First().Key;
+
+            account acc;
+            if (!settings.Accounts.TryGetValue(account, out acc))
+                throw new ArgumentException("There is no RT.Emailer account named \"{0}\" defined in the settings file (\"{1}\").".Fmt(account, settingsFile), "account");
+
+            using (var smtp = new RTSmtpClient(acc, Log))
+            {
+                var from = new MailAddress(acc.FromAddress, acc.FromName ?? fromName ??
+                    (Assembly.GetEntryAssembly() == null ? null : Path.GetFileName(Assembly.GetEntryAssembly().Location)));
+                smtp.SendEmail(from, to, subject, bodyPlain, bodyHtml);
+            }
         }
     }
 }
