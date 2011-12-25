@@ -346,15 +346,24 @@ namespace RT.Util
         /// <param name="subject">Subject line.</param>
         /// <param name="bodyPlain">Body of the message in plaintext format, or null to omit this MIME type.</param>
         /// <param name="bodyHtml">Body of the message in HTML format, or null to omit this MIME type.</param>
-        /// <param name="account">The name of one of the RT.Emailer accounts to use (case-sensitive), or null to use the default one.</param>
+        /// <param name="account">The name of one of the RT.Emailer accounts to use (case-sensitive). If null or not defined, will fall back
+        /// to exe name, then the Default Account setting, and then any defined account, in this order.</param>
         /// <param name="fromName">The text to use as the "from" name. If null, will use the executable name. This setting
         /// has no effect if the specified RT.Emailer account specifies a FromName of its own.</param>
         public static void SendEmail(IEnumerable<MailAddress> to, string subject, string bodyPlain = null, string bodyHtml = null, string account = null, string fromName = null)
         {
+            // Load the settings file
             var settingsFile = SettingsUtil.GetAttribute<settings>().GetFileName();
             settings settings;
             SettingsUtil.LoadSettings(out settings);
-            if (!settings.Accounts.Any())
+
+            // Add an empty exe name account
+            string exeName = Assembly.GetEntryAssembly() == null ? null : Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            if (exeName != null && !settings.Accounts.ContainsKey(exeName))
+                settings.Accounts.Add(exeName, null);
+
+            // Save any changes we've made (to a separate file!) and report error if we have no accounts at all
+            if (!settings.Accounts.Any(a => a.Value != null))
             {
                 settings.Accounts.Add("example", new account());
                 settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".example"));
@@ -363,17 +372,19 @@ namespace RT.Util
             else
                 settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".rewrite"));
 
-            if (account == null)
-                account = settings.DefaultAccount ?? settings.Accounts.First().Key;
+            // Pick the actual account we'll use
+            if (account == null || !settings.Accounts.ContainsKey(account) || settings.Accounts[account] == null)
+                account = exeName;
+            if (account == null || !settings.Accounts.ContainsKey(account) || settings.Accounts[account] == null)
+                account = settings.DefaultAccount;
+            if (account == null || !settings.Accounts.ContainsKey(account) || settings.Accounts[account] == null)
+                account = settings.Accounts.First(a => a.Value != null).Key;
+            var acc = settings.Accounts[account];
 
-            account acc;
-            if (!settings.Accounts.TryGetValue(account, out acc))
-                throw new ArgumentException("There is no RT.Emailer account named \"{0}\" defined in the settings file (\"{1}\").".Fmt(account, settingsFile), "account");
-
+            // Send the email
             using (var smtp = new RTSmtpClient(acc, Log))
             {
-                var from = new MailAddress(acc.FromAddress, acc.FromName ?? fromName ??
-                    (Assembly.GetEntryAssembly() == null ? null : Path.GetFileName(Assembly.GetEntryAssembly().Location)));
+                var from = new MailAddress(acc.FromAddress, acc.FromName ?? fromName ?? (exeName == null ? null : Path.GetFileNameWithoutExtension(exeName)));
                 smtp.SendEmail(from, to, subject, bodyPlain, bodyHtml);
             }
         }
