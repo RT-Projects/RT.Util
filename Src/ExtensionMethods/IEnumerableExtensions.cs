@@ -847,5 +847,81 @@ namespace RT.Util.ExtensionMethods
             if (list.Count > 0)
                 yield return list;
         }
+
+        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
+                this IEnumerable<TItem> source,
+                Func<TItem, TState> state,
+                Action<TState, int> first = null,
+                Action<TItem, TState, int, int> accumulate = null,
+                Func<TState, int, int, TResult> last = null,
+                Func<TResult> empty = null,
+                IEqualityComparer<TState> stateComparer = null
+            )
+        {
+            Func<TState, int, TResult> substituteFirst = null;
+            if (first != null)
+                substituteFirst = (a, b) => { first(a, b); return default(TResult); };
+            return Accumulate(source, state, substituteFirst, accumulate, last, empty, stateComparer);
+        }
+
+        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
+                this IEnumerable<TItem> source,
+                Func<TItem, TState> state,
+                Func<TState, int, TResult> first = null,
+                Action<TItem, TState, int, int> accumulate = null,
+                Action<TState, int, int> last = null,
+                Func<TResult> empty = null,
+                IEqualityComparer<TState> stateComparer = null
+            )
+        {
+            Func<TState, int, int, TResult> substituteLast = null;
+            if (last != null)
+                substituteLast = (a, b, c) => { last(a, b, c); return default(TResult); };
+            return Accumulate(source, state, first, accumulate, substituteLast, empty, stateComparer);
+        }
+
+        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
+                this IEnumerable<TItem> source,
+                Func<TItem, TState> state,
+                Func<TState, int, TResult> first = null,
+                Action<TItem, TState, int, int> accumulate = null,
+                Func<TState, int, int, TResult> last = null,
+                Func<TResult> empty = null,
+                IEqualityComparer<TState> stateComparer = null
+            )
+        {
+            stateComparer = stateComparer ?? EqualityComparer<TState>.Default;
+            bool any = false;
+            TState prevState = default(TState);
+            var totalIndex = 0;
+            var currentIndex = 0;
+            foreach (var elem in source)
+            {
+                var curState = state(elem);
+                if (!any)
+                {
+                    any = true;
+                    if (first != null)
+                        yield return first(curState, totalIndex);
+                }
+                else if (!stateComparer.Equals(prevState, curState))
+                {
+                    if (last != null)
+                        yield return last(prevState, totalIndex - 1, currentIndex);
+                    currentIndex = 0;
+                    if (first != null)
+                        yield return first(curState, totalIndex);
+                }
+                if (accumulate != null)
+                    accumulate(elem, curState, totalIndex, currentIndex);
+                prevState = curState;
+                totalIndex++;
+                currentIndex++;
+            }
+            if (any && last != null)
+                yield return last(prevState, totalIndex, currentIndex);
+            if (!any && empty != null)
+                yield return empty();
+        }
     }
 }
