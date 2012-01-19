@@ -848,46 +848,136 @@ namespace RT.Util.ExtensionMethods
                 yield return list;
         }
 
+        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
+        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
+        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
+        /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
+        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
+        /// <param name="firstAction">An optional callback that is invoked every time a new group of elements starts.</param>
+        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
+        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
+        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
+        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
+        /// <returns>A collection containing the elements returned by <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
         public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
                 this IEnumerable<TItem> source,
                 Func<TItem, TState> state,
-                Action<TState, int> first = null,
+                Action<TState, int> firstAction = null,
                 Action<TItem, TState, int, int> accumulate = null,
-                Func<TState, int, int, TResult> last = null,
+                Func<TState, int, int, TResult> lastFunc = null,
                 Func<TResult> empty = null,
                 IEqualityComparer<TState> stateComparer = null
             )
         {
+            if (source == null)
+                throw new ArgumentNullException("state");
+            if (state == null)
+                throw new ArgumentNullException("state");
             Func<TState, int, TResult> substituteFirst = null;
-            if (first != null)
-                substituteFirst = (a, b) => { first(a, b); return default(TResult); };
-            return Accumulate(source, state, substituteFirst, accumulate, last, empty, stateComparer);
+            if (firstAction != null)
+                substituteFirst = (a, b) => { firstAction(a, b); return default(TResult); };
+            return accumulateIterator(source, state, substituteFirst, accumulate, lastFunc, empty, stateComparer, true, false);
         }
 
+        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
+        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
+        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
+        /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
+        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
+        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
+        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
+        /// <param name="lastAction">An optional callback that is invoked at the end of a group.</param>
+        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
+        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
+        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
         public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
                 this IEnumerable<TItem> source,
                 Func<TItem, TState> state,
-                Func<TState, int, TResult> first = null,
+                Func<TState, int, TResult> firstFunc = null,
                 Action<TItem, TState, int, int> accumulate = null,
-                Action<TState, int, int> last = null,
+                Action<TState, int, int> lastAction = null,
                 Func<TResult> empty = null,
                 IEqualityComparer<TState> stateComparer = null
             )
         {
+            if (source == null)
+                throw new ArgumentNullException("state");
+            if (state == null)
+                throw new ArgumentNullException("state");
             Func<TState, int, int, TResult> substituteLast = null;
-            if (last != null)
-                substituteLast = (a, b, c) => { last(a, b, c); return default(TResult); };
-            return Accumulate(source, state, first, accumulate, substituteLast, empty, stateComparer);
+            if (lastAction != null)
+                substituteLast = (a, b, c) => { lastAction(a, b, c); return default(TResult); };
+            return accumulateIterator(source, state, firstFunc, accumulate, substituteLast, empty, stateComparer, false, true);
         }
 
+        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
+        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
+        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
+        /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
+        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
+        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
+        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
+        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
+        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
+        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
+        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> and <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
         public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
                 this IEnumerable<TItem> source,
                 Func<TItem, TState> state,
-                Func<TState, int, TResult> first = null,
+                Func<TState, int, TResult> firstFunc = null,
                 Action<TItem, TState, int, int> accumulate = null,
-                Func<TState, int, int, TResult> last = null,
+                Func<TState, int, int, TResult> lastFunc = null,
                 Func<TResult> empty = null,
                 IEqualityComparer<TState> stateComparer = null
+            )
+        {
+            if (source == null)
+                throw new ArgumentNullException("state");
+            if (state == null)
+                throw new ArgumentNullException("state");
+            return accumulateIterator(source, state, firstFunc, accumulate, lastFunc, empty, stateComparer, false, false);
+        }
+
+        /// <summary>Accumulates consecutive equal elements and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
+        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
+        /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
+        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
+        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
+        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
+        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
+        /// <param name="itemComparer">An optional comparer to determine equality of items.</param>
+        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> and <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
+        public static IEnumerable<TResult> Accumulate<TItem, TResult>(
+                this IEnumerable<TItem> source,
+                Func<TItem, int, TResult> firstFunc = null,
+                Action<TItem, int, int> accumulate = null,
+                Func<TItem, int, int, TResult> lastFunc = null,
+                Func<TResult> empty = null,
+                IEqualityComparer<TItem> itemComparer = null
+            )
+        {
+            if (source == null)
+                throw new ArgumentNullException("state");
+            Action<TItem, TItem, int, int> substituteAccumulate = null;
+            if (accumulate != null)
+                substituteAccumulate = (a, _, b, c) => { accumulate(a, b, c); };
+            return accumulateIterator(source, item => item, firstFunc, substituteAccumulate, lastFunc, empty, itemComparer, false, false);
+        }
+
+        private static IEnumerable<TResult> accumulateIterator<TItem, TState, TResult>(
+                IEnumerable<TItem> source,
+                Func<TItem, TState> state,
+                Func<TState, int, TResult> firstFunc,
+                Action<TItem, TState, int, int> accumulate,
+                Func<TState, int, int, TResult> lastFunc,
+                Func<TResult> empty,
+                IEqualityComparer<TState> stateComparer,
+                bool omitResultFromFirst,
+                bool omitResultFromLast
             )
         {
             stateComparer = stateComparer ?? EqualityComparer<TState>.Default;
@@ -901,16 +991,16 @@ namespace RT.Util.ExtensionMethods
                 if (!any)
                 {
                     any = true;
-                    if (first != null)
-                        yield return first(curState, totalIndex);
+                    if (!omitResultFromFirst && firstFunc != null)
+                        yield return firstFunc(curState, totalIndex);
                 }
                 else if (!stateComparer.Equals(prevState, curState))
                 {
-                    if (last != null)
-                        yield return last(prevState, totalIndex - 1, currentIndex);
+                    if (!omitResultFromLast && lastFunc != null)
+                        yield return lastFunc(prevState, totalIndex - 1, currentIndex);
                     currentIndex = 0;
-                    if (first != null)
-                        yield return first(curState, totalIndex);
+                    if (!omitResultFromFirst && firstFunc != null)
+                        yield return firstFunc(curState, totalIndex);
                 }
                 if (accumulate != null)
                     accumulate(elem, curState, totalIndex, currentIndex);
@@ -918,8 +1008,8 @@ namespace RT.Util.ExtensionMethods
                 totalIndex++;
                 currentIndex++;
             }
-            if (any && last != null)
-                yield return last(prevState, totalIndex, currentIndex);
+            if (!omitResultFromLast && any && lastFunc != null)
+                yield return lastFunc(prevState, totalIndex, currentIndex);
             if (!any && empty != null)
                 yield return empty();
         }
