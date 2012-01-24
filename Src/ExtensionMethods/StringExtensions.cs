@@ -55,7 +55,7 @@ namespace RT.Util.ExtensionMethods
             get
             {
                 if (_urlAllowedBytesCache == null)
-                    _urlAllowedBytesCache = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*'(),/:;@");
+                    _urlAllowedBytesCache = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*(),/:;@");
                 return _urlAllowedBytesCache;
             }
         }
