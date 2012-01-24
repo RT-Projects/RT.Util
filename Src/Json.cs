@@ -666,7 +666,7 @@ namespace RT.Util.Json
         /// <summary>
         /// Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and comments.
         /// Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are only replaced
-        /// outside of JavaScript literal strings and regexes.
+        /// outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are inserted unmodified.
         /// </summary>
         /// <param name="js">JavaScript code with placeholders.</param>
         /// <param name="namevalues">Alternating names and associated values, for example ["user", "abc"] specifies one value named "user".</param>
@@ -689,6 +689,7 @@ namespace RT.Util.Json
             if (namevalues.Length % 2 != 0)
                 throw new ArgumentException("namevalues must have an even number of values.", "namevalues");
 
+            bool hadRaw = false;
             var str = new StringBuilder();
             foreach (Match m in Regex.Matches(js, @"
                 \{\{(?<placeholder>[^\{\}]*?)\}\}|
@@ -703,7 +704,9 @@ namespace RT.Util.Json
                     var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].AsString == name);
                     if (index == -1)
                         throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
-                    var value = JsonValue.ToString(namevalues[2 * index + 1]);
+                    var raw = namevalues[2 * index + 1] as JsonRaw;
+                    var value = raw == null ? JsonValue.ToString(namevalues[2 * index + 1]) : raw.Raw;
+                    if (raw != null) hadRaw = true;
                     if (value.Length > 0 && (
                         ((char.IsLetter(str[str.Length - 1]) || char.IsDigit(str[str.Length - 1]) || "_$".Contains(str[str.Length - 1])) && (char.IsLetter(value[0]) || char.IsDigit(value[0]) || "_$".Contains(value[0]))) ||
                         (str[str.Length - 1] == '-' && value[0] == '-')))
@@ -717,7 +720,7 @@ namespace RT.Util.Json
                 else
                     str.Append(m.Value);
             }
-            return str.ToString();
+            return hadRaw ? Fmt(str.ToString()) : str.ToString(); // the Raw value is expected to contain no placeholders.
         }
     }
 
@@ -1141,6 +1144,32 @@ namespace RT.Util.Json
         public override IEnumerable<string> ToEnumerable()
         {
             yield return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
+        }
+    }
+
+    /// <summary>
+    /// A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow embedding
+    /// arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.
+    /// </summary>
+    public class JsonRaw : JsonValue
+    {
+        public string Raw { get; private set; }
+
+        public JsonRaw(string raw)
+        {
+            Raw = raw;
+        }
+
+        public JsonRaw(DateTime datetime)
+        {
+            Raw = datetime.TimeOfDay == TimeSpan.Zero
+                ? "new Date({0}, {1}, {2})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day)
+                : "new Date({0}, {1}, {2},  {3}, {4}, {5},  {6})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond);
+        }
+
+        public override IEnumerable<string> ToEnumerable()
+        {
+            yield return Raw;
         }
     }
 }
