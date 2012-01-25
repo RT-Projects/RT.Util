@@ -1160,11 +1160,14 @@ namespace RT.Util.Json
             Raw = raw;
         }
 
-        public JsonRaw(DateTime datetime)
+        public static JsonRaw FromDate(DateTime datetime)
         {
-            Raw = datetime.TimeOfDay == TimeSpan.Zero
-                ? "new Date({0}, {1}, {2})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day)
-                : "new Date({0}, {1}, {2},  {3}, {4}, {5},  {6})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond);
+            return new JsonRaw
+            (
+                datetime.TimeOfDay == TimeSpan.Zero
+                    ? "new Date({0}, {1}, {2})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day)
+                    : "new Date({0}, {1}, {2}, {3}, {4}, {5}, {6})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond)
+            );
         }
 
         public override IEnumerable<string> ToEnumerable()
