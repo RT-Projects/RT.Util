@@ -695,7 +695,7 @@ namespace RT.Util.Json
                 \{\{(?<placeholder>[^\{\}]*?)\}\}|
                 (?<required_whitespace>(?<=\p{L}|\p{Nd}|[_\$])\s+(?=\p{L}|\p{Nd}|[_\$])|(?<=\+)\s+(?=\+))|
                 (?<comment>//[^\n]*|/\*.*?\*/)|
-                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|(?<!(?:\p{L}|\p{Nd}|[_\)\]\}\$])\s*)/(?:[^/\\]|\\.)*/|
+                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|((?<!(?:\p{L}|\p{Nd}|[_\)\]\}\$])\s*)|(?<=return\s*))/(?:[^/\\]|\\.)*/|
                 .", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace))
             {
                 if (m.Groups["placeholder"].Success)
