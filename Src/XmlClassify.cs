@@ -66,33 +66,33 @@ namespace RT.Util.Xml
         /// </summary>
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
-        /// <param name="baseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, string baseDir = null, object parentNode = null)
+        public static T LoadObjectFromXmlFile<T>(string filename, XmlClassifyOptions options = null, object parentNode = null)
         {
-            return (T) LoadObjectFromXmlFile(typeof(T), filename, baseDir, parentNode);
+            return (T) LoadObjectFromXmlFile(typeof(T), filename, options, parentNode);
         }
 
         /// <summary>
         /// Reads an object of the specified type from the specified XML file.
         /// </summary>
-        /// <param name="type">Type of the object to read.</param>
+        /// <param name="type">Type of object to read.</param>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
-        /// <param name="baseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static object LoadObjectFromXmlFile(Type type, string filename, string baseDir = null, object parentNode = null)
+        public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null, object parentNode = null)
         {
-            baseDir = baseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+            options = options ?? new XmlClassifyOptions();
+            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
                 elem = XElement.Load(strRead);
-            return new classifier(baseDir).Declassify(type, elem, parentNode);
+            return new classifier(options).Declassify(type, elem, parentNode);
         }
 
         /// <summary>
@@ -100,14 +100,13 @@ namespace RT.Util.Xml
         /// </summary>
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <param name="baseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, string baseDir = null, object parentNode = null)
+        public static T ObjectFromXElement<T>(XElement elem, XmlClassifyOptions options = null, object parentNode = null)
         {
-            return (T) ObjectFromXElement(typeof(T), elem, baseDir, parentNode);
+            return (T) ObjectFromXElement(typeof(T), elem, options, parentNode);
         }
 
         /// <summary>
@@ -115,14 +114,13 @@ namespace RT.Util.Xml
         /// </summary>
         /// <param name="type">Type of the object to reconstruct.</param>
         /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <param name="baseDir">The base directory from which to locate additional XML files
-        /// whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static object ObjectFromXElement(Type type, XElement elem, string baseDir = null, object parentNode = null)
+        public static object ObjectFromXElement(Type type, XElement elem, XmlClassifyOptions options = null, object parentNode = null)
         {
-            return new classifier(baseDir).Declassify(type, elem, parentNode);
+            return new classifier(options).Declassify(type, elem, parentNode);
         }
 
         /// <summary>
@@ -132,9 +130,10 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="xml">XML tree to reconstruct object from.</param>
         /// <param name="intoObject">Object to assign values to in order to reconstruct the original object.</param>
-        public static void XmlIntoObject<T>(XElement xml, T intoObject)
+        /// <param name="options">Options.</param>
+        public static void XmlIntoObject<T>(XElement xml, T intoObject, XmlClassifyOptions options = null)
         {
-            new classifier(".").XmlIntoObject(xml, intoObject, typeof(T), null);
+            new classifier(options ?? new XmlClassifyOptions { BaseDir = "." }).XmlIntoObject(xml, intoObject, typeof(T), null);
         }
 
         /// <summary>
@@ -144,12 +143,13 @@ namespace RT.Util.Xml
         /// </summary>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="intoObject">Object to assign values to in order to reconstruct the original object. Also determines the type of object expected from the XML.</param>
-        public static void ReadXmlFileIntoObject(string filename, object intoObject)
+        /// <param name="options">Options.</param>
+        public static void ReadXmlFileIntoObject(string filename, object intoObject, XmlClassifyOptions options = null)
         {
             var strRead = new StreamReader(filename, Encoding.UTF8);
             XElement elem = XElement.Load(strRead);
             strRead.Close();
-            new classifier(".").XmlIntoObject(elem, intoObject, intoObject.GetType(), null);
+            new classifier(options ?? new XmlClassifyOptions { BaseDir = "." }).XmlIntoObject(elem, intoObject, intoObject.GetType(), null);
         }
 
         /// <summary>
@@ -158,12 +158,11 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of the object to store.</typeparam>
         /// <param name="saveObject">Object to store in an XML file.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
-        /// <param name="baseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
-        public static void SaveObjectToXmlFile<T>(T saveObject, string filename, string baseDir = null, string tagName = null)
+        public static void SaveObjectToXmlFile<T>(T saveObject, string filename, XmlClassifyOptions options = null, string tagName = null)
         {
-            SaveObjectToXmlFile(saveObject, typeof(T), filename, baseDir, tagName);
+            SaveObjectToXmlFile(saveObject, typeof(T), filename, options, tagName);
         }
 
         /// <summary>
@@ -172,13 +171,13 @@ namespace RT.Util.Xml
         /// <param name="saveObject">Object to store in an XML file.</param>
         /// <param name="saveType">Type of the object to store.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
-        /// <param name="baseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
-        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, string baseDir = null, string tagName = null)
+        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, XmlClassifyOptions options = null, string tagName = null)
         {
-            baseDir = baseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
-            var x = new classifier(baseDir).Classify(saveObject, saveType, tagName ?? "item");
+            options = options ?? new XmlClassifyOptions();
+            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+            var x = new classifier(options).Classify(saveObject, saveType, tagName ?? "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -186,35 +185,33 @@ namespace RT.Util.Xml
         /// <summary>Converts the specified object into an XML tree.</summary>
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="saveObject">Object to convert to an XML tree.</param>
-        /// <param name="baseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<T>(T saveObject, string baseDir = null, string tagName = null)
+        public static XElement ObjectToXElement<T>(T saveObject, XmlClassifyOptions options = null, string tagName = null)
         {
-            return new classifier(baseDir).Classify(saveObject, typeof(T), tagName ?? "item");
+            return new classifier(options).Classify(saveObject, typeof(T), tagName ?? "item");
         }
 
         /// <summary>Converts the specified object into an XML tree.</summary>
         /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="saveType">Type of object to convert.</param>
-        /// <param name="baseDir">The base directory from which to construct the paths for
-        /// additional XML files whenever a field has an <see cref="XmlFollowIdAttribute"/> attribute.</param>
+        /// <param name="options">Options.</param>
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement(object saveObject, Type saveType, string baseDir = null, string tagName = null)
+        public static XElement ObjectToXElement(object saveObject, Type saveType, XmlClassifyOptions options = null, string tagName = null)
         {
-            return new classifier(baseDir).Classify(saveObject, saveType, tagName ?? "item");
+            return new classifier(options).Classify(saveObject, saveType, tagName ?? "item");
         }
 
         private sealed class classifier
         {
-            private string _baseDir;
+            private XmlClassifyOptions _options;
             private int _nextId = 0;
 
-            public classifier(string baseDir = null)
+            public classifier(XmlClassifyOptions options = null)
             {
-                _baseDir = baseDir;
+                _options = options ?? new XmlClassifyOptions();
             }
 
             private Dictionary<string, object> _rememberD { get { if (_rememberCacheD == null) _rememberCacheD = new Dictionary<string, object>(); return _rememberCacheD; } }
@@ -453,18 +450,18 @@ namespace RT.Util.Xml
                             var attr = subElem.Attribute("id");
                             if (attr != null)
                             {
-                                if (_baseDir == null)
+                                if (_options.BaseDir == null)
                                     throw new ArgumentNullException(@"An object that uses [XmlFollowId] can only be reconstructed if a base directory is specified.", "baseDir");
-                                string newFile = Path.Combine(_baseDir, innerType.Name, attr.Value + ".xml");
+                                string newFile = Path.Combine(_options.BaseDir, innerType.Name, attr.Value + ".xml");
                                 field.SetValue(intoObject,
                                     typeof(XmlDeferredObject<>).MakeGenericType(innerType)
                                         .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
                                         .Invoke(Ut.NewArray<object>(
                                             attr.Value /*id*/,
                                             typeof(XmlClassify).GetMethod("LoadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic,
-                                                null, new Type[] { typeof(Type), typeof(string), typeof(string), typeof(object) }, null) /*generatorMethod*/,
+                                                null, new Type[] { typeof(Type), typeof(string), typeof(XmlClassifyOptions), typeof(object) }, null) /*generatorMethod*/,
                                             null /*generatorObject*/,
-                                            new object[] { /*type*/ innerType, /*filename*/ newFile, /*baseDir*/ _baseDir, /*parent*/ intoObject } /*generatorParams*/
+                                            new object[] { /*type*/ innerType, /*filename*/ newFile, /*options*/ _options, /*parent*/ intoObject } /*generatorParams*/
                                         ))
                                 );
                             }
@@ -688,7 +685,7 @@ namespace RT.Util.Xml
                                     if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
                                     {
                                         var prop = field.FieldType.GetProperty("Value");
-                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_baseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), _baseDir, "item");
+                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_options.BaseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), _options, "item");
                                     }
                                 }
                                 else
@@ -763,6 +760,41 @@ namespace RT.Util.Xml
         /// <summary>When overridden in a derived class, post-processes this object after <see cref="XmlClassify"/> has restored it from XML.
         /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
         void AfterXmlDeclassify();
+    }
+
+    /// <summary>Specifies some options for use in XmlClassify.</summary>
+    public sealed class XmlClassifyOptions
+    {
+        /// <summary>
+        /// The base directory from which to construct the paths for additional XML files whenever a field has
+        /// an <see cref="XmlFollowIdAttribute"/> attribute. Inferred automatically from filename if null.
+        /// </summary>
+        public string BaseDir = null;
+
+        internal readonly Dictionary<Type, XmlClassifyTypeOptions> TypeOptions = new Dictionary<Type, XmlClassifyTypeOptions>();
+
+        /// <summary>Adds XmlClassify options that are relevant to classifying/declassifying a specific type.</summary>
+        /// <param name="type">The type to which these options apply.</param>
+        /// <param name="options">Options.</param>
+        /// <returns>Itself.</returns>
+        public XmlClassifyOptions AddTypeOptions(Type type, XmlClassifyTypeOptions options)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            if (options == null) throw new ArgumentNullException("options");
+            if (TypeOptions.ContainsKey(type)) throw new ArgumentException("XmlClassify options for type {0} have already been defined.".Fmt(type), "type");
+            if (TypeOptions.Values.Contains(options)) throw new ArgumentException("Must use a different XmlClassifyTypeOptions instance for every type.", "options");
+            options.InitializeFor(type);
+            TypeOptions.Add(type, options);
+            return this;
+        }
+    }
+
+    /// <summary>Specifies some options for use in XmlClassify that pertain to a specific type.</summary>
+    public abstract class XmlClassifyTypeOptions
+    {
+        internal void InitializeFor(Type type)
+        {
+        }
     }
 
     /// <summary>
