@@ -208,6 +208,7 @@ namespace RT.Util.Xml
         {
             private XmlClassifyOptions _options;
             private int _nextId = 0;
+            private List<Action> _doAtTheEnd;
 
             public classifier(XmlClassifyOptions options = null)
             {
@@ -235,80 +236,81 @@ namespace RT.Util.Xml
                 return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
             }
 
-            private object declassify(Type type, string filename, object parentNode)
-            {
-                XElement elem;
-                using (var strRead = new StreamReader(filename, Encoding.UTF8))
-                    elem = XElement.Load(strRead);
-                return Declassify(type, elem, parentNode);
-            }
-
             public object Declassify(Type type, XElement elem, object parentNode)
             {
+                _doAtTheEnd = new List<Action>();
+                var result = declassify(type, elem, parentNode);
+                foreach (var action in _doAtTheEnd)
+                    action();
+                return result;
+            }
+
+            private object declassify(Type type, XElement elem, object parentNode)
+            {
+                object result;
+                var originalType = type;
+                var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
+
+                XmlClassifyTypeOptions typeOptions;
+                if (_options.TypeOptions.TryGetValue(type, out typeOptions) && typeOptions.SubstituteType != null)
+                    type = typeOptions.SubstituteType;
+
                 if (elem.Attribute("null") != null)
-                    return null;
+                    result = null;
                 else if (type == typeof(XElement))
-                    return elem.Elements().FirstOrDefault();
+                    result = elem.Elements().FirstOrDefault();
                 else if (type.IsEnum)
-                    return Enum.Parse(type, elem.Value);
+                    result = Enum.Parse(type, elem.Value);
                 else if (type == typeof(string))
                 {
                     if (elem.Attribute("encoding") != null)
                     {
                         if (elem.Attribute("encoding").Value == "c-literal")
-                            return elem.Value.CLiteralUnescape();
+                            result = elem.Value.CLiteralUnescape();
                         else if (elem.Attribute("encoding").Value == "base64")
-                            return elem.Value.Base64UrlDecode().FromUtf8();
+                            result = elem.Value.Base64UrlDecode().FromUtf8();
                         else
                             throw new InvalidDataException("Encoding \"{0}\" is not recognized for elements of type \"string\"".Fmt(elem.Attribute("encoding")));
                     }
-                    return elem.Value;
+                    else
+                        result = elem.Value;
                 }
                 else if (type == typeof(char))
                 {
                     if (elem.Attribute("encoding") != null && elem.Attribute("encoding").Value == "codepoint")
-                        return (char) int.Parse(elem.Value);
-                    return elem.Value[0];
+                        result = (char) int.Parse(elem.Value);
+                    else
+                        result = elem.Value[0];
                 }
                 else if (ExactConvert.IsSupportedType(type))
-                    return ExactConvert.To(type, elem.Value);
+                    result = ExactConvert.To(type, elem.Value);
+                else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    // It’s a nullable type, just determine the inner type and start again
+                    result = declassify(type.GetGenericArguments()[0], elem, parentNode);
+                }
+                else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
+                {
+                    // It’s a Tuple or KeyValuePair
+                    var genericArguments = type.GetGenericArguments();
+                    var tupleParams = new object[genericArguments.Length];
+                    for (int i = 0; i < genericArguments.Length; i++)
+                    {
+                        var tagName = genericDefinition == typeof(KeyValuePair<,>) ? (i == 0 ? "key" : "value") : "item" + (i + 1);
+                        var subElem = elem.Element(tagName);
+                        if (subElem == null)
+                            continue;
+                        tupleParams[i] = declassify(genericArguments[i], subElem, parentNode);
+                    }
+                    var constructor = type.GetConstructor(genericArguments);
+                    if (constructor == null)
+                        throw new InvalidOperationException("Could not find expected Tuple constructor.");
+                    result = constructor.Invoke(tupleParams);
+                }
                 else
                 {
-                    Type[] typeParameters;
-
-                    // If it’s a nullable type, just determine the inner type and start again
-                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        return Declassify(type.GetGenericArguments()[0], elem, parentNode);
-
-                    var refAttr = elem.Attribute("ref");
-                    if (refAttr != null)
-                    {
-                        if (!_rememberD.ContainsKey(refAttr.Value))
-                            throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).".Fmt(refAttr.Value));
-                        return _rememberD[refAttr.Value];
-                    }
-
-                    // Check if it’s a Tuple or KeyValuePair
-                    var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
-                    if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
-                    {
-                        var genericArguments = type.GetGenericArguments();
-                        var tupleParams = new object[genericArguments.Length];
-                        for (int i = 0; i < genericArguments.Length; i++)
-                        {
-                            var tagName = genericDefinition == typeof(KeyValuePair<,>) ? (i == 0 ? "key" : "value") : "item" + (i + 1);
-                            var subElem = elem.Element(tagName);
-                            if (subElem == null)
-                                continue;
-                            tupleParams[i] = Declassify(genericArguments[i], subElem, parentNode);
-                        }
-                        var constructor = type.GetConstructor(genericArguments);
-                        if (constructor == null)
-                            throw new InvalidOperationException("Could not find expected Tuple constructor.");
-                        return constructor.Invoke(tupleParams);
-                    }
-
                     // Check if it’s an array, collection or dictionary
+                    Type[] typeParameters;
                     Type keyType = null, valueType = null;
                     if (type.IsArray)
                         valueType = type.GetElementType();
@@ -362,7 +364,7 @@ namespace RT.Util.Xml
                             }
                             var nullAttr = itemTag.Attribute("null");
                             if (nullAttr == null)
-                                value = Declassify(valueType, itemTag, parentNode);
+                                value = declassify(valueType, itemTag, parentNode);
                             if (type.IsArray)
                                 addMethod.Invoke(outputList, new object[] { i++, value });
                             else if (keyType == null)
@@ -370,7 +372,7 @@ namespace RT.Util.Xml
                             else
                                 addMethod.Invoke(outputList, new object[] { key, value });
                         }
-                        return outputList;
+                        result = outputList;
                     }
                     else
                     {
@@ -401,19 +403,32 @@ namespace RT.Util.Xml
                             throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
                         }
 
-                        XmlIntoObject(elem, ret, realType, parentNode);
-                        return ret;
+                        xmlIntoObject(elem, ret, realType, parentNode);
+                        result = ret;
                     }
                 }
+
+                // Apply de-substitution (if any)
+                if (originalType != type)
+                    result = typeOptions.FromSubstitute(result);
+                if (elem.Attribute("refid") != null)
+                    _rememberD[elem.Attribute("refid").Value] = result;
+                return result;
             }
 
             public void XmlIntoObject(XElement xml, object intoObject, Type type, object parentNode)
             {
                 if (xml.Attribute("refid") != null)
                     _rememberD[xml.Attribute("refid").Value] = intoObject;
+                xmlIntoObject(xml, intoObject, type, parentNode);
+            }
 
-                foreach (var field in type.GetAllFields())
+            private void xmlIntoObject(XElement xml, object intoObject, Type type, object parentNode)
+            {
+                foreach (var fieldForeach in type.GetAllFields())
                 {
+                    var field = fieldForeach;   // lambda-inside-foreach bug workaround
+
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
@@ -471,14 +486,25 @@ namespace RT.Util.Xml
                     // Fields with no special [Xml...] attributes
                     else
                     {
-                        var tag = xml.Elements(rFieldName);
-                        if (tag.Any())
-                            field.SetValue(intoObject, Declassify(field.FieldType, tag.First(), intoObject));
+                        var tag = xml.Elements(rFieldName).FirstOrDefault();
+                        if (tag != null)
+                        {
+                            var refAttr = tag.Attribute("ref");
+                            if (refAttr != null)
+                                _doAtTheEnd.Add(() =>
+                                {
+                                    if (!_rememberD.ContainsKey(refAttr.Value))
+                                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).".Fmt(refAttr.Value));
+                                    field.SetValue(intoObject, _rememberD[refAttr.Value]);
+                                });
+                            else
+                                field.SetValue(intoObject, declassify(field.FieldType, tag, intoObject));
+                        }
                     }
                 }
 
                 if (intoObject is IXmlClassifyProcess)
-                    ((IXmlClassifyProcess) intoObject).AfterXmlDeclassify();
+                    _doAtTheEnd.Add(() => { ((IXmlClassifyProcess) intoObject).AfterXmlDeclassify(); });
             }
 
             public XElement Classify(object saveObject, Type declaredType, string tagName)
@@ -509,6 +535,33 @@ namespace RT.Util.Xml
                         else
                             elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                     }
+                }
+
+                // See if there's a substitute type defined
+                XmlClassifyTypeOptions typeOptions;
+                var originalObject = saveObject;
+                if (_options.TypeOptions.TryGetValue(saveType, out typeOptions) && typeOptions.SubstituteType != null)
+                {
+                    saveObject = typeOptions.ToSubstitute(saveObject);
+                    saveType = typeOptions.SubstituteType;
+                }
+
+                // Preserve reference identity of reference types
+                if (!(originalObject is ValueType))
+                {
+                    if (_rememberC.ContainsKey(originalObject))
+                    {
+                        var attr = _rememberC[originalObject].Attribute("refid");
+                        if (attr == null)
+                        {
+                            attr = new XAttribute("refid", _nextId.ToString());
+                            _nextId++;
+                            _rememberC[originalObject].Add(attr);
+                        }
+                        elem.Add(new XAttribute("ref", attr.Value));
+                        return elem;
+                    }
+                    _rememberC.Add(originalObject, elem);
                 }
 
                 if (saveType == typeof(XElement))
@@ -547,23 +600,6 @@ namespace RT.Util.Xml
                 {
                     if (declaredType.IsInterface && declaredType.GetGenericTypeDefinition() != typeof(ICollection<>) && declaredType.GetGenericTypeDefinition() != typeof(IList<>) && declaredType.GetGenericTypeDefinition() != typeof(IDictionary<,>))
                         throw new InvalidOperationException("The field {0} is of an interface type, but not ICollection<T>, IList<T> or IDictionary<TKey, TValue>. Those are the only interface types supported.".Fmt(tagName));
-
-                    if (!(saveObject is ValueType))
-                    {
-                        if (_rememberC.ContainsKey(saveObject))
-                        {
-                            var attr = _rememberC[saveObject].Attribute("refid");
-                            if (attr == null)
-                            {
-                                attr = new XAttribute("refid", _nextId.ToString());
-                                _nextId++;
-                                _rememberC[saveObject].Add(attr);
-                            }
-                            elem.Add(new XAttribute("ref", attr.Value));
-                            return elem;
-                        }
-                        _rememberC.Add(saveObject, elem);
-                    }
 
                     if (saveObject is IXmlClassifyProcess)
                         ((IXmlClassifyProcess) saveObject).BeforeXmlClassify();
@@ -762,6 +798,21 @@ namespace RT.Util.Xml
         void AfterXmlDeclassify();
     }
 
+    /// <summary>Specifies that a type contains information on how to substitute a type for another type during XmlClassify.</summary>
+    /// <typeparam name="TTrue">The type that is actually used for instances in memory.</typeparam>
+    /// <typeparam name="TSubstitute">The substitute type to be used for purposes of classifying and declassifying.</typeparam>
+    public interface IXmlClassifySubstitute<TTrue, TSubstitute>
+    {
+        /// <summary>Converts an instance of the “real” type to a substitute instance to be classified.</summary>
+        /// <param name="instance">An instance of the “real” type to be substituted.</param>
+        /// <returns>The converted object to use in classifying.</returns>
+        TSubstitute ToSubstitute(TTrue instance);
+        /// <summary>Converts a substitute instance, generated by declassifying, back to the “real” type.</summary>
+        /// <param name="instance">An instance of the substituted type, provided by XmlClassify.</param>
+        /// <returns>The converted object to put into the real type.</returns>
+        TTrue FromSubstitute(TSubstitute instance);
+    }
+
     /// <summary>Specifies some options for use in XmlClassify.</summary>
     public sealed class XmlClassifyOptions
     {
@@ -792,8 +843,38 @@ namespace RT.Util.Xml
     /// <summary>Specifies some options for use in XmlClassify that pertain to a specific type.</summary>
     public abstract class XmlClassifyTypeOptions
     {
+        internal Type SubstituteType;
+        internal Func<object, object> ToSubstitute;
+        internal Func<object, object> FromSubstitute;
+
         internal void InitializeFor(Type type)
         {
+            var substInterfaces = GetType().GetInterfaces()
+                .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IXmlClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
+            if (substInterfaces.Length > 1)
+                throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType(), type));
+            else if (substInterfaces.Length == 1)
+            {
+                SubstituteType = substInterfaces[0].GetGenericArguments()[1];
+                if (type == SubstituteType)
+                    throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType(), type));
+                var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
+                var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
+                ToSubstitute = obj =>
+                {
+                    var result = toSubstMethod.Invoke(this, new[] { obj });
+                    if (result != null && result.GetType() != SubstituteType) // forbidden just in case because I see no use cases for returning a subtype
+                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, SubstituteType, result.GetType()));
+                    return result;
+                };
+                FromSubstitute = obj =>
+                {
+                    var result = fromSubstMethod.Invoke(this, new[] { obj });
+                    if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype
+                        throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type, result.GetType()));
+                    return result;
+                };
+            }
         }
     }
 
