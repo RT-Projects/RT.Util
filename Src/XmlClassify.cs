@@ -349,28 +349,49 @@ namespace RT.Util.Xml
                             addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
                         }
 
-                        if (elem.Attribute("refid") != null)
-                            _rememberD[elem.Attribute("refid").Value] = outputList;
-
                         int i = 0;
                         foreach (var itemTag in elem.Elements("item"))
                         {
                             object key = null, value = null;
+
+                            // Reconstruct the key (if it’s a dictionary)
                             if (keyType != null)
                             {
                                 var keyAttr = itemTag.Attribute("key");
                                 try { key = isIntegerType(keyType) ? ExactConvert.To(keyType, keyAttr.Value) : keyType.IsEnum ? Enum.Parse(keyType, keyAttr.Value) : keyAttr.Value; }
                                 catch { continue; }
                             }
-                            var nullAttr = itemTag.Attribute("null");
-                            if (nullAttr == null)
-                                value = declassify(valueType, itemTag, parentNode);
-                            if (type.IsArray)
-                                addMethod.Invoke(outputList, new object[] { i++, value });
-                            else if (keyType == null)
-                                addMethod.Invoke(outputList, new object[] { value });
+
+                            var refAttr = itemTag.Attribute("ref");
+                            if (refAttr != null)
+                            {
+                                var j = i;    // remember current value for the lambda
+                                _doAtTheEnd.Add(() =>
+                                {
+                                    if (!_rememberD.ContainsKey(refAttr.Value))
+                                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refAttr.Value));
+                                    if (type.IsArray)
+                                        addMethod.Invoke(outputList, new object[] { i, _rememberD[refAttr.Value] });
+                                    else if (keyType == null)
+                                        addMethod.Invoke(outputList, new object[] { _rememberD[refAttr.Value] });
+                                    else
+                                        addMethod.Invoke(outputList, new object[] { key, _rememberD[refAttr.Value] });
+                                });
+                            }
                             else
-                                addMethod.Invoke(outputList, new object[] { key, value });
+                            {
+                                var nullAttr = itemTag.Attribute("null");
+                                if (nullAttr == null)
+                                    value = declassify(valueType, itemTag, parentNode);
+                                if (type.IsArray)
+                                    addMethod.Invoke(outputList, new object[] { i, value });
+                                else if (keyType == null)
+                                    // Need to do this later so that all the items are in the right order
+                                    _doAtTheEnd.Add(() => { addMethod.Invoke(outputList, new object[] { value }); });
+                                else
+                                    addMethod.Invoke(outputList, new object[] { key, value });
+                            }
+                            i++;
                         }
                         result = outputList;
                     }
@@ -494,7 +515,7 @@ namespace RT.Util.Xml
                                 _doAtTheEnd.Add(() =>
                                 {
                                     if (!_rememberD.ContainsKey(refAttr.Value))
-                                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered before the element with the corresponding refid=""{0}"". This is not currently supported. Swap the elements containing the ref and refid attributes (including subelements).".Fmt(refAttr.Value));
+                                        throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refAttr.Value));
                                     field.SetValue(intoObject, _rememberD[refAttr.Value]);
                                 });
                             else
