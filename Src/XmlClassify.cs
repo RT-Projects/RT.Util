@@ -62,6 +62,12 @@ namespace RT.Util.Xml
     public static class XmlClassify
     {
         /// <summary>
+        /// Options used when null is passed to methods that take options. Make sure not to modify this instance if any thread in the application
+        /// might be in the middle of using <see cref="XmlClassify"/>; ideally the options shoud be set once during startup and never changed after that.
+        /// </summary>
+        public static XmlClassifyOptions DefaultOptions = new XmlClassifyOptions();
+
+        /// <summary>
         /// Reads an object of the specified type from the specified XML file.
         /// </summary>
         /// <typeparam name="T">Type of object to read.</typeparam>
@@ -86,13 +92,11 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null, object parentNode = null)
         {
-            options = options ?? new XmlClassifyOptions();
-            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : null);
-
+            string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
                 elem = XElement.Load(strRead);
-            return new classifier(options).Declassify(type, elem, parentNode);
+            return new classifier(options, defaultBaseDir).Declassify(type, elem, parentNode);
         }
 
         /// <summary>
@@ -175,9 +179,8 @@ namespace RT.Util.Xml
         /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, XmlClassifyOptions options = null, string tagName = null)
         {
-            options = options ?? new XmlClassifyOptions();
-            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : null);
-            var x = new classifier(options).Classify(saveObject, saveType, tagName ?? "item");
+            string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
+            var x = new classifier(options, defaultBaseDir).Classify(saveObject, saveType, tagName ?? "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -210,9 +213,14 @@ namespace RT.Util.Xml
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
 
-            public classifier(XmlClassifyOptions options = null)
+            public classifier(XmlClassifyOptions options = null, string defaultBaseDir = null)
             {
-                _options = options ?? new XmlClassifyOptions();
+                _options = options ?? DefaultOptions ?? new XmlClassifyOptions(); // in case someone set default options to null
+                if (_options.BaseDir == null && defaultBaseDir != null)
+                {
+                    _options = _options.Clone();
+                    _options.BaseDir = defaultBaseDir;
+                }
             }
 
             private Dictionary<string, object> _rememberD { get { if (_rememberCacheD == null) _rememberCacheD = new Dictionary<string, object>(); return _rememberCacheD; } }
@@ -845,7 +853,7 @@ namespace RT.Util.Xml
         /// </summary>
         public string BaseDir = null;
 
-        internal readonly Dictionary<Type, XmlClassifyTypeOptions> TypeOptions = new Dictionary<Type, XmlClassifyTypeOptions>();
+        internal Dictionary<Type, XmlClassifyTypeOptions> TypeOptions = new Dictionary<Type, XmlClassifyTypeOptions>();
 
         /// <summary>Adds XmlClassify options that are relevant to classifying/declassifying a specific type.</summary>
         /// <param name="type">The type to which these options apply.</param>
@@ -860,6 +868,11 @@ namespace RT.Util.Xml
             options.InitializeFor(type);
             TypeOptions.Add(type, options);
             return this;
+        }
+
+        internal XmlClassifyOptions Clone()
+        {
+            return (XmlClassifyOptions) MemberwiseClone();
         }
     }
 
