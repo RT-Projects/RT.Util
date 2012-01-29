@@ -87,7 +87,7 @@ namespace RT.Util.Xml
         public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null, object parentNode = null)
         {
             options = options ?? new XmlClassifyOptions();
-            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : null);
 
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
@@ -133,7 +133,7 @@ namespace RT.Util.Xml
         /// <param name="options">Options.</param>
         public static void XmlIntoObject<T>(XElement xml, T intoObject, XmlClassifyOptions options = null)
         {
-            new classifier(options ?? new XmlClassifyOptions { BaseDir = "." }).XmlIntoObject(xml, intoObject, typeof(T), null);
+            new classifier(options).XmlIntoObject(xml, intoObject, typeof(T), null);
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace RT.Util.Xml
             var strRead = new StreamReader(filename, Encoding.UTF8);
             XElement elem = XElement.Load(strRead);
             strRead.Close();
-            new classifier(options ?? new XmlClassifyOptions { BaseDir = "." }).XmlIntoObject(elem, intoObject, intoObject.GetType(), null);
+            new classifier(options).XmlIntoObject(elem, intoObject, intoObject.GetType(), null);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace RT.Util.Xml
         public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, XmlClassifyOptions options = null, string tagName = null)
         {
             options = options ?? new XmlClassifyOptions();
-            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".");
+            options.BaseDir = options.BaseDir ?? (filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : null);
             var x = new classifier(options).Classify(saveObject, saveType, tagName ?? "item");
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
@@ -487,7 +487,7 @@ namespace RT.Util.Xml
                             if (attr != null)
                             {
                                 if (_options.BaseDir == null)
-                                    throw new ArgumentNullException(@"An object that uses [XmlFollowId] can only be reconstructed if a base directory is specified.", "baseDir");
+                                    throw new InvalidOperationException(@"An object that uses [XmlFollowId] can only be reconstructed if a base directory is specified (see “BaseDir” in the XmlClassifyOptions class).");
                                 string newFile = Path.Combine(_options.BaseDir, innerType.Name, attr.Value + ".xml");
                                 field.SetValue(intoObject,
                                     typeof(XmlDeferredObject<>).MakeGenericType(innerType)
@@ -741,6 +741,8 @@ namespace RT.Util.Xml
 
                                     if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
                                     {
+                                        if (_options.BaseDir == null)
+                                            throw new InvalidOperationException(@"An object that uses [XmlFollowId] can only be stored if a base directory is specified (see “BaseDir” in the XmlClassifyOptions class).");
                                         var prop = field.FieldType.GetProperty("Value");
                                         SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_options.BaseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), _options, "item");
                                     }
