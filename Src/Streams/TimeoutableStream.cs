@@ -64,19 +64,19 @@ namespace RT.Util.Streams
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var async = _stream.BeginRead(buffer, offset, count, null, null);
-            async.AsyncWaitHandle.WaitOne(ReadTimeout);
-            if (async.IsCompleted)
+            var asyncRead = _stream.BeginRead(buffer, offset, count, null, null);
+            asyncRead.AsyncWaitHandle.WaitOne(ReadTimeout);
+            if (asyncRead.IsCompleted)
             {
-                var result = _stream.EndRead(async);
-                async.AsyncWaitHandle.Close();
+                var result = _stream.EndRead(asyncRead);
+                asyncRead.AsyncWaitHandle.Close();
                 return result;
             }
             else
             {
                 _stream.Dispose();
-                _stream.EndRead(async);
-                async.AsyncWaitHandle.Close();
+                _stream.EndRead(asyncRead);
+                asyncRead.AsyncWaitHandle.Close();
                 throw new TimeoutException("The Read operation has timed out.");
             }
         }
@@ -88,19 +88,19 @@ namespace RT.Util.Streams
         /// </summary>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            var async = _stream.BeginWrite(buffer, offset, count, null, null);
-            async.AsyncWaitHandle.WaitOne(WriteTimeout);
-            if (async.IsCompleted)
+            var asyncWrite = _stream.BeginWrite(buffer, offset, count, null, null);
+            asyncWrite.AsyncWaitHandle.WaitOne(WriteTimeout);
+            if (asyncWrite.IsCompleted)
             {
-                _stream.EndWrite(async);
-                async.AsyncWaitHandle.Close();
+                _stream.EndWrite(asyncWrite);
+                asyncWrite.AsyncWaitHandle.Close();
             }
             else
             {
                 _stream.Dispose();
-                try { _stream.EndWrite(async); }
+                try { _stream.EndWrite(asyncWrite); }
                 catch (OperationCanceledException) { }
-                async.AsyncWaitHandle.Close();
+                asyncWrite.AsyncWaitHandle.Close();
                 throw new TimeoutException("The Write operation has timed out.");
             }
         }
