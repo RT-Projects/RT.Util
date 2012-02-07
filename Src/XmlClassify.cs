@@ -213,15 +213,12 @@ namespace RT.Util.Xml
             private XmlClassifyOptions _options;
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
+            private string _baseDir;
 
             public classifier(XmlClassifyOptions options = null, string defaultBaseDir = null)
             {
                 _options = options ?? DefaultOptions ?? new XmlClassifyOptions(); // in case someone set default options to null
-                if (_options.BaseDir == null && defaultBaseDir != null)
-                {
-                    _options = _options.Clone();
-                    _options.BaseDir = defaultBaseDir;
-                }
+                _baseDir = _options.BaseDir ?? defaultBaseDir;
             }
 
             private Dictionary<string, object> _rememberD { get { if (_rememberCacheD == null) _rememberCacheD = new Dictionary<string, object>(); return _rememberCacheD; } }
@@ -499,9 +496,9 @@ namespace RT.Util.Xml
                             var attr = subElem.Attribute("id");
                             if (attr != null)
                             {
-                                if (_options.BaseDir == null)
+                                if (_baseDir == null)
                                     throw new InvalidOperationException(@"An object that uses [XmlFollowId] can only be reconstructed if a base directory is specified (see “BaseDir” in the XmlClassifyOptions class).");
-                                string newFile = Path.Combine(_options.BaseDir, innerType.Name, attr.Value + ".xml");
+                                string newFile = Path.Combine(_baseDir, innerType.Name, attr.Value + ".xml");
                                 field.SetValue(intoObject,
                                     typeof(XmlDeferredObject<>).MakeGenericType(innerType)
                                         .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
@@ -754,10 +751,10 @@ namespace RT.Util.Xml
 
                                     if ((bool) field.FieldType.GetProperty("Evaluated").GetValue(saveValue, null))
                                     {
-                                        if (_options.BaseDir == null)
+                                        if (_baseDir == null)
                                             throw new InvalidOperationException(@"An object that uses [XmlFollowId] can only be stored if a base directory is specified (see “BaseDir” in the XmlClassifyOptions class).");
                                         var prop = field.FieldType.GetProperty("Value");
-                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_options.BaseDir, innerType.Name + Path.DirectorySeparatorChar + id + ".xml"), _options, "item");
+                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_baseDir, innerType.Name, id + ".xml"), _options, "item");
                                     }
                                 }
                                 else
@@ -890,11 +887,6 @@ namespace RT.Util.Xml
             options.InitializeFor(type);
             TypeOptions.Add(type, options);
             return this;
-        }
-
-        internal XmlClassifyOptions Clone()
-        {
-            return (XmlClassifyOptions) MemberwiseClone();
         }
     }
 
