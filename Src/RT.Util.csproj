@@ -160,6 +160,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
+    <Compile Include="RhoML.cs" />
     <Compile Include="RTSmtpClient.cs" />
     <Compile Include="RummageAttributes.cs" />
     <Compile Include="Stopwatch.cs" />
