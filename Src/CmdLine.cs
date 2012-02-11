@@ -433,7 +433,7 @@ namespace RT.Util.CommandLine
 
             while (i < args.Length)
             {
-                if (args[i] == "--")
+                if (args[i] == "--" && !suppressOptions)
                 {
                     suppressOptions = true;
                     i++;
