@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdLineTests.cs" />
     <Compile Include="Collections\ListSortedTests.cs" />
     <Compile Include="CustomComparerTests.cs" />
     <Compile Include="EggsMLTests.cs" />
