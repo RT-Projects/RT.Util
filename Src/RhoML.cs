@@ -49,7 +49,7 @@ namespace RT.Util
 
         public override void AppendTo(StringBuilder builder)
         {
-            builder.Append(Regex.Replace(_text, @"{[`}a-zA-Z]", "{$1"));
+            builder.Append(Regex.Replace(_text, @"{[`}a-zA-Z]", match => "{" + match.Value));
         }
     }
 
@@ -214,9 +214,9 @@ namespace RT.Util
             var result = new List<RhoNode>();
             while (true)
             {
-                int consumed = consumeUntilNonText();
-                if (consumed > 0)
-                    result.Add(new RhoText(Input.Substring(Pos - consumed, consumed)));
+                string consumed = consumeUntilNonText();
+                if (consumed.Length > 0)
+                    result.Add(new RhoText(consumed));
                 if (Pos >= Input.Length)
                     return result;
                 if (Cur == '{' && Next == '}')
@@ -231,10 +231,11 @@ namespace RT.Util
                 Pos++;
         }
 
-        private int consumeUntilNonText()
+        private string consumeUntilNonText()
         {
             int pos = Pos;
 
+            var sb = new StringBuilder();
             while (pos < Input.Length)
             {
                 // Last char before EOF can only be text
@@ -249,17 +250,20 @@ namespace RT.Util
                     char next = Input[pos + 1];
                     if (next == '`' || next == '}' || (next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z'))
                         break;
-                    // Otherwise the next character cannot possibly start a tag either: a { would just be part of the curly escape.
-                    // So consume the next one as well.
+                    // Otherwise the next character cannot possibly start a tag
+                    if (next == '{')
+                    {
+                        sb.Append(Input.Substring(Pos, pos - Pos));
+                        Pos = pos + 1;
+                    }
                     pos++;
                 }
 
                 pos++;
             }
-
-            int result = pos - Pos;
+            sb.Append(Input.Substring(Pos, pos - Pos));
             Pos = pos;
-            return result;
+            return sb.ToString();
         }
 
         private RhoTag parseTag()
