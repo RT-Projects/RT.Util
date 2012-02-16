@@ -109,12 +109,12 @@
     <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\IQueryableExtensions.cs" />
-    <Compile Include="ExtensionMethods\MiscExtensions.cs" />
     <Compile Include="ExtensionMethods\NumericExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
     <Compile Include="ExtensionMethods\StreamExtensions.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
     <Compile Include="ExtensionMethods\TypeExtensions.cs" />
+    <Compile Include="ExtensionMethods\WindowsFormsExtensions.cs" />
     <Compile Include="ExtensionMethods\XmlLinqExtensions.cs" />
     <Compile Include="Forms\DlgMessage.cs">
       <SubType>Form</SubType>

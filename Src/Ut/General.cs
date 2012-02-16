@@ -431,7 +431,10 @@ namespace RT.Util
                 }
                 catch (IOException ex)
                 {
-                    if (!ex.IsSharingViolation())
+                    int hResult = 0;
+                    try { hResult = (int) ex.GetType().GetProperty("HResult", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ex, null); }
+                    catch { }
+                    if (hResult != -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
                         throw;
                 }
 

@@ -92,13 +92,13 @@ namespace RT.Util
         {
             try
             {
-                _cancellation.Token.SleepCancellable(FirstInterval);
+                _cancellation.Token.WaitHandle.WaitOne(FirstInterval);
                 while (!_cancellation.IsCancellationRequested)
                 {
                     _periodicActivityRunning = true;
                     PeriodicActivity();
                     _periodicActivityRunning = false;
-                    _cancellation.Token.SleepCancellable(SubsequentInterval);
+                    _cancellation.Token.WaitHandle.WaitOne(SubsequentInterval);
                 }
             }
             finally
