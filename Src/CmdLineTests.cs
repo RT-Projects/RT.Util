@@ -10,6 +10,7 @@ namespace RT.Util
     [TestFixture]
     public sealed class CmdLineTests
     {
+#pragma warning disable 0649 // Field is never assigned to, and will always have its default value null
         private class commandLine
         {
             [Option("--stuff")]
@@ -17,6 +18,7 @@ namespace RT.Util
             [IsPositional]
             public string[] Args;
         }
+#pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
 
         [Test]
         public static void Test()

@@ -525,12 +525,14 @@ namespace RT.Util.Xml
             Assert.AreEqual(co.ListVersion[0], cn.ListVersion[2]);
         }
 
+#pragma warning disable 0649 // Field is never assigned to, and will always have its default value null
         private class classWithVersion
         {
             public Version Version;
             public Version Version2;
             public Version VersionNull;
         }
+#pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
 
         private class substituteVersion
         {
