@@ -810,6 +810,12 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>Determines whether this sequence comprises the values provided in the specified order.</summary>
+        public static bool SequenceEqual<T>(this IEnumerable<T> sequence1, params T[] sequence2)
+        {
+            return Enumerable.SequenceEqual(sequence1, sequence2);
+        }
+
         /// <summary>Determines whether all the input sequences are equal according to SequenceEquals.</summary>
         public static bool AllSequencesEqual<T>(this IEnumerable<IEnumerable<T>> sources)
         {
