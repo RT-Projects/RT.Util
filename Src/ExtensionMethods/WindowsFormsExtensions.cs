@@ -23,14 +23,5 @@ namespace RT.Util.ExtensionMethods
             }
             return null;
         }
-
-        /// <summary>Same as Control.Invoke, except that the action is not invoked immediately
-        /// if we are on the GUI thread. Instead, it is scheduled to be run the next time the GUI thread is idle.</summary>
-        /// <param name="invokable">Control to invoke action on.</param>
-        /// <param name="action">Action to invoke.</param>
-        public static void InvokeLater(this Control invokable, Action action)
-        {
-            Task.Factory.StartNew(() => { invokable.Invoke(action); });
-        }
     }
 }
