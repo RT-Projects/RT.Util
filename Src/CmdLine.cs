@@ -1298,24 +1298,21 @@ namespace RT.Util.CommandLine
 
             ConsoleUtil.Write(GenerateHelp(tr, ConsoleUtil.WrapToWidth()));
 
-            if (!WasCausedByHelpRequest())
+            if (!WasCausedByHelpRequest)
             {
                 Console.WriteLine();
                 ConsoleUtil.Write(GenerateErrorText(tr, ConsoleUtil.WrapToWidth()));
             }
         }
 
+        /// <summary>Contains the list of switches that are recognised by <see cref="WasCausedByHelpRequest"/>.</summary>
+        protected string[] _helpSwitches = new[] { "-?", "/?", "--?", "-h", "/h", "--help", "help" };
+
         /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
         /// <remarks>Currently the following switches are recognised as help switches:
         /// <c>-?</c>, <c>/?</c>, <c>--?</c>, <c>-h</c>, <c>/h</c>, <c>--help</c>, <c>help</c>
         /// </remarks>
-        public bool WasCausedByHelpRequest()
-        {
-            var helps = new[] { "-?", "/?", "--?", "-h", "/h", "--help", "help" };
-            return
-                (this is UnrecognizedCommandOrOptionException && helps.Contains(((UnrecognizedCommandOrOptionException) this).CommandOrOptionName))
-                || (this is UnexpectedArgumentException && helps.Contains(((UnexpectedArgumentException) this).UnexpectedParameters.FirstOrDefault()));
-        }
+        public virtual bool WasCausedByHelpRequest { get { return false; } }
     }
 
     /// <summary>Specifies that the arguments specified by the user on the command-line do not pass the custom validation checks.</summary>
@@ -1341,6 +1338,9 @@ namespace RT.Util.CommandLine
         {
             CommandOrOptionName = commandOrOptionName;
         }
+        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
+        /// <remarks>The set of switches recognised as help switches is listed in the base property documentation, <see cref="CommandLineParseException.WasCausedByHelpRequest"/>.</remarks>
+        public override bool WasCausedByHelpRequest { get { return _helpSwitches.Contains(CommandOrOptionName); } }
     }
 
     /// <summary>Specifies that the command-line parser encountered a command or option that is not allowed in conjunction with a previously-encountered command or option.</summary>
@@ -1392,6 +1392,9 @@ namespace RT.Util.CommandLine
         {
             UnexpectedParameters = unexpectedArgs;
         }
+        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
+        /// <remarks>The set of switches recognised as help switches is listed in the base property documentation, <see cref="CommandLineParseException.WasCausedByHelpRequest"/>.</remarks>
+        public override bool WasCausedByHelpRequest { get { return _helpSwitches.Contains(UnexpectedParameters.FirstOrDefault()); } }
     }
 
     /// <summary>Specifies that a parameter that expected a numerical value was passed a string by the user that doesn’t parse as a number.</summary>
