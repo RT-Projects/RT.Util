@@ -148,13 +148,16 @@ namespace RT.Util
         /// <summary>
         /// Checks to see whether the specified path starts with any of the standard paths supported by
         /// <see cref="ExpandPath"/>, and if so, replaces the prefix with a "$(NAME)" string and returns
-        /// the resulting value.
+        /// the resulting value. The value passed in should be an absolute path for the substitution to work.
         /// </summary>
         public static string UnexpandPath(string path)
         {
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
-                if (path.StartsWith(Environment.GetFolderPath(folderEnum)))
-                    return "$(" + folderEnum + ")" + path.Substring(Environment.GetFolderPath(folderEnum).Length);
+            {
+                var folderPath = Environment.GetFolderPath(folderEnum);
+                if (folderPath.Length > 0 && path.StartsWith(folderPath))
+                    return "$(" + folderEnum + ")" + path.Substring(folderPath.Length);
+            }
             if (path.StartsWith(Path.GetTempPath()))
                 return "$(Temp)" + path.Substring(Path.GetTempPath().Length);
             return path;
