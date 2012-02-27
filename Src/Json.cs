@@ -39,12 +39,15 @@ namespace RT.Util.Json
         private OffsetToLineCol _offsetConverter;
         public OffsetToLineCol OffsetConverter { get { if (_offsetConverter == null) _offsetConverter = new OffsetToLineCol(Json); return _offsetConverter; } }
 
+        private bool _allowJavaScript;
+
         private JsonParserState() { }
 
-        public JsonParserState(string json)
+        public JsonParserState(string json, bool allowJavaScript)
         {
             Json = json;
             Pos = 0;
+            _allowJavaScript = allowJavaScript;
             ConsumeWhitespace();
         }
 
@@ -95,6 +98,8 @@ namespace RT.Util.Json
                         return ParseNumber();
                     else if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')
                         return parseWord();
+                    else if (_allowJavaScript && cn == '\'')
+                        return ParseString();
                     else
                         throw new JsonParseException(this, "unexpected character");
             }
@@ -108,14 +113,42 @@ namespace RT.Util.Json
             else throw new JsonParseException(this, "unknown keyword: \"{0}\"".Fmt(word));
         }
 
+        private JsonString parseDictKey()
+        {
+            if (Cur == null)
+                throw new JsonParseException(this, "unexpected end of dictionary");
+
+            if (_allowJavaScript)
+            {
+                char c = Cur.Value;
+                if (c == '_' || c == '$' || char.IsLetter(c))
+                {
+                    int pos = Pos;
+                    Pos++;
+                    while (Cur != null && (Cur == '_' || Cur == '$' || char.IsLetter(Cur.Value)))
+                        Pos++;
+                    ConsumeWhitespace();
+                    return new JsonString(Json.Substring(pos, Pos - pos));
+                }
+            }
+            return ParseString();
+        }
+
         public JsonString ParseString()
         {
             var sb = new StringBuilder();
-            if (Cur != '"')
+            bool isJavaScript = Cur == '\'';
+            if (Cur != '"' && (!_allowJavaScript || Cur != '\''))
                 throw new JsonParseException(this, "expected a string");
             Pos++;
             while (true)
             {
+                if (_allowJavaScript && isJavaScript && Cur == '\'')
+                {
+                    Pos++;
+                    break;
+                    // Note: JavaScript string support is incomplete; it allows only the same escapes as JSON strings.
+                }
                 switch (Cur)
                 {
                     case null: throw new JsonParseException(this, "unexpected end of string");
@@ -145,6 +178,11 @@ namespace RT.Util.Json
                                     Pos += 4;
                                     break;
                                 default:
+                                    if (_allowJavaScript && Cur == '\'')
+                                    {
+                                        sb.Append('\'');
+                                        break;
+                                    }
                                     throw new JsonParseException(this, "unknown escape sequence");
                             }
                         }
@@ -275,7 +313,7 @@ namespace RT.Util.Json
                     throw new JsonParseException(this, "unexpected end of dict");
                 if (Cur == '}')
                     break;
-                var name = ParseString();
+                var name = parseDictKey();
                 if (Cur != ':')
                     throw new JsonParseException(this, "expected a colon to separate dict key/value");
                 Pos++;
@@ -303,9 +341,9 @@ namespace RT.Util.Json
 
     public abstract class JsonValue : IEquatable<JsonValue>
     {
-        public static JsonValue Parse(string jsonValue)
+        public static JsonValue Parse(string jsonValue, bool allowJavaScript = false)
         {
-            var ps = new JsonParserState(jsonValue);
+            var ps = new JsonParserState(jsonValue, allowJavaScript);
             var result = ps.ParseValue();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
@@ -738,11 +776,11 @@ namespace RT.Util.Json
             List.AddRange(items);
         }
 
-        public static new JsonList Parse(string jsonList)
+        public static new JsonList Parse(string jsonList, bool allowJavaScript = false)
         {
             if (jsonList == null)
                 throw new ArgumentNullException("jsonList");
-            var ps = new JsonParserState(jsonList);
+            var ps = new JsonParserState(jsonList, allowJavaScript);
             var result = ps.ParseList();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
@@ -827,9 +865,9 @@ namespace RT.Util.Json
                 Dict.Add(item.Key, item.Value);
         }
 
-        public static new JsonDict Parse(string jsonDict)
+        public static new JsonDict Parse(string jsonDict, bool allowJavaScript = false)
         {
-            var ps = new JsonParserState(jsonDict);
+            var ps = new JsonParserState(jsonDict, allowJavaScript);
             var result = ps.ParseDict();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
@@ -937,9 +975,9 @@ namespace RT.Util.Json
         private string _value;
         public JsonString(string value) { if (value == null) throw new ArgumentNullException(); _value = value; }
 
-        public static new JsonString Parse(string jsonString)
+        public static new JsonString Parse(string jsonString, bool allowJavaScript = false)
         {
-            var ps = new JsonParserState(jsonString);
+            var ps = new JsonParserState(jsonString, allowJavaScript);
             var result = ps.ParseString();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
@@ -995,9 +1033,9 @@ namespace RT.Util.Json
         private bool _value;
         public JsonBool(bool value) { _value = value; }
 
-        public static new JsonBool Parse(string jsonBool)
+        public static new JsonBool Parse(string jsonBool, bool allowJavaScript = false)
         {
-            var ps = new JsonParserState(jsonBool);
+            var ps = new JsonParserState(jsonBool, allowJavaScript);
             var result = ps.ParseBool();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
@@ -1053,9 +1091,9 @@ namespace RT.Util.Json
         public JsonNumber(long value) { _long = value; }
         public JsonNumber(int value) { _double = value; }
 
-        public static new JsonNumber Parse(string jsonNumber)
+        public static new JsonNumber Parse(string jsonNumber, bool allowJavaScript = false)
         {
-            var ps = new JsonParserState(jsonNumber);
+            var ps = new JsonParserState(jsonNumber, allowJavaScript);
             var result = ps.ParseNumber();
             if (ps.Cur != null)
                 throw new JsonParseException(ps, "expected end of input");
