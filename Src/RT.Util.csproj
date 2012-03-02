@@ -47,11 +47,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
@@ -110,10 +114,11 @@
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\IQueryableExtensions.cs" />
     <Compile Include="ExtensionMethods\NumericExtensions.cs" />
+    <Compile Include="ExtensionMethods\ObjectExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
+    <Compile Include="ExtensionMethods\ReflectionExtensions.cs" />
     <Compile Include="ExtensionMethods\StreamExtensions.cs" />
     <Compile Include="ExtensionMethods\StringExtensions.cs" />
-    <Compile Include="ExtensionMethods\TypeExtensions.cs" />
     <Compile Include="ExtensionMethods\WindowsFormsExtensions.cs" />
     <Compile Include="ExtensionMethods\XmlLinqExtensions.cs" />
     <Compile Include="Forms\DlgMessage.cs">
@@ -125,6 +130,7 @@
     <Compile Include="Forms\ManagedForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\ManagedWindow.cs" />
     <Compile Include="FpsCounter.cs" />
     <Compile Include="Geometry\ArcD.cs" />
     <Compile Include="Geometry\BoundingBoxD.cs" />
@@ -147,6 +153,7 @@
     <Compile Include="Lingo\Languages.cs" />
     <Compile Include="Lingo\Lingo.cs" />
     <Compile Include="Lingo\LingoAttributes.cs" />
+    <Compile Include="Lingo\LingoWpf.cs" />
     <Compile Include="Lingo\NumberSystem.cs" />
     <Compile Include="Lingo\TranslatableException.cs" />
     <Compile Include="Lingo\TranslationBase.cs" />
