@@ -106,6 +106,22 @@ namespace RT.Util
             public void Error(string message, params string[] tokens) { AnyErrors = true; output("Error: ", message, tokens); }
             public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
 
+            public void Error(string message, string filename, int lineNumber, int? columnNumber = null)
+            {
+                AnyErrors = true;
+                outputLine("Error", filename, columnNumber == null ? lineNumber.ToString() : "{0},{1}".Fmt(lineNumber, columnNumber), message);
+            }
+
+            public void Warning(string message, string filename, int lineNumber, int? columnNumber = null)
+            {
+                outputLine("Warning", filename, columnNumber == null ? lineNumber.ToString() : "{0},{1}".Fmt(lineNumber, columnNumber), message);
+            }
+
+            private void outputLine(string errorOrWarning, string filename, string lineOrLineAndColumn, string message)
+            {
+                Console.Error.WriteLine("{0}({1}): {2}: {3}", filename, lineOrLineAndColumn, errorOrWarning, message);
+            }
+
             private void output(string errorOrWarning, string message, params string[] tokens)
             {
                 if (tokens == null || tokens.Length == 0)
@@ -153,10 +169,16 @@ namespace RT.Util
         /// outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
         void Error(string message, params string[] tokens);
 
+        /// <summary>When implemented in a class, outputs the error <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
+        void Error(string message, string filename, int lineNumber, int? columnNumber = null);
+
         /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
         /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
         /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
         void Warning(string message, params string[] tokens);
+
+        /// <summary>When implemented in a class, outputs the warning <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
+        void Warning(string message, string filename, int lineNumber, int? columnNumber = null);
     }
 #else
     interface IPostBuildReporter { } // to suppress a documentation cref warning

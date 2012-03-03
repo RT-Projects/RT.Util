@@ -61,7 +61,8 @@ namespace RT.KitchenSink.ParseCs
 
         private static IEnumerable<Token> lex(string data)
         {
-            int index = 0;
+            // Tolerate a UTF BOM
+            int index = data[0] == 0xFEFF ? 1 : 0;
             int dataLength = data.Length;
             while (index < dataLength && char.IsWhiteSpace(data, index))
                 index += char.IsSurrogate(data, index) ? 2 : 1;
@@ -82,7 +83,7 @@ namespace RT.KitchenSink.ParseCs
                     index += kw.Length;
                     goto ContinueDo;
 
-                ContinueForeachKw: ;
+                    ContinueForeachKw: ;
                 }
 
                 // Identifiers
@@ -309,7 +310,7 @@ namespace RT.KitchenSink.ParseCs
                     index += ch.Length;
                     goto ContinueDo;
 
-                ContinueForeachCh: ;
+                    ContinueForeachCh: ;
                 }
 
                 if (data[index] == '#' && beginningOfLine(data, index))
@@ -324,7 +325,7 @@ namespace RT.KitchenSink.ParseCs
 
                 throw new LexException(@"Unrecognized token", index);
 
-            ContinueDo:
+                ContinueDo:
                 while (index < dataLength && char.IsWhiteSpace(data, index))
                     index += char.IsSurrogate(data, index) ? 2 : 1;
             }

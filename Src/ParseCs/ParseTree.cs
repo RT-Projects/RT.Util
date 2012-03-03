@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
 
@@ -14,7 +14,42 @@ namespace RT.KitchenSink.ParseCs
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
     [XmlIgnoreIfDefault, XmlIgnoreIfEmpty]
-    public abstract class CsNode { }
+    public abstract class CsNode
+    {
+        public int Index;
+
+        public virtual IEnumerable<CsNode> Subnodes
+        {
+            get
+            {
+                yield return this;
+
+                var type = this.GetType();
+                var subnodes = new List<CsNode>();
+                foreach (var field in type.GetAllFields())
+                {
+                    if (typeof(CsNode).IsAssignableFrom(field.FieldType))
+                        subnodes.Add(field.GetValue(this) as CsNode);
+                    else if (typeof(IEnumerable).IsAssignableFrom(field.FieldType))
+                        subnodes.AddRange(recurse(field.GetValue(this) as IEnumerable).SelectMany(ienum => ienum.OfType<CsNode>()));
+                }
+
+                foreach (var subnode in subnodes)
+                    if (subnode != null)
+                        foreach (var node in subnode.Subnodes)
+                            yield return node;
+            }
+        }
+
+        private IEnumerable<IEnumerable> recurse(IEnumerable ienum)
+        {
+            if (ienum == null)
+                yield break;
+            yield return ienum;
+            foreach (var subEnum in ienum.OfType<IEnumerable>().SelectMany(recurse))
+                yield return subEnum;
+        }
+    }
 
     #region Document & Namespace
     public sealed class CsDocument : CsNode
@@ -177,6 +212,7 @@ namespace RT.KitchenSink.ParseCs
     {
         public bool IsAbstract, IsVirtual, IsOverride, IsSealed;
         public List<CsSimpleMethod> Methods = null;
+        public CsTypeName ImplementsFrom;
 
         public override string ToString()
         {
@@ -188,6 +224,11 @@ namespace RT.KitchenSink.ParseCs
             sb.Append("event ");
             sb.Append(Type.ToString());
             sb.Append(' ');
+            if (ImplementsFrom != null)
+            {
+                sb.Append(ImplementsFrom.ToString());
+                sb.Append('.');
+            }
             sb.Append(NamesAndInitializers.Select(n => n.ToString()).JoinString(", "));
             if (Methods != null)
             {
@@ -696,13 +737,13 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsCustomAttribute : CsNode
     {
         public CsTypeName Type;
-        public List<CsExpression> Positional = new List<CsExpression>();
-        public List<CsNameAndExpression> Named = new List<CsNameAndExpression>();
+        public List<CsArgument> Arguments = new List<CsArgument>();
+        public List<CsNameAndExpression> PropertySetters = new List<CsNameAndExpression>();
         public override string ToString()
         {
-            if (Positional.Count + Named.Count == 0)
+            if (Arguments.Count + PropertySetters.Count == 0)
                 return Type.ToString();
-            return string.Concat(Type.ToString(), '(', Positional.Select(p => p.ToString()).Concat(Named.Select(p => p.ToString())).JoinString(", "), ')');
+            return string.Concat(Type.ToString(), '(', Arguments.Concat<CsNode>(PropertySetters).Select(p => p.ToString()).JoinString(", "), ')');
         }
     }
     public enum CustomAttributeLocation { None, Assembly, Module, Type, Method, Property, Field, Event, Param, Return, Typevar }
@@ -1531,9 +1572,12 @@ namespace RT.KitchenSink.ParseCs
         }
     }
 
+    public enum VarianceMode { Invariant, Covariant, Contravariant }
+
     public sealed class CsNameAndCustomAttributes : CsNode
     {
         public string Name;
+        public VarianceMode Variance;
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public override string ToString()
         {

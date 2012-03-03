@@ -75,7 +75,7 @@ namespace RT.KitchenSink.ParseCs
             }
             catch (LexException e)
             {
-                throw new ParseException(e.Message, e.Index, doc);
+                throw new ParseException(e.Message, e.Index, doc, e);
             }
             catch (ParseException e)
             {
@@ -87,7 +87,7 @@ namespace RT.KitchenSink.ParseCs
                     doc.Namespaces.Add((CsNamespace) e.IncompleteResult);
                 else if (e.IncompleteResult is CsType)
                     doc.Types.Add((CsType) e.IncompleteResult);
-                throw new ParseException(e.Message, e.Index, doc);
+                throw new ParseException(e.Message, e.Index, doc, e);
             }
             return doc;
         }
@@ -174,7 +174,7 @@ namespace RT.KitchenSink.ParseCs
             }
             catch (LexException e)
             {
-                throw new ParseException(e.Message, e.Index, ns);
+                throw new ParseException(e.Message, e.Index, ns, e);
             }
             catch (ParseException e)
             {
@@ -186,7 +186,7 @@ namespace RT.KitchenSink.ParseCs
                     ns.Namespaces.Add((CsNamespace) e.IncompleteResult);
                 else if (e.IncompleteResult is CsType)
                     ns.Types.Add((CsType) e.IncompleteResult);
-                throw new ParseException(e.Message, e.Index, ns);
+                throw new ParseException(e.Message, e.Index, ns, e);
             }
             return ns;
         }
@@ -235,7 +235,8 @@ namespace RT.KitchenSink.ParseCs
                 else if (!tok[i].IsBuiltin("("))
                     throw new ParseException("'(', ',' or ']' expected.", tok[i].Index);
                 i++;
-                bool acceptPositional = true;
+                bool acceptPositionalArgs = true;
+                bool acceptOptionalArgs = true;
                 bool expectComma = false;
                 while (!tok[i].IsBuiltin(")"))
                 {
@@ -248,14 +249,23 @@ namespace RT.KitchenSink.ParseCs
                     expectComma = true;
                     if (tok[i].Type == TokenType.Identifier && tok[i + 1].IsBuiltin("="))
                     {
-                        acceptPositional = false;
+                        acceptPositionalArgs = false;
+                        acceptOptionalArgs = false;
                         var posName = tok[i].TokenStr;
                         i += 2;
                         var expr = parseExpression(tok, ref i);
-                        attr.Named.Add(new CsNameAndExpression { Name = posName, Expression = expr });
+                        attr.PropertySetters.Add(new CsNameAndExpression { Name = posName, Expression = expr });
                     }
-                    else if (acceptPositional)
-                        attr.Positional.Add(parseExpression(tok, ref i));
+                    else if (acceptOptionalArgs && tok[i].Type == TokenType.Identifier && tok[i + 1].IsBuiltin(":"))
+                    {
+                        acceptPositionalArgs = false;
+                        var posName = tok[i].TokenStr;
+                        i += 2;
+                        var expr = parseExpression(tok, ref i);
+                        attr.Arguments.Add(new CsArgument { ArgumentName = posName, ArgumentExpression = expr });
+                    }
+                    else if (acceptPositionalArgs)
+                        attr.Arguments.Add(new CsArgument { ArgumentExpression = parseExpression(tok, ref i) });
                     else
                         throw new ParseException("Identifier '=' <expression>, or ')' expected.", tok[i].Index);
                 }
@@ -285,6 +295,14 @@ namespace RT.KitchenSink.ParseCs
                 var customAttribs = new List<CsCustomAttributeGroup>();
                 while (tok[i].IsBuiltin("["))
                     customAttribs.Add(parseCustomAttributeGroup(tok, ref i, true));
+
+                var variance = VarianceMode.Invariant;
+                if (tok[i].IsBuiltin("in") || tok[i].IsBuiltin("out"))
+                {
+                    variance = tok[i].IsBuiltin("out") ? VarianceMode.Covariant : VarianceMode.Contravariant;
+                    i++;
+                }
+
                 var name = tok[i].Identifier();
                 i++;
                 genericTypeParameters.Add(new CsNameAndCustomAttributes { Name = name, CustomAttributes = customAttribs });
@@ -305,7 +323,7 @@ namespace RT.KitchenSink.ParseCs
                 i++;
                 string genericParameter;
                 try { genericParameter = tok[i].Identifier(); }
-                catch (ParseException e) { throw new ParseException(e.Message, e.Index, ret); }
+                catch (ParseException e) { throw new ParseException(e.Message, e.Index, ret, e); }
                 if (ret.ContainsKey(genericParameter))
                     throw new ParseException("A constraint clause has already been specified for type parameter '{0}'. All of the constraints for a type parameter must be specified in a single where clause.".Fmt(genericParameter), tok[i].Index, ret);
                 i++;
@@ -343,7 +361,7 @@ namespace RT.KitchenSink.ParseCs
                         {
                             if (e.IncompleteResult is CsTypeName)
                                 ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { BaseClass = (CsTypeName) e.IncompleteResult });
-                            throw new ParseException(e.Message, e.Index, ret);
+                            throw new ParseException(e.Message, e.Index, ret, e);
                         }
                     }
                 }
@@ -384,7 +402,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsParameter)
                         ret.Add((CsParameter) e.IncompleteResult);
-                    throw new ParseException(e.Message, e.Index, ret);
+                    throw new ParseException(e.Message, e.Index, ret, e);
                 }
             }
             while (tok[i].IsBuiltin(","));
@@ -486,12 +504,12 @@ namespace RT.KitchenSink.ParseCs
                     {
                         try
                         {
-                            var result = parseTypeName(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
+                            var result = parseTypeName(tok, ref j, (flags & typeIdentifierFlags.Lenient) | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
                             part.GenericTypeArguments.Add(result.Item1);
                             while (tok[j].IsBuiltin(","))
                             {
                                 j++;
-                                result = parseTypeName(tok, ref j, flags | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
+                                result = parseTypeName(tok, ref j, (flags & typeIdentifierFlags.Lenient) | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowShr);
                                 part.GenericTypeArguments.Add(result.Item1);
                             }
                             if (result.Item2)
@@ -577,7 +595,7 @@ namespace RT.KitchenSink.ParseCs
                     return Tuple.Create(ret, false);
                 if (e.IncompleteResult is CsTypeName)
                     throw;
-                throw new ParseException(e.Message, e.Index, ret);
+                throw new ParseException(e.Message, e.Index, ret, e);
             }
             i = j;
             return Tuple.Create(ret, onShr);
@@ -703,10 +721,6 @@ namespace RT.KitchenSink.ParseCs
             {
                 return parseEnumDeclaration(tok, ref i, customAttribs, j);
             }
-            else if (tok[j].IsBuiltin("event"))
-            {
-                return parseEventDeclaration(tok, ref i, customAttribs, j);
-            }
             else if (tok[j].Type == TokenType.Identifier && tok[j + 1].IsBuiltin("("))
             {
                 return parseConstructorDeclaration(tok, ref i, customAttribs, j);
@@ -725,8 +739,16 @@ namespace RT.KitchenSink.ParseCs
             }
             else
             {
-                // It could be a field, a method, an operator overload or a property
                 var afterModifiers = j;
+
+                // It could be a field, a method, an operator overload, a property or an event
+                var isEvent = false;
+                if (tok[j].IsBuiltin("event"))
+                {
+                    isEvent = true;
+                    j++;
+                }
+
                 var prevIndex = tok[j].Index;
                 CsTypeName type;
                 try
@@ -763,45 +785,62 @@ namespace RT.KitchenSink.ParseCs
 
                 if (tok[j].IsBuiltin("{"))
                 {
-                    var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs };
-                    parseModifiers(prop, tok, ref i);
-                    if (i != afterModifiers)
-                        throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
-                    i = j;
-                    parsePropertyBody(prop, tok, ref i);
-                    return prop;
+                    if (isEvent)
+                    {
+                        var evnt = new CsEvent { Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Name = name } }, CustomAttributes = customAttribs };
+                        parseModifiers(evnt, tok, ref i);
+                        if (i != afterModifiers)
+                            throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
+                        i = j;
+                        parseEventBody(evnt, tok, ref i);
+                        return evnt;
+                    }
+                    else
+                    {
+                        // It’s a property
+                        var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs };
+                        parseModifiers(prop, tok, ref i);
+                        if (i != afterModifiers)
+                            throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
+                        i = j;
+                        parsePropertyBody(prop, tok, ref i);
+                        return prop;
+                    }
                 }
                 else if (tok[j].IsBuiltin("=") || tok[j].IsBuiltin(";") || tok[j].IsBuiltin(","))
-                    return parseFieldDeclaration(tok, ref i, customAttribs, j, afterModifiers, type, name);
+                {
+                    return parseFieldOrEventDeclaration(isEvent, tok, ref i, customAttribs, j, afterModifiers, type, null, name);
+                }
                 else if (tok[j].IsBuiltin("(") || tok[j].IsBuiltin("<") || tok[j].IsBuiltin("."))
                 {
-                    // Could still be a method or property (even an indexed one)
-                    return parseMemberDeclarationComplexCase(tok, ref i, customAttribs, j, afterModifiers, type, name);
+                    // Could still be a method, event, property or indexer
+                    return parseMemberDeclarationComplexCase(tok, ref i, customAttribs, j, afterModifiers, isEvent, type, name);
                 }
                 else
                     throw new ParseException("For a field, '=', ',' or ';' expected. For a method, '(' or '<' expected. For a property, '{' expected.", tok[j].Index);
             }
         }
-        private static CsMember parseMemberDeclarationComplexCase(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j, int afterModifiers, CsTypeName type, string name)
+        private static CsMember parseMemberDeclarationComplexCase(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j, int afterModifiers, bool isEvent, CsTypeName type, string name)
         {
             // If it's "(", it's a method.
-            // If it's "<", it may be a generic method, or it may be a method or property that explicitly implements a member inherited from an abstract type or interface with a generic type argument.
-            // If it's ".", it is a method or property that explicitly implements an inherited abstract or interface member. The method could still be generic.
+            // If it's "<", it may be a generic method, or it may be a method, property or event that explicitly implements an interface member from a generic interface.
+            // If it's ".", it is a method, property or event that explicitly implements an interface member. The method could still be generic.
 
-            List<CsNameAndCustomAttributes> genericsAlreadyParsed = null;
-            CsTypeName implementsFrom = null;
+            List<CsNameAndCustomAttributes> genericTypeParameters = null;
+            CsConcreteTypeName implementsFrom = null;
 
             if (tok[j].IsBuiltin("<") || tok[j].IsBuiltin("."))
             {
-                // If it's '<', there are two different cases we need to handle here:
+                // If the next token is '<', there are two different cases we need to handle here:
                 // (1) The "<" could be the beginning of the method's generic type parameter declaration, e.g.
                 //         void MyMethod<T>() { }
-                // (2) The "<" could be the beginning of a generic type argument to an interface that the method is trying to implement, e.g.
+                // (2) The "<" could be the beginning of a generic type argument to an interface that the method, property or event is trying to implement, e.g.
                 //         IEnumerator<int> IEnumerable<int>.GetEnumerator() { }
                 // In case (1), the generic parameter can have custom attributes, but must otherwise be just an identifier.
                 // In case (2), it can't have custom attributes, but it can have nested generic type arguments or namespaces, e.g. IEnumerable<System.Collections.Generic.List<int>>.
-                // Also, in case (2), it can still be a property rather than a method.
-                // So here's the strategy: We'll see how far we can parse a type identifier. If the method has a generic type parameter with a custom attribute, then this will parse
+                // Also, in case (2), it can still be a property or event rather than a method.
+                // If the next token is '.', it is an interface name with or without a namespace, which may or may not have generic arguments.
+                // So here's the strategy: We'll see how far we can parse a type identifier. If it’s a method with a generic type parameter that has a custom attribute, then this will parse
                 // up to the method name and leave us at the '<'. If the method has only generic type parameters without custom attributes (or none at all), then this will include
                 // the method name and generic type parameters as part of the parsed type identifier. We'll then have to remove it from there.
                 j--;
@@ -822,50 +861,73 @@ namespace RT.KitchenSink.ParseCs
                     return prop;
                 }
 
+                // Apart from 'this', no builtins (keywords) are allowed
                 if (!(ty.Parts[ty.Parts.Count - 1] is CsSimpleNameIdentifier))
-                    throw new ParseException("Identifier expected instead of '" + ty.Parts[ty.Parts.Count - 1].ToString() + "'.", tok[j - 1].Index);
+                    throw new ParseException("Identifier expected instead of '{0}'.".Fmt(ty.Parts[ty.Parts.Count - 1]), tok[j - 1].Index);
                 var lastPart = (CsSimpleNameIdentifier) ty.Parts[ty.Parts.Count - 1];
                 ty.Parts.RemoveAt(ty.Parts.Count - 1);
-                if (lastPart != null && lastPart.GenericTypeArguments != null)
+
+                // If the last part has generic type “arguments”, it must be a generic method and those are actually its generic type parameter declarations.
+                if (lastPart.GenericTypeArguments != null)
                 {
-                    genericsAlreadyParsed = new List<CsNameAndCustomAttributes>();
+                    genericTypeParameters = new List<CsNameAndCustomAttributes>();
                     foreach (var g in lastPart.GenericTypeArguments)
                     {
                         var single = g.GetSingleIdentifier();
                         if (single == null)
-                            throw new ParseException(@"Invalid generic type parameter declaration.", tok[j].Index);
-                        genericsAlreadyParsed.Add(new CsNameAndCustomAttributes { Name = single, CustomAttributes = new List<CsCustomAttributeGroup>() });
+                            throw new ParseException("Invalid generic type parameter declaration.", tok[j].Index);
+                        genericTypeParameters.Add(new CsNameAndCustomAttributes { Name = single, CustomAttributes = new List<CsCustomAttributeGroup>() });
                     }
                 }
                 else if (tok[j].IsBuiltin("<"))
-                    genericsAlreadyParsed = parseGenericTypeParameterList(tok, ref j);
+                {
+                    // “ty” only went up to the method name but didn’t parse the generic type parameter list, probably because it contains a custom attribute.
+                    genericTypeParameters = parseGenericTypeParameterList(tok, ref j);
+                }
+
                 name = lastPart.Name;
-                if (ty.Parts.Count > 0)
-                    implementsFrom = ty;
+                implementsFrom = ty.Parts.Count == 0 ? null : ty;
 
                 if (tok[j].IsBuiltin("{"))
                 {
-                    // It's a property after all
-                    if (genericsAlreadyParsed != null)
-                        throw new ParseException(@"Properties cannot be generic.", tok[j].Index);
-                    var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
-                    parseModifiers(prop, tok, ref i);
-                    if (i != afterModifiers)
-                        throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
-                    i = j;
-                    parsePropertyBody(prop, tok, ref i);
-                    return prop;
+                    // It's a property, or an event with method bodies
+                    if (genericTypeParameters != null)
+                        throw new ParseException("Properties and events cannot be generic.", tok[j].Index);
+                    if (isEvent)
+                    {
+                        var evnt = new CsEvent { Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Name = name } }, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+                        parseModifiers(evnt, tok, ref i);
+                        if (i != afterModifiers)
+                            throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
+                        i = j;
+                        parseEventBody(evnt, tok, ref i);
+                        return evnt;
+                    }
+                    else
+                    {
+                        var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+                        parseModifiers(prop, tok, ref i);
+                        if (i != afterModifiers)
+                            throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
+                        i = j;
+                        parsePropertyBody(prop, tok, ref i);
+                        return prop;
+                    }
+                }
+                else if (isEvent && (tok[j].IsBuiltin(";") || tok[j].IsBuiltin("=")))
+                {
+                    // It’s an event without a body
+                    return (CsEvent) parseFieldOrEventDeclaration(true, tok, ref i, customAttribs, j, afterModifiers, type, implementsFrom, name);
                 }
             }
-            CsMethod meth = new CsMethod { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+
+            // We’ve taken care of explicitly-implemented properties, indexers and events. The only case left is that it must be a method.
+            // implementsFrom and genericTypeParameters are fully populated.
+            CsMethod meth = new CsMethod { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom, GenericTypeParameters = genericTypeParameters };
             parseModifiers(meth, tok, ref i);
             if (i != afterModifiers)
                 throw new ParseException("The modifier '{0}' is not valid for methods.".Fmt(tok[i].TokenStr), tok[i].Index);
             i = j;
-            if (genericsAlreadyParsed != null)
-                meth.GenericTypeParameters = genericsAlreadyParsed;
-            else if (tok[i].IsBuiltin("<"))
-                meth.GenericTypeParameters = parseGenericTypeParameterList(tok, ref i);
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index, meth);
             try { meth.Parameters = parseParameterList(tok, ref i); }
@@ -873,7 +935,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (e.IncompleteResult is List<CsParameter>)
                     meth.Parameters = (List<CsParameter>) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, meth);
+                throw new ParseException(e.Message, e.Index, meth, e);
             }
             if (tok[i].IsIdentifier("where"))
             {
@@ -882,7 +944,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is Dictionary<string, List<CsGenericTypeConstraint>>)
                         meth.GenericTypeConstraints = (Dictionary<string, List<CsGenericTypeConstraint>>) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, meth);
+                    throw new ParseException(e.Message, e.Index, meth, e);
                 }
             }
             if (tok[i].IsBuiltin(";"))
@@ -894,19 +956,23 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsBlock)
                         meth.MethodBody = (CsBlock) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, meth);
+                    throw new ParseException(e.Message, e.Index, meth, e);
                 }
             }
             else
                 throw new ParseException(@"';' or '{' expected.", tok[i].Index, meth);
             return meth;
         }
-        private static CsField parseFieldDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j, int afterModifiers, CsTypeName type, string name)
+        private static CsMultiMember parseFieldOrEventDeclaration(bool isEvent, TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j, int afterModifiers, CsTypeName type, CsTypeName implementsFrom, string name)
         {
-            CsField fi = new CsField { Type = type, CustomAttributes = customAttribs };
-            parseModifiers(fi, tok, ref i);
+            CsMultiMember ret;
+            if (isEvent)
+                ret = new CsEvent { Type = type, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+            else
+                ret = new CsField { Type = type, CustomAttributes = customAttribs };
+            parseModifiers(ret, tok, ref i);
             if (i != afterModifiers)
-                throw new ParseException("The modifier '{0}' is not valid for fields.".Fmt(tok[i].TokenStr), tok[i].Index);
+                throw new ParseException("The modifier '{0}' is not valid for {1}.".Fmt(tok[i].TokenStr, isEvent ? "events" : "fields"), tok[i].Index);
             i = j;
             CsExpression initializer = null;
             try
@@ -916,7 +982,7 @@ namespace RT.KitchenSink.ParseCs
                     i++;
                     initializer = parseExpression(tok, ref i);
                 }
-                fi.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
+                ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
                 while (tok[i].IsBuiltin(","))
                 {
                     i++;
@@ -928,22 +994,22 @@ namespace RT.KitchenSink.ParseCs
                         i++;
                         initializer = parseExpression(tok, ref i);
                     }
-                    fi.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
+                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
                 }
             }
             catch (ParseException e)
             {
                 if (e.IncompleteResult is CsExpression)
                 {
-                    fi.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
-                    throw new ParseException(e.Message, e.Index, fi);
+                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
+                    throw new ParseException(e.Message, e.Index, ret, e);
                 }
                 throw;
             }
             if (!tok[i].IsBuiltin(";"))
-                throw new ParseException("'=', ',' or ';' expected.", tok[i].Index, fi);
+                throw new ParseException("'=', ',' or ';' expected.", tok[i].Index, ret);
             i++;
-            return fi;
+            return ret;
         }
         private static CsOperatorOverload parseOperatorOverloadDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, ref int j, int afterModifiers, CsTypeName type)
         {
@@ -1011,7 +1077,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (e.IncompleteResult is CsBlock)
                     op.MethodBody = (CsBlock) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, op);
+                throw new ParseException(e.Message, e.Index, op, e);
             }
             return op;
         }
@@ -1037,7 +1103,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (e.IncompleteResult is CsBlock)
                     op.MethodBody = (CsBlock) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, op);
+                throw new ParseException(e.Message, e.Index, op, e);
             }
             return op;
         }
@@ -1059,7 +1125,7 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsBlock)
                 {
                     des.MethodBody = (CsBlock) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, des);
+                    throw new ParseException(e.Message, e.Index, des, e);
                 }
                 throw;
             }
@@ -1097,7 +1163,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is List<CsArgument>)
                         con.CallArguments = (List<CsArgument>) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, con);
+                    throw new ParseException(e.Message, e.Index, con, e);
                 }
             }
             if (!tok[i].IsBuiltin("{"))
@@ -1108,71 +1174,11 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsBlock)
                 {
                     con.MethodBody = (CsBlock) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, con);
+                    throw new ParseException(e.Message, e.Index, con, e);
                 }
                 throw;
             }
             return con;
-        }
-        private static CsEvent parseEventDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
-        {
-            CsEvent ev = new CsEvent { CustomAttributes = customAttribs };
-            parseModifiers(ev, tok, ref i);
-            if (i != j)
-                throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
-            i = j + 1;
-
-            ev.Type = parseTypeName(tok, ref i, typeIdentifierFlags.AllowArrays | typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers).Item1;
-
-            string name = tok[i].Identifier();
-            i++;
-            if (tok[i].IsBuiltin("{"))
-            {
-                parseEventBody(ev, tok, ref i);
-                return ev;
-            }
-
-            CsExpression initializer = null;
-            bool canHaveCurly = true;
-            bool canHaveEquals = true;
-
-            try
-            {
-                if (tok[i].IsBuiltin("="))
-                {
-                    canHaveCurly = false;
-                    canHaveEquals = false;
-                    i++;
-                    initializer = parseExpression(tok, ref i);
-                }
-                ev.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
-                while (tok[i].IsBuiltin(","))
-                {
-                    canHaveCurly = false;
-                    canHaveEquals = true;
-                    i++;
-                    name = tok[i].Identifier();
-                    initializer = null;
-                    i++;
-                    if (tok[i].IsBuiltin("="))
-                    {
-                        canHaveEquals = false;
-                        i++;
-                        initializer = parseExpression(tok, ref i);
-                    }
-                    ev.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
-                }
-            }
-            catch (ParseException e)
-            {
-                if (e.IncompleteResult is CsExpression)
-                    ev.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
-                throw new ParseException(e.Message, e.Index, ev);
-            }
-            if (!tok[i].IsBuiltin(";"))
-                throw new ParseException(canHaveCurly ? (canHaveEquals ? "'{', '=', ',' or ';' expected." : "'{', ',' or ';' expected.") : (canHaveEquals ? "'=', ',' or ';' expected." : "',' or ';' expected."), tok[i].Index, ev);
-            i++;
-            return ev;
         }
         private static void parsePropertyBody(CsProperty prop, TokenJar tok, ref int i)
         {
@@ -1201,7 +1207,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is CsBlock)
                             m.Body = (CsBlock) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, prop);
+                        throw new ParseException(e.Message, e.Index, prop, e);
                     }
                 }
                 else if (tok[i].IsBuiltin(";"))
@@ -1215,6 +1221,7 @@ namespace RT.KitchenSink.ParseCs
         {
             tok[i].Assert("{");
             i++;
+            ev.Methods = new List<CsSimpleMethod>();
 
             while (!tok[i].IsBuiltin("}"))
             {
@@ -1225,7 +1232,7 @@ namespace RT.KitchenSink.ParseCs
                 parseModifiers(m, tok, ref i);
                 if (!tok[i].IsIdentifier("add") && !tok[i].IsIdentifier("remove"))
                     throw new ParseException("'add' or 'remove' expected.", tok[i].Index, ev);
-                m.Type = tok[i].TokenStr == "get" ? MethodType.Get : MethodType.Set;
+                m.Type = tok[i].TokenStr == "add" ? MethodType.Add : MethodType.Remove;
                 if (ev.Methods.Any(me => me.Type == m.Type))
                 {
                     if (m.Type == MethodType.Add)
@@ -1242,7 +1249,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is CsBlock)
                             m.Body = (CsBlock) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, ev);
+                        throw new ParseException(e.Message, e.Index, ev, e);
                     }
                 }
                 else if (tok[i].IsBuiltin(";"))
@@ -1284,7 +1291,7 @@ namespace RT.KitchenSink.ParseCs
                 }
                 catch (ParseException e)
                 {
-                    throw new ParseException(e.Message, e.Index, en);
+                    throw new ParseException(e.Message, e.Index, en, e);
                 }
                 var val = new CsEnumValue { Name = ident, CustomAttributes = cAttribs };
                 en.EnumValues.Add(val);
@@ -1298,7 +1305,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is CsExpression)
                             val.LiteralValue = (CsExpression) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, en);
+                        throw new ParseException(e.Message, e.Index, en, e);
                     }
                 }
                 if (!tok[i].IsBuiltin(",") && !tok[i].IsBuiltin("}"))
@@ -1344,7 +1351,7 @@ namespace RT.KitchenSink.ParseCs
                     deleg.Parameters = (List<CsParameter>) e.IncompleteResult;
                 else if (e.IncompleteResult is Dictionary<string, List<CsGenericTypeConstraint>>)
                     deleg.GenericTypeConstraints = (Dictionary<string, List<CsGenericTypeConstraint>>) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, deleg);
+                throw new ParseException(e.Message, e.Index, deleg, e);
             }
 
             if (!tok[i].IsBuiltin(";"))
@@ -1371,7 +1378,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is List<CsNameAndCustomAttributes>)
                         type.GenericTypeParameters = (List<CsNameAndCustomAttributes>) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, type);
+                    throw new ParseException(e.Message, e.Index, type, e);
                 }
             }
 
@@ -1392,7 +1399,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsTypeName && type is CsTypeLevel2)
                         type.BaseTypes.Add((CsTypeName) e.IncompleteResult);
-                    throw new ParseException(e.Message, e.Index, type);
+                    throw new ParseException(e.Message, e.Index, type, e);
                 }
             }
 
@@ -1403,7 +1410,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is Dictionary<string, List<CsGenericTypeConstraint>>)
                         type.GenericTypeConstraints = (Dictionary<string, List<CsGenericTypeConstraint>>) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, type);
+                    throw new ParseException(e.Message, e.Index, type, e);
                 }
             }
 
@@ -1425,7 +1432,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsMember)
                         type.Members.Add((CsMember) e.IncompleteResult);
-                    throw new ParseException(e.Message, e.Index, type);
+                    throw new ParseException(e.Message, e.Index, type, e);
                 }
             }
             if (!tok[i].IsBuiltin("}"))
@@ -1503,7 +1510,7 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsYieldReturnStatement { Expression = (CsExpression) e.IncompleteResult });
+                        throw new ParseException(e.Message, e.Index, new CsYieldReturnStatement { Expression = (CsExpression) e.IncompleteResult }, e);
                     throw;
                 }
                 var yieldreturn = new CsYieldReturnStatement { Expression = expr };
@@ -1598,7 +1605,7 @@ namespace RT.KitchenSink.ParseCs
                     if (e.IncompleteResult is CsStatement)
                     {
                         fixd.Body = (CsStatement) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, fixd);
+                        throw new ParseException(e.Message, e.Index, fixd, e);
                     }
                     throw;
                 }
@@ -1606,7 +1613,7 @@ namespace RT.KitchenSink.ParseCs
             }
 
             // Slight hack: parseVariableDeclarationOrExpressionStatement() does not consume the trailing ';' of the statement.
-            // This is so that the same method can be used in parsing 'using' for 'for' statements.
+            // This is so that the same method can be used in parsing 'using' and 'for' statements.
             var stmt = parseVariableDeclarationOrExpressionStatement(tok, ref i);
             if (!tok[i].IsBuiltin(";"))
                 throw new ParseException("';' expected.", tok[i].Index, stmt);
@@ -1628,7 +1635,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsStatement)
                         block.Statements.Add((CsStatement) e.IncompleteResult);
-                    throw new ParseException(e.Message, e.Index, block);
+                    throw new ParseException(e.Message, e.Index, block, e);
                 }
             }
             i++;
@@ -1670,7 +1677,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsBlock)
                         ctch.Block = (CsBlock) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, tr);
+                    throw new ParseException(e.Message, e.Index, tr, e);
                 }
             }
             if (tok[i].IsBuiltin("finally"))
@@ -1683,7 +1690,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsBlock)
                         tr.Finally = (CsBlock) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, tr);
+                    throw new ParseException(e.Message, e.Index, tr, e);
                 }
             }
             return tr;
@@ -1708,7 +1715,7 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsStatement)
                 {
                     stat.Statement = (CsStatement) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, stat);
+                    throw new ParseException(e.Message, e.Index, stat, e);
                 }
                 throw;
             }
@@ -1734,7 +1741,7 @@ namespace RT.KitchenSink.ParseCs
                     ifs.Statement = (CsStatement) e.IncompleteResult;
                 else
                     ifs.Statement = new CsEmptyStatement();
-                throw new ParseException(e.Message, e.Index, ifs);
+                throw new ParseException(e.Message, e.Index, ifs, e);
             }
             if (tok[i].IsBuiltin("else"))
             {
@@ -1744,7 +1751,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsStatement)
                         ifs.ElseStatement = (CsStatement) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, ifs);
+                    throw new ParseException(e.Message, e.Index, ifs, e);
                 }
             }
             return ifs;
@@ -1768,7 +1775,7 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsStatement)
                 {
                     usin.Body = (CsStatement) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, usin);
+                    throw new ParseException(e.Message, e.Index, usin, e);
                 }
                 throw;
             }
@@ -1839,7 +1846,7 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsStatement)
                 {
                     fore.Body = (CsStatement) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, fore);
+                    throw new ParseException(e.Message, e.Index, fore, e);
                 }
                 throw;
             }
@@ -1878,7 +1885,7 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsStatement)
                 {
                     fore.Body = (CsStatement) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, fore);
+                    throw new ParseException(e.Message, e.Index, fore, e);
                 }
                 throw;
             }
@@ -1898,7 +1905,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (e.IncompleteResult is CsExpression)
                     sw.SwitchOn = (CsExpression) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, sw);
+                throw new ParseException(e.Message, e.Index, sw, e);
             }
             if (!tok[i].IsBuiltin(")"))
                 throw new ParseException("')' expected.", tok[i].Index, sw);
@@ -1938,7 +1945,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is CsStatement)
                             cas.Statements.Add((CsStatement) e.IncompleteResult);
-                        throw new ParseException(e.Message, e.Index, sw);
+                        throw new ParseException(e.Message, e.Index, sw, e);
                     }
                 }
             }
@@ -1962,7 +1969,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (e.IncompleteResult is CsExpression)
                     ret.Expression = (CsExpression) e.IncompleteResult;
-                throw new ParseException(e.Message, e.Index, ret);
+                throw new ParseException(e.Message, e.Index, ret, e);
             }
             if (!tok[i].IsBuiltin(";"))
                 throw new ParseException("';' expected. (3)", tok[i].Index, ret);
@@ -2017,7 +2024,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsExpression && name != null)
                         decl.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
-                    throw new ParseException(e.Message, e.Index, decl);
+                    throw new ParseException(e.Message, e.Index, decl, e);
                 }
 
                 // This function does not consume the trailing ‘;’ of the statement, so that ‘using’ and ‘for’ can use it (where the statement can end with a ‘)’ or ‘,’ instead).
@@ -2037,9 +2044,9 @@ namespace RT.KitchenSink.ParseCs
                 if (e.IncompleteResult is CsExpression)
                 {
                     exprStat.Expression = (CsExpression) e.IncompleteResult;
-                    throw new ParseException(msg, e.Index, exprStat);
+                    throw new ParseException(msg, e.Index, exprStat, e);
                 }
-                throw new ParseException(msg, e.Index, e.IncompleteResult);
+                throw new ParseException(msg, e.Index, e.IncompleteResult, e);
             }
 
             // This function does not consume the trailing ‘;’ of the statement, so that ‘using’ and ‘for’ can use it (where the statement can end with a ‘)’ or ‘,’ instead).
@@ -2101,7 +2108,7 @@ namespace RT.KitchenSink.ParseCs
                 if (analyse is CsBinaryTypeOperatorExpression)
                 {
                     var bin = (CsBinaryTypeOperatorExpression) analyse;
-                    if (bin.Right is CsNullableTypeName)
+                    if (bin.Right is CsNullableTypeName && bin.Operator == BinaryTypeOperator.Is)
                     {
                         bin.Right = ((CsNullableTypeName) bin.Right).InnerType;
                         haveQ = true;
@@ -2113,16 +2120,16 @@ namespace RT.KitchenSink.ParseCs
             {
                 CsExpression middle;
                 try { middle = parseExpression(tok, ref i); }
-                catch (ParseException e) { throw new ParseException(e.Message, e.Index, left); }
+                catch (ParseException e) { throw new ParseException(e.Message, e.Index, left, e); }
                 if (!tok[i].IsBuiltin(":"))
                     throw new ParseException("Unterminated conditional operator. ':' expected.", tok[i].Index, left);
                 i++;
-                try { return new CsConditionalExpression { Left = left, Middle = middle, Right = parseExpression(tok, ref i) }; }
+                try { return new CsConditionalExpression { Index = tok[i].Index, Left = left, Middle = middle, Right = parseExpression(tok, ref i) }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsConditionalExpression { Left = left, Middle = middle, Right = (CsExpression) e.IncompleteResult });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsConditionalExpression { Index = tok[i].Index, Left = left, Middle = middle, Right = (CsExpression) e.IncompleteResult }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2139,8 +2146,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Coalesce });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Coalesce }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2157,8 +2164,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.OrOr });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.OrOr }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2175,8 +2182,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.AndAnd });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.AndAnd }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2193,8 +2200,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Or });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Or }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2211,8 +2218,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Xor });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Xor }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2229,8 +2236,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.And });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.And }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2248,8 +2255,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2269,8 +2276,8 @@ namespace RT.KitchenSink.ParseCs
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsTypeName)
-                            throw new ParseException(e.Message, e.Index, new CsBinaryTypeOperatorExpression { Left = left, Right = (CsTypeName) e.IncompleteResult, Operator = op });
-                        throw new ParseException(e.Message, e.Index, left);
+                            throw new ParseException(e.Message, e.Index, new CsBinaryTypeOperatorExpression { Left = left, Right = (CsTypeName) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, left, e);
                     }
                 }
                 else
@@ -2281,8 +2288,8 @@ namespace RT.KitchenSink.ParseCs
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsExpression)
-                            throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op });
-                        throw new ParseException(e.Message, e.Index, left);
+                            throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, left, e);
                     }
                 }
             }
@@ -2301,8 +2308,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2320,8 +2327,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2339,8 +2346,8 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op });
-                    throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                    throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
             return left;
@@ -2380,7 +2387,7 @@ namespace RT.KitchenSink.ParseCs
                     try { left = new CsMemberAccessExpression { AccessType = type, Left = left, Right = parseExpressionIdentifier(tok, ref i) }; }
                     catch (ParseException e)
                     {
-                        throw new ParseException(e.Message, e.Index, left);
+                        throw new ParseException(e.Message, e.Index, left, e);
                     }
                 }
                 else if (tok[i].IsBuiltin("(") || tok[i].IsBuiltin("["))
@@ -2391,7 +2398,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is List<CsArgument>)
                             func.Arguments = (List<CsArgument>) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, func);
+                        throw new ParseException(e.Message, e.Index, func, e);
                     }
                     left = func;
                 }
@@ -2461,7 +2468,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsExpression)
                         arguments.Add(new CsArgument { ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
-                    throw new ParseException(e.Message, e.Index, arguments);
+                    throw new ParseException(e.Message, e.Index, arguments, e);
                 }
             }
             i++;
@@ -2482,7 +2489,7 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is List<CsExpression>)
-                        throw new ParseException(e.Message, e.Index, new CsArrayLiteralExpression { Expressions = (List<CsExpression>) e.IncompleteResult });
+                        throw new ParseException(e.Message, e.Index, new CsArrayLiteralExpression { Expressions = (List<CsExpression>) e.IncompleteResult }, e);
                     throw;
                 }
             }
@@ -2517,7 +2524,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsTypeName)
                         expr.Type = (CsTypeName) e.IncompleteResult;
-                    throw new ParseException(e.Message, e.Index, expr);
+                    throw new ParseException(e.Message, e.Index, expr, e);
                 }
                 expr.Type = ty;
                 if (!tok[i].IsBuiltin(")"))
@@ -2551,7 +2558,7 @@ namespace RT.KitchenSink.ParseCs
                     {
                         if (e.IncompleteResult is List<CsExpression>)
                             anon.Initializers = (List<CsExpression>) e.IncompleteResult;
-                        throw new ParseException(e.Message, e.Index, anon);
+                        throw new ParseException(e.Message, e.Index, anon, e);
                     }
                     return anon;
                 }
@@ -2565,7 +2572,7 @@ namespace RT.KitchenSink.ParseCs
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is List<CsExpression>)
-                            throw new ParseException(e.Message, e.Index, new CsNewImplicitlyTypedArrayExpression { Items = (List<CsExpression>) e.IncompleteResult });
+                            throw new ParseException(e.Message, e.Index, new CsNewImplicitlyTypedArrayExpression { Items = (List<CsExpression>) e.IncompleteResult }, e);
                         throw;
                     }
                 }
@@ -2591,7 +2598,7 @@ namespace RT.KitchenSink.ParseCs
                                 constructor.Arguments = (List<CsArgument>) e.IncompleteResult;
                             else if (e.IncompleteResult is List<CsExpression>)
                                 constructor.Initializers = (List<CsExpression>) e.IncompleteResult;
-                            throw new ParseException(e.Message, e.Index, constructor);
+                            throw new ParseException(e.Message, e.Index, constructor, e);
                         }
                         return constructor;
                     }
@@ -2604,7 +2611,7 @@ namespace RT.KitchenSink.ParseCs
                         {
                             if (e.IncompleteResult is List<CsExpression>)
                                 constructor.Initializers = (List<CsExpression>) e.IncompleteResult;
-                            throw new ParseException(e.Message, e.Index, constructor);
+                            throw new ParseException(e.Message, e.Index, constructor, e);
                         }
                         return constructor;
                     }
@@ -2641,7 +2648,7 @@ namespace RT.KitchenSink.ParseCs
                             {
                                 if (e.IncompleteResult is List<CsExpression>)
                                     ret.Items = (List<CsExpression>) e.IncompleteResult;
-                                throw new ParseException(e.Message, e.Index, ret);
+                                throw new ParseException(e.Message, e.Index, ret, e);
                             }
                         }
                         return ret;
@@ -2720,7 +2727,7 @@ namespace RT.KitchenSink.ParseCs
                         if (e.IncompleteResult is CsBlock)
                         {
                             lambda.Block = (CsBlock) e.IncompleteResult;
-                            throw new ParseException(e.Message, e.Index, lambda);
+                            throw new ParseException(e.Message, e.Index, lambda, e);
                         }
                         throw;
                     }
@@ -2735,7 +2742,7 @@ namespace RT.KitchenSink.ParseCs
                         if (e.IncompleteResult is CsExpression)
                         {
                             lambda.Body = (CsExpression) e.IncompleteResult;
-                            throw new ParseException(e.Message, e.Index, lambda);
+                            throw new ParseException(e.Message, e.Index, lambda, e);
                         }
                         throw;
                     }
@@ -2798,12 +2805,12 @@ namespace RT.KitchenSink.ParseCs
                     try
                     {
                         i = afterType;
-                        return new CsCastExpression { Operand = parseExpressionUnary(tok, ref i), Type = typeName };
+                        return new CsCastExpression { Index = tok[i].Index, Operand = parseExpressionUnary(tok, ref i), Type = typeName };
                     }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsExpression)
-                            throw new ParseException(e.Message, e.Index, new CsCastExpression { Operand = (CsExpression) e.IncompleteResult, Type = typeName });
+                            throw new ParseException(e.Message, e.Index, new CsCastExpression { Index = tok[i].Index, Operand = (CsExpression) e.IncompleteResult, Type = typeName }, e);
                         throw;
                     }
                 }
@@ -2843,7 +2850,7 @@ namespace RT.KitchenSink.ParseCs
                 return simpleName;
             }
 
-        afterTy:
+            afterTy:
             var ret = new CsSimpleNameIdentifier { Name = tok[i].Identifier() };
             i++;
             return ret;
@@ -2860,7 +2867,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (e.IncompleteResult is CsExpression)
                         list.Add((CsExpression) e.IncompleteResult);
-                    throw new ParseException(e.Message, e.Index, list);
+                    throw new ParseException(e.Message, e.Index, list, e);
                 }
                 if (!tok[i].IsBuiltin("}") && !tok[i].IsBuiltin(","))
                     throw new ParseException("'}' or ',' expected.", tok[i].Index, list);
