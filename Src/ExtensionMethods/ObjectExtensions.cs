@@ -50,7 +50,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Turns the specified value into a nullable value.</summary>
         /// <typeparam name="TInput">Any non-nullable value type.</typeparam>
         /// <param name="input">Any value.</param>
-        /// <returns>The same value case as nullable.</returns>
+        /// <returns>The same value cast as nullable.</returns>
         public static TInput? Nullable<TInput>(this TInput input) where TInput : struct
         {
             return (TInput?) input;
@@ -67,6 +67,7 @@ namespace RT.Util.ExtensionMethods
         /// <item><description>There is no field with the specified name.</description></item>
         /// </list>
         /// </exception>
+        /// <remarks>This method is intended to be used only for debugging. Do not rely on it in production code.</remarks>
         public static T GetFieldValue<T>(this object instance, string fieldName)
         {
             var field = instance.GetType().GetAllFields().Single(f => f.Name == fieldName);
