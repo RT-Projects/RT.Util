@@ -143,7 +143,7 @@ namespace RT.Util
                     case SettingsSerializer.DotNetBinary:
                         PathUtil.CreatePathToFile(filename);
                         var bf = new BinaryFormatter();
-                        using (var fs = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                        using (var fs = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
                             bf.Serialize(fs, settings);
                         break;
                     default:
