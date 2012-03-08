@@ -577,8 +577,8 @@ namespace RT.Util.Xml
                     saveType = typeOptions.SubstituteType;
                 }
 
-                // Preserve reference identity of reference types
-                if (!(originalObject is ValueType))
+                // Preserve reference identity of reference types except string
+                if (!(originalObject is ValueType) && !(originalObject is string))
                 {
                     if (_rememberC.ContainsKey(originalObject))
                     {

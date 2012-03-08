@@ -417,37 +417,34 @@ namespace RT.Util.Xml
                 <item>
                   <Int1>5</Int1>
                   <Int2>5</Int2>
-                  <String1 refid=""0"">aaaaa</String1>
-                  <String2 ref=""0"" />
+                  <String1>aaaaa</String1>
+                  <String2>aaaaa</String2>
                   <String3>aaaaa</String3>
-                  <Version1 refid=""1"">
+                  <Version1 refid=""0"">
                     <Major>4</Major>
                     <Minor>7</Minor>
                     <Build>-1</Build>
                     <Revision>-1</Revision>
                   </Version1>
-                  <Version2 ref=""1"" />
+                  <Version2 ref=""0"" />
                   <Version3>
                     <Major>4</Major>
                     <Minor>7</Minor>
                     <Build>-1</Build>
                     <Revision>-1</Revision>
                   </Version3>
-                  <List1 refid=""2"" />
-                  <List2 ref=""2"" />
+                  <List1 refid=""1"" />
+                  <List2 ref=""1"" />
                   <List3 />
                 </item>")));
 
             var cn = XmlClassify.ObjectFromXElement<classRefTest1>(XElement.Parse(xml.ToString()));
-            Assert.IsTrue(object.ReferenceEquals(cn.String1, cn.String2));
-            Assert.IsFalse(object.ReferenceEquals(cn.String1, cn.String3));
             Assert.IsTrue(object.ReferenceEquals(cn.Version1, cn.Version2));
             Assert.IsFalse(object.ReferenceEquals(cn.Version1, cn.Version3));
             Assert.IsTrue(object.ReferenceEquals(cn.List1, cn.List2));
             Assert.IsFalse(object.ReferenceEquals(cn.List1, cn.List3));
 
             // Some sanity checks
-            Assert.IsFalse(object.ReferenceEquals(co.String1, cn.String1));
             Assert.IsFalse(object.ReferenceEquals(co.Version1, cn.Version1));
             Assert.IsFalse(object.ReferenceEquals(co.List1, cn.List1));
             Assert.AreEqual(co.String1, cn.String2);
@@ -483,12 +480,12 @@ namespace RT.Util.Xml
                     <item>5</item>
                   </ListInt>
                   <ListString>
-                    <item refid=""0"">aaaaa</item>
                     <item>aaaaa</item>
-                    <item ref=""0"" />
+                    <item>aaaaa</item>
+                    <item>aaaaa</item>
                   </ListString>
                   <ListVersion>
-                    <item refid=""1"">
+                    <item refid=""0"">
                       <Major>4</Major>
                       <Minor>7</Minor>
                       <Build>-1</Build>
@@ -500,25 +497,22 @@ namespace RT.Util.Xml
                       <Build>-1</Build>
                       <Revision>-1</Revision>
                     </item>
-                    <item ref=""1"" />
+                    <item ref=""0"" />
                   </ListVersion>
                   <ListList>
-                    <item refid=""2"" />
+                    <item refid=""1"" />
                     <item />
-                    <item ref=""2"" />
+                    <item ref=""1"" />
                   </ListList>
                 </item>")));
 
             var cn = XmlClassify.ObjectFromXElement<classRefTest2>(XElement.Parse(xml.ToString()));
-            Assert.IsTrue(object.ReferenceEquals(cn.ListString[0], cn.ListString[2]));
-            Assert.IsFalse(object.ReferenceEquals(cn.ListString[0], cn.ListString[1]));
             Assert.IsTrue(object.ReferenceEquals(cn.ListVersion[0], cn.ListVersion[2]));
             Assert.IsFalse(object.ReferenceEquals(cn.ListVersion[0], cn.ListVersion[1]));
             Assert.IsTrue(object.ReferenceEquals(cn.ListList[0], cn.ListList[2]));
             Assert.IsFalse(object.ReferenceEquals(cn.ListList[0], cn.ListList[1]));
 
             // Some sanity checks
-            Assert.IsFalse(object.ReferenceEquals(co.ListString[0], cn.ListString[0]));
             Assert.IsFalse(object.ReferenceEquals(co.ListVersion[0], cn.ListVersion[0]));
             Assert.IsFalse(object.ReferenceEquals(co.ListList[0], cn.ListList[0]));
             Assert.AreEqual(co.ListString[0], cn.ListString[2]);
