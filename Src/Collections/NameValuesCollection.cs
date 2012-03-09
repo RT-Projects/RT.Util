@@ -273,31 +273,56 @@ namespace RT.Util.Collections
     /// <typeparam name="TValue">The type of the values stored in this collection.</typeparam>
     public struct ValuesCollection<TValue> : IList<TValue>
     {
-        /// <summary>The collection being wrapped. Both "null" and an empty list may stand for empty.</summary>
+        /// <summary>The collection being wrapped. Both null and an empty list may stand for empty.</summary>
         private List<TValue> _values;
+
         /// <summary>
-        /// If false, the wrapped collection cannot be modified through this struct.
-        /// The reason this is in the opposite sense to "isReadOnly" is that this way default(ValuesCollection)
-        /// results in a valid, empty read-only collection.
+        /// If false, the wrapped collection cannot be modified through this struct (read-only).
+        /// The reason this isn’t “isReadOnly” is that <c>default(ValuesCollection&lt;TValue&gt;)</c>
+        /// and <c>new ValuesCollection&lt;TValue&gt;()</c> would otherwise generate an invalid
+        /// collection: <paramref name="_values"/> would be null, so no values could be added.
         /// </summary>
         private bool _isWritable;
 
         /// <summary>
-        /// Creates a wrapper for the specified list. The list may be null to represent an empty
+        /// Creates a wrapper for the specified list instance. The list may be null to represent an empty
         /// wrapper provided that the wrapper is read-only.
         /// </summary>
         /// <param name="values">The list to wrap. May be null for an empty read-only wrapper.</param>
         /// <param name="isReadOnly">Specifies whether the wrapper allows the wrapped list to be modified.</param>
+        /// <remarks>This constructor does NOT create a copy of the list. Thus, even if <paramref name="isReadOnly"/> is true,
+        /// the list may still be modified if a reference to the list is accessed elsewhere. Consider only passing in lists which you
+        /// created and are not passed or used anywhere else.</remarks>
         public ValuesCollection(List<TValue> values, bool isReadOnly)
         {
-            if (values == null && !isReadOnly) throw new ArgumentException("A ValuesCollection<> with a null underlying list must be created as read-only.");
+            if (values == null && !isReadOnly)
+                throw new ArgumentException("A {0} with a null underlying list must be created as read-only.".Fmt(typeof(ValuesCollection<TValue>).FullName));
             _values = values;
             _isWritable = !isReadOnly;
         }
 
-        private void throwNonWritable()
+        /// <summary>Creates a writable (non-read-only) empty <see cref="ValuesCollection{TValue}"/>.</summary>
+        public static ValuesCollection<TValue> CreateEmpty() { return new ValuesCollection<TValue>(new List<TValue>(), isReadOnly: false); }
+
+        /// <summary>Creates a writable (non-read-only) <see cref="ValuesCollection{TValue}"/> containing the specified values.</summary>
+        public static ValuesCollection<TValue> Create(params TValue[] initialValues) { return new ValuesCollection<TValue>(new List<TValue>(initialValues), isReadOnly: false); }
+
+        /// <summary>Creates a read-only <see cref="ValuesCollection{TValue}"/> containing the specified values.</summary>
+        public static ValuesCollection<TValue> CreateReadOnly(params TValue[] initialValues) { return new ValuesCollection<TValue>(new List<TValue>(initialValues), isReadOnly: true); }
+
+        /// <summary>Creates a read-only <see cref="ValuesCollection{TValue}"/> containing the specified values.</summary>
+        public static implicit operator ValuesCollection<TValue>(TValue[] initialValues) { return CreateReadOnly(initialValues); }
+
+        /// <summary>Creates a read-only <see cref="ValuesCollection{TValue}"/> wrapping the specified list instance.</summary>
+        /// <remarks>This operator does NOT create a copy of the list. Thus, even if <paramref name="isReadOnly"/> is true,
+        /// the list may still be modified if a reference to the list is accessed elsewhere. Consider only passing in lists which you
+        /// created and are not passed or used anywhere else.</remarks>
+        public static implicit operator ValuesCollection<TValue>(List<TValue> values) { return new ValuesCollection<TValue>(values, isReadOnly: true); }
+
+        private void throwIfReadOnly()
         {
-            throw new InvalidOperationException("Cannot execute method because the collection is read-only");
+            if (!_isWritable)
+                throw new InvalidOperationException("Cannot execute method because the collection is read-only.");
         }
 
         /// <summary>
@@ -314,7 +339,7 @@ namespace RT.Util.Collections
         /// </summary>
         public void Insert(int index, TValue item)
         {
-            if (!_isWritable) throwNonWritable();
+            throwIfReadOnly();
             _values.Insert(index, item);
         }
 
@@ -323,7 +348,7 @@ namespace RT.Util.Collections
         /// </summary>
         public void RemoveAt(int index)
         {
-            if (!_isWritable) throwNonWritable();
+            throwIfReadOnly();
             _values.RemoveAt(index);
         }
 
@@ -339,7 +364,7 @@ namespace RT.Util.Collections
             }
             set
             {
-                if (!_isWritable) throwNonWritable();
+                throwIfReadOnly();
                 _values[index] = value;
             }
         }
@@ -361,7 +386,7 @@ namespace RT.Util.Collections
         /// </summary>
         public void Add(TValue item)
         {
-            if (!_isWritable) throwNonWritable();
+            throwIfReadOnly();
             _values.Add(item);
         }
 
@@ -370,7 +395,7 @@ namespace RT.Util.Collections
         /// </summary>
         public void Clear()
         {
-            if (!_isWritable) throwNonWritable();
+            throwIfReadOnly();
             _values.Clear();
         }
 
@@ -412,7 +437,7 @@ namespace RT.Util.Collections
         /// </summary>
         public bool Remove(TValue item)
         {
-            if (!_isWritable) throwNonWritable();
+            throwIfReadOnly();
             return _values.Remove(item);
         }
 
