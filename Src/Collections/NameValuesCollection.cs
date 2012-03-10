@@ -280,7 +280,7 @@ namespace RT.Util.Collections
         /// If false, the wrapped collection cannot be modified through this struct (read-only).
         /// The reason this isn’t “isReadOnly” is that <c>default(ValuesCollection&lt;TValue&gt;)</c>
         /// and <c>new ValuesCollection&lt;TValue&gt;()</c> would otherwise generate an invalid
-        /// collection: <paramref name="_values"/> would be null, so no values could be added.
+        /// collection: <see name="_values"/> would be null, so no values could be added.
         /// </summary>
         private bool _isWritable;
 
@@ -314,9 +314,8 @@ namespace RT.Util.Collections
         public static implicit operator ValuesCollection<TValue>(TValue[] initialValues) { return CreateReadOnly(initialValues); }
 
         /// <summary>Creates a read-only <see cref="ValuesCollection{TValue}"/> wrapping the specified list instance.</summary>
-        /// <remarks>This operator does NOT create a copy of the list. Thus, even if <paramref name="isReadOnly"/> is true,
-        /// the list may still be modified if a reference to the list is accessed elsewhere. Consider only passing in lists which you
-        /// created and are not passed or used anywhere else.</remarks>
+        /// <remarks>This operator does NOT create a copy of the list. The list may still be modified if a reference to the list is accessed
+        /// elsewhere. Consider only passing in lists which you created and are not passed or used anywhere else.</remarks>
         public static implicit operator ValuesCollection<TValue>(List<TValue> values) { return new ValuesCollection<TValue>(values, isReadOnly: true); }
 
         private void throwIfReadOnly()
