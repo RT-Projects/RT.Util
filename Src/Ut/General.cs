@@ -95,13 +95,16 @@ namespace RT.Util
         /// <summary>
         /// Sends the specified sequence of key strokes to the active application.
         /// </summary>
-        /// <param name="keys">A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or Tuple&lt;Keys, bool&gt;.</param>
+        /// <param name="keys">A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or <see cref="Tuple&lt;Keys, bool&gt;"/>.</param>
         /// <exception cref="ArgumentException">
         ///     <list type="bullet">
         ///         <item><description><paramref name="keys"/> was null.</description></item>
-        ///         <item><description><paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/> and <see cref="char"/> are accepted.</description></item>
+        ///         <item><description><paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see cref="char"/> and <see cref="Tuple&lt;Keys, bool&gt;"/> are accepted.</description></item>
         ///     </list>
         /// </exception>
+        /// <remarks>For objects of type <see cref="Keys"/>, the relevant key is pressed and released. For objects of type <see cref="char"/>,
+        /// the specified Unicode character is simulated as a keypress and release. For objects of type <see cref="Tuple&lt;Keys, bool&gt;"/>,
+        /// the bool specifies whether to simulate only a key-down (false) or only a key-up (true).</remarks>
         public static void SendKeystrokes(IEnumerable<object> keys)
         {
             if (keys == null)
