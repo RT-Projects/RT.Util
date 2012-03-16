@@ -817,7 +817,12 @@ namespace RT.KitchenSink.ParseCs
                     return parseMemberDeclarationComplexCase(tok, ref i, customAttribs, j, afterModifiers, isEvent, type, name);
                 }
                 else
-                    throw new ParseException("For a field, '=', ',' or ';' expected. For a method, '(' or '<' expected. For a property, '{' expected.", tok[j].Index);
+                {
+                    if (isEvent)
+                        throw new ParseException("'=', ',', ';' or '{' expected.", tok[j].Index);
+                    else
+                        throw new ParseException("For a field, '=', ',' or ';' expected. For a method, '(' or '<' expected. For a property, '{' expected.", tok[j].Index);
+                }
             }
         }
         private static CsMember parseMemberDeclarationComplexCase(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j, int afterModifiers, bool isEvent, CsTypeName type, string name)
@@ -898,7 +903,7 @@ namespace RT.KitchenSink.ParseCs
                         var evnt = new CsEvent { Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Name = name } }, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
                         parseModifiers(evnt, tok, ref i);
                         if (i != afterModifiers)
-                            throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
+                            throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
                         i = j;
                         parseEventBody(evnt, tok, ref i);
                         return evnt;
@@ -2086,7 +2091,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsExpression parseExpressionConditional(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
-            var left = parseExpressionCoaslesce(tok, ref i, tryNotToThrow);
+            var left = parseExpressionCoalesce(tok, ref i, tryNotToThrow);
             if (left == null)
                 return null;
             bool haveQ = false;
@@ -2134,15 +2139,15 @@ namespace RT.KitchenSink.ParseCs
             }
             return left;
         }
-        private static CsExpression parseExpressionCoaslesce(TokenJar tok, ref int i, bool tryNotToThrow = false)
+        private static CsExpression parseExpressionCoalesce(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
             var left = parseExpressionBoolOr(tok, ref i, tryNotToThrow);
             if (left == null)
                 return null;
-            while (tok[i].IsBuiltin("??"))
+            if (tok[i].IsBuiltin("??"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionBoolOr(tok, ref i), Operator = BinaryOperator.Coalesce }; }
+                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionCoalesce(tok, ref i), Operator = BinaryOperator.Coalesce }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)

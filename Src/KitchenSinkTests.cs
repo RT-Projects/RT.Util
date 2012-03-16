@@ -2,7 +2,6 @@
 using System.Reflection;
 using NUnit.Direct;
 using NUnit.Framework;
-using RT.Util;
 
 [assembly: Timeout(20000)]
 
