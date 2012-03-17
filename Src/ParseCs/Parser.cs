@@ -52,7 +52,7 @@ namespace RT.KitchenSink.ParseCs
         #region Misc
         private static CsDocument parseDocument(TokenJar tok, ref int i)
         {
-            var doc = new CsDocument();
+            var doc = new CsDocument { Index = tok[i].Index };
             try
             {
                 while (tok.IndexExists(i))
@@ -105,7 +105,7 @@ namespace RT.KitchenSink.ParseCs
                 if (!tok[i].IsBuiltin(";"))
                     throw new ParseException("';' expected. (1)", tok[i].Index);
                 i++;
-                return new CsUsingAlias { Alias = firstIdent, Original = typeIdent };
+                return new CsUsingAlias { Index = tok[i].Index, Alias = firstIdent, Original = typeIdent };
             }
             else if (tok[i].IsBuiltin("."))
             {
@@ -124,12 +124,12 @@ namespace RT.KitchenSink.ParseCs
                 if (!tok[i].IsBuiltin(";"))
                     throw new ParseException("'.' or ';' expected.", tok[i].Index);
                 i++;
-                return new CsUsingNamespace { Namespace = sb.ToString() };
+                return new CsUsingNamespace { Index = tok[i].Index, Namespace = sb.ToString() };
             }
             else if (tok[i].IsBuiltin(";"))
             {
                 i++;
-                return new CsUsingNamespace { Namespace = firstIdent };
+                return new CsUsingNamespace { Index = tok[i].Index, Namespace = firstIdent };
             }
 
             throw new ParseException("'=', '.' or ';' expected.", tok[i].Index);
@@ -152,7 +152,7 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException("'.' or '{' expected.", tok[i].Index);
             i++;
 
-            var ns = new CsNamespace { Name = sb.ToString() };
+            var ns = new CsNamespace { Index = tok[i].Index, Name = sb.ToString() };
             try
             {
                 while (!tok[i].IsBuiltin("}"))
@@ -220,7 +220,7 @@ namespace RT.KitchenSink.ParseCs
             while (true)
             {
                 var type = parseTypeName(tok, ref i, 0).Item1;
-                var attr = new CsCustomAttribute { Type = type };
+                var attr = new CsCustomAttribute { Index = tok[i].Index, Type = type };
                 group.Add(attr);
                 if (tok[i].IsBuiltin("]"))
                 {
@@ -254,7 +254,7 @@ namespace RT.KitchenSink.ParseCs
                         var posName = tok[i].TokenStr;
                         i += 2;
                         var expr = parseExpression(tok, ref i);
-                        attr.PropertySetters.Add(new CsNameAndExpression { Name = posName, Expression = expr });
+                        attr.PropertySetters.Add(new CsNameAndExpression { Index = tok[i].Index, Name = posName, Expression = expr });
                     }
                     else if (acceptOptionalArgs && tok[i].Type == TokenType.Identifier && tok[i + 1].IsBuiltin(":"))
                     {
@@ -262,10 +262,10 @@ namespace RT.KitchenSink.ParseCs
                         var posName = tok[i].TokenStr;
                         i += 2;
                         var expr = parseExpression(tok, ref i);
-                        attr.Arguments.Add(new CsArgument { ArgumentName = posName, ArgumentExpression = expr });
+                        attr.Arguments.Add(new CsArgument { Index = tok[i].Index, ArgumentName = posName, ArgumentExpression = expr });
                     }
                     else if (acceptPositionalArgs)
-                        attr.Arguments.Add(new CsArgument { ArgumentExpression = parseExpression(tok, ref i) });
+                        attr.Arguments.Add(new CsArgument { Index = tok[i].Index, ArgumentExpression = parseExpression(tok, ref i) });
                     else
                         throw new ParseException("Identifier '=' <expression>, or ')' expected.", tok[i].Index);
                 }
@@ -283,7 +283,7 @@ namespace RT.KitchenSink.ParseCs
                 else
                     throw new ParseException("']' or ',' expected. (1)", tok[i].Index);
             }
-            return new CsCustomAttributeGroup { CustomAttributes = group, Location = loc, NoNewLine = noNewLine };
+            return new CsCustomAttributeGroup { Index = tok[i].Index, CustomAttributes = group, Location = loc, NoNewLine = noNewLine };
         }
         private static List<CsNameAndCustomAttributes> parseGenericTypeParameterList(TokenJar tok, ref int i)
         {
@@ -305,7 +305,7 @@ namespace RT.KitchenSink.ParseCs
 
                 var name = tok[i].Identifier();
                 i++;
-                genericTypeParameters.Add(new CsNameAndCustomAttributes { Name = name, CustomAttributes = customAttribs });
+                genericTypeParameters.Add(new CsNameAndCustomAttributes { Index = tok[i].Index, Name = name, CustomAttributes = customAttribs });
                 if (tok[i].IsBuiltin(","))
                     continue;
                 else if (tok[i].IsBuiltin(">"))
@@ -335,17 +335,17 @@ namespace RT.KitchenSink.ParseCs
                     i++;
                     if (tok[i].IsBuiltin("new") && tok.IndexExists(i + 2) && tok[i + 1].IsBuiltin("(") && tok[i + 2].IsBuiltin(")"))
                     {
-                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintNew());
+                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintNew { Index = tok[i].Index });
                         i += 3;
                     }
                     else if (tok[i].IsBuiltin("class"))
                     {
-                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintClass());
+                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintClass { Index = tok[i].Index });
                         i++;
                     }
                     else if (tok[i].IsBuiltin("struct"))
                     {
-                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintStruct());
+                        ret.AddSafe(genericParameter, new CsGenericTypeConstraintStruct { Index = tok[i].Index });
                         i++;
                     }
                     else if (tok[i].Type != TokenType.Identifier)
@@ -355,12 +355,12 @@ namespace RT.KitchenSink.ParseCs
                         try
                         {
                             var ident = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords).Item1;
-                            ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { BaseClass = ident });
+                            ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { Index = tok[i].Index, BaseClass = ident });
                         }
                         catch (ParseException e)
                         {
                             if (e.IncompleteResult is CsTypeName)
-                                ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { BaseClass = (CsTypeName) e.IncompleteResult });
+                                ret.AddSafe(genericParameter, new CsGenericTypeConstraintBaseClass { Index = tok[i].Index, BaseClass = (CsTypeName) e.IncompleteResult });
                             throw new ParseException(e.Message, e.Index, ret, e);
                         }
                     }
@@ -453,11 +453,11 @@ namespace RT.KitchenSink.ParseCs
                 if (defaultValue == null)
                     return null;
             }
-            return new CsParameter { Type = result.Item1, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs, DefaultValue = defaultValue };
+            return new CsParameter { Index = tok[i].Index, Type = result.Item1, Name = name, IsThis = isThis, IsOut = isOut, IsRef = isRef, IsParams = isParams, CustomAttributes = customAttribs, DefaultValue = defaultValue };
         }
         private static Tuple<CsTypeName, bool> parseTypeName(TokenJar tok, ref int i, typeIdentifierFlags flags, bool tryNotToThrow = false)
         {
-            var ty = new CsConcreteTypeName();
+            var ty = new CsConcreteTypeName { Index = tok[i].Index };
             if (tok[i].IsIdentifier("global") && tok[i + 1].IsBuiltin("::"))
             {
                 ty.HasGlobal = true;
@@ -470,13 +470,13 @@ namespace RT.KitchenSink.ParseCs
             {
                 CsSimpleName partAbstract;
                 if (tok[j].Type == TokenType.Builtin && (flags & typeIdentifierFlags.AllowKeywords) == typeIdentifierFlags.AllowKeywords && builtinTypes.Contains(tok[j].TokenStr))
-                    partAbstract = new CsSimpleNameBuiltin { Builtin = tok[j].TokenStr };
+                    partAbstract = new CsSimpleNameBuiltin { Index = tok[i].Index, Builtin = tok[j].TokenStr };
                 else if (ty.Parts.Count > 0 && (flags & typeIdentifierFlags.Lenient) != 0 && tok[j].Type != TokenType.Identifier)
                     return Tuple.Create((CsTypeName) ty, false);
                 else if (tok[j].Type != TokenType.Identifier && tryNotToThrow)
                     return null;
                 else
-                    partAbstract = new CsSimpleNameIdentifier { Name = tok[j].Identifier("Type expected.") };
+                    partAbstract = new CsSimpleNameIdentifier { Index = tok[i].Index, Name = tok[j].Identifier("Type expected.") };
                 j++;
                 ty.Parts.Add(partAbstract);
                 i = j;
@@ -490,11 +490,11 @@ namespace RT.KitchenSink.ParseCs
                     j++;
                     if ((flags & typeIdentifierFlags.AllowEmptyGenerics) != 0 && (tok[j].IsBuiltin(",") || tok[j].IsBuiltin(">")))
                     {
-                        part.GenericTypeArguments.Add(new CsEmptyGenericParameter());
+                        part.GenericTypeArguments.Add(new CsEmptyGenericParameter { Index = tok[i].Index });
                         while (tok[j].IsBuiltin(","))
                         {
                             j++;
-                            part.GenericTypeArguments.Add(new CsEmptyGenericParameter());
+                            part.GenericTypeArguments.Add(new CsEmptyGenericParameter { Index = tok[i].Index });
                         }
                         if (!tok[j].IsBuiltin(">"))
                             throw new ParseException("',' or '>' expected. (2)", tok[j].Index, ty);
@@ -552,12 +552,12 @@ namespace RT.KitchenSink.ParseCs
                     while (tok[j].IsBuiltin("*"))
                     {
                         j++;
-                        ret = new CsPointerTypeName { InnerType = ret };
+                        ret = new CsPointerTypeName { Index = tok[i].Index, InnerType = ret };
                     }
                     if (tok[j].IsBuiltin("?"))
                     {
                         j++;
-                        ret = new CsNullableTypeName { InnerType = ret };
+                        ret = new CsNullableTypeName { Index = tok[i].Index, InnerType = ret };
                     }
                 }
                 i = j;
@@ -578,7 +578,7 @@ namespace RT.KitchenSink.ParseCs
                             if ((flags & typeIdentifierFlags.Lenient) == 0)
                                 throw new ParseException("',' or ']' expected.", tok[j].Index, ret);
                             if (arrayRanks.Count > 0)
-                                ret = new CsArrayTypeName { ArrayRanks = arrayRanks, InnerType = ret };
+                                ret = new CsArrayTypeName { Index = tok[i].Index, ArrayRanks = arrayRanks, InnerType = ret };
                             return Tuple.Create(ret, false);
                         }
                         j++;
@@ -586,7 +586,7 @@ namespace RT.KitchenSink.ParseCs
                         arrayRanks.Add(num);
                     }
                     if (arrayRanks.Count > 0)
-                        ret = new CsArrayTypeName { ArrayRanks = arrayRanks, InnerType = ret };
+                        ret = new CsArrayTypeName { Index = tok[i].Index, ArrayRanks = arrayRanks, InnerType = ret };
                 }
             }
             catch (ParseException e)
@@ -765,7 +765,7 @@ namespace RT.KitchenSink.ParseCs
                 if (tok[j].IsBuiltin("this"))
                 {
                     // Indexed property
-                    var prop = new CsIndexedProperty { Type = type, CustomAttributes = customAttribs };
+                    var prop = new CsIndexedProperty { Index = tok[i].Index, Type = type, CustomAttributes = customAttribs };
                     parseModifiers(prop, tok, ref i);
                     if (i != afterModifiers)
                         throw new ParseException("The modifier '{0}' is not valid for indexed properties.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -787,7 +787,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     if (isEvent)
                     {
-                        var evnt = new CsEvent { Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Name = name } }, CustomAttributes = customAttribs };
+                        var evnt = new CsEvent { Index = tok[i].Index, Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Index = tok[i].Index, Name = name } }, CustomAttributes = customAttribs };
                         parseModifiers(evnt, tok, ref i);
                         if (i != afterModifiers)
                             throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -798,7 +798,7 @@ namespace RT.KitchenSink.ParseCs
                     else
                     {
                         // It’s a property
-                        var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs };
+                        var prop = new CsProperty { Index = tok[i].Index, Type = type, Name = name, CustomAttributes = customAttribs };
                         parseModifiers(prop, tok, ref i);
                         if (i != afterModifiers)
                             throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -854,7 +854,7 @@ namespace RT.KitchenSink.ParseCs
                 if (tok[j].IsBuiltin(".") && tok[j + 1].IsBuiltin("this"))
                 {
                     // It's an indexed property
-                    var prop = new CsIndexedProperty { Type = type, CustomAttributes = customAttribs, ImplementsFrom = ty };
+                    var prop = new CsIndexedProperty { Index = tok[i].Index, Type = type, CustomAttributes = customAttribs, ImplementsFrom = ty };
                     parseModifiers(prop, tok, ref i);
                     if (i != afterModifiers)
                         throw new ParseException("The modifier '{0}' is not valid for indexed properties.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -881,7 +881,7 @@ namespace RT.KitchenSink.ParseCs
                         var single = g.GetSingleIdentifier();
                         if (single == null)
                             throw new ParseException("Invalid generic type parameter declaration.", tok[j].Index);
-                        genericTypeParameters.Add(new CsNameAndCustomAttributes { Name = single, CustomAttributes = new List<CsCustomAttributeGroup>() });
+                        genericTypeParameters.Add(new CsNameAndCustomAttributes { Index = tok[i].Index, Name = single, CustomAttributes = new List<CsCustomAttributeGroup>() });
                     }
                 }
                 else if (tok[j].IsBuiltin("<"))
@@ -900,7 +900,7 @@ namespace RT.KitchenSink.ParseCs
                         throw new ParseException("Properties and events cannot be generic.", tok[j].Index);
                     if (isEvent)
                     {
-                        var evnt = new CsEvent { Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Name = name } }, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+                        var evnt = new CsEvent { Index = tok[i].Index, Type = type, NamesAndInitializers = new List<CsNameAndExpression> { new CsNameAndExpression { Index = tok[i].Index, Name = name } }, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
                         parseModifiers(evnt, tok, ref i);
                         if (i != afterModifiers)
                             throw new ParseException("The modifier '{0}' is not valid for events.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -910,7 +910,7 @@ namespace RT.KitchenSink.ParseCs
                     }
                     else
                     {
-                        var prop = new CsProperty { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+                        var prop = new CsProperty { Index = tok[i].Index, Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
                         parseModifiers(prop, tok, ref i);
                         if (i != afterModifiers)
                             throw new ParseException("The modifier '{0}' is not valid for properties.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -928,7 +928,7 @@ namespace RT.KitchenSink.ParseCs
 
             // We’ve taken care of explicitly-implemented properties, indexers and events. The only case left is that it must be a method.
             // implementsFrom and genericTypeParameters are fully populated.
-            CsMethod meth = new CsMethod { Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom, GenericTypeParameters = genericTypeParameters };
+            CsMethod meth = new CsMethod { Index = tok[i].Index, Type = type, Name = name, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom, GenericTypeParameters = genericTypeParameters };
             parseModifiers(meth, tok, ref i);
             if (i != afterModifiers)
                 throw new ParseException("The modifier '{0}' is not valid for methods.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -972,9 +972,9 @@ namespace RT.KitchenSink.ParseCs
         {
             CsMultiMember ret;
             if (isEvent)
-                ret = new CsEvent { Type = type, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
+                ret = new CsEvent { Index = tok[i].Index, Type = type, CustomAttributes = customAttribs, ImplementsFrom = implementsFrom };
             else
-                ret = new CsField { Type = type, CustomAttributes = customAttribs };
+                ret = new CsField { Index = tok[i].Index, Type = type, CustomAttributes = customAttribs };
             parseModifiers(ret, tok, ref i);
             if (i != afterModifiers)
                 throw new ParseException("The modifier '{0}' is not valid for {1}.".Fmt(tok[i].TokenStr, isEvent ? "events" : "fields"), tok[i].Index);
@@ -987,7 +987,7 @@ namespace RT.KitchenSink.ParseCs
                     i++;
                     initializer = parseExpression(tok, ref i);
                 }
-                ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
+                ret.NamesAndInitializers.Add(new CsNameAndExpression { Index = tok[i].Index, Name = name, Expression = initializer });
                 while (tok[i].IsBuiltin(","))
                 {
                     i++;
@@ -999,14 +999,14 @@ namespace RT.KitchenSink.ParseCs
                         i++;
                         initializer = parseExpression(tok, ref i);
                     }
-                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = initializer });
+                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Index = tok[i].Index, Name = name, Expression = initializer });
                 }
             }
             catch (ParseException e)
             {
                 if (e.IncompleteResult is CsExpression)
                 {
-                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
+                    ret.NamesAndInitializers.Add(new CsNameAndExpression { Index = tok[i].Index, Name = name, Expression = (CsExpression) e.IncompleteResult });
                     throw new ParseException(e.Message, e.Index, ret, e);
                 }
                 throw;
@@ -1042,7 +1042,7 @@ namespace RT.KitchenSink.ParseCs
                         case "false": unop = UnaryOperator.False; break;
                         default: throw new ParseException("Binary operator must have two parameters. Overloadable unary operators are '+', '-', '!', '~', '++', '--', 'true' and 'false'.", tok[j].Index);
                     }
-                    op = new CsUnaryOperatorOverload { CustomAttributes = customAttribs, Parameter = parameters[0], ReturnType = type, Operator = unop };
+                    op = new CsUnaryOperatorOverload { Index = tok[i].Index, CustomAttributes = customAttribs, Parameter = parameters[0], ReturnType = type, Operator = unop };
                     break;
 
                 case 2:
@@ -1067,7 +1067,7 @@ namespace RT.KitchenSink.ParseCs
                         case ">=": binop = BinaryOperator.GreaterEq; break;
                         default: throw new ParseException("Unary operator must have only one parameter. Overloadable binary operators are '+', '-', '*', '/', '%', '&', '|', '^', '<<', '>>', '==', '!=', '<', '>', '<=', and '>='.", tok[j].Index);
                     }
-                    op = new CsBinaryOperatorOverload { CustomAttributes = customAttribs, Parameter = parameters[0], SecondParameter = parameters[1], ReturnType = type, Operator = binop };
+                    op = new CsBinaryOperatorOverload { Index = tok[i].Index, CustomAttributes = customAttribs, Parameter = parameters[0], SecondParameter = parameters[1], ReturnType = type, Operator = binop };
                     break;
 
                 default:
@@ -1088,7 +1088,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsCastOperatorOverload parseCastOperatorOverloadDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
-            var op = new CsCastOperatorOverload { CastType = tok[j].IsBuiltin("implicit") ? CastOperatorType.Implicit : CastOperatorType.Explicit, CustomAttributes = customAttribs };
+            var op = new CsCastOperatorOverload { Index = tok[i].Index, CastType = tok[j].IsBuiltin("implicit") ? CastOperatorType.Implicit : CastOperatorType.Explicit, CustomAttributes = customAttribs };
             parseModifiers(op, tok, ref i);
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for {1} operator declarations.".Fmt(tok[i].TokenStr, tok[j].TokenStr), tok[i].Index);
@@ -1114,7 +1114,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsDestructor parseDestructorDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
-            CsDestructor des = new CsDestructor { Name = tok[j + 1].TokenStr, CustomAttributes = customAttribs };
+            CsDestructor des = new CsDestructor { Index = tok[i].Index, Name = tok[j + 1].TokenStr, CustomAttributes = customAttribs };
             parseModifiers(des, tok, ref i);
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for destructors.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -1138,7 +1138,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsConstructor parseConstructorDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
-            CsConstructor con = new CsConstructor { Name = tok[j].TokenStr, CustomAttributes = customAttribs };
+            CsConstructor con = new CsConstructor { Index = tok[i].Index, Name = tok[j].TokenStr, CustomAttributes = customAttribs };
             parseModifiers(con, tok, ref i);
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for constructors.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -1158,7 +1158,7 @@ namespace RT.KitchenSink.ParseCs
                 i++;
                 if (!tok[i].IsBuiltin("("))
                     throw new ParseException("'(' expected.", tok[i].Index);
-                con.MethodBody = new CsBlock();  // temporary; just so we can throw a valid constructor as an incomplete result
+                con.MethodBody = new CsBlock { Index = tok[i].Index };  // temporary; just so we can throw a valid constructor as an incomplete result
                 try
                 {
                     bool dummy;
@@ -1196,7 +1196,7 @@ namespace RT.KitchenSink.ParseCs
                 var cAttribs = new List<CsCustomAttributeGroup>();
                 while (tok[i].IsBuiltin("["))
                     cAttribs.Add(parseCustomAttributeGroup(tok, ref i, false));
-                var m = new CsSimpleMethod { CustomAttributes = cAttribs };
+                var m = new CsSimpleMethod { Index = tok[i].Index, CustomAttributes = cAttribs };
                 parseModifiers(m, tok, ref i);
                 if (!tok[i].IsIdentifier("get") && !tok[i].IsIdentifier("set"))
                     throw new ParseException("'get' or 'set' expected.", tok[i].Index, prop);
@@ -1233,7 +1233,7 @@ namespace RT.KitchenSink.ParseCs
                 var cAttribs = new List<CsCustomAttributeGroup>();
                 while (tok[i].IsBuiltin("["))
                     cAttribs.Add(parseCustomAttributeGroup(tok, ref i, false));
-                var m = new CsSimpleMethod { CustomAttributes = cAttribs };
+                var m = new CsSimpleMethod { Index = tok[i].Index, CustomAttributes = cAttribs };
                 parseModifiers(m, tok, ref i);
                 if (!tok[i].IsIdentifier("add") && !tok[i].IsIdentifier("remove"))
                     throw new ParseException("'add' or 'remove' expected.", tok[i].Index, ev);
@@ -1266,7 +1266,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsEnum parseEnumDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
-            var en = new CsEnum { CustomAttributes = customAttribs };
+            var en = new CsEnum { Index = tok[i].Index, CustomAttributes = customAttribs };
             parseModifiers(en, tok, ref i);
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for enums.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -1298,7 +1298,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     throw new ParseException(e.Message, e.Index, en, e);
                 }
-                var val = new CsEnumValue { Name = ident, CustomAttributes = cAttribs };
+                var val = new CsEnumValue { Index = tok[i].Index, Name = ident, CustomAttributes = cAttribs };
                 en.EnumValues.Add(val);
                 i++;
 
@@ -1330,7 +1330,7 @@ namespace RT.KitchenSink.ParseCs
         }
         private static CsDelegate parseDelegateDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
-            var deleg = new CsDelegate { CustomAttributes = customAttribs };
+            var deleg = new CsDelegate { Index = tok[i].Index, CustomAttributes = customAttribs };
             parseModifiers(deleg, tok, ref i);
             if (i != j)
                 throw new ParseException("The modifier '{0}' is not valid for delegates.".Fmt(tok[i].TokenStr), tok[i].Index);
@@ -1367,6 +1367,7 @@ namespace RT.KitchenSink.ParseCs
         private static CsTypeLevel2 parseClassStructOrInterfaceDeclaration(TokenJar tok, ref int i, List<CsCustomAttributeGroup> customAttribs, int j)
         {
             var type = tok[j].IsBuiltin("class") ? new CsClass() : tok[j].IsBuiltin("struct") ? (CsTypeLevel2) new CsStruct() : new CsInterface();
+            type.Index = tok[i].Index;
             type.CustomAttributes = customAttribs;
             parseModifiers(type, tok, ref i);
             if (i != j)
@@ -1484,7 +1485,7 @@ namespace RT.KitchenSink.ParseCs
 
             if (tok[i].IsBuiltin("do"))
             {
-                var dow = new CsDoWhileStatement();
+                var dow = new CsDoWhileStatement { Index = tok[i].Index };
                 i++;
                 dow.Statement = parseStatement(tok, ref i);
                 if (!tok[i].IsBuiltin("while") || !tok[i + 1].IsBuiltin("("))
@@ -1500,9 +1501,10 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin("continue") || tok[i].IsBuiltin("break"))
             {
                 var stat = tok[i].IsBuiltin("continue") ? (CsStatement) new CsContinueStatement() : new CsBreakStatement();
+                stat.Index = tok[i].Index;
                 i++;
                 if (!tok[i].IsBuiltin(";"))
-                    throw new ParseException("';' expected.", tok[i].Index, new CsContinueStatement());
+                    throw new ParseException("';' expected.", tok[i].Index, stat);
                 i++;
                 return stat;
             }
@@ -1515,10 +1517,10 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsYieldReturnStatement { Expression = (CsExpression) e.IncompleteResult }, e);
+                        throw new ParseException(e.Message, e.Index, new CsYieldReturnStatement { Index = tok[i].Index, Expression = (CsExpression) e.IncompleteResult }, e);
                     throw;
                 }
-                var yieldreturn = new CsYieldReturnStatement { Expression = expr };
+                var yieldreturn = new CsYieldReturnStatement { Index = tok[i].Index, Expression = expr };
                 if (!tok[i].IsBuiltin(";"))
                     throw new ParseException("';' expected.", tok[i].Index, yieldreturn);
                 i++;
@@ -1527,11 +1529,12 @@ namespace RT.KitchenSink.ParseCs
 
             if (tok[i].IsIdentifier("yield") && tok[i + 1].IsBuiltin("break"))
             {
+                var stat = new CsYieldBreakStatement { Index = tok[i].Index };
                 i += 2;
                 if (!tok[i].IsBuiltin(";"))
-                    throw new ParseException("';' expected.", tok[i].Index, new CsYieldBreakStatement());
+                    throw new ParseException("';' expected.", tok[i].Index, stat);
                 i++;
-                return new CsYieldBreakStatement();
+                return stat;
             }
 
             if (tok[i].IsBuiltin("goto"))
@@ -1539,24 +1542,32 @@ namespace RT.KitchenSink.ParseCs
                 i++;
                 if (tok[i].IsBuiltin("default"))
                 {
+                    var stat = new CsGotoDefaultStatement { Index = tok[i].Index };
                     i++;
                     if (!tok[i].IsBuiltin(";"))
-                        throw new ParseException("';' expected.", tok[i].Index, new CsContinueStatement());
+                        throw new ParseException("';' expected.", tok[i].Index, stat);
                     i++;
-                    return new CsGotoDefaultStatement();
+                    return stat;
                 }
                 if (tok[i].IsBuiltin("case"))
                 {
+                    var stat = new CsGotoCaseStatement { Index = tok[i].Index };
                     i++;
-                    var expr = parseExpression(tok, ref i);
+                    try { stat.Expression = parseExpression(tok, ref i); }
+                    catch (ParseException e)
+                    {
+                        if (e.IncompleteResult is CsExpression)
+                            stat.Expression = (CsExpression) e.IncompleteResult;
+                        throw new ParseException(e.Message, e.Index, stat, e);
+                    }
                     if (!tok[i].IsBuiltin(";"))
-                        throw new ParseException("';' expected.", tok[i].Index, new CsContinueStatement());
+                        throw new ParseException("';' expected.", tok[i].Index, stat);
                     i++;
-                    return new CsGotoCaseStatement { Expression = expr };
+                    return stat;
                 }
                 var name = tok[i].Identifier();
                 i++;
-                var got = new CsGotoStatement { Label = name };
+                var got = new CsGotoStatement { Index = tok[i].Index, Label = name };
                 if (!tok[i].IsBuiltin(";"))
                     throw new ParseException("';' expected.", tok[i].Index, got);
                 i++;
@@ -1578,12 +1589,13 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin(";"))
             {
                 i++;
-                return new CsEmptyStatement();
+                return new CsEmptyStatement { Index = tok[i].Index };
             }
 
             if (tok[i].IsBuiltin("checked") || tok[i].IsBuiltin("unchecked") || tok[i].IsBuiltin("unsafe"))
             {
                 CsBlockStatement ret = tok[i].IsBuiltin("checked") ? new CsCheckedStatement() : tok[i].IsBuiltin("unchecked") ? (CsBlockStatement) new CsUncheckedStatement() : new CsUnsafeStatement();
+                ret.Index = tok[i].Index;
                 i++;
                 ret.Block = parseBlock(tok, ref i);
                 return ret;
@@ -1596,7 +1608,7 @@ namespace RT.KitchenSink.ParseCs
                     throw new ParseException("'(' expected.", tok[i].Index);
                 i++;
                 var k = i;
-                var fixd = new CsFixedStatement { InitializationStatement = parseVariableDeclarationOrExpressionStatement(tok, ref i) };
+                var fixd = new CsFixedStatement { Index = tok[i].Index, InitializationStatement = parseVariableDeclarationOrExpressionStatement(tok, ref i) };
                 if (!tok[i].IsBuiltin(")"))
                     throw new ParseException("')' expected.", tok[i].Index);
                 i++;
@@ -1631,7 +1643,7 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException("'{' expected.", tok[i].Index);
             i++;
 
-            CsBlock block = new CsBlock();
+            CsBlock block = new CsBlock { Index = tok[i].Index };
 
             while (!tok[i].IsBuiltin("}"))
             {
@@ -1654,13 +1666,13 @@ namespace RT.KitchenSink.ParseCs
             i++;
             if (!tok[i].IsBuiltin("{"))
                 throw new ParseException("'{' expected after 'try'.", tok[i].Index);
-            var tr = new CsTryStatement { Block = parseBlock(tok, ref i) };
+            var tr = new CsTryStatement { Index = tok[i].Index, Block = parseBlock(tok, ref i) };
             if (!tok[i].IsBuiltin("catch") && !tok[i].IsBuiltin("finally"))
                 throw new ParseException("'catch' or 'finally' expected after 'try' block.", tok[i].Index);
             while (tok[i].IsBuiltin("catch"))
             {
+                var ctch = new CsCatchClause { Index = tok[i].Index };
                 i++;
-                var ctch = new CsCatchClause();
                 tr.Catches.Add(ctch);
                 if (tok[i].IsBuiltin("("))
                 {
@@ -1706,6 +1718,7 @@ namespace RT.KitchenSink.ParseCs
                 tok[i].Assert("false");
 
             var stat = tok[i].IsBuiltin("while") ? (CsExpressionBlockStatement) new CsWhileStatement() : new CsLockStatement();
+            stat.Index = tok[i].Index;
             i++;
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
@@ -1730,7 +1743,7 @@ namespace RT.KitchenSink.ParseCs
         {
             tok[i].Assert("if");
 
-            var ifs = new CsIfStatement();
+            var ifs = new CsIfStatement { Index = tok[i].Index };
             i++;
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
@@ -1742,10 +1755,7 @@ namespace RT.KitchenSink.ParseCs
             try { ifs.Statement = parseStatement(tok, ref i); }
             catch (ParseException e)
             {
-                if (e.IncompleteResult is CsStatement)
-                    ifs.Statement = (CsStatement) e.IncompleteResult;
-                else
-                    ifs.Statement = new CsEmptyStatement();
+                ifs.Statement = (e.IncompleteResult as CsStatement) ?? new CsEmptyStatement { Index = tok[i].Index };
                 throw new ParseException(e.Message, e.Index, ifs, e);
             }
             if (tok[i].IsBuiltin("else"))
@@ -1769,7 +1779,7 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
             i++;
-            var usin = new CsUsingStatement { InitializationStatement = parseVariableDeclarationOrExpressionStatement(tok, ref i) };
+            var usin = new CsUsingStatement { Index = tok[i].Index, InitializationStatement = parseVariableDeclarationOrExpressionStatement(tok, ref i) };
             if (!tok[i].IsBuiltin(")"))
                 throw new ParseException("')' expected.", tok[i].Index);
             i++;
@@ -1794,7 +1804,7 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
             i++;
-            var fore = new CsForStatement();
+            var fore = new CsForStatement { Index = tok[i].Index };
             if (!tok[i].IsBuiltin(";"))
             {
                 while (true)
@@ -1861,7 +1871,7 @@ namespace RT.KitchenSink.ParseCs
         {
             tok[i].Assert("foreach");
 
-            var fore = new CsForeachStatement();
+            var fore = new CsForeachStatement { Index = tok[i].Index };
             i++;
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index);
@@ -1900,7 +1910,7 @@ namespace RT.KitchenSink.ParseCs
         {
             tok[i].Assert("switch");
 
-            var sw = new CsSwitchStatement();
+            var sw = new CsSwitchStatement { Index = tok[i].Index };
             i++;
             if (!tok[i].IsBuiltin("("))
                 throw new ParseException("'(' expected.", tok[i].Index, sw);
@@ -1927,7 +1937,7 @@ namespace RT.KitchenSink.ParseCs
                     i++;
                     if (cas == null || cas.Statements != null)
                     {
-                        cas = new CsCaseLabel();
+                        cas = new CsCaseLabel { Index = tok[i].Index };
                         sw.Cases.Add(cas);
                     }
                     cas.CaseValues.Add(isDef ? null : parseExpression(tok, ref i));
@@ -1963,6 +1973,7 @@ namespace RT.KitchenSink.ParseCs
                 tok[i].Assert("false");
 
             var ret = tok[i].IsBuiltin("return") ? (CsOptionalExpressionStatement) new CsReturnStatement() : new CsThrowStatement();
+            ret.Index = tok[i].Index;
             i++;
             if (tok[i].IsBuiltin(";"))
             {
@@ -2006,7 +2017,7 @@ namespace RT.KitchenSink.ParseCs
             if (declType != null)
             {
                 i = j - 1;
-                var decl = new CsVariableDeclarationStatement { Type = declType, IsConst = isConst };
+                var decl = new CsVariableDeclarationStatement { Index = tok[i].Index, Type = declType, IsConst = isConst };
                 string name = null;
                 try
                 {
@@ -2021,14 +2032,14 @@ namespace RT.KitchenSink.ParseCs
                             i++;
                             expr = parseExpression(tok, ref i);
                         }
-                        decl.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = expr });
+                        decl.NamesAndInitializers.Add(new CsNameAndExpression { Index = tok[i].Index, Name = name, Expression = expr });
                     }
                     while (tok[i].IsBuiltin(","));
                 }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression && name != null)
-                        decl.NamesAndInitializers.Add(new CsNameAndExpression { Name = name, Expression = (CsExpression) e.IncompleteResult });
+                        decl.NamesAndInitializers.Add(new CsNameAndExpression { Index = tok[i].Index, Name = name, Expression = (CsExpression) e.IncompleteResult });
                     throw new ParseException(e.Message, e.Index, decl, e);
                 }
 
@@ -2040,12 +2051,11 @@ namespace RT.KitchenSink.ParseCs
                 throw new ParseException("Expected type + variable declaration after 'const'.", tok[i].Index);
 
             // Finally, the only remaining possible way for it to be a valid statement is by being an expression.
-            var exprStat = new CsExpressionStatement();
-            int index = tok[i].Index;
+            var exprStat = new CsExpressionStatement { Index = tok[i].Index };
             try { exprStat.Expression = parseExpression(tok, ref i); }
             catch (ParseException e)
             {
-                var msg = index == e.Index ? @"Invalid statement." : e.Message;
+                var msg = exprStat.Index == e.Index ? @"Invalid statement." : e.Message;
                 if (e.IncompleteResult is CsExpression)
                 {
                     exprStat.Expression = (CsExpression) e.IncompleteResult;
@@ -2085,7 +2095,7 @@ namespace RT.KitchenSink.ParseCs
                 }
                 i++;
                 var right = parseExpression(tok, ref i);
-                return new CsAssignmentExpression { Left = left, Right = right, Operator = type };
+                return new CsAssignmentExpression { Index = tok[i].Index, Left = left, Right = right, Operator = type };
             }
             return left;
         }
@@ -2147,11 +2157,11 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin("??"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionCoalesce(tok, ref i), Operator = BinaryOperator.Coalesce }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionCoalesce(tok, ref i), Operator = BinaryOperator.Coalesce }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Coalesce }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Coalesce }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2165,11 +2175,11 @@ namespace RT.KitchenSink.ParseCs
             while (tok[i].IsBuiltin("||"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionBoolAnd(tok, ref i), Operator = BinaryOperator.OrOr }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionBoolAnd(tok, ref i), Operator = BinaryOperator.OrOr }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.OrOr }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.OrOr }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2183,11 +2193,11 @@ namespace RT.KitchenSink.ParseCs
             while (tok[i].IsBuiltin("&&"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionLogicalOr(tok, ref i), Operator = BinaryOperator.AndAnd }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionLogicalOr(tok, ref i), Operator = BinaryOperator.AndAnd }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.AndAnd }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.AndAnd }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2201,11 +2211,11 @@ namespace RT.KitchenSink.ParseCs
             while (tok[i].IsBuiltin("|"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionLogicalXor(tok, ref i), Operator = BinaryOperator.Or }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionLogicalXor(tok, ref i), Operator = BinaryOperator.Or }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Or }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Or }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2219,11 +2229,11 @@ namespace RT.KitchenSink.ParseCs
             while (tok[i].IsBuiltin("^"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionLogicalAnd(tok, ref i), Operator = BinaryOperator.Xor }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionLogicalAnd(tok, ref i), Operator = BinaryOperator.Xor }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Xor }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.Xor }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2237,11 +2247,11 @@ namespace RT.KitchenSink.ParseCs
             while (tok[i].IsBuiltin("&"))
             {
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionEquality(tok, ref i), Operator = BinaryOperator.And }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionEquality(tok, ref i), Operator = BinaryOperator.And }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.And }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = BinaryOperator.And }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2256,11 +2266,11 @@ namespace RT.KitchenSink.ParseCs
             {
                 BinaryOperator op = tok[i].IsBuiltin("==") ? BinaryOperator.Eq : BinaryOperator.NotEq;
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionRelational(tok, ref i), Operator = op }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionRelational(tok, ref i), Operator = op }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2277,11 +2287,11 @@ namespace RT.KitchenSink.ParseCs
                 {
                     var op = tok[i].IsBuiltin("is") ? BinaryTypeOperator.Is : BinaryTypeOperator.As;
                     i++;
-                    try { return new CsBinaryTypeOperatorExpression { Left = left, Right = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1, Operator = op }; }
+                    try { return new CsBinaryTypeOperatorExpression { Index = tok[i].Index, Left = left, Right = parseTypeName(tok, ref i, typeIdentifierFlags.AllowKeywords | typeIdentifierFlags.AllowNullablesAndPointers | typeIdentifierFlags.AllowArrays).Item1, Operator = op }; }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsTypeName)
-                            throw new ParseException(e.Message, e.Index, new CsBinaryTypeOperatorExpression { Left = left, Right = (CsTypeName) e.IncompleteResult, Operator = op }, e);
+                            throw new ParseException(e.Message, e.Index, new CsBinaryTypeOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsTypeName) e.IncompleteResult, Operator = op }, e);
                         throw new ParseException(e.Message, e.Index, left, e);
                     }
                 }
@@ -2289,11 +2299,11 @@ namespace RT.KitchenSink.ParseCs
                 {
                     BinaryOperator op = tok[i].IsBuiltin("<") ? BinaryOperator.Less : tok[i].IsBuiltin("<=") ? BinaryOperator.LessEq : tok[i].IsBuiltin(">") ? BinaryOperator.Greater : BinaryOperator.GreaterEq;
                     i++;
-                    try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionShift(tok, ref i), Operator = op }; }
+                    try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionShift(tok, ref i), Operator = op }; }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is CsExpression)
-                            throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                            throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
                         throw new ParseException(e.Message, e.Index, left, e);
                     }
                 }
@@ -2309,11 +2319,11 @@ namespace RT.KitchenSink.ParseCs
             {
                 BinaryOperator op = tok[i].IsBuiltin("<<") ? BinaryOperator.Shl : BinaryOperator.Shr;
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionAdditive(tok, ref i), Operator = op }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionAdditive(tok, ref i), Operator = op }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2328,11 +2338,11 @@ namespace RT.KitchenSink.ParseCs
             {
                 BinaryOperator op = tok[i].IsBuiltin("+") ? BinaryOperator.Plus : BinaryOperator.Minus;
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionMultiplicative(tok, ref i), Operator = op }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionMultiplicative(tok, ref i), Operator = op }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2347,11 +2357,11 @@ namespace RT.KitchenSink.ParseCs
             {
                 BinaryOperator op = tok[i].IsBuiltin("*") ? BinaryOperator.Times : tok[i].IsBuiltin("/") ? BinaryOperator.Div : BinaryOperator.Mod;
                 i++;
-                try { left = new CsBinaryOperatorExpression { Left = left, Right = parseExpressionUnary(tok, ref i), Operator = op }; }
+                try { left = new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = parseExpressionUnary(tok, ref i), Operator = op }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
+                        throw new ParseException(e.Message, e.Index, new CsBinaryOperatorExpression { Index = tok[i].Index, Left = left, Right = (CsExpression) e.IncompleteResult, Operator = op }, e);
                     throw new ParseException(e.Message, e.Index, left, e);
                 }
             }
@@ -2378,7 +2388,7 @@ namespace RT.KitchenSink.ParseCs
             }
             i++;
             var operand = parseExpressionUnary(tok, ref i);
-            return new CsUnaryOperatorExpression { Operand = operand, Operator = op };
+            return new CsUnaryOperatorExpression { Index = tok[i].Index, Operand = operand, Operator = op };
         }
         private static CsExpression parseExpressionPrimary(TokenJar tok, ref int i, bool tryNotToThrow = false)
         {
@@ -2389,7 +2399,7 @@ namespace RT.KitchenSink.ParseCs
                 {
                     MemberAccessType type = tok[i].IsBuiltin(".") ? MemberAccessType.Regular : MemberAccessType.PointerDeref;
                     i++;
-                    try { left = new CsMemberAccessExpression { AccessType = type, Left = left, Right = parseExpressionIdentifier(tok, ref i) }; }
+                    try { left = new CsMemberAccessExpression { Index = tok[i].Index, AccessType = type, Left = left, Right = parseExpressionIdentifier(tok, ref i) }; }
                     catch (ParseException e)
                     {
                         throw new ParseException(e.Message, e.Index, left, e);
@@ -2397,7 +2407,7 @@ namespace RT.KitchenSink.ParseCs
                 }
                 else if (tok[i].IsBuiltin("(") || tok[i].IsBuiltin("["))
                 {
-                    var func = new CsFunctionCallExpression { Left = left };
+                    var func = new CsFunctionCallExpression { Index = tok[i].Index, Left = left };
                     try { func.Arguments = parseArgumentList(tok, ref i, out func.IsIndexer); }
                     catch (ParseException e)
                     {
@@ -2409,12 +2419,12 @@ namespace RT.KitchenSink.ParseCs
                 }
                 else if (tok[i].IsBuiltin("++"))
                 {
-                    left = new CsUnaryOperatorExpression { Operand = left, Operator = UnaryOperator.PostfixInc };
+                    left = new CsUnaryOperatorExpression { Index = tok[i].Index, Operand = left, Operator = UnaryOperator.PostfixInc };
                     i++;
                 }
                 else if (tok[i].IsBuiltin("--"))
                 {
-                    left = new CsUnaryOperatorExpression { Operand = left, Operator = UnaryOperator.PostfixDec };
+                    left = new CsUnaryOperatorExpression { Index = tok[i].Index, Operand = left, Operator = UnaryOperator.PostfixDec };
                     i++;
                 }
             }
@@ -2461,7 +2471,7 @@ namespace RT.KitchenSink.ParseCs
                             inoutref = ArgumentMode.Out;
                             i++;
                         }
-                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
+                        arguments.Add(new CsArgument { Index = tok[i].Index, ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = parseExpression(tok, ref i) });
                         if (tok[i].IsBuiltin(isIndexer ? "]" : ")"))
                             break;
                         else if (!tok[i].IsBuiltin(","))
@@ -2472,7 +2482,7 @@ namespace RT.KitchenSink.ParseCs
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is CsExpression)
-                        arguments.Add(new CsArgument { ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
+                        arguments.Add(new CsArgument { Index = tok[i].Index, ArgumentName = argName, ArgumentMode = inoutref, ArgumentExpression = (CsExpression) e.IncompleteResult });
                     throw new ParseException(e.Message, e.Index, arguments, e);
                 }
             }
@@ -2483,41 +2493,42 @@ namespace RT.KitchenSink.ParseCs
         {
             if (tok[i].IsIdentifier("from") && tok[i + 1].Type == TokenType.Identifier)
             {
-                var linq = new CsLinqExpression();
+                var linq = new CsLinqExpression { Index = tok[i].Index };
                 parseLinqQueryExpression(linq, tok, ref i);
                 return linq;
             }
 
             if (tok[i].IsBuiltin("{"))
             {
-                try { return new CsArrayLiteralExpression { Expressions = parseArrayLiteral(tok, ref i) }; }
+                try { return new CsArrayLiteralExpression { Index = tok[i].Index, Expressions = parseArrayLiteral(tok, ref i) }; }
                 catch (ParseException e)
                 {
                     if (e.IncompleteResult is List<CsExpression>)
-                        throw new ParseException(e.Message, e.Index, new CsArrayLiteralExpression { Expressions = (List<CsExpression>) e.IncompleteResult }, e);
+                        throw new ParseException(e.Message, e.Index, new CsArrayLiteralExpression { Index = tok[i].Index, Expressions = (List<CsExpression>) e.IncompleteResult }, e);
                     throw;
                 }
             }
 
             if (tok[i].Type == TokenType.CharacterLiteral)
-                return new CsCharacterLiteralExpression { Literal = tok[i++].TokenStr[0] };
+                return new CsCharacterLiteralExpression { Index = tok[i].Index, Literal = tok[i++].TokenStr[0] };
 
             if (tok[i].Type == TokenType.StringLiteral)
-                return new CsStringLiteralExpression { Literal = tok[i++].TokenStr };
+                return new CsStringLiteralExpression { Index = tok[i].Index, Literal = tok[i++].TokenStr };
 
             if (tok[i].Type == TokenType.NumberLiteral)
-                return new CsNumberLiteralExpression { Literal = tok[i++].TokenStr };
+                return new CsNumberLiteralExpression { Index = tok[i].Index, Literal = tok[i++].TokenStr };
 
-            if (tok[i].IsBuiltin("true")) { i++; return new CsBooleanLiteralExpression { Literal = true }; }
-            if (tok[i].IsBuiltin("false")) { i++; return new CsBooleanLiteralExpression { Literal = false }; }
-            if (tok[i].IsBuiltin("null")) { i++; return new CsNullExpression(); }
-            if (tok[i].IsBuiltin("this")) { i++; return new CsThisExpression(); }
-            if (tok[i].IsBuiltin("base")) { i++; return new CsBaseExpression(); }
+            if (tok[i].IsBuiltin("true")) { i++; return new CsBooleanLiteralExpression { Index = tok[i].Index, Literal = true }; }
+            if (tok[i].IsBuiltin("false")) { i++; return new CsBooleanLiteralExpression { Index = tok[i].Index, Literal = false }; }
+            if (tok[i].IsBuiltin("null")) { i++; return new CsNullExpression { Index = tok[i].Index }; }
+            if (tok[i].IsBuiltin("this")) { i++; return new CsThisExpression { Index = tok[i].Index }; }
+            if (tok[i].IsBuiltin("base")) { i++; return new CsBaseExpression { Index = tok[i].Index }; }
 
             if (tok[i].IsBuiltin("typeof") || tok[i].IsBuiltin("default") || tok[i].IsBuiltin("sizeof"))
             {
                 var typof = tok[i].IsBuiltin("typeof");
                 var expr = typof ? new CsTypeofExpression() : tok[i].IsBuiltin("default") ? (CsTypeOperatorExpression) new CsDefaultExpression() : new CsSizeofExpression();
+                expr.Index = tok[i].Index;
                 i++;
                 if (!tok[i].IsBuiltin("("))
                     throw new ParseException("'(' expected after 'typeof' or 'default'.", tok[i].Index);
@@ -2541,6 +2552,7 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].IsBuiltin("checked") || tok[i].IsBuiltin("unchecked"))
             {
                 var expr = tok[i].IsBuiltin("checked") ? (CsCheckedUncheckedExpression) new CsCheckedExpression() : new CsUncheckedExpression();
+                expr.Index = tok[i].Index;
                 i++;
                 if (!tok[i].IsBuiltin("("))
                     throw new ParseException("'(' expected after 'checked' or 'unchecked'.", tok[i].Index);
@@ -2557,7 +2569,7 @@ namespace RT.KitchenSink.ParseCs
                 i++;
                 if (tok[i].IsBuiltin("{"))
                 {
-                    var anon = new CsNewAnonymousTypeExpression();
+                    var anon = new CsNewAnonymousTypeExpression { Index = tok[i].Index };
                     try { anon.Initializers = parseArrayLiteral(tok, ref i); }
                     catch (ParseException e)
                     {
@@ -2573,11 +2585,11 @@ namespace RT.KitchenSink.ParseCs
                     // Implicitly-typed array
                     if (!tok[i].IsBuiltin("{"))
                         throw new ParseException("'{' expected.", tok[i].Index);
-                    try { return new CsNewImplicitlyTypedArrayExpression { Items = parseArrayLiteral(tok, ref i) }; }
+                    try { return new CsNewImplicitlyTypedArrayExpression { Index = tok[i].Index, Items = parseArrayLiteral(tok, ref i) }; }
                     catch (ParseException e)
                     {
                         if (e.IncompleteResult is List<CsExpression>)
-                            throw new ParseException(e.Message, e.Index, new CsNewImplicitlyTypedArrayExpression { Items = (List<CsExpression>) e.IncompleteResult }, e);
+                            throw new ParseException(e.Message, e.Index, new CsNewImplicitlyTypedArrayExpression { Index = tok[i].Index, Items = (List<CsExpression>) e.IncompleteResult }, e);
                         throw;
                     }
                 }
@@ -2589,7 +2601,7 @@ namespace RT.KitchenSink.ParseCs
                     if (tok[i].IsBuiltin("("))
                     {
                         // Constructor call with parameters
-                        var constructor = new CsNewConstructorExpression { Type = ty };
+                        var constructor = new CsNewConstructorExpression { Index = tok[i].Index, Type = ty };
                         try
                         {
                             bool dummy;
@@ -2610,7 +2622,7 @@ namespace RT.KitchenSink.ParseCs
                     else if (tok[i].IsBuiltin("{"))
                     {
                         // Constructor call without parameters
-                        var constructor = new CsNewConstructorExpression { Type = ty };
+                        var constructor = new CsNewConstructorExpression { Index = tok[i].Index, Type = ty };
                         try { constructor.Initializers = parseArrayLiteral(tok, ref i); }
                         catch (ParseException e)
                         {
@@ -2625,7 +2637,7 @@ namespace RT.KitchenSink.ParseCs
                         // Array construction
                         bool dummy;
                         var k = i;
-                        var ret = new CsNewArrayExpression { Type = ty };
+                        var ret = new CsNewArrayExpression { Index = tok[i].Index, Type = ty };
                         ret.SizeExpressions.AddRange(parseArgumentList(tok, ref i, out dummy).Select(p =>
                         {
                             if (p.ArgumentMode != ArgumentMode.In)
@@ -2667,7 +2679,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 i++;
                 var delegateParams = tok[i].IsBuiltin("(") ? parseParameterList(tok, ref i) : null;
-                return new CsAnonymousMethodExpression { Block = parseBlock(tok, ref i), Parameters = delegateParams };
+                return new CsAnonymousMethodExpression { Index = tok[i].Index, Block = parseBlock(tok, ref i), Parameters = delegateParams };
             }
 
             // See if this could be a lambda expression. If it is, set 'parameters' to something non-null and move 'i' to behind the '=>'. Otherwise, keep 'i' unchanged.
@@ -2675,7 +2687,7 @@ namespace RT.KitchenSink.ParseCs
             if (tok[i].Type == TokenType.Identifier && tok[i + 1].IsBuiltin("=>"))
             {
                 // p => ...
-                parameters = new List<CsParameter> { new CsParameter { Name = tok[i].TokenStr } };
+                parameters = new List<CsParameter> { new CsParameter { Index = tok[i].Index, Name = tok[i].TokenStr } };
                 i += 2;
             }
             else if (tok[i].IsBuiltin("("))
@@ -2705,16 +2717,16 @@ namespace RT.KitchenSink.ParseCs
                 // If (Type p1, Type p2) => ... still didn't work, try (p1, p2) => ...
                 if (parameters == null && tok[i + 1].Type == TokenType.Identifier)
                 {
-                    var ps = new List<string> { tok[i + 1].TokenStr };
+                    var ps = new List<CsParameter> { new CsParameter { Index = tok[i + 1].Index, Name = tok[i + 1].TokenStr } };
                     var j = i + 2;
                     while (tok[j].IsBuiltin(",") && tok[j + 1].Type == TokenType.Identifier)
                     {
-                        ps.Add(tok[j + 1].TokenStr);
+                        ps.Add(new CsParameter { Index = tok[j + 1].Index, Name = tok[j + 1].TokenStr });
                         j += 2;
                     }
                     if (tok[j].IsBuiltin(")") && tok[j + 1].IsBuiltin("=>"))
                     {
-                        parameters = ps.Select(p => new CsParameter { Name = p }).ToList();
+                        parameters = ps;
                         i = j + 2;
                     }
                 }
@@ -2725,7 +2737,7 @@ namespace RT.KitchenSink.ParseCs
             {
                 if (tok[i].IsBuiltin("{"))
                 {
-                    var lambda = new CsBlockLambdaExpression { Parameters = parameters };
+                    var lambda = new CsBlockLambdaExpression { Index = tok[i].Index, Parameters = parameters };
                     try { lambda.Block = parseBlock(tok, ref i); }
                     catch (ParseException e)
                     {
@@ -2740,7 +2752,7 @@ namespace RT.KitchenSink.ParseCs
                 }
                 else
                 {
-                    var lambda = new CsSimpleLambdaExpression { Parameters = parameters };
+                    var lambda = new CsSimpleLambdaExpression { Index = tok[i].Index, Parameters = parameters };
                     try { lambda.Body = parseExpression(tok, ref i); }
                     catch (ParseException e)
                     {
@@ -2822,10 +2834,10 @@ namespace RT.KitchenSink.ParseCs
 
                 // It’s a subexpression!
                 i = afterExpression;
-                return new CsParenthesizedExpression { Subexpression = expression };
+                return new CsParenthesizedExpression { Index = tok[i].Index, Subexpression = expression };
             }
 
-            return new CsSimpleNameExpression { SimpleName = parseExpressionIdentifier(tok, ref i) };
+            return new CsSimpleNameExpression { Index = tok[i].Index, SimpleName = parseExpressionIdentifier(tok, ref i) };
         }
         private static string[] _genericMethodGroupMagicalTokens = new[] { "(", ")", "]", ":", ";", ",", ".", "?", "==", "!=" };
         private static CsSimpleName parseExpressionIdentifier(TokenJar tok, ref int i)
@@ -2856,7 +2868,7 @@ namespace RT.KitchenSink.ParseCs
             }
 
             afterTy:
-            var ret = new CsSimpleNameIdentifier { Name = tok[i].Identifier() };
+            var ret = new CsSimpleNameIdentifier { Index = tok[i].Index, Name = tok[i].Identifier() };
             i++;
             return ret;
         }
@@ -2942,7 +2954,7 @@ namespace RT.KitchenSink.ParseCs
                 into = tok[i].Identifier();
                 i++;
             }
-            return new CsLinqJoinClause { ItemName = item, SourceExpression = srcExpr, KeyExpression1 = keyExpr1, KeyExpression2 = keyExpr2, IntoName = into };
+            return new CsLinqJoinClause { Index = tok[i].Index, ItemName = item, SourceExpression = srcExpr, KeyExpression1 = keyExpr1, KeyExpression2 = keyExpr2, IntoName = into };
         }
         private static CsLinqElement parseLinqLetClause(TokenJar tok, ref int i)
         {
@@ -2953,19 +2965,19 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin("="))
                 throw new ParseException("'=' expected.", tok[i].Index);
             i++;
-            return new CsLinqLetClause { ItemName = item, Expression = parseExpression(tok, ref i) };
+            return new CsLinqLetClause { Index = tok[i].Index, ItemName = item, Expression = parseExpression(tok, ref i) };
         }
         private static CsLinqElement parseLinqWhereClause(TokenJar tok, ref int i)
         {
             tok[i].Assert("where");
             i++;
-            return new CsLinqWhereClause { WhereExpression = parseExpression(tok, ref i) };
+            return new CsLinqWhereClause { Index = tok[i].Index, WhereExpression = parseExpression(tok, ref i) };
         }
         private static CsLinqElement parseLinqOrderByClause(TokenJar tok, ref int i)
         {
             tok[i].Assert("orderby");
             i++;
-            var orderby = new CsLinqOrderByClause();
+            var orderby = new CsLinqOrderByClause { Index = tok[i].Index };
             while (true)
             {
                 var expr = parseExpression(tok, ref i);
@@ -2980,7 +2992,7 @@ namespace RT.KitchenSink.ParseCs
                     type = LinqOrderByType.Descending;
                     i++;
                 }
-                orderby.KeyExpressions.Add(new CsLinqOrderBy { OrderByExpression = expr, OrderByType = type });
+                orderby.KeyExpressions.Add(new CsLinqOrderBy { Index = tok[i].Index, OrderByExpression = expr, OrderByType = type });
                 if (!tok[i].IsBuiltin(","))
                     break;
                 i++;
@@ -2991,7 +3003,7 @@ namespace RT.KitchenSink.ParseCs
         {
             tok[i].Assert("select");
             i++;
-            return new CsLinqSelectClause { SelectExpression = parseExpression(tok, ref i) };
+            return new CsLinqSelectClause { Index = tok[i].Index, SelectExpression = parseExpression(tok, ref i) };
         }
         private static CsLinqElement parseLinqGroupByClause(TokenJar tok, ref int i)
         {
@@ -3001,13 +3013,13 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsIdentifier("by"))
                 throw new ParseException("'by' expected.", tok[i].Index);
             i++;
-            return new CsLinqGroupByClause { SelectionExpression = selExpr, KeyExpression = parseExpression(tok, ref i) };
+            return new CsLinqGroupByClause { Index = tok[i].Index, SelectionExpression = selExpr, KeyExpression = parseExpression(tok, ref i) };
         }
         private static void parseLinqQueryContinuation(CsLinqExpression linq, TokenJar tok, ref int i)
         {
             tok[i].Assert("into");
             i++;
-            linq.Elements.Add(new CsLinqIntoClause { ItemName = tok[i].Identifier() });
+            linq.Elements.Add(new CsLinqIntoClause { Index = tok[i].Index, ItemName = tok[i].Identifier() });
             i++;
             parseLinqQueryBody(linq, tok, ref i);
         }
@@ -3020,7 +3032,7 @@ namespace RT.KitchenSink.ParseCs
             if (!tok[i].IsBuiltin("in"))
                 throw new ParseException("'in' expected.", tok[i].Index);
             i++;
-            return new CsLinqFromClause { ItemName = item, SourceExpression = parseExpression(tok, ref i) };
+            return new CsLinqFromClause { Index = tok[i].Index, ItemName = item, SourceExpression = parseExpression(tok, ref i) };
         }
         #endregion
     }
