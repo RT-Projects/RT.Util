@@ -532,7 +532,6 @@ namespace RT.Util.Xml
             public Version Version2;
             public Version VersionNull;
         }
-#pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
 
         private class substituteVersion
         {
@@ -540,22 +539,54 @@ namespace RT.Util.Xml
 
             public class Options : XmlClassifyTypeOptions, IXmlClassifySubstitute<Version, substituteVersion>
             {
-                public substituteVersion ToSubstitute(Version instance)
+                public substituteVersion ToSubstitute(Version version)
                 {
-                    return instance == null ? null : new substituteVersion { Value = instance.ToString() };
+                    return version.NullOr(v => new substituteVersion { Value = v.ToString() });
                 }
 
-                public Version FromSubstitute(substituteVersion instance)
+                public Version FromSubstitute(substituteVersion subst)
                 {
-                    return instance == null ? null : Version.Parse(instance.Value);
+                    return subst.NullOr(s => Version.Parse(s.Value));
                 }
             }
         }
 
+        private class classWithGuid
+        {
+            public Guid Guid;
+            public Guid? GuidNullableNull;
+            public Guid? GuidNullableNotNull;
+        }
+
+        private class substituteGuid
+        {
+            public string Value;
+
+            public class Options : XmlClassifyTypeOptions, IXmlClassifySubstitute<Guid, substituteGuid>
+            {
+                public substituteGuid ToSubstitute(Guid guid)
+                {
+                    return guid.NullOr(g => new substituteGuid { Value = g.ToString() });
+                }
+
+                public Guid FromSubstitute(substituteGuid subst)
+                {
+                    return Guid.Parse(subst.Value);
+                }
+            }
+        }
+
+#pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
+
         private class optionsVersionToString : XmlClassifyTypeOptions, IXmlClassifySubstitute<Version, string>
         {
-            public string ToSubstitute(Version instance) { return instance == null ? null : instance.ToString(); }
-            public Version FromSubstitute(string instance) { return instance == null ? null : Version.Parse(instance); }
+            public string ToSubstitute(Version version) { return version.NullOr(v => v.ToString()); }
+            public Version FromSubstitute(string str) { return str.NullOr(s => Version.Parse(s)); }
+        }
+        private class optionsGuidToString : XmlClassifyTypeOptions, IXmlClassifySubstitute<Guid, string>
+        {
+            public string ToSubstitute(Guid guid) { return guid.NullOr(g => g.ToString()); }
+            public Guid FromSubstitute(string str) { return Guid.Parse(str); }
         }
 
         [Test]
@@ -574,7 +605,7 @@ namespace RT.Util.Xml
                   <VersionNull null=""1"" />
                 </item>")));
 
-            assertSubst(inst, opts, xml);
+            assertSubstVersion(inst, opts, xml);
 
             opts = new XmlClassifyOptions().AddTypeOptions(typeof(Version), new optionsVersionToString());
             xml = XmlClassify.ObjectToXElement(inst, opts);
@@ -585,10 +616,10 @@ namespace RT.Util.Xml
                   <VersionNull null=""1"" />
                 </item>")));
 
-            assertSubst(inst, opts, xml);
+            assertSubstVersion(inst, opts, xml);
         }
 
-        private static void assertSubst(classWithVersion inst, XmlClassifyOptions opts, XElement xml)
+        private static void assertSubstVersion(classWithVersion inst, XmlClassifyOptions opts, XElement xml)
         {
             var inst2 = XmlClassify.ObjectFromXElement<classWithVersion>(xml, opts);
             Assert.IsTrue(object.ReferenceEquals(inst2.Version, inst2.Version2)); // reference identity preserved
@@ -600,6 +631,48 @@ namespace RT.Util.Xml
             Assert.AreEqual(1, inst2.Version.Build);
         }
 
-#warning TODO: Check that classifying a nullable type actually uses the substitution for the underlying type
+        private static Guid _testGuid = Guid.Parse("d3909698-14cb-4af2-886b-739c6dc567eb");
+
+        [Test]
+        public void TestTypeSubstitutionNullable()
+        {
+            var inst = new classWithGuid
+            {
+                Guid = _testGuid,
+                GuidNullableNotNull = _testGuid,
+                GuidNullableNull = null
+            };
+            var opts = new XmlClassifyOptions().AddTypeOptions(typeof(Guid), new substituteGuid.Options());
+            var xml = XmlClassify.ObjectToXElement(inst, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
+                <item>
+                  <Guid>
+                    <Value>d3909698-14cb-4af2-886b-739c6dc567eb</Value>
+                  </Guid>
+                  <GuidNullableNull null=""1"" />
+                  <GuidNullableNotNull>
+                    <Value>d3909698-14cb-4af2-886b-739c6dc567eb</Value>
+                  </GuidNullableNotNull>
+                </item>")));
+            assertSubstGuid(opts, xml);
+
+            opts = new XmlClassifyOptions().AddTypeOptions(typeof(Guid), new optionsGuidToString());
+            xml = XmlClassify.ObjectToXElement(inst, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
+                <item>
+                  <Guid>d3909698-14cb-4af2-886b-739c6dc567eb</Guid>
+                  <GuidNullableNull null=""1"" />
+                  <GuidNullableNotNull>d3909698-14cb-4af2-886b-739c6dc567eb</GuidNullableNotNull>
+                </item>")));
+            assertSubstGuid(opts, xml);
+        }
+
+        private static void assertSubstGuid(XmlClassifyOptions opts, XElement xml)
+        {
+            var inst2 = XmlClassify.ObjectFromXElement<classWithGuid>(xml, opts);
+            Assert.IsTrue(inst2.Guid.Equals(_testGuid));
+            Assert.IsTrue(inst2.GuidNullableNotNull.Value.Equals(_testGuid));
+            Assert.IsTrue(inst2.GuidNullableNull == null);
+        }
     }
 }
