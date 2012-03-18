@@ -10,8 +10,6 @@ using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
 /*
- * Root item name: either remove completely or expose through Options
- * Eliminate parent argument from the public static methods?
  * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
  * Can the Follow attribute be implemented separately using XmlClassifyOptions?
  */
@@ -76,27 +74,13 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T LoadObjectFromXmlFile<T>(string filename, XmlClassifyOptions options = null, object parentNode = null)
-        {
-            return (T) LoadObjectFromXmlFile(typeof(T), filename, options, parentNode);
-        }
-
-        /// <summary>
-        /// Reads an object of the specified type from the specified XML file.
-        /// </summary>
-        /// <param name="type">Type of object to read.</param>
-        /// <param name="filename">Path and filename of the XML file to read from.</param>
-        /// <param name="options">Options.</param>
-        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it receives the object passed in here as its value. Default is null.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null, object parentNode = null)
+        public static T LoadObjectFromXmlFile<T>(string filename, XmlClassifyOptions options = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
                 elem = XElement.Load(strRead);
-            return new classifier(options, defaultBaseDir).Declassify(type, elem, parentNode);
+            return (T) new classifier(options, defaultBaseDir).Declassify(typeof(T), elem);
         }
 
         /// <summary>
@@ -108,23 +92,9 @@ namespace RT.Util.Xml
         /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
         /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static T ObjectFromXElement<T>(XElement elem, XmlClassifyOptions options = null, object parentNode = null)
+        public static T ObjectFromXElement<T>(XElement elem, XmlClassifyOptions options = null)
         {
-            return (T) ObjectFromXElement(typeof(T), elem, options, parentNode);
-        }
-
-        /// <summary>
-        /// Reconstructs an object of the specified type from the specified XML tree.
-        /// </summary>
-        /// <param name="type">Type of the object to reconstruct.</param>
-        /// <param name="elem">XML tree to reconstruct object from.</param>
-        /// <param name="options">Options.</param>
-        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it receives the object passed in here as its value. Default is null.</param>
-        /// <returns>A new instance of the requested type.</returns>
-        public static object ObjectFromXElement(Type type, XElement elem, XmlClassifyOptions options = null, object parentNode = null)
-        {
-            return new classifier(options).Declassify(type, elem, parentNode);
+            return (T) new classifier(options).Declassify(typeof(T), elem);
         }
 
         /// <summary>
@@ -163,10 +133,9 @@ namespace RT.Util.Xml
         /// <param name="saveObject">Object to store in an XML file.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">Options.</param>
-        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
-        public static void SaveObjectToXmlFile<T>(T saveObject, string filename, XmlClassifyOptions options = null, string tagName = null)
+        public static void SaveObjectToXmlFile<T>(T saveObject, string filename, XmlClassifyOptions options = null)
         {
-            SaveObjectToXmlFile(saveObject, typeof(T), filename, options, tagName);
+            SaveObjectToXmlFile(saveObject, typeof(T), filename, options);
         }
 
         /// <summary>
@@ -176,11 +145,10 @@ namespace RT.Util.Xml
         /// <param name="saveType">Type of the object to store.</param>
         /// <param name="filename">Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">Options.</param>
-        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
-        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, XmlClassifyOptions options = null, string tagName = null)
+        public static void SaveObjectToXmlFile(object saveObject, Type saveType, string filename, XmlClassifyOptions options = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            var x = new classifier(options, defaultBaseDir).Classify(saveObject, saveType, tagName ?? "item");
+            var x = new classifier(options, defaultBaseDir).Classify(saveObject, saveType);
             PathUtil.CreatePathToFile(filename);
             x.Save(filename);
         }
@@ -189,22 +157,20 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to convert.</typeparam>
         /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="options">Options.</param>
-        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement<T>(T saveObject, XmlClassifyOptions options = null, string tagName = null)
+        public static XElement ObjectToXElement<T>(T saveObject, XmlClassifyOptions options = null)
         {
-            return new classifier(options).Classify(saveObject, typeof(T), tagName ?? "item");
+            return new classifier(options).Classify(saveObject, typeof(T));
         }
 
         /// <summary>Converts the specified object into an XML tree.</summary>
         /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="saveType">Type of object to convert.</param>
         /// <param name="options">Options.</param>
-        /// <param name="tagName">Name of the top-level XML tag to use for this object. Default is "item".</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement(object saveObject, Type saveType, XmlClassifyOptions options = null, string tagName = null)
+        public static XElement ObjectToXElement(object saveObject, Type saveType, XmlClassifyOptions options = null)
         {
-            return new classifier(options).Classify(saveObject, saveType, tagName ?? "item");
+            return new classifier(options).Classify(saveObject, saveType);
         }
 
         private sealed class classifier
@@ -213,11 +179,13 @@ namespace RT.Util.Xml
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
             private string _baseDir;
+            private string _rootElementName;
 
             public classifier(XmlClassifyOptions options = null, string defaultBaseDir = null)
             {
                 _options = options ?? DefaultOptions ?? new XmlClassifyOptions(); // in case someone set default options to null
                 _baseDir = _options.BaseDir ?? defaultBaseDir;
+                _rootElementName = _options.RootElementName ?? "item";
             }
 
             private Dictionary<string, object> _rememberD
@@ -249,7 +217,7 @@ namespace RT.Util.Xml
                 return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
             }
 
-            public object Declassify(Type type, XElement elem, object parentNode)
+            public object Declassify(Type type, XElement elem, object parentNode = null)
             {
                 _doAtTheEnd = new List<Action>();
                 var result = declassify(type, elem, parentNode);
@@ -265,8 +233,8 @@ namespace RT.Util.Xml
                 var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
 
                 XmlClassifyTypeOptions typeOptions;
-                if (_options.TypeOptions.TryGetValue(type, out typeOptions) && typeOptions.SubstituteType != null)
-                    type = typeOptions.SubstituteType;
+                if (_options._typeOptions.TryGetValue(type, out typeOptions) && typeOptions._substituteType != null)
+                    type = typeOptions._substituteType;
 
                 var processXml = typeOptions as IXmlClassifyProcessXml;
                 if (processXml != null)
@@ -448,7 +416,7 @@ namespace RT.Util.Xml
 
                 // Apply de-substitution (if any)
                 if (originalType != type)
-                    result = typeOptions.FromSubstitute(result);
+                    result = typeOptions._fromSubstitute(result);
                 if (elem.Attribute("refid") != null)
                     _rememberD[elem.Attribute("refid").Value] = result;
                 return result;
@@ -545,9 +513,9 @@ namespace RT.Util.Xml
                     _doAtTheEnd.Add(() => { ((IXmlClassifyProcess) intoObject).AfterXmlDeclassify(); });
             }
 
-            public XElement Classify(object saveObject, Type declaredType, string tagName)
+            public XElement Classify(object saveObject, Type declaredType, string tagName = null)
             {
-                XElement elem = new XElement(tagName);
+                XElement elem = new XElement(tagName ?? _rootElementName);
 
                 if (saveObject == null)
                 {
@@ -578,10 +546,10 @@ namespace RT.Util.Xml
                 // See if there's a substitute type defined
                 XmlClassifyTypeOptions typeOptions;
                 var originalObject = saveObject;
-                if (_options.TypeOptions.TryGetValue(saveType, out typeOptions) && typeOptions.SubstituteType != null)
+                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions._substituteType != null)
                 {
-                    saveObject = typeOptions.ToSubstitute(saveObject);
-                    saveType = typeOptions.SubstituteType;
+                    saveObject = typeOptions._toSubstitute(saveObject);
+                    saveType = typeOptions._substituteType;
                 }
 
                 // Preserve reference identity of reference types except string
@@ -761,7 +729,7 @@ namespace RT.Util.Xml
                                         if (_baseDir == null)
                                             throw new InvalidOperationException(@"An object that uses [XmlFollowId] can only be stored if a base directory is specified (see “BaseDir” in the XmlClassifyOptions class).");
                                         var prop = field.FieldType.GetProperty("Value");
-                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_baseDir, innerType.Name, id + ".xml"), _options, "item");
+                                        SaveObjectToXmlFile(prop.GetValue(saveValue, null), prop.PropertyType, Path.Combine(_baseDir, innerType.Name, id + ".xml"), _options);
                                     }
                                 }
                                 else
@@ -787,40 +755,37 @@ namespace RT.Util.Xml
 #if DEBUG
         /// <summary>Performs safety checks to ensure that a specific type doesn't cause XmlClassify exceptions. Note that this doesn't guarantee that the data is preserved correctly.
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
+        /// <typeparam name="T">The type that must be XmlClassify-able.</typeparam>
         /// <param name="rep">Object to report post-build errors to.</param>
-        /// <param name="typeToCheck">The type that must be XmlClassify-able.</param>
-        public static void PostBuildStep(IPostBuildReporter rep, Type typeToCheck)
+        public static void PostBuildStep<T>(IPostBuildReporter rep)
         {
             object obj;
             try
             {
-                obj = Activator.CreateInstance(typeToCheck, nonPublic: true);
+                obj = Activator.CreateInstance(typeof(T), nonPublic: true);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to instantiate type {0}, required by XmlClassify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(typeToCheck, e.Message),
-                    "class", typeToCheck.Name);
+                rep.Error("Unable to instantiate type {0}, required by XmlClassify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
                 return;
             }
             XElement xel;
             try
             {
-                xel = ObjectToXElement(obj, typeToCheck);
+                xel = ObjectToXElement(obj);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to XmlClassify type {0}. {1}".Fmt(typeToCheck, e.Message),
-                    "class", typeToCheck.Name);
+                rep.Error("Unable to XmlClassify type {0}. {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
                 return;
             }
             try
             {
-                ObjectFromXElement(typeToCheck, xel);
+                ObjectFromXElement<T>(xel);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to de-XmlClassify type {0}. {1}".Fmt(typeToCheck, e.Message),
-                    "class", typeToCheck.Name);
+                rep.Error("Unable to de-XmlClassify type {0}. {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
                 return;
             }
         }
@@ -882,7 +847,10 @@ namespace RT.Util.Xml
         /// </summary>
         public string BaseDir = null;
 
-        internal Dictionary<Type, XmlClassifyTypeOptions> TypeOptions = new Dictionary<Type, XmlClassifyTypeOptions>();
+        /// <summary>The name of the root element for classified objects.</summary>
+        public string RootElementName = "item";
+
+        internal Dictionary<Type, XmlClassifyTypeOptions> _typeOptions = new Dictionary<Type, XmlClassifyTypeOptions>();
 
         /// <summary>Adds XmlClassify options that are relevant to classifying/declassifying a specific type.</summary>
         /// <param name="type">The type to which these options apply.</param>
@@ -892,10 +860,10 @@ namespace RT.Util.Xml
         {
             if (type == null) throw new ArgumentNullException("type");
             if (options == null) throw new ArgumentNullException("options");
-            if (TypeOptions.ContainsKey(type)) throw new ArgumentException("XmlClassify options for type {0} have already been defined.".Fmt(type), "type");
-            if (TypeOptions.Values.Contains(options)) throw new ArgumentException("Must use a different XmlClassifyTypeOptions instance for every type.", "options");
-            options.InitializeFor(type);
-            TypeOptions.Add(type, options);
+            if (_typeOptions.ContainsKey(type)) throw new ArgumentException("XmlClassify options for type {0} have already been defined.".Fmt(type), "type");
+            if (_typeOptions.Values.Contains(options)) throw new ArgumentException("Must use a different XmlClassifyTypeOptions instance for every type.", "options");
+            options.initializeFor(type);
+            _typeOptions.Add(type, options);
             return this;
         }
     }
@@ -903,11 +871,11 @@ namespace RT.Util.Xml
     /// <summary>Specifies some options for use in XmlClassify that pertain to a specific type.</summary>
     public abstract class XmlClassifyTypeOptions
     {
-        internal Type SubstituteType;
-        internal Func<object, object> ToSubstitute;
-        internal Func<object, object> FromSubstitute;
+        internal Type _substituteType;
+        internal Func<object, object> _toSubstitute;
+        internal Func<object, object> _fromSubstitute;
 
-        internal void InitializeFor(Type type)
+        internal void initializeFor(Type type)
         {
             var substInterfaces = GetType().GetInterfaces()
                 .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IXmlClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
@@ -915,19 +883,19 @@ namespace RT.Util.Xml
                 throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType(), type));
             else if (substInterfaces.Length == 1)
             {
-                SubstituteType = substInterfaces[0].GetGenericArguments()[1];
-                if (type == SubstituteType)
+                _substituteType = substInterfaces[0].GetGenericArguments()[1];
+                if (type == _substituteType)
                     throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType(), type));
                 var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
                 var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
-                ToSubstitute = obj =>
+                _toSubstitute = obj =>
                 {
                     var result = toSubstMethod.Invoke(this, new[] { obj });
-                    if (result != null && result.GetType() != SubstituteType) // forbidden just in case because I see no use cases for returning a subtype
-                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, SubstituteType, result.GetType()));
+                    if (result != null && result.GetType() != _substituteType) // forbidden just in case because I see no use cases for returning a subtype
+                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType, result.GetType()));
                     return result;
                 };
-                FromSubstitute = obj =>
+                _fromSubstitute = obj =>
                 {
                     var result = fromSubstMethod.Invoke(this, new[] { obj });
                     if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype

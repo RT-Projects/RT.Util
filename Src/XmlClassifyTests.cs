@@ -121,9 +121,15 @@ namespace RT.Util.Xml
         [Test]
         public void TestBlankClass()
         {
-            XElement xel;
-            xel = XmlClassify.ObjectToXElement(new blankClass());
+            XElement xel = XmlClassify.ObjectToXElement(new blankClass());
             XmlClassify.ObjectFromXElement<blankClass>(xel);
+        }
+
+        [Test]
+        public void TestRootElementName()
+        {
+            XElement xel = XmlClassify.ObjectToXElement(new blankClass(), new XmlClassifyOptions { RootElementName = "BlankClass" });
+            Assert.IsTrue(XNode.DeepEquals(xel, XElement.Parse(@"<BlankClass/>")));
         }
 
         [Test]

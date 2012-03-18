@@ -43,15 +43,11 @@ namespace RT.Util
         /// </summary>
         /// <param name="rep">Object to report post-build errors to.</param>
         /// <param name="settingsType">The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil methods at normal run-time.</param>
-        public static void PostBuildStep(IPostBuildReporter rep, Type settingsType)
+        public static void PostBuildStep<TSettings>(IPostBuildReporter rep) where TSettings : SettingsBase
         {
-            if (!settingsType.IsSubclassOf(typeof(SettingsBase)))
-                rep.Error("The type {0} must be derived from {1} in order to be used with SettingsUtil.".Fmt(settingsType.FullName, typeof(SettingsBase).FullName), "class", settingsType.Name);
-
-            try { GetAttribute(settingsType); }
-            catch (Exception e) { rep.Error(e.Message, "class", settingsType.Name); }
-
-            XmlClassify.PostBuildStep(rep, settingsType);
+            try { GetAttribute(typeof(TSettings)); }
+            catch (Exception e) { rep.Error(e.Message, "class", typeof(TSettings).Name); }
+            XmlClassify.PostBuildStep<TSettings>(rep);
         }
 #endif
 
