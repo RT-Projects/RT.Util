@@ -10,7 +10,6 @@ using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
 /*
- * Implement XmlPostprocess
  * Root item name: either remove completely or expose through Options
  * Eliminate parent argument from the public static methods?
  * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
@@ -221,7 +220,15 @@ namespace RT.Util.Xml
                 _baseDir = _options.BaseDir ?? defaultBaseDir;
             }
 
-            private Dictionary<string, object> _rememberD { get { if (_rememberCacheD == null) _rememberCacheD = new Dictionary<string, object>(); return _rememberCacheD; } }
+            private Dictionary<string, object> _rememberD
+            {
+                get
+                {
+                    if (_rememberCacheD == null)
+                        _rememberCacheD = new Dictionary<string, object>();
+                    return _rememberCacheD;
+                }
+            }
             private Dictionary<string, object> _rememberCacheD;
 
             private Dictionary<object, XElement> _rememberC
@@ -766,6 +773,9 @@ namespace RT.Util.Xml
                             }
                         }
                     }
+
+                    if (saveObject is IXmlClassifyProcessXml)
+                        ((IXmlClassifyProcessXml) saveObject).XmlPostprocess(elem);
                 }
 
                 return elem;
@@ -843,7 +853,7 @@ namespace RT.Util.Xml
         /// <summary>Pre-processes the provided XML before declassifying.</summary>
         /// <param name="xml">XML to preprocess.</param>
         void XmlPreprocess(XElement xml);
-        /// <summary>Post-processes the provided XML after classifying.</summary>
+        /// <summary>Post-processes the generated XML after classifying.</summary>
         /// <param name="xml">XML to postprocess.</param>
         void XmlPostprocess(XElement xml);
     }
