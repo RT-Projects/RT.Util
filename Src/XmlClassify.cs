@@ -71,8 +71,6 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to read.</typeparam>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="options">Options.</param>
-        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, XmlClassifyOptions options = null)
         {
@@ -89,12 +87,22 @@ namespace RT.Util.Xml
         /// <typeparam name="T">Type of object to reconstruct.</typeparam>
         /// <param name="elem">XML tree to reconstruct object from.</param>
         /// <param name="options">Options.</param>
-        /// <param name="parentNode">If the type T contains a field with the <see cref="XmlParentAttribute"/> attribute,
-        /// it receives the object passed in here as its value. Default is null.</param>
         /// <returns>A new instance of the requested type.</returns>
         public static T ObjectFromXElement<T>(XElement elem, XmlClassifyOptions options = null)
         {
             return (T) new classifier(options).Declassify(typeof(T), elem);
+        }
+
+        /// <summary>
+        /// Reconstructs an object of the specified type from the specified XML tree.
+        /// </summary>
+        /// <param name="type">Type of object to reconstruct.</param>
+        /// <param name="elem">XML tree to reconstruct object from.</param>
+        /// <param name="options">Options.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static object ObjectFromXElement(Type type, XElement elem, XmlClassifyOptions options = null)
+        {
+            return new classifier(options).Declassify(type, elem);
         }
 
         /// <summary>
@@ -164,11 +172,11 @@ namespace RT.Util.Xml
         }
 
         /// <summary>Converts the specified object into an XML tree.</summary>
-        /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="saveType">Type of object to convert.</param>
+        /// <param name="saveObject">Object to convert to an XML tree.</param>
         /// <param name="options">Options.</param>
         /// <returns>XML tree generated from the object.</returns>
-        public static XElement ObjectToXElement(object saveObject, Type saveType, XmlClassifyOptions options = null)
+        public static XElement ObjectToXElement(Type saveType, object saveObject, XmlClassifyOptions options = null)
         {
             return new classifier(options).Classify(saveObject, saveType);
         }
@@ -759,33 +767,42 @@ namespace RT.Util.Xml
         /// <param name="rep">Object to report post-build errors to.</param>
         public static void PostBuildStep<T>(IPostBuildReporter rep)
         {
+            PostBuildStep(typeof(T), rep);
+        }
+
+        /// <summary>Performs safety checks to ensure that a specific type doesn't cause XmlClassify exceptions. Note that this doesn't guarantee that the data is preserved correctly.
+        /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
+        /// <param name="type">The type that must be XmlClassify-able.</param>
+        /// <param name="rep">Object to report post-build errors to.</param>
+        public static void PostBuildStep(Type type, IPostBuildReporter rep)
+        {
             object obj;
             try
             {
-                obj = Activator.CreateInstance(typeof(T), nonPublic: true);
+                obj = Activator.CreateInstance(type, nonPublic: true);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to instantiate type {0}, required by XmlClassify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
+                rep.Error("Unable to instantiate type {0}, required by XmlClassify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(type, e.Message), "class", type.Name);
                 return;
             }
             XElement xel;
             try
             {
-                xel = ObjectToXElement(obj);
+                xel = ObjectToXElement(type, obj);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to XmlClassify type {0}. {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
+                rep.Error("Unable to XmlClassify type {0}. {1}".Fmt(type, e.Message), "class", type.Name);
                 return;
             }
             try
             {
-                ObjectFromXElement<T>(xel);
+                ObjectFromXElement(type, xel);
             }
             catch (Exception e)
             {
-                rep.Error("Unable to de-XmlClassify type {0}. {1}".Fmt(typeof(T), e.Message), "class", typeof(T).Name);
+                rep.Error("Unable to de-XmlClassify type {0}. {1}".Fmt(type, e.Message), "class", type.Name);
                 return;
             }
         }

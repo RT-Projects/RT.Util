@@ -41,8 +41,8 @@ namespace RT.Util
         /// Performs safety checks to ensure that a settings object conforms to various requirements imposed by SettingsUtil methods. Run this method as a post-build
         /// step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.
         /// </summary>
+        /// <typeparam name="TSettings">The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil methods at normal run-time.</typeparam>
         /// <param name="rep">Object to report post-build errors to.</param>
-        /// <param name="settingsType">The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil methods at normal run-time.</param>
         public static void PostBuildStep<TSettings>(IPostBuildReporter rep) where TSettings : SettingsBase
         {
             try { GetAttribute(typeof(TSettings)); }
