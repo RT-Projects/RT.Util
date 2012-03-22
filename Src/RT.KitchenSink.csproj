@@ -69,8 +69,11 @@
     <Compile Include="Lex\LexTokens.cs" />
     <Compile Include="Lex\LexUtil.cs" />
     <Compile Include="Lex\TokenJar.cs" />
+    <Compile Include="ParseCs\AutoList.cs" />
     <Compile Include="ParseCs\CandidateInfo.cs" />
     <Compile Include="ParseCs\Conversion.cs" />
+    <Compile Include="ParseCs\Exceptions.cs" />
+    <Compile Include="ParseCs\Extensions.cs" />
     <Compile Include="ParseCs\NameResolver.cs" />
     <Compile Include="ParseCs\Lexer.cs" />
     <Compile Include="ParseCs\Parser.cs" />

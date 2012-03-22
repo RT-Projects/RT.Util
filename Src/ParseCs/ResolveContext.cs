@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using RT.Util.ExtensionMethods;
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
     abstract class ResolveContext
     {

@@ -4,13 +4,10 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using RT.Util;
-using RT.Util.Collections;
-using RT.Util.ExtensionMethods;
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
     static class ParserUtil
     {
@@ -115,7 +112,8 @@ namespace RT.KitchenSink.ParseCs
                 while (e1.MoveNext())
                 {
                     bool isNext = e2.MoveNext();
-                    Ut.Assert(isNext);
+                    if (!isNext)
+                        throw new InternalErrorException("Internal error 39420");
 
                     var ms = comparer(e1.Current, e2.Current);
                     if (ms == -1)
@@ -167,7 +165,8 @@ namespace RT.KitchenSink.ParseCs
             if (delegateType == null)
                 return null;
             var invoke = delegateType.GetMethod("Invoke");
-            Ut.Assert(invoke != null);
+            if (invoke == null)
+                throw new InternalErrorException("Internal error 5723057");
             return invoke.ReturnType;
         }
 
@@ -175,7 +174,8 @@ namespace RT.KitchenSink.ParseCs
         {
             var delegateType = GetDelegateType(type);
             var invoke = delegateType.GetMethod("Invoke");
-            Ut.Assert(invoke != null);
+            if (invoke == null)
+                throw new InternalErrorException("Internal error 032479");
             return invoke.GetParameters().Select(p => p.ParameterType);
         }
 
@@ -189,7 +189,7 @@ namespace RT.KitchenSink.ParseCs
             var evaluatedArguments = new AutoList<ResolveContext>();
             var modes = new AutoList<ArgumentMode>(parameterInfo.Select(pi => pi.IsOut ? ArgumentMode.Out : pi.ParameterType.IsByRef ? ArgumentMode.Ref : ArgumentMode.In));
             var paramsArray = new List<ResolveContext>();
-            var paramsArrayIndex = parameterInfo.IndexOf(p => p.IsDefined<ParamArrayAttribute>());
+            var paramsArrayIndex = parameterInfo.IndexOf(p => p.IsDefined(typeof(ParamArrayAttribute), false));
 
             foreach (var argument in args)
             {

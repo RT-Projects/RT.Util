@@ -4,9 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using RT.Util.ExtensionMethods;
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
@@ -43,20 +42,19 @@ namespace RT.KitchenSink.ParseCs
         };
 
         [Flags]
-        public enum LexOptions { IgnoreComments = 1 };
+        public enum LexOptions { None = 0, IgnoreComments = 1 };
 
         public static List<string> PreprocessorDirectives = new List<string>();
 
         public static TokenJar Lex(string data, LexOptions opt)
         {
-            var endToken = new Token(null, TokenType.EndOfFile, data.Length);
+            var endToken = new Token(null, TokenType.EndOfFile, data.Length, data.Length);
             return new TokenJar(preprocess(lex(data)).Where(t => ((t.Type != TokenType.CommentSlashSlash && t.Type != TokenType.CommentSlashStar) || (opt & LexOptions.IgnoreComments) == 0)), endToken);
         }
 
         public static TokenJar Lex(string data)
         {
-            var endToken = new Token(null, TokenType.EndOfFile, data.Length);
-            return new TokenJar(preprocess(lex(data)), endToken);
+            return Lex(data, LexOptions.None);
         }
 
         private static IEnumerable<Token> lex(string data)
@@ -79,7 +77,7 @@ namespace RT.KitchenSink.ParseCs
                     if (index + kw.Length >= dataLength || data[index + kw.Length] == '_' || char.IsLetterOrDigit(data, index + kw.Length))
                         continue;
 
-                    yield return new Token(kw, TokenType.Builtin, index);
+                    yield return new Token(kw, TokenType.Builtin, index, index + kw.Length);
                     index += kw.Length;
                     goto ContinueDo;
 
@@ -96,7 +94,7 @@ namespace RT.KitchenSink.ParseCs
                     index += char.IsSurrogate(data, index) ? 2 : 1;
                     while (index < dataLength && (char.IsLetterOrDigit(data, index) || data[index] == '_'))
                         index += char.IsSurrogate(data, index) ? 2 : 1;
-                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.Identifier, tokenIndex);
+                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.Identifier, tokenIndex, index);
                     goto ContinueDo;
                 }
 
@@ -115,8 +113,8 @@ namespace RT.KitchenSink.ParseCs
                         }
                         else if (data[index] == '"')
                         {
-                            yield return new Token(str.ToString(), TokenType.StringLiteral, tokenIndex);
                             index++;
+                            yield return new Token(str.ToString(), TokenType.StringLiteral, tokenIndex, index);
                             goto ContinueDo;
                         }
                         else
@@ -192,8 +190,8 @@ namespace RT.KitchenSink.ParseCs
                         }
                         else if (!isChar && ch == '"')
                         {
-                            yield return new Token(str.ToString(), TokenType.StringLiteral, tokenIndex);
                             index++;
+                            yield return new Token(str.ToString(), TokenType.StringLiteral, tokenIndex, index);
                             goto ContinueDo;
                         }
                         else if (isChar && ch == '\'')
@@ -202,8 +200,8 @@ namespace RT.KitchenSink.ParseCs
                                 throw new LexException("Empty character literal.", index);
                             if (str.Length > 1)
                                 throw new LexException("Too many characters in character literal.", index);
-                            yield return new Token(str.ToString(), TokenType.CharacterLiteral, tokenIndex);
                             index++;
+                            yield return new Token(str.ToString(), TokenType.CharacterLiteral, tokenIndex, index);
                             goto ContinueDo;
                         }
                         else if (ch == '\n' || ch == '\r')
@@ -233,7 +231,7 @@ namespace RT.KitchenSink.ParseCs
                         if ((data[index] == 'u' || data[index] == 'U' || data[index] == 'l' || data[index] == 'L') && char.ToUpper(data[index]) != char.ToUpper(first))
                             index++;
                     }
-                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.NumberLiteral, origIndex);
+                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.NumberLiteral, origIndex, index);
                     goto ContinueDo;
                 }
 
@@ -271,7 +269,7 @@ namespace RT.KitchenSink.ParseCs
                         if (index < data.Length && ((char.ToUpper(first) == 'U' && char.ToUpper(data[index]) == 'L') || (char.ToUpper(first) == 'L' && char.ToUpper(data[index]) == 'U')))
                             index++;
                     }
-                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.NumberLiteral, origIndex);
+                    yield return new Token(data.Substring(origIndex, index - origIndex), TokenType.NumberLiteral, origIndex, index);
                     goto ContinueDo;
                 }
 
@@ -282,16 +280,16 @@ namespace RT.KitchenSink.ParseCs
                     if (data[index + 1] == '/')
                     {
                         int pos = data.IndexOf('\n', index + 2);
-                        yield return new Token(pos < 0 ? data.Substring(origIndex) : data.Substring(origIndex, pos - origIndex), TokenType.CommentSlashSlash, origIndex);
                         index = pos < 0 ? data.Length : pos + 1;
+                        yield return new Token(pos < 0 ? data.Substring(origIndex) : data.Substring(origIndex, pos - origIndex), TokenType.CommentSlashSlash, origIndex, index);
                     }
                     else
                     {
                         int pos = data.IndexOf("*/", index + 2);
                         if (pos == -1)
                             throw new LexException("Unterminated comment.", index);
-                        yield return new Token(data.Substring(origIndex, pos + 2 - origIndex), TokenType.CommentSlashStar, origIndex);
                         index = pos + 2;
+                        yield return new Token(data.Substring(origIndex, pos + 2 - origIndex), TokenType.CommentSlashStar, origIndex, index);
                     }
                     goto ContinueDo;
                 }
@@ -306,7 +304,7 @@ namespace RT.KitchenSink.ParseCs
                         if (ch[i] != data[index + i])
                             goto ContinueForeachCh;
 
-                    yield return new Token(ch, TokenType.Builtin, index);
+                    yield return new Token(ch, TokenType.Builtin, index, index + ch.Length);
                     index += ch.Length;
                     goto ContinueDo;
 
@@ -318,7 +316,7 @@ namespace RT.KitchenSink.ParseCs
                     int i = index;
                     while (i < data.Length && data[i] != '\n' && data[i] != '\r' && data[i] != '\u2028' && data[i] != '\u2029')
                         i++;
-                    yield return new Token(data.Substring(index, i - index), TokenType.PreprocessorDirective, index);
+                    yield return new Token(data.Substring(index, i - index), TokenType.PreprocessorDirective, index, i);
                     index = i;
                     goto ContinueDo;
                 }

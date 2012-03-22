@@ -6,17 +6,15 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using RT.Util.ExtensionMethods;
-using RT.Util.Xml;
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-    [XmlIgnoreIfDefault, XmlIgnoreIfEmpty]
     public abstract class CsNode
     {
-        public int Index;
+        public int StartIndex;
+        public int EndIndex;
 
         public virtual IEnumerable<CsNode> Subnodes
         {
@@ -26,7 +24,7 @@ namespace RT.KitchenSink.ParseCs
 
                 var type = this.GetType();
                 var subnodes = new List<CsNode>();
-                foreach (var field in type.GetAllFields())
+                foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                 {
                     if (typeof(CsNode).IsAssignableFrom(field.FieldType))
                         subnodes.Add(field.GetValue(this) as CsNode);
@@ -164,7 +162,9 @@ namespace RT.KitchenSink.ParseCs
         public bool IsInternal, IsPrivate, IsProtected, IsPublic, IsNew, IsUnsafe;
         protected virtual StringBuilder modifiersCs()
         {
-            var sb = new StringBuilder(CustomAttributes.Select(c => c.ToString()).JoinString());
+            var sb = new StringBuilder();
+            foreach (var str in CustomAttributes)
+                sb.Append(str);
             if (IsProtected) sb.Append("protected ");
             if (IsInternal) sb.Append("internal ");
             if (IsPrivate) sb.Append("private ");
@@ -321,7 +321,7 @@ namespace RT.KitchenSink.ParseCs
     public sealed class CsMethod : CsMemberLevel2
     {
         public List<CsParameter> Parameters = new List<CsParameter>();
-        public List<CsNameAndCustomAttributes> GenericTypeParameters = null;
+        public List<CsGenericParameter> GenericTypeParameters = null;
         public Dictionary<string, List<CsGenericTypeConstraint>> GenericTypeConstraints = null;
         public CsBlock MethodBody;
         public bool IsPartial;
@@ -366,6 +366,44 @@ namespace RT.KitchenSink.ParseCs
             else
                 sb.Append(";\n");
             return sb.ToString();
+        }
+
+        public override IEnumerable<CsNode> Subnodes
+        {
+            get
+            {
+                yield return this;
+
+                foreach (var subnode in Type.Subnodes)
+                    yield return subnode;
+
+                if (ImplementsFrom != null)
+                    foreach (var subnode in ImplementsFrom.Subnodes)
+                        yield return subnode;
+
+                foreach (var node in CustomAttributes)
+                    foreach (var subnode in node.Subnodes)
+                        yield return subnode;
+
+                foreach (var node in Parameters)
+                    foreach (var subnode in node.Subnodes)
+                        yield return subnode;
+
+                if (GenericTypeParameters != null)
+                    foreach (var node in GenericTypeParameters)
+                        foreach (var subnode in node.Subnodes)
+                            yield return subnode;
+
+                if (GenericTypeConstraints != null)
+                    foreach (var values in GenericTypeConstraints.Values)
+                        foreach (var node in values)
+                            foreach (var subnode in node.Subnodes)
+                                yield return subnode;
+
+                if (MethodBody != null)
+                    foreach (var subnode in MethodBody.Subnodes)
+                        yield return subnode;
+            }
         }
     }
     public abstract class CsOperatorOverload : CsMember
@@ -487,7 +525,7 @@ namespace RT.KitchenSink.ParseCs
     }
     public abstract class CsTypeCanBeGeneric : CsType
     {
-        public List<CsNameAndCustomAttributes> GenericTypeParameters = null;
+        public List<CsGenericParameter> GenericTypeParameters = null;
         public Dictionary<string, List<CsGenericTypeConstraint>> GenericTypeConstraints = null;
 
         protected string genericTypeParametersCs()
@@ -696,11 +734,10 @@ namespace RT.KitchenSink.ParseCs
         public override string ToString() { return (HasGlobal ? "global::" : string.Empty) + Parts.Select(p => p.ToString()).JoinString("."); }
         public override string GetSingleIdentifier()
         {
-            return !HasGlobal && Parts.Count == 1 &&
-                    Parts[0] is CsSimpleNameIdentifier &&
-                    ((CsSimpleNameIdentifier) Parts[0]).GenericTypeArguments == null
-                ? ((CsSimpleNameIdentifier) Parts[0]).Name
-                : null;
+            if (HasGlobal || Parts.Count != 1)
+                return null;
+            var identifier = Parts[0] as CsSimpleNameIdentifier;
+            return identifier != null && identifier.GenericTypeArguments == null ? identifier.Name : null;
         }
     }
     public sealed class CsArrayTypeName : CsTypeName
@@ -1018,10 +1055,10 @@ namespace RT.KitchenSink.ParseCs
     }
     public sealed class CsConditionalExpression : CsExpression
     {
-        public CsExpression Left, Middle, Right;
+        public CsExpression Condition, TruePart, FalsePart;
         public override string ToString()
         {
-            return string.Concat(Left.ToString(), " ? ", Middle.ToString(), " : ", Right.ToString());
+            return string.Concat(Condition.ToString(), " ? ", TruePart.ToString(), " : ", FalsePart.ToString());
         }
         public override Expression ToLinqExpression(NameResolver resolver, bool isChecked) { throw new NotImplementedException(); }
     }
@@ -1191,7 +1228,12 @@ namespace RT.KitchenSink.ParseCs
 
             if (IsIndexer)
             {
-                var property = ParserUtil.ResolveOverloads(left.ExpressionType.GetAllProperties().Select(p => Tuple.Create(p, p.GetIndexParameters())).ToList(), resolvedArguments, resolver);
+                var property = ParserUtil.ResolveOverloads(
+                    left.ExpressionType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Select(p => Tuple.Create(p, p.GetIndexParameters()))
+                        .ToList(),
+                    resolvedArguments,
+                    resolver);
                 throw new NotImplementedException();
             }
 
@@ -1204,7 +1246,7 @@ namespace RT.KitchenSink.ParseCs
                     var method = ParserUtil.ResolveOverloads(
                         leftMg.MethodGroup.Where(mg => mg.IsExtensionMethod == (i == 1)).Select(mg => Tuple.Create(mg.Method, mg.Method.GetParameters())).ToList(),
                         // For extension methods, add the expression that pretends to be the “this” instance as the first argument
-                        i == 0 ? resolvedArguments : new ArgumentInfo(null, leftMg.Parent, ArgumentMode.In).Concat(resolvedArguments),
+                        i == 0 ? resolvedArguments : new[] { new ArgumentInfo(null, leftMg.Parent, ArgumentMode.In) }.Concat(resolvedArguments),
                         resolver);
                     if (method != null)
                         return new ResolveContextExpression(Expression.Call(method.Member.IsStatic ? null : leftMg.Parent.ToExpression(), method.Member, method.Parameters.Select(arg =>
@@ -1574,14 +1616,14 @@ namespace RT.KitchenSink.ParseCs
 
     public enum VarianceMode { Invariant, Covariant, Contravariant }
 
-    public sealed class CsNameAndCustomAttributes : CsNode
+    public sealed class CsGenericParameter : CsNode
     {
         public string Name;
         public VarianceMode Variance;
         public List<CsCustomAttributeGroup> CustomAttributes = new List<CsCustomAttributeGroup>();
         public override string ToString()
         {
-            return CustomAttributes.Select(c => c.ToString()).JoinString() + Name.Sanitize();
+            return CustomAttributes.Select(c => c.ToString()).JoinString() + (Variance == VarianceMode.Covariant ? "out " : Variance == VarianceMode.Contravariant ? "in " : "") + Name.Sanitize();
         }
     }
 
@@ -1621,75 +1663,4 @@ namespace RT.KitchenSink.ParseCs
         }
     }
     #endregion
-
-    public static class Extensions
-    {
-        public static string Indent(this string input)
-        {
-            return Regex.Replace(input, "^(?!$)", "    ", RegexOptions.Multiline);
-        }
-        public static string CsEscape(this char ch, bool singleQuote, bool doubleQuote)
-        {
-            switch (ch)
-            {
-                case '\\': return "\\\\";
-                case '\0': return "\\0";
-                case '\a': return "\\a";
-                case '\b': return "\\b";
-                case '\f': return "\\f";
-                case '\n': return "\\n";
-                case '\r': return "\\r";
-                case '\t': return "\\t";
-                case '\v': return "\\v";
-                case '\'': return singleQuote ? "\\'" : "'";
-                case '"': return doubleQuote ? "\\\"" : "\"";
-                default: return ch.ToString();
-            }
-        }
-        public static string ToCs(this BinaryOperator op)
-        {
-            return
-                op == BinaryOperator.Times ? "*" :
-                op == BinaryOperator.Div ? "/" :
-                op == BinaryOperator.Mod ? "%" :
-                op == BinaryOperator.Plus ? "+" :
-                op == BinaryOperator.Minus ? "-" :
-                op == BinaryOperator.Shl ? "<<" :
-                op == BinaryOperator.Shr ? ">>" :
-                op == BinaryOperator.Less ? "<" :
-                op == BinaryOperator.Greater ? ">" :
-                op == BinaryOperator.LessEq ? "<=" :
-                op == BinaryOperator.GreaterEq ? ">=" :
-                op == BinaryOperator.Eq ? "==" :
-                op == BinaryOperator.NotEq ? "!=" :
-                op == BinaryOperator.And ? "&" :
-                op == BinaryOperator.Xor ? "^" :
-                op == BinaryOperator.Or ? "|" :
-                op == BinaryOperator.AndAnd ? "&&" :
-                op == BinaryOperator.OrOr ? "||" :
-                op == BinaryOperator.Coalesce ? "??" : null;
-        }
-        public static string ToCs(this UnaryOperator op)
-        {
-            return
-                op == UnaryOperator.Plus ? "+" :
-                op == UnaryOperator.Minus ? "-" :
-                op == UnaryOperator.Not ? "!" :
-                op == UnaryOperator.Neg ? "~" :
-                op == UnaryOperator.PrefixInc ? "++" :
-                op == UnaryOperator.PrefixDec ? "--" :
-                op == UnaryOperator.PostfixInc ? "++" :
-                op == UnaryOperator.PostfixDec ? "--" :
-                op == UnaryOperator.PointerDeref ? "*" :
-                op == UnaryOperator.AddressOf ? "&" :
-                op == UnaryOperator.True ? "true" :
-                op == UnaryOperator.False ? "false" : null;
-        }
-        public static string Sanitize(this string identifier)
-        {
-            if (Lexer.Keywords.Contains(identifier))
-                return "@" + identifier;
-            return identifier;
-        }
-    }
 }

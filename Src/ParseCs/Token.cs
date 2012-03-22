@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
@@ -21,11 +21,13 @@ namespace RT.KitchenSink.ParseCs
     {
         private string _str;
         private TokenType _type;
-        private int _index;
-        public Token(string str, TokenType type, int index) { _str = str; _type = type; _index = index; }
+        private int _startIndex;
+        private int _endIndex;
+        public Token(string str, TokenType type, int startIndex, int endIndex) { _str = str; _type = type; _startIndex = startIndex; _endIndex = endIndex; }
         public string TokenStr { get { return _str; } }
         public TokenType Type { get { return _type; } }
-        public int Index { get { return _index; } }
+        public int StartIndex { get { return _startIndex; } }
+        public int EndIndex { get { return _endIndex; } }
 
         public bool IsBuiltin(string name) { return _type == TokenType.Builtin && _str.Equals(name); }
         public bool IsIdentifier(string name) { return _type == TokenType.Identifier && _str.Equals(name); }
@@ -38,14 +40,14 @@ namespace RT.KitchenSink.ParseCs
         public string Identifier(string errorMessage)
         {
             if (_type != TokenType.Identifier)
-                throw new ParseException(errorMessage, _index);
+                throw new ParseException(errorMessage, _startIndex);
             return _str;
         }
 
         public void Assert(string token)
         {
             if (!_str.Equals(token))
-                throw new ParseException(@"Assertion failed.", _index);
+                throw new ParseException(@"Assertion failed.", _startIndex);
         }
 
         public override string ToString()

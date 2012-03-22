@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using RT.Util;
-using RT.Util.ExtensionMethods;
 
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
     class TypeInferer
     {
@@ -17,7 +15,7 @@ namespace RT.KitchenSink.ParseCs
         {
             var method = candidateInfo.Member as MethodInfo;
             if (method == null || !method.IsGenericMethodDefinition)
-                throw new InternalErrorException("Type inference can only be performed on a generic method definition.");
+                throw new InvalidOperationException("Type inference can only be performed on a generic method definition.");
 
             var inferer = new TypeInferer(candidateInfo.Parameters, method, resolver);
             if (!inferer.infer())
@@ -57,7 +55,8 @@ namespace RT.KitchenSink.ParseCs
 
         private TypeInferer(CandidateParameterInfo[] parameters, MethodInfo method, NameResolver resolver)
         {
-            Ut.Assert(method.IsGenericMethodDefinition);
+            if (!method.IsGenericMethodDefinition)
+                throw new ArgumentException("The specified method must be a generic method definition.");
 
             _parameters = parameters;
             _method = method;
@@ -401,7 +400,8 @@ namespace RT.KitchenSink.ParseCs
                     var uCandidate = q.Dequeue();
                     if (uCandidate.BaseType != null && uCandidate.BaseType != typeof(object))
                         q.Enqueue(uCandidate.BaseType);
-                    q.EnqueueRange(uCandidate.GetInterfaces());
+                    foreach (var interf in uCandidate.GetInterfaces())
+                        q.Enqueue(interf);
 
                     if (uCandidate.IsGenericType && uCandidate.GetGenericTypeDefinition() == c)
                     {
@@ -522,7 +522,8 @@ namespace RT.KitchenSink.ParseCs
                     var vCandidate = q.Dequeue();
                     if (vCandidate.BaseType != null && vCandidate.BaseType != typeof(object))
                         q.Enqueue(vCandidate.BaseType);
-                    q.EnqueueRange(vCandidate.GetInterfaces());
+                    foreach (var interf in vCandidate.GetInterfaces())
+                        q.Enqueue(interf);
 
                     if (vCandidate.IsGenericType && vCandidate.GetGenericTypeDefinition() == c)
                     {

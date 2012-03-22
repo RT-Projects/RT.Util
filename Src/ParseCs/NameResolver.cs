@@ -4,11 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using RT.Util.ExtensionMethods;
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
     public class NameResolver
     {
@@ -29,10 +28,14 @@ namespace RT.KitchenSink.ParseCs
 
         public static NameResolver FromType(Type type, params Assembly[] assemblies)
         {
+            if (type == null)
+                throw new ArgumentNullException("type");
             return new NameResolver(type.Namespace, type, null, assemblies);
         }
         public static NameResolver FromInstance(object instance, params Assembly[] assemblies)
         {
+            if (instance == null)
+                throw new ArgumentNullException("instance");
             var type = instance.GetType();
             return new NameResolver(type.Namespace, type, instance, assemblies);
         }
@@ -179,7 +182,7 @@ namespace RT.KitchenSink.ParseCs
                 }
 
                 // Is it an extension method?
-                foreach (var method in _assemblies.SelectMany(a => a.GetTypes()).SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static)).Where(m => m.Name == simpleNameIdentifier.Name && m.IsDefined<ExtensionAttribute>()))
+                foreach (var method in _assemblies.SelectMany(a => a.GetTypes()).SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static)).Where(m => m.Name == simpleNameIdentifier.Name && m.IsDefined(typeof(ExtensionAttribute), false)))
                 {
                     var prms = method.GetParameters();
                     if (prms.Length == 0)

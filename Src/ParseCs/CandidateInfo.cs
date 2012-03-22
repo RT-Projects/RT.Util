@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using RT.Util;
 
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
 
-namespace RT.KitchenSink.ParseCs
+namespace RT.ParseCs
 {
     class CandidateParameterInfo
     {
@@ -124,7 +123,8 @@ namespace RT.KitchenSink.ParseCs
                 {
                     var del1 = ParserUtil.GetDelegateType(p1.ParameterType);
                     var del2 = ParserUtil.GetDelegateType(p2.ParameterType);
-                    Ut.Assert(del1 != null && del2 != null);
+                    if (del1 == null || del2 == null)
+                        throw new InternalErrorException("Internal error 23087");
                     var del1param = ParserUtil.GetDelegateParameterTypes(p1.ParameterType);
                     var del2param = ParserUtil.GetDelegateParameterTypes(p2.ParameterType);
                     if (del1param.SequenceEqual(del2param))
