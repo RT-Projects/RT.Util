@@ -61,7 +61,6 @@
     <Compile Include="CmdLine.cs" />
     <Compile Include="Collections\AutoList.cs" />
     <Compile Include="Collections\ListSorted.cs" />
-    <Compile Include="Collections\NameValuesCollection.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\ReadOnlyCollections.cs" />
     <Compile Include="Consoles\ColoredConsoleOut.cs" />
@@ -165,6 +164,7 @@
     </Compile>
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="NameGenerator.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
     <Compile Include="RhoML.cs" />
