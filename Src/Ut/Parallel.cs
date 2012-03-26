@@ -82,7 +82,7 @@ namespace RT.Util
                 thread.Join();
                 lock (exceptionLock)
                     if (exception != null)
-                        throw exception;
+                        throw new Exception(exception.Message, exception);
             }
         }
 
