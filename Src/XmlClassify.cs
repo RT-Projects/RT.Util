@@ -675,6 +675,9 @@ namespace RT.Util.Xml
 
                         foreach (var field in saveType.GetAllFields())
                         {
+                            if (field.FieldType == saveType && saveType.IsValueType)
+                                throw new InvalidOperationException(@"Cannot serialize an instance of the type {0} because it is a value type that contains itself.".Fmt(saveType.FullName));
+
                             // Ignore the backing field for events
                             if (typeof(Delegate).IsAssignableFrom(field.FieldType) && saveType.GetEvent(field.Name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance) != null)
                                 continue;
