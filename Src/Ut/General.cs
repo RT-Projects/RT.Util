@@ -410,9 +410,10 @@ namespace RT.Util
         /// <param name="action">The action to be attempted and possibly retried.</param>
         /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
         /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
-        public static void WaitSharingVio(Action action, TimeSpan? maximum = null)
+        /// <param name="onSharingVio">Action to execute when a sharing violation does occur (is called before the waiting).</param>
+        public static void WaitSharingVio(Action action, TimeSpan? maximum = null, Action onSharingVio = null)
         {
-            WaitSharingVio<bool>(() => { action(); return true; }, maximum);
+            WaitSharingVio<bool>(() => { action(); return true; }, maximum, onSharingVio);
         }
 
         /// <summary>
@@ -422,7 +423,8 @@ namespace RT.Util
         /// <param name="func">The function to be attempted and possibly retried.</param>
         /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
         /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
-        public static T WaitSharingVio<T>(Func<T> func, TimeSpan? maximum = null)
+        /// <param name="onSharingVio">Action to execute when a sharing violation does occur (is called before the waiting).</param>
+        public static T WaitSharingVio<T>(Func<T> func, TimeSpan? maximum = null, Action onSharingVio = null)
         {
             var started = DateTime.UtcNow;
             int sleep = 279;
@@ -439,6 +441,8 @@ namespace RT.Util
                     catch { }
                     if (hResult != -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
                         throw;
+                    if (onSharingVio != null)
+                        onSharingVio();
                 }
 
                 if (maximum != null)

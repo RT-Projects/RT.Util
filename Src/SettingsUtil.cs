@@ -482,8 +482,8 @@ namespace RT.Util
         public SettingsSerializer Serializer { get; private set; }
 
         /// <summary>
-        /// Returns the file name that should be used to store the settings class marked with this attribute. Note that
-        /// the return value may change depending on external factors (the existence of a file). The recommended
+        /// Returns the full path and file name that should be used to store the settings class marked with this attribute.
+        /// Note that the return value may change depending on external factors (the existence of a file). The recommended
         /// approach is to load settings once, and then save them whenever necessary to whichever path is returned
         /// by this function.
         /// </summary>
