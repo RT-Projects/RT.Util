@@ -576,6 +576,24 @@ namespace RT.Util.Xml
             }
         }
 
+        private struct stringWrapper
+        {
+            public string Value;
+
+            public class Options : XmlClassifyTypeOptions, IXmlClassifySubstitute<stringWrapper, string>
+            {
+                public stringWrapper FromSubstitute(string str)
+                {
+                    return new stringWrapper { Value = str };
+                }
+
+                public string ToSubstitute(stringWrapper subst)
+                {
+                    return subst.Value;
+                }
+            }
+        }
+
 #pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
 
         private class optionsVersionToString : XmlClassifyTypeOptions, IXmlClassifySubstitute<Version, string>
@@ -673,6 +691,23 @@ namespace RT.Util.Xml
             Assert.IsTrue(inst2.Guid.Equals(_testGuid));
             Assert.IsTrue(inst2.GuidNullableNotNull.Value.Equals(_testGuid));
             Assert.IsTrue(inst2.GuidNullableNull == null);
+        }
+
+        [Test]
+        public void TestTypeSubstitutionStruct()
+        {
+            var inst = new stringWrapper { Value = "val" };
+            var opts = new XmlClassifyOptions().AddTypeOptions(typeof(stringWrapper), new stringWrapper.Options());
+            var xml = XmlClassify.ObjectToXElement(inst, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item>val</item>")));
+            var inst2 = XmlClassify.ObjectFromXElement<stringWrapper>(xml, opts);
+            Assert.AreEqual("val", inst2.Value);
+
+            inst = new stringWrapper { Value = null };
+            xml = XmlClassify.ObjectToXElement(inst, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item null='1'/>")));
+            inst2 = XmlClassify.ObjectFromXElement<stringWrapper>(xml, opts);
+            Assert.IsNull(inst2.Value);
         }
     }
 }

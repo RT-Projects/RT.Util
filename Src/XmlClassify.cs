@@ -525,29 +525,27 @@ namespace RT.Util.Xml
             {
                 XElement elem = new XElement(tagName ?? _rootElementName);
 
-                if (saveObject == null)
-                {
-                    elem.Add(new XAttribute("null", 1));
-                    return elem;
-                }
-
                 // Add a “type” attribute if the instance type is different from the field’s declared type
-                Type saveType = saveObject.GetType();
-                if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
+                Type saveType = declaredType;
+                if (saveObject != null)
                 {
-                    // ... but only add this attribute if it is not a collection, because then XmlClassify doesn’t care about the “type” attribute when restoring the object from XML anyway
-                    Type[] typeParameters;
-                    if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                    saveType = saveObject.GetType();
+                    if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
                     {
-                        if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                        // ... but only add this attribute if it is not a collection, because then XmlClassify doesn’t care about the “type” attribute when restoring the object from XML anyway
+                        Type[] typeParameters;
+                        if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                         {
-                            if (saveType.Namespace.Equals(declaredType.Namespace))
-                                elem.Add(new XAttribute("type", saveType.Name));
+                            if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                            {
+                                if (saveType.Namespace.Equals(declaredType.Namespace))
+                                    elem.Add(new XAttribute("type", saveType.Name));
+                                else
+                                    elem.Add(new XAttribute("type", saveType.FullName));
+                            }
                             else
-                                elem.Add(new XAttribute("type", saveType.FullName));
+                                elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                         }
-                        else
-                            elem.Add(new XAttribute("fulltype", saveType.AssemblyQualifiedName));
                     }
                 }
 
@@ -558,6 +556,12 @@ namespace RT.Util.Xml
                 {
                     saveObject = typeOptions._toSubstitute(saveObject);
                     saveType = typeOptions._substituteType;
+                }
+
+                if (saveObject == null)
+                {
+                    elem.Add(new XAttribute("null", 1));
+                    return elem;
                 }
 
                 // Preserve reference identity of reference types except string
