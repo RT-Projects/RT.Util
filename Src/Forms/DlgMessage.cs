@@ -193,6 +193,9 @@ namespace RT.Util.Dialogs
         /// </summary>
         public int CancelButton = -1;
 
+        /// <summary>Specifies whether a taskbar icon is shown for the dialog box.</summary>
+        public bool ShowInTaskbar;
+
         /// <summary>
         /// Shows a message using all the settings specified in this class instance. Anything
         /// left at defaults will be modified to hold the appropriate value. Any invalid settings
@@ -290,90 +293,89 @@ namespace RT.Util.Dialogs
         /// <returns>The index of the button pressed.</returns>
         private int showAsIs()
         {
-            DlgMessageForm Form = new DlgMessageForm();
-
-            Form.Font = SystemFonts.MessageBoxFont;
-            if (Font != null)
-                Form.Message.Font = Font;
-
-            if (Image != null)
+            using (var form = new DlgMessageForm())
             {
-                Form.img.Image = Image;
-                Form.img.Visible = true;
-            }
+                form.Font = SystemFonts.MessageBoxFont;
+                if (Font != null)
+                    form.Message.Font = Font;
 
-            Form.Text = Caption;
-            Form.Message.Text = Message;
-
-            // --- Buttons - captions, visibility, accept/cancel
-
-            Button[] Btn = new Button[4];
-            Btn[0] = Form.Btn0;
-            Btn[1] = Form.Btn1;
-            Btn[2] = Form.Btn2;
-            Btn[3] = Form.Btn3;
-
-            Form.AcceptButton = null;
-            Form.CancelButton = null;
-
-            for (int i = Buttons.Length - 1; i >= 0; i--)
-            {
-                Btn[i].Visible = true;
-                Btn[i].Text = Buttons[i];
-                Btn[i].SendToBack(); // otherwise table layout ordering is messed up
-            }
-
-            Form.AcceptButton = Btn[AcceptButton];
-            Form.CancelButton = Btn[CancelButton];
-
-            Form.Shown += (dummy1, dummy2) => Btn[AcceptButton].Focus(); // otherwise the AcceptButton has no effect
-
-            // --- Ding
-
-            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
-            {
-                switch (Type)
+                if (Image != null)
                 {
-                    case DlgType.Info:
-                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
-                        break;
-                    case DlgType.Question:
-                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
-                        break;
-                    case DlgType.Warning:
-                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
-                        break;
-                    case DlgType.Error:
-                        WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
-                        break;
+                    form.img.Image = Image;
+                    form.img.Visible = true;
                 }
-            }
 
-            // --- Show
+                form.Text = Caption;
+                form.Message.Text = Message;
 
-            Form.Message.MaximumSize = new Size(Math.Min(600, Screen.PrimaryScreen.WorkingArea.Width * 3 / 4), Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
+                // --- Buttons - captions, visibility, accept/cancel
 
-            var result = Form.ShowDialog();
-            Form.Dispose();
+                Button[] Btn = new Button[4];
+                Btn[0] = form.Btn0;
+                Btn[1] = form.Btn1;
+                Btn[2] = form.Btn2;
+                Btn[3] = form.Btn3;
 
-            // --- Return button index
+                form.AcceptButton = null;
+                form.CancelButton = null;
 
-            switch (result)
-            {
-                case DialogResult.OK:
-                    return 0;
-                case DialogResult.Cancel:
-                    return 1;
-                case DialogResult.Yes:
-                    return 2;
-                case DialogResult.No:
-                    return 3;
-                default:
-                    // Should be unable to get here
-                    throw new Exception("Internal exception in Util: unreachable code");
+                for (int i = Buttons.Length - 1; i >= 0; i--)
+                {
+                    Btn[i].Visible = true;
+                    Btn[i].Text = Buttons[i];
+                    Btn[i].SendToBack(); // otherwise table layout ordering is messed up
+                }
+
+                form.AcceptButton = Btn[AcceptButton];
+                form.CancelButton = Btn[CancelButton];
+
+                form.Shown += (dummy1, dummy2) => Btn[AcceptButton].Focus(); // otherwise the AcceptButton has no effect
+
+                // --- Ding
+
+                if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
+                {
+                    switch (Type)
+                    {
+                        case DlgType.Info:
+                            WinAPI.MessageBeep(WinAPI.MessageBeepType.Information);
+                            break;
+                        case DlgType.Question:
+                            WinAPI.MessageBeep(WinAPI.MessageBeepType.Question);
+                            break;
+                        case DlgType.Warning:
+                            WinAPI.MessageBeep(WinAPI.MessageBeepType.Warning);
+                            break;
+                        case DlgType.Error:
+                            WinAPI.MessageBeep(WinAPI.MessageBeepType.Error);
+                            break;
+                    }
+                }
+
+                // --- Show
+
+                form.Message.MaximumSize = new Size(Math.Min(600, Screen.PrimaryScreen.WorkingArea.Width * 3 / 4), Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
+                form.ShowInTaskbar = ShowInTaskbar;
+
+                var result = form.ShowDialog();
+
+                // --- Return button index
+
+                switch (result)
+                {
+                    case DialogResult.OK:
+                        return 0;
+                    case DialogResult.Cancel:
+                        return 1;
+                    case DialogResult.Yes:
+                        return 2;
+                    case DialogResult.No:
+                        return 3;
+                    default:
+                        // Should be unable to get here
+                        throw new Exception("Internal exception in Util: unreachable code");
+                }
             }
         }
     }
-
-
 }
