@@ -44,7 +44,12 @@ namespace RT.Util
         public string Text
         {
             get { return _text; }
-            set { if (value == null) throw new ArgumentNullException(); _text = value; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                _text = value;
+            }
         }
 
         private string _text;
@@ -53,7 +58,7 @@ namespace RT.Util
         public RhoText(string text)
         {
             if (text == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("text");
             Text = text;
         }
 
@@ -76,13 +81,13 @@ namespace RT.Util
         public IDictionary<string, string> Attributes
         {
             get { return _attributes; }
-            set { if (value == null) throw new ArgumentNullException(); _attributes = value; }
+            set { if (value == null) throw new ArgumentNullException("value"); _attributes = value; }
         }
         /// <summary>Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/> instance in any order whatsoever.</summary>
         public IList<RhoNode> Children
         {
             get { return _children; }
-            set { if (value == null) throw new ArgumentNullException(); _children = value; }
+            set { if (value == null) throw new ArgumentNullException("children"); _children = value; }
         }
 
         private IDictionary<string, string> _attributes;
@@ -106,8 +111,10 @@ namespace RT.Util
         /// <summary>Constructor.</summary>
         public RhoTag(string name, string value, IDictionary<string, string> attributes, List<RhoNode> elements)
         {
-            if (attributes == null || elements == null)
-                throw new ArgumentNullException();
+            if (attributes == null)
+                throw new ArgumentNullException("attributes");
+            if (elements == null)
+                throw new ArgumentNullException("elements");
             Name = name;
             Value = value;
             Attributes = new ReadOnlyDictionary<string, string>(attributes);

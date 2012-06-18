@@ -193,7 +193,7 @@ namespace RT.Util
         public static string ExtractParent(string path)
         {
             if (path == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("path");
 
             int pos = -1;
             if (path.Length >= 2)
@@ -216,7 +216,7 @@ namespace RT.Util
         public static string ExtractParent(string path, char separator)
         {
             if (path == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("path");
 
             int pos = -1;
             if (path.Length >= 2)
@@ -238,7 +238,7 @@ namespace RT.Util
         public static string ExtractNameAndExt(string path)
         {
             if (path == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("path");
 
             int pos = path.LastIndexOfAny(new[] { '/', '\\' });
 

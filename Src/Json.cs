@@ -973,7 +973,12 @@ namespace RT.Util.Json
     public class JsonString : JsonValue, IEquatable<JsonString>
     {
         private string _value;
-        public JsonString(string value) { if (value == null) throw new ArgumentNullException(); _value = value; }
+        public JsonString(string value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+            _value = value;
+        }
 
         public static new JsonString Parse(string jsonString, bool allowJavaScript = false)
         {
