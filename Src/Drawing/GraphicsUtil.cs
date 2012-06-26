@@ -26,6 +26,56 @@ namespace RT.Util.Drawing
             return Color.FromArgb(r, g, b);
         }
 
+        /// <summary>Converts the specified hue, saturation and luminance values into an RGB color.</summary>
+        public static Color FromHsl(double hue, double saturation, double luminance)
+        {
+            double r = 0, g = 0, b = 0;
+            if (luminance != 0)
+            {
+                if (saturation == 0)
+                    r = g = b = luminance;
+                else
+                {
+                    double temp2 = getColorTemperature(hue, saturation, luminance);
+                    double temp1 = 2.0 * luminance - temp2;
+
+                    r = getColorComponent(temp1, temp2, hue + 1.0 / 3.0);
+                    g = getColorComponent(temp1, temp2, hue);
+                    b = getColorComponent(temp1, temp2, hue - 1.0 / 3.0);
+                }
+            }
+            return Color.FromArgb((int) (255 * r), (int) (255 * g), (int) (255 * b));
+        }
+
+        private static double getColorComponent(double temp1, double temp2, double temp3)
+        {
+            temp3 = moveIntoRange(temp3);
+            if (temp3 < 1.0 / 6.0)
+                return temp1 + (temp2 - temp1) * 6.0 * temp3;
+            else if (temp3 < 0.5)
+                return temp2;
+            else if (temp3 < 2.0 / 3.0)
+                return temp1 + ((temp2 - temp1) * ((2.0 / 3.0) - temp3) * 6.0);
+            else
+                return temp1;
+        }
+
+        private static double moveIntoRange(double temp3)
+        {
+            if (temp3 < 0.0)
+                temp3 += 1.0;
+            else if (temp3 > 1.0)
+                temp3 -= 1.0;
+            return temp3;
+        }
+
+        private static double getColorTemperature(double hue, double saturation, double luminance)
+        {
+            return luminance < 0.5
+                ? luminance * (1.0 + saturation)
+                : luminance + saturation - (luminance * saturation);
+        }
+
         /// <summary>
         /// Draws the specified <paramref name="image"/> into the destination rectangle <paramref name="destRect"/> of the <paramref name="graphics"/> object using the specified <paramref name="opacity"/>.
         /// </summary>
@@ -78,6 +128,55 @@ namespace RT.Util.Drawing
             source.UnlockBits(sBits);
             transparencyLayer.UnlockBits(tBits);
             return source;
+        }
+
+        /// <summary>Generates an image by taking the color components from one image and the transparency (alpha) layer from another.</summary>
+        /// <param name="size">Size of the image to generate.</param>
+        /// <param name="initGraphics">Optional delegate to invoke on each of the two images.</param>
+        /// <param name="drawOpaqueLayer">Code to draw the color layers.</param>
+        /// <param name="drawTransparencyLayer">Code to draw the transparency (alpha) layer.</param>
+        /// <returns>The new bitmap generated.</returns>
+        public static unsafe Bitmap MakeSemitransparentImage(Size size, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer)
+        {
+            return MakeSemitransparentImage(size.Width, size.Height, initGraphics, drawOpaqueLayer, drawTransparencyLayer);
+        }
+
+        /// <summary>Generates an image by taking the color components from one image and the transparency (alpha) layer from another.</summary>
+        /// <param name="width">The width of the image to generate.</param>
+        /// <param name="height">The height of the image to generate.</param>
+        /// <param name="initGraphics">Optional delegate to invoke on each of the two images.</param>
+        /// <param name="drawOpaqueLayer">Code to draw the color layers.</param>
+        /// <param name="drawTransparencyLayer">Code to draw the transparency (alpha) layer.</param>
+        /// <returns>The new bitmap generated.</returns>
+        public static unsafe Bitmap MakeSemitransparentImage(int width, int height, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer)
+        {
+            var opaque = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(opaque))
+            {
+                if (initGraphics != null)
+                    initGraphics(g);
+                drawOpaqueLayer(g);
+            }
+            var trans = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(trans))
+            {
+                if (initGraphics != null)
+                    initGraphics(g);
+                drawTransparencyLayer(g);
+            }
+
+            var oBits = opaque.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            var tBits = trans.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            for (int y = 0; y < height; y++)
+            {
+                byte* read = (byte*) tBits.Scan0 + y * tBits.Stride;
+                byte* write = (byte*) oBits.Scan0 + y * oBits.Stride;
+                for (int x = 0; x < width; x++)
+                    write[4 * x + 3] = Math.Min(write[4 * x + 3], read[4 * x + 3]);
+            }
+            opaque.UnlockBits(oBits);
+            trans.UnlockBits(tBits);
+            return opaque;
         }
 #endif
 
