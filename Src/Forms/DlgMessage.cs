@@ -123,21 +123,14 @@ namespace RT.Util.Dialogs
             InitializeComponent();
         }
 
-        private bool _buttonPressed = false;
-
         /// <summary>
         /// This takes care of the user closing the dialog. This is equivalent to pressing
         /// the Cancel button, whichever one it happens to be.
         /// </summary>
         private void DlgMessage_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (!_buttonPressed)
+            if (DialogResult == DialogResult.None)
                 DialogResult = CancelButton.DialogResult;
-        }
-
-        private void Btn_Click(object sender, EventArgs e)
-        {
-            _buttonPressed = true;
         }
     }
 

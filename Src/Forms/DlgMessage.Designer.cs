@@ -70,7 +70,7 @@ namespace RT.Util.Dialogs
             this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1F));
             this.layoutMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.layoutMain.Size = new System.Drawing.Size(728, 169);
+            this.layoutMain.Size = new System.Drawing.Size(687, 169);
             this.layoutMain.TabIndex = 14;
             // 
             // layoutButtons
@@ -86,7 +86,7 @@ namespace RT.Util.Dialogs
             this.layoutButtons.Controls.Add(this.Btn3, 0, 0);
             this.layoutButtons.Controls.Add(this.Btn0, 0, 0);
             this.layoutButtons.Controls.Add(this.Btn1, 0, 0);
-            this.layoutButtons.Location = new System.Drawing.Point(345, 111);
+            this.layoutButtons.Location = new System.Drawing.Point(220, 84);
             this.layoutButtons.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.layoutButtons.Name = "layoutButtons";
             this.layoutButtons.RowCount = 1;
@@ -109,7 +109,6 @@ namespace RT.Util.Dialogs
             this.Btn2.Text = "s";
             this.Btn2.UseVisualStyleBackColor = true;
             this.Btn2.Visible = false;
-            this.Btn2.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn3
             // 
@@ -126,7 +125,6 @@ namespace RT.Util.Dialogs
             this.Btn3.Text = "button3";
             this.Btn3.UseVisualStyleBackColor = true;
             this.Btn3.Visible = false;
-            this.Btn3.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn0
             // 
@@ -143,7 +141,6 @@ namespace RT.Util.Dialogs
             this.Btn0.Text = "Longish button text";
             this.Btn0.UseVisualStyleBackColor = true;
             this.Btn0.Visible = false;
-            this.Btn0.Click += new System.EventHandler(this.Btn_Click);
             // 
             // Btn1
             // 
@@ -160,7 +157,6 @@ namespace RT.Util.Dialogs
             this.Btn1.Text = "Some more long text\r\nwow multi-line\r\nbutton!";
             this.Btn1.UseVisualStyleBackColor = true;
             this.Btn1.Visible = false;
-            this.Btn1.Click += new System.EventHandler(this.Btn_Click);
             // 
             // layoutMessage
             // 
@@ -180,21 +176,20 @@ namespace RT.Util.Dialogs
             this.layoutMessage.Name = "layoutMessage";
             this.layoutMessage.RowCount = 1;
             this.layoutMessage.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.layoutMessage.Size = new System.Drawing.Size(812, 106);
+            this.layoutMessage.Size = new System.Drawing.Size(687, 66);
             this.layoutMessage.TabIndex = 14;
             // 
             // Message
             // 
             this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.Message.AutoSize = true;
-            this.Message.Location = new System.Drawing.Point(71, 5);
+            this.Message.Location = new System.Drawing.Point(71, 25);
             this.Message.Margin = new System.Windows.Forms.Padding(5);
             this.Message.MinimumSize = new System.Drawing.Size(175, 0);
             this.Message.Name = "Message";
-            this.Message.Size = new System.Drawing.Size(736, 96);
+            this.Message.Size = new System.Drawing.Size(175, 16);
             this.Message.TabIndex = 16;
-            this.Message.Text = "This\r\nis\r\nsome\r\nlong\r\ntext\r\nBut the message is the longest thing ever. But the me" +
-                "ssage is the longest thing ever. But the message is the longest thing ever.";
+            this.Message.Text = "Save changes to this file?";
             // 
             // img
             // 
@@ -215,10 +210,10 @@ namespace RT.Util.Dialogs
             this.pnlLine.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.pnlLine.BackColor = System.Drawing.SystemColors.ActiveBorder;
             this.pnlLine.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlLine.Location = new System.Drawing.Point(0, 106);
+            this.pnlLine.Location = new System.Drawing.Point(0, 66);
             this.pnlLine.Margin = new System.Windows.Forms.Padding(0);
             this.pnlLine.Name = "pnlLine";
-            this.pnlLine.Size = new System.Drawing.Size(812, 1);
+            this.pnlLine.Size = new System.Drawing.Size(687, 1);
             this.pnlLine.TabIndex = 20;
             // 
             // info
@@ -226,7 +221,7 @@ namespace RT.Util.Dialogs
             this.info.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.info.BackColor = System.Drawing.Color.Transparent;
             this.info.Image = ((System.Drawing.Image) (resources.GetObject("info.Image")));
-            this.info.Location = new System.Drawing.Point(266, 0);
+            this.info.Location = new System.Drawing.Point(245, 0);
             this.info.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.info.Name = "info";
             this.info.Size = new System.Drawing.Size(48, 48);
@@ -240,7 +235,7 @@ namespace RT.Util.Dialogs
             this.question.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.question.BackColor = System.Drawing.Color.Transparent;
             this.question.Image = ((System.Drawing.Image) (resources.GetObject("question.Image")));
-            this.question.Location = new System.Drawing.Point(340, 0);
+            this.question.Location = new System.Drawing.Point(319, 0);
             this.question.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.question.Name = "question";
             this.question.Size = new System.Drawing.Size(48, 48);
@@ -254,7 +249,7 @@ namespace RT.Util.Dialogs
             this.warning.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.warning.BackColor = System.Drawing.Color.Transparent;
             this.warning.Image = ((System.Drawing.Image) (resources.GetObject("warning.Image")));
-            this.warning.Location = new System.Drawing.Point(415, 0);
+            this.warning.Location = new System.Drawing.Point(394, 0);
             this.warning.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.warning.Name = "warning";
             this.warning.Size = new System.Drawing.Size(48, 48);
@@ -268,7 +263,7 @@ namespace RT.Util.Dialogs
             this.error.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.error.BackColor = System.Drawing.Color.Transparent;
             this.error.Image = ((System.Drawing.Image) (resources.GetObject("error.Image")));
-            this.error.Location = new System.Drawing.Point(490, 0);
+            this.error.Location = new System.Drawing.Point(469, 0);
             this.error.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.error.Name = "error";
             this.error.Size = new System.Drawing.Size(48, 48);
@@ -283,7 +278,7 @@ namespace RT.Util.Dialogs
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(728, 169);
+            this.ClientSize = new System.Drawing.Size(687, 169);
             this.Controls.Add(this.error);
             this.Controls.Add(this.warning);
             this.Controls.Add(this.question);
