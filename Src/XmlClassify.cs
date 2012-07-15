@@ -954,6 +954,9 @@ namespace RT.Util.Xml
     /// <see cref="XmlIgnoreIfEmptyAttribute"/> will cause the distinction between null and an empty element
     /// to be lost. However, a collection containing only null elements is persisted correctly.
     /// </summary>
+    /// <remarks>Warning: Do not use this custom attribute on a field that has a non-default value set in the
+    /// containing class’s constructor. Doing so will cause a serialised “null” to revert to that constructor value
+    /// upon deserliasation.</remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class XmlIgnoreIfDefaultAttribute : Attribute { }
 

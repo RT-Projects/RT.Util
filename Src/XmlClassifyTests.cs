@@ -709,5 +709,110 @@ namespace RT.Util.Xml
             inst2 = XmlClassify.ObjectFromXElement<stringWrapper>(xml, opts);
             Assert.IsNull(inst2.Value);
         }
+
+        private sealed class settingsClass
+        {
+            public setting S1 = new setting();
+            public setting S2 = new setting { Something = "FOO", Other = "BAR" };
+            public List<setting> L = new List<setting> { new setting { Other = "1", Something = "1" }, new setting { Other = "2" } };
+        }
+
+        private sealed class setting
+        {
+            public string Something = "foo";
+            public string Other = "bar";
+        }
+
+        [Test]
+        public void TestNestedDefaultsUpgradeability()
+        {
+            var xml = XElement.Parse(@"
+                <item>
+                    <S1>
+                        <Something>foo1</Something>
+                        <Other>bar1</Other>
+                    </S1>
+                    <S2>
+                        <Something>FOO1</Something>
+                        <Other>BAR1</Other>
+                    </S2>
+                </item>
+            ");
+            var settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual("foo1", settings.S1.Something);
+            Assert.AreEqual("bar1", settings.S1.Other);
+            Assert.AreEqual("FOO1", settings.S2.Something);
+            Assert.AreEqual("BAR1", settings.S2.Other);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <S1>
+                        <Something>foo1</Something>
+                    </S1>
+                    <S2>
+                        <Something>FOO1</Something>
+                    </S2>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual("foo1", settings.S1.Something);
+            Assert.AreEqual("bar", settings.S1.Other);
+            Assert.AreEqual("FOO1", settings.S2.Something);
+            Assert.AreEqual("BAR", settings.S2.Other);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <S1>
+                    </S1>
+                    <S2>
+                    </S2>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual("foo", settings.S1.Something);
+            Assert.AreEqual("bar", settings.S1.Something);
+            Assert.AreEqual("FOO", settings.S2.Something);
+            Assert.AreEqual("BAR", settings.S2.Something);
+
+            xml = XElement.Parse(@"
+                <item>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual("foo", settings.S1.Something);
+            Assert.AreEqual("bar", settings.S1.Other);
+            Assert.AreEqual("FOO", settings.S2.Something);
+            Assert.AreEqual("BAR", settings.S2.Other);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <L>
+                        <item>
+                            <Other>a</Other>
+                        </item>
+                        <item>
+                            <Other>b</Other>
+                        </item>
+                    </L>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(2, settings.L.Count);
+            Assert.AreEqual("a", settings.L[0].Other);
+            Assert.AreEqual("b", settings.L[1].Other);
+            Assert.AreEqual("foo", settings.L[0].Something);
+            Assert.AreEqual("foo", settings.L[1].Something);
+
+            xml = XElement.Parse(@"
+                <item>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(2, settings.L.Count);
+            Assert.AreEqual("1", settings.L[0].Other);
+            Assert.AreEqual("2", settings.L[1].Other);
+            Assert.AreEqual("1", settings.L[0].Something);
+            Assert.AreEqual("foo", settings.L[1].Something);
+        }
     }
 }
