@@ -770,9 +770,9 @@ namespace RT.Util.Xml
             ");
             settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
             Assert.AreEqual("foo", settings.S1.Something);
-            Assert.AreEqual("bar", settings.S1.Something);
+            Assert.AreEqual("bar", settings.S1.Other);
             Assert.AreEqual("FOO", settings.S2.Something);
-            Assert.AreEqual("BAR", settings.S2.Something);
+            Assert.AreEqual("BAR", settings.S2.Other);
 
             xml = XElement.Parse(@"
                 <item>

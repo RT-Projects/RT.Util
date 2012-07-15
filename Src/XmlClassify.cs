@@ -228,13 +228,13 @@ namespace RT.Util.Xml
             public object Declassify(Type type, XElement elem, object parentNode = null)
             {
                 _doAtTheEnd = new List<Action>();
-                var result = declassify(type, elem, parentNode);
+                var result = declassify(type, elem, null, parentNode);
                 foreach (var action in _doAtTheEnd)
                     action();
                 return result;
             }
 
-            private object declassify(Type type, XElement elem, object parentNode)
+            private object declassify(Type type, XElement elem, object already, object parentNode)
             {
                 object result;
                 var originalType = type;
@@ -280,7 +280,7 @@ namespace RT.Util.Xml
                 else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    result = declassify(type.GetGenericArguments()[0], elem, parentNode);
+                    result = declassify(type.GetGenericArguments()[0], elem, already, parentNode);
                 }
                 else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
                 {
@@ -293,7 +293,7 @@ namespace RT.Util.Xml
                         var subElem = elem.Element(tagName);
                         if (subElem == null)
                             continue;
-                        tupleParams[i] = declassify(genericArguments[i], subElem, parentNode);
+                        tupleParams[i] = declassify(genericArguments[i], subElem, null, parentNode);
                     }
                     var constructor = type.GetConstructor(genericArguments);
                     if (constructor == null)
@@ -317,6 +317,8 @@ namespace RT.Util.Xml
 
                     if (valueType != null)
                     {
+                        // It’s a collection or dictionary.
+
                         if (keyType != null && keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
                             throw new InvalidOperationException("The field {0} is of a dictionary type, but its key type is {1}. Only string, integer types and enums are supported.".Fmt(elem.Name, keyType));
 
@@ -375,7 +377,7 @@ namespace RT.Util.Xml
                             {
                                 var nullAttr = itemTag.Attribute("null");
                                 if (nullAttr == null)
-                                    value = declassify(valueType, itemTag, parentNode);
+                                    value = declassify(valueType, itemTag, null, parentNode);
                                 if (type.IsArray)
                                     addMethod.Invoke(outputList, new object[] { i, value });
                                 else if (keyType == null)
@@ -390,6 +392,8 @@ namespace RT.Util.Xml
                     }
                     else
                     {
+                        // It’s NOT a collection or dictionary
+
                         object ret;
 
                         Type realType = type;
@@ -410,7 +414,7 @@ namespace RT.Util.Xml
 
                         try
                         {
-                            ret = Activator.CreateInstance(realType, true);
+                            ret = already == null || already.GetType() != realType ? Activator.CreateInstance(realType, true) : already;
                         }
                         catch (Exception e)
                         {
@@ -512,7 +516,7 @@ namespace RT.Util.Xml
                                     field.SetValue(intoObject, _rememberD[refAttr.Value]);
                                 });
                             else
-                                field.SetValue(intoObject, declassify(field.FieldType, tag, intoObject));
+                                field.SetValue(intoObject, declassify(field.FieldType, tag, field.GetValue(intoObject), intoObject));
                         }
                     }
                 }
