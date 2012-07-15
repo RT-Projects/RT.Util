@@ -229,9 +229,10 @@ namespace RT.Util.ExtensionMethods
             Assert_DateTimeContentIs(dt.TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Utc);
 
             DateTimeExtensions.TryParseIso("2008-02-27 21:35:47.1415926+01:30", out dt);
-            Assert_DateTimeContentIs(dt, 2008, 02, 27, 20, 05, 47, 141592600, DateTimeKind.Local);
-            Assert_DateTimeContentIs(dt.TruncatedToSeconds(), 2008, 02, 27, 20, 05, 47, 0, DateTimeKind.Local);
-            Assert_DateTimeContentIs(dt.TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Local);
+            Assert.AreEqual(dt.Kind, DateTimeKind.Local);
+            Assert_DateTimeContentIs(dt.ToUniversalTime(), 2008, 02, 27, 20, 05, 47, 141592600, DateTimeKind.Utc);
+            Assert_DateTimeContentIs(dt.ToUniversalTime().TruncatedToSeconds(), 2008, 02, 27, 20, 05, 47, 0, DateTimeKind.Utc);
+            Assert_DateTimeContentIs(dt.ToUniversalTime().TruncatedToDays(), 2008, 02, 27, 0, 0, 0, 0, DateTimeKind.Utc);
         }
     }
 }

@@ -873,7 +873,7 @@ namespace RT.Util
             Assert.IsTrue(ExactConvert.Try("2008-12-31 22:35:56.123Z", out result));
             Assert.AreEqual(new DateTime(2008, 12, 31, 22, 35, 56, 123), result); Assert.AreEqual(DateTimeKind.Utc, result.Kind);
             Assert.IsTrue(ExactConvert.Try("2008-12-31 22:30+01:00", out result));
-            Assert.AreEqual(new DateTime(2008, 12, 31, 21, 30, 0), result); Assert.AreEqual(DateTimeKind.Local, result.Kind);
+            Assert.AreEqual(new DateTime(2008, 12, 31, 21, 30, 0), result.ToUniversalTime()); Assert.AreEqual(DateTimeKind.Local, result.Kind);
             Assert.IsTrue(ExactConvert.Try("2008-12-31", out result));
             Assert.AreEqual(new DateTime(2008, 12, 31), result); Assert.AreEqual(DateTimeKind.Unspecified, result.Kind);
             // Invalid strings
