@@ -714,13 +714,35 @@ namespace RT.Util.Xml
         {
             public setting S1 = new setting();
             public setting S2 = new setting { Something = "FOO", Other = "BAR" };
+            public setting S3 = null;
             public List<setting> L = new List<setting> { new setting { Other = "1", Something = "1" }, new setting { Other = "2" } };
+            public bunch B = new bunch { C1 = new subClass { Derived = "TEST" } };
         }
 
         private sealed class setting
         {
             public string Something = "foo";
             public string Other = "bar";
+        }
+
+        private class bunch
+        {
+            public baseClass C1 = new baseClass { Base = "BASE" };
+            public baseClass C2 = new baseClass { Base = "BASE" };
+            public baseClass C3 = new subClass { Base = "BASE" };
+            public baseClass C4 = new subClass { Base = "BASE", Derived = "DERIVED" };
+            public baseClass C5 = new subClass();
+            public baseClass C6 = null;
+        }
+
+        private class baseClass
+        {
+            public string Base = "base";
+        }
+
+        private class subClass : baseClass
+        {
+            public string Derived = "derived";
         }
 
         [Test]
@@ -752,6 +774,7 @@ namespace RT.Util.Xml
                     <S2>
                         <Something>FOO1</Something>
                     </S2>
+                    <S3><Something>blah</Something></S3>
                 </item>
             ");
             settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
@@ -759,6 +782,7 @@ namespace RT.Util.Xml
             Assert.AreEqual("bar", settings.S1.Other);
             Assert.AreEqual("FOO1", settings.S2.Something);
             Assert.AreEqual("BAR", settings.S2.Other);
+            Assert.AreEqual("blah", settings.S3.Something);
 
             xml = XElement.Parse(@"
                 <item>
@@ -784,6 +808,7 @@ namespace RT.Util.Xml
             Assert.AreEqual("FOO", settings.S2.Something);
             Assert.AreEqual("BAR", settings.S2.Other);
 
+            // List
             xml = XElement.Parse(@"
                 <item>
                     <L>
@@ -813,6 +838,125 @@ namespace RT.Util.Xml
             Assert.AreEqual("2", settings.L[1].Other);
             Assert.AreEqual("1", settings.L[0].Something);
             Assert.AreEqual("foo", settings.L[1].Something);
+        }
+
+        [Test]
+        public void TestSubclassesAndUpgradeability()
+        {
+            var xml = XElement.Parse(@"
+                <item>
+                </item>
+            ");
+            var settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
+            Assert.AreEqual(typeof(baseClass), settings.B.C2.GetType());
+            Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
+            Assert.AreEqual(typeof(subClass), settings.B.C4.GetType());
+            Assert.AreEqual("base", settings.B.C1.Base);
+            Assert.AreEqual("TEST", (settings.B.C1 as subClass).Derived);
+            Assert.AreEqual("BASE", settings.B.C2.Base);
+            Assert.AreEqual("BASE", settings.B.C3.Base);
+            Assert.AreEqual("derived", (settings.B.C3 as subClass).Derived);
+            Assert.AreEqual("BASE", settings.B.C4.Base);
+            Assert.AreEqual("DERIVED", (settings.B.C4 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C1 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Base>XML</Base>
+                        </C1>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
+            Assert.AreEqual("XML", settings.B.C1.Base);
+            Assert.AreEqual("TEST", (settings.B.C1 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C2 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Base>XML</Base>
+                        </C2>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C2.GetType());
+            Assert.AreEqual("XML", settings.B.C2.Base);
+            Assert.AreEqual("derived", (settings.B.C2 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C3 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Derived>XML</Derived>
+                        </C3>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
+            Assert.AreEqual("BASE", settings.B.C3.Base);
+            Assert.AreEqual("XML", (settings.B.C3 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C4 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Base>XML</Base>
+                        </C4>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C4.GetType());
+            Assert.AreEqual("XML", settings.B.C4.Base);
+            Assert.AreEqual("DERIVED", (settings.B.C4 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C5 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Derived>XML</Derived>
+                        </C5>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C5.GetType());
+            Assert.AreEqual("base", settings.B.C5.Base);
+            Assert.AreEqual("XML", (settings.B.C5 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C6 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Derived>XML</Derived>
+                        </C6>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C6.GetType());
+            Assert.AreEqual("base", settings.B.C6.Base);
+            Assert.AreEqual("XML", (settings.B.C6 as subClass).Derived);
+
+            xml = XElement.Parse(@"
+                <item>
+                    <B>
+                        <C1 fulltype=""RT.Util.Xml.XmlClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                            <Derived>XML</Derived>
+                        </C1>
+                    </B>
+                </item>
+            ");
+            settings = XmlClassify.ObjectFromXElement<settingsClass>(xml);
+            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
+            Assert.AreEqual("base", settings.B.C1.Base); // not BASE because it's a different type, even if a subtype
+            Assert.AreEqual("XML", (settings.B.C1 as subClass).Derived);
         }
     }
 }
