@@ -62,7 +62,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key1">Key at which the inner Dictionary is located in the outer Dictionary.</param>
         /// <param name="key2">Key at which the value is located in the inner Dictionary.</param>
         /// <param name="value">Value to add to the inner Dictionary.</param>
-        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value)
+        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value, IEqualityComparer<K2> comparer = null)
         {
             if (dic == null)
                 throw new ArgumentNullException("dic");
@@ -71,7 +71,7 @@ namespace RT.Util.ExtensionMethods
             if (key2 == null)
                 throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key1))
-                dic[key1] = new Dictionary<K2, V>();
+                dic[key1] = comparer == null ? new Dictionary<K2, V>() : new Dictionary<K2, V>(comparer);
             dic[key1][key2] = value;
         }
 
