@@ -62,6 +62,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key1">Key at which the inner Dictionary is located in the outer Dictionary.</param>
         /// <param name="key2">Key at which the value is located in the inner Dictionary.</param>
         /// <param name="value">Value to add to the inner Dictionary.</param>
+        /// <param name="comparer">Optional equality comparer to pass into the inner dictionary if a new one is created.</param>
         public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value, IEqualityComparer<K2> comparer = null)
         {
             if (dic == null)
