@@ -28,7 +28,6 @@ namespace RT.Util.Lingo
 
         /// <summary>
         /// Gets or sets a value indicating whether the menu items to edit or create a language should be displayed.
-        /// This defaults to false for release builds and true for debug builds.
         /// </summary>
         public bool TranslationEditingEnabled { get; set; }
 
@@ -80,9 +79,7 @@ namespace RT.Util.Lingo
             _setLanguage = setLanguage;
             _languageMenu = languageMenu;
             _getCurrentLanguage = getCurrentLanguage;
-#if DEBUG
             TranslationEditingEnabled = true;
-#endif
 
             if (_languageMenu != null)
                 _languageMenu.DropDownOpening += new EventHandler(dropDownOpening);
