@@ -9,11 +9,23 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
+    /// <summary>Decodes the IL inside a specified method.</summary>
     public static class ILReader
     {
         private static Dictionary<short, OpCode> _opCodeList = typeof(OpCodes).GetFields().Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode) f.GetValue(null)).ToDictionary(o => o.Value);
 
+        /// <summary>Decodes the IL inside the specified method.</summary>
+        /// <param name="method">The method whose IL to decode. This may be a constructor, too.</param>
+        /// <param name="genericContext">The type in which the method is declared, to provide context to resolve members that involve generics.</param>
+        /// <returns>The sequence of <see cref="Instruction"/> instances describing the instructions in the method.</returns>
         public static IEnumerable<Instruction> ReadIL(MethodBase method, Type genericContext)
+        {
+            if (method == null)
+                throw new ArgumentNullException("method");
+            return readIL(method, genericContext);
+        }
+
+        private static IEnumerable<Instruction> readIL(MethodBase method, Type genericContext)
         {
             MethodBody body = method.GetMethodBody();
             if (body == null)
@@ -95,17 +107,29 @@ namespace RT.Util
         }
     }
 
+    /// <summary>Describes an IL instruction in a method.</summary>
     public sealed class Instruction
     {
+        /// <summary>The byte offset at which this instruction starts.</summary>
         public int StartOffset { get; private set; }
+        /// <summary>The opcode of the instruction.</summary>
         public OpCode OpCode { get; private set; }
+        /// <summary>The operand. Depending on the <see cref="OpCode"/>, this may be a <see cref="FieldInfo"/>, <see cref="MethodBase"/>, <see cref="Type"/>, byte, short, int, long, string, float, double, or null.
+        /// In the case of the switch instruction, it is an int[].</summary>
         public object Operand { get; private set; }
+
+        /// <summary>Constructs an instance representing an IL instruction.</summary>
+        /// <param name="startOffset">The byte offset at which this instruction starts.</param>
+        /// <param name="opCode">The opcode of the instruction.</param>
+        /// <param name="operand">The operand.</param>
         public Instruction(int startOffset, OpCode opCode, object operand)
         {
             StartOffset = startOffset;
             OpCode = opCode;
             Operand = operand;
         }
+
+        /// <summary>Returns a string representation of this object.</summary>
         public override string ToString()
         {
             return OpCode.ToString() + (Operand == null ? string.Empty : " " + Operand.ToString());
