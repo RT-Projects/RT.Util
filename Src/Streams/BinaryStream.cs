@@ -115,7 +115,7 @@ namespace RT.Util.Streams
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException("buffer");
             _stream.Write(buffer, offset, count);
         }
 

@@ -33,39 +33,41 @@ namespace RT.Util
                 throw new ArgumentNullException("old");
             if (@new == null)
                 throw new ArgumentNullException("new");
+            return diffIterator(old as IList<T> ?? old.ToArray(), @new as IList<T> ?? @new.ToArray(), comparer ?? EqualityComparer<T>.Default, predicate, postProcessor);
+        }
 
-            comparer = comparer ?? EqualityComparer<T>.Default;
-            var olda = old as IList<T> ?? old.ToArray();
-            var newa = @new as IList<T> ?? @new.ToArray();
-
+        private static IEnumerable<Tuple<T, DiffOp>> diffIterator<T>(IList<T> old, IList<T> @new,
+            IEqualityComparer<T> comparer, Func<T, bool> predicate,
+            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor)
+        {
             var startMatchIndex = 0;
-            while (startMatchIndex < olda.Count && startMatchIndex < newa.Count && comparer.Equals(olda[startMatchIndex], newa[startMatchIndex]))
+            while (startMatchIndex < old.Count && startMatchIndex < @new.Count && comparer.Equals(old[startMatchIndex], @new[startMatchIndex]))
             {
-                yield return Tuple.Create(olda[startMatchIndex], DiffOp.None);
+                yield return Tuple.Create(old[startMatchIndex], DiffOp.None);
                 startMatchIndex++;
             }
 
             int endMatchIndex = 0;
-            while (endMatchIndex < olda.Count - startMatchIndex && endMatchIndex < newa.Count - startMatchIndex && comparer.Equals(olda[olda.Count - 1 - endMatchIndex], newa[newa.Count - 1 - endMatchIndex]))
+            while (endMatchIndex < old.Count - startMatchIndex && endMatchIndex < @new.Count - startMatchIndex && comparer.Equals(old[old.Count - 1 - endMatchIndex], @new[@new.Count - 1 - endMatchIndex]))
                 endMatchIndex++;
 
-            if (olda.Count > startMatchIndex + endMatchIndex && newa.Count > startMatchIndex + endMatchIndex)
-                foreach (var x in diff(olda, newa, comparer, predicate, postProcessor, startMatchIndex, endMatchIndex))
+            if (old.Count > startMatchIndex + endMatchIndex && @new.Count > startMatchIndex + endMatchIndex)
+                foreach (var x in diffImpl(old, @new, comparer, predicate, postProcessor, startMatchIndex, endMatchIndex))
                     yield return x;
             else
             {
-                for (int i = startMatchIndex; i < olda.Count - endMatchIndex; i++)
-                    yield return Tuple.Create(olda[i], DiffOp.Del);
-                for (int i = startMatchIndex; i < newa.Count - endMatchIndex; i++)
-                    yield return Tuple.Create(newa[i], DiffOp.Ins);
+                for (int i = startMatchIndex; i < old.Count - endMatchIndex; i++)
+                    yield return Tuple.Create(old[i], DiffOp.Del);
+                for (int i = startMatchIndex; i < @new.Count - endMatchIndex; i++)
+                    yield return Tuple.Create(@new[i], DiffOp.Ins);
             }
 
-            for (int i = olda.Count - endMatchIndex; i < olda.Count; i++)
-                yield return Tuple.Create(olda[i], DiffOp.None);
+            for (int i = old.Count - endMatchIndex; i < old.Count; i++)
+                yield return Tuple.Create(old[i], DiffOp.None);
         }
 
         private sealed class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
-        private static IEnumerable<Tuple<T, DiffOp>> diff<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
+        private static IEnumerable<Tuple<T, DiffOp>> diffImpl<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
         {
             var newhash = new Dictionary<T, List<int>>(comparer);
             for (int i = startMatch; i < newa.Count - endMatch; i++)

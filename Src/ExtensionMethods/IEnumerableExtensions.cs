@@ -877,7 +877,7 @@ namespace RT.Util.ExtensionMethods
             )
         {
             if (source == null)
-                throw new ArgumentNullException("state");
+                throw new ArgumentNullException("source");
             if (state == null)
                 throw new ArgumentNullException("state");
             Func<TState, int, TResult> substituteFirst = null;
@@ -909,7 +909,7 @@ namespace RT.Util.ExtensionMethods
             )
         {
             if (source == null)
-                throw new ArgumentNullException("state");
+                throw new ArgumentNullException("source");
             if (state == null)
                 throw new ArgumentNullException("state");
             Func<TState, int, int, TResult> substituteLast = null;
@@ -941,7 +941,7 @@ namespace RT.Util.ExtensionMethods
             )
         {
             if (source == null)
-                throw new ArgumentNullException("state");
+                throw new ArgumentNullException("source");
             if (state == null)
                 throw new ArgumentNullException("state");
             return accumulateIterator(source, state, firstFunc, accumulate, lastFunc, empty, stateComparer, false, false);
@@ -967,7 +967,7 @@ namespace RT.Util.ExtensionMethods
             )
         {
             if (source == null)
-                throw new ArgumentNullException("state");
+                throw new ArgumentNullException("source");
             Action<TItem, TItem, int, int> substituteAccumulate = null;
             if (accumulate != null)
                 substituteAccumulate = (a, _, b, c) => { accumulate(a, b, c); };

@@ -448,7 +448,7 @@ namespace RT.Util.ExtensionMethods
         public static string ToHex(this uint[] data)
         {
             if (data == null)
-                throw new ArgumentNullException("uintArray");
+                throw new ArgumentNullException("data");
 
             char[] charArr = new char[data.Length * 8];
             var j = 0;

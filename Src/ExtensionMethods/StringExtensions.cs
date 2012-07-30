@@ -647,7 +647,11 @@ namespace RT.Util.ExtensionMethods
         {
             if (formatString == null)
                 throw new ArgumentNullException("formatString");
+            return fmtEnumerableIterator(formatString, args);
+        }
 
+        private static IEnumerable<object> fmtEnumerableIterator(this string formatString, params object[] args)
+        {
             StringBuilder sb = new StringBuilder(formatString.Length);
             int i = 0;
             while (i < formatString.Length)

@@ -365,7 +365,6 @@ namespace RT.Util.Lingo
         public static void WarnOfUnusedStrings(Type type, params Assembly[] assemblies)
         {
             var fields = allTrStringFields(type).ToList();
-            var reader = new ilReader();
 
             foreach (var mod in assemblies.SelectMany(a => a.GetModules(false)))
             {
@@ -375,17 +374,13 @@ namespace RT.Util.Lingo
                         typ.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(m => m.DeclaringType == typ).Cast<MethodBase>().Concat(
                         typ.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(c => c.DeclaringType == typ).Cast<MethodBase>()))
                     {
-                        foreach (var instr in reader.ReadIL(meth))
+                        foreach (var instr in ILReader.ReadIL(meth, type))
                         {
                             if (instr.OpCode == OpCodes.Ldfld || instr.OpCode == OpCodes.Ldflda)
                             {
-                                var field = mod.ResolveField((int) instr.Argument.Value, typ.GetGenericArguments(), meth.IsConstructor ? Type.EmptyTypes : meth.GetGenericArguments());
-                                if (field != null)
-                                {
-                                    fields.Remove(field);
-                                    if (fields.Count == 0)
-                                        return;
-                                }
+                                fields.Remove((FieldInfo) instr.Operand);
+                                if (fields.Count == 0)
+                                    return;
                             }
                         }
                     }
@@ -402,90 +397,6 @@ namespace RT.Util.Lingo
             foreach (var nested in type.GetAllFields().Where(f => f.FieldType.IsDefined<LingoStringClassAttribute>()))
                 fields = fields.Concat(allTrStringFields(nested.FieldType));
             return fields;
-        }
-
-        private sealed class ilReader
-        {
-            public sealed class Instruction
-            {
-                public int StartOffset { get; private set; }
-                public OpCode OpCode { get; private set; }
-                public long? Argument { get; private set; }
-                public Instruction(int startOffset, OpCode opCode, long? argument)
-                {
-                    StartOffset = startOffset;
-                    OpCode = opCode;
-                    Argument = argument;
-                }
-                public override string ToString()
-                {
-                    return OpCode.ToString() + (Argument == null ? string.Empty : " " + Argument.Value);
-                }
-            }
-
-            private Dictionary<short, OpCode> _opCodeList;
-
-            public ilReader()
-            {
-                _opCodeList = typeof(OpCodes).GetFields().Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode) f.GetValue(null)).ToDictionary(o => o.Value);
-            }
-
-            public IEnumerable<Instruction> ReadIL(MethodBase method)
-            {
-                MethodBody body = method.GetMethodBody();
-                if (body == null)
-                    yield break;
-
-                int offset = 0;
-                byte[] il = body.GetILAsByteArray();
-                while (offset < il.Length)
-                {
-                    int startOffset = offset;
-                    byte opCodeByte = il[offset];
-                    short opCodeValue = opCodeByte;
-                    offset++;
-
-                    // If it's an extended opcode then grab the second byte. The 0xFE prefix codes aren't marked as prefix operators though.
-                    if (opCodeValue == 0xFE || _opCodeList[opCodeValue].OpCodeType == OpCodeType.Prefix)
-                    {
-                        opCodeValue = (short) ((opCodeValue << 8) + il[offset]);
-                        offset++;
-                    }
-
-                    OpCode code = _opCodeList[opCodeValue];
-
-                    Int64? argument = null;
-
-                    int argumentSize = 4;
-                    if (code.OperandType == OperandType.InlineNone)
-                        argumentSize = 0;
-                    else if (code.OperandType == OperandType.ShortInlineBrTarget || code.OperandType == OperandType.ShortInlineI || code.OperandType == OperandType.ShortInlineVar)
-                        argumentSize = 1;
-                    else if (code.OperandType == OperandType.InlineVar)
-                        argumentSize = 2;
-                    else if (code.OperandType == OperandType.InlineI8 || code.OperandType == OperandType.InlineR)
-                        argumentSize = 8;
-                    else if (code.OperandType == OperandType.InlineSwitch)
-                    {
-                        long num = il[offset] + (il[offset + 1] << 8) + (il[offset + 2] << 16) + (il[offset + 3] << 24);
-                        argumentSize = (int) (4 * num + 4);
-                    }
-
-                    if (argumentSize > 0)
-                    {
-                        Int64 arg = 0;
-                        for (int i = 0; i < argumentSize; ++i)
-                        {
-                            Int64 v = il[offset + i];
-                            arg += v << (i * 8);
-                        }
-                        argument = arg;
-                        offset += argumentSize;
-                    }
-
-                    yield return new Instruction(startOffset, code, argument);
-                }
-            }
         }
     }
 }

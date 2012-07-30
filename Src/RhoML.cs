@@ -87,7 +87,7 @@ namespace RT.Util
         public IList<RhoNode> Children
         {
             get { return _children; }
-            set { if (value == null) throw new ArgumentNullException("children"); _children = value; }
+            set { if (value == null) throw new ArgumentNullException("value"); _children = value; }
         }
 
         private IDictionary<string, string> _attributes;

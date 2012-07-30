@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
+using System.Reflection.Emit;
 
 namespace RT.Util
 {
@@ -49,55 +50,105 @@ namespace RT.Util
         /// <returns>1 if any errors occurred, otherwise 0.</returns>
         public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
-#if DEBUG
             int countMethods = 0;
             var rep = new postBuildReporter(sourcePath);
+            var attempt = Ut.Lambda((Action action) =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception e)
+                {
+                    var realException = e;
+                    while (realException is TargetInvocationException && realException.InnerException != null)
+                        realException = realException.InnerException;
+
+                    var st = new StackTrace(realException, true);
+                    string fileLine = null;
+                    for (int i = 0; i < st.FrameCount; i++)
+                    {
+                        var frame = st.GetFrame(i);
+                        if (frame.GetFileName() != null)
+                        {
+                            fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
+                            break;
+                        }
+                    }
+
+                    Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
+                    rep.AnyErrors = true;
+                }
+            });
+
+            // Check 1: Custom-defined PostBuildCheck methods
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
             {
-                var meth = ty.GetMethod("PostBuildCheck", BindingFlags.NonPublic | BindingFlags.Static);
-                if (meth != null)
+                attempt(() =>
                 {
-                    if (meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeof(IPostBuildReporter) }) && meth.ReturnType == typeof(void))
+                    var meth = ty.GetMethod("PostBuildCheck", BindingFlags.NonPublic | BindingFlags.Static);
+                    if (meth != null)
                     {
-                        try
+                        if (meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeof(IPostBuildReporter) }) && meth.ReturnType == typeof(void))
                         {
                             countMethods++;
                             meth.Invoke(null, new object[] { rep });
                         }
-                        catch (Exception e)
-                        {
-                            var realException = e;
-                            while (realException is TargetInvocationException && realException.InnerException != null)
-                                realException = realException.InnerException;
-
-                            var st = new StackTrace(realException, true);
-                            string fileLine = null;
-                            if (st.FrameCount > 0)
-                            {
-                                var frame = st.GetFrame(0);
-                                fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
-                            }
-
-                            Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
-                            rep.AnyErrors = true;
-                        }
+                        else
+                            rep.Error(
+                                "The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be one parameter of type {1}, and the return type should be void.".Fmt(ty.FullName, typeof(IPostBuildReporter).FullName),
+                                (ty.IsValueType ? "struct " : "class ") + ty.Name, "PostBuildCheck");
                     }
-                    else
-                        rep.Error(
-                            "The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be one parameter of type {1}, and the return type should be void.".Fmt(ty.FullName, typeof(IPostBuildReporter).FullName),
-                            (ty.IsValueType ? "struct " : "class ") + ty.Name, "PostBuildCheck");
-                }
+                });
             }
+
+            // Check 2: All “throw new ArgumentNullException(...)” statements should refer to an actual parameter
+            foreach (var asm in assemblies)
+                foreach (var type in asm.GetTypes())
+                    foreach (var meth in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                        attempt(() =>
+                        {
+                            var instructions = ILReader.ReadIL(meth, type).ToArray();
+                            for (int i = 0; i < instructions.Length; i++)
+                                if (instructions[i].OpCode.Value == OpCodes.Newobj.Value)
+                                {
+                                    var constructor = (ConstructorInfo) instructions[i].Operand;
+                                    string wrong = null;
+                                    if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
+                                        if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value)
+                                            if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 1].Operand))
+                                                wrong = (string) instructions[i - 1].Operand;
+                                    if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string), typeof(string)))
+                                        if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value && instructions[i - 2].OpCode.Value == OpCodes.Ldstr.Value)
+                                            if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 2].Operand))
+                                                wrong = (string) instructions[i - 2].Operand;
+
+                                    if (wrong != null)
+                                    {
+                                        rep.Error(
+                                            @"The method ""{0}.{1}"" constructs an ArgumentNullException with a parameter name ""{2}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrong),
+                                            meth.DeclaringType.IsValueType ? "struct " : "class " + genericsConvert(meth.DeclaringType.Name),
+                                            genericsConvert(meth.Name),
+                                            "ArgumentNullException",
+                                            wrong
+                                        );
+                                    }
+                                }
+                        });
 
             Console.WriteLine("Post-build checks ran on {0} assemblies, {1} methods and completed {2}.".Fmt(assemblies.Length, countMethods, rep.AnyErrors ? "with ERRORS" : "SUCCESSFULLY"));
 
             return rep.AnyErrors ? 1 : 0;
-#else
-            return 0;
-#endif
         }
 
-#if DEBUG
+        private static string genericsConvert(string memberName)
+        {
+            var p = memberName.IndexOf('`');
+            if (p != -1)
+                memberName = memberName.Substring(0, p) + "<";
+            return memberName;
+        }
+
         private sealed class postBuildReporter : IPostBuildReporter
         {
             private string _path;
@@ -137,8 +188,8 @@ namespace RT.Util
                         var tokenIndex = 0;
                         for (int i = 0; i < lines.Length; i++)
                         {
-                            var match = Regex.Match(lines[i], "\\b" + Regex.Escape(tokens[tokenIndex]) + "\\b");
-                            if (match.Success)
+                            Match match;
+                            while ((match = Regex.Match(lines[i], "\\b" + Regex.Escape(tokens[tokenIndex]) + "\\b")).Success)
                             {
                                 tokenIndex++;
                                 if (tokenIndex == tokens.Length)
@@ -157,10 +208,8 @@ namespace RT.Util
                 Console.Error.WriteLine(errorOrWarning + message);
             }
         }
-#endif
     }
 
-#if DEBUG
     /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
     public interface IPostBuildReporter
     {
@@ -180,7 +229,4 @@ namespace RT.Util
         /// <summary>When implemented in a class, outputs the warning <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
         void Warning(string message, string filename, int lineNumber, int? columnNumber = null);
     }
-#else
-    interface IPostBuildReporter { } // to suppress a documentation cref warning
-#endif
 }
