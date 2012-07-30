@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
-using System.Reflection.Emit;
 
 namespace RT.Util
 {
