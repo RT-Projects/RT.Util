@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using RT.Util.Controls;
 using RT.Util.Dialogs;
+using WC = System.Windows.Controls;
 
 namespace RT.Util.Lingo
 {
@@ -278,6 +279,41 @@ namespace RT.Util.Lingo
                 menuItem.DropDownItems.Clear();
                 populateToolStripItems(menuItem.DropDownItems);
             };
+        }
+    }
+
+    /// <summary>Helps an application using Lingo to display language selection UI using WPF controls.</summary>
+    /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>
+    public class LanguageHelperWpf<TTranslation> : LanguageHelper<TTranslation> where TTranslation : TranslationBase, new()
+    {
+        /// <summary>Constructor.</summary>
+        /// <param name="programTitle">The title of the program - to be displayed in the translation UI.</param>
+        /// <param name="moduleName">Name of the module being translated - used to construct the filename for the translation file.</param>
+        /// <param name="editable">Whether translation editing UI should be included.</param>
+        /// <param name="trFormSettings">Translation window settings, such as window position/size.</param>
+        /// <param name="trFormIcon">The icon to use on the translation window.</param>
+        /// <param name="getCurrentLanguage">A callback that returns the currently active language whenever called.</param>
+        public LanguageHelperWpf(string programTitle, string moduleName, bool editable,
+            TranslationForm<TTranslation>.Settings trFormSettings, Icon trFormIcon, Func<Language> getCurrentLanguage)
+            : base(programTitle, moduleName, editable, trFormSettings, trFormIcon, getCurrentLanguage)
+        {
+        }
+
+        /// <summary>Appends menu items for changing languages and, optionally, translation editing. The menu items are hooked with appropriate click handlers.</summary>
+        public void PopulateMenuItems(WC.ItemCollection items)
+        {
+            foreach (var entry in ListCurrentEntries())
+            {
+                if (entry.SeparatorBefore)
+                    items.Add(new WC.Separator());
+                var item = new WC.MenuItem();
+                item.Header = entry.Text.Replace("&&", "&").Replace("_", "__").Replace("&", "_");
+                item.IsChecked = entry.IsCurrentLanguage;
+                item.IsEnabled = entry.Enabled;
+                var action = entry.Action; // to capture the right thing into lambda
+                item.Click += delegate { action(); };
+                items.Add(item);
+            }
         }
     }
 }
