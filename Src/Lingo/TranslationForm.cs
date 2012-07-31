@@ -57,7 +57,7 @@ namespace RT.Util.Lingo
         /// <summary>
         /// Fires every time the translation is updated on the disk (i.e. when the user clicks either "Save &amp; Close" or "Apply changes").
         /// </summary>
-        public event SetLanguage<TTranslation> TranslationChanged;
+        public event SetTranslation<TTranslation> TranslationChanged;
 
         /// <summary>Main constructor.</summary>
         /// <param name="settings">Settings of the <see cref="TranslationForm&lt;T&gt;"/>.</param>
@@ -626,7 +626,7 @@ namespace RT.Util.Lingo
             {
                 Lingo.SaveTranslation(_moduleName, _translation);
                 if (fireTranslationChanged && TranslationChanged != null)
-                    TranslationChanged(Lingo.LoadTranslation<TTranslation>(_moduleName, _language));
+                    TranslationChanged(Lingo.LoadTranslation<TTranslation>(_moduleName, _language)); // need a clone of _translation
                 AnyChanges = false;
             }
         }

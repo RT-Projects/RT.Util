@@ -27,33 +27,38 @@ namespace RT.Util.Lingo
         /// <summary>Presents the user with a dialog to select a language from, and (if they click "OK") creates a new XML file for the new translation.</summary>
         /// <typeparam name="TTranslation">Class containing the translatable strings.</typeparam>
         /// <param name="moduleName">Name of the module being translated (forms part of the translation's XML file).</param>
-        /// <param name="setLanguage">Callback invoked by this method to change the language used by the program.</param>
         /// <param name="fontName">Specifies the name of the font to use in this dialog, or null for the default font.</param>
         /// <param name="fontSize">Specifies the size of the font to use in this dialog. Ignored if <paramref name="fontName"/> is null.</param>
         /// <returns>If the user clicked OK, creates a new XML file and returns the translation. If the user clicked Cancel, returns null.</returns>
-        public static TTranslation CreateTranslation<TTranslation>(string moduleName, SetLanguage<TTranslation> setLanguage, string fontName, float fontSize) where TTranslation : TranslationBase, new()
+        public static TTranslation CreateTranslation<TTranslation>(string moduleName, string fontName, float fontSize) where TTranslation : TranslationBase, new()
         {
             using (TranslationCreateForm tcf = new TranslationCreateForm())
             {
                 tcf.Font = fontName != null ? new Font(fontName, fontSize, FontStyle.Regular) : SystemFonts.MessageBoxFont;
-                if (tcf.ShowDialog() == DialogResult.OK)
+                if (tcf.ShowDialog() != DialogResult.OK)
+                    return null;
+
+                if (tcf.SelectedLanguage == new TTranslation().Language)
                 {
-                    TTranslation trans = new TTranslation { Language = tcf.SelectedLanguage };
-                    string iso = trans.Language.GetIsoLanguageCode();
-                    string xmlFile = PathUtil.AppPathCombine("Translations", moduleName + "." + iso + ".xml");
-                    if (!File.Exists(xmlFile))
-                    {
-                        XmlClassify.SaveObjectToXmlFile(trans, xmlFile);
-                        setLanguage(trans);
-                        return trans;
-                    }
+                    DlgMessage.Show("This is the native language of the application. This translation cannot be edited, and you cannot create a new translation for this language.",
+                        "Error creating translation", DlgType.Error, "OK");
+                    return null;
+                }
+
+                var trans = new TTranslation { Language = tcf.SelectedLanguage };
+                string iso = trans.Language.GetIsoLanguageCode();
+                string xmlFile = PathUtil.AppPathCombine("Translations", moduleName + "." + iso + ".xml");
+                if (File.Exists(xmlFile))
+                {
                     int result = DlgMessage.Show("A translation into the selected language already exists. If you wish to start this translation afresh, please delete the translation file first.\n\nThe translation file is: " + xmlFile,
                         "Error creating translation", DlgType.Error, "&Go to containing folder", "Cancel");
                     if (result == 0)
                         Process.Start(Path.GetDirectoryName(xmlFile));
+                    return null;
                 }
+                XmlClassify.SaveObjectToXmlFile(trans, xmlFile);
+                return trans;
             }
-            return null;
         }
 
         /// <summary>Main constructor.</summary>
@@ -66,7 +71,6 @@ namespace RT.Util.Lingo
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(5)
             };
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -89,12 +93,11 @@ namespace RT.Util.Lingo
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Bottom,
-                Margin = new Padding(5)
             };
 
-            _btnOk = new Button { Text = "OK", Margin = new Padding(5), Anchor = AnchorStyles.Left, Enabled = false };
+            _btnOk = new Button { Text = "OK", Margin = new Padding(5), Anchor = AnchorStyles.Left, Enabled = false, AutoSize = true, MinimumSize = new Size(75, 20) };
             _btnOk.Click += (s, v) => { DialogResult = DialogResult.OK; };
-            _btnCancel = new Button { Text = "Cancel", Margin = new Padding(5), Anchor = AnchorStyles.Left };
+            _btnCancel = new Button { Text = "Cancel", Margin = new Padding(5), Anchor = AnchorStyles.Left, AutoSize = true, MinimumSize = new Size(75, 20) };
             _btnCancel.Click += (s, v) => { DialogResult = DialogResult.Cancel; };
             tlpButtons.Controls.Add(_btnOk, 1, 0);
             tlpButtons.Controls.Add(_btnCancel, 2, 0);
@@ -121,6 +124,7 @@ namespace RT.Util.Lingo
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             ShowInTaskbar = false;
             Font = SystemFonts.MessageBoxFont;
+            Padding = new Padding(5);
 
             Load += (s, v) =>
             {

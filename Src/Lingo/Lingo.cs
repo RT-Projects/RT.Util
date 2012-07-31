@@ -13,13 +13,10 @@ using RT.Util.Xml;
 
 namespace RT.Util.Lingo
 {
-    /// <summary>
-    /// Used by any function which may change the language of the program. The program must
-    /// change the UI language in this callback and remember to use that language after restarting.
-    /// </summary>
+    /// <summary>Used for functions which change the language of the program.</summary>
     /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
     /// <param name="translation">The new translation to be used by the program.</param>
-    public delegate void SetLanguage<in TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
+    public delegate void SetTranslation<in TTranslation>(TTranslation translation) where TTranslation : TranslationBase;
 
     /// <summary>
     /// Static class with helper methods to support multi-language applications.

@@ -149,7 +149,7 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Json.cs" />
-    <Compile Include="Lingo\LanguageMenuHelper.cs" />
+    <Compile Include="Lingo\LanguageHelper.cs" />
     <Compile Include="Lingo\Languages.cs" />
     <Compile Include="Lingo\Lingo.cs" />
     <Compile Include="Lingo\LingoAttributes.cs" />
