@@ -69,22 +69,11 @@ namespace RT.Util
                     case OperandType.InlineVar: operand = BitConverter.ToInt16(il, offset); offset += 2; break;
                     case OperandType.InlineI8: operand = BitConverter.ToInt64(il, offset); offset += 8; break;
                     case OperandType.InlineR: operand = BitConverter.ToDouble(il, offset); offset += 8; break;
-
-                    case OperandType.InlineField:
-                        try
-                        {
-                            operand = method.Module.ResolveField(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method.GetGenericArguments());
-                        }
-                        catch (ArgumentException e)
-                        {
-                            throw new Exception("{0} / {1}".Fmt(genericContext, method, e.Message));
-                        }
-                        offset += 4;
-                        break;
-                    case OperandType.InlineMethod: operand = method.Module.ResolveMethod(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method.GetGenericArguments()); offset += 4; break;
+                    case OperandType.InlineField: operand = method.Module.ResolveField(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method is ConstructorInfo ? Type.EmptyTypes : method.GetGenericArguments()); offset += 4; break;
+                    case OperandType.InlineMethod: operand = method.Module.ResolveMethod(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method is ConstructorInfo ? Type.EmptyTypes : method.GetGenericArguments()); offset += 4; break;
                     case OperandType.InlineSig: operand = method.Module.ResolveSignature(BitConverter.ToInt32(il, offset)); offset += 4; break;
                     case OperandType.InlineString: operand = method.Module.ResolveString(BitConverter.ToInt32(il, offset)); offset += 4; break;
-                    case OperandType.InlineType: operand = method.Module.ResolveType(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method.GetGenericArguments()); offset += 4; break;
+                    case OperandType.InlineType: operand = method.Module.ResolveType(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method is ConstructorInfo ? Type.EmptyTypes : method.GetGenericArguments()); offset += 4; break;
 
                     case OperandType.InlineSwitch:
                         long num = BitConverter.ToInt32(il, offset);
@@ -99,7 +88,7 @@ namespace RT.Util
                         break;
 
                     case OperandType.InlineTok:
-                        operand = method.Module.ResolveMember(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method.GetGenericArguments()); offset += 4; break;
+                        operand = method.Module.ResolveMember(BitConverter.ToInt32(il, offset), genericContext.GetGenericArguments(), method is ConstructorInfo ? Type.EmptyTypes : method.GetGenericArguments()); offset += 4; break;
                 }
 
                 yield return new Instruction(startOffset, code, operand);
