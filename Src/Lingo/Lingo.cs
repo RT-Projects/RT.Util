@@ -371,7 +371,7 @@ namespace RT.Util.Lingo
                         typ.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(m => m.DeclaringType == typ).Cast<MethodBase>().Concat(
                         typ.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance).Where(c => c.DeclaringType == typ).Cast<MethodBase>()))
                     {
-                        foreach (var instr in ILReader.ReadIL(meth, type))
+                        foreach (var instr in ILReader.ReadIL(meth, typ))
                         {
                             if (instr.OpCode == OpCodes.Ldfld || instr.OpCode == OpCodes.Ldflda)
                             {
