@@ -566,7 +566,7 @@ namespace RT.Util.Xml
             {
                 public substituteGuid ToSubstitute(Guid guid)
                 {
-                    return guid.NullOr(g => new substituteGuid { Value = g.ToString() });
+                    return new substituteGuid { Value = guid.ToString() };
                 }
 
                 public Guid FromSubstitute(substituteGuid subst)
@@ -603,7 +603,7 @@ namespace RT.Util.Xml
         }
         private class optionsGuidToString : XmlClassifyTypeOptions, IXmlClassifySubstitute<Guid, string>
         {
-            public string ToSubstitute(Guid guid) { return guid.NullOr(g => g.ToString()); }
+            public string ToSubstitute(Guid guid) { return guid.ToString(); }
             public Guid FromSubstitute(string str) { return Guid.Parse(str); }
         }
 
