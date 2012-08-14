@@ -59,8 +59,9 @@ namespace RT.Util.Drawing
         public CoordinateAxesDirection CoordinateAxesDirection = CoordinateAxesDirection.RightDown;
 
         /// <summary>
-        /// Stores the screen size. "Screen" here refers to the final surface that this Canvas is destined
-        /// for. This field may be left unspecified if no "viewport" functions are used (eg, <see cref="SetViewport(double,double,double)"/>).
+        /// Stores the screen size. "Screen" here refers to the final surface that this Canvas is destined for.
+        /// The screen size is used for "set viewport" methods which do not take a screen location: they assume
+        /// the relevant screen edge is meant instead.
         /// </summary>
         public Size ScreenSize;
 
@@ -633,6 +634,16 @@ namespace RT.Util.Drawing
                 _offsetY = screenY - worldY * _scaleY;
         }
 
+        public void SetViewportHorz(double worldLeft, double worldRight)
+        {
+            SetViewportHorz(worldLeft, worldRight, 0, ScreenSize.Width - 1);
+        }
+
+        public void SetViewportVert(double worldTop, double worldBottom)
+        {
+            SetViewportVert(worldTop, worldBottom, 0, ScreenSize.Height - 1);
+        }
+
         public void SetViewportWidth(double worldWidth, float screenWidth, bool maintainAspect = false)
         {
             _scaleX = screenWidth / worldWidth;
@@ -651,6 +662,11 @@ namespace RT.Util.Drawing
         public float ViewportCenterSY { get { return ScreenSize.Height / 2f; } }
         public double ViewportCenterWX { get { return WX(ViewportCenterSX); } }
         public double ViewportCenterWY { get { return WY(ViewportCenterSY); } }
+
+        public double ViewportTopWY { get { return (0 - _offsetY) / _scaleY; } }
+        public double ViewportBottomWY { get { return (ScreenSize.Height - _offsetY) / _scaleY; } }
+        public double ViewportLeftWX { get { return (0 - _offsetX) / _scaleX; } }
+        public double ViewportRightWX { get { return (ScreenSize.Width - _offsetX) / _scaleX; } }
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
     }

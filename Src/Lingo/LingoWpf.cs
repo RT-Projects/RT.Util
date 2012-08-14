@@ -19,52 +19,22 @@ namespace RT.Util.Lingo
             if (translation == null)
                 throw new ArgumentNullException("translation");
 
-            translateControlWpf((dynamic) window, translation, null);
+            translateControlWpf(window, translation, null);
         }
 
         private static void translateWpf(object translation, FrameworkElement control, object controlContent, Action<string> setter, List<trStringInfo> generateFields)
         {
-            if (controlContent == null)
-                return;
-
-            if (!(controlContent is string))
+            if (controlContent is FrameworkElement)
             {
-                translateControlWpf((dynamic) controlContent, translation, generateFields);
-                return;
+                translateControlWpf((FrameworkElement) controlContent, translation, generateFields);
             }
-
-            var translated = translate(control.Name, control.Tag, translation, (string) controlContent, control, generateFields);
-            if (translated != null)
-                setter(translated);
-        }
-
-        private static void translateControlWpf(Window control, object translation, List<trStringInfo> generateFields)
-        {
-            if (control == null)
-                return;
-
-            translateControlWpf((ContentControl) control, translation, generateFields);
-
-            if (!string.IsNullOrEmpty(control.Title))
-                translateWpf(translation, control, control.Title, newTitle => { control.Title = newTitle; }, generateFields);
-        }
-
-        private static void translateControlWpf(ContentControl control, object translation, List<trStringInfo> generateFields)
-        {
-            if (control == null)
-                return;
-
-            translateControlWpf((FrameworkElement) control, translation, generateFields);
-            translateWpf(translation, control, control.Content, newContent => { control.Content = newContent; }, generateFields);
-        }
-
-        private static void translateControlWpf(AccessText control, object translation, List<trStringInfo> generateFields)
-        {
-            if (control == null)
-                return;
-
-            translateControlWpf((FrameworkElement) control, translation, generateFields);
-            translateWpf(translation, control, control.Text, newText => { control.Text = newText; }, generateFields);
+            else if (controlContent is string)
+            {
+                var translated = translate(control.Name, control.Tag, translation, (string) controlContent, control, generateFields);
+                if (translated != null)
+                    setter(translated);
+            }
+            // else it could be null
         }
 
         private static void translateControlWpf(FrameworkElement control, object translation, List<trStringInfo> generateFields)
@@ -72,18 +42,51 @@ namespace RT.Util.Lingo
             if (control == null)
                 return;
 
+            if (control is Window)
+            {
+                var window = (Window) control;
+                if (!string.IsNullOrEmpty(window.Title))
+                    translateWpf(translation, window, window.Title, newTitle => { window.Title = newTitle; }, generateFields);
+            }
+
+            if (control is AccessText)
+            {
+                var access = (AccessText) control;
+                translateWpf(translation, access, access.Text, newText => { access.Text = newText; }, generateFields);
+            }
+
+            if (control is ContentControl)
+            {
+                var cc = (ContentControl) control;
+                if (cc is HeaderedContentControl)
+                {
+                    var hc = (HeaderedContentControl) cc;
+                    translateWpf(translation, hc, hc.Header, newHeader => { hc.Header = newHeader; }, generateFields);
+                }
+                translateWpf(translation, cc, cc.Content, newContent => { cc.Content = newContent; }, generateFields);
+            }
+
+            if (control is ItemsControl)
+            {
+                var ic = (ItemsControl) control;
+                if (ic is HeaderedItemsControl)
+                {
+                    var hc = (HeaderedItemsControl) ic;
+                    translateWpf(translation, hc, hc.Header, newHeader => { hc.Header = newHeader; }, generateFields);
+                }
+                foreach (var item in ic.Items.OfType<FrameworkElement>())
+                    translateControlWpf(item, translation, generateFields);
+            }
+
+            if (control is Panel)
+            {
+                var panel = (Panel) control;
+                foreach (var child in panel.Children.OfType<FrameworkElement>())
+                    translateControlWpf(child, translation, generateFields);
+            }
+
+            translateControlWpf(control.ContextMenu, translation, generateFields);
             translateWpf(translation, control, control.ToolTip, newTooltip => { control.ToolTip = newTooltip; }, generateFields);
-        }
-
-        private static void translateControlWpf(Panel control, object translation, List<trStringInfo> generateFields)
-        {
-            if (control == null)
-                return;
-
-            translateControlWpf((FrameworkElement) control, translation, generateFields);
-
-            foreach (dynamic child in control.Children)
-                translateControlWpf(child, translation, generateFields);
         }
     }
 }

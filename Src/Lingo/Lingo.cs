@@ -104,10 +104,10 @@ namespace RT.Util.Lingo
                     }
                 }
                 if (LingoNotes != null)
-                    attribs.Add("LingoNotes(\"" + LingoNotes.CsharpEscape() + "\")");
+                    attribs.Add("LingoNotes(\"" + LingoNotes.CLiteralEscape() + "\")");
                 if (attribs.Count > 0)
                     sb.AppendLine("        [" + attribs.JoinString(", ") + "]");
-                sb.AppendLine("        public TrString " + FieldName + " = \"" + Translation.CsharpEscape() + "\";");
+                sb.AppendLine("        public TrString " + FieldName + " = \"" + Translation.CLiteralEscape() + "\";");
             }
         }
 
@@ -137,7 +137,7 @@ namespace RT.Util.Lingo
 
                 var lst = new List<trStringInfo>();
                 translateControl(control, translation, lst);
-                generateCode(control, translation, lst);
+                generateCode(translation, lst);
             }
 
             /// <summary>Translates the text of the specified WPF window and all its sub-controls using the specified translation object, while simultaneously generating C# code for the required translation strings.</summary>
@@ -152,15 +152,12 @@ namespace RT.Util.Lingo
 
                 var lst = new List<trStringInfo>();
                 translateControlWpf(window, translation, lst);
-                generateCode(window, translation, lst);
+                generateCode(translation, lst);
             }
 
-            private void generateCode(object control, object translation, List<trStringInfo> lst)
+            private void generateCode(object translation, List<trStringInfo> lst)
             {
                 var ns = translation.GetType().Namespace;
-                if (!_codeSoFar.ContainsKey(ns))
-                    _codeSoFar[ns] = new List<string>();
-
                 var sb = new StringBuilder();
                 sb.AppendLine("    [LingoStringClass" + translation.GetType().GetCustomAttributes<LingoInGroupAttribute>()
                     .Select(lig => ", LingoInGroup(" + (lig.Group.GetType().Namespace == ns ? lig.Group.GetType().Name : lig.Group.GetType().FullName) + "." + lig.Group.ToString() + ")").JoinString() + "]");
@@ -175,7 +172,7 @@ namespace RT.Util.Lingo
                     item.AppendTo(sb);
                 }
                 sb.AppendLine("    }");
-                _codeSoFar[ns].Add(sb.ToString());
+                _codeSoFar.AddSafe(ns, sb.ToString());
             }
 
             /// <summary>Generates the file.</summary>
@@ -337,22 +334,6 @@ namespace RT.Util.Lingo
                 foreach (ToolStripItem subitem in ((ToolStripDropDownItem) tsi).DropDownItems)
                     translateToolStripItem(subitem, translation, generateFields);
             }
-        }
-
-        private static string CsharpEscape(this string str)
-        {
-            return str
-                .Replace("\\", "\\\\")
-                .Replace("'", "\\'")
-                .Replace("\"", "\\\"")
-                .Replace("\0", "\\0")
-                .Replace("\r", "\\r")
-                .Replace("\n", "\\n")
-                .Replace("\a", "\\a")
-                .Replace("\b", "\\b")
-                .Replace("\f", "\\f")
-                .Replace("\t", "\\t")
-                .Replace("\v", "\\v");
         }
 
         /// <summary>Outputs a <see cref="DlgMessage"/> containing a list of translation-string fields (<see cref="TrString"/> or <see cref="TrStringNum"/>) which are not referenced in any of the IL code in the specified assembly or assemblies. 
