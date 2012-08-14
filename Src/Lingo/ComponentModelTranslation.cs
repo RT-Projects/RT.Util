@@ -162,4 +162,58 @@ namespace RT.Util.Lingo
             return false;
         }
     }
+
+    /// <summary>Provides a base implementation for enum converters intended to enable enum translation. See remarks.</summary>
+    /// <typeparam name="TEnum">Type of the enum being translated.</typeparam>
+    /// <typeparam name="TTranslation">Type of a translation class which has fields named the same as enum values.</typeparam>
+    /// <remarks>Suggested use: define a separate Lingo string class for the enum. Inside this class, declare a nested class deriving
+    /// from this base class. Specify a TypeConverter on the enum in question using the said nested class.</remarks>
+    public abstract class LingoEnumConverter<TEnum, TTranslation> : EnumConverter
+        where TEnum : struct
+    {
+        private Type _enumType, _trType;
+        private Func<TTranslation> _getTranslation;
+
+        /// <summary>Constructor.</summary>
+        /// <param name="getTranslation">A method which returns the currently active translation for this enum.</param>
+        public LingoEnumConverter(Func<TTranslation> getTranslation)
+            : base(typeof(TEnum))
+        {
+            _enumType = typeof(TEnum);
+            _trType = typeof(TTranslation);
+            _getTranslation = getTranslation;
+
+            if (!_enumType.IsEnum)
+                throw new ArgumentException("The type \"{0}\" is not an enum type, and so cannot be used in \"{1}\".".Fmt(typeof(TEnum), GetType()));
+        }
+
+        /// <summary>Override; see base.</summary>
+        public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+        {
+            if (value is string)
+            {
+                var tr = _getTranslation();
+                var val = (string) value;
+                foreach (var field in _trType.GetFields())
+                    if (field.FieldType == typeof(TrString) && ((TrString) field.GetValue(tr)).Translation == val)
+                        return Enum.Parse(_enumType, field.Name);
+            }
+            return base.ConvertFrom(context, culture, value);
+        }
+
+        /// <summary>Override; see base.</summary>
+        public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+        {
+            if (destinationType == typeof(string) && value != null)
+            {
+                var result = value.ToString();
+                var field = _trType.GetField(result);
+                if (field != null)
+                    result = ((TrString) field.GetValue(_getTranslation())).Translation;
+                return result;
+            }
+            else
+                return base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
 }

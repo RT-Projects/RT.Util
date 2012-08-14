@@ -534,6 +534,8 @@ namespace RT.Util.Xml
                 if (saveObject != null)
                 {
                     saveType = saveObject.GetType();
+                    if (saveType == typeof(IntPtr) || saveType == typeof(Pointer))
+                        throw new NotSupportedException("XmlClassify does not support serializing values of type \"{0}\". Consider marking the offending field with [XmlIgnore].".Fmt(saveType));
                     if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
                     {
                         // ... but only add this attribute if it is not a collection, because then XmlClassify doesn’t care about the “type” attribute when restoring the object from XML anyway

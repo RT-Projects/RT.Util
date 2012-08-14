@@ -23,6 +23,12 @@ namespace RT.Util.Lingo
     /// </summary>
     public static partial class Lingo
     {
+        /// <summary>
+        /// If not null, whenever a translation is saved, Lingo will also attempt to save it in this directory. Use an absolute path. Lingo will
+        /// quietly ignore any errors when saving here, and will do nothing if the path is missing. Lingo will overwrite read-only files without prompts.
+        /// </summary>
+        public static string AlsoSaveTranslationsTo = null;
+
         /// <summary>Attempts to load the translation for the specified module and language. The translation must exist in the application 
         /// executable directory under a subdirectory called "Translations". If the translation loaded successfully, returns the translation instance.
         /// Otherwise, the <typeparamref name="TTranslation"/> default constructor is called and the result returned, and
@@ -66,6 +72,16 @@ namespace RT.Util.Lingo
         public static void SaveTranslation<TTranslation>(string moduleName, TTranslation translation) where TTranslation : TranslationBase, new()
         {
             XmlClassify.SaveObjectToXmlFile(translation, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
+            if (AlsoSaveTranslationsTo != null && Directory.Exists(AlsoSaveTranslationsTo))
+            {
+                try
+                {
+                    var filename = Path.Combine(AlsoSaveTranslationsTo, moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml");
+                    File.SetAttributes(filename, File.GetAttributes(filename) & ~FileAttributes.ReadOnly);
+                    XmlClassify.SaveObjectToXmlFile(translation, filename);
+                }
+                catch { }
+            }
         }
 
         /// <summary>Returns the language from the <see cref="Language"/> enum which corresponds to the specified ISO code, or null if none matches.</summary>
