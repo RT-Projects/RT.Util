@@ -392,5 +392,26 @@ namespace RT.Util.Lingo
                 fields = fields.Concat(allTrStringFields(nested.FieldType));
             return fields;
         }
+
+        /// <summary>Checks that the enum values declared in the specified enum type and the TrString fields declared in the specified translation type match exactly.</summary>
+        public static void CheckEnumTranslation<TEnum, TTranslation>(IPostBuildReporter rep)
+            where TEnum : struct
+            where TTranslation : class
+        {
+            var set = typeof(TTranslation).GetAllFields().Where(f => f.FieldType == typeof(TrString)).Select(f => f.Name).ToHashSet();
+            foreach (var enumValue in EnumStrong.GetValues<TEnum>())
+                if (!set.Contains(enumValue.ToString()))
+                {
+                    rep.Error(@"The translation type ""{0}"" does not contain a field of type {1} with the name ""{2}"" declared in enum type ""{3}"".".Fmt(typeof(TTranslation).FullName, typeof(TrString).Name, enumValue, typeof(TEnum).FullName), "class " + typeof(TTranslation).Name);
+                    rep.Error(@"---- Enum type is here.", "enum " + typeof(TEnum).Name);
+                }
+            TEnum dummy;
+            foreach (var value in set)
+                if (!EnumStrong.TryParse<TEnum>(value, out dummy, ignoreCase: false))
+                {
+                    rep.Error(@"The enum type ""{0}"" does not contain a value with the name ""{1}"" declared in translation type ""{2}"".".Fmt(typeof(TEnum).FullName, value, typeof(TTranslation).FullName), "enum " + typeof(TEnum).Name);
+                    rep.Error(@"---- Translation type is here.", "class " + typeof(TTranslation).Name);
+                }
+        }
     }
 }
