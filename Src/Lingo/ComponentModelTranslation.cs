@@ -41,6 +41,29 @@ namespace RT.Util.Lingo
             Description = memberDescription.Description;
         }
 
+        /// <summary>Constructor.</summary>
+        public MemberTr(TrString category, TrString displayName, TrString description)
+        {
+            Category = category ?? "";
+            DisplayName = displayName;
+            Description = description ?? "";
+        }
+
+        /// <summary>Constructor.</summary>
+        public MemberTr(TrString displayName)
+        {
+            DisplayName = displayName;
+            Description = Category = "";
+        }
+
+        /// <summary>Constructor.</summary>
+        public MemberTr(TrString displayName, TrString description)
+        {
+            DisplayName = displayName;
+            Description = description;
+            Category = "";
+        }
+
         /// <summary>Override, for debugging purposes only.</summary>
         public override string ToString()
         {
@@ -92,7 +115,7 @@ namespace RT.Util.Lingo
         {
             var properties = new List<PropertyDescriptor>();
             foreach (var prop in _objectType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                properties.Add(new LingoPropertyDescriptor<TTranslation>(prop, _translation));
+                properties.Add(new LingoPropertyDescriptor<TTranslation>(prop, _translation, _objectType));
             return new PropertyDescriptorCollection(properties.ToArray());
         }
     }
@@ -103,13 +126,15 @@ namespace RT.Util.Lingo
         private TTranslation _translation;
         private MethodInfo _trMethod; // is null if there was no method with the expected name
 
-        public LingoPropertyDescriptor(PropertyInfo pi, TTranslation translation)
+        public LingoPropertyDescriptor(PropertyInfo pi, TTranslation translation, Type objectType)
             : base(pi.Name, new Attribute[0])
         {
             _pi = pi;
             _translation = translation;
+
             var methName = _pi.Name + "Tr";
-            var candidates = _pi.DeclaringType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+            var candidates = objectType.SelectChain(t => t.BaseType == typeof(object) ? null : t.BaseType)
+                .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
                 .Where(m => m.Name == methName);
             if (!candidates.Any())
                 return;

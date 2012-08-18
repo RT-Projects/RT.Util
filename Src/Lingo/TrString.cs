@@ -81,6 +81,22 @@ namespace RT.Util.Lingo
         public TrStringNum(params string[] translations) { Translations = translations; IsNumber = new[] { true }; }
 
         /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
+        /// <param name="tr">Current translation. Its language's number system will be used to interpolate the translation.</param>
+        /// <param name="args">Arguments to be interpolated into the translation.</param>
+        public string Fmt(TranslationBase tr, params object[] args)
+        {
+            return Fmt(tr.Language.GetNumberSystem(), args);
+        }
+
+        /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
+        /// <param name="lang">Current translation's language. Its number system will be used to interpolate the translation.</param>
+        /// <param name="args">Arguments to be interpolated into the translation.</param>
+        public string Fmt(Language lang, params object[] args)
+        {
+            return Fmt(lang.GetNumberSystem(), args);
+        }
+
+        /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
         public string Fmt(NumberSystem ns, params object[] args)
         {
             try

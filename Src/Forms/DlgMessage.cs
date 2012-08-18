@@ -89,7 +89,7 @@ namespace RT.Util.Dialogs
         /// </summary>
         internal static string[] DefaultCaption = new string[] {
             "Information", "Question",
-            "Warning", "Error", "" // TODO: See bug 15
+            "Warning", "Error", "" // the last string is for "custom"
         };
 
         /// <summary>
@@ -369,6 +369,20 @@ namespace RT.Util.Dialogs
                         throw new Exception("Internal exception in Util: unreachable code");
                 }
             }
+        }
+
+        /// <summary>Applies a translation to certain default strings, on the assumption that all messages are to be shown with the same translation.</summary>
+        /// <param name="ok">Translation for the default "OK" button.</param>
+        /// <param name="captionInfo">Translation for the default window caption for informational messages.</param>
+        /// <param name="captionQuestion">Translation for the default window caption for question messages.</param>
+        /// <param name="captionWarning">Translation for the default window caption for warning messages.</param>
+        /// <param name="captionError">Translation for the default window caption for error messages.</param>
+        public static void Translate(string ok, string captionInfo, string captionQuestion, string captionWarning, string captionError)
+        {
+            DlgMessageForm.DefaultOKCaption = ok;
+            DlgMessageForm.DefaultCaption = new[] {
+                captionInfo, captionQuestion, captionWarning, captionError, ""
+            };
         }
     }
 }
