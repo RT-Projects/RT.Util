@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
+using RT.Util.IL;
 using RT.Util.Xml;
 
 namespace RT.Util.Lingo

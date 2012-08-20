@@ -7,7 +7,7 @@ using System.Reflection.Emit;
 using System.Text;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util
+namespace RT.Util.IL
 {
     /// <summary>Decodes the IL inside a specified method.</summary>
     public static class ILReader
