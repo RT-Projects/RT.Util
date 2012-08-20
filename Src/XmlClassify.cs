@@ -773,7 +773,6 @@ namespace RT.Util.Xml
 
         #region Post-build step check
 
-#if DEBUG
         /// <summary>Performs safety checks to ensure that a specific type doesn't cause XmlClassify exceptions. Note that this doesn't guarantee that the data is preserved correctly.
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
         /// <typeparam name="T">The type that must be XmlClassify-able.</typeparam>
@@ -819,7 +818,6 @@ namespace RT.Util.Xml
                 return;
             }
         }
-#endif
 
         #endregion
     }

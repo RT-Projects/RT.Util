@@ -36,7 +36,6 @@ namespace RT.Util
             return GetAttribute(typeof(TSettings));
         }
 
-#if DEBUG
         /// <summary>
         /// Performs safety checks to ensure that a settings object conforms to various requirements imposed by SettingsUtil methods. Run this method as a post-build
         /// step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.
@@ -49,7 +48,6 @@ namespace RT.Util
             catch (Exception e) { rep.Error(e.Message, "class", typeof(TSettings).Name); }
             XmlClassify.PostBuildStep<TSettings>(rep);
         }
-#endif
 
         /// <summary>Loads settings into the specified class, or, if not available, creates a new instance of the class.</summary>
         /// <param name="settings">Destination - the settings class will be placed here</param>

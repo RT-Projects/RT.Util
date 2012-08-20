@@ -757,7 +757,6 @@ namespace RT.Util.CommandLine
 
         #region Post-build step check
 
-#if DEBUG
         /// <summary>Performs safety checks to ensure that the structure of your command-line syntax defining class is valid according to the criteria laid out in the documentation of <see cref="CommandLineParser&lt;T&gt;"/>.
         /// Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
         /// <param name="rep">Object to report post-build errors to.</param>
@@ -1078,7 +1077,6 @@ namespace RT.Util.CommandLine
                 }
             }
         }
-#endif
 
         #endregion
     }
