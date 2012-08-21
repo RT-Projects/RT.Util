@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -353,15 +354,47 @@ namespace RT.Util.Lingo
             }
         }
 
-        /// <summary>Outputs a <see cref="DlgMessage"/> containing a list of translation-string fields (<see cref="TrString"/> or <see cref="TrStringNum"/>) which are not referenced in any of the IL code in the specified assembly or assemblies. 
-        /// Displays only those unused fields from the specified type as well as types referenced by that type that have the <see cref="LingoStringClassAttribute"/>.</summary>
-        /// <param name="type">Top-level translation-string type whose fields to examine.</param>
-        /// <param name="assemblies">Collection of assemblies whose IL code to examine.</param>
-        public static void WarnOfUnusedStrings(Type type, params Assembly[] assemblies)
+        /// <summary>Checks the specified assemblies for any obvious Lingo-related problems, including unused strings, mismatched enum translations.</summary>
+        /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
+        /// <param name="rep">Post-build step reporter.</param>
+        /// <param name="assemblies">A list of assemblies to check. The Lingo assembly is included automatically to ensure correct operation.</param>
+        public static void PostBuildStep<TTranslation>(IPostBuildReporter rep, params Assembly[] assemblies)
         {
-            var fields = new HashSet<FieldInfo>();
-            addAllLingoRelevantFields(type, fields);
+            if (!assemblies.Contains(Assembly.GetExecutingAssembly()))
+                assemblies = assemblies.Concat(Assembly.GetExecutingAssembly()).ToArray();
 
+            // Check that all enum translations are sensible
+            var allEnumTrs = allEnumTranslations(assemblies).ToList();
+            foreach (var tr in allEnumTrs)
+                checkEnumTranslation(rep, tr.EnumType, tr.TranslationType);
+
+            // Check all component model member translations
+            foreach (var type in assemblies.SelectMany(a => a.GetTypes()))
+            {
+                // All functions returning MemberTr and accepting a TranslationBase descendant must conform
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => p.Name).ToHashSet();
+                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    if (method.ReturnType == typeof(MemberTr) && method.GetParameters().Length == 1 && typeof(TranslationBase).IsAssignableFrom(method.GetParameters()[0].ParameterType))
+                    {
+                        if (!method.IsStatic)
+                            rep.Error("A member translation method must be static. Translation method: {0}".Fmt(method.DeclaringType.FullName + "." + method.Name), "class " + method.DeclaringType.Name, typeof(MemberTr).Name + " " + method.Name);
+                        if (!method.Name.EndsWith("Tr"))
+                            rep.Error("The name of a member translation method must end with the letters \"Tr\". Translation method: {0}".Fmt(method.DeclaringType.FullName + "." + method.Name), "class " + method.DeclaringType.Name, typeof(MemberTr).Name + " " + method.Name);
+                        var propertyName = method.Name.Substring(0, method.Name.Length - 2);
+                        if (!properties.Contains(propertyName))
+                            rep.Error("Member translation method has no corresponding property named \"{1}\". Translation method: {0}".Fmt(method.DeclaringType.FullName + "." + method.Name, propertyName), "class " + method.DeclaringType.Name, typeof(MemberTr).Name + " " + method.Name);
+                    }
+            }
+
+            // Find unused strings
+            var fields = new HashSet<FieldInfo>();
+            addAllLingoRelevantFields(typeof(TTranslation), fields);
+
+            // Treat all fields used for enum translations as used
+            foreach (var f in allEnumTrs.SelectMany(et => et.TranslationType.GetAllFields()))
+                fields.Remove(f);
+
+            // Treat all fields that occur in a ldfld / ldflda instruction as used
             foreach (var mod in assemblies.SelectMany(a => a.GetModules(false)))
             {
                 foreach (var typ in mod.GetTypes())
@@ -376,15 +409,17 @@ namespace RT.Util.Lingo
                             {
                                 fields.Remove((FieldInfo) instr.Operand);
                                 if (fields.Count == 0)
-                                    return;
+                                    goto done; // don't have to break the loop early, but there's really no point in searching the rest of the code now
                             }
                         }
                     }
                 }
             }
 
-            if (DlgMessage.ShowWarning("Unused Lingo fields found:\n\n • " + fields.Select(f => f.DeclaringType.FullName + "." + f.Name).JoinString("\n • "), "Ignore", "Break") == 1)
-                Debugger.Break();
+            // Report warnings for all unused strings (not errors so that the developer can test things in the presence of unused strings)
+            done:
+            foreach (var field in fields)
+                rep.Warning("Unused Lingo field: " + field.DeclaringType.FullName + "." + field.Name, "class " + field.DeclaringType.Name, field.FieldType.Name, field.Name);
         }
 
         private static void addAllLingoRelevantFields(Type type, HashSet<FieldInfo> sofar)
@@ -401,25 +436,45 @@ namespace RT.Util.Lingo
             }
         }
 
-        /// <summary>Checks that the enum values declared in the specified enum type and the TrString fields declared in the specified translation type match exactly.</summary>
-        public static void CheckEnumTranslation<TEnum, TTranslation>(IPostBuildReporter rep)
-            where TEnum : struct
-            where TTranslation : class
+        private class enumTrInfo { public Type EnumType; public Type TranslationType; }
+
+        private static IEnumerable<enumTrInfo> allEnumTranslations(IEnumerable<Assembly> assemblies)
         {
-            var set = typeof(TTranslation).GetAllFields().Where(f => f.FieldType == typeof(TrString)).Select(f => f.Name).ToHashSet();
-            foreach (var enumValue in EnumStrong.GetValues<TEnum>())
+            foreach (var type in assemblies.SelectMany(a => a.GetTypes()))
+                if (type.IsEnum)
+                {
+                    var attr = type.GetCustomAttributes<TypeConverterAttribute>().FirstOrDefault();
+                    if (attr == null)
+                        continue;
+                    var converter = Type.GetType(attr.ConverterTypeName);
+                    var lingoConverter = converter.SelectChain(t => t.BaseType == typeof(object) ? null : t.BaseType)
+                        .FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(LingoEnumConverter<,>));
+                    if (lingoConverter == null)
+                        continue;
+                    var args = lingoConverter.GetGenericArguments();
+                    yield return new enumTrInfo { EnumType = args[0], TranslationType = args[1] };
+                }
+        }
+
+        /// <summary>Checks that the enum values declared in the specified enum type and the TrString fields declared in the specified translation type match exactly.</summary>
+        private static void checkEnumTranslation(IPostBuildReporter rep, Type enumType, Type translationType)
+        {
+            var set = translationType.GetAllFields().Where(f => f.FieldType == typeof(TrString)).Select(f => f.Name).ToHashSet();
+            foreach (var enumValue in Enum.GetValues(enumType))
                 if (!set.Contains(enumValue.ToString()))
                 {
-                    rep.Error(@"The translation type ""{0}"" does not contain a field of type {1} with the name ""{2}"" declared in enum type ""{3}"".".Fmt(typeof(TTranslation).FullName, typeof(TrString).Name, enumValue, typeof(TEnum).FullName), "class " + typeof(TTranslation).Name);
-                    rep.Error(@"---- Enum type is here.", "enum " + typeof(TEnum).Name);
+                    rep.Error(@"The translation type ""{0}"" does not contain a field of type {1} with the name ""{2}"" declared in enum type ""{3}"".".Fmt(translationType.FullName, typeof(TrString).Name, enumValue, enumType.FullName), "class " + translationType.Name);
+                    rep.Error(@"---- Enum type is here.", "enum " + enumType.Name);
                 }
-            TEnum dummy;
             foreach (var value in set)
-                if (!EnumStrong.TryParse<TEnum>(value, out dummy, ignoreCase: false))
+            {
+                try { Enum.Parse(enumType, value, ignoreCase: false); }
+                catch (ArgumentException)
                 {
-                    rep.Error(@"The enum type ""{0}"" does not contain a value with the name ""{1}"" declared in translation type ""{2}"".".Fmt(typeof(TEnum).FullName, value, typeof(TTranslation).FullName), "enum " + typeof(TEnum).Name);
-                    rep.Error(@"---- Translation type is here.", "class " + typeof(TTranslation).Name);
+                    rep.Error(@"The enum type ""{0}"" does not contain a value with the name ""{1}"" declared in translation type ""{2}"".".Fmt(enumType.FullName, value, translationType.FullName), "enum " + enumType.Name);
+                    rep.Error(@"---- Translation type is here.", "class " + translationType.Name);
                 }
+            }
         }
     }
 }
