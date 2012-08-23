@@ -16,7 +16,7 @@ namespace RT.Util.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
     /// <typeparam name="TTranslation">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>
-    public sealed class TranslationForm<TTranslation> : ManagedForm where TTranslation : TranslationBase, new()
+    public sealed class TranslationForm<TTranslation> : ManagedForm, ITranslationDialog where TTranslation : TranslationBase, new()
     {
         private TranslationPanel[] _currentlyVisibleTranslationPanels;
         private TranslationPanel[] _allTranslationPanels;
@@ -101,7 +101,7 @@ namespace RT.Util.Lingo
             var dicPanels = new Dictionary<object, List<TranslationPanel>>();
             var lstAllPanels = new List<TranslationPanel>();
             var lstUngroupedPanels = new List<TranslationPanel>();
-            createPanelsForType(null, typeof(TTranslation), typeof(TTranslation), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null, "");
+            createPanelsForType(null, typeof(TTranslation), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null, "");
 
             // Discover all the group types, their enum values, and then their attributes
             Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
@@ -493,14 +493,15 @@ namespace RT.Util.Lingo
             AnyChanges = false;
         }
 
-        private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups, string path)
+        private void createPanelsForType(string chkName, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups, string path)
         {
+#warning TODO: this should be rewritten using TranslationDialogHelper.GetGroups
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
                 if (chkName == null)
-                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.FullName), "type");
+                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(type.FullName), "type");
                 else
-                    throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkType.FullName, chkName), "type");
+                    throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(type.FullName, chkName), "type");
             }
 
             var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
@@ -522,7 +523,7 @@ namespace RT.Util.Lingo
                             dicPanels.AddSafe(group, pnl);
                 }
                 else if (!f.IsDefined<LingoIgnoreAttribute>(true))
-                    createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups, path + f.Name + " / ");
+                    createPanelsForType(f.Name, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups, path + f.Name + " / ");
             }
         }
 
@@ -1105,6 +1106,7 @@ namespace RT.Util.Lingo
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = null;
                 State = TranslationPanelState.OutOfDate;
+                fireChangeMade();
             }
 
             protected override void setBackColor()
@@ -1453,6 +1455,7 @@ namespace RT.Util.Lingo
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
                 _translation.Old = null;
                 State = TranslationPanelState.OutOfDate;
+                fireChangeMade();
             }
 
             protected override void setBackColor()

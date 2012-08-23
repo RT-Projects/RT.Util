@@ -151,6 +151,8 @@
     <Compile Include="Json.cs" />
     <Compile Include="Lingo\ComponentModelTranslation.cs" />
     <Compile Include="Lingo\LanguageHelper.cs" />
+    <Compile Include="Lingo\LanguageHelperWinForms.cs" />
+    <Compile Include="Lingo\LanguageHelperWpf.cs" />
     <Compile Include="Lingo\Languages.cs" />
     <Compile Include="Lingo\Lingo.cs" />
     <Compile Include="Lingo\LingoAttributes.cs" />
@@ -161,8 +163,12 @@
     <Compile Include="Lingo\TranslationCreateForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Lingo\TranslationDialog.cs" />
     <Compile Include="Lingo\TranslationForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Lingo\TranslationWindow.xaml.cs">
+      <DependentUpon>TranslationWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Lingo\TrString.cs" />
     <Compile Include="Log.cs" />
@@ -216,6 +222,12 @@
       <SubType>Designer</SubType>
       <DependentUpon>InputBox.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Lingo\TranslationWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

@@ -74,11 +74,23 @@ namespace RT.Util.Xml
         /// <returns>A new instance of the requested type.</returns>
         public static T LoadObjectFromXmlFile<T>(string filename, XmlClassifyOptions options = null)
         {
+            return (T) LoadObjectFromXmlFile(typeof(T), filename, options);
+        }
+
+        /// <summary>
+        /// Reads an object of the specified type from the specified XML file.
+        /// </summary>
+        /// <typeparam name="T">Type of object to read.</typeparam>
+        /// <param name="filename">Path and filename of the XML file to read from.</param>
+        /// <param name="options">Options.</param>
+        /// <returns>A new instance of the requested type.</returns>
+        public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null)
+        {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
                 elem = XElement.Load(strRead);
-            return (T) new classifier(options, defaultBaseDir).Declassify(typeof(T), elem);
+            return new classifier(options, defaultBaseDir).Declassify(type, elem);
         }
 
         /// <summary>

@@ -61,8 +61,19 @@ namespace RT.Util.Lingo
         /// <returns>The loaded translation.</returns>
         public static TTranslation LoadTranslation<TTranslation>(string module, Language language) where TTranslation : TranslationBase, new()
         {
+            return (TTranslation) LoadTranslation(typeof(TTranslation), module, language);
+        }
+
+        /// <summary>Loads and returns the translation for the specified module and language. The translation must exist in the application 
+        /// executable directory under a subdirectory called "Translations". If the translation cannot be loaded successfully, an exception is thrown.</summary>
+        /// <typeparam name="TTranslation">The type of the translation class to load the translation into.</typeparam>
+        /// <param name="module">The name of the module whose translation to load.</param>
+        /// <param name="language">The language code of the language to load.</param>
+        /// <returns>The loaded translation.</returns>
+        public static TranslationBase LoadTranslation(Type translationType, string module, Language language)
+        {
             string path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
-            var trans = XmlClassify.LoadObjectFromXmlFile<TTranslation>(path);
+            var trans = (TranslationBase) XmlClassify.LoadObjectFromXmlFile(translationType, path);
             trans.Language = language;
             return trans;
         }
