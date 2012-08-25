@@ -25,8 +25,42 @@ namespace RT.Util.Forms
         public ManagedWindow(Settings settings)
         {
             if (settings == null) throw new ArgumentNullException("settings");
-
             _settings = settings;
+
+            SetSizePosFromSettings();
+
+            // SizeChanged event: keeps track of minimize/maximize and normal size
+            SizeChanged += new SizeChangedEventHandler(processResize);
+            // Move event: keeps track of normal dimensions
+            LocationChanged += new EventHandler(processMove);
+            // Close event: save the settings
+            Closed += new EventHandler(saveSettings);
+
+            _prevWindowState = WindowState;
+
+            switch (WindowState)
+            {
+                case WindowState.Minimized:
+                    _stateMinimized = true;
+                    _stateMaximized = false; // (guessing?)
+                    break;
+                case WindowState.Maximized:
+                    _stateMinimized = false;
+                    _stateMaximized = true;
+                    break;
+                case WindowState.Normal:
+                    _stateMinimized = false;
+                    _stateMaximized = false;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Applies the window size and position as specified in the window settings. If the XAML sets the window's Width/Height, this method
+        /// can be called in the window's constructor right after InitializeComponent, to re-apply the correct size.
+        /// </summary>
+        public void SetSizePosFromSettings()
+        {
             try
             {
                 var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
@@ -53,31 +87,6 @@ namespace RT.Util.Forms
             }
             catch
             { }
-
-            // SizeChanged event: keeps track of minimize/maximize and normal size
-            SizeChanged += new SizeChangedEventHandler(processResize);
-            // Move event: keeps track of normal dimensions
-            LocationChanged += new EventHandler(processMove);
-            // Close event: save the settings
-            Closed += new EventHandler(saveSettings);
-
-            _prevWindowState = WindowState;
-
-            switch (WindowState)
-            {
-                case WindowState.Minimized:
-                    _stateMinimized = true;
-                    _stateMaximized = false; // (guessing?)
-                    break;
-                case WindowState.Maximized:
-                    _stateMinimized = false;
-                    _stateMaximized = true;
-                    break;
-                case WindowState.Normal:
-                    _stateMinimized = false;
-                    _stateMaximized = false;
-                    break;
-            }
         }
 
         private void processResize(object sender, SizeChangedEventArgs e)
