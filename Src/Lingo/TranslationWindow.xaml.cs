@@ -32,7 +32,7 @@ namespace RT.Util.Lingo
             public int SplitterDistance = 300;
             /// <summary>Remembers the string last typed in the Find dialog.</summary>
             public string LastFindQuery = "";
-            /// <summary>Remembers the last settings of the "Search English text" option in the Find dialog.</summary>
+            /// <summary>Remembers the last settings of the "Search Original" option in the Find dialog.</summary>
             public bool LastFindOrig = true;
             /// <summary>Remembers the last settings of the "Search Translation" option in the Find dialog.</summary>
             public bool LastFindTrans = true;
@@ -46,6 +46,8 @@ namespace RT.Util.Lingo
             : base(settings)
         {
             InitializeComponent();
+            SetSizePosFromSettings();
+
             if (icon != null)
                 Icon = icon;
             Title = "Translating " + programTitle;
@@ -61,6 +63,11 @@ namespace RT.Util.Lingo
             CommandBindings.Add(new CommandBinding(TranslationCommands.MarkAllStringsUpToDate, markAllStringsUpToDate));
             CommandBindings.Add(new CommandBinding(TranslationCommands.Font, font));
 
+            CommandBindings.Add(new CommandBinding(TranslationCommands.PrevTextBox, delegate { gotoTextBox(up: true); }));
+            CommandBindings.Add(new CommandBinding(TranslationCommands.NextTextBox, delegate { gotoTextBox(up: false); }));
+            CommandBindings.Add(new CommandBinding(TranslationCommands.PrevGroup, delegate { gotoGroup(up: true); }));
+            CommandBindings.Add(new CommandBinding(TranslationCommands.NextGroup, delegate { gotoGroup(up: false); }));
+
             var original = (TranslationBase) Activator.CreateInstance(translationType);
             var translation = Lingo.LoadTranslation(translationType, moduleName, language);
 
@@ -70,54 +77,6 @@ namespace RT.Util.Lingo
             ctGroups.Items.Clear();
             ctGroups.ItemsSource = _groups;
         }
-
-        //private void generateTranslationPanels(Type type, Dictionary<object, TranslationGroup> groups, string path)
-        //{
-        //    foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-        //    {
-        //        if (field.IsDefined<LingoIgnoreAttribute>())
-        //            continue;
-        //        if (field.FieldType.IsDefined<LingoStringClassAttribute>())
-        //            generateTranslationPanels(field.FieldType, groups, path + field.Name + " / ");
-        //        else if (field.FieldType == typeof(TrString) || field.FieldType == typeof(TrStringNum))
-        //        {
-
-        //        }
-        //    }
-        //}
-
-        //private void createPanelsForType(string chkName, Type chkType, Type type, object original, object translation, Dictionary<object, List<TranslationInfo>> dicPanels, List<TranslationInfo> lstUngroupedPanels, List<TranslationInfo> lstAllPanels, IEnumerable<object> classGroups, string path)
-        //{
-        //    if (!type.IsDefined<LingoStringClassAttribute>(true))
-        //    {
-        //        if (chkName == null)
-        //            throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(chkType.FullName), "type");
-        //        else
-        //            throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(chkType.FullName, chkName), "type");
-        //    }
-
-        //    var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
-        //    if (classGroups != null)
-        //        thisClassGroups = thisClassGroups.Concat(classGroups);
-
-        //    foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-        //    {
-        //        if (f.FieldType == typeof(TrString) || f.FieldType == typeof(TrStringNum))
-        //        {
-        //            string notes = f.GetCustomAttributes(true).OfType<LingoNotesAttribute>().Select(lna => lna.Notes).FirstOrDefault();
-        //            var pnl = createTranslationPanel(notes, f.GetValue(original), f.GetValue(translation), path + f.Name);
-        //            lstAllPanels.Add(pnl);
-        //            var groups = f.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group).Concat(thisClassGroups);
-        //            if (!groups.Any())
-        //                lstUngroupedPanels.Add(pnl);
-        //            else
-        //                foreach (var group in groups)
-        //                    dicPanels.AddSafe(group, pnl);
-        //        }
-        //        else if (!f.IsDefined<LingoIgnoreAttribute>(true))
-        //            createPanelsForType(f.Name, type, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups, path + f.Name + " / ");
-        //    }
-        //}
 
         /// <summary>
         /// Fires every time the translation is updated on the disk (i.e. when the user clicks either "Save &amp; Close" or "Apply changes").
@@ -178,6 +137,206 @@ namespace RT.Util.Lingo
         {
             throw new NotImplementedException();
         }
+
+        private void populateTrStringNumGrid(object sender, RoutedEventArgs e)
+        {
+            var grid = (Grid) sender;
+            var info = (TrStringNumInfo) grid.DataContext;
+            int nn = info.TranslationTr.IsNumber.Where(b => b).Count();
+            int curRow = 0;
+
+            int prevRow;
+            TextBlock textBlock;
+            string label2 = "Original:";
+            if (info.TranslationTr.Old != null && !info.TranslationTr.Old.SequenceEqual(info.NewOriginal))
+            {
+                populateRows(grid, "Old Original:", info, info.TranslationTr.Old, info.OriginalNumSys, false, nn, ref curRow);
+                label2 = "New Original:";
+            }
+
+            populateRows(grid, label2, info, info.NewOriginal, info.OriginalNumSys, false, nn, ref curRow);
+            populateRows(grid, "Translation:", info, info.TranslationTr.Translations, info.TranslationNumSys, true, nn, ref curRow);
+
+            // Label (e.g. “Original”, “Translation”)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+            for (int i = 0; i < nn; i++)
+                // Number form descriptions (e.g. “sglr”, “plrl”) for each interpolated number
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+            // Original text or textboxes for translations
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // OK button
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+
+            for (int i = 0; i < curRow; i++)
+                grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+        }
+
+        private void populateRows(Grid grid, string label, TrStringNumInfo info, string[] display, NumberSystem ns, bool textBoxes, int nn, ref int curRow)
+        {
+            int numRows = (int) Math.Pow(ns.NumStrings, nn);
+
+            var textBlock = new TextBlock(new Run(label));
+            grid.Children.Add(textBlock);
+            Grid.SetColumn(textBlock, 0);
+            Grid.SetRow(textBlock, curRow);
+            Grid.SetRowSpan(textBlock, numRows);
+
+            int column = 1;
+            for (int i = 0; i < info.TranslationTr.IsNumber.Length; i++)
+            {
+                if (info.TranslationTr.IsNumber[i])
+                {
+                    var header = new TextBlock(new Run("{" + i + "}"));
+                    Grid.SetColumn(header, column);
+                    Grid.SetRow(header, curRow);
+                    grid.Children.Add(header);
+                    column++;
+                }
+            }
+            curRow++;
+
+            Button button = null;
+            for (int row = 0; row < numRows; row++)
+            {
+                int col = 1;
+                int r = row;
+                for (int i = 0; i < info.TranslationTr.IsNumber.Length; i++)
+                {
+                    if (info.TranslationTr.IsNumber[i])
+                    {
+                        var numFormDescr = new TextBlock(new Run(ns.GetDescription(r % ns.NumStrings)));
+                        Grid.SetColumn(numFormDescr, col);
+                        Grid.SetRow(numFormDescr, curRow);
+                        grid.Children.Add(numFormDescr);
+                        col++;
+                        r /= ns.NumStrings;
+                    }
+                }
+                if (textBoxes)
+                {
+                    var textBox = new TextBox
+                    {
+                        Text = (display != null && row < display.Length) ? display[row] : "",
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        Width = double.NaN,
+                        Height = double.NaN,
+                        AcceptsReturn = true,
+                        Tag = info
+                    };
+                    Grid.SetColumn(textBox, col);
+                    Grid.SetRow(textBox, curRow);
+                    grid.Children.Add(textBox);
+                    if (row == 0)
+                    {
+                        button = new Button { Content = "OK", Tag = info };
+                        Grid.SetColumn(button, col + 1);
+                        Grid.SetRow(button, curRow);
+                        Grid.SetRowSpan(button, numRows);
+                        // Do not add to the grid yet; must add it after all the textboxes so that its tab order is correct
+                    }
+                }
+                else
+                {
+                    var originalText = new TextBlock(new Run((display != null && row < display.Length) ? display[row] : ""));
+                    Grid.SetColumn(originalText, col);
+                    Grid.SetColumnSpan(originalText, 2);
+                    Grid.SetRow(originalText, curRow);
+                    grid.Children.Add(originalText);
+                }
+                curRow++;
+            }
+
+            // Defer adding the button until the end so that its tab order is correct
+            if (button != null)
+                grid.Children.Add(button);
+        }
+
+        private void ctGroups_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _uiElementCache = null;
+#warning Remove the next two lines once we removed the example objects from the XAML
+            ctStrings.ItemsSource = null;
+            ctStrings.Items.Clear();
+            ctStrings.ItemsSource = ((TranslationGroup) ctGroups.SelectedItem).Infos;
+        }
+
+        private object[] _uiElementCache;
+
+        private static IEnumerable<DependencyObject> findVisualChildren(DependencyObject control, Predicate<DependencyObject> predicate)
+        {
+            if (control == null)
+                yield break;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(control); i++)
+            {
+                var child = VisualTreeHelper.GetChild(control, i);
+                if (child != null && predicate(child))
+                    yield return child;
+                foreach (var childOfChild in findVisualChildren(child, predicate))
+                    yield return childOfChild;
+            }
+        }
+
+        private void gotoGroup(bool up)
+        {
+            var curGroup = ctGroups.SelectedIndex;
+            if (up)
+            {
+                if (curGroup == 0)
+                    return;
+                curGroup--;
+            }
+            else
+            {
+                if (curGroup == ctGroups.Items.Count - 1)
+                    return;
+                curGroup++;
+            }
+            ctGroups.SelectedIndex = curGroup;
+            ctGroups.ScrollIntoView(ctGroups.SelectedItem);
+        }
+
+        private void gotoTextBox(bool up)
+        {
+            if (_uiElementCache == null)
+                _uiElementCache = findVisualChildren(this, obj => obj is TextBox || obj is Button).ToArray<object>();
+
+            var currentElement = FocusManager.GetFocusedElement(this);
+#warning Remove the next two lines once we think it never triggers
+            if (currentElement != Keyboard.FocusedElement)
+                System.Diagnostics.Debugger.Break();
+
+            if (!(currentElement is TextBox || currentElement is Button))
+                return;
+            var index = Array.IndexOf(_uiElementCache, currentElement);
+
+            if (up)
+            {
+                if (index == -1)
+                    index = _uiElementCache.Length;
+                do
+                {
+                    index--;
+                    if (index == -1)
+                        return;
+                }
+                while (index >= 0 && !(_uiElementCache[index] is TextBox));
+            }
+            else
+            {
+                do
+                {
+                    index++;
+                    if (index == _uiElementCache.Length)
+                        return;
+                }
+                while (index < _uiElementCache.Length && !(_uiElementCache[index] is TextBox));
+            }
+            var toFocus = (TextBox) _uiElementCache[index];
+            toFocus.Focus();
+            ((ContentPresenter) ctStrings.ItemContainerGenerator.ContainerFromItem(toFocus.Tag)).BringIntoView();
+        }
     }
 
     static class TranslationCommands
@@ -192,5 +351,9 @@ namespace RT.Util.Lingo
         public static RoutedCommand MarkAllStringsOutOfDate = new RoutedCommand();
         public static RoutedCommand MarkAllStringsUpToDate = new RoutedCommand();
         public static RoutedCommand Font = new RoutedCommand();
+        public static RoutedCommand PrevTextBox = new RoutedCommand();
+        public static RoutedCommand NextTextBox = new RoutedCommand();
+        public static RoutedCommand PrevGroup = new RoutedCommand();
+        public static RoutedCommand NextGroup = new RoutedCommand();
     }
 }

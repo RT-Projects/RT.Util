@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:lingo="clr-namespace:RT.Util.Lingo"
         xmlns:rtf="clr-namespace:RT.Util.Forms"
-        TextOptions.TextFormattingMode="Display"
-        Title="TranslationWindow" Height="266" Width="423">
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Height="488" Width="523"
+        TextOptions.TextFormattingMode="Display">
     <Window.Resources>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0" x:Key="panelBackgroundBrush">
             <LinearGradientBrush.GradientStops>
@@ -48,26 +49,33 @@
         <KeyBinding Command="lingo:TranslationCommands.GotoNextOutOfDateString" Modifiers="Ctrl" Key="N"/>
         <KeyBinding Command="lingo:TranslationCommands.MarkCurrentStringOutOfDate" Modifiers="Ctrl" Key="M"/>
         <KeyBinding Command="lingo:TranslationCommands.Font" Modifiers="Ctrl" Key="T"/>
+        <KeyBinding Command="lingo:TranslationCommands.PrevGroup" Modifiers="Alt" Key="PageUp"/>
+        <KeyBinding Command="lingo:TranslationCommands.NextGroup" Modifiers="Alt" Key="PageDown"/>
     </Window.InputBindings>
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top" KeyboardNavigation.IsTabStop="False">
-            <MenuItem Header="_Translation" KeyboardNavigation.IsTabStop="False">
+        <Menu DockPanel.Dock="Top" KeyboardNavigation.TabNavigation="None">
+            <MenuItem Header="_Translation">
                 <MenuItem Header="_Save and apply" Command="lingo:TranslationCommands.SaveAndApply" InputGestureText="Ctrl+S or F5" />
                 <MenuItem Header="_Close" Command="lingo:TranslationCommands.Close" InputGestureText="Alt+F4"/>
             </MenuItem>
-            <MenuItem Header="_Edit" KeyboardNavigation.IsTabStop="False">
+            <MenuItem Header="_Edit">
                 <MenuItem Header="_Find..." Command="lingo:TranslationCommands.Find" InputGestureText="Ctrl+F"/>
                 <MenuItem Header="F_ind next" Command="lingo:TranslationCommands.FindNext" InputGestureText="F3"/>
                 <MenuItem Header="Find _previous" Command="lingo:TranslationCommands.FindPrevious" InputGestureText="Shift+F3"/>
                 <Separator/>
-                <MenuItem Header="Go to _next out-of-date string" Command="lingo:TranslationCommands.GotoNextOutOfDateString" InputGestureText="Ctrl+N"/>
                 <MenuItem Header="Mark _current string as out-of-date" Command="lingo:TranslationCommands.MarkCurrentStringOutOfDate" InputGestureText="Ctrl+M"/>
                 <MenuItem Header="Mark all strings as _out-of-date" Command="lingo:TranslationCommands.MarkAllStringsOutOfDate"/>
                 <MenuItem Header="Mark all strings as _up-to-date" Command="lingo:TranslationCommands.MarkAllStringsUpToDate"/>
             </MenuItem>
-            <MenuItem Header="_View" KeyboardNavigation.IsTabStop="False">
+            <MenuItem Header="_View">
                 <MenuItem Header="_Font" Command="lingo:TranslationCommands.Font" InputGestureText="Ctrl+T"/>
+                <Separator/>
+                <MenuItem Header="Go to _previous group" Command="lingo:TranslationCommands.PrevGroup" InputGestureText="Alt+PageUp"/>
+                <MenuItem Header="Go to _next group" Command="lingo:TranslationCommands.NextGroup" InputGestureText="Alt+PageDown"/>
+                <MenuItem Header="Go to p_revious string within group" Command="lingo:TranslationCommands.PrevTextBox" InputGestureText="Alt+↑"/>
+                <MenuItem Header="Go to n_ext string within group" Command="lingo:TranslationCommands.NextTextBox" InputGestureText="Alt+↓"/>
+                <MenuItem Header="Go to next _out-of-date string" Command="lingo:TranslationCommands.GotoNextOutOfDateString" InputGestureText="Ctrl+N"/>
             </MenuItem>
         </Menu>
         <Grid>
@@ -75,7 +83,7 @@
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="3*"/>
             </Grid.ColumnDefinitions>
-            <ListBox Name="ctGroups" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Margin="0,0,8,0">
+            <ListBox Name="ctGroups" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Margin="0,0,8,0" SelectionChanged="ctGroups_SelectionChanged" TextSearch.TextPath="Label">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Margin="5,5,5,5" >
@@ -83,12 +91,11 @@
                                 <TextBlock DockPanel.Dock="Right" Text="!" Margin="4,0,0,0" FontWeight="Bold" Foreground="Red" Visibility="{Binding OutOfDateVisibility}"/>
                                 <TextBlock Text="{Binding Label}" FontWeight="Bold" TextWrapping="Wrap"/>
                             </DockPanel>
-                            <Label Margin="8,0,0,0">
-                                <Label.LayoutTransform>
+                            <TextBlock Text="{Binding Notes}" TextWrapping="Wrap" Margin="8,0,0,0">
+                                <TextBlock.LayoutTransform>
                                     <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
-                                </Label.LayoutTransform>
-                                <TextBlock Text="{Binding Notes}" TextWrapping="Wrap"/>
-                            </Label>
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -96,17 +103,17 @@
                     <lingo:TranslationGroup Label="Blah very" Notes="Thingay stuff blah stuff blah stuff blah stuff blah " OutOfDate="True"/>
                     <lingo:TranslationGroup Label="Blah" Notes="Thingy"/>
                     <lingo:TranslationGroup Label="Blah" Notes="Thingy stuff blah stuff blah stuff blah stuff blah "/>
-                    <lingo:TranslationGroup Label="Blah very" Notes="Thingy stuff blah stuff blah stuff blah stuff blah " OutOfDate="True"/>
-                    <lingo:TranslationGroup Label="Blah" Notes="Thingy stuff blah stuff blah stuff blah stuff blah "/>
-                    <lingo:TranslationGroup Label="Blah" Notes="Thingy stuff blah stuff blah stuff blah stuff blah "/>
-                    <lingo:TranslationGroup Label="Blah very" Notes="Thingy stuff blah stuff blah stuff blah stuff blah " OutOfDate="True"/>
-                    <lingo:TranslationGroup Label="Blah" Notes="Thingy stuff blah stuff blah stuff blah stuff blah "/>
-                    <lingo:TranslationGroup Label="Blah" Notes="Thingy stuff blah stuff blah stuff blah stuff blah "/>
                 </ListBox.Items>
             </ListBox>
+
             <GridSplitter Width="8" Style="{StaticResource gridSplitterStyle}" />
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="1">
-                <ItemsControl>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="1" IsTabStop="False" Name="ctStringsScroll">
+                <ItemsControl Name="ctStrings" IsTabStop="False">
+                    <ItemsControl.InputBindings>
+                        <KeyBinding Command="lingo:TranslationCommands.PrevTextBox" Modifiers="Alt" Key="Up"/>
+                        <KeyBinding Command="lingo:TranslationCommands.NextTextBox" Modifiers="Alt" Key="Down"/>
+                    </ItemsControl.InputBindings>
                     <ItemsControl.Resources>
                         <DataTemplate DataType="{x:Type lingo:TrStringInfo}">
                             <StackPanel Margin="8">
@@ -114,38 +121,38 @@
                                 <TextBlock Text="{Binding Notes}" FontStyle="Italic"  TextWrapping="Wrap"/>
                                 <Grid Margin="0,8,0,0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="auto"/>
-                                        <RowDefinition Height="auto"/>
-                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto" />
+                                        <RowDefinition Height="auto" />
+                                        <RowDefinition Height="auto" />
                                     </Grid.RowDefinitions>
-                                    <Label Grid.Column="0" Grid.Row="0" Content="English" Padding="0"/>
-                                    <Label Grid.Column="0" Grid.Row="1" Content="New English" Padding="0"/>
-                                    <TextBox Grid.Column="1" Grid.Row="2" >Blah</TextBox>
-                                    <Label Grid.Column="0" Grid.Row="2" Content="Translation" Padding="0"/>
-                                    <Button Grid.Column="2" Grid.Row="2">OK</Button>
+                                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Old Original:" Visibility="{Binding OldVisible}" />
+                                    <TextBlock Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding OldOriginal}" Visibility="{Binding OldVisible}" />
+                                    <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding NewLabel}" />
+                                    <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding NewOriginal}" />
+                                    <TextBlock Grid.Column="0" Grid.Row="2" Text="Translation:" />
+                                    <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding Translation}" Tag="{Binding}" />
+                                    <Button Grid.Column="2" Grid.Row="2" Tag="{Binding}">OK</Button>
                                 </Grid>
                             </StackPanel>
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type lingo:TrStringNumInfo}">
-                            <StackPanel Background="Silver">
-                                <TextBlock Text="{Binding Label}" FontWeight="Bold" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding Notes}" FontStyle="Italic" TextWrapping="Wrap"/>
+                            <StackPanel Margin="8">
+                                <TextBlock Text="{Binding Label}" FontWeight="Bold"  TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding Notes}" FontStyle="Italic"  TextWrapping="Wrap"/>
+                                <Grid Margin="0,8,0,0" Loaded="populateTrStringNumGrid"/>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.Resources>
                     <ItemsControl.Items>
-                        <lingo:TrStringInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringNumInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringInfo Label="Stuff / Blah" Notes="Specifies the translation for blah. Specifies the translation for blah. Specifies the translation for blah." />
-                        <lingo:TrStringInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringNumInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringInfo Label="Stuff / Blah" Notes="Specifies the translation for blah." />
+                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num1" Notes="Specifies the translation for blah." />
+                        <lingo:TrStringInfo Label="Stuff / Blah / NoNum" Notes="Contains no interpolated numbers."/>
+                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num2" Notes="Specifies the translation for blah." />
+                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num3" Notes="Specifies the translation for blah." />
                     </ItemsControl.Items>
                 </ItemsControl>
             </ScrollViewer>

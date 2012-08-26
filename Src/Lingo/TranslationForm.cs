@@ -44,7 +44,7 @@ namespace RT.Util.Lingo
             public int SplitterDistance = 300;
             /// <summary>Remembers the string last typed in the Find dialog.</summary>
             public string LastFindQuery = "";
-            /// <summary>Remembers the last settings of the "Search English text" option in the Find dialog.</summary>
+            /// <summary>Remembers the last settings of the "Search Original" option in the Find dialog.</summary>
             public bool LastFindOrig = true;
             /// <summary>Remembers the last settings of the "Search Translation" option in the Find dialog.</summary>
             public bool LastFindTrans = true;
@@ -341,7 +341,7 @@ namespace RT.Util.Lingo
                 tableLayout.Controls.Add(lbl, 0, 0); tableLayout.SetColumnSpan(lbl, 3);
                 TextBox txt = new TextBox { Text = _settings.LastFindQuery, Anchor = AnchorStyles.Left | AnchorStyles.Right };
                 tableLayout.Controls.Add(txt, 0, 1); tableLayout.SetColumnSpan(txt, 3);
-                CheckBox optOrig = new CheckBox { Text = "Search &English text", Checked = _settings.LastFindOrig, AutoSize = true, Anchor = AnchorStyles.Left };
+                CheckBox optOrig = new CheckBox { Text = "Search &Original", Checked = _settings.LastFindOrig, AutoSize = true, Anchor = AnchorStyles.Left };
                 tableLayout.Controls.Add(optOrig, 0, 2); tableLayout.SetColumnSpan(optOrig, 3);
                 CheckBox optTrans = new CheckBox { Text = "Search &Translations", Checked = _settings.LastFindTrans, AutoSize = true, Anchor = AnchorStyles.Left };
                 tableLayout.Controls.Add(optTrans, 0, 3); tableLayout.SetColumnSpan(optTrans, 3);
@@ -373,7 +373,7 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.Show("You unchecked both “Search English text” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
+                DlgMessage.Show("You unchecked both “Search Original” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
 
@@ -413,7 +413,7 @@ namespace RT.Util.Lingo
         {
             if (!_settings.LastFindOrig && !_settings.LastFindTrans)
             {
-                DlgMessage.Show("You unchecked both “Search English text” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
+                DlgMessage.Show("You unchecked both “Search Original” and “Search Translations”. That leaves nothing to be searched.", "Nothing to search", DlgType.Info);
                 return;
             }
 
@@ -682,8 +682,8 @@ namespace RT.Util.Lingo
             public List<TranslationGroupListItem> ListItems = new List<TranslationGroupListItem>();
 
             protected Button _btnAccept;
-            private Label _lblOldEnglishLbl;
-            private Label _lblNewEnglishLbl;
+            private Label _lblOldOriginalLbl;
+            private Label _lblNewOriginalLbl;
             private Label _lblStringCode;
             private Label _lblNotes;
             private Label _lblOtherGroups;
@@ -740,19 +740,19 @@ namespace RT.Util.Lingo
                     RowStyles.Add(new RowStyle(SizeType.AutoSize));
                     currow++;
                 }
-                bool haveOldEnglish = false;
+                bool haveOldOriginal = false;
                 if (needOldRow)
                 {
-                    haveOldEnglish = true;
-                    _lblOldEnglishLbl = new Label { Text = "Old English:", AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
-                    _lblOldEnglishLbl.Click += focusTranslationBox;
-                    Controls.Add(_lblOldEnglishLbl, 0, currow);
+                    haveOldOriginal = true;
+                    _lblOldOriginalLbl = new Label { Text = "Old Original:", AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
+                    _lblOldOriginalLbl.Click += focusTranslationBox;
+                    Controls.Add(_lblOldOriginalLbl, 0, currow);
                     RowStyles.Add(new RowStyle(SizeType.AutoSize));
                     currow++;
                 }
-                _lblNewEnglishLbl = new Label { Text = haveOldEnglish ? "New English:" : "English:", AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
-                _lblNewEnglishLbl.Click += focusTranslationBox;
-                Controls.Add(_lblNewEnglishLbl, 0, currow);
+                _lblNewOriginalLbl = new Label { Text = haveOldOriginal ? "New Original:" : "Original:", AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left };
+                _lblNewOriginalLbl.Click += focusTranslationBox;
+                Controls.Add(_lblNewOriginalLbl, 0, currow);
                 RowStyles.Add(new RowStyle(SizeType.AutoSize));
                 currow++;
 
@@ -799,9 +799,9 @@ namespace RT.Util.Lingo
             public virtual void SetUpToDate()
             {
                 State = TranslationPanelState.UpToDateAndSaved;
-                if (_lblOldEnglishLbl != null)
-                    _lblOldEnglishLbl.Visible = false;
-                _lblNewEnglishLbl.Text = "English:";
+                if (_lblOldOriginalLbl != null)
+                    _lblOldOriginalLbl.Visible = false;
+                _lblNewOriginalLbl.Text = "Original:";
             }
             public abstract void SetOutOfDate();
             public virtual void SetFont(Font font, Size f)
@@ -914,7 +914,7 @@ namespace RT.Util.Lingo
             private TrString _translation;
             private TrString _original;
             private TextBoxAutoHeight _txtTranslation;
-            private Label _lblOldEnglish;
+            private Label _lblOldOriginal;
 
             public TranslationPanelTrString(string notes, TrString orig, TrString trans, string label)
                 : base(notes, label,
@@ -946,17 +946,17 @@ namespace RT.Util.Lingo
                     currow++;
                 if (!string.IsNullOrEmpty(trans.Old) && trans.Old != orig.Translation)
                 {
-                    _lblOldEnglish = new Label { Text = trans.Old, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
-                    _lblOldEnglish.Click += focusTranslationBox;
-                    Controls.Add(_lblOldEnglish, 1, currow);
-                    SetColumnSpan(_lblOldEnglish, 2);
+                    _lblOldOriginal = new Label { Text = trans.Old, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
+                    _lblOldOriginal.Click += focusTranslationBox;
+                    Controls.Add(_lblOldOriginal, 1, currow);
+                    SetColumnSpan(_lblOldOriginal, 2);
                     setBackColor();
                     currow++;
                 }
-                Label lblNewEnglish = new Label { Text = orig.Translation, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
-                lblNewEnglish.Click += focusTranslationBox;
-                Controls.Add(lblNewEnglish, 1, currow);
-                SetColumnSpan(lblNewEnglish, 2);
+                Label lblNewOriginal = new Label { Text = orig.Translation, UseMnemonic = false, AutoSize = true, Margin = new Padding(margin), Anchor = AnchorStyles.Left | AnchorStyles.Right };
+                lblNewOriginal.Click += focusTranslationBox;
+                Controls.Add(lblNewOriginal, 1, currow);
+                SetColumnSpan(lblNewOriginal, 2);
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
 
@@ -1096,8 +1096,8 @@ namespace RT.Util.Lingo
                 base.SetUpToDate();
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = _original.Translation;
-                if (_lblOldEnglish != null)
-                    _lblOldEnglish.Visible = false;
+                if (_lblOldOriginal != null)
+                    _lblOldOriginal.Visible = false;
                 ResumeLayout(true);
             }
 
@@ -1112,18 +1112,18 @@ namespace RT.Util.Lingo
             protected override void setBackColor()
             {
                 base.setBackColor();
-                if (_lblOldEnglish != null)
+                if (_lblOldOriginal != null)
                 {
                     switch (State)
                     {
                         case TranslationPanelState.UpToDateAndSaved:
-                            _lblOldEnglish.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
+                            _lblOldOriginal.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
                             break;
                         case TranslationPanelState.OutOfDate:
-                            _lblOldEnglish.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
+                            _lblOldOriginal.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
                             break;
                         case TranslationPanelState.Unsaved:
-                            _lblOldEnglish.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
+                            _lblOldOriginal.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
                             break;
                     }
                 }
@@ -1136,7 +1136,7 @@ namespace RT.Util.Lingo
         {
             private TrStringNum _original;
             private TrStringNum _translation;
-            private Panel _pnlOldEnglish;
+            private Panel _pnlOldOriginal;
             private TextBoxAutoHeight[] _txtTranslation;
             private NumberSystem _origNumberSystem;
             private NumberSystem _transNumberSystem;
@@ -1170,15 +1170,15 @@ namespace RT.Util.Lingo
                     currow++;
                 if (trans.Old != null && !trans.Old.SequenceEqual(orig.Translations))
                 {
-                    _pnlOldEnglish = createTablePanel(orig, trans.Old, origNumberSystem, false, nn, rowsOrig);
-                    Controls.Add(_pnlOldEnglish, 1, currow);
-                    SetColumnSpan(_pnlOldEnglish, 2);
+                    _pnlOldOriginal = createTablePanel(orig, trans.Old, origNumberSystem, false, nn, rowsOrig);
+                    Controls.Add(_pnlOldOriginal, 1, currow);
+                    SetColumnSpan(_pnlOldOriginal, 2);
                     setBackColor();
                     currow++;
                 }
-                Panel pnlNewEnglish = createTablePanel(orig, orig.Translations, origNumberSystem, false, nn, rowsOrig);
-                Controls.Add(pnlNewEnglish, 1, currow);
-                SetColumnSpan(pnlNewEnglish, 2);
+                Panel pnlNewOriginal = createTablePanel(orig, orig.Translations, origNumberSystem, false, nn, rowsOrig);
+                Controls.Add(pnlNewOriginal, 1, currow);
+                SetColumnSpan(pnlNewOriginal, 2);
                 currow++;
                 Controls.Add(pnlTranslation, 1, currow);
 
@@ -1445,8 +1445,8 @@ namespace RT.Util.Lingo
                 base.SetUpToDate();
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
                 _translation.Old = _original.Translations;
-                if (_pnlOldEnglish != null)
-                    _pnlOldEnglish.Visible = false;
+                if (_pnlOldOriginal != null)
+                    _pnlOldOriginal.Visible = false;
                 ResumeLayout(true);
             }
 
@@ -1461,18 +1461,18 @@ namespace RT.Util.Lingo
             protected override void setBackColor()
             {
                 base.setBackColor();
-                if (_pnlOldEnglish != null)
+                if (_pnlOldOriginal != null)
                 {
                     switch (State)
                     {
                         case TranslationPanelState.UpToDateAndSaved:
-                            _pnlOldEnglish.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
+                            _pnlOldOriginal.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
                             break;
                         case TranslationPanelState.OutOfDate:
-                            _pnlOldEnglish.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
+                            _pnlOldOriginal.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
                             break;
                         case TranslationPanelState.Unsaved:
-                            _pnlOldEnglish.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
+                            _pnlOldOriginal.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
                             break;
                     }
                 }

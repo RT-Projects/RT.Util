@@ -24,8 +24,11 @@ namespace RT.Util.Lingo
             var dic = new Dictionary<object, TranslationGroup>();
             TranslationGroup ungrouped = null;
             getGroups(null, type, original, translation, original.Language.GetNumberSystem(), translation.Language.GetNumberSystem(), dic, ref ungrouped, new object[0], "");
-            foreach (var kvp in dic)
-                yield return kvp.Value;
+            var enumTypes = dic.Keys.Select(k => k.GetType()).Distinct().OrderBy(t => t.Name).ToArray();
+            var enumValues = enumTypes.SelectMany(t => Enum.GetValues(t).Cast<object>()).ToArray();
+            foreach (var key in enumValues)
+                if (dic.ContainsKey(key))
+                    yield return dic[key];
             if (ungrouped != null)
                 yield return ungrouped;
         }
@@ -54,16 +57,15 @@ namespace RT.Util.Lingo
                     var trInfo = f.FieldType == typeof(TrString)
                         ? (TranslationInfo) new TrStringInfo
                         {
-                            Label = path + f.Name, Notes = notes,
+                            Label = path + f.Name,
+                            Notes = notes,
                             NewOriginal = ((TrString) f.GetValue(original)).Translation,
                             TranslationTr = (TrString) f.GetValue(translation)
                         }
-                        : (TranslationInfo) new TrStringNumInfo
+                        : (TranslationInfo) new TrStringNumInfo((TrStringNum) f.GetValue(original), (TrStringNum) f.GetValue(translation), originalNumSys, translationNumSys)
                         {
-                            Label = path + f.Name, Notes = notes,
-                            NewOriginal = ((TrStringNum) f.GetValue(original)).Translations,
-                            TranslationTr = (TrStringNum) f.GetValue(translation),
-                            OriginalNumSys = originalNumSys, TranslationNumSys = translationNumSys
+                            Label = path + f.Name,
+                            Notes = notes
                         };
 
                     var groups = f.GetCustomAttributes<LingoInGroupAttribute>().Select(attr => attr.Group).Concat(thisClassGroups);
@@ -116,8 +118,8 @@ namespace RT.Util.Lingo
         private bool _outOfDate;
         public Visibility OutOfDateVisibility { get { return _outOfDate ? Visibility.Visible : Visibility.Collapsed; } }
 
-        private ObservableCollection<TranslationInfo> _panels = new ObservableCollection<TranslationInfo>();
-        public ObservableCollection<TranslationInfo> Infos { get { return _panels; } }
+        private List<TranslationInfo> _infos = new List<TranslationInfo>();
+        public List<TranslationInfo> Infos { get { return _infos; } }
 
         private void propertyChanged(string name) { PropertyChanged(this, new PropertyChangedEventArgs(name)); }
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
@@ -151,6 +153,15 @@ namespace RT.Util.Lingo
         }
         public string OldOriginal { get { return TranslationTr.Old; } }
         public string Translation { get { return TranslationTr.Translation; } set { TranslationTr.Translation = value; } }
+
+        public Visibility OldVisible { get { return TranslationTr.Old == NewOriginal ? Visibility.Visible : Visibility.Collapsed; } }
+        public string NewLabel { get { return OldVisible == Visibility.Visible ? "New Original:" : "Original:"; } }
+
+        public TrStringInfo()
+        {
+            NewOriginal = "New original.";
+            TranslationTr = new TrString { Old = "Old original.", Translation = "Традуктирование." };
+        }
     }
 
     sealed class TrStringNumInfo : TranslationInfo
@@ -170,7 +181,20 @@ namespace RT.Util.Lingo
                 TranslationTr.Old = NewOriginal.ToArray();
             }
         }
-        public string[] OldOriginal { get { return TranslationTr.Old; } }
-        public string[] Translation { get { return TranslationTr.Translations; } set { TranslationTr.Translations = value.ToArray(); } }
+
+        /// <summary>For XAML. Do not call.</summary>
+        public TrStringNumInfo()
+            : this(new TrStringNum(new[] { "1 move", "{0} moves" }), new TrStringNum(new[] { "1 шаг", "{0} шага", "{0} шагов" }, new[] { true }),
+            Language.EnglishUK.GetNumberSystem(), Language.Russian.GetNumberSystem()) { }
+
+        public TrStringNumInfo(TrStringNum orig, TrStringNum trans, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
+        {
+            NewOriginal = orig.Translations;
+            TranslationTr = trans;
+            OriginalNumSys = origNumberSystem;
+            TranslationNumSys = transNumberSystem;
+
+            int numberOfNumbers = trans.IsNumber.Where(b => b).Count();
+        }
     }
 }
