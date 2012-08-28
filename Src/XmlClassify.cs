@@ -80,7 +80,7 @@ namespace RT.Util.Xml
         /// <summary>
         /// Reads an object of the specified type from the specified XML file.
         /// </summary>
-        /// <typeparam name="T">Type of object to read.</typeparam>
+        /// <param name="type">Type of object to read.</param>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="options">Options.</param>
         /// <returns>A new instance of the requested type.</returns>
