@@ -4,7 +4,7 @@
         xmlns:lingo="clr-namespace:RT.Util.Lingo"
         xmlns:rtf="clr-namespace:RT.Util.Forms"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        Height="488" Width="523"
+        Height="486" Width="657"
         TextOptions.TextFormattingMode="Display">
     <Window.Resources>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0" x:Key="panelBackgroundBrush">
@@ -116,9 +116,9 @@
                     </ItemsControl.InputBindings>
                     <ItemsControl.Resources>
                         <DataTemplate DataType="{x:Type lingo:TrStringInfo}">
-                            <StackPanel Margin="8">
-                                <TextBlock Text="{Binding Label}" FontWeight="Bold"  TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding Notes}" FontStyle="Italic"  TextWrapping="Wrap"/>
+                            <StackPanel Margin="8" Background="{Binding Background}" Loaded="translationInfoTemplateLoad">
+                                <TextBlock Text="{Binding Label}" FontWeight="Bold"  TextWrapping="Wrap" Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding Notes}" FontStyle="Italic"  TextWrapping="Wrap" Margin="0,0,0,5"/>
                                 <Grid Margin="0,8,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="auto" />
@@ -131,6 +131,7 @@
                                         <RowDefinition Height="auto" />
                                     </Grid.RowDefinitions>
                                     <TextBlock Grid.Column="0" Grid.Row="0" Text="Old Original:" Visibility="{Binding OldVisible}" />
+                                    <Rectangle Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Fill="{Binding BackgroundForOldLabel}" />
                                     <TextBlock Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding OldOriginal}" Visibility="{Binding OldVisible}" />
                                     <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding NewLabel}" />
                                     <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding NewOriginal}" />
@@ -138,6 +139,7 @@
                                     <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding Translation}" Tag="{Binding}" />
                                     <Button Grid.Column="2" Grid.Row="2" Tag="{Binding}">OK</Button>
                                 </Grid>
+                                <Border BorderThickness="0,.5,0,0" BorderBrush="Silver" Margin="8,16,8,0" />
                             </StackPanel>
                         </DataTemplate>
                         <DataTemplate DataType="{x:Type lingo:TrStringNumInfo}">
@@ -149,10 +151,10 @@
                         </DataTemplate>
                     </ItemsControl.Resources>
                     <ItemsControl.Items>
-                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num1" Notes="Specifies the translation for blah." />
                         <lingo:TrStringInfo Label="Stuff / Blah / NoNum" Notes="Contains no interpolated numbers."/>
-                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num2" Notes="Specifies the translation for blah." />
-                        <lingo:TrStringNumInfo Label="Stuff / Blah / Num3" Notes="Specifies the translation for blah." />
+                        <lingo:TrStringInfo Label="Stuff / Blah / NoNum" Notes="Contains no interpolated numbers."/>
+                        <lingo:TrStringInfo Label="Stuff / Blah / NoNum" Notes="Contains no interpolated numbers."/>
+                        <!--<lingo:TrStringNumInfo Label="Stuff / Blah / Num3" Notes="Specifies the translation for blah." />-->
                     </ItemsControl.Items>
                 </ItemsControl>
             </ScrollViewer>

@@ -13,7 +13,7 @@ namespace RT.Util.Lingo
         private readonly ImageSource _icon;
 
         private TranslationWindow _translationWindow;
-        protected override ITranslationDialog TranslationDialog { get { return _translationWindow; } }
+        internal override ITranslationDialog TranslationDialog { get { return _translationWindow; } }
 
         /// <summary>Constructor.</summary>
         /// <param name="programTitle">The title of the program - to be displayed in the translation UI.</param>
@@ -49,6 +49,7 @@ namespace RT.Util.Lingo
             }
         }
 
+        /// <summary>Override; see base.</summary>
         protected override void CreateNewLanguage()
         {
             var newTranslation = TranslationCreateForm.CreateTranslation<TTranslation>(_moduleName, _settings.FontName, _settings.FontSize);
@@ -59,6 +60,7 @@ namespace RT.Util.Lingo
             }
         }
 
+        /// <summary>Override; see base.</summary>
         protected override void EditCurrentLanguage()
         {
             if (_getCurrentLanguage() == _defaultLanguage)

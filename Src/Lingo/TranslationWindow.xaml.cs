@@ -42,6 +42,13 @@ namespace RT.Util.Lingo
             public float FontSize;
         }
 
+        /// <summary>Main constructor.</summary>
+        /// <param name="translationType">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</param>
+        /// <param name="settings">Settings of the <see cref="TranslationWindow"/>.</param>
+        /// <param name="icon">Application icon to use.</param>
+        /// <param name="programTitle">Title of the program. Used in the title bar.</param>
+        /// <param name="moduleName">Used for locating the translation file to be edited under the Translations directory.</param>
+        /// <param name="language">The language to be edited.</param>
         public TranslationWindow(Type translationType, Settings settings, ImageSource icon, string programTitle, string moduleName, Language language)
             : base(settings)
         {
@@ -83,10 +90,8 @@ namespace RT.Util.Lingo
         /// </summary>
         public event Action<object> TranslationChanged;
 
-        public bool AnyChanges
-        {
-            get { return _anyChanges; }
-        }
+        /// <summary>Gets a value indicating whether any changes have been made by the user since the last save.</summary>
+        public bool AnyChanges { get { return _anyChanges; } }
 
         public void SaveChanges(bool fireTranslationChanged)
         {
@@ -336,6 +341,13 @@ namespace RT.Util.Lingo
             var toFocus = (TextBox) _uiElementCache[index];
             toFocus.Focus();
             ((ContentPresenter) ctStrings.ItemContainerGenerator.ContainerFromItem(toFocus.Tag)).BringIntoView();
+        }
+
+        private void translationInfoTemplateLoad(object sender, RoutedEventArgs e)
+        {
+            var stackPanel = (StackPanel) sender;
+            stackPanel.SetBinding(StackPanel.IsKeyboardFocusWithinProperty, new Binding { Path = new PropertyPath("IsFocused"), Mode = BindingMode.OneWayToSource });
+            System.Diagnostics.Debugger.Break();
         }
     }
 

@@ -66,7 +66,7 @@ namespace RT.Util.Lingo
 
         /// <summary>Loads and returns the translation for the specified module and language. The translation must exist in the application 
         /// executable directory under a subdirectory called "Translations". If the translation cannot be loaded successfully, an exception is thrown.</summary>
-        /// <typeparam name="TTranslation">The type of the translation class to load the translation into.</typeparam>
+        /// <param name="translationType">The type of the translation class to load the translation into.</param>
         /// <param name="module">The name of the module whose translation to load.</param>
         /// <param name="language">The language code of the language to load.</param>
         /// <returns>The loaded translation.</returns>

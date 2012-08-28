@@ -1,19 +1,23 @@
 ﻿using System;
-using RT.Util.ExtensionMethods;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ComponentModel;
-using System.Windows;
-using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
+using System.Windows;
+using System.Windows.Media;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Lingo
 {
-    public interface ITranslationDialog
+    /// <summary>Contains methods and properties to be implemented by the different implementations of the Lingo translation GUI.</summary>
+    internal interface ITranslationDialog
     {
+        /// <summary>Determines whether any changes have been made to the translation by the user since the last save.</summary>
         bool AnyChanges { get; }
+        /// <summary>Saves the current translation.</summary>
+        /// <param name="fireTranslationChanged">True if the TranslationChanged event is to be fired; false if not.</param>
         void SaveChanges(bool fireTranslationChanged);
+        /// <summary>Closes the dialog without prompting for saving or discarding unsaved changes.</summary>
         void CloseWithoutPrompts();
     }
 
@@ -132,6 +136,59 @@ namespace RT.Util.Lingo
         public string Notes { get { return _notes; } set { _notes = value; propertyChanged("Notes"); } }
         private string _notes;
 
+        protected static Brush upToDateNormal = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc));
+        protected static Brush outOfDateNormal = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xff));
+        protected static Brush unsavedNormal = new SolidColorBrush(Color.FromRgb(0xff, 0xcc, 0xcc));
+        protected static Brush upToDateFocus = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xdd));
+        protected static Brush outOfDateFocus = new SolidColorBrush(Color.FromRgb(0xdd, 0xdd, 0xff));
+        protected static Brush unsavedFocus = new SolidColorBrush(Color.FromRgb(0xff, 0xdd, 0xdd));
+        protected static Brush upToDateOldNormal = new SolidColorBrush(Color.FromRgb(0xbb, 0xbb, 0xbb));
+        protected static Brush outOfDateOldNormal = new SolidColorBrush(Color.FromRgb(0xbb, 0xbb, 0xff));
+        protected static Brush unsavedOldNormal = new SolidColorBrush(Color.FromRgb(0xff, 0xbb, 0xbb));
+        protected static Brush upToDateOldFocus = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xcc));
+        protected static Brush outOfDateOldFocus = new SolidColorBrush(Color.FromRgb(0xcc, 0xcc, 0xff));
+        protected static Brush unsavedOldFocus = new SolidColorBrush(Color.FromRgb(0xff, 0xcc, 0xcc));
+
+        public virtual TranslationInfoState State { get { return _state; } set { _state = value; propertyChanged("State"); propertyChanged("Background"); propertyChanged("BackgroundForOldLabel"); } }
+        private TranslationInfoState _state;
+        public bool IsFocused { get { return _isFocused; } set { _isFocused = value; propertyChanged("IsFocused"); propertyChanged("Background"); propertyChanged("BackgroundForOldLabel"); } }
+        private bool _isFocused;
+
+        public Brush Background
+        {
+            get
+            {
+                switch (_state)
+                {
+                    case TranslationInfoState.UpToDateAndSaved:
+                        return _isFocused ? upToDateFocus : upToDateNormal;
+                    case TranslationInfoState.OutOfDate:
+                        return _isFocused ? outOfDateFocus : outOfDateNormal;
+                    case TranslationInfoState.Unsaved:
+                        return _isFocused ? unsavedFocus : unsavedNormal;
+                    default:
+                        throw new InvalidOperationException(@"Invalid value of State: " + _state);
+                }
+            }
+        }
+        public Brush BackgroundForOldLabel
+        {
+            get
+            {
+                switch (_state)
+                {
+                    case TranslationInfoState.UpToDateAndSaved:
+                        return _isFocused ? upToDateOldFocus : upToDateOldNormal;
+                    case TranslationInfoState.OutOfDate:
+                        return _isFocused ? outOfDateOldFocus : outOfDateOldNormal;
+                    case TranslationInfoState.Unsaved:
+                        return _isFocused ? unsavedOldFocus : unsavedOldNormal;
+                    default:
+                        throw new InvalidOperationException(@"Invalid value of State: " + _state);
+                }
+            }
+        }
+
         protected void propertyChanged(string name) { PropertyChanged(this, new PropertyChangedEventArgs(name)); }
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
     }
@@ -154,7 +211,7 @@ namespace RT.Util.Lingo
         public string OldOriginal { get { return TranslationTr.Old; } }
         public string Translation { get { return TranslationTr.Translation; } set { TranslationTr.Translation = value; } }
 
-        public Visibility OldVisible { get { return TranslationTr.Old == NewOriginal ? Visibility.Visible : Visibility.Collapsed; } }
+        public Visibility OldVisible { get { return TranslationTr.Old == NewOriginal ? Visibility.Collapsed : Visibility.Visible; } }
         public string NewLabel { get { return OldVisible == Visibility.Visible ? "New Original:" : "Original:"; } }
 
         public TrStringInfo()
@@ -196,5 +253,16 @@ namespace RT.Util.Lingo
 
             int numberOfNumbers = trans.IsNumber.Where(b => b).Count();
         }
+    }
+
+    /// <summary>Describes the state of a single translation (a <see cref="TrString"/> or <see cref="TrStringNum"/> instance).</summary>
+    public enum TranslationInfoState
+    {
+        /// <summary>The string is up to date and has been saved to the translation file.</summary>
+        UpToDateAndSaved,
+        /// <summary>The string is out of date, i.e. the original text has changed since the translation was written (or the user has explicitly marked it as out-of-date).</summary>
+        OutOfDate,
+        /// <summary>The user has made changes to the string which have as yet not been saved to the translation file.</summary>
+        Unsaved
     }
 }

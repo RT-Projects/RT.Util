@@ -456,7 +456,7 @@ namespace RT.Util.Lingo
             int finish = _lastFocusedPanel == null ? refList.Length - 1 : start - 1;
             for (int i = start % refList.Length; i != finish; i = (i + 1) % refList.Length)
             {
-                if (refList[i].TranslationPanel.State != TranslationPanelState.UpToDateAndSaved)
+                if (refList[i].TranslationPanel.State != TranslationInfoState.UpToDateAndSaved)
                 {
                     _lstGroups.SelectedItem = refList[i].ListItem;
                     _lstGroupsSelectionChangeTimer.Enabled = false;
@@ -465,7 +465,7 @@ namespace RT.Util.Lingo
                     return;
                 }
             }
-            if (_lastFocusedPanel != null && _lastFocusedPanel.State != TranslationPanelState.UpToDateAndSaved)
+            if (_lastFocusedPanel != null && _lastFocusedPanel.State != TranslationInfoState.UpToDateAndSaved)
                 DlgMessage.Show("All other strings are up to date.", "Next out-of-date string", DlgType.Info);
             else
                 DlgMessage.Show("All strings are up to date.", "Next out-of-date string", DlgType.Info);
@@ -476,7 +476,7 @@ namespace RT.Util.Lingo
             if (AnyChanges)
             {
                 foreach (var panel in _allTranslationPanels)
-                    if (panel.State == TranslationPanelState.Unsaved)
+                    if (panel.State == TranslationInfoState.Unsaved)
                         panel.SetUpToDate();
                 _lstGroups.Invalidate();
                 try
@@ -649,13 +649,6 @@ namespace RT.Util.Lingo
 
         private delegate void GroupSwitchEventHandler(object sender, GroupSwitchEventArgs e);
 
-        private enum TranslationPanelState
-        {
-            UpToDateAndSaved,
-            OutOfDate,
-            Unsaved
-        }
-
         private abstract class TranslationPanel : TableLayoutPanel
         {
             public event EventHandler ChangeMade;
@@ -689,8 +682,8 @@ namespace RT.Util.Lingo
             private Label _lblOtherGroups;
             private TableLayoutPanel _pnlTopRow;
 
-            private TranslationPanelState _state;
-            public TranslationPanelState State
+            private TranslationInfoState _state;
+            public TranslationInfoState State
             {
                 get { return _state; }
                 protected set { _state = value; setBackColor(); }
@@ -709,7 +702,7 @@ namespace RT.Util.Lingo
                 // Calculate number of rows
                 int rows = 3;
                 if (!string.IsNullOrEmpty(notes)) rows++;
-                _state = outOfDate ? TranslationPanelState.OutOfDate : TranslationPanelState.UpToDateAndSaved;
+                _state = outOfDate ? TranslationInfoState.OutOfDate : TranslationInfoState.UpToDateAndSaved;
                 if (needOldRow)
                     rows++;
 
@@ -798,7 +791,7 @@ namespace RT.Util.Lingo
             public abstract void FocusTranslationBox(int boxIndex, int characterIndex, int selectionLength);
             public virtual void SetUpToDate()
             {
-                State = TranslationPanelState.UpToDateAndSaved;
+                State = TranslationInfoState.UpToDateAndSaved;
                 if (_lblOldOriginalLbl != null)
                     _lblOldOriginalLbl.Visible = false;
                 _lblNewOriginalLbl.Text = "Original:";
@@ -817,13 +810,13 @@ namespace RT.Util.Lingo
             {
                 switch (State)
                 {
-                    case TranslationPanelState.UpToDateAndSaved:
+                    case TranslationInfoState.UpToDateAndSaved:
                         BackColor = _anythingFocused ? upToDateFocus : upToDateNormal;
                         break;
-                    case TranslationPanelState.OutOfDate:
+                    case TranslationInfoState.OutOfDate:
                         BackColor = _anythingFocused ? outOfDateFocus : outOfDateNormal;
                         break;
-                    case TranslationPanelState.Unsaved:
+                    case TranslationInfoState.Unsaved:
                         BackColor = _anythingFocused ? unsavedFocus : unsavedNormal;
                         break;
                 }
@@ -960,7 +953,7 @@ namespace RT.Util.Lingo
                 currow++;
                 Controls.Add(_txtTranslation, 1, currow);
 
-                _txtTranslation.TextChanged += (s, e) => { if (State != TranslationPanelState.Unsaved) { State = TranslationPanelState.Unsaved; fireChangeMade(); } };
+                _txtTranslation.TextChanged += (s, e) => { if (State != TranslationInfoState.Unsaved) { State = TranslationInfoState.Unsaved; fireChangeMade(); } };
                 _txtTranslation.Enter += (s, e) => { _txtTranslation.SelectAll(); AnythingFocused = true; fireEnterPanel(); };
                 _txtTranslation.Leave += (s, e) => { AnythingFocused = false; };
                 _txtTranslation.Tag = this;
@@ -974,11 +967,11 @@ namespace RT.Util.Lingo
 
             protected override void acceptTranslation(object sender, EventArgs e)
             {
-                if (State != TranslationPanelState.UpToDateAndSaved || !_translation.Translation.Equals(_txtTranslation.Text))
+                if (State != TranslationInfoState.UpToDateAndSaved || !_translation.Translation.Equals(_txtTranslation.Text))
                 {
                     _translation.Translation = _txtTranslation.Text;
                     _translation.Old = _original.Translation;
-                    State = TranslationPanelState.Unsaved;
+                    State = TranslationInfoState.Unsaved;
                     fireChangeMade();
                 }
                 fireCtrlDown();
@@ -1105,7 +1098,7 @@ namespace RT.Util.Lingo
             {
                 _translation.Translation = _txtTranslation.Text;
                 _translation.Old = null;
-                State = TranslationPanelState.OutOfDate;
+                State = TranslationInfoState.OutOfDate;
                 fireChangeMade();
             }
 
@@ -1116,13 +1109,13 @@ namespace RT.Util.Lingo
                 {
                     switch (State)
                     {
-                        case TranslationPanelState.UpToDateAndSaved:
+                        case TranslationInfoState.UpToDateAndSaved:
                             _lblOldOriginal.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
                             break;
-                        case TranslationPanelState.OutOfDate:
+                        case TranslationInfoState.OutOfDate:
                             _lblOldOriginal.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
                             break;
-                        case TranslationPanelState.Unsaved:
+                        case TranslationInfoState.Unsaved:
                             _lblOldOriginal.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
                             break;
                     }
@@ -1262,7 +1255,7 @@ namespace RT.Util.Lingo
                             AcceptsTab = false,
                             ShortcutsEnabled = true
                         };
-                        tba.TextChanged += (s, e) => { if (State != TranslationPanelState.Unsaved) { State = TranslationPanelState.Unsaved; fireChangeMade(); } };
+                        tba.TextChanged += (s, e) => { if (State != TranslationInfoState.Unsaved) { State = TranslationInfoState.Unsaved; fireChangeMade(); } };
                         tba.Enter += textBoxEnter;
                         tba.Leave += (s, e) => { AnythingFocused = false; };
                         tba.Tag = this;
@@ -1299,7 +1292,7 @@ namespace RT.Util.Lingo
             protected override void acceptTranslation(object sender, EventArgs e)
             {
                 var newTrans = _txtTranslation.Select(t => t.Text).ToArray();
-                if (State != TranslationPanelState.UpToDateAndSaved || !_translation.Translations.SequenceEqual(newTrans))
+                if (State != TranslationInfoState.UpToDateAndSaved || !_translation.Translations.SequenceEqual(newTrans))
                 {
                     _translation.Translations = newTrans;
                     _translation.Old = _original.Translations;
@@ -1454,7 +1447,7 @@ namespace RT.Util.Lingo
             {
                 _translation.Translations = _txtTranslation.Select(t => t.Text).ToArray();
                 _translation.Old = null;
-                State = TranslationPanelState.OutOfDate;
+                State = TranslationInfoState.OutOfDate;
                 fireChangeMade();
             }
 
@@ -1465,13 +1458,13 @@ namespace RT.Util.Lingo
                 {
                     switch (State)
                     {
-                        case TranslationPanelState.UpToDateAndSaved:
+                        case TranslationInfoState.UpToDateAndSaved:
                             _pnlOldOriginal.BackColor = _anythingFocused ? upToDateOldFocus : upToDateOldNormal;
                             break;
-                        case TranslationPanelState.OutOfDate:
+                        case TranslationInfoState.OutOfDate:
                             _pnlOldOriginal.BackColor = _anythingFocused ? outOfDateOldFocus : outOfDateOldNormal;
                             break;
-                        case TranslationPanelState.Unsaved:
+                        case TranslationInfoState.Unsaved:
                             _pnlOldOriginal.BackColor = _anythingFocused ? unsavedOldFocus : unsavedOldNormal;
                             break;
                     }
@@ -1546,7 +1539,7 @@ namespace RT.Util.Lingo
                     e.Graphics.DrawString(tgli.Notes, new Font(Font.Name, Font.Size * 0.8f, FontStyle.Regular), new SolidBrush(textColor),
                         new RectangleF(e.Bounds.Left + HORIZONTAL_MARGIN + INDENTATION, e.Bounds.Top + h, ClientSize.Width - INDENTATION - 2 * HORIZONTAL_MARGIN, e.Bounds.Height - h));
                 }
-                if (tgli.TranslationPanels.Any(t => t.State != TranslationPanelState.UpToDateAndSaved))
+                if (tgli.TranslationPanels.Any(t => t.State != TranslationInfoState.UpToDateAndSaved))
                 {
                     Color red = Color.FromArgb((textColor.R + 256) / 2, textColor.G / 2, textColor.B / 2);
                     e.Graphics.DrawString("!", new Font(Font, FontStyle.Bold), new SolidBrush(red), new PointF(e.Bounds.Right - HORIZONTAL_MARGIN, e.Bounds.Top + VERTICAL_MARGIN), new StringFormat { Alignment = StringAlignment.Far });

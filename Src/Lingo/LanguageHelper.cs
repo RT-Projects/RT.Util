@@ -11,11 +11,11 @@ namespace RT.Util.Lingo
     /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>
     public abstract class LanguageHelper<TTranslation> where TTranslation : TranslationBase, new()
     {
-        protected readonly string _programTitle;
-        protected readonly string _moduleName;
-        protected readonly bool _editable;
-        protected readonly Func<Language> _getCurrentLanguage;
-        protected readonly Language _defaultLanguage = new TTranslation().Language;
+        internal readonly string _programTitle;
+        internal readonly string _moduleName;
+        internal readonly bool _editable;
+        internal readonly Func<Language> _getCurrentLanguage;
+        internal readonly Language _defaultLanguage = new TTranslation().Language;
 
         /// <summary>Constructor.</summary>
         /// <param name="programTitle">The title of the program - to be displayed in the translation UI.</param>
@@ -46,9 +46,10 @@ namespace RT.Util.Lingo
         /// </summary>
         public event SetTranslation<TTranslation> TranslationChanged = delegate { };
 
+        /// <summary>Triggers the <see cref="TranslationChanged"/> event with the specified translation.</summary>
         protected void FireTranslationChanged(TTranslation translation) { TranslationChanged(translation); }
 
-        protected abstract ITranslationDialog TranslationDialog { get; }
+        internal abstract ITranslationDialog TranslationDialog { get; }
 
         /// <summary>Returns a value indicating whether it is okay to close the application. The user is asked if there are any unsaved changes.</summary>
         public bool MayExitApplication()
@@ -162,7 +163,9 @@ namespace RT.Util.Lingo
             return result;
         }
 
+        /// <summary>Opens the dialog for creating a new language.</summary>
         protected abstract void CreateNewLanguage();
+        /// <summary>Opens the GUI for editing the translation in the current language.</summary>
         protected abstract void EditCurrentLanguage();
     }
 }
