@@ -268,7 +268,7 @@ namespace RT.Util.ExtensionMethods
             if (source == null)
                 throw new ArgumentNullException("source");
             // Ensure that the source IEnumerable is evaluated only once
-            return permutations(source.ToArray());
+            return permutations(source as T[] ?? source.ToArray());
         }
 
         private static IEnumerable<IEnumerable<T>> permutations<T>(IEnumerable<T> source)
