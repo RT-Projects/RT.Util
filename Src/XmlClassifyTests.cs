@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Drawing;
 using System.Xml.Linq;
 using NUnit.Framework;
 using RT.Util.ExtensionMethods;
@@ -116,6 +116,7 @@ namespace RT.Util.Xml
 
             // Should work as expected
             public SortedDictionary<int, string> SortedDic;
+            public int[] IntArray;
         }
 
         [Test]
@@ -375,6 +376,7 @@ namespace RT.Util.Xml
             {
                 IntCollection = new int[] { 1, 2, 3, 4 },
                 IntList = new int[] { 5, 6, 7, 8 },
+                IntArray = new int[] { 9, 10, 11, 12 },
                 IntStringDic = new SortedDictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" }, { 4, "four" } },
                 SortedDic = new SortedDictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" }, { 4, "four" } }
             };
@@ -386,6 +388,8 @@ namespace RT.Util.Xml
             Assert.IsTrue(x2.IntCollection.SequenceEqual(new[] { 1, 2, 3, 4 }));
             Assert.IsTrue(x2.IntList != null);
             Assert.IsTrue(x2.IntList.SequenceEqual(new[] { 5, 6, 7, 8 }));
+            Assert.IsTrue(x2.IntArray != null);
+            Assert.IsTrue(x2.IntArray.SequenceEqual(new[] { 9, 10, 11, 12 }));
             Assert.IsTrue(x2.IntStringDic != null);
             Assert.IsTrue(x2.IntStringDic.GetType() == typeof(Dictionary<int, string>));
             Assert.IsTrue(x2.IntStringDic.Keys.Order().SequenceEqual(new[] { 1, 2, 3, 4 }));
@@ -957,6 +961,173 @@ namespace RT.Util.Xml
             Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
             Assert.AreEqual("base", settings.B.C1.Base); // not BASE because it's a different type, even if a subtype
             Assert.AreEqual("XML", (settings.B.C1 as subClass).Derived);
+        }
+
+        private sealed class TestPrePostProcess : IXmlClassifyProcess
+        {
+            [XmlIgnore]
+            private Color _color;
+            private string _colorAsString;
+
+            public Color Color { get { return _color; } }
+
+            /// <summary>For XmlClassify</summary>
+            private TestPrePostProcess() { }
+
+            public TestPrePostProcess(Color color) { _color = color; }
+
+            public void BeforeXmlClassify()
+            {
+                _colorAsString = "{0:X2}{1:X2}{2:X2}".Fmt(_color.R, _color.G, _color.B);
+            }
+
+            public void AfterXmlDeclassify()
+            {
+                _color = Color.FromArgb(
+                    Convert.ToInt32(_colorAsString.Substring(0, 2), 16),
+                    Convert.ToInt32(_colorAsString.Substring(2, 2), 16),
+                    Convert.ToInt32(_colorAsString.Substring(4, 2), 16));
+            }
+        }
+
+        [Test]
+        public void TestPrePostprocess()
+        {
+            var instance = new TestPrePostProcess(Color.FromArgb(171, 205, 239));
+            var xml = XmlClassify.ObjectToXElement(instance);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><colorAsString>ABCDEF</colorAsString></item>")));
+
+            var reconstructed = XmlClassify.ObjectFromXElement<TestPrePostProcess>(xml);
+            Assert.AreEqual(reconstructed.Color, Color.FromArgb(171, 205, 239));
+        }
+
+        private sealed class SerializeThis
+        {
+            public string KeepThis;
+            public string SetThisToXyz;
+        }
+
+        private sealed class serializeThisOptions : XmlClassifyTypeOptions, IXmlClassifyProcessXml
+        {
+            public void XmlPreprocess(XElement xml)
+            {
+                xml.Add(new XElement("SetThisToXyz", "Xyz"));
+            }
+
+            public void XmlPostprocess(XElement xml)
+            {
+                xml.Element("SetThisToXyz").Remove();
+            }
+        }
+
+        [Test]
+        public void TestXmlPrePostprocess()
+        {
+            var opt = new XmlClassifyOptions().AddTypeOptions(typeof(SerializeThis), new serializeThisOptions());
+
+            var instance = new SerializeThis { KeepThis = "Keep", SetThisToXyz = "abc" };
+            var xml = XmlClassify.ObjectToXElement(instance, opt);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><KeepThis>Keep</KeepThis></item>")));
+
+            var reconstructed = XmlClassify.ObjectFromXElement<SerializeThis>(xml, opt);
+            Assert.IsNotNull(reconstructed);
+            Assert.AreEqual(reconstructed.KeepThis, "Keep");
+            Assert.AreEqual(reconstructed.SetThisToXyz, "Xyz");
+        }
+
+        private sealed class explicitlyImplementedList : IList<string>
+        {
+            private List<string> _inner = new List<string>();
+
+            int IList<string>.IndexOf(string item) { return _inner.IndexOf(item); }
+            void IList<string>.Insert(int index, string item) { _inner.Insert(index, item); }
+            void IList<string>.RemoveAt(int index) { _inner.RemoveAt(index); }
+            string IList<string>.this[int index] { get { return _inner[index]; } set { _inner[index] = value; } }
+            void ICollection<string>.Add(string item) { _inner.Add(item); }
+            void ICollection<string>.Clear() { _inner.Clear(); }
+            bool ICollection<string>.Contains(string item) { return _inner.Contains(item); }
+            void ICollection<string>.CopyTo(string[] array, int arrayIndex) { _inner.CopyTo(array, arrayIndex); }
+            int ICollection<string>.Count { get { return _inner.Count; } }
+            bool ICollection<string>.IsReadOnly { get { return false; } }
+            bool ICollection<string>.Remove(string item) { return _inner.Remove(item); }
+            IEnumerator<string> IEnumerable<string>.GetEnumerator() { return _inner.GetEnumerator(); }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return _inner.GetEnumerator(); }
+        }
+
+        private sealed class classWithExplicitlyImplementedList
+        {
+            public IList<string> List1 = new explicitlyImplementedList();
+            public explicitlyImplementedList List2 = new explicitlyImplementedList();
+        }
+
+        [Test]
+        public void TestClassWithExplicitlyImplementedList()
+        {
+            IList<string> weird1 = new explicitlyImplementedList();
+            weird1.Add("X");
+            var weird2 = new explicitlyImplementedList();
+            ((IList<string>) weird2).Add("Y");
+
+            var xml = XmlClassify.ObjectToXElement(new classWithExplicitlyImplementedList { List1 = weird1, List2 = weird2 });
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><List1><item>X</item></List1><List2><item>Y</item></List2></item>")));
+
+            var reconstructed = XmlClassify.ObjectFromXElement<classWithExplicitlyImplementedList>(xml);
+            Assert.IsNotNull(reconstructed);
+            Assert.IsNotNull(reconstructed.List1);
+            Assert.AreEqual(1, reconstructed.List1.Count);
+            Assert.AreEqual("X", reconstructed.List1[0]);
+            Assert.IsNotNull(reconstructed.List2);
+            Assert.AreEqual(1, ((IList<string>) reconstructed.List2).Count);
+            Assert.AreEqual("Y", ((IList<string>) reconstructed.List2)[0]);
+        }
+
+        private sealed class explicitlyImplementedDictionary : IDictionary<string, string>
+        {
+            private Dictionary<string, string> _inner = new Dictionary<string, string>();
+
+            void IDictionary<string, string>.Add(string key, string value) { _inner.Add(key, value); }
+            bool IDictionary<string, string>.ContainsKey(string key) { return _inner.ContainsKey(key); }
+            ICollection<string> IDictionary<string, string>.Keys { get { return _inner.Keys; } }
+            bool IDictionary<string, string>.Remove(string key) { return _inner.Remove(key); }
+            bool IDictionary<string, string>.TryGetValue(string key, out string value) { return _inner.TryGetValue(key, out value); }
+            ICollection<string> IDictionary<string, string>.Values { get { return _inner.Values; } }
+            string IDictionary<string, string>.this[string key] { get { return _inner[key]; } set { _inner[key] = value; } }
+            void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> item) { ((ICollection<KeyValuePair<string, string>>) _inner).Add(item); }
+            void ICollection<KeyValuePair<string, string>>.Clear() { ((ICollection<KeyValuePair<string, string>>) _inner).Clear(); }
+            bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> item) { return ((ICollection<KeyValuePair<string, string>>) _inner).Contains(item); }
+            void ICollection<KeyValuePair<string, string>>.CopyTo(KeyValuePair<string, string>[] array, int arrayIndex) { ((ICollection<KeyValuePair<string, string>>) _inner).CopyTo(array, arrayIndex); }
+            int ICollection<KeyValuePair<string, string>>.Count { get { return ((ICollection<KeyValuePair<string, string>>) _inner).Count; } }
+            bool ICollection<KeyValuePair<string, string>>.IsReadOnly { get { return false; } }
+            bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> item) { return ((ICollection<KeyValuePair<string, string>>) _inner).Remove(item); }
+            IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator() { return _inner.GetEnumerator(); }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return _inner.GetEnumerator(); }
+        }
+
+        private sealed class classWithExplicitlyImplementedDictionary
+        {
+            public IDictionary<string, string> Dictionary1 = new explicitlyImplementedDictionary();
+            public explicitlyImplementedDictionary Dictionary2 = new explicitlyImplementedDictionary();
+        }
+
+        [Test]
+        public void TestClassWithExplicitlyImplementedDictionary()
+        {
+            IDictionary<string, string> weird1 = new explicitlyImplementedDictionary();
+            weird1.Add("X", "Y");
+            var weird2 = new explicitlyImplementedDictionary();
+            ((IDictionary<string, string>) weird2).Add("Y", "Z");
+
+            var xml = XmlClassify.ObjectToXElement(new classWithExplicitlyImplementedDictionary { Dictionary1 = weird1, Dictionary2 = weird2 });
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><Dictionary1><item key='X'>Y</item></Dictionary1><Dictionary2><item key='Y'>Z</item></Dictionary2></item>")));
+
+            var reconstructed = XmlClassify.ObjectFromXElement<classWithExplicitlyImplementedDictionary>(xml);
+            Assert.IsNotNull(reconstructed);
+            Assert.IsNotNull(reconstructed.Dictionary1);
+            Assert.AreEqual(1, reconstructed.Dictionary1.Count);
+            Assert.AreEqual("Y", reconstructed.Dictionary1["X"]);
+            Assert.IsNotNull(reconstructed.Dictionary2);
+            Assert.AreEqual(1, ((IDictionary<string, string>) reconstructed.Dictionary2).Count);
+            Assert.AreEqual("Z", ((IDictionary<string, string>) reconstructed.Dictionary2)["Y"]);
         }
     }
 }

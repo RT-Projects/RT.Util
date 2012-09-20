@@ -428,7 +428,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Decodes this string from base-64-url encoding, which is safe for use in URLs and does not
-        /// contain the unnecessary padding whde the number of bytes is not divisible by 3, into a byte array.</summary>
+        /// contain the unnecessary padding when the number of bytes is not divisible by 3, into a byte array.</summary>
         /// <seealso cref="Base64UrlEncode"/>
         public static byte[] Base64UrlDecode(this string input)
         {
@@ -870,8 +870,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns true if and only if this string is equal to the other string under the
-        /// case-insensitive comparison (ordinal).
+        /// Determines whether this string is equal to the other string under the ordinal case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).
         /// </summary>
         public static bool EqualsNoCase(this string strthis, string str)
         {
