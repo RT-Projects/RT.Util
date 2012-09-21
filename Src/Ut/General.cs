@@ -93,22 +93,35 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Sends the specified sequence of key strokes to the active application.
+        /// Sends the specified sequence of key strokes to the active application. See remarks for details.
         /// </summary>
         /// <param name="keys">A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or <c>System.Tuple&lt;Keys, bool&gt;</c>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> was null.</exception>
         /// <exception cref="ArgumentException">
-        ///     <list type="bullet">
-        ///         <item><description><paramref name="keys"/> was null.</description></item>
-        ///         <item><description><paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see cref="char"/> and <c>System.Tuple&lt;Keys, bool&gt;</c> are accepted.</description></item>
-        ///     </list>
+        /// <paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see cref="char"/> and
+        /// <c>System.Tuple&lt;System.Windows.Forms.Keys, bool&gt;</c> are accepted.
         /// </exception>
-        /// <remarks>For objects of type <see cref="Keys"/>, the relevant key is pressed and released. For objects of type <see cref="char"/>,
-        /// the specified Unicode character is simulated as a keypress and release. For objects of type <c>System.Tuple&lt;Keys, bool&gt;</c>,
-        /// the bool specifies whether to simulate only a key-down (false) or only a key-up (true).</remarks>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item><description>For objects of type <see cref="Keys"/>, the relevant key is pressed and released.</description></item>
+        /// <item><description>For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and release.</description></item>
+        /// <item><description>For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a key-down (false) or only a key-up (true).</description></item>
+        /// </list>
+        /// </remarks>
+        /// <example>
+        /// <para>The following example demonstrates how to use this method to send the key combination Win+R:</para>
+        /// <code>
+        ///     Ut.SendKeystrokes(Ut.NewArray&lt;object&gt;(
+        ///         Tuple.Create(Keys.LWin, true),
+        ///         Keys.R,
+        ///         Tuple.Create(Keys.LWin, false)
+        ///     ));
+        /// </code>
+        /// </example>
         public static void SendKeystrokes(IEnumerable<object> keys)
         {
             if (keys == null)
-                throw new ArgumentException(@"The input collection cannot be null.", "keys");
+                throw new ArgumentNullException("keys");
 
             var input = new List<WinAPI.INPUT>();
             foreach (var elem in keys)
