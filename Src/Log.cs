@@ -65,7 +65,7 @@ namespace RT.Util
         /// <summary>
         /// Used internally to make the Log operation atomic.
         /// </summary>
-        protected object _lock_log = new object();
+        protected object _logLock = new object();
 
         /// <summary>
         /// Initialises some members to their default values.
@@ -301,7 +301,7 @@ namespace RT.Util
         /// <summary>Logs a message to the console.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 if (VerbosityLimit[type] < verbosity)
                     return;
@@ -391,8 +391,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Gets the <see cref="StreamWriter"/> used by this StreamLogger for writing
-        /// text. Intended use is to enable the caller write arbitrary text to the
+        /// Gets the <see cref="System.IO.StreamWriter"/> used by this StreamLogger for writing
+        /// text. Intended use is to enable the caller to write arbitrary text to the
         /// underlying stream.
         /// </summary>
         public StreamWriter StreamWriter
@@ -403,7 +403,7 @@ namespace RT.Util
         /// <summary>Logs a message to the underlying stream.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 if (VerbosityLimit[type] < verbosity || _streamWriter == null)
                     return;
@@ -418,7 +418,7 @@ namespace RT.Util
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
         public override void Separator()
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 _streamWriter.WriteLine();
                 _streamWriter.WriteLine(new string('-', 120));
@@ -451,7 +451,7 @@ namespace RT.Util
             if (VerbosityLimit[type] < verbosity || Filename == null)
                 return;
 
-            lock (_lock_log)
+            lock (_logLock)
             {
                 string fmtInfo, indent;
                 GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
@@ -467,7 +467,7 @@ namespace RT.Util
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
         public override void Separator()
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 using (var f = File.AppendText(Filename))
                 {
@@ -496,7 +496,7 @@ namespace RT.Util
         /// <summary>Logs a message to the underlying loggers.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 foreach (LoggerBase logger in Loggers.Values)
                     logger.Log(verbosity, type, message);
@@ -506,7 +506,7 @@ namespace RT.Util
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
         public override void Separator()
         {
-            lock (_lock_log)
+            lock (_logLock)
             {
                 foreach (LoggerBase logger in Loggers.Values)
                     logger.Separator();
