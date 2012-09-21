@@ -34,9 +34,8 @@ namespace RT.KitchenSink.Collections
         }
 
         /// <summary>
-        /// Set[item] returns the specified item from the set. Returns null if
-        /// the item is not in the set. This may be necessary in case 'item' is
-        /// not the object in the set, but is equal to an object in the set.
+        /// Returns the specified <paramref name="item"/> from the set. If <paramref name="item"/> is not the actual object in the set,
+        /// but merely equal to an object in the set, the object in the set is returned. Returns null if the item is not in the set.
         /// </summary>
         public T this[T item]
         {
@@ -50,8 +49,7 @@ namespace RT.KitchenSink.Collections
         }
 
         /// <summary>
-        /// Unions this set with the specified set, storing the result in this
-        /// set.
+        /// Unions this set with the specified <paramref name="set"/>, storing the result in this set.
         /// </summary>
         public void Union(Set<T> set)
         {
@@ -60,8 +58,7 @@ namespace RT.KitchenSink.Collections
         }
 
         /// <summary>
-        /// Intersects this set with the specified set, storing the result in
-        /// this set.
+        /// Intersects this set with the specified <paramref name="set"/>, storing the result in this set.
         /// </summary>
         public void Intersect(Set<T> set)
         {
@@ -73,8 +70,7 @@ namespace RT.KitchenSink.Collections
         }
 
         /// <summary>
-        /// Subtracts the specified set from this set, removing the items in
-        /// <code>set</code> from this set.
+        /// Subtracts the specified set from this set, removing the items in <paramref name="set"/> from this set.
         /// </summary>
         public void Subtract(Set<T> set)
         {
