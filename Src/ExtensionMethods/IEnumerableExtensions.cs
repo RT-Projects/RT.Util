@@ -854,170 +854,78 @@ namespace RT.Util.ExtensionMethods
                 yield return list;
         }
 
-        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <summary>Accumulates consecutive equal elements.</summary>
         /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
-        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
-        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
-        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
-        /// <param name="firstAction">An optional callback that is invoked every time a new group of elements starts.</param>
-        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
-        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
-        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
-        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
-        /// <returns>A collection containing the elements returned by <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
-        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
-                this IEnumerable<TItem> source,
-                Func<TItem, TState> state,
-                Action<TState, int> firstAction = null,
-                Action<TItem, TState, int, int> accumulate = null,
-                Func<TState, int, int, TResult> lastFunc = null,
-                Func<TResult> empty = null,
-                IEqualityComparer<TState> stateComparer = null
-            )
+        /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
+        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            if (state == null)
-                throw new ArgumentNullException("state");
-            Func<TState, int, TResult> substituteFirst = null;
-            if (firstAction != null)
-                substituteFirst = (a, b) => { firstAction(a, b); return default(TResult); };
-            return accumulateIterator(source, state, substituteFirst, accumulate, lastFunc, empty, stateComparer, true, false);
+            return accumulateIterator(source, x => x, null, null);
         }
 
-        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <summary>Accumulates consecutive equal elements.</summary>
         /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
-        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
-        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
-        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
-        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
-        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
-        /// <param name="lastAction">An optional callback that is invoked at the end of a group.</param>
-        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
-        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
-        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
-        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
-                this IEnumerable<TItem> source,
-                Func<TItem, TState> state,
-                Func<TState, int, TResult> firstFunc = null,
-                Action<TItem, TState, int, int> accumulate = null,
-                Action<TState, int, int> lastAction = null,
-                Func<TResult> empty = null,
-                IEqualityComparer<TState> stateComparer = null
-            )
+        /// <param name="itemEquality">An optional function to determine equality of items.</param>
+        /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
+        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            if (state == null)
-                throw new ArgumentNullException("state");
-            Func<TState, int, int, TResult> substituteLast = null;
-            if (lastAction != null)
-                substituteLast = (a, b, c) => { lastAction(a, b, c); return default(TResult); };
-            return accumulateIterator(source, state, firstFunc, accumulate, substituteLast, empty, stateComparer, false, true);
+            return accumulateIterator(source, x => x, itemEquality, null);
         }
 
-        /// <summary>Accumulates consecutive elements that share a common property and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <summary>Accumulates consecutive equal elements.</summary>
         /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
-        /// <typeparam name="TState">The type of criterion or property by which consecutive elements are grouped.</typeparam>
-        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
-        /// <param name="state">A function that determines the “state” of each element. Consecutive elements with the same “state” are grouped.</param>
-        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
-        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
-        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
-        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
-        /// <param name="stateComparer">An optional comparer to determine equality of state values returned by <paramref name="state"/>.</param>
-        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> and <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
-        public static IEnumerable<TResult> Accumulate<TItem, TState, TResult>(
-                this IEnumerable<TItem> source,
-                Func<TItem, TState> state,
-                Func<TState, int, TResult> firstFunc = null,
-                Action<TItem, TState, int, int> accumulate = null,
-                Func<TState, int, int, TResult> lastFunc = null,
-                Func<TResult> empty = null,
-                IEqualityComparer<TState> stateComparer = null
-            )
+        /// <param name="itemComparer">An optional equality comparer to determine item equality by.</param>
+        /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
+        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            if (state == null)
-                throw new ArgumentNullException("state");
-            return accumulateIterator(source, state, firstFunc, accumulate, lastFunc, empty, stateComparer, false, false);
+            return accumulateIterator(source, x => x, null, itemComparer);
         }
 
-        /// <summary>Accumulates consecutive equal elements and calls a callback delegate once for each element in each group, as well as the first and last, allowing processing of each group.</summary>
+        /// <summary>Accumulates consecutive elements that are equal when processed by a selector.</summary>
         /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
-        /// <typeparam name="TResult">The type of items in the result sequence returned.</typeparam>
+        /// <typeparam name="TKey">The return type of the <paramref name="selector"/> function.</typeparam>
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
-        /// <param name="firstFunc">An optional callback that is invoked every time a new group of elements starts. The result sequence contains the elements returned by this function.</param>
-        /// <param name="accumulate">An optional callback that is invoked for every element.</param>
-        /// <param name="lastFunc">An optional callback that is invoked at the end of a group. The result sequence contains the elements returned by this function.</param>
-        /// <param name="empty">An optional callback that is invoked only if the input sequence is empty.</param>
-        /// <param name="itemComparer">An optional comparer to determine equality of items.</param>
-        /// <returns>A collection containing the elements returned by <paramref name="firstFunc"/> and <paramref name="lastFunc"/> or, if the input sequence is empty, the return value of <paramref name="empty"/> (if specified).</returns>
-        public static IEnumerable<TResult> Accumulate<TItem, TResult>(
-                this IEnumerable<TItem> source,
-                Func<TItem, int, TResult> firstFunc = null,
-                Action<TItem, int, int> accumulate = null,
-                Func<TItem, int, int, TResult> lastFunc = null,
-                Func<TResult> empty = null,
-                IEqualityComparer<TItem> itemComparer = null
-            )
+        /// <param name="selector">A function to transform each item into a key which is compared for equality.</param>
+        /// <param name="keyComparer">An optional equality comparer for the keys returned by <paramref name="selector"/>.</param>
+        /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
+        public static IEnumerable<ConsecutiveGroup<TItem, TKey>> GroupConsecutiveBy<TItem, TKey>(this IEnumerable<TItem> source, Func<TItem, TKey> selector, IEqualityComparer<TKey> keyComparer = null)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            Action<TItem, TItem, int, int> substituteAccumulate = null;
-            if (accumulate != null)
-                substituteAccumulate = (a, _, b, c) => { accumulate(a, b, c); };
-            return accumulateIterator(source, item => item, firstFunc, substituteAccumulate, lastFunc, empty, itemComparer, false, false);
+            var comparer = keyComparer ?? EqualityComparer<TKey>.Default;
+            return accumulateIterator(source, selector, null, keyComparer);
         }
 
-        private static IEnumerable<TResult> accumulateIterator<TItem, TState, TResult>(
-                IEnumerable<TItem> source,
-                Func<TItem, TState> state,
-                Func<TState, int, TResult> firstFunc,
-                Action<TItem, TState, int, int> accumulate,
-                Func<TState, int, int, TResult> lastFunc,
-                Func<TResult> empty,
-                IEqualityComparer<TState> stateComparer,
-                bool omitResultFromFirst,
-                bool omitResultFromLast
-            )
+        private static IEnumerable<ConsecutiveGroup<TItem, TKey>> accumulateIterator<TItem, TKey>(IEnumerable<TItem> source, Func<TItem, TKey> selector, Func<TKey, TKey, bool> itemEquality, IEqualityComparer<TKey> itemComparer)
         {
-            stateComparer = stateComparer ?? EqualityComparer<TState>.Default;
             bool any = false;
-            TState prevState = default(TState);
-            var totalIndex = 0;
-            var currentIndex = 0;
+            TKey prevKey = default(TKey);
+            var index = 0;
+            var currentList = new List<TItem>();
             foreach (var elem in source)
             {
-                var curState = state(elem);
+                var key = selector(elem);
                 if (!any)
-                {
                     any = true;
-                    if (!omitResultFromFirst && firstFunc != null)
-                        yield return firstFunc(curState, totalIndex);
-                }
-                else if (!stateComparer.Equals(prevState, curState))
+                else if (itemEquality != null ? !itemEquality(prevKey, key) : itemComparer != null ? !itemComparer.Equals(prevKey, key) : !object.Equals(prevKey, key))
                 {
-                    if (!omitResultFromLast && lastFunc != null)
-                        yield return lastFunc(prevState, totalIndex - 1, currentIndex);
-                    currentIndex = 0;
-                    if (!omitResultFromFirst && firstFunc != null)
-                        yield return firstFunc(curState, totalIndex);
+                    yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
+                    currentList = new List<TItem>();
                 }
-                if (accumulate != null)
-                    accumulate(elem, curState, totalIndex, currentIndex);
-                prevState = curState;
-                totalIndex++;
-                currentIndex++;
+                currentList.Add(elem);
+                prevKey = key;
+                index++;
             }
-            if (!omitResultFromLast && any && lastFunc != null)
-                yield return lastFunc(prevState, totalIndex, currentIndex);
-            if (!any && empty != null)
-                yield return empty();
+            if (any)
+                yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
         }
 
         /// <summary>Enumerates a chain of objects where each object refers to the next one. The chain starts with the specified object and ends when null is encountered.</summary>
@@ -1031,6 +939,44 @@ namespace RT.Util.ExtensionMethods
                 yield return obj;
                 obj = next(obj);
             }
+        }
+    }
+
+    /// <summary>Encapsulates information about a group generated by <see cref="IEnumerableExtensions.GroupConsecutive{TItem}(IEnumerable{TItem})"/> and its overloads.</summary>
+    /// <typeparam name="TItem">Type of the elements in the sequence.</typeparam>
+    public class ConsecutiveGroup<TItem> : IEnumerable<TItem>
+    {
+        /// <summary>Index in the original sequence where the group started.</summary>
+        public int Index { get; private set; }
+        /// <summary>Size of the group.</summary>
+        public int Count { get; private set; }
+
+        private IEnumerable<TItem> _group;
+        internal ConsecutiveGroup(int index, List<TItem> group)
+        {
+            Index = index;
+            Count = group.Count;
+            _group = group;
+        }
+
+        /// <summary>Returns an enumerator that iterates through the collection.</summary>
+        /// <returns>A <see cref="System.Collections.Generic.IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
+        public IEnumerator<TItem> GetEnumerator() { return _group.GetEnumerator(); }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+    }
+
+    /// <summary>Encapsulates information about a group generated by <see cref="IEnumerableExtensions.GroupConsecutiveBy{TItem,TKey}"/>.</summary>
+    /// <typeparam name="TItem">Type of the elements in the sequence.</typeparam>
+    /// <typeparam name="TKey">Type of the key by which elements were compared.</typeparam>
+    public class ConsecutiveGroup<TItem, TKey> : ConsecutiveGroup<TItem>
+    {
+        /// <summary>The key by which the items in this group are deemed equal.</summary>
+        public TKey Key { get; private set; }
+
+        internal ConsecutiveGroup(int index, List<TItem> group, TKey key)
+            : base(index, group)
+        {
+            Key = key;
         }
     }
 }
