@@ -1,0 +1,41 @@
+<!-- Custom Main.BuildScriptKind.ZYXWVUTSRQPONMLKJIHGFEDCBA -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="Build" ToolsVersion="4.0">
+  <Import Project="..\Build\CommonImports.proj"/>
+  <PropertyGroup>
+    <ProjectName>KitchenSink</ProjectName>
+    <BuildsPath Condition="'$(BuildsPath)'==''">..\..\..\builds</BuildsPath>
+  </PropertyGroup>
+
+
+  <Target Name="Version">
+    <AssemblyVersion AssemblyFile="Properties\AssemblyInfo.cs" VersionTemplate="?.?.$(BuildId).$(ChangeId)">
+      <Output TaskParameter="Version" PropertyName="Version"/>
+    </AssemblyVersion>
+  </Target>
+
+
+  <Target Name="Build" DependsOnTargets="BuildDebug;BuildRelease">
+  </Target>
+
+
+  <Target Name="BuildDebug" DependsOnTargets="Version">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Debug;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <Target Name="BuildRelease" DependsOnTargets="Version">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <Target Name="DeployToDocGen" DependsOnTargets="BuildDebug">
+    <Error Condition="'$(DeployToDocGenPath)'==''" Text="DeployToDocGenPath must be specified"/>
+    <MakeDir Directories="$(DeployToDocGenPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\RT.KitchenSink.dll" DestinationFolder="$(DeployToDocGenPath)"/>
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\RT.KitchenSink.docs.xml" DestinationFolder="$(DeployToDocGenPath)"/>
+  </Target>
+
+</Project>
