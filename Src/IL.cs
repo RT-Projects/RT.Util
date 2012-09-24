@@ -10,7 +10,7 @@ using RT.Util;
 
 namespace RT.KitchenSink
 {
-    /// <summary>Provides a collection on unconnected pieces of functionality.</summary>
+    /// <summary>Provides a collection of unconnected pieces of functionality.</summary>
     public static partial class Ks
     {
         private static AssemblyBuilder _assemblyBuilder = null;

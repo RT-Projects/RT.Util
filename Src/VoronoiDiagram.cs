@@ -18,7 +18,7 @@ namespace RT.KitchenSink.Geometry
         RemoveOffboundsSites = 2
     }
 
-    /// <summary>Represents a Voronoi diagrams.</summary>
+    /// <summary>Represents a Voronoi diagram.</summary>
     public sealed class VoronoiDiagram
     {
         /// <summary>Edges of the diagram.</summary>
