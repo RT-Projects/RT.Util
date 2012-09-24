@@ -1,12 +1,9 @@
-﻿using System;
-using RT.Util.ExtensionMethods;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using NUnit.Framework;
-using System.IO;
+using RT.Util.ExtensionMethods;
+using RT.Util.Streams;
 
-namespace RT.Util.Streams
+namespace RT.KitchenSink.Streams
 {
     [TestFixture]
     class PeekableStreamTests

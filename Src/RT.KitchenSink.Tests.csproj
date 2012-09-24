@@ -8,8 +8,8 @@
     <ProjectGuid>{EA7E9C00-DD8B-43DC-84F6-AE2F9F41ED30}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>KitchenSinkTests</RootNamespace>
-    <AssemblyName>KitchenSinkTests</AssemblyName>
+    <RootNamespace>RT.KitchenSink</RootNamespace>
+    <AssemblyName>RT.KitchenSinkTests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <OutputPath>..\Builds\$(Configuration)</OutputPath>

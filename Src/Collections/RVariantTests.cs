@@ -690,7 +690,7 @@ namespace RT.KitchenSink.Collections.Tests
             Assert_StoresCorrectValueOfCorrectType(floatM, "3.1415925", TypeCode.String);
             Assert_StoresCorrectValueOfCorrectType(doubleM, "1208.1287987986866", TypeCode.String);
             Assert_StoresCorrectValueOfCorrectType(decimalM, "198729384734.239472736876", TypeCode.String);
-            Assert_StoresCorrectValueOfCorrectType(DateTimeM, "2008-12-30 21:32:56.9880000Z", TypeCode.String);
+            Assert_StoresCorrectValueOfCorrectType(DateTimeM, "2008-12-30 21:32:56.988Z", TypeCode.String);
             Assert_StoresCorrectValueOfCorrectType(charM, "\u0065", TypeCode.String);
             Assert_StoresCorrectValueOfCorrectType(stringM, "stuff", TypeCode.String);
             // And that equality checks still work and produce consistent results

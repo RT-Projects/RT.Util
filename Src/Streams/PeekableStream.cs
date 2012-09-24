@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using RT.Util;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Streams
+namespace RT.KitchenSink.Streams
 {
     /// <summary>
     /// Implements a stream that exposes methods to transparently peek at the bytes that would be read by a call to <see cref="Read"/>,

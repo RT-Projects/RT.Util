@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Streams
+namespace RT.KitchenSink.Streams
 {
     /// <summary>
     /// Implements a stream which enables control codes to be read from or written to the underlying stream at
