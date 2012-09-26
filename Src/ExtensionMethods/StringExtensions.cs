@@ -879,6 +879,18 @@ namespace RT.Util.ExtensionMethods
             return strthis.Equals(str, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Determines whether this string contains the other string under the ordinal case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).
+        /// </summary>
+        public static bool ContainsNoCase(this string strthis, string str)
+        {
+            if (strthis == null)
+                throw new ArgumentNullException("strthis");
+            if (str == null)
+                throw new ArgumentNullException("str");
+            return strthis.IndexOf(str, StringComparison.OrdinalIgnoreCase) != -1;
+        }
+
         /// <summary>Returns true if and only if this string ends with the specified character.</summary>
         /// <seealso cref="StartsWith"/>
         public static bool EndsWith(this string str, char? ch)
