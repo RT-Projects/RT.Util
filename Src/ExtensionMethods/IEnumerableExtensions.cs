@@ -683,17 +683,23 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// <para>Turns all elements in the enumerable to strings and joins them using the specified string
-        /// as the separator and the specified prefix and suffix for each string.</para>
+        /// Turns all elements in the enumerable to strings and joins them using the specified <paramref name="separator"/>
+        /// and the specified <paramref name="prefix"/> and <paramref name="suffix"/> for each string.
+        /// </summary>
+        /// <param name="values">The sequence of elements to join into a string.</param>
+        /// <param name="separator">Optionally, a separator to insert between each element and the next.</param>
+        /// <param name="prefix">Optionally, a string to insert in front of each element.</param>
+        /// <param name="suffix">Optionally, a string to insert after each element.</param>
+        /// <param name="lastSeparator">Optionally, a separator to use between the second-to-last and the last element.</param>
         /// <example>
         ///     <code>
-        ///         var a = (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]");
-        ///         // a contains "[Paris], [London], [Tokyo]"
-        ///         ...JoinString(", ", "[", "]", " and ");
-        ///         // a contains "[Paris], [London] and [Tokyo]"
+        ///         // Returns "[Paris], [London], [Tokyo]"
+        ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]")
+        ///         
+        ///         // Returns "[Paris], [London] and [Tokyo]"
+        ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]", " and ");
         ///     </code>
         /// </example>
-        /// </summary>
         public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)
         {
             if (values == null)
