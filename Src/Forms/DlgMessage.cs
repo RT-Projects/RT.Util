@@ -203,49 +203,49 @@ namespace RT.Util.Dialogs
         /// <summary>
         /// Shows a message of the specified message type, using an appropriate caption, sound and image.
         /// </summary>
-        public static int Show(string Message, DlgType Type)
+        public static int Show(string message, DlgType type)
         {
-            return new DlgMessage() { Message = Message, Type = Type }.Show();
+            return new DlgMessage() { Message = message, Type = type }.Show();
         }
 
         /// <summary>
         /// Shows a message of the specified message type, using an appropriate sound and image.
         /// </summary>
-        public static int Show(string Message, string Caption, DlgType Type, params string[] Buttons)
+        public static int Show(string message, string caption, DlgType type, params string[] buttons)
         {
-            return new DlgMessage() { Message = Message, Caption = Caption, Type = Type, Buttons = Buttons }.Show();
+            return new DlgMessage() { Message = message, Caption = caption, Type = type, Buttons = buttons }.Show();
         }
 
         /// <summary>
         /// Shows an informational message using the image, caption and sound appropriate for this message type.
         /// </summary>
-        public static int ShowInfo(string Message, params string[] Buttons)
+        public static int ShowInfo(string message, params string[] buttons)
         {
-            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Info }.Show();
+            return new DlgMessage() { Message = message, Buttons = buttons, Type = DlgType.Info }.Show();
         }
 
         /// <summary>
         /// Shows a question message using the image, caption and sound appropriate for this message type.
         /// </summary>
-        public static int ShowQuestion(string Message, params string[] Buttons)
+        public static int ShowQuestion(string message, params string[] buttons)
         {
-            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Question }.Show();
+            return new DlgMessage() { Message = message, Buttons = buttons, Type = DlgType.Question }.Show();
         }
 
         /// <summary>
         /// Shows a warning message using the image, caption and sound appropriate for this message type.
         /// </summary>
-        public static int ShowWarning(string Message, params string[] Buttons)
+        public static int ShowWarning(string message, params string[] buttons)
         {
-            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Warning }.Show();
+            return new DlgMessage() { Message = message, Buttons = buttons, Type = DlgType.Warning }.Show();
         }
 
         /// <summary>
         /// Shows an error message using the image, caption and sound appropriate for this message type.
         /// </summary>
-        public static int ShowError(string Message, params string[] Buttons)
+        public static int ShowError(string message, params string[] buttons)
         {
-            return new DlgMessage() { Message = Message, Buttons = Buttons, Type = DlgType.Error }.Show();
+            return new DlgMessage() { Message = message, Buttons = buttons, Type = DlgType.Error }.Show();
         }
 
         /// <summary>
