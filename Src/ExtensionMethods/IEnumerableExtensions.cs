@@ -778,6 +778,8 @@ namespace RT.Util.ExtensionMethods
         /// For example, new[] { 1, 2, 3 }.InsertBetween(0) returns { 1, 0, 2, 0, 3 }.</returns>
         public static IEnumerable<T> InsertBetween<T>(this IEnumerable<T> source, T extraElement)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
             return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
         }
 
