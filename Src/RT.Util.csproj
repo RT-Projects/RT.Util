@@ -186,6 +186,9 @@
     <Compile Include="Streams\SocketStreams.cs" />
     <Compile Include="Streams\TimeoutableStream.cs" />
     <Compile Include="Text\OffsetToLineCol.cs" />
+    <Compile Include="Threading\Periodic.cs" />
+    <Compile Include="Threading\RateLimitedAction.cs" />
+    <Compile Include="Threading\TimeLimitedThreadPool.cs" />
     <Compile Include="Ut\OnException.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
@@ -202,7 +205,6 @@
     <Compile Include="Streams\VoidStream.cs" />
     <Compile Include="EnumStrong.cs" />
     <Compile Include="Text\TextTable.cs" />
-    <Compile Include="Threading.cs" />
     <Compile Include="TimeOut.cs" />
     <Compile Include="Ut\Diff.cs" />
     <Compile Include="Ut\General.cs" />
