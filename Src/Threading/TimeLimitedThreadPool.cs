@@ -36,11 +36,8 @@ namespace RT.Util.Threading
                 return;
             lock (_isIdle)
             {
-                while (true)
-                {
-                    while (!_isIdle.All(b => b) || _queue.Count > 0)
-                        Monitor.Wait(_isIdle);
-                }
+                while (!_isIdle.All(b => b) || _queue.Count > 0)
+                    Monitor.Wait(_isIdle);
             }
         }
 
