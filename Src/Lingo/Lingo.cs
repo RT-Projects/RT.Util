@@ -84,14 +84,23 @@ namespace RT.Util.Lingo
         /// <param name="translation">The translation to save.</param>
         public static void SaveTranslation<TTranslation>(string moduleName, TTranslation translation) where TTranslation : TranslationBase, new()
         {
-            XmlClassify.SaveObjectToXmlFile(translation, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
+            SaveTranslation(typeof(TTranslation), moduleName, translation);
+        }
+
+        /// <summary>Writes the specified translation for the specified module to an XML file in the application directory.</summary>
+        /// <param name="translationType">Translation class to write.</param>
+        /// <param name="moduleName">Name of the module for which this is a translation.</param>
+        /// <param name="translation">The translation to save.</param>
+        public static void SaveTranslation(Type translationType, string moduleName, TranslationBase translation)
+        {
+            XmlClassify.SaveObjectToXmlFile(translation, translationType, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
             if (AlsoSaveTranslationsTo != null && Directory.Exists(AlsoSaveTranslationsTo))
             {
                 try
                 {
                     var filename = Path.Combine(AlsoSaveTranslationsTo, moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml");
                     File.SetAttributes(filename, File.GetAttributes(filename) & ~FileAttributes.ReadOnly);
-                    XmlClassify.SaveObjectToXmlFile(translation, filename);
+                    XmlClassify.SaveObjectToXmlFile(translation, translationType, filename);
                 }
                 catch { }
             }
