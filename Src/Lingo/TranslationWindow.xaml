@@ -137,7 +137,7 @@
                                     <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding NewOriginal}" />
                                     <TextBlock Grid.Column="0" Grid.Row="2" Text="Translation:" />
                                     <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding Translation}" Tag="{Binding}" />
-                                    <Button Grid.Column="2" Grid.Row="2" Tag="{Binding}">OK</Button>
+                                    <Button Grid.Column="2" Grid.Row="2" Tag="{Binding}" Click="acceptTranslation">OK</Button>
                                 </Grid>
                                 <Border BorderThickness="0,.5,0,0" BorderBrush="Silver" Margin="8,16,8,0" />
                             </StackPanel>

@@ -23,6 +23,10 @@ namespace RT.Util.Lingo
     public partial class TranslationWindow : ManagedWindow, ITranslationDialog
     {
         private bool _anyChanges = false;
+        private TranslationBase _translation;
+        private Type _translationType;
+        private string _moduleName;
+        private Language _language;
         private ObservableCollection<TranslationGroup> _groups = new ObservableCollection<TranslationGroup>();
 
         /// <summary>Holds the settings of the <see cref="TranslationForm&lt;T&gt;"/>.</summary>
@@ -55,6 +59,10 @@ namespace RT.Util.Lingo
             InitializeComponent();
             SetSizePosFromSettings();
 
+            _translationType = translationType;
+            _moduleName = moduleName;
+            _language = language;
+
             if (icon != null)
                 Icon = icon;
             Title = "Translating " + programTitle;
@@ -76,9 +84,9 @@ namespace RT.Util.Lingo
             CommandBindings.Add(new CommandBinding(TranslationCommands.NextGroup, delegate { gotoGroup(up: false); }));
 
             var original = (TranslationBase) Activator.CreateInstance(translationType);
-            var translation = Lingo.LoadTranslation(translationType, moduleName, language);
+            _translation = Lingo.LoadTranslation(translationType, moduleName, language);
 
-            foreach (var group in TranslationDialogHelper.GetGroups(translationType, original, translation))
+            foreach (var group in TranslationDialogHelper.GetGroups(translationType, original, _translation))
                 _groups.Add(group);
 
             ctGroups.Items.Clear();
@@ -88,14 +96,20 @@ namespace RT.Util.Lingo
         /// <summary>
         /// Fires every time the translation is updated on the disk (i.e. when the user clicks either "Save &amp; Close" or "Apply changes").
         /// </summary>
-        public event Action<object> TranslationChanged;
+        public event Action<TranslationBase> TranslationChanged;
 
         /// <summary>Gets a value indicating whether any changes have been made by the user since the last save.</summary>
         public bool AnyChanges { get { return _anyChanges; } }
 
         public void SaveChanges(bool fireTranslationChanged)
         {
-            throw new NotImplementedException();
+            if (AnyChanges)
+            {
+                Lingo.SaveTranslation(_translationType, _moduleName, _translation);
+                if (fireTranslationChanged && TranslationChanged != null)
+                    TranslationChanged(Lingo.LoadTranslation(_translationType, _moduleName, _language));
+                _anyChanges = false;
+            }
         }
 
         public void CloseWithoutPrompts()
@@ -160,7 +174,7 @@ namespace RT.Util.Lingo
             }
 
             populateRows(grid, label2, info, info.NewOriginal, info.OriginalNumSys, false, nn, ref curRow);
-            populateRows(grid, "Translation:", info, info.TranslationTr.Translations, info.TranslationNumSys, true, nn, ref curRow);
+            populateRows(grid, "Translation:", info, info.TranslationTr.Translations, info.TranslationNumSys, true, nn, ref curRow, info.NewOriginal);
 
             // Label (e.g. “Original”, “Translation”)
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
@@ -176,7 +190,7 @@ namespace RT.Util.Lingo
                 grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
         }
 
-        private void populateRows(Grid grid, string label, TrStringNumInfo info, string[] display, NumberSystem ns, bool textBoxes, int nn, ref int curRow)
+        private void populateRows(Grid grid, string label, TrStringNumInfo info, string[] display, NumberSystem ns, bool useTextBoxes, int nn, ref int curRow, string[] newOriginal = null)
         {
             int numRows = (int) Math.Pow(ns.NumStrings, nn);
 
@@ -185,6 +199,8 @@ namespace RT.Util.Lingo
             Grid.SetColumn(textBlock, 0);
             Grid.SetRow(textBlock, curRow);
             Grid.SetRowSpan(textBlock, numRows);
+
+            var textBoxes = useTextBoxes ? new List<TextBox>() : null;
 
             int column = 1;
             for (int i = 0; i < info.TranslationTr.IsNumber.Length; i++)
@@ -217,7 +233,7 @@ namespace RT.Util.Lingo
                         r /= ns.NumStrings;
                     }
                 }
-                if (textBoxes)
+                if (useTextBoxes)
                 {
                     var textBox = new TextBox
                     {
@@ -238,6 +254,17 @@ namespace RT.Util.Lingo
                         Grid.SetColumn(button, col + 1);
                         Grid.SetRow(button, curRow);
                         Grid.SetRowSpan(button, numRows);
+                        button.Click += delegate
+                        {
+                            var newTrans = textBoxes.Select(box => box.Text).ToArray();
+                            if (info.State != TranslationInfoState.UpToDateAndSaved || !info.TranslationTr.Translations.SequenceEqual(newTrans))
+                            {
+                                info.TranslationTr.Translations = newTrans;
+                                info.TranslationTr.Old = newOriginal;
+                                _anyChanges = true;
+                            }
+                            fireCtrlDown();
+                        };
                         // Do not add to the grid yet; must add it after all the textboxes so that its tab order is correct
                     }
                 }
@@ -255,6 +282,23 @@ namespace RT.Util.Lingo
             // Defer adding the button until the end so that its tab order is correct
             if (button != null)
                 grid.Children.Add(button);
+        }
+
+        private void acceptTranslation(object sender, RoutedEventArgs e)
+        {
+            var info = (TrStringInfo) ((Button) sender).Tag;
+            if (info.State != TranslationInfoState.UpToDateAndSaved)
+            {
+                info.TranslationTr.Old = info.NewOriginal;
+                info.State = TranslationInfoState.Unsaved;
+                _anyChanges = true;
+            }
+            fireCtrlDown();
+        }
+
+        private void fireCtrlDown()
+        {
+            throw new NotImplementedException();
         }
 
         private void ctGroups_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -346,8 +390,9 @@ namespace RT.Util.Lingo
         private void translationInfoTemplateLoad(object sender, RoutedEventArgs e)
         {
             var stackPanel = (StackPanel) sender;
-            stackPanel.SetBinding(StackPanel.IsKeyboardFocusWithinProperty, new Binding { Path = new PropertyPath("IsFocused"), Mode = BindingMode.OneWayToSource });
-            System.Diagnostics.Debugger.Break();
+            var source = (TrStringInfo) stackPanel.DataContext;
+            stackPanel.IsKeyboardFocusWithinChanged += delegate { source.IsFocused = stackPanel.IsKeyboardFocusWithin; };
+            //System.Diagnostics.Debugger.Break();
         }
     }
 
