@@ -1,185 +1,320 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Threading
 {
-    /// <summary>Runs an arbitrary number of actions on a limited number of threads and aborts the ones that exceed a specified time limit.</summary>
+    /// <summary>
+    /// Runs tasks in separate threads, each with a time limit. Tasks exceeding the limit are automatically aborted.
+    /// </summary>
     public sealed class TimeLimitedThreadPool
     {
-        private Queue<TimeLimitedThread> _queue = new Queue<TimeLimitedThread>();
-        private int _concurrentThreads = 2;
-        private bool _threadsInitialised = false;
-        private bool _background = false;
-        private bool[] _isIdle = null;
+        /// <summary>Keeps track of how many worker threads the user requested when constructing this pool.</summary>
+        private int _workerThreadCount;
+        /// <summary>Keeps track of whether the user requested background or foreground threads when constructing this pool.</summary>
+        private bool _foreground;
+        /// <summary>Keeps track of whether the user wanted the pool to shut down automatically every time it becomes idle.</summary>
+        private bool _shutdownWhenIdle;
+        /// <summary>The queue of tasks. Also acts as the lock object for synchronizing additions/removals from the queue and several other changes.</summary>
+        private Queue<TimeLimitedTask> _queue;
+        /// <summary>The array of worker descriptors. Each instance is created once and never replaced.</summary>
+        private worker[] _workers;
+        /// <summary>Set whenever all workers are idle and there are no tasks queued. Reset whenever a task gets queued.</summary>
+        private ManualResetEvent _idle = new ManualResetEvent(true);
+        /// <summary>Used for controlled shutdown of the control thread and the worker threads.</summary>
+        private bool _shutdownControl = false, _shutdownWorkers = false;
+        /// <summary>Used for waking up the control thread whenever it needs to check whether anything needs aborting or when the pool may have become idle.</summary>
+        private AutoResetEvent _controlWakeup = new AutoResetEvent(false);
+        /// <summary>Indicates how long the control thread is going to sleep, to avoid waking it up when there's no need to.</summary>
+        private DateTime _controlSleepingUntil = DateTime.UtcNow + _indefinitely;
+        /// <summary>Reference to the control thread.</summary>
+        private Thread _controlThread;
 
-        /// <summary>Fires when a thread is aborted due to exceeding its time limit.</summary>
-        public event Action<TimeLimitedThread> Aborted;
-        /// <summary>Fires when a thread completes within its time limit.</summary>
-        public event Action<TimeLimitedThread> Completed;
+        /// <summary>An approximation to sleeping indefinitely which doesn't require special-casing in arithmetic/comparisons</summary>
+        private static TimeSpan _indefinitely = TimeSpan.FromDays(1);
+
+        private class worker
+        {
+            /// <summary>The task this thread is currently executing. Is null to indicate that the worker is idle (but is possibly about to retrieve the next queued task).</summary>
+            public TimeLimitedTask Task;
+            /// <summary>The UTC time at which the current task should be aborted if it doesn't complete by then.</summary>
+            public DateTime AbortTime;
+            /// <summary>The thread on which the work is performed.</summary>
+            public Thread Thread;
+        }
+
+        /// <summary>Wait on this handle after enqueueing tasks to find out when all tasks have been completed or aborted.</summary>
+        public WaitHandle Idle { get { return _idle; } }
 
         /// <summary>Constructor.</summary>
-        /// <param name="concurrentThreads">Number of concurrent threads to run.</param>
-        /// <param name="background">True if the threads should be designated background threads.</param>
-        public TimeLimitedThreadPool(int concurrentThreads = 2, bool background = false)
+        /// <param name="workerThreadCount">The number of worker threads to run. If zero, the number of processor cores will be used.</param>
+        /// <param name="foreground">True to use foreground threads (which prevent a program from shutting down while executing).</param>
+        /// <param name="shutdownWhenIdle">If true, <see cref="Shutdown"/> is invoked automatically every time the pool becomes idle. Ideal if your work load involves queueing large batches occasionally.</param>
+        public TimeLimitedThreadPool(int workerThreadCount = 0, bool foreground = false, bool shutdownWhenIdle = false)
         {
-            _concurrentThreads = concurrentThreads;
-            _background = background;
+            _workerThreadCount = workerThreadCount <= 0 ? Environment.ProcessorCount : workerThreadCount;
+            _foreground = foreground;
+            _shutdownWhenIdle = shutdownWhenIdle;
         }
 
-        /// <summary>Waits for all currently running threads to finish.</summary>
-        public void Wait()
+        private void startupIfNecessary()
         {
-            if (_isIdle == null)
+            if (_queue != null)
                 return;
-            lock (_isIdle)
+            _queue = new Queue<TimeLimitedTask>();
+            _workers = new worker[_workerThreadCount];
+
+            for (int i = 0; i < _workerThreadCount; i++)
             {
-                while (!_isIdle.All(b => b) || _queue.Count > 0)
-                    Monitor.Wait(_isIdle);
+                _workers[i] = new worker();
+                createWorkerThread(_workers[i]);
             }
+
+            _controlThread = new Thread(controlThreadProc);
+            _controlThread.IsBackground = !_foreground;
+            _controlThread.Name = "TimeLimitedThreadPool Control " + _controlThread.GetHashCode();
+            _controlThread.Start();
         }
 
-        private void startThread(int i)
+        private void createWorkerThread(worker worker)
         {
-            Action action = null;
-            var startExecuting = new AutoResetEvent(false);
-            var executionDone = new AutoResetEvent(false);
+            worker.Thread = new Thread(() => workerThreadProc(worker));
+            worker.Thread.Name = "TimeLimitedThreadPool Worker " + worker.Thread.GetHashCode();
+            worker.Thread.IsBackground = !_foreground;
+            worker.Thread.Start();
+        }
 
-            var executionThread = new Thread(() =>
+        private void controlThreadProc()
+        {
+            while (true)
             {
-                while (true)
+                var sleep = _controlSleepingUntil - DateTime.UtcNow + TimeSpan.FromMilliseconds(1); // otherwise the WaitOne call might end up not waiting at all, iterating through the loop far too often instead of waiting 1 ms.
+                if (sleep.Ticks > 0)
+                    _controlWakeup.WaitOne(sleep);
+                lock (_queue) // guarantees that Task and StartTime are both valid w.r.t. each other; no tasks can start (change from null to non-null) while we're in this lock
                 {
-                    lock (_isIdle)
-                    {
-                        _isIdle[i] = true;
-                        Monitor.PulseAll(_isIdle);
-                    }
-                    startExecuting.WaitOne();
-                    lock (_isIdle)
-                        _isIdle[i] = false;
-                    action();
-                    executionDone.Set();
-                }
-            });
-            if (_background)
-                executionThread.IsBackground = true;
-            executionThread.Start();
-
-            var controlThread = new Thread(() =>
-            {
-                while (true)
-                {
-                    TimeLimitedThread threadInfo;
-                    lock (_queue)
-                    {
-                        while (_queue.Count == 0)
-                            Monitor.Wait(_queue);
-                        threadInfo = _queue.Dequeue();
-                    }
-                    action = threadInfo.ThreadAction;
-                    startExecuting.Set();
-                    if (!executionDone.WaitOne(threadInfo.TimeLimit))
-                    {
-                        // Time limit exceeded — abort the thread
-                        executionThread.Abort();
-                        if (Aborted != null)
-                            Aborted(threadInfo);
-
-                        // Start a new set of threads
-                        startThread(i);
+                    if (_shutdownControl)
                         return;
-                    }
-                    if (Completed != null)
-                        Completed(threadInfo);
-                }
-            });
-            if (_background)
-                controlThread.IsBackground = true;
-            controlThread.Start();
-        }
-
-        private void startThreadsIfNecessary()
-        {
-            if (!_threadsInitialised)
-                lock (_queue)
-                    if (!_threadsInitialised)
+                    var now = DateTime.UtcNow;
+                    _controlSleepingUntil = now + _indefinitely; // if no tasks are found to be in progress (and we know none can start while we're doing this) then wait indefinitely
+                    bool allIdle = true;
+                    foreach (var worker in _workers)
                     {
-                        _threadsInitialised = true;
-                        _isIdle = new bool[_concurrentThreads];
-                        for (int i = 0; i < _concurrentThreads; i++)
+                        var task = worker.Task; // the task could complete while we're doing this, making this field null
+                        if (task == null)
+                            continue; // no task is currently active on this thread
+
+                        if (worker.AbortTime < now)
                         {
-                            _isIdle[i] = true;
-                            startThread(i);
+                            worker.Thread.Abort();
+                            if (worker.Task != null) // the occasional task will complete between the first check and the thread abort; no need to invoke the abort action for these since we know for sure they completed in their entirety
+                                if (task.AbortAction != null) // access via the task variable since the Task field could still disappear from under our feet
+                                {
+                                    task.AbortAction();
+                                    task.State = TimeLimitedTaskState.Aborted;
+                                }
+                            worker.Task = null; // mark that there's no task on this thread
+                            createWorkerThread(worker);
+                        }
+                        else
+                        {
+                            allIdle = false; // a newly created worker thread will also be idle, so only this case counts as non-idle
+                            if (_controlSleepingUntil > worker.AbortTime)
+                                _controlSleepingUntil = worker.AbortTime;
                         }
                     }
+                    if (allIdle && _queue.Count == 0 && !_idle.WaitOne(0))
+                    {
+                        _idle.Set();
+                        _controlWakeup.Reset(); // a task may have finished while we were doing stuff; we know for sure that a another iteration is not currently necessary
+                    }
+                }
+                // Shutdown automatically on becoming idle if requested
+                if (_shutdownWhenIdle && _idle.WaitOne(0))
+                    Shutdown();
+            }
         }
 
-        private void enqueue(TimeLimitedThread thread)
+        private void workerThreadProc(worker worker)
         {
-            startThreadsIfNecessary();
+            while (true)
+            {
+                lock (_queue)
+                {
+                    // The control thread might now need to indicate that the pool has become idle. This can only occur if the queue is empty and every worker is idle.
+                    if (_queue.Count == 0)
+                        _controlWakeup.Set(); // the queue is indeed empty and _this_ worker has just become idle, so a check is needed
+                    // Wait for work
+                    while (_queue.Count == 0)
+                    {
+                        if (_shutdownWorkers)
+                            return;
+                        Monitor.Wait(_queue); // either we've run out of tasks, or PulseAll woke up too many threads for the job
+                    }
+                    // Initiate the next task
+                    worker.Task = _queue.Dequeue();
+                    worker.Task.State = TimeLimitedTaskState.Started;
+                    worker.AbortTime = DateTime.UtcNow + worker.Task.TimeLimit;
+                }
+                // ThreadAbortException can occur from here onwards, and never inside the lock (including Monitor.Wait, because Task is then guaranteed null)
+
+                // The control thread now needs to update its sleeping time, but only if the current task is due to be aborted before the current sleep expires
+                if (_controlSleepingUntil > worker.AbortTime)
+                    _controlWakeup.Set();
+
+                worker.Task.TaskAction();
+
+                var task = worker.Task;
+                worker.Task = null; // First mark the order as idle
+                task.State = TimeLimitedTaskState.Completed; // Only then mark the task as completed. This matters in the Shutdown method
+            }
+        }
+
+        /// <summary>
+        /// Shuts down all threads owned by the thread pool. Empties the queue of tasks and forcefully aborts any tasks currently in progress.
+        /// Blocks until the shutdown has completed. May be called multiple times in a row. The threads will be recreated automatically the next
+        /// time one of the task-enqueueing methods is called.
+        /// </summary>
+        public void Shutdown()
+        {
+            if (_queue == null)
+                return;
+
+            // First shut down the control thread, to make sure it doesn't kick off new workers in case it happens to abort something while we're doing this
             lock (_queue)
             {
-                _queue.Enqueue(thread);
+                foreach (var task in _queue)
+                    task.State = TimeLimitedTaskState.Cancelled;
+                _queue.Clear();
+                _shutdownControl = true;
+                // Now the control thread is definitely outside the lock, either before or after the wait. Force it to skip/leave the wait.
+                _controlWakeup.Set();
+            }
+            // The thread will now enter the lock and see that a shutdown is requested
+            _controlThread.Join();
+
+            // Now shut down the worker threads
+            _shutdownWorkers = true;
+            lock (_queue)
+            {
+                // First abort those that are doing work
+                foreach (var worker in _workers)
+                {
+                    var task = worker.Task;
+                    if (task != null)
+                    {
+                        task.State = TimeLimitedTaskState.Aborted;
+                        worker.Thread.Abort(); // cannot happen inside the worker thread's lock (_queue), including the Monitor.Wait
+                    }
+                }
+                // Now do an orderly shutdown of any idle workers, to maintain the absence of Thread.Aborts inside the lock (_queue) section there
+                Monitor.PulseAll(_queue);
+            }
+            // And wait until they've all stopped
+            foreach (var worker in _workers)
+                worker.Thread.Join();
+
+            // Update state to reflect that we're shut down
+            _queue = null;
+            _workers = null;
+            _controlThread = null;
+            _shutdownControl = _shutdownWorkers = false;
+            _controlSleepingUntil = DateTime.UtcNow + _indefinitely;
+            _controlWakeup.Reset();
+        }
+
+        /// <summary>Places a time-limited task into the execution queue, which will start executing as soon as a worker is available
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        public void EnqueueTask(TimeLimitedTask task)
+        {
+            startupIfNecessary();
+            lock (_queue)
+            {
+                _queue.Enqueue(task);
+                task.State = TimeLimitedTaskState.Enqueued;
+                _idle.Reset();
+                Monitor.Pulse(_queue);
+            }
+        }
+
+        /// <summary>Places a number of time-limited tasks into the execution queue, which will start executing as soon as a worker is available
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        public void EnqueueTasks(IEnumerable<TimeLimitedTask> tasks)
+        {
+            startupIfNecessary();
+            lock (_queue)
+            {
+                foreach (var task in tasks)
+                {
+                    _queue.Enqueue(task);
+                    task.State = TimeLimitedTaskState.Enqueued;
+                }
+                _idle.Reset();
                 Monitor.PulseAll(_queue);
             }
         }
 
-        private void enqueue(IEnumerable<TimeLimitedThread> threads)
+        /// <summary>Places a time-limited task into the execution queue, which will start executing as soon as a worker is available
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        public void EnqueueTask(TimeSpan timeLimit, Action action, Action abortAction = null)
         {
-            startThreadsIfNecessary();
-            lock (_queue)
-            {
-                foreach (var thread in threads)
-                    _queue.Enqueue(thread);
-                Monitor.PulseAll(_queue);
-            }
+            EnqueueTask(new TimeLimitedTask(timeLimit, action, abortAction));
         }
 
-        /// <summary>Enqueues the specified thread, to be executed as soon as any thread is idle.</summary>
-        /// <param name="thread">Specifies the thread and time limit.</param>
-        public void EnqueueThread(TimeLimitedThread thread) { enqueue(thread); }
-        /// <summary>Enqueues the specified thread with the specified time limit, to be executed as soon as any thread is idle.</summary>
-        /// <param name="timeLimit">Specifies the time limit within which the action must finish or it will be aborted.
-        /// The time limit counts from when the action starts executing.</param>
-        /// <param name="action">The action to execute in a thread.</param>
-        public void EnqueueThread(TimeSpan timeLimit, Action action) { enqueue(new TimeLimitedThread(timeLimit, action)); }
-
-        /// <summary>Enqueues the specified threads, to be executed as soon as any thread is idle.</summary>
-        /// <param name="threads">Specifies the threads and their time limits.</param>
-        public void EnqueueThreads(IEnumerable<TimeLimitedThread> threads) { enqueue(threads); }
-        /// <summary>Enqueues the specified threads, to be executed as soon as any thread is idle.</summary>
-        /// <param name="threads">Specifies the threads and their time limits.</param>
-        public void EnqueueThreads(params TimeLimitedThread[] threads) { enqueue(threads); }
-        /// <summary>Enqueues the specified threads, to be executed as soon as any thread is idle.</summary>
-        /// <param name="timeLimit">Specifies the time limit within which each action must finish or it will be aborted.
-        /// The time limit counts from when the action starts executing.</param>
-        /// <param name="actions">The actions to execute in a thread.</param>
-        public void EnqueueThreads(TimeSpan timeLimit, IEnumerable<Action> actions) { enqueue(actions.Select(a => new TimeLimitedThread(timeLimit, a))); }
-        /// <summary>Enqueues the specified threads, to be executed as soon as any thread is idle.</summary>
-        /// <param name="timeLimit">Specifies the time limit within which each action must finish or it will be aborted.
-        /// The time limit counts from when the action starts executing.</param>
-        /// <param name="actions">The actions to execute in a thread.</param>
-        public void EnqueueThreads(TimeSpan timeLimit, params Action[] actions) { enqueue(actions.Select(a => new TimeLimitedThread(timeLimit, a))); }
+        /// <summary>Places a number of time-limited tasks into the execution queue, which will start executing as soon as a worker is available
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        public void EnqueueTasks(TimeSpan timeLimit, IEnumerable<Action> action, Action abortAction = null)
+        {
+            EnqueueTasks(action.Select(a => new TimeLimitedTask(timeLimit, a, abortAction)));
+        }
     }
 
-    /// <summary>Encapsulates information about an action and a time limit.</summary>
-    public sealed class TimeLimitedThread
+    /// <summary>Represents the state of a time-limited task.</summary>
+    public enum TimeLimitedTaskState
     {
-        /// <summary>Specifies the time limit within which the action must finish or it will be aborted.
-        /// The time limit counts from when the action starts executing.</summary>
+        /// <summary>The task has been created, but not yet enqueued.</summary>
+        Created,
+        /// <summary>The task has been enqueued, but hasn't started yet.</summary>
+        Enqueued,
+        /// <summary>The task has started executing, but is not yet completed, aborted or cancelled.</summary>
+        Started,
+        /// <summary>The task has completed.</summary>
+        Completed,
+        /// <summary>The task has been aborted due to time-out.</summary>
+        Aborted,
+        /// <summary>The task has been queued for execution, but was cancelled (e.g. by shutting down the pool forcefully) before it begun.</summary>
+        Cancelled,
+    }
+
+    /// <summary>
+    /// Encapsulates a time-limited task used with the <see cref="TimeLimitedThreadPool"/>.
+    /// </summary>
+    public class TimeLimitedTask
+    {
+        /// <summary>The action invoked to perform the task in question. This code must be hardened against the asynchronous <see cref="ThreadAbortException"/>.</summary>
+        public Action TaskAction { get; private set; }
+        /// <summary>The action invoked if the task has been aborted due to time-out (but not cancelled or aborted due to a Shutdown).</summary>
+        public Action AbortAction { get; private set; }
+        /// <summary>The maximum amount of time this task may take from the point when it begins executing. Tasks exceeding this limit are automatically aborted.</summary>
         public TimeSpan TimeLimit { get; private set; }
-        /// <summary>The action to execute within the time limit.</summary>
-        public Action ThreadAction { get; private set; }
+        /// <summary>Gets the current state of this task.</summary>
+        public TimeLimitedTaskState State { get; internal set; }
+
         /// <summary>Constructor.</summary>
-        /// <param name="timeLimit">Specifies the time limit within which the action must finish or it will be aborted.
-        /// The time limit counts from when the action starts executing.</param>
-        /// <param name="threadAction">The action to execute within the time limit.</param>
-        public TimeLimitedThread(TimeSpan timeLimit, Action threadAction)
+        /// <param name="timeLimit">See <see cref="TimeLimit"/>.</param>
+        /// <param name="action">See <see cref="TaskAction"/>.</param>
+        /// <param name="abortAction">See <see cref="AbortAction"/>.</param>
+        public TimeLimitedTask(TimeSpan timeLimit, Action action, Action abortAction = null)
         {
-            ThreadAction = threadAction;
+            if (action == null)
+                throw new ArgumentNullException("action");
+            if (timeLimit < TimeSpan.Zero)
+                throw new ArgumentException("Time limit must not be negative", "timeLimit");
+            TaskAction = action;
+            AbortAction = abortAction;
             TimeLimit = timeLimit;
+            State = TimeLimitedTaskState.Created;
         }
     }
 }
