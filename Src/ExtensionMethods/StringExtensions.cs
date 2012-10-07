@@ -983,11 +983,21 @@ namespace RT.Util.ExtensionMethods
             return Regex.Replace(str, "(?<=\n)", new string(' ', by));
         }
 
-        /// <summary>Splits a string into chunks of equal size. The last chunk may be smaller than chunkSize, but all chunks, if any, will contain at least 1 character.</summary>
+        /// <summary>
+        /// Splits a string into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>,
+        /// but all chunks, if any, will contain at least 1 character.
+        /// </summary>
+        /// <param name="str">String to split into chunks.</param>
+        /// <param name="chunkSize">Size of each chunk. Must be greater than zero.</param>
+        /// <returns>A lazy-evaluated collection containing the chunks from the string.</returns>
         public static IEnumerable<string> Split(this string str, int chunkSize)
         {
+            if (str == null)
+                throw new ArgumentNullException("str");
             if (chunkSize <= 0)
                 throw new ArgumentException("chunkSize must be greater than zero.", "chunkSize");
+            if (str.Length == 0)
+                return Enumerable.Empty<string>();
             return splitIterator(str, chunkSize);
         }
         private static IEnumerable<string> splitIterator(this string str, int chunkSize)
