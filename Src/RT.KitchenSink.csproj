@@ -78,6 +78,7 @@
     <Compile Include="Tcp\TcpClient.cs" />
     <Compile Include="Tcp\TcpEvents.cs" />
     <Compile Include="Tcp\TcpServer.cs" />
+    <Compile Include="Threading\TimeLimitedThreadPool.cs" />
     <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
     <Compile Include="Waiter.cs" />

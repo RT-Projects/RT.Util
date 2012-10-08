@@ -8,19 +8,22 @@ using System.Threading;
 // - ExecuteTask helper method, for a single task, not even using the thread pool. Could return bool to indicate whether the task got completed or aborted.
 // - ExecuteTasks helper method. Could use the calling thread as the control thread.
 
-namespace RT.Util.Threading
+namespace RT.KitchenSink.Threading
 {
     /// <summary>
-    /// Runs tasks in separate threads, each with a time limit. Tasks exceeding the limit are automatically aborted.
+    /// Runs tasks in separate threads, each with a time limit. Tasks exceeding the limit are automatically aborted. See Remarks for important limitations.
     /// </summary>
+    /// <remarks>
+    /// There are several major limitations that limit the usefulness of this code. First, the task code must be fully guarded against asynchronous exceptions.
+    /// This precludes the use of much of the BCL, for example all collection classes. Second, if the task is stuck in a native method, it will not be aborted.
+    /// Third, the code may deadlock in debug builds due to how the lock statement is JITted there.
+    /// </remarks>
     public sealed class TimeLimitedThreadPool
     {
         /// <summary>Keeps track of how many worker threads the user requested when constructing this pool.</summary>
         private int _workerThreadCount;
         /// <summary>Keeps track of whether the user requested background or foreground threads when constructing this pool.</summary>
         private bool _foreground;
-        /// <summary>Keeps track of whether the user wanted the pool to shut down automatically every time it becomes idle.</summary>
-        private bool _shutdownWhenIdle;
         /// <summary>The queue of tasks. Also acts as the lock object for synchronizing additions/removals from the queue and several other changes.</summary>
         private Queue<TimeLimitedTask> _queue;
         /// <summary>The array of worker descriptors. Each instance is created once and never replaced.</summary>
@@ -55,12 +58,10 @@ namespace RT.Util.Threading
         /// <summary>Constructor.</summary>
         /// <param name="workerThreadCount">The number of worker threads to run. If zero, the number of processor cores will be used.</param>
         /// <param name="foreground">True to use foreground threads (which prevent a program from shutting down while executing).</param>
-        /// <param name="shutdownWhenIdle">If true, <see cref="Shutdown"/> is invoked automatically every time the pool becomes idle. Ideal if your work load involves queueing large batches occasionally.</param>
-        public TimeLimitedThreadPool(int workerThreadCount = 0, bool foreground = false, bool shutdownWhenIdle = false)
+        public TimeLimitedThreadPool(int workerThreadCount = 0, bool foreground = false)
         {
             _workerThreadCount = workerThreadCount <= 0 ? Environment.ProcessorCount : workerThreadCount;
             _foreground = foreground;
-            _shutdownWhenIdle = shutdownWhenIdle;
         }
 
         private void startupIfNecessary()
@@ -134,9 +135,6 @@ namespace RT.Util.Threading
                         _controlWakeup.Reset(); // a task may have finished while we were doing stuff; we know for sure that a another iteration is not currently necessary
                     }
                 }
-                // Shutdown automatically on becoming idle if requested
-                if (_shutdownWhenIdle && _idle.WaitOne(0))
-                    Shutdown();
             }
         }
 
@@ -178,7 +176,7 @@ namespace RT.Util.Threading
         /// <summary>
         /// Shuts down all threads owned by the thread pool. Empties the queue of tasks and forcefully aborts any tasks currently in progress.
         /// Blocks until the shutdown has completed. May be called multiple times in a row. The threads will be recreated automatically the next
-        /// time one of the task-enqueueing methods is called.
+        /// time one of the task-enqueueing methods is called. Must be synchronized with any calls to task enqueueing methods.
         /// </summary>
         public void Shutdown()
         {
@@ -229,7 +227,8 @@ namespace RT.Util.Threading
         }
 
         /// <summary>Places a time-limited task into the execution queue, which will start executing as soon as a worker is available
-        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.
+        /// Must be synchronized with <see cref="Shutdown"/>.</summary>
         public void EnqueueTask(TimeLimitedTask task)
         {
             startupIfNecessary();
@@ -243,7 +242,8 @@ namespace RT.Util.Threading
         }
 
         /// <summary>Places a number of time-limited tasks into the execution queue, which will start executing as soon as a worker is available
-        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.
+        /// Must be synchronized with <see cref="Shutdown"/>.</summary>
         public void EnqueueTasks(IEnumerable<TimeLimitedTask> tasks)
         {
             startupIfNecessary();
@@ -260,14 +260,16 @@ namespace RT.Util.Threading
         }
 
         /// <summary>Places a time-limited task into the execution queue, which will start executing as soon as a worker is available
-        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.
+        /// Must be synchronized with <see cref="Shutdown"/>.</summary>
         public void EnqueueTask(TimeSpan timeLimit, Action action, Action abortAction = null)
         {
             EnqueueTask(new TimeLimitedDelegateTask(timeLimit, action, abortAction));
         }
 
         /// <summary>Places a number of time-limited tasks into the execution queue, which will start executing as soon as a worker is available
-        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.</summary>
+        /// and all tasks queued earlier are completed. If the pool was shut down, it will be started up automatically.
+        /// Must be synchronized with <see cref="Shutdown"/>.</summary>
         public void EnqueueTasks(TimeSpan timeLimit, IEnumerable<Action> action, Action abortAction = null)
         {
             EnqueueTasks(action.Select(a => new TimeLimitedDelegateTask(timeLimit, a, abortAction)));

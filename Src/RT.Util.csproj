@@ -188,7 +188,6 @@
     <Compile Include="Text\OffsetToLineCol.cs" />
     <Compile Include="Threading\Periodic.cs" />
     <Compile Include="Threading\RateLimitedAction.cs" />
-    <Compile Include="Threading\TimeLimitedThreadPool.cs" />
     <Compile Include="Ut\OnException.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
