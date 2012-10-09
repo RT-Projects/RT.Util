@@ -16,7 +16,7 @@ namespace RT.Util.Streams
             bool okclient = false;
             bool okserver = false;
             bool pipeready = false;
-            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
+            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
                 while (!pipeready) Thread.Sleep(50);
@@ -71,7 +71,7 @@ namespace RT.Util.Streams
             bool okclient = false;
             bool okserver = false;
             bool pipeready = false;
-            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
+            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
                 while (!pipeready) Thread.Sleep(50);
@@ -123,7 +123,7 @@ namespace RT.Util.Streams
             bool okclient = false;
             bool okserver = false;
             bool pipeready = false;
-            var pipename = "test.pipe." + Rnd.NextBytes(10).ToHex();
+            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
             var tc = new Thread(() =>
             {
                 while (!pipeready) Thread.Sleep(50);
