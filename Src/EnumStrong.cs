@@ -22,7 +22,7 @@ namespace RT.Util
         /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
         /// <param name="value">A string containing the name or value to convert.</param>
         /// <param name="ignoreCase">If true, ignore case; otherwise, regard case.</param>
-        public static T Parse<T>(string value, bool ignoreCase)
+        public static T Parse<T>(string value, bool ignoreCase) where T : struct
         {
             return (T) Enum.Parse(typeof(T), value, ignoreCase);
         }
@@ -32,10 +32,9 @@ namespace RT.Util
         /// <param name="value">A string containing the name or value to convert.</param>
         /// <param name="result">Variable receiving the converted value.</param>
         /// <returns>True if the value was successfully converted; false otherwise.</returns>
-        public static bool TryParse<T>(string value, out T result)
+        public static bool TryParse<T>(string value, out T result) where T : struct
         {
-            try { result = (T) Enum.Parse(typeof(T), value); return true; }
-            catch { result = default(T); return false; }
+            return Enum.TryParse<T>(value, out result);
         }
 
         /// <summary>Finds the enum value corresponding to the specified string.</summary>
@@ -44,10 +43,30 @@ namespace RT.Util
         /// <param name="result">Variable receiving the converted value.</param>
         /// <param name="ignoreCase">If true, ignore case; otherwise, regard case.</param>
         /// <returns>True if the value was successfully converted; false otherwise.</returns>
-        public static bool TryParse<T>(string value, out T result, bool ignoreCase)
+        public static bool TryParse<T>(string value, out T result, bool ignoreCase) where T : struct
         {
-            try { result = (T) Enum.Parse(typeof(T), value, ignoreCase); return true; }
-            catch { result = default(T); return false; }
+            return Enum.TryParse<T>(value, ignoreCase, out result);
+        }
+
+        /// <summary>Finds the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">A string containing the name or value to convert.</param>
+        /// <returns>The value if it was successfully converted; null otherwise.</returns>
+        public static T? TryParse<T>(string value) where T : struct
+        {
+            T result;
+            return Enum.TryParse<T>(value, out result) ? result : (T?) null;
+        }
+
+        /// <summary>Finds the enum value corresponding to the specified string.</summary>
+        /// <typeparam name="T">The enum type from which to retrieve the value.</typeparam>
+        /// <param name="value">A string containing the name or value to convert.</param>
+        /// <param name="ignoreCase">If true, ignore case; otherwise, regard case.</param>
+        /// <returns>The value if it was successfully converted; null otherwise.</returns>
+        public static T? TryParse<T>(string value, bool ignoreCase) where T : struct
+        {
+            T result;
+            return Enum.TryParse<T>(value, ignoreCase, out result) ? result : (T?) null;
         }
 
         /// <summary>Returns the set of enum values from the specified enum type.</summary>
