@@ -340,7 +340,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="sourceArray">Array in which to search for the subarray.</param>
         /// <param name="findWhat">Subarray to search for.</param>
         /// <param name="startIndex">Index in <paramref name="sourceArray"/> at which to start searching.</param>
-        /// <param name="sourceLength">Maximum length of the source array to search. The greatest index that can be returned is this minus the length of <paramref name="findWhat"/>.</param>
+        /// <param name="sourceLength">Maximum length of the source array to search starting from <paramref name="startIndex"/>.
+        /// The greatest index that can be returned is this minus the length of <paramref name="findWhat"/> plus <paramref name="startIndex"/>.</param>
         /// <param name="comparer">Optional equality comparer.</param>
         /// <returns>The index of the first match, or -1 if no match is found.</returns>
         public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int? sourceLength = null, IEqualityComparer<T> comparer = null)
@@ -354,7 +355,7 @@ namespace RT.Util.ExtensionMethods
             if (sourceLength != null && (sourceLength < 0 || sourceLength + startIndex > sourceArray.Length))
                 throw new ArgumentOutOfRangeException("sourceLength");
 
-            var maxIndex = (sourceLength ?? (sourceArray.Length - startIndex)) - findWhat.Length;
+            var maxIndex = (sourceLength == null ? sourceArray.Length : startIndex + sourceLength.Value) - findWhat.Length;
             for (int i = startIndex; i <= maxIndex; i++)
                 if (sourceArray.SubarrayEquals(i, findWhat, 0, findWhat.Length, comparer))
                     return i;

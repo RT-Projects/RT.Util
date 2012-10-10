@@ -369,8 +369,8 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual(0, new int[0].IndexOfSubarray(new int[0], 0, 0));
             Assert.AreEqual(-1, new int[0].IndexOfSubarray(new int[] { 1 }, 0, 0));
             Assert.AreEqual(0, new int[] { 1 }.IndexOfSubarray(new int[] { 1 }, 0, 1));
-            Assert.AreEqual(-1, new int[] { 1 }.IndexOfSubarray(new int[] { 1 }, 1, 1));
-            Assert.AreEqual(1, new int[] { 1 }.IndexOfSubarray(new int[0], 1, 1));
+            Assert.AreEqual(-1, new int[] { 1, 2 }.IndexOfSubarray(new int[] { 1 }, 1, 1));
+            Assert.AreEqual(1, new int[] { 1 }.IndexOfSubarray(new int[0], 1, 0));
 
             Assert.AreEqual(2, new[] { 1, 2, 3, 4, 5 }.IndexOfSubarray(new[] { 3, 4 }, 0, 5));
             Assert.AreEqual(2, new[] { 1, 2, 3, 4, 5 }.IndexOfSubarray(new[] { 3, 4 }, 0, 4));
