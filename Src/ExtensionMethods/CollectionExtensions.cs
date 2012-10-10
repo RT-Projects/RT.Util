@@ -289,21 +289,48 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Determines whether a subarray within the current array is equal to the specified other array.
+        /// </summary>
+        /// <param name="sourceArray">First array to examine.</param>
+        /// <param name="sourceStartIndex">Start index of the subarray within the first array to compare.</param>
+        /// <param name="otherArray">Array to compare the subarray against.</param>
+        /// <param name="comparer">Optional equality comparer.</param>
+        /// <returns>True if the current array contains the specified subarray at the specified index; false otherwise.</returns>
+        public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, IEqualityComparer<T> comparer = null)
+        {
+            if (otherArray == null)
+                throw new ArgumentNullException("otherArray");
+            return SubarrayEquals(sourceArray, sourceStartIndex, otherArray, 0, otherArray.Length, comparer);
+        }
+
+        /// <summary>
         /// Determines whether the two arrays contain the same content in the specified location.
         /// </summary>
-        public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, int otherStartIndex, int length) where T : IEquatable<T>
+        /// <param name="sourceArray">First array to examine.</param>
+        /// <param name="sourceStartIndex">Start index of the subarray within the first array to compare.</param>
+        /// <param name="otherArray">Second array to examine.</param>
+        /// <param name="otherStartIndex">Start index of the subarray within the second array to compare.</param>
+        /// <param name="length">Length of the subarrays to compare.</param>
+        /// <param name="comparer">Optional equality comparer.</param>
+        /// <returns>True if the two arrays contain the same subarrays at the specified indexes; false otherwise.</returns>
+        public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, int otherStartIndex, int length, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
                 throw new ArgumentNullException("sourceArray");
+            if (sourceStartIndex < 0)
+                throw new ArgumentOutOfRangeException("The sourceStartIndex argument must be non-negative.", "sourceStartIndex");
             if (otherArray == null)
                 throw new ArgumentNullException("otherArray");
-            if (sourceStartIndex < 0 || length < 0 || otherStartIndex < 0 || sourceStartIndex + length > sourceArray.Length || otherStartIndex + length > otherArray.Length)
-                throw new ArgumentOutOfRangeException();
+            if (otherStartIndex < 0)
+                throw new ArgumentOutOfRangeException("The otherStartIndex argument must be non-negative.", "otherStartIndex");
+            if (length < 0 || sourceStartIndex + length > sourceArray.Length || otherStartIndex + length > otherArray.Length)
+                throw new ArgumentOutOfRangeException("The length argument must be non-negative and must be such that both subarrays are within the bounds of the respective source arrays.", "length");
+
+            if (comparer == null)
+                comparer = EqualityComparer<T>.Default;
             for (int i = 0; i < length; i++)
-            {
-                if (!sourceArray[sourceStartIndex + i].Equals(otherArray[otherStartIndex + i]))
+                if (!comparer.Equals(sourceArray[sourceStartIndex + i], otherArray[otherStartIndex + i]))
                     return false;
-            }
             return true;
         }
 
@@ -314,7 +341,9 @@ namespace RT.Util.ExtensionMethods
         /// <param name="findWhat">Subarray to search for.</param>
         /// <param name="startIndex">Index in <paramref name="sourceArray"/> at which to start searching.</param>
         /// <param name="sourceLength">Maximum length of the source array to search. The greatest index that can be returned is this minus the length of <paramref name="findWhat"/>.</param>
-        public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int? sourceLength = null) where T : IEquatable<T>
+        /// <param name="comparer">Optional equality comparer.</param>
+        /// <returns>The index of the first match, or -1 if no match is found.</returns>
+        public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int? sourceLength = null, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
                 throw new ArgumentNullException("sourceArray");
@@ -322,12 +351,13 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("findWhat");
             if (startIndex < 0 || startIndex > sourceArray.Length)
                 throw new ArgumentOutOfRangeException("startIndex");
+            if (sourceLength != null && (sourceLength < 0 || sourceLength + startIndex > sourceArray.Length))
+                throw new ArgumentOutOfRangeException("sourceLength");
+
             var maxIndex = (sourceLength ?? (sourceArray.Length - startIndex)) - findWhat.Length;
             for (int i = startIndex; i <= maxIndex; i++)
-            {
-                if (sourceArray.SubarrayEquals(i, findWhat, 0, findWhat.Length))
+                if (sourceArray.SubarrayEquals(i, findWhat, 0, findWhat.Length, comparer))
                     return i;
-            }
             return -1;
         }
 
