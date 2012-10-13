@@ -33,6 +33,8 @@ namespace RT.KitchenSink.Collections
         PartialComparisonResult PartialCompareTo(T other);
     }
 
+#warning All the HashSet<T> occurrences in here used to be Set<T>. Check semantics of various methods. Known problem: Set<T>.AsReadOnly() was efficient; now it instantiates a wrapper every time.
+
     /// <summary>
     /// Represents a node in the poset graph. A node represents a single equivalence class,
     /// and maintains two sets of links to nearby nodes - specifically, those representing
@@ -43,9 +45,9 @@ namespace RT.KitchenSink.Collections
     {
         private List<T> _elements;
         /// <summary>Stores a set of all nodes which are just-larger than this one. DO NOT CHANGE!</summary>
-        internal Set<PosetNode<T>> _largers = new Set<PosetNode<T>>();
+        internal HashSet<PosetNode<T>> _largers = new HashSet<PosetNode<T>>();
         /// <summary>Stores a set of all nodes which are just-smaller than this one. DO NOT CHANGE!</summary>
-        internal Set<PosetNode<T>> _smallers = new Set<PosetNode<T>>();
+        internal HashSet<PosetNode<T>> _smallers = new HashSet<PosetNode<T>>();
 
         /// <summary>Gets a read-only collection of all nodes which are just-larger than this one.</summary>
         public ReadOnlyCollection<PosetNode<T>> Largers { get { return _largers.AsReadOnly(); } }
@@ -120,10 +122,10 @@ namespace RT.KitchenSink.Collections
     /// and the other starting from the maximal elements.
     /// </summary>
     /// <typeparam name="T">The type of the elements to be stored. Must implement <see cref="IPartialComparable&lt;T&gt;"/></typeparam>
-    public sealed class Poset<T> where T : IPartialComparable<T>
+    public sealed class PoHashSet<T> where T : IPartialComparable<T>
     {
-        private Set<PosetNode<T>> _minimals = new Set<PosetNode<T>>();
-        private Set<PosetNode<T>> _maximals = new Set<PosetNode<T>>();
+        private HashSet<PosetNode<T>> _minimals = new HashSet<PosetNode<T>>();
+        private HashSet<PosetNode<T>> _maximals = new HashSet<PosetNode<T>>();
 
         /// <summary>
         /// Gets the set of all minimal elements in the poset.
@@ -156,7 +158,7 @@ namespace RT.KitchenSink.Collections
             add(false, node, _maximals, null);
         }
 
-        private void add(bool upwards, PosetNode<T> toadd, Set<PosetNode<T>> links, PosetNode<T> linkfrom)
+        private void add(bool upwards, PosetNode<T> toadd, HashSet<PosetNode<T>> links, PosetNode<T> linkfrom)
         {
             bool any = false;
             List<PosetNode<T>> links_add = null;
@@ -255,7 +257,7 @@ namespace RT.KitchenSink.Collections
                 throw new InternalErrorException("Maximals have larger links");
         }
 
-        private void checkLinksTowardsMax(PosetNode<T> node, Set<PosetNode<T>> links)
+        private void checkLinksTowardsMax(PosetNode<T> node, HashSet<PosetNode<T>> links)
         {
             if (node != null)
             {
@@ -273,7 +275,7 @@ namespace RT.KitchenSink.Collections
                 checkLinksTowardsMax(l, l._largers);
         }
 
-        private void checkLinksTowardsMin(PosetNode<T> node, Set<PosetNode<T>> links)
+        private void checkLinksTowardsMin(PosetNode<T> node, HashSet<PosetNode<T>> links)
         {
             if (node != null)
             {

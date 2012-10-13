@@ -49,7 +49,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\RVariantTests.cs" />
-    <Compile Include="Collections\SetTests.cs" />
     <Compile Include="KitchenSinkTests.cs" />
     <Compile Include="Properties\KitchenSink\KitchenSinkTestsAssemblyInfo.cs" />
     <Compile Include="Streams\ControlCodedStreamTests.cs" />
@@ -68,10 +67,6 @@
     <ProjectReference Include="RT.KitchenSink.csproj">
       <Project>{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}</Project>
       <Name>KitchenSink</Name>
-    </ProjectReference>
-    <ProjectReference Include="KitchenSinkServer.csproj">
-      <Project>{7840475C-11F4-4DF1-B989-528905427672}</Project>
-      <Name>KitchenSinkServer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
