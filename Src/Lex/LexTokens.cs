@@ -53,10 +53,10 @@ namespace RT.KitchenSink.Lex
     {
         public string Builtin { get; private set; }
 
-        public BuiltinToken(LexPosition start, LexPosition end, string operator_)
+        public BuiltinToken(LexPosition start, LexPosition end, string @operator)
             : base(start, end)
         {
-            Builtin = operator_;
+            Builtin = @operator;
         }
 
         public new sealed class Parser : Token.Parser

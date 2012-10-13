@@ -8,7 +8,7 @@ using RT.KitchenSink.Collections;
 
 namespace RT.KitchenSink.Lex
 {
-    public sealed class LexTokenizer : LazyToCollection<Token>
+    public sealed class LexTokenizer : LazyList<Token>
     {
         public LexTokenizer(LexReader reader, IEnumerable<Token.Parser> tokenParsers, ICollection<Type> ignoreTokens, Type stopToken, bool swallowWhitespace)
             : base(makeEnumerable(reader, tokenParsers, ignoreTokens, stopToken, swallowWhitespace))
