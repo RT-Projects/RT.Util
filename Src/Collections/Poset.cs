@@ -122,7 +122,7 @@ namespace RT.KitchenSink.Collections
     /// and the other starting from the maximal elements.
     /// </summary>
     /// <typeparam name="T">The type of the elements to be stored. Must implement <see cref="IPartialComparable&lt;T&gt;"/></typeparam>
-    public sealed class PoHashSet<T> where T : IPartialComparable<T>
+    public sealed class Poset<T> where T : IPartialComparable<T>
     {
         private HashSet<PosetNode<T>> _minimals = new HashSet<PosetNode<T>>();
         private HashSet<PosetNode<T>> _maximals = new HashSet<PosetNode<T>>();
