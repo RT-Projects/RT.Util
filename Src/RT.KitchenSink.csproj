@@ -68,9 +68,6 @@
     <Compile Include="Regex2.cs" />
     <Compile Include="Streams\ControlCodedStream.cs" />
     <Compile Include="Streams\PeekableStream.cs" />
-    <Compile Include="Tcp\TcpClient.cs" />
-    <Compile Include="Tcp\TcpEvents.cs" />
-    <Compile Include="Tcp\TcpServer.cs" />
     <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
     <Compile Include="Waiter.cs" />
