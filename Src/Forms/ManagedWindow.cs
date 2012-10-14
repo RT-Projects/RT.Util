@@ -1,11 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Threading;
+
+// Requirements:
+// - on first run, centered on primary or current monitor using the designer width/height and maximized state
+// - on subsequent runs, restored to the same state / position / size as it had on last shutdown, without flicker
+// - if restored maximized, must be on the same screen, and after un-maximizing must have the same position / size as it would have had on last shutdown
+// - must keep the passed in settings object reasonably up-to-date at all times, without any explicit calls to do so
+// - when window defaults to maximized, a start and immediate close must not remember a silly size (e.g. zeroes)
+
+// To do:
+// - investigate replacing MaximizedByDefault with WindowState="Maximized" in XAML support
+// - disallow window being completely off-screen for whatever reason (e.g. resolution change)
+// - on resolution change, move the window to its last state at that resolution
 
 namespace RT.Util.Forms
 {
     /// <summary>
     /// A window which has all the proper minimize/restore methods, and which remembers its position and size between instances of the application.
+    /// The size/position/state values are automatically reflected in the settings object whenever the user resizes or moves the window. If XAML
+    /// supplies an initial size, that size will be used whenever no previous size is available (such as first run).
     /// </summary>
     public class ManagedWindow : Window
     {
@@ -16,6 +31,7 @@ namespace RT.Util.Forms
         private double _normalLeft, _normalTop;
         private double _prevLeft, _prevTop;  // WPF bug workaround: see processResize for explanation
         private Settings _settings;
+        private DispatcherTimer _storeSettingsTimer;
 
         /// <summary>We need a default constructor for the WPF designer to work. Don't invoke this or else the settings won't work.</summary>
         public ManagedWindow() { }
@@ -27,17 +43,47 @@ namespace RT.Util.Forms
             if (settings == null) throw new ArgumentNullException("settings");
             _settings = settings;
 
-            SetSizePosFromSettings();
+            try
+            {
+                var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
+                WindowDimensions dimensions;
+                if (_settings.DimensionsByRes.TryGetValue(resolution, out dimensions))
+                {
+                    // Restore the settings we already have for this window
+                    SourceInitialized += delegate
+                    {
+                        // Can't do this in the constructor because then maximizing to secondary montor is broken, and also because XAML would then have priority.
+                        // Also can't do this in the conventional "Loaded" event, because it's fired too late, when the window is already visible, causing flicker.
+                        Left = _normalLeft = dimensions.Left;
+                        Top = _normalTop = dimensions.Top;
+                        Width = _normalWidth = dimensions.Width;
+                        Height = _normalHeight = dimensions.Height;
+                        Maximized = dimensions.Maximized;
+                        finishInitialization();
+                    };
+                }
+                else
+                {
+                    // Use default settings: center on active monitor, using the size and state defined in the designer / XAML
+                    WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen; // must be set in the constructor
+                    Maximized = MaximizedByDefault;
+                    Loaded += delegate
+                    {
+                        // Left/Top/Width/Height not available until after the window has become visible
+                        _normalLeft = Left;
+                        _normalTop = Top;
+                        _normalWidth = Width;
+                        _normalHeight = Height;
+                        finishInitialization();
+                    };
+                }
+            }
+            catch { }
+        }
 
-            // SizeChanged event: keeps track of minimize/maximize and normal size
-            SizeChanged += new SizeChangedEventHandler(processResize);
-            // Move event: keeps track of normal dimensions
-            LocationChanged += new EventHandler(processMove);
-            // Close event: save the settings
-            Closed += new EventHandler(saveSettings);
-
+        void finishInitialization()
+        {
             _prevWindowState = WindowState;
-
             switch (WindowState)
             {
                 case WindowState.Minimized:
@@ -53,41 +99,23 @@ namespace RT.Util.Forms
                     _stateMaximized = false;
                     break;
             }
+
+            // SizeChanged event: keeps track of minimize/maximize and normal size
+            SizeChanged += processResize;
+            // Move event: keeps track of normal dimensions
+            LocationChanged += processMove;
+            // Close event: save the settings
+            Closed += storeSettings;
+            // Settings are stored in the dispatcher a short while after the user has stopped resizing/moving the window,
+            // to work around the maximize-related bug described in processResize.
+            _storeSettingsTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150), IsEnabled = false };
+            _storeSettingsTimer.Tick += storeSettingsDelayedTick;
         }
 
-        /// <summary>
-        /// Applies the window size and position as specified in the window settings. If the XAML sets the window's Width/Height, this method
-        /// can be called in the window's constructor right after InitializeComponent, to re-apply the correct size.
-        /// </summary>
-        public void SetSizePosFromSettings()
-        {
-            try
-            {
-                var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
-
-                WindowDimensions dimensions = null;
-                if (_settings.DimensionsByRes.ContainsKey(resolution))
-                    dimensions = _settings.DimensionsByRes[resolution];
-
-                if (dimensions == null)
-                {
-                    Left = _normalLeft = SystemParameters.WorkArea.Left + SystemParameters.WorkArea.Width / 2 - Width / 2;
-                    Top = _normalTop = SystemParameters.WorkArea.Top + SystemParameters.WorkArea.Height / 2 - Height / 2;
-                    _normalWidth = Width;
-                    _normalHeight = Height;
-                }
-                else
-                {
-                    Left = _normalLeft = dimensions.Left;
-                    Top = _normalTop = dimensions.Top;
-                    Width = _normalWidth = dimensions.Width;
-                    Height = _normalHeight = dimensions.Height;
-                    Maximized = dimensions.Maximized;
-                }
-            }
-            catch
-            { }
-        }
+        /// <summary>To make the window maximized by default (i.e. on first run, before the user has had a chance to move/resize the window),
+        /// override this property and return true. This property is read from the window constructor. Do not use XAML to set Maximized to true
+        /// because <see cref="ManagedWindow"/> will not be able to override that without flicker (and thus doesn't support that at all).</summary>
+        public virtual bool MaximizedByDefault { get { return false; } }
 
         private void processResize(object sender, SizeChangedEventArgs e)
         {
@@ -109,7 +137,7 @@ namespace RT.Util.Forms
                         _stateMinimized = true;
                         break;
                     case WindowState.Maximized:
-                        // The window was just maximized. Due to a stupid bug in WPF, a LocationChanged event will have occurred before this Resize event.
+                        // ARGH: The window was just maximized. Due to a stupid bug in WPF, a LocationChanged event will have occurred before this Resize event.
                         // In that LocationChanged event, WindowState is incorrectly still set to "normal", but "Left" and "Top" are already set to -4 each.
                         // Consequently, we have to remember the *actual* left/top in _prevLeft/_prevTop and restore them here.
                         _normalLeft = _prevLeft;
@@ -135,6 +163,7 @@ namespace RT.Util.Forms
 
                 _prevWindowState = WindowState;
             }
+            storeSettingsDelayed();
         }
 
         private void processMove(object sender, EventArgs e)
@@ -148,6 +177,7 @@ namespace RT.Util.Forms
                 _normalLeft = Left;
                 _normalTop = Top;
             }
+            storeSettingsDelayed();
         }
 
         /// <summary>Determines if the current managed form is minimised.</summary>
@@ -251,16 +281,29 @@ namespace RT.Util.Forms
             public bool Maximized;
         }
 
-        private void saveSettings(object sender, EventArgs e)
+        private void storeSettings(object _ = null, EventArgs __ = null)
         {
             var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
-            var dimensions = new WindowDimensions();
+            WindowDimensions dimensions;
+            if (!_settings.DimensionsByRes.TryGetValue(resolution, out dimensions))
+                dimensions = _settings.DimensionsByRes[resolution] = new WindowDimensions();
             dimensions.Left = _normalLeft;
             dimensions.Top = _normalTop;
             dimensions.Width = _normalWidth;
             dimensions.Height = _normalHeight;
             dimensions.Maximized = Maximized;
-            _settings.DimensionsByRes[resolution] = dimensions;
+        }
+
+        private void storeSettingsDelayed()
+        {
+            _storeSettingsTimer.Stop();
+            _storeSettingsTimer.Start();
+        }
+
+        private void storeSettingsDelayedTick(object _, EventArgs __)
+        {
+            _storeSettingsTimer.Stop();
+            storeSettings();
         }
 
         #endregion
