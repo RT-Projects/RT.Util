@@ -522,9 +522,7 @@ namespace RT.Util.ExtensionMethods
                     default:
                         if (c >= ' ')
                             result.Append(c);
-                        else if (c > 255)
-                            result.AppendFormat(@"\x{0:X4}", (int) c); // to be C-compatible, \x must be followed by 2 or 4 digits, but never 3.
-                        else
+                        else // the character is in the 0..31 range
                             result.AppendFormat(@"\x{0:X2}", (int) c);
                         break;
                 }
