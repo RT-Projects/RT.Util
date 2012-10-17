@@ -33,8 +33,6 @@ namespace RT.KitchenSink.Collections
         PartialComparisonResult PartialCompareTo(T other);
     }
 
-#warning All the HashSet<T> occurrences in here used to be Set<T>. Check semantics of various methods. Known problem: Set<T>.AsReadOnly() was efficient; now it instantiates a wrapper every time.
-
     /// <summary>
     /// Represents a node in the poset graph. A node represents a single equivalence class,
     /// and maintains two sets of links to nearby nodes - specifically, those representing
@@ -50,9 +48,11 @@ namespace RT.KitchenSink.Collections
         internal HashSet<PosetNode<T>> _smallers = new HashSet<PosetNode<T>>();
 
         /// <summary>Gets a read-only collection of all nodes which are just-larger than this one.</summary>
-        public ReadOnlyCollection<PosetNode<T>> Largers { get { return _largers.AsReadOnly(); } }
+        public ReadOnlyCollection<PosetNode<T>> Largers { get { return _largers.AsReadOnly(ref _largersRO); } }
+        private ReadOnlyCollection<PosetNode<T>> _largersRO;
         /// <summary>Gets a read-only collection of all nodes which are just-smaller than this one.</summary>
-        public ReadOnlyCollection<PosetNode<T>> Smallers { get { return _smallers.AsReadOnly(); } }
+        public ReadOnlyCollection<PosetNode<T>> Smallers { get { return _smallers.AsReadOnly(ref _smallersRO); } }
+        private ReadOnlyCollection<PosetNode<T>> _smallersRO;
 
         /// <summary>
         /// Creates a new node and initialises it with the single element. A node is only
@@ -130,12 +130,14 @@ namespace RT.KitchenSink.Collections
         /// <summary>
         /// Gets the set of all minimal elements in the poset.
         /// </summary>
-        public ReadOnlyCollection<PosetNode<T>> Minimals { get { return _minimals.AsReadOnly(); } }
+        public ReadOnlyCollection<PosetNode<T>> Minimals { get { return _minimals.AsReadOnly(ref _minimalsRO); } }
+        private ReadOnlyCollection<PosetNode<T>> _minimalsRO;
 
         /// <summary>
         /// Gets the set of all maximal elements in the poset.
         /// </summary>
-        public ReadOnlyCollection<PosetNode<T>> Maximals { get { return _maximals.AsReadOnly(); } }
+        public ReadOnlyCollection<PosetNode<T>> Maximals { get { return _maximals.AsReadOnly(ref _maximalsRO); } }
+        private ReadOnlyCollection<PosetNode<T>> _maximalsRO;
 
         /// <summary>
         /// Adds an element to the poset. If available, the element will be added to an existing

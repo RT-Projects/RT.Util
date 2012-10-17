@@ -64,7 +64,6 @@
     <Compile Include="Lex\TokenJar.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
     <Compile Include="RateCalculator.cs" />
-    <Compile Include="Regex2.cs" />
     <Compile Include="Streams\ControlCodedStream.cs" />
     <Compile Include="Streams\PeekableStream.cs" />
     <Compile Include="ValueStat.cs" />
