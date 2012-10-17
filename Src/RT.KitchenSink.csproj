@@ -62,7 +62,6 @@
     <Compile Include="Lex\LexTokens.cs" />
     <Compile Include="Lex\LexUtil.cs" />
     <Compile Include="Lex\TokenJar.cs" />
-    <Compile Include="PowerfulRegex.cs" />
     <Compile Include="Properties\KitchenSink\AssemblyInfo.cs" />
     <Compile Include="RateCalculator.cs" />
     <Compile Include="Regex2.cs" />
