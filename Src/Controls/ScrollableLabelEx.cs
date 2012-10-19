@@ -21,6 +21,7 @@ namespace RT.Util.Controls
             AutoScroll = true;
             TabStop = false;
 
+            Label.Click += delegate { Focus(); };
             Label.LinkGotFocus += linkGotFocus;
 
             // For some reason KeyDown doesn’t receive the cursor keys, so use PreviewKeyDown

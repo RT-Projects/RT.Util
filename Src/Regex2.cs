@@ -57,7 +57,7 @@ namespace RT.Util
         /// <summary>Changes the meaning of the dot (.) so it matches every character except \n.</summary>
         NewlineNotMatchedByDot = 16,
         /// <summary>Specifies that the only valid captures are explicitly named or numbered groups
-        /// of the form (?<name>…). This allows unnamed parentheses to act as noncapturing
+        /// of the form (?&lt;name&gt;…). This allows unnamed parentheses to act as noncapturing
         /// groups without the syntactic clumsiness of the expression (?:…).</summary>
         ExplicitCapture = 4,
         /// <summary>Specifies that the regular expression is compiled to an assembly. This yields
