@@ -10,6 +10,8 @@ using System.Windows.Media;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 
+#warning TODO: Lingo/WPF is unfinished and sort of belongs on a branch. Search for comments with "TODO" in them before deleting this warning.
+
 namespace RT.Util.Lingo
 {
     /// <summary>
@@ -95,6 +97,7 @@ namespace RT.Util.Lingo
         /// <summary>Gets a value indicating whether any changes have been made by the user since the last save.</summary>
         public bool AnyChanges { get { return _anyChanges; } }
 
+        /// <summary>TODO: comment</summary>
         public void SaveChanges(bool fireTranslationChanged)
         {
             if (AnyChanges)
@@ -106,6 +109,7 @@ namespace RT.Util.Lingo
             }
         }
 
+        /// <summary>TODO: comment</summary>
         public void CloseWithoutPrompts()
         {
             throw new NotImplementedException();
@@ -158,8 +162,6 @@ namespace RT.Util.Lingo
             int nn = info.TranslationTr.IsNumber.Where(b => b).Count();
             int curRow = 0;
 
-            int prevRow;
-            TextBlock textBlock;
             string label2 = "Original:";
             if (info.TranslationTr.Old != null && !info.TranslationTr.Old.SequenceEqual(info.NewOriginal))
             {
@@ -298,8 +300,7 @@ namespace RT.Util.Lingo
         private void ctGroups_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             _uiElementCache = null;
-#warning Remove the next two lines once we removed the example objects from the XAML
-            ctStrings.ItemsSource = null;
+            ctStrings.ItemsSource = null; // removes the example objects from XAML
             ctStrings.Items.Clear();
             ctStrings.ItemsSource = ((TranslationGroup) ctGroups.SelectedItem).Infos;
         }
@@ -346,7 +347,7 @@ namespace RT.Util.Lingo
                 _uiElementCache = findVisualChildren(this, obj => obj is TextBox || obj is Button).ToArray<object>();
 
             var currentElement = FocusManager.GetFocusedElement(this);
-#warning Remove the next two lines once we think it never triggers
+            // TODO: Remove the next two lines once we think it never triggers
             if (currentElement != Keyboard.FocusedElement)
                 System.Diagnostics.Debugger.Break();
 

@@ -495,7 +495,7 @@ namespace RT.Util.Lingo
 
         private void createPanelsForType(string chkName, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups, string path)
         {
-#warning TODO: this should be rewritten using TranslationDialogHelper.GetGroups
+            // TODO: this should be rewritten using TranslationDialogHelper.GetGroups
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
                 if (chkName == null)
