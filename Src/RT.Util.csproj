@@ -212,6 +212,7 @@
     <Compile Include="Random.cs" />
     <Compile Include="Ut\RunMain.cs" />
     <Compile Include="Ut\TicToc.cs" />
+    <Compile Include="Waiter.cs" />
     <Compile Include="WinAPI.cs" />
     <Compile Include="XmlClassify.cs" />
   </ItemGroup>

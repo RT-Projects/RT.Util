@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using RT.Util;
 using RT.Util.ExtensionMethods;
 
-namespace RT.KitchenSink
+namespace RT.Util
 {
     /// <summary>
     /// Helps limit the rate of an action to be within all of the defined rate limits, by suspending the calling thread
