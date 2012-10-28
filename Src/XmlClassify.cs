@@ -86,14 +86,15 @@ namespace RT.Util.Xml
         /// <param name="type">Type of object to read.</param>
         /// <param name="filename">Path and filename of the XML file to read from.</param>
         /// <param name="options">Options.</param>
+        /// <param name="parent">If the class to be declassified has a field with the [XmlParent] attribute, that field will receive this object.</param>
         /// <returns>A new instance of the requested type.</returns>
-        public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null)
+        public static object LoadObjectFromXmlFile(Type type, string filename, XmlClassifyOptions options = null, object parent = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             XElement elem;
             using (var strRead = new StreamReader(filename, Encoding.UTF8))
                 elem = XElement.Load(strRead);
-            return new classifier(options, defaultBaseDir).Declassify(type, elem);
+            return new classifier(options, defaultBaseDir).Declassify(type, elem, parent);
         }
 
         /// <summary>
@@ -500,13 +501,10 @@ namespace RT.Util.Xml
                                 string newFile = Path.Combine(_baseDir, innerType.Name, attr.Value + ".xml");
                                 field.SetValue(intoObject,
                                     typeof(XmlDeferredObject<>).MakeGenericType(innerType)
-                                        .GetConstructor(new Type[] { typeof(string), typeof(MethodInfo), typeof(object), typeof(object[]) })
+                                        .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(string) /* id */, typeof(Func<object>) /* generator */ }, null)
                                         .Invoke(Ut.NewArray<object>(
-                                            attr.Value /*id*/,
-                                            typeof(XmlClassify).GetMethod("LoadObjectFromXmlFile", BindingFlags.Static | BindingFlags.NonPublic,
-                                                null, new Type[] { typeof(Type), typeof(string), typeof(XmlClassifyOptions), typeof(object) }, null) /*generatorMethod*/,
-                                            null /*generatorObject*/,
-                                            new object[] { /*type*/ innerType, /*filename*/ newFile, /*options*/ _options, /*parent*/ intoObject } /*generatorParams*/
+                                            attr.Value /* id */,
+                                            new Func<object>(() => LoadObjectFromXmlFile(innerType, newFile, _options, intoObject)) /* generator */
                                         ))
                                 );
                             }
@@ -1042,6 +1040,9 @@ namespace RT.Util.Xml
         /// <param name="id">Id that refers to the object to be generated.</param>
         /// <param name="generator">Function to generate the object.</param>
         public XmlDeferredObject(string id, Func<T> generator) { _id = id; _generator = generator; }
+
+        internal XmlDeferredObject(string id, Func<object> generator)
+            : this(id, () => (T) generator()) { }
 
         /// <summary>Initialises a deferred object using an actual object. Evaluation is not deferred.</summary>
         /// <param name="id">Id that refers to the object.</param>
