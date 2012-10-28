@@ -135,6 +135,17 @@ namespace RT.Util.CommandLine
             public Action ProcessEndOfParameters;
         }
 
+        /// <summary>Generates the help screen for this command line.</summary>
+        /// <param name="applicationTr">Specifies the application’s translation object which contains the localised strings that document the command-line options and commands.
+        /// This object is passed in to the FieldNameDoc() methods described in the documentation for <see cref="CommandLineParser&lt;T&gt;"/>. This should be null for monoligual applications.</param>
+        /// <param name="commandLineTr">The instance containing the translation of CommandLineParser’s own text, or null for English.</param>
+        /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
+        /// <param name="subType">Optionally, a class that is used as a subcommand within the command-line syntax. Generates help for the subcommand.</param>
+        public static ConsoleColoredString GenerateHelp(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
+        {
+            return getHelpGenerator(subType ?? typeof(T), applicationTr)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
+        }
+
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
             var ret = Activator.CreateInstance(type, true);
