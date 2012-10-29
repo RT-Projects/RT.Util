@@ -239,18 +239,14 @@ namespace RT.Util
     /// </summary>
     public sealed class NullLogger : LoggerBase
     {
-        /// <summary>
-        /// Does nothing.
-        /// </summary>
-        public override void Log(uint verbosity, LogType type, string message)
-        {
-        }
-        /// <summary>
-        /// Does nothing.
-        /// </summary>
-        public override void Separator()
-        {
-        }
+        /// <summary>Provides a preallocated instance of <see cref="NullLogger"/>.</summary>
+        public static NullLogger Instance = new NullLogger();
+
+        /// <summary>Does nothing.</summary>
+        public override void Log(uint verbosity, LogType type, string message) { }
+
+        /// <summary>Does nothing.</summary>
+        public override void Separator() { }
     }
 
     /// <summary>
