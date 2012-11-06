@@ -73,7 +73,8 @@ namespace RT.Util.ExtensionMethods
             using (var enumer = source.GetEnumerator())
             {
                 bool any = enumer.MoveNext();
-                if (!any) yield break;
+                if (!any)
+                    yield break;
                 T first = enumer.Current;
                 T last = enumer.Current;
                 while (enumer.MoveNext())
@@ -538,7 +539,8 @@ namespace RT.Util.ExtensionMethods
                 }
                 else
                 {
-                    if (headtail == count) headtail = 0;
+                    if (headtail == count)
+                        headtail = 0;
                     yield return queue[headtail];
                     queue[headtail] = item;
                     headtail++;

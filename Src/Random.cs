@@ -83,6 +83,19 @@ namespace RT.Util
                 _rnd.NextBytes(buffer);
             return buffer;
         }
+
+        /// <summary>
+        ///     Generates a random string of the specified length, taking characters from the specified arsenal of characters.</summary>
+        /// <param name="length">
+        ///     Length of the string to generate.</param>
+        /// <param name="takeCharactersFrom">
+        ///     Arsenal to take random characters from. (Default is upper- and lower-case letters and digits.)</param>
+        public static string GenerateString(int length, string takeCharactersFrom = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+        {
+            if (takeCharactersFrom == null)
+                throw new ArgumentNullException("takeCharactersFrom");
+            return new string(Ut.NewArray(length, i => takeCharactersFrom[Rnd.Next(takeCharactersFrom.Length)]));
+        }
     }
 
     /// <summary>
@@ -109,6 +122,19 @@ namespace RT.Util
             var bytes = new byte[count];
             _rnd.GetBytes(bytes);
             return bytes;
+        }
+
+        /// <summary>
+        ///     Generates a random string of the specified length, taking characters from the specified arsenal of characters.</summary>
+        /// <param name="length">
+        ///     Length of the string to generate.</param>
+        /// <param name="takeCharactersFrom">
+        ///     Arsenal to take random characters from. (Default is upper- and lower-case letters and digits.)</param>
+        public static string GenerateString(int length, string takeCharactersFrom = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+        {
+            if (takeCharactersFrom == null)
+                throw new ArgumentNullException("takeCharactersFrom");
+            return new string(Ut.NewArray(length, i => takeCharactersFrom[BitConverter.ToInt32(RndCrypto.NextBytes(4), 0) % takeCharactersFrom.Length]));
         }
     }
 }

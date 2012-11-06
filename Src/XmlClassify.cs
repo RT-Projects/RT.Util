@@ -379,7 +379,7 @@ namespace RT.Util.Xml
                                     if (!_rememberD.ContainsKey(refAttr.Value))
                                         throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refAttr.Value));
                                     if (type.IsArray)
-                                        addMethod.Invoke(outputList, new object[] { i, _rememberD[refAttr.Value] });
+                                        addMethod.Invoke(outputList, new object[] { j, _rememberD[refAttr.Value] });
                                     else if (keyType == null)
                                         addMethod.Invoke(outputList, new object[] { _rememberD[refAttr.Value] });
                                     else
@@ -449,9 +449,12 @@ namespace RT.Util.Xml
 
             public void XmlIntoObject(XElement xml, object intoObject, Type type, object parentNode)
             {
+                _doAtTheEnd = new List<Action>();
                 if (xml.Attribute("refid") != null)
                     _rememberD[xml.Attribute("refid").Value] = intoObject;
                 xmlIntoObject(xml, intoObject, type, parentNode);
+                foreach (var action in _doAtTheEnd)
+                    action();
             }
 
             private void xmlIntoObject(XElement xml, object intoObject, Type type, object parentNode)
@@ -907,10 +910,14 @@ namespace RT.Util.Xml
         /// <returns>Itself.</returns>
         public XmlClassifyOptions AddTypeOptions(Type type, XmlClassifyTypeOptions options)
         {
-            if (type == null) throw new ArgumentNullException("type");
-            if (options == null) throw new ArgumentNullException("options");
-            if (_typeOptions.ContainsKey(type)) throw new ArgumentException("XmlClassify options for type {0} have already been defined.".Fmt(type), "type");
-            if (_typeOptions.Values.Contains(options)) throw new ArgumentException("Must use a different XmlClassifyTypeOptions instance for every type.", "options");
+            if (type == null)
+                throw new ArgumentNullException("type");
+            if (options == null)
+                throw new ArgumentNullException("options");
+            if (_typeOptions.ContainsKey(type))
+                throw new ArgumentException("XmlClassify options for type {0} have already been defined.".Fmt(type), "type");
+            if (_typeOptions.Values.Contains(options))
+                throw new ArgumentException("Must use a different XmlClassifyTypeOptions instance for every type.", "options");
             options.initializeFor(type);
             _typeOptions.Add(type, options);
             return this;

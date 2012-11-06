@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Xml.Linq;
 using NUnit.Framework;
 using RT.Util.ExtensionMethods;
@@ -477,10 +478,17 @@ namespace RT.Util.Xml
         public void TestReferenceIdentity2()
         {
             var co = new classRefTest2();
-            co.ListInt.Add(5); co.ListInt.Add(5);
-            co.ListString.Add(new string('a', 5)); co.ListString.Add(new string('a', 5)); co.ListString.Add(co.ListString[0]);
-            co.ListVersion.Add(new Version(4, 7)); co.ListVersion.Add(new Version(4, 7)); co.ListVersion.Add(co.ListVersion[0]);
-            co.ListList.Add(new List<int>()); co.ListList.Add(new List<int>()); co.ListList.Add(co.ListList[0]);
+            co.ListInt.Add(5);
+            co.ListInt.Add(5);
+            co.ListString.Add(new string('a', 5));
+            co.ListString.Add(new string('a', 5));
+            co.ListString.Add(co.ListString[0]);
+            co.ListVersion.Add(new Version(4, 7));
+            co.ListVersion.Add(new Version(4, 7));
+            co.ListVersion.Add(co.ListVersion[0]);
+            co.ListList.Add(new List<int>());
+            co.ListList.Add(new List<int>());
+            co.ListList.Add(co.ListList[0]);
 
             var xml = XmlClassify.ObjectToXElement(co);
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
@@ -969,12 +977,22 @@ namespace RT.Util.Xml
             private Color _color;
             private string _colorAsString;
 
+            private List<blankClass> _list;
+            private blankClass _specified;
+
             public Color Color { get { return _color; } }
 
             /// <summary>For XmlClassify</summary>
             private TestPrePostProcess() { }
 
-            public TestPrePostProcess(Color color) { _color = color; }
+            public TestPrePostProcess(Color color)
+            {
+                _color = color;
+
+                // This forces the use of reference equality
+                _specified = new blankClass();
+                _list = new List<blankClass> { _specified };
+            }
 
             public void BeforeXmlClassify()
             {
@@ -987,6 +1005,12 @@ namespace RT.Util.Xml
                     Convert.ToInt32(_colorAsString.Substring(0, 2), 16),
                     Convert.ToInt32(_colorAsString.Substring(2, 2), 16),
                     Convert.ToInt32(_colorAsString.Substring(4, 2), 16));
+
+                // Test that the reference equality has been restored correctly *before* AfterXmlDeclassify() was called
+                Assert.IsNotNull(_specified);
+                Assert.IsNotNull(_list);
+                Assert.AreEqual(1, _list.Count);
+                Assert.IsTrue(object.ReferenceEquals(_list[0], _specified));
             }
         }
 
@@ -995,7 +1019,7 @@ namespace RT.Util.Xml
         {
             var instance = new TestPrePostProcess(Color.FromArgb(171, 205, 239));
             var xml = XmlClassify.ObjectToXElement(instance);
-            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><colorAsString>ABCDEF</colorAsString></item>")));
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><colorAsString>ABCDEF</colorAsString><list><item refid='0'/></list><specified ref='0'/></item>")));
 
             var reconstructed = XmlClassify.ObjectFromXElement<TestPrePostProcess>(xml);
             Assert.AreEqual(reconstructed.Color, Color.FromArgb(171, 205, 239));
@@ -1128,6 +1152,80 @@ namespace RT.Util.Xml
             Assert.IsNotNull(reconstructed.Dictionary2);
             Assert.AreEqual(1, ((IDictionary<string, string>) reconstructed.Dictionary2).Count);
             Assert.AreEqual("Z", ((IDictionary<string, string>) reconstructed.Dictionary2)["Y"]);
+        }
+
+        sealed class xmlIntoObjectReferenceEqualityTester
+        {
+            public List<blankClass> List;
+            public blankClass Specified;
+        }
+
+        [Test]
+        public void TestXmlIntoObjectReferenceEquality()
+        {
+            var inner = new blankClass();
+            var tester = new xmlIntoObjectReferenceEqualityTester
+            {
+                List = new List<blankClass> { inner },
+                Specified = inner
+            };
+            var classified = XmlClassify.ObjectToXElement(tester);
+
+            Assert.IsNotNull(classified.Element("Specified"));
+            Assert.IsNotNull(classified.Element("Specified").Attribute("ref"));
+            Assert.IsNotNull(classified.Element("List"));
+            Assert.IsNotNull(classified.Element("List").Element("item"));
+            Assert.IsNotNull(classified.Element("List").Element("item").Attribute("refid"));
+            Assert.IsTrue(classified.Element("Specified").Attribute("ref").Value == classified.Element("List").Element("item").Attribute("refid").Value);
+            var tmpFile = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(tmpFile, classified.ToString());
+
+                var newTester = new xmlIntoObjectReferenceEqualityTester();
+                XmlClassify.ReadXmlFileIntoObject(tmpFile, newTester);
+
+                Assert.IsNotNull(newTester.List);
+                Assert.AreEqual(1, newTester.List.Count);
+                Assert.IsTrue(object.ReferenceEquals(newTester.List[0], newTester.Specified));
+            }
+            finally
+            {
+                try { File.Delete(tmpFile); }
+                catch { }
+            }
+        }
+
+        sealed class referenceEqualityInArraysTester
+        {
+            public blankClass[] Array;
+            public blankClass Specified;
+        }
+
+        [Test]
+        public void TestReferenceEqualityInArrays()
+        {
+            var inner = new blankClass();
+            var tester = new referenceEqualityInArraysTester
+            {
+                Array = new blankClass[] { inner, inner },
+                Specified = inner
+            };
+            var classified = XmlClassify.ObjectToXElement(tester);
+
+            Assert.IsNotNull(classified.Element("Specified"));
+            Assert.IsNotNull(classified.Element("Specified").Attribute("ref"));
+            Assert.IsNotNull(classified.Element("Array"));
+            Assert.IsNotNull(classified.Element("Array").Element("item"));
+            Assert.IsNotNull(classified.Element("Array").Element("item").Attribute("refid"));
+            Assert.IsTrue(classified.Element("Specified").Attribute("ref").Value == classified.Element("Array").Element("item").Attribute("refid").Value);
+
+            var newTester = XmlClassify.ObjectFromXElement<referenceEqualityInArraysTester>(classified);
+
+            Assert.IsNotNull(newTester.Array);
+            Assert.AreEqual(2, newTester.Array.Length);
+            Assert.IsTrue(object.ReferenceEquals(newTester.Array[0], newTester.Specified));
+            Assert.IsTrue(object.ReferenceEquals(newTester.Array[1], newTester.Specified));
         }
     }
 }
