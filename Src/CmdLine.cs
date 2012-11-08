@@ -300,23 +300,8 @@ namespace RT.Util.CommandLine
                         {
                             ProcessParameter = () =>
                             {
-                                // The following code is also duplicated below
-                                if (field.FieldType == typeof(string))
-                                    field.SetValue(ret, args[i]);
-                                else if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
-                                    field.SetValue(ret, res);
-                                }
-                                else
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerType(field.FieldType) */);
-                                    field.SetValue(ret, res);
-                                }
+                                if (!convertStringAndSetField(args[i], ret, field))
+                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr));
 
                                 positionals.RemoveAt(0);
                                 missingMandatories.Remove(field);
@@ -340,23 +325,8 @@ namespace RT.Util.CommandLine
                                 if (i >= args.Length)
                                     throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
 
-                                // The following code is also duplicated above
-                                if (field.FieldType == typeof(string))
-                                    field.SetValue(ret, args[i]);
-                                else if (field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType.GetGenericArguments()[0], args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerNullableType(field.FieldType)*/);
-                                    field.SetValue(ret, res);
-                                }
-                                else
-                                {
-                                    object res;
-                                    if (!ExactConvert.Try(field.FieldType, args[i], out res))
-                                        throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr) /*, ExactConvert.IsTrueIntegerType(field.FieldType)*/);
-                                    field.SetValue(ret, res);
-                                }
+                                if (!convertStringAndSetField(args[i], ret, field))
+                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr));
 
                                 i++;
                                 missingMandatories.Remove(field);
@@ -496,6 +466,24 @@ namespace RT.Util.CommandLine
                 throw new CommandLineValidationException(error, getHelpGenerator(type, applicationTr));
 
             return ret;
+        }
+
+        private static bool convertStringAndSetField(string value, object cmdLineObject, FieldInfo field)
+        {
+            object result;
+
+            if (field.FieldType == typeof(string))
+                result = value;
+            else
+            {
+                Type type = field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                    ? field.FieldType.GetGenericArguments()[0]
+                    : field.FieldType;
+                if (!ExactConvert.Try(type, value, out result))
+                    return false;
+            }
+            field.SetValue(cmdLineObject, result);
+            return true;
         }
 
         private static Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type, TranslationBase applicationTr)

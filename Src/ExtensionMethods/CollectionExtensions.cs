@@ -110,16 +110,17 @@ namespace RT.Util.ExtensionMethods
         /// <param name="dic">Dictionary to operate on.</param>
         /// <param name="key">Key at which the list is located in the dictionary.</param>
         /// <param name="amount">The amount by which to increment the integer.</param>
-        public static void IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
+        /// <returns>The new value at the specified key.</returns>
+        public static int IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
         {
             if (dic == null)
                 throw new ArgumentNullException("dic");
             if (key == null)
                 throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
-                dic[key] = amount;
+                return (dic[key] = amount);
             else
-                dic[key] = dic[key] + amount;
+                return (dic[key] = dic[key] + amount);
         }
 
         /// <summary>Determines whether the current HashSet-in-a-Dictionary contains the specified key and value.</summary>

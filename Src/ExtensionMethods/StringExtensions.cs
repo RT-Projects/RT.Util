@@ -913,10 +913,10 @@ namespace RT.Util.ExtensionMethods
             return str != null && str.Length > 0 && str[0] == ch.Value;
         }
 
-        /// <summary>Colours the specified string in the specified console colour.</summary>
-        /// <param name="str">The string to colour.</param>
-        /// <param name="color">The colour to colour the string in.</param>
-        /// <returns>A potentially colourful string.</returns>
+        /// <summary>Colours the specified string in the specified console color.</summary>
+        /// <param name="str">The string to color.</param>
+        /// <param name="color">The color to color the string in.</param>
+        /// <returns>A potentially colorful string.</returns>
         public static ConsoleColoredString Color(this string str, ConsoleColor color)
         {
             if (str == null)
@@ -924,14 +924,26 @@ namespace RT.Util.ExtensionMethods
             return new ConsoleColoredString(str, color);
         }
 
-        /// <summary>Returns the specified object as a coloured string.</summary>
+        /// <summary>Colours the specified character in the specified console color.</summary>
+        /// <param name="ch">The character to color.</param>
+        /// <param name="color">The color to color the character in.</param>
+        /// <returns>A potentially colorful character.</returns>
+        public static ConsoleColoredChar Color(this char ch, ConsoleColor color)
+        {
+            return new ConsoleColoredChar(ch, color);
+        }
+
+        /// <summary>Returns the specified object as a colored string.</summary>
         /// <param name="obj">The object to convert.</param>
-        /// <param name="defaultColor">The colour to colour the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
-        /// <returns>A potentially colourful string.</returns>
+        /// <param name="defaultColor">The color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
+        /// <returns>A potentially colorful string.</returns>
         public static ConsoleColoredString ToConsoleColoredString(this object obj, ConsoleColor defaultColor = ConsoleColor.Gray)
         {
             if (obj == null)
                 return ConsoleColoredString.Empty;
+            ConsoleColoredChar cc;
+            if ((cc = obj as ConsoleColoredChar) != null)
+                return cc.Character.ToString().Color(cc.Color);
             return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultColor);
         }
 

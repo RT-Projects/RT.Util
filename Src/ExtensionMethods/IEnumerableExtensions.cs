@@ -868,11 +868,11 @@ namespace RT.Util.ExtensionMethods
         /// <typeparam name="TItem">The type of items in the input sequence.</typeparam>
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
         /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source)
+        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return accumulateIterator(source, x => x, null, null);
+            return groupConsecutiveIterator(source, x => x, null, null);
         }
 
         /// <summary>Accumulates consecutive equal elements.</summary>
@@ -880,11 +880,11 @@ namespace RT.Util.ExtensionMethods
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
         /// <param name="itemEquality">An optional function to determine equality of items.</param>
         /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality)
+        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return accumulateIterator(source, x => x, itemEquality, null);
+            return groupConsecutiveIterator(source, x => x, itemEquality, null);
         }
 
         /// <summary>Accumulates consecutive equal elements.</summary>
@@ -892,11 +892,11 @@ namespace RT.Util.ExtensionMethods
         /// <param name="source">The input sequence from which to accumulate groups of consecutive elements.</param>
         /// <param name="itemComparer">An optional equality comparer to determine item equality by.</param>
         /// <returns>A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer)
+        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return accumulateIterator(source, x => x, null, itemComparer);
+            return groupConsecutiveIterator(source, x => x, null, itemComparer);
         }
 
         /// <summary>Accumulates consecutive elements that are equal when processed by a selector.</summary>
@@ -911,10 +911,10 @@ namespace RT.Util.ExtensionMethods
             if (source == null)
                 throw new ArgumentNullException("source");
             var comparer = keyComparer ?? EqualityComparer<TKey>.Default;
-            return accumulateIterator(source, selector, null, keyComparer);
+            return groupConsecutiveIterator(source, selector, null, keyComparer);
         }
 
-        private static IEnumerable<ConsecutiveGroup<TItem, TKey>> accumulateIterator<TItem, TKey>(IEnumerable<TItem> source, Func<TItem, TKey> selector, Func<TKey, TKey, bool> itemEquality, IEqualityComparer<TKey> itemComparer)
+        private static IEnumerable<ConsecutiveGroup<TItem, TKey>> groupConsecutiveIterator<TItem, TKey>(IEnumerable<TItem> source, Func<TItem, TKey> selector, Func<TKey, TKey, bool> itemEquality, IEqualityComparer<TKey> itemComparer)
         {
             bool any = false;
             TKey prevKey = default(TKey);
@@ -950,22 +950,64 @@ namespace RT.Util.ExtensionMethods
                 obj = next(obj);
             }
         }
+
+        /// <summary>Determines which element occurs the most often in the specified input sequence.</summary>
+        /// <typeparam name="T">Type of elements in the input sequence.</typeparam>
+        /// <param name="source">Sequence to find most common element in.</param>
+        /// <param name="comparer">Optional equality comparer to compare elements by.</param>
+        /// <returns>Of all elements that occur the most number of times, the one whose last instance occurs soonest in the sequence.</returns>
+        public static T MaxCountElement<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
+        {
+            int count;
+            return MaxCountElement<T>(source, out count, comparer);
+        }
+
+        /// <summary>Determines which element occurs the most often in the specified input sequence, and how often.</summary>
+        /// <typeparam name="T">Type of elements in the input sequence.</typeparam>
+        /// <param name="source">Sequence to find most common element in.</param>
+        /// <param name="count">Receives the number of times the element occurred.</param>
+        /// <param name="comparer">Optional equality comparer to compare elements by.</param>
+        /// <returns>Of all elements that occur the most number of times, the one whose last instance occurs soonest in the sequence.</returns>
+        public static T MaxCountElement<T>(this IEnumerable<T> source, out int count, IEqualityComparer<T> comparer = null)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            var counts = new Dictionary<T, int>(comparer);
+            var curMaxElement = default(T);
+            count = 0;
+            foreach (var elem in source)
+            {
+                var newCount = counts.IncSafe(elem);
+                if (newCount > count)
+                {
+                    count = newCount;
+                    curMaxElement = elem;
+                }
+            }
+            if (count == 0)
+                throw new InvalidOperationException("The specified collection contained no elements.");
+            return curMaxElement;
+        }
     }
 
     /// <summary>Encapsulates information about a group generated by <see cref="IEnumerableExtensions.GroupConsecutive{TItem}(IEnumerable{TItem})"/> and its overloads.</summary>
     /// <typeparam name="TItem">Type of the elements in the sequence.</typeparam>
-    public class ConsecutiveGroup<TItem> : IEnumerable<TItem>
+    /// <typeparam name="TKey">Type of the key by which elements were compared.</typeparam>
+    public class ConsecutiveGroup<TItem, TKey> : IEnumerable<TItem>
     {
         /// <summary>Index in the original sequence where the group started.</summary>
         public int Index { get; private set; }
         /// <summary>Size of the group.</summary>
         public int Count { get; private set; }
+        /// <summary>The key by which the items in this group are deemed equal.</summary>
+        public TKey Key { get; private set; }
 
         private IEnumerable<TItem> _group;
-        internal ConsecutiveGroup(int index, List<TItem> group)
+        internal ConsecutiveGroup(int index, List<TItem> group, TKey key)
         {
             Index = index;
             Count = group.Count;
+            Key = key;
             _group = group;
         }
 
@@ -973,20 +1015,5 @@ namespace RT.Util.ExtensionMethods
         /// <returns>A <see cref="System.Collections.Generic.IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
         public IEnumerator<TItem> GetEnumerator() { return _group.GetEnumerator(); }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
-    }
-
-    /// <summary>Encapsulates information about a group generated by <see cref="IEnumerableExtensions.GroupConsecutiveBy{TItem,TKey}"/>.</summary>
-    /// <typeparam name="TItem">Type of the elements in the sequence.</typeparam>
-    /// <typeparam name="TKey">Type of the key by which elements were compared.</typeparam>
-    public class ConsecutiveGroup<TItem, TKey> : ConsecutiveGroup<TItem>
-    {
-        /// <summary>The key by which the items in this group are deemed equal.</summary>
-        public TKey Key { get; private set; }
-
-        internal ConsecutiveGroup(int index, List<TItem> group, TKey key)
-            : base(index, group)
-        {
-            Key = key;
-        }
     }
 }

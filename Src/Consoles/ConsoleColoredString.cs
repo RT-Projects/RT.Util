@@ -571,7 +571,7 @@ namespace RT.Util.Consoles
                         object obj = args[num];
                         ConsoleColoredString ccstr;
                         IFormattable objFmt;
-                        
+
                         // Side-effect: This sets “ccstr” inside the if expression
                         if (colorBuilder != null || (ccstr = obj as ConsoleColoredString) == null)
                             ccstr = new ConsoleColoredString(
@@ -604,6 +604,44 @@ namespace RT.Util.Consoles
         public ConsoleColoredString Fmt(params object[] args)
         {
             return ConsoleColoredString.Format(null, this, args);
+        }
+
+        /// <summary>Returns an array describing the color of every character in the current string.</summary>
+        /// <returns>A copy of the internal color array. Modifying the returned array is safe.</returns>
+        public ConsoleColor[] GetColors()
+        {
+            return _colors.ToArray();
+        }
+
+        /// <summary>Gets the character and color at a specified character position in the current colored string.</summary>
+        /// <param name="index">A character position in the current colored string.</param>
+        /// <returns>A tuple containing a Unicode character and a console color.</returns>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is greater than or equal to the length of this object or less than zero.</exception>
+        public ConsoleColoredChar this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= _text.Length)
+                    throw new IndexOutOfRangeException("The index must be non-negative and smaller than the length of the string.");
+                return new ConsoleColoredChar(_text[index], _colors[index]);
+            }
+        }
+    }
+
+    /// <summary>Contains a character and a console color.</summary>
+    public sealed class ConsoleColoredChar
+    {
+        /// <summary>Gets the character.</summary>
+        public char Character { get; private set; }
+        /// <summary>Gets the console color.</summary>
+        public ConsoleColor Color { get; private set; }
+        /// <summary>Constructor.</summary>
+        /// <param name="character">The character.</param>
+        /// <param name="color">The console color.</param>
+        public ConsoleColoredChar(char character, ConsoleColor color)
+        {
+            Character = character;
+            Color = color;
         }
     }
 }
