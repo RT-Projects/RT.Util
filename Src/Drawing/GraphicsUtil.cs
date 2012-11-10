@@ -180,6 +180,31 @@ namespace RT.Util.Drawing
         }
 #endif
 
+        /// <summary>Draws a rounded rectangle.</summary>
+        /// <param name="g">Graphics object to draw on.</param>
+        /// <param name="pen">Pen to use when drawing the rounded rectangle.</param>
+        /// <param name="rectangle">Position of the rectangle.</param>
+        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        public static void DrawRoundedRectangle(this Graphics g, Pen pen, RectangleF rectangle, float radius, bool tolerant = false)
+        {
+            g.DrawPath(pen, RoundedRectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, radius, tolerant));
+        }
+
+        /// <summary>Draws a rounded rectangle.</summary>
+        /// <param name="g">Graphics object to draw on.</param>
+        /// <param name="pen">Pen to use when drawing the rounded rectangle.</param>
+        /// <param name="x">Left edge of the rounded rectangle.</param>
+        /// <param name="y">Top edge of the rounded rectangle.</param>
+        /// <param name="width">Width of the rounded rectangle.</param>
+        /// <param name="height">Height of the rounded rectangle.</param>
+        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        public static void DrawRoundedRectangle(this Graphics g, Pen pen, float x, float y, float width, float height, float radius, bool tolerant = false)
+        {
+            g.DrawPath(pen, RoundedRectangle(x, y, width, height, radius, tolerant));
+        }
+
         /// <summary>Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
         /// <param name="rectangle">Position of the rectangle.</param>
         /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>

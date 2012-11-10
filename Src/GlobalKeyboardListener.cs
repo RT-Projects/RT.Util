@@ -89,14 +89,12 @@ namespace RT.Util
                 if (HookAllKeys || _hookedKeys.Contains(key))
                 {
                     var kea = new GlobalKeyEventArgs(key, lParam.scanCode);
+
                     if ((wParam == WinAPI.WM_KEYDOWN || wParam == WinAPI.WM_SYSKEYDOWN) && (KeyDown != null))
-                    {
                         KeyDown(this, kea);
-                    }
                     else if ((wParam == WinAPI.WM_KEYUP || wParam == WinAPI.WM_SYSKEYUP) && (KeyUp != null))
-                    {
                         KeyUp(this, kea);
-                    }
+
                     if (kea.Handled)
                         return 1;
                 }

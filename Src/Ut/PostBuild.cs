@@ -76,6 +76,7 @@ namespace RT.Util
                     }
 
                     Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
+                    Console.Error.WriteLine(realException.StackTrace);
                     rep.AnyErrors = true;
                 }
             });
