@@ -55,7 +55,6 @@
     <Compile Include="ExtensionMethods\CollectionExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\DateTimeExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\IEnumerableExtensionsTests.cs" />
-    <Compile Include="ExtensionMethods\ObjectExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\StreamExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\StringExtensionsTests.cs" />
     <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
@@ -71,6 +70,7 @@
     <Compile Include="Streams\TimeoutableStreamTests.cs" />
     <Compile Include="UtilTests.cs" />
     <Compile Include="Ut\DiffTests.cs" />
+    <Compile Include="Ut\ExtensionsTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>

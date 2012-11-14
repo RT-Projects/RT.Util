@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using RT.Util.ExtensionMethods;
 
-namespace RT.Util.ExtensionMethods
+namespace RT.Util
 {
     /// <summary>Provides a function delegate that accepts only value types as input and return types.</summary>
     public delegate TResult FuncStructStruct<in TInput, TResult>(TInput input)
@@ -27,7 +26,7 @@ namespace RT.Util.ExtensionMethods
     public delegate TResult FuncStruct<in TInput, TResult>(TInput input) where TInput : struct;
 
     /// <summary>Provides extension methods that apply to all types.</summary>
-    public static class ObjectExtensions
+    partial class Ut
     {
         /// <summary>Returns null if the input is null, otherwise the result of the specified lambda when applied to the input.</summary>
         /// <typeparam name="TInput">Type of the input value.</typeparam>

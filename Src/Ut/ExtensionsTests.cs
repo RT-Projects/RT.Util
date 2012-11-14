@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System.Text;
 using NUnit.Framework;
-using System.Reflection;
 
-namespace RT.Util.ExtensionMethods
+namespace RT.Util
 {
     [TestFixture]
-    public sealed class ObjectExtensionsTests
+    public sealed class UtExtensionsTests
     {
         private void Check<T>(Type expected, T actual)
         {

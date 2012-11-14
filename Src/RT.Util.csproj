@@ -117,7 +117,6 @@
     <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="ExtensionMethods\IQueryableExtensions.cs" />
     <Compile Include="ExtensionMethods\NumericExtensions.cs" />
-    <Compile Include="ExtensionMethods\ObjectExtensions.cs" />
     <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
     <Compile Include="ExtensionMethods\ReflectionExtensions.cs" />
     <Compile Include="ExtensionMethods\StreamExtensions.cs" />
@@ -192,6 +191,7 @@
     <Compile Include="Text\OffsetToLineCol.cs" />
     <Compile Include="Threading\Periodic.cs" />
     <Compile Include="Threading\RateLimitedAction.cs" />
+    <Compile Include="Ut\Extensions.cs" />
     <Compile Include="Ut\OnException.cs" />
     <Compile Include="Ut\Parallel.cs" />
     <Compile Include="Ut\PostBuild.cs" />
