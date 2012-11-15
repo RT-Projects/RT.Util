@@ -35,7 +35,7 @@
     <Error Condition="'$(DeployToDocGenPath)'==''" Text="DeployToDocGenPath must be specified"/>
     <MakeDir Directories="$(DeployToDocGenPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
     <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\RT.Util.dll" DestinationFolder="$(DeployToDocGenPath)"/>
-    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\RT.Util.docs.xml" DestinationFolder="$(DeployToDocGenPath)"/>
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\RT.Util.xml" DestinationFolder="$(DeployToDocGenPath)"/>
   </Target>
 
 </Project>
