@@ -169,8 +169,8 @@ namespace RT.Util.Dialogs
             this.layoutMessage.ColumnCount = 2;
             this.layoutMessage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.layoutMessage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.layoutMessage.Controls.Add(this.Message, 0, 0);
             this.layoutMessage.Controls.Add(this.img, 0, 0);
+            this.layoutMessage.Controls.Add(this.Message, 1, 0);
             this.layoutMessage.Location = new System.Drawing.Point(0, 0);
             this.layoutMessage.Margin = new System.Windows.Forms.Padding(0);
             this.layoutMessage.Name = "layoutMessage";
