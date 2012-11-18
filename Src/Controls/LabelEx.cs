@@ -217,55 +217,60 @@ namespace RT.Util.Controls
         private bool _formJustDeactivated;
         private int _hangingIndent = 0;
         private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
-        private int? _keyboardFocusOnLinkNumberPrivate;
+        private linkLocationInfo _keyboardFocusOnLinkPrivate;
         private bool _lastHadFocus;
-        private List<linkLocationInfo> _linkLocations;
+        private List<locationInfo> _specialLocations;
         private char _mnemonic;
         private bool _mouseIsDownOnLink;
-        private int? _mouseOnLinkNumber;
+        private linkLocationInfo _mouseOnLink;
         private double _paragraphSpacing = 0d;
         private List<Control> _parentChain = new List<Control>();
         private EggsNode _parsed;
         private bool _spaceIsDownOnLink;
         private bool _wordWrap = false;
 
-        private int? _keyboardFocusOnLinkNumber
+        private linkLocationInfo _keyboardFocusOnLink
         {
-            get { return _keyboardFocusOnLinkNumberPrivate; }
+            get { return _keyboardFocusOnLinkPrivate; }
             set
             {
-                if (_keyboardFocusOnLinkNumberPrivate == value)
+                if (_keyboardFocusOnLinkPrivate == value)
                     return;
-                if (LinkLostFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
-                    LinkLostFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
-                _keyboardFocusOnLinkNumberPrivate = value;
+
+                // The previous focused link loses focus
+                if (LinkLostFocus != null && _keyboardFocusOnLinkPrivate != null)
+                    LinkLostFocus(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
+
+                _keyboardFocusOnLinkPrivate = value;
                 Invalidate();
-                if (LinkGotFocus != null && _keyboardFocusOnLinkNumberPrivate != null)
-                    LinkGotFocus(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumberPrivate.Value].Rectangles));
+
+                // The new link gains focus
+                if (LinkGotFocus != null && _keyboardFocusOnLinkPrivate != null)
+                    LinkGotFocus(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
             }
         }
 
         // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
         private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
 
-        private class renderState
+        private sealed class renderState
         {
             public Font Font { get; private set; }
             public Color Color { get; private set; }
             public int BlockIndent { get; private set; }
-            public int? LinkNumber { get; private set; }
+            public IEnumerable<locationInfo> ActiveLocations { get; private set; }
             public bool Mnemonic { get; private set; }
 
-            public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; LinkNumber = null; Mnemonic = false; }
-            private renderState(Font font, Color color, int blockIndent, int? linkNumber, bool mnemonic) { Font = font; Color = color; BlockIndent = blockIndent; LinkNumber = linkNumber; Mnemonic = mnemonic; }
-            public renderState ChangeFont(Font newFont) { return new renderState(newFont, Color, BlockIndent, LinkNumber, Mnemonic); }
-            public renderState ChangeColor(Color newColor) { return new renderState(Font, newColor, BlockIndent, LinkNumber, Mnemonic); }
-            public renderState ChangeBlockIndent(int newIndent) { return new renderState(Font, Color, newIndent, LinkNumber, Mnemonic); }
-            public renderState ChangeLinkNumberAndColor(int? newLinkNumber, Color newColor) { return new renderState(Font, newColor, BlockIndent, newLinkNumber, Mnemonic); }
-            public renderState SetMnemonic() { return new renderState(Font, Color, BlockIndent, LinkNumber, true); }
+            public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; ActiveLocations = Enumerable.Empty<locationInfo>(); Mnemonic = false; }
+            private renderState(Font font, Color color, int blockIndent, IEnumerable<locationInfo> activeLocations, bool mnemonic) { Font = font; Color = color; BlockIndent = blockIndent; ActiveLocations = activeLocations; Mnemonic = mnemonic; }
+            public renderState ChangeFont(Font newFont) { return new renderState(newFont, Color, BlockIndent, ActiveLocations, Mnemonic); }
+            public renderState ChangeColor(Color newColor) { return new renderState(Font, newColor, BlockIndent, ActiveLocations, Mnemonic); }
+            public renderState ChangeBlockIndent(int newIndent) { return new renderState(Font, Color, newIndent, ActiveLocations, Mnemonic); }
+            public renderState SetMnemonic() { return new renderState(Font, Color, BlockIndent, ActiveLocations, true); }
+            public renderState AddActiveLocation(locationInfo location) { return new renderState(Font, Color, BlockIndent, location.Concat(ActiveLocations), Mnemonic); }
         }
 
-        private class renderingInfo
+        private sealed class renderingInfo
         {
             public string Text;
             public Rectangle Rectangle;
@@ -273,10 +278,15 @@ namespace RT.Util.Controls
             public renderingInfo(string text, Rectangle location, renderState state) { Text = text; Rectangle = location; State = state; }
         }
 
-        private class linkLocationInfo
+        private abstract class locationInfo
+        {
+            public List<Rectangle> Rectangles = new List<Rectangle>();
+        }
+
+        private sealed class linkLocationInfo : locationInfo
         {
             public string LinkID;
-            public List<Rectangle> Rectangles = new List<Rectangle>();
+            public char? Mnemonic;
         }
 
         /// <summary>Override; see base.</summary>
@@ -295,7 +305,7 @@ namespace RT.Util.Controls
             _cachedRendering = null;
             Invalidate();
             base.OnEnabledChanged(e);
-            fixMouseCursor(PointToClient(Control.MousePosition));
+            checkForLinks(PointToClient(Control.MousePosition));
         }
 
         /// <summary>Override; see base.</summary>
@@ -303,7 +313,7 @@ namespace RT.Util.Controls
         {
             // If a link has focus, trigger the LinkLostFocus event.
             // OnPaint will trigger the LinkGotFocus event as appropriate
-            _keyboardFocusOnLinkNumber = null;
+            _keyboardFocusOnLink = null;
 
             _cachedPreferredSizes.Clear();
             _cachedRendering = null;
@@ -404,16 +414,16 @@ namespace RT.Util.Controls
                 _cachedRendering = new List<renderingInfo>();
                 _cachedRenderingWidth = ClientSize.Width;
                 _cachedRenderingColor = initialColor;
-                _linkLocations = new List<linkLocationInfo>();
-                doPaintOrMeasure(e.Graphics, _parsed, Font, initialColor, _cachedRenderingWidth, _cachedRendering, _linkLocations);
+                _specialLocations = new List<locationInfo>();
+                doPaintOrMeasure(e.Graphics, _parsed, Font, initialColor, _cachedRenderingWidth, _cachedRendering, _specialLocations);
 
                 // If this control has focus and it has a link in it, focus the first link. (This triggers the LinkGotFocus event.)
                 if (!_lastHadFocus)
-                    _keyboardFocusOnLinkNumber = null;
-                else if (_keyboardFocusOnLinkNumber == null)
-                    _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : 0;
+                    _keyboardFocusOnLink = null;
+                else if (_keyboardFocusOnLink == null)
+                    _keyboardFocusOnLink = _specialLocations.OfType<linkLocationInfo>().FirstOrDefault();
 
-                fixMouseCursor(PointToClient(Control.MousePosition));
+                checkForLinks(PointToClient(Control.MousePosition));
             }
 
             foreach (var item in _cachedRendering)
@@ -423,24 +433,23 @@ namespace RT.Util.Controls
                 if (item.Rectangle.Top > e.ClipRectangle.Bottom)
                     break;
                 var font = item.State.Font;
-                if ((item.State.Mnemonic && ShowKeyboardCues) || (_mouseOnLinkNumber != null && _mouseOnLinkNumber == item.State.LinkNumber))
+                if ((item.State.Mnemonic && ShowKeyboardCues) || (_mouseOnLink != null && item.State.ActiveLocations.Contains(_mouseOnLink)))
                     font = new Font(font, font.Style | FontStyle.Underline);
                 TextRenderer.DrawText(e.Graphics, item.Text,
                     font,
                     item.Rectangle.Location,
-                    (_mouseIsDownOnLink && _mouseOnLinkNumber == item.State.LinkNumber) ||
-                    (_spaceIsDownOnLink && _keyboardFocusOnLinkNumber == item.State.LinkNumber)
+                    (_mouseIsDownOnLink && item.State.ActiveLocations.Contains(_mouseOnLink)) ||
+                    (_spaceIsDownOnLink && item.State.ActiveLocations.Contains(_keyboardFocusOnLink))
                         ? LinkActiveColor : item.State.Color,
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             }
 
-            if (_keyboardFocusOnLinkNumber != null && _linkLocations != null)
+            if (_keyboardFocusOnLink != null && _specialLocations != null)
             {
-                // This should never happen, but I encountered it once and couldn’t reproduce it, so better put in a workaround...
-                if (_linkLocations.Count <= _keyboardFocusOnLinkNumber.Value)
-                    _keyboardFocusOnLinkNumberPrivate = null;   // set the private one so that no event is triggered
+                if (!_specialLocations.Contains(_keyboardFocusOnLink))
+                    _keyboardFocusOnLinkPrivate = null;   // set the private one so that no event is triggered
                 else
-                    foreach (var rectangle in _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles)
+                    foreach (var rectangle in _keyboardFocusOnLink.Rectangles)
                         ControlPaint.DrawFocusRectangle(e.Graphics, rectangle);
             }
         }
@@ -458,7 +467,7 @@ namespace RT.Util.Controls
         }
 
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
-            List<renderingInfo> renderings = null, List<linkLocationInfo> linkRenderings = null)
+            List<renderingInfo> renderings = null, List<locationInfo> locations = null)
         {
             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
@@ -470,6 +479,9 @@ namespace RT.Util.Controls
                 (state, text) => measure(state.Font, text, g).Width,
                 (state, text, width) =>
                 {
+                    if (state.Mnemonic && !string.IsNullOrWhiteSpace(text))
+                        state.ActiveLocations.OfType<linkLocationInfo>().FirstOrDefault().NullOr(link => { link.Mnemonic = text.Trim()[0]; return link; });
+
                     if (renderings != null && !string.IsNullOrEmpty(text))
                     {
                         renderingInfo info;
@@ -485,16 +497,15 @@ namespace RT.Util.Controls
                             info = new renderingInfo(text, new Rectangle(x, y, width, measure(state.Font, " ", g).Height), state);
                             renderings.Add(info);
                         }
-                        if (state.LinkNumber != null)
+                        foreach (var location in state.ActiveLocations)
                         {
-                            var list = linkRenderings[state.LinkNumber.Value].Rectangles;
-                            if (list.Count == 0 || list[list.Count - 1].Y != info.Rectangle.Y)
-                                list.Add(info.Rectangle);
+                            if (location.Rectangles.Count == 0 || location.Rectangles[location.Rectangles.Count - 1].Y != info.Rectangle.Y)
+                                location.Rectangles.Add(info.Rectangle);
                             else
                             {
-                                var rect = list[list.Count - 1];
+                                var rect = location.Rectangles[location.Rectangles.Count - 1];
                                 rect.Width += width;
-                                list[list.Count - 1] = rect;
+                                location.Rectangles[location.Rectangles.Count - 1] = rect;
                             }
                         }
                     }
@@ -542,10 +553,11 @@ namespace RT.Util.Controls
 
                         // LINK (e.g. <link target>{link text}, link target may be omitted)
                         case '{':
-                            if (linkRenderings == null)
+                            if (locations == null)
                                 break;
-                            linkRenderings.Add(new linkLocationInfo { LinkID = parameter });
-                            return Tuple.Create(state.ChangeLinkNumberAndColor(linkRenderings.Count - 1, Enabled ? LinkColor : SystemColors.GrayText), 0);
+                            var linkLocation = new linkLocationInfo { LinkID = parameter };
+                            locations.Add(linkLocation);
+                            return Tuple.Create(state.ChangeColor(Enabled ? LinkColor : SystemColors.GrayText).AddActiveLocation(linkLocation), 0);
 
                         // COLOUR (e.g. <colour>=coloured text=, revert to default colour if no <colour> specified)
                         case '=':
@@ -578,41 +590,24 @@ namespace RT.Util.Controls
             }
 
             // Mnemonics for links within the label, which trigger the link
-            Stack<int> links = new Stack<int>();
-            int linkNumber = -1;
-            Func<EggsNode, bool> recurse = null;
-            recurse = node =>
-            {
-                EggsTag tag;
-                if ((tag = node as EggsTag) != null)
-                {
-                    if (tag.Tag == '<')
-                        return false;
-                    else if (tag.Tag == '{')
-                    {
-                        linkNumber++;
-                        links.Push(linkNumber);
-                    }
-                    else if (tag.Tag == '&' && links.Count > 0 && tag.Children.Count == 1 && tag.Children.First() is EggsText &&
-                        char.ToUpperInvariant(tag.Children.First().ToString(true)[0]) == char.ToUpperInvariant(charCode))
-                    {
-                        var pop = links.Pop();
-                        _keyboardFocusOnLinkNumber = pop;
-                        Focus();
-                        if (LinkActivated != null)
-                            LinkActivated(this, new LinkEventArgs(_linkLocations[pop].LinkID, _linkLocations[pop].Rectangles));
-                        return true;
-                    }
-                    foreach (var child in tag.Children)
-                        if (recurse(child))
-                            return true;
-                    if (tag.Tag == '{')
-                        links.Pop();
-                }
+            var applicableLinks = _specialLocations.OfType<linkLocationInfo>().Where(link => link.Mnemonic == charCode).ToArray();
+            if (applicableLinks.Length == 0)
                 return false;
-            };
-
-            return recurse(_parsed);
+            else if (applicableLinks.Length == 1)
+            {
+                // One applicable link: activate it
+                _keyboardFocusOnLink = applicableLinks[0];
+                Focus();
+                if (LinkActivated != null)
+                    LinkActivated(this, new LinkEventArgs(applicableLinks[0].LinkID, applicableLinks[0].Rectangles));
+            }
+            else
+            {
+                // More than one applicable link: cycle between between them without activating them (must press Enter or Space to activate them)
+                _keyboardFocusOnLink = _keyboardFocusOnLink.NullOr(kf => applicableLinks.SkipWhile(loc => loc != kf).Skip(1).FirstOrDefault()) ?? applicableLinks.FirstOrDefault();
+                Focus();
+            }
+            return true;
         }
 
         /// <summary>This method is called when the control responds to a mnemonic being pressed.</summary>
@@ -627,31 +622,31 @@ namespace RT.Util.Controls
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (_cachedRendering != null && e.Button == MouseButtons.None)
-                fixMouseCursor(e.Location);
+                checkForLinks(e.Location);
             base.OnMouseMove(e);
         }
 
-        private void fixMouseCursor(Point p)
+        private void checkForLinks(Point p)
         {
-            if (Enabled && _linkLocations != null)
+            if (Enabled && _specialLocations != null)
             {
-                for (int i = 0; i < _linkLocations.Count; i++)
-                    foreach (var rectangle in _linkLocations[i].Rectangles)
+                foreach (var location in _specialLocations.OfType<linkLocationInfo>())
+                    foreach (var rectangle in location.Rectangles)
                         if (rectangle.Contains(p))
                         {
-                            if (_mouseOnLinkNumber != i)
+                            if (_mouseOnLink != location)
                             {
                                 Cursor = _cursorHand;
-                                _mouseOnLinkNumber = i;
+                                _mouseOnLink = location;
                                 Invalidate();
                             }
                             return;
                         }
             }
-            if (_mouseOnLinkNumber != null)
+            if (_mouseOnLink != null)
             {
                 Cursor = Cursors.Default;
-                _mouseOnLinkNumber = null;
+                _mouseOnLink = null;
                 Invalidate();
             }
         }
@@ -662,7 +657,7 @@ namespace RT.Util.Controls
             if (_cachedRendering != null && TabStop)
             {
                 Cursor = Cursors.Default;
-                _mouseOnLinkNumber = null;
+                _mouseOnLink = null;
                 Invalidate();
             }
             base.OnMouseLeave(e);
@@ -671,10 +666,10 @@ namespace RT.Util.Controls
         /// <summary>Override; see base.</summary>
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (_mouseOnLinkNumber != null)
+            if (_mouseOnLink != null)
             {
                 _mouseIsDownOnLink = true;
-                _keyboardFocusOnLinkNumber = _mouseOnLinkNumber;
+                _keyboardFocusOnLink = _mouseOnLink;
                 Focus();
                 Invalidate();
             }
@@ -693,14 +688,14 @@ namespace RT.Util.Controls
                 {
                     // Determine whether the mouse is still on the link; if so, trigger it
                     bool still = false;
-                    foreach (var rectangle in _linkLocations[_mouseOnLinkNumber.Value].Rectangles)
+                    foreach (var rectangle in _mouseOnLink.Rectangles)
                         if (rectangle.Contains(e.Location))
                         {
                             still = true;
                             break;
                         }
                     if (still)
-                        LinkActivated(this, new LinkEventArgs(_linkLocations[_mouseOnLinkNumber.Value].LinkID, _linkLocations[_mouseOnLinkNumber.Value].Rectangles));
+                        LinkActivated(this, new LinkEventArgs(_mouseOnLink.LinkID, _mouseOnLink.Rectangles));
                 }
             }
             base.OnMouseUp(e);
@@ -710,8 +705,11 @@ namespace RT.Util.Controls
         protected override void OnGotFocus(EventArgs e)
         {
             _lastHadFocus = true;
-            if (_keyboardFocusOnLinkNumber == null && _linkLocations != null)
-                _keyboardFocusOnLinkNumber = _linkLocations.Count == 0 ? (int?) null : Control.ModifierKeys.HasFlag(Keys.Shift) ? _linkLocations.Count - 1 : 0;
+            if (_keyboardFocusOnLink == null && _specialLocations != null)
+            {
+                var links = _specialLocations.OfType<linkLocationInfo>();
+                _keyboardFocusOnLink = Control.ModifierKeys.HasFlag(Keys.Shift) ? links.LastOrDefault() : links.FirstOrDefault();
+            }
 
             // Only call the base if this is not the late invocation from the paint event
             if (!(e is PaintEventArgs))
@@ -725,7 +723,7 @@ namespace RT.Util.Controls
             if (_formJustDeactivated)
                 _formJustDeactivated = false;
             else
-                _keyboardFocusOnLinkNumber = null;
+                _keyboardFocusOnLink = null;
             base.OnLostFocus(e);
         }
 
@@ -759,19 +757,19 @@ namespace RT.Util.Controls
             // This handles Tab and Shift-Tab.
             // The Enter and Space keys are handled in OnKeyDown() instead.
 
-            if (keyData == Keys.Tab && _linkLocations != null && _linkLocations.Count > 0 && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber < _linkLocations.Count - 1))
-            {
-                _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? -1) + 1;
-                return true;
-            }
+            if (keyData != Keys.Tab && keyData != (Keys.Tab | Keys.Shift))
+                return base.ProcessDialogKey(keyData);
 
-            if (keyData == (Keys.Tab | Keys.Shift) && _linkLocations != null && _linkLocations.Count > 0 && (_keyboardFocusOnLinkNumber == null || _keyboardFocusOnLinkNumber > 0))
-            {
-                _keyboardFocusOnLinkNumber = (_keyboardFocusOnLinkNumber ?? _linkLocations.Count) - 1;
-                return true;
-            }
+            var shift = keyData == (Keys.Tab | Keys.Shift);
+            var links = _specialLocations.OfType<linkLocationInfo>();
 
-            return base.ProcessDialogKey(keyData);
+            _keyboardFocusOnLink = shift
+                ? links.TakeWhile(l => l != _keyboardFocusOnLink).LastOrDefault()
+                : links.SkipWhile(l => l != _keyboardFocusOnLink).Skip(1).FirstOrDefault();
+
+            return _keyboardFocusOnLink == null
+                ? base.ProcessDialogKey(keyData)
+                : true;
         }
 
         /// <summary>Override; see base.</summary>
@@ -841,8 +839,8 @@ namespace RT.Util.Controls
         /// <summary>Pretends as if the user pressed Enter. Has no effect if there is no link that has keyboard focus.</summary>
         public void PerformClick()
         {
-            if (_keyboardFocusOnLinkNumber != null && LinkActivated != null)
-                LinkActivated(this, new LinkEventArgs(_linkLocations[_keyboardFocusOnLinkNumber.Value].LinkID, _linkLocations[_keyboardFocusOnLinkNumber.Value].Rectangles));
+            if (_keyboardFocusOnLink != null && LinkActivated != null)
+                LinkActivated(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
         }
     }
 
