@@ -228,6 +228,8 @@ namespace RT.Util.Controls
         private EggsNode _parsed;
         private bool _spaceIsDownOnLink;
         private bool _wordWrap = false;
+        private ToolTip _tooltip = new ToolTip { StripAmpersands = false, Active = true };
+        private string _tooltipText;
 
         private linkLocationInfo _keyboardFocusOnLink
         {
@@ -289,6 +291,11 @@ namespace RT.Util.Controls
             public char? Mnemonic;
         }
 
+        private sealed class tooltipLocationInfo : locationInfo
+        {
+            public string Tooltip;
+        }
+
         /// <summary>Override; see base.</summary>
         protected override void OnFontChanged(EventArgs e)
         {
@@ -305,7 +312,7 @@ namespace RT.Util.Controls
             _cachedRendering = null;
             Invalidate();
             base.OnEnabledChanged(e);
-            checkForLinks(PointToClient(Control.MousePosition));
+            checkForLinksAndTooltips(PointToClient(Control.MousePosition));
         }
 
         /// <summary>Override; see base.</summary>
@@ -423,7 +430,7 @@ namespace RT.Util.Controls
                 else if (_keyboardFocusOnLink == null)
                     _keyboardFocusOnLink = _specialLocations.OfType<linkLocationInfo>().FirstOrDefault();
 
-                checkForLinks(PointToClient(Control.MousePosition));
+                checkForLinksAndTooltips(PointToClient(Control.MousePosition));
             }
 
             foreach (var item in _cachedRendering)
@@ -480,7 +487,7 @@ namespace RT.Util.Controls
                 (state, text, width) =>
                 {
                     if (state.Mnemonic && !string.IsNullOrWhiteSpace(text))
-                        state.ActiveLocations.OfType<linkLocationInfo>().FirstOrDefault().NullOr(link => { link.Mnemonic = text.Trim()[0]; return link; });
+                        state.ActiveLocations.OfType<linkLocationInfo>().FirstOrDefault().NullOr(link => { link.Mnemonic = char.ToLowerInvariant(text.Trim()[0]); return link; });
 
                     if (renderings != null && !string.IsNullOrEmpty(text))
                     {
@@ -559,6 +566,14 @@ namespace RT.Util.Controls
                             locations.Add(linkLocation);
                             return Tuple.Create(state.ChangeColor(Enabled ? LinkColor : SystemColors.GrayText).AddActiveLocation(linkLocation), 0);
 
+                        // TOOLTIP (e.g. <tooltip text>#main text#)
+                        case '#':
+                            if (string.IsNullOrWhiteSpace(parameter) || locations == null)
+                                break;
+                            var tooltipLocation = new tooltipLocationInfo { Tooltip = parameter };
+                            locations.Add(tooltipLocation);
+                            return Tuple.Create(state.AddActiveLocation(tooltipLocation), 0);
+
                         // COLOUR (e.g. <colour>=coloured text=, revert to default colour if no <colour> specified)
                         case '=':
                             var color = parameter == null ? initialForeColor : (Color) (_colorConverter ?? (_colorConverter = new ColorConverter())).ConvertFromString(parameter);
@@ -622,32 +637,56 @@ namespace RT.Util.Controls
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (_cachedRendering != null && e.Button == MouseButtons.None)
-                checkForLinks(e.Location);
+                checkForLinksAndTooltips(e.Location);
             base.OnMouseMove(e);
         }
 
-        private void checkForLinks(Point p)
+        private void checkForLinksAndTooltips(Point p)
         {
+            var anyLink = false;
+            var anyTooltip = false;
+
             if (Enabled && _specialLocations != null)
             {
-                foreach (var location in _specialLocations.OfType<linkLocationInfo>())
+                foreach (var location in _specialLocations)
                     foreach (var rectangle in location.Rectangles)
                         if (rectangle.Contains(p))
                         {
-                            if (_mouseOnLink != location)
+                            if (location is linkLocationInfo)
                             {
-                                Cursor = _cursorHand;
-                                _mouseOnLink = location;
-                                Invalidate();
+                                if (_mouseOnLink != location)
+                                {
+                                    Cursor = _cursorHand;
+                                    _mouseOnLink = (linkLocationInfo) location;
+                                    Invalidate();
+                                }
+                                anyLink = true;
                             }
-                            return;
+                            else
+                            {
+                                // tooltip
+                                var tooltipText = ((tooltipLocationInfo) location).Tooltip;
+                                if (_tooltipText != tooltipText)
+                                {
+                                    _tooltip.Show(tooltipText, this, rectangle.Left, rectangle.Bottom + 5);
+                                    _tooltipText = tooltipText;
+                                }
+                                anyTooltip = true;
+                            }
                         }
             }
-            if (_mouseOnLink != null)
+
+            if (_mouseOnLink != null && !anyLink)
             {
                 Cursor = Cursors.Default;
                 _mouseOnLink = null;
                 Invalidate();
+            }
+
+            if (!anyTooltip)
+            {
+                _tooltip.Hide(this);
+                _tooltipText = null;
             }
         }
 
@@ -660,6 +699,8 @@ namespace RT.Util.Controls
                 _mouseOnLink = null;
                 Invalidate();
             }
+            _tooltip.Hide(this);
+            _tooltipText = null;
             base.OnMouseLeave(e);
         }
 
