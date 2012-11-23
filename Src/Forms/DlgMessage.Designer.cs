@@ -82,10 +82,10 @@ namespace RT.Util.Dialogs
             this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.layoutButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.layoutButtons.Controls.Add(this.Btn2, 0, 0);
-            this.layoutButtons.Controls.Add(this.Btn3, 0, 0);
             this.layoutButtons.Controls.Add(this.Btn0, 0, 0);
-            this.layoutButtons.Controls.Add(this.Btn1, 0, 0);
+            this.layoutButtons.Controls.Add(this.Btn1, 1, 0);
+            this.layoutButtons.Controls.Add(this.Btn2, 2, 0);
+            this.layoutButtons.Controls.Add(this.Btn3, 3, 0);
             this.layoutButtons.Location = new System.Drawing.Point(220, 84);
             this.layoutButtons.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.layoutButtons.Name = "layoutButtons";
