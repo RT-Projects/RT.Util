@@ -1467,7 +1467,7 @@ namespace RT.Util.CommandLine
             if (long1 == long2)
                 return StringComparer.OrdinalIgnoreCase.Compare(opt1, opt2);
             else if (long1)
-                return 1; // --blah comes after -blah
+                return 1;  // --blah comes after -blah
             else
                 return -1;
         }
