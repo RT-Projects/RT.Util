@@ -230,7 +230,7 @@ namespace RT.Util.CommandLine
                     // ### ENUM fields, option scheme (“-x”)
                     else
                     {
-                        var behaviour = field.GetCustomAttributes<EnumOptionsAttribute>().First().Behaviour;
+                        var behavior = field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior;
                         var underlyingType = field.FieldType.GetEnumUnderlyingType();
                         object prev = null;
 
@@ -244,20 +244,20 @@ namespace RT.Util.CommandLine
                                     var o = oForeach;
                                     options[o] = () =>
                                     {
-                                        if (behaviour == EnumBehaviour.SingleValue)
+                                        if (behavior == EnumBehavior.SingleValue)
                                             field.SetValue(ret, enumField.GetValue(null));
                                         else
                                         {
                                             if (underlyingType == typeof(ulong))
-                                                prev = (ulong) (prev ?? 0UL) | (ulong) enumField.GetRawConstantValue();
+                                                prev = (prev == null ? 0UL : (ulong) prev) | (ulong) enumField.GetRawConstantValue();
                                             else
-                                                prev = Convert.ToInt64(prev ?? 0L) | Convert.ToInt64(enumField.GetRawConstantValue());
+                                                prev = (prev == null ? 0L : Convert.ToInt64(prev)) | Convert.ToInt64(enumField.GetRawConstantValue());
                                             field.SetValue(ret, Convert.ChangeType(prev, underlyingType));
                                         }
                                         i++;
                                         missingMandatories.Remove(field);
 
-                                        if (behaviour == EnumBehaviour.SingleValue)
+                                        if (behavior == EnumBehavior.SingleValue)
                                         {
                                             // If only a single value is allowed, throw an error if another value is specified later
                                             foreach (var enumField2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
@@ -435,7 +435,7 @@ namespace RT.Util.CommandLine
                 throw new MissingParameterException(missingMandatories[0], swallowingField, !missingMandatories[0].IsDefined<IsPositionalAttribute>(), getHelpGenerator(type, applicationTr));
 
             Type[] typeParam;
-            string error = null;
+            ConsoleColoredString error = null;
             if (type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam))
             {
                 var tp = typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]);
@@ -451,7 +451,7 @@ namespace RT.Util.CommandLine
                 if (meth == null || !meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeParam[0] }))
                     throw new CommandLineValidationException(@"Couldn’t find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type, applicationTr));
 
-                error = (string) meth.Invoke(ret, new object[] { applicationTr });
+                error = (ConsoleColoredString) meth.Invoke(ret, new object[] { applicationTr });
             }
             else if (typeof(ICommandLineValidatable).IsAssignableFrom(type))
                 error = ((ICommandLineValidatable) ret).Validate();
@@ -502,58 +502,11 @@ namespace RT.Util.CommandLine
                 List<FieldInfo> optionalOptions, mandatoryOptions, optionalPositional, mandatoryPositional;
                 getFieldsForHelp(type, out optionalOptions, out mandatoryOptions, out optionalPositional, out mandatoryPositional);
 
-                // List all the OPTIONS (mandatory first) in the "Usage" line
-                foreach (var f in mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld })))
-                {
-                    IEnumerable<string> optionsRaw;
-                    bool hasParam;  // false if it’s just “-x”; true if it’s “-x foo”
-
-                    if (f.Field.FieldType.IsEnum && !f.Field.IsDefined<OptionAttribute>())
-                    {
-                        optionsRaw = f.Field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
-                            .Where(fld => fld.IsDefined<OptionAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
-                            .SelectMany(fi => fi.GetOrderedOptionAttributeNames());
-                        hasParam = false;
-                    }
-                    else
-                    {
-                        optionsRaw = f.Field.GetOrderedOptionAttributeNames();
-                        hasParam = f.Field.FieldType != typeof(bool);
-                    }
-
-                    help.Add(new ConsoleColoredString(f.Mandatory ? " " : " [", ConsoleColor.DarkGray));
-                    var options = optionsRaw.Any(a => !a.StartsWith("--")) ? optionsRaw.Where(a => !a.StartsWith("--")) : optionsRaw;
-                    var c = new ConsoleColoredString(options.First(), ConsoleColor.White);
-                    foreach (var option in options.Skip(1))
-                    {
-                        c = c + new ConsoleColoredString("|", ConsoleColor.DarkGray);
-                        c = c + new ConsoleColoredString(option, ConsoleColor.Cyan);
-                    }
-                    if (hasParam)
-                        c = c + new ConsoleColoredString(" <" + f.Field.Name + ">", ConsoleColor.Cyan);
-                    help.Add(c);
-                    if (f.Field.FieldType.IsArray)
-                    {
-                        help.Add(new ConsoleColoredString(" [", ConsoleColor.DarkGray));
-                        help.Add(c);
-                        help.Add(new ConsoleColoredString(" [...]]", ConsoleColor.DarkGray));
-                    }
-                    if (!f.Mandatory)
-                        help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
-                }
-
-                // List all the POSITIOAL parameters (mandatory first) in the “Usage” line
-                foreach (var f in mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalPositional.Select(fld => new { Mandatory = false, Field = fld })))
-                {
-                    help.Add(new ConsoleColoredString(f.Mandatory ? " " : " [", ConsoleColor.DarkGray));
-                    var cmdName = new ConsoleColoredString("<" + f.Field.Name + ">", ConsoleColor.Cyan);
-                    help.Add(cmdName);
-                    if (f.Field.FieldType.IsDefined<CommandGroupAttribute>())
-                        help.Add(" ...");
-                    if (!f.Mandatory)
-                        help.Add(new ConsoleColoredString("]", ConsoleColor.DarkGray));
-                }
-
+                help.Add(
+                    mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))
+                    .Concat(mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalPositional.Select(fld => new { Mandatory = false, Field = fld })))
+                    .Select(f => " " + f.Field.FormatParameterUsage(f.Mandatory))
+                    .JoinColoredString());
 
                 //
                 //  ##  CONSTRUCT THE TABLES
@@ -627,24 +580,25 @@ namespace RT.Util.CommandLine
         private static bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type, TranslationBase applicationTr)
         {
             var anyCommandsWithSuboptions = false;
-            var cmdName = new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan);
+            var cmdName = "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan);
 
             if (field.FieldType.IsEnum)
             {
                 // ### ENUM fields, positional
                 if (positional)
                 {
-                    table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
+                    var topRow = row;
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(2, row, new ConsoleColoredString(attr.Names.Where(n => n.Length <= 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
-                        table.SetCell(3, row, new ConsoleColoredString(attr.Names.Where(n => n.Length > 2).JoinString("\n"), ConsoleColor.White), noWrap: true);
-                        table.SetCell(4, row, getDocumentation(el, type, applicationTr));
+                        table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White), noWrap: true);
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White), noWrap: true);
+                        table.SetCell(4, row, getDocumentation(el, type, applicationTr), colSpan: 2);
                         row++;
                     }
+                    table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2, rowSpan: row - topRow);
                 }
                 // ### ENUM fields, “-x foo” scheme
                 else if (field.IsDefined<OptionAttribute>())
@@ -656,23 +610,26 @@ namespace RT.Util.CommandLine
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(2, row, new ConsoleColoredString(attr.Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White)));
-                        table.SetCell(3, row, new ConsoleColoredString(attr.Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White)));
-                        table.SetCell(4, row, getDocumentation(el, type, applicationTr));
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).JoinString("\n").Color(ConsoleColor.White));
+                        table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).JoinString("\n").Color(ConsoleColor.White));
+                        table.SetCell(5, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
-                    table.SetCell(0, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(1, topRow, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 3);
+                    if (row == topRow + 1)
+                        throw new InvalidOperationException("Enum type {2}.{3} has no values (apart from default value for field {0}.{1}).".Fmt(field.DeclaringType.FullName, field.Name, field.FieldType.DeclaringType.FullName, field.FieldType));
+                    table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 4);
+                    table.SetCell(2, topRow + 1, cmdName, noWrap: true, rowSpan: row - topRow - 1);
                 }
                 // ### ENUM fields, “-x” scheme
                 else
                 {
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => e.IsDefined<OptionAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
                     {
-                        table.SetCell(0, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                        table.SetCell(1, row, new ConsoleColoredString(el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                        table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 3);
+                        table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 4);
                         row++;
                     }
                 }
@@ -689,30 +646,30 @@ namespace RT.Util.CommandLine
                     var cell2 = ConsoleColoredString.Empty;
                     var suboptions = ty.GetAllFields().Any(fld => !fld.IsDefined<UndocumentedAttribute>());
                     anyCommandsWithSuboptions |= suboptions;
-                    var asterisk = suboptions ? new ConsoleColoredString("*", ConsoleColor.DarkYellow) + ConsoleColoredString.NewLine : ConsoleColoredString.NewLine;
-                    foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().First().Names.Order().Select(c => new ConsoleColoredString(c, ConsoleColor.White)))
+                    var asterisk = suboptions ? "*".Color(ConsoleColor.DarkYellow) + ConsoleColoredString.NewLine : ConsoleColoredString.NewLine;
+                    foreach (var cn in ty.GetCustomAttributes<CommandNameAttribute>().First().Names.Order().Select(c => c.Color(ConsoleColor.White)))
                         if (cn.Length > 2) cell2 += cn + asterisk; else cell1 += cn + asterisk;
 
                     table.SetCell(2, row, cell1.Length == 0 ? cell1 : cell1.Substring(0, cell1.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
                     table.SetCell(3, row, cell2.Length == 0 ? cell2 : cell2.Substring(0, cell2.Length - ConsoleColoredString.NewLine.Length), noWrap: true);
-                    table.SetCell(4, row, getDocumentation(ty, ty, applicationTr));
+                    table.SetCell(4, row, getDocumentation(ty, ty, applicationTr), colSpan: 2);
                     row++;
                 }
-                table.SetCell(0, origRow, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), colSpan: 2, rowSpan: row - origRow, noWrap: true);
+                table.SetCell(0, origRow, cmdName, colSpan: 2, rowSpan: row - origRow, noWrap: true);
             }
             // ### All other positional parameters
             else if (positional)
             {
-                table.SetCell(0, row, new ConsoleColoredString("<" + field.Name + ">", ConsoleColor.Cyan), noWrap: true, colSpan: 2);
-                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 3);
+                table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
                 row++;
             }
             // ### All other non-positional parameters
             else
             {
-                table.SetCell(0, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                table.SetCell(1, row, new ConsoleColoredString(field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).JoinString(", "), ConsoleColor.White), noWrap: true);
-                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 3);
+                table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
+                table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
                 row++;
             }
             return anyCommandsWithSuboptions;
@@ -813,15 +770,16 @@ namespace RT.Util.CommandLine
                     continue;
                 }
 
-                // Any combinations of multiple of the above are invalid, as is EnumAttribute on a non-enum field
+                // EnumOptionsAttribute can only be used on enum fields
                 if (enumOpt != null && !field.FieldType.IsEnum)
                     rep.Error(@"{0}.{1}: Cannot use [EnumOptions] attribute on a field whose type is not an enum type.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                // Can’t combine IsPositional and Option
                 else if (positional && options != null)
                     rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [Option] attributes on the same field.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                // Can’t combine IsPositional and EnumOptions
                 else if (positional && enumOpt != null)
                     rep.Error(@"{0}.{1}: Cannot use [IsPositional] and [EnumOptions] attributes on the same field. For a positional enum value, use only [IsPositional].".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
-                else if (options != null && enumOpt != null)
-                    rep.Error(@"{0}.{1}: Cannot use [Option] and [EnumOptions] attributes on the same field. To have the enum value specified by an option followed by a name, for example “-x foo”, use only [Option]. To have the enum value specified by a single option, for example “-x”, use only [EnumOptions] and place the [Option] attributes on the enum values in the enum type instead.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                // Can’t have [Option] without an option name
                 else if (options != null && options.Length == 0)
                     rep.Error(@"{0}.{1}: An [Option] attribute must specify at least one option name.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
 
@@ -842,6 +800,12 @@ namespace RT.Util.CommandLine
                 // ### ENUM fields
                 if (field.FieldType.IsEnum)
                 {
+                    // Can’t have a mandatory or a positional multi-value enum
+                    if (mandatory && enumOpt != null && enumOpt.Behavior == EnumBehavior.MultipleValues)
+                        rep.Error(@"{0}.{1}: A mandatory enum field cannot use multi-value behavior.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+                    if (positional && enumOpt != null && enumOpt.Behavior == EnumBehavior.MultipleValues)
+                        rep.Error(@"{0}.{1}: A positional enum field cannot use multi-value behavior.".Fmt(field.DeclaringType.FullName, field.Name), "class " + commandLineType.Name, field.Name);
+
                     var commandsTaken = new Dictionary<string, FieldInfo>();
                     var defaultValue = field.GetValue(instance);
 
@@ -856,7 +820,7 @@ namespace RT.Util.CommandLine
                         // check that the enum values all have documentation
                         checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods, true);
 
-                        if (enumOpt == null)
+                        if (options != null)
                         {
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
@@ -949,7 +913,7 @@ namespace RT.Util.CommandLine
                     rep.Error(@" -- It is used by {0}.{1}...".Fmt(type.FullName, field.Name), "class " + type.Name, field.Name);
                     rep.Error(@" -- ... and by {0}.{1}.".Fmt(optionTaken[option].DeclaringType.FullName, optionTaken[option].Name), "class " + optionTaken[option].DeclaringType.Name, optionTaken[option].Name);
                 }
-                optionTaken[option] = enumField;
+                optionTaken[option] = field;
             }
         }
 
@@ -1079,7 +1043,7 @@ namespace RT.Util.CommandLine
     public interface ICommandLineValidatable
     {
         /// <summary>When overridden in a derived class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
-        string Validate();
+        ConsoleColoredString Validate();
     }
 
     /// <summary>Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see cref="CommandLineParser&lt;T&gt;"/>.</summary>
@@ -1088,7 +1052,7 @@ namespace RT.Util.CommandLine
     {
         /// <summary>When implemented in a class, returns an error message if the contents of the class are invalid, otherwise returns null.</summary>
         /// <param name="tr">Contains translations for the messages that may occur during validation.</param>
-        string Validate(TTranslation tr);
+        ConsoleColoredString Validate(TTranslation tr);
     }
 
     /// <summary>Groups the translatable strings in the <see cref="Translation"/> class into categories.</summary>
@@ -1203,8 +1167,8 @@ namespace RT.Util.CommandLine
         public UndocumentedAttribute() { }
     }
 
-    /// <summary>Describes the behaviour of an enum-typed field with the <see cref="EnumOptionsAttribute"/>.</summary>
-    public enum EnumBehaviour
+    /// <summary>Describes the behavior of an enum-typed field with the <see cref="EnumOptionsAttribute"/>.</summary>
+    public enum EnumBehavior
     {
         /// <summary>Specifies that an enum is considered to represent a single value.</summary>
         SingleValue,
@@ -1218,10 +1182,10 @@ namespace RT.Util.CommandLine
     public sealed class EnumOptionsAttribute : Attribute
     {
         /// <summary>Constructor.</summary>
-        public EnumOptionsAttribute(EnumBehaviour behaviour) { Behaviour = behaviour; }
+        public EnumOptionsAttribute(EnumBehavior behavior) { Behavior = behavior; }
 
         /// <summary>Specifies whether the enum is considered to represent a single value or a bitfield containing multiple values.</summary>
-        public EnumBehaviour Behaviour { get; private set; }
+        public EnumBehavior Behavior { get; private set; }
     }
 
     /// <summary>Specifies that the command-line parser should ignore a field.</summary>
@@ -1238,6 +1202,8 @@ namespace RT.Util.CommandLine
     {
         /// <summary>Generates the help screen to be output to the user on the console. For non-internationalised (single-language) applications, pass null for the Translation parameter.</summary>
         internal Func<Translation, int, ConsoleColoredString> GenerateHelpFunc { get; private set; }
+        /// <summary>Contains the error message that describes the cause of this exception.</summary>
+        public Func<Translation, ConsoleColoredString> GetColoredMessage { get; private set; }
         /// <summary>Generates the help screen to be output to the user on the console.</summary>
         /// <param name="tr">The translation class containing the translated text, or null for English.</param>
         /// <param name="wrapWidth">The character width at which the output should be word-wrapped.</param>
@@ -1251,29 +1217,24 @@ namespace RT.Util.CommandLine
                 tr = new Translation();
 
             var strings = new List<ConsoleColoredString>();
-            try
+            var message = tr.Error.Translation.Color(ConsoleColor.Red) + " " + GetColoredMessage(tr);
+            foreach (var line in message.WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
             {
-                foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(EggsML.Parse("_*{0}*_ ".Fmt(EggsML.Escape(tr.Error)) + Message), wrapWidth, tr.Error.Translation.Length + 1))
-                {
-                    strings.Add(line);
-                    strings.Add(Environment.NewLine);
-                }
-                return new ConsoleColoredString(strings);
+                strings.Add(line);
+                strings.Add(Environment.NewLine);
             }
-            catch (EggsMLParseException)
-            {
-                foreach (var line in (new ConsoleColoredString(tr.Error, ConsoleColor.Red) + " " + Message).WordWrap(wrapWidth, tr.Error.Translation.Length + 1))
-                {
-                    strings.Add(line);
-                    strings.Add(Environment.NewLine);
-                }
-                return new ConsoleColoredString(strings);
-            }
+            return new ConsoleColoredString(strings);
         }
+
         /// <summary>Constructor.</summary>
-        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
+        public CommandLineParseException(Func<Translation, ConsoleColoredString> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(getMessage, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
-        public CommandLineParseException(Func<Translation, string> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner) : base(getMessage, inner) { GenerateHelpFunc = helpGenerator; }
+        public CommandLineParseException(Func<Translation, ConsoleColoredString> getMessage, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
+            : base(tr => getMessage(tr).ToString(), inner)
+        {
+            GenerateHelpFunc = helpGenerator;
+            GetColoredMessage = getMessage;
+        }
 
         /// <summary>
         /// Prints usage information, followed by an error message describing to the user what it was that the parser didn't
@@ -1311,7 +1272,7 @@ namespace RT.Util.CommandLine
     public sealed class CommandLineValidationException : CommandLineParseException
     {
         /// <summary>Constructor.</summary>
-        public CommandLineValidationException(string message, Func<Translation, int, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
+        public CommandLineValidationException(ConsoleColoredString message, Func<Translation, int, ConsoleColoredString> helpGenerator) : base(tr => message, helpGenerator) { }
     }
 
     /// <summary>Specifies that the command-line parser encountered a command or option that was not recognised (there was no <see cref="OptionAttribute"/>
@@ -1325,7 +1286,7 @@ namespace RT.Util.CommandLine
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(commandOrOptionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnrecognizedCommandOrOptionException(string commandOrOptionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnrecognizedCommandOrOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(commandOrOptionName))), helpGenerator, inner)
+            : base(tr => tr.UnrecognizedCommandOrOption.ToConsoleColoredString().Fmt(commandOrOptionName.Color(ConsoleColor.White)), helpGenerator, inner)
         {
             CommandOrOptionName = commandOrOptionName;
         }
@@ -1346,7 +1307,7 @@ namespace RT.Util.CommandLine
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(earlier, later, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompatibleCommandOrOptionException(string earlier, string later, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompatibleCommandOrOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(later)), "`*`{0}*`".Fmt(EggsML.Escape(earlier))), helpGenerator, inner)
+            : base(tr => tr.IncompatibleCommandOrOption.ToConsoleColoredString().Fmt(later.Color(ConsoleColor.White), earlier.Color(ConsoleColor.White)), helpGenerator, inner)
         {
             EarlierCommandOrOption = earlier;
             LaterCommandOrOption = later;
@@ -1363,7 +1324,7 @@ namespace RT.Util.CommandLine
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(optionName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public IncompleteOptionException(string optionName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.IncompleteOption.Fmt("`*`{0}*`".Fmt(EggsML.Escape(optionName))), helpGenerator, inner)
+            : base(tr => tr.IncompleteOption.ToConsoleColoredString().Fmt(optionName.Color(ConsoleColor.White)), helpGenerator, inner)
         {
             OptionName = optionName;
         }
@@ -1379,7 +1340,7 @@ namespace RT.Util.CommandLine
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedArgs, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnexpectedParameter.Fmt("`*%`{0}%*`".Fmt(EggsML.Escape(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault()))), helpGenerator, inner)
+            : base(tr => tr.UnexpectedParameter.ToConsoleColoredString().Fmt(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault().Color(ConsoleColor.Magenta)), helpGenerator, inner)
         {
             UnexpectedParameters = unexpectedArgs;
         }
@@ -1398,7 +1359,7 @@ namespace RT.Util.CommandLine
         public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.InvalidNumber.Fmt("`*&<<{0}>>&*`".Fmt(EggsML.Escape(fieldName))), helpGenerator, inner)
+            : base(tr => tr.InvalidNumber.ToConsoleColoredString().Fmt("<".Color(ConsoleColor.DarkCyan) + fieldName.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan)), helpGenerator, inner)
         {
             FieldName = fieldName;
         }
@@ -1420,29 +1381,14 @@ namespace RT.Util.CommandLine
         public MissingParameterException(FieldInfo paramField, FieldInfo beforeField, bool isOption, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
             : base(tr => getMessage(tr, paramField, beforeField, isOption), helpGenerator, inner) { Field = paramField; BeforeField = beforeField; IsOption = isOption; }
 
-        private static string getMessage(Translation tr, FieldInfo field, FieldInfo beforeField, bool isOption)
+        private static ConsoleColoredString getMessage(Translation tr, FieldInfo field, FieldInfo beforeField, bool isOption)
         {
-            string fieldFormat;
-            if (field.IsDefined<IsPositionalAttribute>())
-                fieldFormat = "`*&<<" + EggsML.Escape(field.Name) + ">>&*`";
-            else if (field.IsDefined<OptionAttribute>())
-            {
-                var options = field.GetOrderedOptionAttributeNames();
-                if (options.Length > 1)
-                    fieldFormat = "`*${{" + options.Select(o => EggsML.Escape(o)).JoinString("||") + "}}$*`";
-                else
-                    fieldFormat = "`*$`" + EggsML.Escape(options[0]) + "$*`";
-                fieldFormat += " `*&<<" + EggsML.Escape(field.Name) + ">>&*`";
-            }
-            else if (field.FieldType.IsEnum)
-                // You can’t get a MissingParameterException for something that isn’t mandatory, so all of these fields must have [Option] attributes
-                fieldFormat = "`*${{" + field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static).SelectMany(f => f.GetOrderedOptionAttributeNames().Select(o => EggsML.Escape(o))).JoinString("||") + "}}$*`";
-            else
-                throw new InternalErrorException("475927: unexpected field attributes");
+            if (beforeField == null)
+                return (isOption ? tr.MissingOption : tr.MissingParameter).ToConsoleColoredString().Fmt(field.FormatParameterUsage(true));
 
-            return beforeField == null
-                ? (isOption ? tr.MissingOption : tr.MissingParameter).Fmt(fieldFormat)
-                : (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).Fmt(fieldFormat, "`*&<<" + EggsML.Escape(beforeField.Name) + ">>&*`");
+            return (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).ToConsoleColoredString().Fmt(
+                field.FormatParameterUsage(true),
+                "<".Color(ConsoleColor.DarkCyan) + beforeField.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
         }
     }
 
@@ -1461,9 +1407,49 @@ namespace RT.Util.CommandLine
             if (long1 == long2)
                 return StringComparer.OrdinalIgnoreCase.Compare(opt1, opt2);
             else if (long1)
-                return 1;  // --blah comes after -blah
+                return 1; // --blah comes after -blah
             else
                 return -1;
+        }
+
+        public static ConsoleColoredString FormatParameterUsage(this FieldInfo field, bool isMandatory)
+        {
+            // -t name [-t name [...]]    — arrays, multi-value enums with CommandNames
+            if (field.FieldType.IsArray ||
+                (field.FieldType.IsEnum &&
+                    field.IsDefined<OptionAttribute>() &&
+                    field.IsDefined<EnumOptionsAttribute>() &&
+                    field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues))
+            {
+                return (isMandatory ? "{0} {1} [{0} {1} [...]]" : "[{0} {1} [{0} {1} [...]]]").Color(ConsoleColor.DarkGray).Fmt(
+                    field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White),
+                    "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+            }
+
+            // Enums with Option names
+            if (field.FieldType.IsEnum && !field.IsDefined<OptionAttribute>())
+            {
+                var options = field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(fld => fld.IsDefined<OptionAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
+                    .Select(fi => fi.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White))
+                    .ToArray();
+
+                if (field.IsDefined<EnumOptionsAttribute>() && field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues)
+                    // [-t] [-u] [-v]    — multi-value enums with Option names
+                    return options.Select(opt => "[{0}]".Color(ConsoleColor.DarkGray).Fmt(opt)).JoinColoredString(" ");
+
+                // {-t|-u}      — single-value enums with Options
+                return (isMandatory ? (options.Length > 1 ? "{{{0}{1}" : "{0}") : "[{0}]").Color(ConsoleColor.DarkGray).Fmt(options.JoinColoredString("|".Color(ConsoleColor.DarkGray)), "}");
+            }
+
+            // -t       — bools
+            if (field.FieldType == typeof(bool))
+                return "[{0}]".Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White));
+
+            // -t name
+            return (isMandatory ? "{0} {1}" : "[{0} {1}]").Color(ConsoleColor.DarkGray).Fmt(
+                field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White),
+                "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
         }
     }
 }
