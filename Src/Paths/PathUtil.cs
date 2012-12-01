@@ -64,7 +64,7 @@ namespace RT.Util
         /// </summary>
         public static string AppPathCombine(params string[] morePaths)
         {
-            return Path.Combine(morePaths);
+            return Path.Combine(new[] { AppPath }.Concat(morePaths).ToArray());
         }
 
         /// <summary>
