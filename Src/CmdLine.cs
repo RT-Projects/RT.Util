@@ -248,17 +248,11 @@ namespace RT.Util.CommandLine
                                             field.SetValue(ret, enumField.GetValue(null));
                                         else
                                         {
-                                            if (prev == null)
-                                                // Have to use the underlying integer type rather than the enum type because otherwise
-                                                // the dynamic invocation of the “|” operator doesn’t work if the enum type isn’t public
-                                                // (https://connect.microsoft.com/VisualStudio/feedback/details/620805)
-                                                prev = Activator.CreateInstance(underlyingType);
-
-                                            // Dynamic invocation which uses the “|” operator at runtime for the enum type’s underlying integer type.
-                                            // Need to use GetRawConstantValue() in order to get a value that is typed as the underlying integer type.
-                                            // Need to use Convert.ChangeType() because (for example) “byte | byte” returns “int”.
-                                            prev = Convert.ChangeType((dynamic) prev | (dynamic) enumField.GetRawConstantValue(), underlyingType);
-                                            field.SetValue(ret, prev);
+                                            if (underlyingType == typeof(ulong))
+                                                prev = (ulong) (prev ?? 0UL) | (ulong) enumField.GetRawConstantValue();
+                                            else
+                                                prev = Convert.ToInt64(prev ?? 0L) | Convert.ToInt64(enumField.GetRawConstantValue());
+                                            field.SetValue(ret, Convert.ChangeType(prev, underlyingType));
                                         }
                                         i++;
                                         missingMandatories.Remove(field);
