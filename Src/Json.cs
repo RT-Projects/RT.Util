@@ -737,14 +737,8 @@ namespace RT.Util.Json
                 return false;
         }
 
-        /// <summary>Always throws.</summary>
         /// <summary>Returns a hash code representing this object.</summary>
-        public override int GetHashCode()
-        {
-            // the compiler doesn't realise that every descendant overrides GetHashCode anyway. This method
-            // is just to shut it up.
-            throw new NotSupportedException();
-        }
+        public abstract override int GetHashCode();
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static string ToString(JsonValue value)
@@ -1388,6 +1382,12 @@ namespace RT.Util.Json
         public override IEnumerable<string> ToEnumerable()
         {
             yield return Raw;
+        }
+
+        /// <summary>Returns a hash code representing this object.</summary>
+        public override int GetHashCode()
+        {
+            return Raw.GetHashCode();
         }
     }
 }
