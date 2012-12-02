@@ -205,76 +205,85 @@ namespace RT.Util.CommandLine
                             }
                         });
                     }
-                    // ### ENUM fields, option+name scheme (“-x foo”)
-                    else if (option != null)
-                    {
-                        foreach (var o in option.Names)
-                            options[o] = () =>
-                            {
-                                i++;
-                                if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
-                                missingMandatories.Remove(field);
-                                foreach (var enumField in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                                {
-                                    if (enumField.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
-                                    {
-                                        field.SetValue(ret, enumField.GetValue(null));
-                                        i++;
-                                        return;
-                                    }
-                                }
-                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
-                            };
-                    }
-                    // ### ENUM fields, option scheme (“-x”)
+                    // ### ENUM fields
                     else
                     {
-                        var behavior = field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior;
+                        // Take care of both option+name scheme (e.g. “-x foo -x bar”) and option scheme (e.g. “-x -y”)
+                        var behavior = field.GetCustomAttributes<EnumOptionsAttribute>().Select(eoa => eoa.Behavior).FirstOrDefault(EnumBehavior.SingleValue);
                         var underlyingType = field.FieldType.GetEnumUnderlyingType();
-                        object prev = null;
 
-                        foreach (var enumFieldForeach in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                        {
-                            var enumField = enumFieldForeach;
-                            var optionNames = enumField.GetOrderedOptionAttributeNames();
-                            if (optionNames != null)
-                                foreach (var oForeach in optionNames)
+                        var infos = option == null
+                            ? field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Select(enumField => new
+                            {
+                                Options = enumField.GetOrderedOptionAttributeNames(),
+                                NeedCommandName = false,
+                                GetEnumValue = Ut.Lambda((string commandName) => enumField.GetRawConstantValue())
+                            })
+                            : Ut.NewArray(new
+                            {
+                                Options = option.Names,
+                                NeedCommandName = true,
+                                GetEnumValue = Ut.Lambda((string commandName) =>
                                 {
-                                    var o = oForeach;
-                                    options[o] = () =>
+                                    var enumField = field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public)
+                                        .FirstOrDefault(ef => ef.GetCustomAttributes<CommandNameAttribute>().Any(cna => cna.Names.Contains(commandName)));
+                                    if (enumField == null)
+                                        throw new UnrecognizedCommandOrOptionException(commandName, getHelpGenerator(type, applicationTr));
+                                    return enumField.GetRawConstantValue();
+                                })
+                            }).AsEnumerable();
+
+                        object prev = null;
+                        string prevOptionOrCommand = null;
+
+                        foreach (var infForeach in infos)
+                        {
+                            var inf = infForeach;
+                            foreach (var oForeach in inf.Options)
+                            {
+                                var o = oForeach;
+                                options[o] = () =>
+                                {
+                                    i++;
+                                    string commandName = null;
+                                    if (inf.NeedCommandName)
                                     {
-                                        if (behavior == EnumBehavior.SingleValue)
-                                            field.SetValue(ret, enumField.GetValue(null));
+                                        if (i >= args.Length)
+                                            throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
+                                        commandName = args[i];
+                                        i++;
+                                    }
+                                    missingMandatories.Remove(field);
+                                    var value = inf.GetEnumValue(commandName);
+
+                                    if (behavior == EnumBehavior.SingleValue)
+                                    {
+                                        if (prev == null)
+                                        {
+                                            prev = value;
+                                            prevOptionOrCommand = commandName ?? o;
+                                            field.SetValue(ret, value);
+                                        }
+                                        else if (prev.Equals(value))
+                                        {
+                                            // Don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
+                                        }
                                         else
                                         {
-                                            if (underlyingType == typeof(ulong))
-                                                prev = (prev == null ? 0UL : (ulong) prev) | (ulong) enumField.GetRawConstantValue();
-                                            else
-                                                prev = (prev == null ? 0L : Convert.ToInt64(prev)) | Convert.ToInt64(enumField.GetRawConstantValue());
-                                            field.SetValue(ret, Convert.ChangeType(prev, underlyingType));
+                                            // Since only a single value is allowed, throw an error if another value is specified later
+                                            throw new IncompatibleCommandOrOptionException(prevOptionOrCommand, commandName ?? o, getHelpGenerator(type, applicationTr));
                                         }
-                                        i++;
-                                        missingMandatories.Remove(field);
-
-                                        if (behavior == EnumBehavior.SingleValue)
-                                        {
-                                            // If only a single value is allowed, throw an error if another value is specified later
-                                            foreach (var enumField2 in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                                            {
-                                                var optionNames2 = enumField2.GetOrderedOptionAttributeNames();
-                                                if (optionNames2 != null)
-                                                    foreach (var o2Foreach in optionNames2)
-                                                    {
-                                                        var o2 = o2Foreach;
-                                                        options[o2] = () => { throw new IncompatibleCommandOrOptionException(o, o2, getHelpGenerator(type, applicationTr)); };
-                                                    }
-                                            }
-                                            // ... but don’t throw an error if the same value is simply specified multiple times. Just ignore the second occurrence
-                                            options[o] = () => { i++; };
-                                        }
-                                    };
-                                }
+                                    }
+                                    else
+                                    {
+                                        if (underlyingType == typeof(ulong))
+                                            prev = (prev == null ? 0UL : (ulong) prev) | (ulong) value;
+                                        else
+                                            prev = (prev == null ? 0L : Convert.ToInt64(prev)) | Convert.ToInt64(value);
+                                        field.SetValue(ret, Convert.ChangeType(prev, underlyingType));
+                                    }
+                                };
+                            }
                         }
                     }
                 }
