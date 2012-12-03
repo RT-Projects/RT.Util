@@ -1423,6 +1423,11 @@ namespace RT.Util.CommandLine
 
         public static ConsoleColoredString FormatParameterUsage(this FieldInfo field, bool isMandatory)
         {
+            // Positionals
+            if (field.IsDefined<IsPositionalAttribute>())
+                return (isMandatory ? "{0}" : "[{0}]").Color(ConsoleColor.DarkGray).Fmt(
+                    "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+
             // -t name [-t name [...]]    — arrays, multi-value enums with CommandNames
             if (field.FieldType.IsArray ||
                 (field.FieldType.IsEnum &&
@@ -1453,7 +1458,7 @@ namespace RT.Util.CommandLine
 
             // -t       — bools
             if (field.FieldType == typeof(bool))
-                return "[{0}]".Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White));
+                return "[{0}]".Color(ConsoleColor.DarkGray).Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White));
 
             // -t name
             return (isMandatory ? "{0} {1}" : "[{0} {1}]").Color(ConsoleColor.DarkGray).Fmt(
