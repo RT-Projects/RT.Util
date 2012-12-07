@@ -154,8 +154,8 @@ namespace RT.Util
             private string _path;
             public bool AnyErrors { get; set; }
             public postBuildReporter(string path) { _path = path; AnyErrors = false; }
-            public void Error(string message, params string[] tokens) { AnyErrors = true; output("Error: ", message, tokens); }
-            public void Warning(string message, params string[] tokens) { output("Warning: ", message, tokens); }
+            public void Error(string message, params string[] tokens) { AnyErrors = true; output("Error", message, tokens); }
+            public void Warning(string message, params string[] tokens) { output("Warning", message, tokens); }
 
             public void Error(string message, string filename, int lineNumber, int? columnNumber = null)
             {
@@ -170,7 +170,7 @@ namespace RT.Util
 
             private void outputLine(string errorOrWarning, string filename, string lineOrLineAndColumn, string message)
             {
-                Console.Error.WriteLine("{0}({1}): {2}: {3}", filename, lineOrLineAndColumn, errorOrWarning, message);
+                Console.Error.WriteLine("{0}({1}): {2} CS9999: {3}", filename, lineOrLineAndColumn, errorOrWarning, message);
             }
 
             private void output(string errorOrWarning, string message, params string[] tokens)
@@ -194,7 +194,14 @@ namespace RT.Util
                                 tokenIndex++;
                                 if (tokenIndex == tokens.Length)
                                 {
-                                    Console.Error.WriteLine(f.FullName + "(" + (i + 1) + "," + (match.Index + 1) + "): " + errorOrWarning + message);
+                                    Console.Error.WriteLine(@"{0}({1},{2},{1},{3}): {4} CS9999: {5}",
+                                        f.FullName,
+                                        i + 1,
+                                        match.Index + 1,
+                                        match.Index + match.Length + 1,
+                                        errorOrWarning,
+                                        message
+                                    );
                                     return;
                                 }
                             }
