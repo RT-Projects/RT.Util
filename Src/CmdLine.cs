@@ -609,8 +609,8 @@ namespace RT.Util.CommandLine
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.White)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(4, row, getDocumentation(el, type, applicationTr), colSpan: 2);
                         row++;
                     }
@@ -626,15 +626,15 @@ namespace RT.Util.CommandLine
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.White)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(5, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
                     if (row == topRow + 1)
                         throw new InvalidOperationException("Enum type {2}.{3} has no values (apart from default value for field {0}.{1}).".Fmt(field.DeclaringType.FullName, field.Name, field.FieldType.DeclaringType.FullName, field.FieldType));
-                    table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(Environment.NewLine), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true, rowSpan: row - topRow);
                     table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 4);
                     table.SetCell(2, topRow + 1, cmdName, noWrap: true, rowSpan: row - topRow - 1);
                 }
@@ -643,8 +643,8 @@ namespace RT.Util.CommandLine
                 {
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => e.IsDefined<OptionAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
                     {
-                        table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 4);
                         row++;
                     }
@@ -664,8 +664,8 @@ namespace RT.Util.CommandLine
                     anyCommandsWithSuboptions |= suboptions;
                     var asterisk = suboptions ? "*".Color(ConsoleColor.DarkYellow) : ConsoleColoredString.Empty;
                     var names = ty.GetCustomAttributes<CommandNameAttribute>().First().Names;
-                    table.SetCell(2, row, names.Where(n => n.Length <= 2).Select(n => n.Color(ConsoleColor.White) + asterisk).JoinColoredString(", "), noWrap: true);
-                    table.SetCell(3, row, names.Where(n => n.Length > 2).Select(n => n.Color(ConsoleColor.White) + asterisk).JoinColoredString(Environment.NewLine), noWrap: true);
+                    table.SetCell(2, row, names.Where(n => n.Length <= 2).Select(n => n.Color(ConsoleColor.Green) + asterisk).JoinColoredString(", "), noWrap: true);
+                    table.SetCell(3, row, names.Where(n => n.Length > 2).Select(n => n.Color(ConsoleColor.Green) + asterisk).JoinColoredString(Environment.NewLine), noWrap: true);
                     table.SetCell(4, row, getDocumentation(ty, ty, applicationTr), colSpan: 2);
                     row++;
                 }
@@ -681,8 +681,8 @@ namespace RT.Util.CommandLine
             // ### All other non-positional parameters
             else
             {
-                table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(", "), noWrap: true);
-                table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.White)).JoinColoredString(Environment.NewLine), noWrap: true);
+                table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true);
+                table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true);
                 table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
                 row++;
             }
@@ -1445,7 +1445,7 @@ namespace RT.Util.CommandLine
                     field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues))
             {
                 return (isMandatory ? "{0} {1} [{0} {1} [...]]" : "[{0} {1} [{0} {1} [...]]]").Color(ConsoleColor.DarkGray).Fmt(
-                    field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White),
+                    field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow),
                     "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
             }
 
@@ -1454,7 +1454,7 @@ namespace RT.Util.CommandLine
             {
                 var options = field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
                     .Where(fld => fld.IsDefined<OptionAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
-                    .Select(fi => fi.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White))
+                    .Select(fi => fi.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow))
                     .ToArray();
 
                 if (field.IsDefined<EnumOptionsAttribute>() && field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues)
@@ -1467,11 +1467,11 @@ namespace RT.Util.CommandLine
 
             // -t       — bools
             if (field.FieldType == typeof(bool))
-                return "[{0}]".Color(ConsoleColor.DarkGray).Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White));
+                return "[{0}]".Color(ConsoleColor.DarkGray).Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow));
 
             // -t name
             return (isMandatory ? "{0} {1}" : "[{0} {1}]").Color(ConsoleColor.DarkGray).Fmt(
-                field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.White),
+                field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow),
                 "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
         }
     }
