@@ -148,6 +148,9 @@ namespace RT.Util.CommandLine
 
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
+            if (args[i] == "-?" || args[i] == "/?" || args[i] == "--?" || args[i] == "/h" || args[i] == "--help" || args[i] == "-help" || args[i] == "help")
+                throw new CommandLineHelpRequestedException(getHelpGenerator(type, applicationTr));
+
             var ret = Activator.CreateInstance(type, true);
             var options = new Dictionary<string, Action>();
             var positionals = new List<positionalParameterInfo>();
@@ -1091,11 +1094,12 @@ namespace RT.Util.CommandLine
             MissingParameter = @"The parameter {0} is mandatory and must be specified.",
             MissingParameterBefore = @"The parameter {0} is mandatory and must be specified before the {1} parameter.",
             UnexpectedParameter = @"Unexpected parameter: {0}",
-            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.";
+            UnrecognizedCommandOrOption = @"The specified command or option, {0}, is not recognized.",
+            UserRequestedHelp = @"The user has requested help using one of the help options.";
 
         [LingoInGroup(TranslationGroup.CommandLineHelp)]
         public TrString
-            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by *-?* to list them.",
+            AdditionalOptions = @"This command accepts further arguments on the command line. Type the command followed by *-?* or *help* to list them.",
             Error = @"Error:",
             OptionsHeader = @"Optional parameters:",
             ParametersHeader = @"Required parameters:",
@@ -1247,33 +1251,42 @@ namespace RT.Util.CommandLine
 
         /// <summary>
         /// Prints usage information, followed by an error message describing to the user what it was that the parser didn't
-        /// understand. When the exception was caused by a help switch (see <see cref="WasCausedByHelpRequest"/>),
-        /// no error message is printed.
+        /// understand.
         /// </summary>
         /// <param name="tr">Contains translations for the messages used by the command-line parser. Set this to null
         /// only if your application is definitely monolingual (unlocalisable).</param>
-        public void WriteUsageInfoToConsole(Translation tr = null)
+        public virtual void WriteUsageInfoToConsole(Translation tr = null)
         {
             if (tr == null)
                 tr = new Translation();
 
             ConsoleUtil.Write(GenerateHelp(tr, ConsoleUtil.WrapToWidth()));
 
-            if (!WasCausedByHelpRequest)
-            {
-                Console.WriteLine();
-                ConsoleUtil.Write(GenerateErrorText(tr, ConsoleUtil.WrapToWidth()));
-            }
+            Console.WriteLine();
+            ConsoleUtil.Write(GenerateErrorText(tr, ConsoleUtil.WrapToWidth()));
+        }
+    }
+
+    /// <summary>Indicates that the user supplied one of the standard options we recognize as a help request.</summary>
+    [Serializable]
+    public sealed class CommandLineHelpRequestedException : CommandLineParseException
+    {
+        /// <summary>Constructor.</summary>
+        public CommandLineHelpRequestedException(Func<Translation, int, ConsoleColoredString> helpGenerator)
+            : base(tr => tr.UserRequestedHelp.Color(ConsoleColor.Gray), helpGenerator)
+        {
         }
 
-        /// <summary>Contains the list of switches that are recognised by <see cref="WasCausedByHelpRequest"/>.</summary>
-        protected string[] _helpSwitches = new[] { "-?", "/?", "--?", "-h", "/h", "--help", "help" };
+        /// <summary>Prints usage information.</summary>
+        /// <param name="tr">Contains translations for the messages used by the command-line parser. Set this to null
+        /// only if your application is definitely monolingual (unlocalisable).</param>
+        public override void WriteUsageInfoToConsole(Translation tr = null)
+        {
+            if (tr == null)
+                tr = new Translation();
 
-        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
-        /// <remarks>Currently the following switches are recognised as help switches:
-        /// <c>-?</c>, <c>/?</c>, <c>--?</c>, <c>-h</c>, <c>/h</c>, <c>--help</c>, <c>help</c>
-        /// </remarks>
-        public virtual bool WasCausedByHelpRequest { get { return false; } }
+            ConsoleUtil.Write(GenerateHelp(tr, ConsoleUtil.WrapToWidth()));
+        }
     }
 
     /// <summary>Specifies that the arguments specified by the user on the command-line do not pass the custom validation checks.</summary>
@@ -1299,9 +1312,6 @@ namespace RT.Util.CommandLine
         {
             CommandOrOptionName = commandOrOptionName;
         }
-        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
-        /// <remarks>The set of switches recognised as help switches is listed in the base property documentation, <see cref="CommandLineParseException.WasCausedByHelpRequest"/>.</remarks>
-        public override bool WasCausedByHelpRequest { get { return _helpSwitches.Contains(CommandOrOptionName); } }
     }
 
     /// <summary>Specifies that the command-line parser encountered a command or option that is not allowed in conjunction with a previously-encountered command or option.</summary>
@@ -1353,9 +1363,6 @@ namespace RT.Util.CommandLine
         {
             UnexpectedParameters = unexpectedArgs;
         }
-        /// <summary>Indicates whether this exception was caused by the user specifying an option that looks like a help switch.</summary>
-        /// <remarks>The set of switches recognised as help switches is listed in the base property documentation, <see cref="CommandLineParseException.WasCausedByHelpRequest"/>.</remarks>
-        public override bool WasCausedByHelpRequest { get { return _helpSwitches.Contains(UnexpectedParameters.FirstOrDefault()); } }
     }
 
     /// <summary>Specifies that a parameter that expected a numerical value was passed a string by the user that doesn’t parse as a number.</summary>
