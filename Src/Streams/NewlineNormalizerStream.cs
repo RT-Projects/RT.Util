@@ -36,20 +36,12 @@ namespace RT.Util.Streams
             base.Close();
         }
 
-        #region Stuff for reading
-        private byte[] _lastBuffer;
-        private int _lastBufferIndex;
-        private int _lastBufferLength;
         private Stream _underlyingStream;
         private byte[] _newline;
-        private byte[] _stillToOutput;
-        private int _stillToOutputIndex;
-        private int _stillToOutputLength;
-        private bool _ignoreOneLFRead = false;
 
         /// <summary>Constructs a <see cref="NewlineNormalizerStream8bit"/>.</summary>
         /// <param name="underlyingStream">Stream to read textual data from.</param>
-        /// <param name="newline">Normalised newline to use.</param>
+        /// <param name="newline">Normalised newline to use. If not specified, uses <c>Environment.NewLine</c>, encoded to UTF-8.</param>
         public NewlineNormalizerStream8bit(Stream underlyingStream, byte[] newline = null)
         {
             _newline = newline ?? Environment.NewLine.ToUtf8();
@@ -57,6 +49,15 @@ namespace RT.Util.Streams
                 throw new ArgumentException("newline cannot be the empty array.", "newline");
             _underlyingStream = underlyingStream;
         }
+
+        #region Stuff for reading
+        private byte[] _lastBuffer;
+        private int _lastBufferIndex;
+        private int _lastBufferLength;
+        private byte[] _stillToOutput;
+        private int _stillToOutputIndex;
+        private int _stillToOutputLength;
+        private bool _ignoreOneLFRead = false;
 
         private int outputAsMuchAsPossible(ref byte[] fromBuffer, ref int fromOffset, ref int fromCount, byte[] intoBuffer, int intoOffset, int intoCount)
         {
