@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -345,6 +346,47 @@ namespace RT.Util
         public static string AppendBeforeExtension(string filename, string value)
         {
             return Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + value + Path.GetExtension(filename));
+        }
+
+        /// <summary>
+        ///     Given a filename or a pattern containing * or ? wildcards, enumerates all names matching the wildcard.</summary>
+        /// <param name="filenameOrPattern">
+        ///     The filename or pattern to expand. If this doesn't contain any wildcards, it is returned unchanged, even if the named
+        ///     file/directory does not exist in the file system. The pattern may include an absolute or a relative path, or contain just
+        ///     a name; the results will be relative iff the pattern was relative, and will contain no path iff the pattern didn't.</param>
+        /// <param name="matchFiles">
+        ///     Specifies that the pattern should match existing files.</param>
+        /// <param name="matchDirectories">
+        ///     Specifies that the pattern should match existing directories.</param>
+        public static IEnumerable<string> ExpandWildcards(string filenameOrPattern, bool matchFiles = true, bool matchDirectories = false)
+        {
+            var wildcards = new[] { '*', '?' };
+            if (filenameOrPattern.IndexOfAny(wildcards) < 0)
+                return new[] { filenameOrPattern };
+
+            var lastSlashPos = filenameOrPattern.LastIndexOfAny(new[] { '/', '\\' });
+            var path = lastSlashPos < 0 ? null : filenameOrPattern.Substring(0, lastSlashPos + 1);
+            var pattern = lastSlashPos < 0 ? filenameOrPattern : filenameOrPattern.Substring(lastSlashPos + 1);
+            if (path != null && path.IndexOfAny(wildcards) >= 0)
+                throw new NotSupportedException("The filename pattern \"{0}\" contains a wildcard in the path, which is not supported.".Fmt(filenameOrPattern));
+
+            IEnumerable<string> result;
+            if (matchFiles && matchDirectories)
+                result = Directory.EnumerateFileSystemEntries(path ?? ".", pattern);
+            else if (matchFiles)
+                result = Directory.EnumerateFiles(path ?? ".", pattern);
+            else if (matchDirectories)
+                result = Directory.EnumerateDirectories(path ?? ".", pattern);
+            else
+                result = Enumerable.Empty<string>();
+
+            result = result.Select(fullname => path == null ? Path.GetFileName(fullname) : Path.Combine(path, Path.GetFileName(fullname)));
+
+            var ext = Path.GetExtension(filenameOrPattern);
+            if (ext.Length == 4 && ext.IndexOf('*') < 0)
+                result = result.Where(n => Path.GetExtension(n).Length == 4);
+
+            return result;
         }
     }
 
