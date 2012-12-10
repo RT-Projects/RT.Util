@@ -148,8 +148,9 @@ namespace RT.Util.CommandLine
 
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
         {
-            if (args[i] == "-?" || args[i] == "/?" || args[i] == "--?" || args[i] == "/h" || args[i] == "--help" || args[i] == "-help" || args[i] == "help")
-                throw new CommandLineHelpRequestedException(getHelpGenerator(type, applicationTr));
+            if (i < args.Length)
+                if (args[i] == "-?" || args[i] == "/?" || args[i] == "--?" || args[i] == "/h" || args[i] == "--help" || args[i] == "-help" || args[i] == "help")
+                    throw new CommandLineHelpRequestedException(getHelpGenerator(type, applicationTr));
 
             var ret = Activator.CreateInstance(type, true);
             var options = new Dictionary<string, Action>();
