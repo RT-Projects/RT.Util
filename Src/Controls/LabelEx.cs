@@ -219,7 +219,7 @@ namespace RT.Util.Controls
         private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
         private linkLocationInfo _keyboardFocusOnLinkPrivate;
         private bool _lastHadFocus;
-        private List<locationInfo> _specialLocations;
+        private List<locationInfo> _specialLocations = new List<locationInfo>();
         private char _mnemonic;
         private bool _mouseIsDownOnLink;
         private linkLocationInfo _mouseOnLink;
@@ -421,7 +421,7 @@ namespace RT.Util.Controls
                 _cachedRendering = new List<renderingInfo>();
                 _cachedRenderingWidth = ClientSize.Width;
                 _cachedRenderingColor = initialColor;
-                _specialLocations = new List<locationInfo>();
+                _specialLocations.Clear();
                 doPaintOrMeasure(e.Graphics, _parsed, Font, initialColor, _cachedRenderingWidth, _cachedRendering, _specialLocations);
 
                 // If this control has focus and it has a link in it, focus the first link. (This triggers the LinkGotFocus event.)
@@ -451,7 +451,7 @@ namespace RT.Util.Controls
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             }
 
-            if (_keyboardFocusOnLink != null && _specialLocations != null)
+            if (_keyboardFocusOnLink != null)
             {
                 if (!_specialLocations.Contains(_keyboardFocusOnLink))
                     _keyboardFocusOnLinkPrivate = null;   // set the private one so that no event is triggered
@@ -646,7 +646,7 @@ namespace RT.Util.Controls
             var anyLink = false;
             var anyTooltip = false;
 
-            if (Enabled && _specialLocations != null)
+            if (Enabled)
             {
                 foreach (var location in _specialLocations)
                     foreach (var rectangle in location.Rectangles)
@@ -746,7 +746,7 @@ namespace RT.Util.Controls
         protected override void OnGotFocus(EventArgs e)
         {
             _lastHadFocus = true;
-            if (_keyboardFocusOnLink == null && _specialLocations != null)
+            if (_keyboardFocusOnLink == null)
             {
                 var links = _specialLocations.OfType<linkLocationInfo>();
                 _keyboardFocusOnLink = Control.ModifierKeys.HasFlag(Keys.Shift) ? links.LastOrDefault() : links.FirstOrDefault();
