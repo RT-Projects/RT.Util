@@ -346,11 +346,6 @@ namespace RT.Util
         /// <summary>Returns the enum value represented by the specified string, or null if the string does not represent a valid enum value.</summary>
         public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct { T result; return Enum.TryParse<T>(value, ignoreCase, out result) ? (T?) result : null; }
 
-        /// <summary>Returns the earlier of the two specified date/time stamps.</summary>
-        public static DateTime Min(DateTime one, DateTime two) { return one < two ? one : two; }
-        /// <summary>Returns the later of the two specified date/time stamps.</summary>
-        public static DateTime Max(DateTime one, DateTime two) { return one < two ? two : one; }
-
         /// <summary>Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the specified method.</summary>
         /// <param name="firstArgument">Object to call the method on, or null for static methods.</param>
         /// <param name="method">The method to call.</param>
