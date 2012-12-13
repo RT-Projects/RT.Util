@@ -941,26 +941,26 @@ namespace RT.Util.Xml
             var substInterfaces = GetType().GetInterfaces()
                 .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IXmlClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
             if (substInterfaces.Length > 1)
-                throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType(), type));
+                throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName));
             else if (substInterfaces.Length == 1)
             {
                 _substituteType = substInterfaces[0].GetGenericArguments()[1];
                 if (type == _substituteType)
-                    throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType(), type));
+                    throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType().FullName, type.FullName));
                 var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
                 var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
                 _toSubstitute = obj =>
                 {
                     var result = toSubstMethod.Invoke(this, new[] { obj });
                     if (result != null && result.GetType() != _substituteType) // forbidden just in case because I see no use cases for returning a subtype
-                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType, result.GetType()));
+                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType.FullName, result.GetType().FullName));
                     return result;
                 };
                 _fromSubstitute = obj =>
                 {
                     var result = fromSubstMethod.Invoke(this, new[] { obj });
                     if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype
-                        throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type, result.GetType()));
+                        throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type.FullName, result.GetType().FullName));
                     return result;
                 };
             }

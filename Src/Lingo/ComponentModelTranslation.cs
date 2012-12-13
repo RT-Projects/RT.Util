@@ -209,7 +209,7 @@ namespace RT.Util.Lingo
             _getTranslation = getTranslation;
 
             if (!_enumType.IsEnum)
-                throw new ArgumentException("The type \"{0}\" is not an enum type, and so cannot be used in \"{1}\".".Fmt(typeof(TEnum), GetType()));
+                throw new ArgumentException("The type \"{0}\" is not an enum type, and so cannot be used in \"{1}\".".Fmt(typeof(TEnum).FullName, GetType().FullName));
         }
 
         /// <summary>Override; see base.</summary>
