@@ -52,10 +52,12 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
         /// <param name="stream">Stream to read from.</param>
-        /// <param name="encoding">Encoding to expect the text to be in.</param>
+        /// <param name="encoding">Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
         /// <returns>The text read from the stream.</returns>
-        public static string ReadAllText(this Stream stream, Encoding encoding)
+        public static string ReadAllText(this Stream stream, Encoding encoding = null)
         {
+            if (encoding == null)
+                encoding = Encoding.UTF8;
             return encoding.GetString(stream.ReadAllBytes());
         }
 
