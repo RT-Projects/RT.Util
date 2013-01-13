@@ -134,7 +134,14 @@ namespace RT.Util
         {
             if (takeCharactersFrom == null)
                 throw new ArgumentNullException("takeCharactersFrom");
-            return new string(Ut.NewArray(length, i => takeCharactersFrom[BitConverter.ToInt32(RndCrypto.NextBytes(4), 0) % takeCharactersFrom.Length]));
+            var chars = new char[length];
+            var bytes = NextBytes(length * 4);
+            for (int i = 0; i < length; i++)
+            {
+                bytes[i * 4 + 3] = 0;
+                chars[i] = takeCharactersFrom[BitConverter.ToInt32(bytes, i * 4) % takeCharactersFrom.Length];
+            }
+            return new string(chars);
         }
     }
 }
