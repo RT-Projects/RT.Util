@@ -131,7 +131,7 @@ namespace RT.Util
                             stack.Push(curTag);
                             curTag = new EggsTag(input[0], index);
                             index += runLength;
-                            curText = runLength == 3 ? input[0].ToString() : "";
+                            curText = "";
                             curTextIndex = index;
                             input = input.Substring(runLength);
                             continue;
