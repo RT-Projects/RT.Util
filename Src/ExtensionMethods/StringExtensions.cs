@@ -86,7 +86,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <param name="input">String containing URL escape sequences to be decoded.</param>
         /// <returns>The specified string with all URL escape sequences decoded.</returns>
-        /// /// <seealso cref="UrlEscape(string)"/>
+        /// <seealso cref="UrlEscape(string)"/>
         public static string UrlUnescape(this string input)
         {
             if (input == null)
