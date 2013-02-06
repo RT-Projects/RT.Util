@@ -635,9 +635,6 @@ namespace RT.Util.Xml
                 }
                 else
                 {
-                    if (declaredType.IsInterface && declaredType.GetGenericTypeDefinition() != typeof(ICollection<>) && declaredType.GetGenericTypeDefinition() != typeof(IList<>) && declaredType.GetGenericTypeDefinition() != typeof(IDictionary<,>))
-                        throw new InvalidOperationException("The field {0} is of an interface type, but not ICollection<T>, IList<T> or IDictionary<TKey, TValue>. Those are the only interface types supported.".Fmt(tagName));
-
                     // Tuples and KeyValuePairs
                     var genericDefinition = saveType.IsGenericType ? saveType.GetGenericTypeDefinition() : null;
                     if (genericDefinition != null && _tupleTypes.Contains(genericDefinition))

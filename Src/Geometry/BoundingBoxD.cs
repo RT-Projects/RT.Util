@@ -19,6 +19,11 @@ namespace RT.Util.Geometry
         /// <summary>The largest Y coordinate.</summary>
         public double Ymax;
 
+        /// <summary>Gets the difference between the larger and the smaller X limits of the box, i.e. the width of the bounding box.</summary>
+        public double Width { get { return Xmax - Xmin; } }
+        /// <summary>Gets the difference between the larger and the smaller Y limits of the box, i.e. the height of the bounding box.</summary>
+        public double Height { get { return Ymax - Ymin; } }
+
         /// <summary>
         /// Returns a new BoundingBox bounding a single point.
         /// </summary>

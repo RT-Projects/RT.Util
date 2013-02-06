@@ -49,7 +49,8 @@ namespace RT.Util
             XmlClassify.PostBuildStep<TSettings>(rep);
         }
 
-        /// <summary>Loads settings into the specified class, or, if not available, creates a new instance of the class.</summary>
+        /// <summary>Loads settings into the specified class, or, if not available, creates a new instance of the class. See Remarks.</summary>
+        /// <remarks>If the settings file exists but can't be loaded, this function will automatically create a backup of the settings file. If the file is opened exclusively by other code, will retry reading from it for up to 1.5 seconds.</remarks>
         /// <param name="settings">Destination - the settings class will be placed here</param>
         /// <param name="filename">If specified, overrides the filename that is normally derived from the values specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
         /// <param name="serializer">If specified, overrides the serializer specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
@@ -70,12 +71,15 @@ namespace RT.Util
             {
                 try
                 {
-                    settings = deserialize<TSettings>(filename, serializer.Value);
+                    settings = Ut.WaitSharingVio(() => deserialize<TSettings>(filename, serializer.Value), maximum: TimeSpan.FromSeconds(1.5));
                     return true;
                 }
                 catch (XmlException) { settings = new TSettings(); }
                 catch (IOException) { settings = new TSettings(); }
                 catch (SerializationException) { settings = new TSettings(); }
+
+                try { File.Copy(filename, PathUtil.AppendBeforeExtension(filename, ".LoadFailedBackup"), overwrite: true); }
+                catch { }
             }
             return false;
         }
