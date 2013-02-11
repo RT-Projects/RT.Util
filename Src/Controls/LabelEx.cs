@@ -189,7 +189,24 @@ namespace RT.Util.Controls
         /// <see cref="Text"/> is invalid EggsML, or null if it is valid.</summary>
         public EggsMLParseException ParseError { get; private set; }
 
-        private const string BULLET = " • ";
+        /// <summary>Gets or sets a string to use as the bullet point for bulleted lists ([...] in the mark-up).</summary>
+        [DefaultValue(typeof(string), " •\u2002")]
+        public string Bullet
+        {
+            get { return _bullet; }
+            set
+            {
+                if (value == _bullet)
+                    return;
+                _bullet = value;
+                _cachedPreferredSizes.Clear();
+                _cachedRendering = null;
+                autosize();
+                Invalidate();
+            }
+        }
+
+        private string _bullet = " •\u2002";
         private static ColorConverter _colorConverter;
         private static Cursor _cursorHandCache;
         private static Cursor _cursorHand
@@ -551,10 +568,10 @@ namespace RT.Util.Controls
 
                         // BULLET POINT
                         case '[':
-                            var bulletSize = measure(font, BULLET, g);
+                            var bulletSize = measure(font, _bullet, g);
                             var advance = bulletSize.Width;
                             if (renderings != null)
-                                renderings.Add(new renderingInfo(BULLET, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
+                                renderings.Add(new renderingInfo(_bullet, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
                             x += advance;
                             return Tuple.Create(state.ChangeBlockIndent(state.BlockIndent + advance), advance);
 
