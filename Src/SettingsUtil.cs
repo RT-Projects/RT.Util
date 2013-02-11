@@ -63,6 +63,7 @@ namespace RT.Util
             if (serializer == null)
                 serializer = attr.Serializer;
 
+            bool ret = false;
             if (!File.Exists(filename))
             {
                 settings = new TSettings();
@@ -72,7 +73,7 @@ namespace RT.Util
                 try
                 {
                     settings = Ut.WaitSharingVio(() => deserialize<TSettings>(filename, serializer.Value), maximum: TimeSpan.FromSeconds(1.5));
-                    return true;
+                    ret = true;
                 }
                 catch (XmlException) { settings = new TSettings(); }
                 catch (IOException) { settings = new TSettings(); }
@@ -81,7 +82,9 @@ namespace RT.Util
                 try { File.Copy(filename, PathUtil.AppendBeforeExtension(filename, ".LoadFailedBackup"), overwrite: true); }
                 catch { }
             }
-            return false;
+
+            settings.AfterLoad();
+            return ret;
         }
 
         internal static void save(SettingsBase settings, string filename, SettingsSerializer? serializer, SettingsOnFailure onFailure)
@@ -267,6 +270,14 @@ namespace RT.Util
         /// method returns).
         /// </summary>
         public virtual void BeforeSave()
+        {
+        }
+
+        /// <summary>
+        /// This method is called just before the settings class is restored from disk, allowing any required changes to
+        /// be made to the fields. The base implementation does nothing.
+        /// </summary>
+        public virtual void AfterLoad()
         {
         }
 
