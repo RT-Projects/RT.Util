@@ -402,5 +402,20 @@ namespace RT.Util.Drawing
 
             return new Rectangle(x, y, w, h);
         }
+
+        /// <summary>Creates a new bitmap by executing the specified drawing command(s) on a blank new 32-bit bitmap.</summary>
+        /// <param name="width">Width of the bitmap.</param>
+        /// <param name="height">Height of the bitmap.</param>
+        /// <param name="draw">Command(s) to execute on the new bitmap.</param>
+        public static Bitmap DrawBitmap(int width, int height, Action<Graphics> draw)
+        {
+            var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SetHighQuality();
+                draw(g);
+            }
+            return bmp;
+        }
     }
 }
