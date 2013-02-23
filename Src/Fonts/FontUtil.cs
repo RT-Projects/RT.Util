@@ -31,10 +31,6 @@ namespace RT.KitchenSink.Fonts
                         graphics.ReleaseHdc(hdc);
                     }
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message + " (" + e.GetType().FullName + ")");
-                }
                 finally
                 {
                     Marshal.DestroyStructure(plogFont, typeof(LOGFONT));
