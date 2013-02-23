@@ -26,6 +26,7 @@ namespace RT.Util.Drawing
             return Color.FromArgb(r, g, b);
         }
 
+        /// <summary>Converts hue, saturation and value into an RGB color object.</summary>
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (hue < 0 || hue >= 360)
@@ -45,8 +46,7 @@ namespace RT.Util.Drawing
 
             if (s == 0)
             {
-                // If s is 0, all colors are the same.
-                // This is some flavor of gray.
+                // Zero saturation = gray
                 r = v;
                 g = v;
                 b = v;
@@ -61,24 +61,17 @@ namespace RT.Util.Drawing
                 int sectorNumber;
                 double sectorPos;
 
-                // The color wheel consists of 6 sectors.
-                // Figure out which sector you're in.
+                // The color wheel consists of 6 sectors. Figure out which sector you're in.
                 sectorPos = h / 60;
                 sectorNumber = (int) (Math.Floor(sectorPos));
-
-                // get the fractional part of the sector.
-                // That is, how many degrees into the sector
-                // are you?
                 fractionalSector = sectorPos - sectorNumber;
 
-                // Calculate values for the three axes
-                // of the color.
+                // Calculate values for the three axes of the color.
                 p = v * (1 - s);
                 q = v * (1 - (s * fractionalSector));
                 t = v * (1 - (s * (1 - fractionalSector)));
 
-                // Assign the fractional colors to r, g, and b
-                // based on the sector the angle is in.
+                // Assign the fractional colors to r, g, and b based on the sector the angle is in.
                 switch (sectorNumber)
                 {
                     case 0:
@@ -118,8 +111,7 @@ namespace RT.Util.Drawing
                         break;
                 }
             }
-            // return an RgbColor structure, with values scaled
-            // to be between 0 and 255.
+
             return Color.FromArgb((int) (r * 255), (int) (g * 255), (int) (b * 255));
         }
 
