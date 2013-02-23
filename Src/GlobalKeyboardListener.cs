@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace RT.Util
 {
     /// <summary>Manages a global low-level keyboard hook.</summary>
-    public sealed class GlobalKeyboardListener
+    public sealed class GlobalKeyboardListener : IDisposable
     {
         /// <summary>The collections of keys to watch for. This is ignored if <see cref="HookAllKeys" /> is set to true.</summary>
         public List<Keys> HookedKeys { get { return _hookedKeys; } }
@@ -24,45 +24,41 @@ namespace RT.Util
         /// <summary>Current state of each modifier key.</summary>
         private bool _ctrl, _alt, _shift, _win;
 
-        #region Events
         /// <summary>Occurs when one of the hooked keys is pressed.</summary>
         public event GlobalKeyEventHandler KeyDown;
         /// <summary>Occurs when one of the hooked keys is released.</summary>
         public event GlobalKeyEventHandler KeyUp;
-        #endregion
 
-        #region Constructors and Destructors
+        /// <summary>Keeps the managed delegate referenced so that the garbage collector doesn’t collect it.</summary>
+        private WinAPI.KeyboardHookProc _hook;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="GlobalKeyboardListener" /> class and installs the keyboard hook.</summary>
         public GlobalKeyboardListener()
         {
-            hook();
+            IntPtr hInstance = WinAPI.LoadLibrary("User32");
+            _hook = hookProc;   // don’t remove this or the garbage collector will collect it while the global hook still tries to access it
+            _hHook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, _hook, IntPtr.Zero, 0);
         }
+
+        private bool _disposed = false;
 
         /// <summary>
         ///     Releases unmanaged resources and performs other cleanup operations before the <see
         ///     cref="GlobalKeyboardListener" /> is reclaimed by garbage collection and uninstalls the keyboard hook.</summary>
         ~GlobalKeyboardListener()
         {
-            unhook();
-        }
-        #endregion
-
-        private WinAPI.KeyboardHookProc _hook;
-
-        #region Public Methods
-        /// <summary>Installs the global hook</summary>
-        private void hook()
-        {
-            IntPtr hInstance = WinAPI.LoadLibrary("User32");
-            _hook = new WinAPI.KeyboardHookProc(hookProc);
-            _hHook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, _hook, hInstance, 0);
+            Dispose();
         }
 
-        /// <summary>Uninstalls the global hook</summary>
-        private void unhook()
+        /// <summary>Unregisters the hook and disposes the object.</summary>
+        public void Dispose()
         {
-            WinAPI.UnhookWindowsHookEx(_hHook);
+            if (!_disposed)
+            {
+                _disposed = true;
+                WinAPI.UnhookWindowsHookEx(_hHook);
+            }
         }
 
         /// <summary>
@@ -139,7 +135,6 @@ namespace RT.Util
             }
             return WinAPI.CallNextHookEx(_hHook, code, wParam, ref lParam);
         }
-        #endregion
     }
 
     /// <summary>Encapsulates the current state of modifier keys.</summary>
