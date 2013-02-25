@@ -32,8 +32,7 @@ namespace RT.Util.Geometry
         /// "line.Start + lambda * line", for each line. If the lines don't intersect,
         /// the lambdas are set to NaN.
         /// </summary>
-        public static void LineWithLine(ref EdgeD line1, ref EdgeD line2,
-                                        out double line1lambda, out double line2lambda)
+        public static void LineWithLine(ref EdgeD line1, ref EdgeD line2, out double line1Lambda, out double line2Lambda)
         {
             // line1 direction vector
             double l1dx = line1.End.X - line1.Start.X;
@@ -46,107 +45,33 @@ namespace RT.Util.Geometry
 
             if (denom == 0)
             {
-                line1lambda = double.NaN;
-                line2lambda = double.NaN;
+                line1Lambda = double.NaN;
+                line2Lambda = double.NaN;
             }
             else
             {
-                line1lambda = (l2dx*(line1.Start.Y - line2.Start.Y) - l2dy*(line1.Start.X - line2.Start.X)) / denom;
-                line2lambda = (l1dx*(line1.Start.Y - line2.Start.Y) - l1dy*(line1.Start.X - line2.Start.X)) / denom;
-            }
-        }
-
-        /// <summary>
-        /// <para>Finds the point of intersection between two lines, specified by a
-        /// point on a line and the gradient. Works correctly if the gradient
-        /// is infinite (vertical line), for both positive and negative inf.</para>
-        /// 
-        /// <para>If a single intersection exists, returns the coordinates in ix, iy.
-        /// If the lines coincide, returns Inf,Inf. If lines are parallel but
-        /// don't coincide returns NaN,NaN.</para>
-        /// 
-        /// <para>WARNING: untested.</para>
-        /// </summary>
-        public static void LineWithLine(out double ix, out double iy,
-            double x1, double y1, double dydx1, double x2, double y2, double dydx2)
-        {
-            bool gradeq = dydx1 == dydx2;
-            bool inf1 = double.IsInfinity(dydx1);
-            bool inf2 = double.IsInfinity(dydx2);
-
-            if (!(gradeq || inf1 || inf2))
-            {
-                // Most common case - no infinities, lines not parallel.
-                // Could do extra checks for max accuracy but not convinced that's
-                // going to be worth the performance penalty.
-                ix = (y2 - y1 + dydx1 * x1 - dydx2 * x2) / (dydx1 - dydx2);
-                iy = y1 + dydx1 * (ix - x1);
-            }
-            else if (gradeq || (inf1 && inf2))
-            {
-                // Lines are parallel
-                bool intersect = false;
-                if (double.IsInfinity(dydx1))
-                    // Vertical lines
-                    intersect = x1 == x2;
-                else
-                    // Not vertical lines
-                    intersect = (y1 == y2 + dydx2 * (x1 - x2));
-
-                // If they intersect, return Inf,Inf. If not, return NaN,NaN
-                if (intersect)
-                    ix = iy = double.PositiveInfinity;
-                else
-                    ix = iy = double.NaN;
-            }
-            else if (inf1)
-            {
-                // Line 1 is vertical but the other one isn't
-                ix = x1;
-                iy = y2 + dydx2 * (x1 - x2);
-            }
-            else /*if (inf2)*/
-            {
-                // Line 2 is vertical but the other one isn't
-                ix = x2;
-                iy = y1 + dydx1 * (x2 - x1);
+                line1Lambda = (l2dx * (line1.Start.Y - line2.Start.Y) - l2dy * (line1.Start.X - line2.Start.X)) / denom;
+                line2Lambda = (l1dx * (line1.Start.Y - line2.Start.Y) - l1dy * (line1.Start.X - line2.Start.X)) / denom;
             }
         }
 
         /// <summary>
         /// <para>Finds the point of intersection between two lines, specified by
         /// two points each.</para>
-        /// 
-        /// <para>If a single intersection exists, returns the coordinates in ix, iy.
-        /// If the lines coincide, returns Inf,Inf. If lines are parallel but
-        /// don't coincide returns NaN,NaN.</para>
-        /// 
-        /// <para>WARNING: untested.</para>
+        /// <para>If the lines coincide or are parallel, returns (NaN,NaN).</para>
         /// </summary>
-        public static void LineWithLine(out double ix, out double iy,
-            double fx1, double fy1, double tx1, double ty1,
-            double fx2, double fy2, double tx2, double ty2)
+        public static PointD intersect(PointD f1, PointD t1, PointD f2, PointD t2)
         {
-            double num = (tx2 - fx2) * (fy1 - fy2) - (ty2 - fy2) * (fx1 - fx2);
-            double den = (ty2 - fy2) * (tx1 - fx1) - (tx2 - fx2) * (ty1 - fy1);
+            var det = (f1.X - t1.X) * (f2.Y - t2.Y) - (f1.Y - t1.Y) * (f2.X - t2.X);
 
-            if (den != 0)
-            {
-                // Lines are not parallel
-                double u = num / den;
-                ix = fx1 + u * (tx1 - fx1);
-                iy = fy1 + u * (ty2 - fy1);
-            }
-            else if (num != 0)
-            {
-                // Parallel but not coincident
-                ix = iy = double.NaN;
-            }
-            else
-            {
-                // Parallel and coincident
-                ix = iy = double.PositiveInfinity;
-            }
+            if (det == 0)
+                // Lines are parallel
+                return new PointD(double.NaN, double.NaN);
+
+            return new PointD(
+                ((f1.X * t1.Y - f1.Y * t1.X) * (f2.X - t2.X) - (f1.X - t1.X) * (f2.X * t2.Y - f2.Y * t2.X)) / det,
+                ((f1.X * t1.Y - f1.Y * t1.X) * (f2.Y - t2.Y) - (f1.Y - t1.Y) * (f2.X * t2.Y - f2.Y * t2.X)) / det
+            );
         }
 
         #endregion
@@ -174,12 +99,12 @@ namespace RT.Util.Geometry
             // 
             // Eventually we get a standard quadratic equation in l with the
             // following coefficients:
-            double a = dx*dx + dy*dy;
-            double b = -2 * (ax*dx + ay*dy);
-            double c = ax*ax + ay*ay - circle.Radius*circle.Radius;
+            double a = dx * dx + dy * dy;
+            double b = -2 * (ax * dx + ay * dy);
+            double c = ax * ax + ay * ay - circle.Radius * circle.Radius;
 
             // Now just solve the quadratic eqn...
-            double D = b*b - 4*a*c;
+            double D = b * b - 4 * a * c;
             if (D < 0)
             {
                 lambda1 = lambda2 = double.NaN;
@@ -187,8 +112,8 @@ namespace RT.Util.Geometry
             else
             {
                 double sqrtD = Math.Sqrt(D);
-                lambda1 = (-b + sqrtD) / (2*a);
-                lambda2 = (-b - sqrtD) / (2*a);
+                lambda1 = (-b + sqrtD) / (2 * a);
+                lambda2 = (-b - sqrtD) / (2 * a);
             }
         }
 
