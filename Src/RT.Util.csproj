@@ -186,6 +186,7 @@
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
     <Compile Include="Streams\ConsoleLoggingStream.cs" />
+    <Compile Include="Streams\DoNotCloseStream.cs" />
     <Compile Include="Streams\HashingStream.cs" />
     <Compile Include="Streams\NewlineNormalizerStream.cs" />
     <Compile Include="Streams\SocketStreams.cs" />
