@@ -340,16 +340,20 @@ namespace RT.Util.Json
     /// <summary>Encapsulates a JSON value (e.g. a boolean, a number, a string, a list, a dictionary, etc.)</summary>
     public abstract class JsonValue : IEquatable<JsonValue>
     {
-        /// <summary>Parses the specified string into a JSON value.</summary>
-        /// <param name="jsonValue">A string containing JSON syntax.</param>
+        /// <summary>
+        ///     Parses the specified string into a JSON value.</summary>
+        /// <param name="jsonValue">
+        ///     A string containing JSON syntax.</param>
         /// <param name="allowJavaScript">
-        /// <para>True to allow certain notations that are allowed in JavaScript but not strictly in JSON:</para>
-        /// <list type="bullet">
-        /// <item><description>allows keys in dictionaries to be unquoted</description></item>
-        /// <item><description>allows strings to be delimited with single-quotes in addition to double-quotes</description></item>
-        /// </list>
-        /// </param>
-        /// <returns>A <see cref="JsonValue"/> instance representing the value.</returns>
+        ///     <para>True to allow certain notations that are allowed in JavaScript but not strictly in JSON:</para>
+        ///     <list type="bullet">
+        ///     <item><description>
+        ///         allows keys in dictionaries to be unquoted</description></item>
+        ///     <item><description>
+        ///         allows strings to be delimited with single-quotes in addition to double-quotes</description></item>
+        ///     </list></param>
+        /// <returns>
+        ///     A <see cref="JsonValue"/> instance representing the value.</returns>
         public static JsonValue Parse(string jsonValue, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonValue, allowJavaScript);
@@ -359,10 +363,15 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON value.</summary>
-        /// <param name="jsonValue">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonValue"/> representing the value, or null if unsuccessful. (But note that null is also a possible valid value in case of success.)</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON value.</summary>
+        /// <param name="jsonValue">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonValue"/> representing the value, or null if unsuccessful. (But note that null is
+        ///     also a possible valid value in case of success.)</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonValue, out JsonValue result)
         {
             try
@@ -415,7 +424,9 @@ namespace RT.Util.Json
         /// <summary>See <see cref="AsInt"/>.</summary>
         public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.AsInt; }
 
-        /// <summary>Returns the current value cast to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value cast to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise,
+        ///     throws.</summary>
         public JsonList AsList
         {
             get
@@ -427,7 +438,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value cast to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value cast to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise,
+        ///     throws.</summary>
         public JsonDict AsDict
         {
             get
@@ -475,7 +488,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value as a long if it is a <see cref="JsonNumber"/> containing an integer within the range of long; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value as a long if it is a <see cref="JsonNumber"/> containing an integer within the
+        ///     range of long; otherwise, throws.</summary>
         public long AsLong
         {
             get
@@ -487,7 +502,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value as an int if it is a <see cref="JsonNumber"/> containing an integer within the range of int; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value as an int if it is a <see cref="JsonNumber"/> containing an integer within the
+        ///     range of int; otherwise, throws.</summary>
         public int AsInt
         {
             get
@@ -501,7 +518,9 @@ namespace RT.Util.Json
 
         #region Both IList and IDictionary
 
-        /// <summary>Removes all items from the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Removes all items from the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>;
+        ///     otherwise, throws.</summary>
         public void Clear()
         {
             if (this is JsonList)
@@ -512,7 +531,9 @@ namespace RT.Util.Json
                 throw new NotSupportedException("This method is only supported on dictionary and list values.");
         }
 
-        /// <summary>Returns the number of items in the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the number of items in the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"
+        ///     />; otherwise, throws.</summary>
         public int Count
         {
             get
@@ -526,14 +547,18 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns false if this value is a <see cref="JsonDict"/> or a <see cref="JsonList"/>; otherwise, returns true.</summary>
+        /// <summary>
+        ///     Returns false if this value is a <see cref="JsonDict"/> or a <see cref="JsonList"/>; otherwise, returns
+        ///     true.</summary>
         public bool IsReadOnly { get { return !(this is JsonDict || this is JsonList); } }
 
         #endregion
 
         #region IList
 
-        /// <summary>Returns the item at the specified <paramref name="index"/> within the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the item at the specified <paramref name="index"/> within the current list if it is a <see
+        ///     cref="JsonList"/>; otherwise, throws.</summary>
         public JsonValue this[int index]
         {
             get
@@ -552,7 +577,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Add the specified <paramref name="item"/> to the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Add the specified <paramref name="item"/> to the current list if it is a <see cref="JsonList"/>; otherwise,
+        ///     throws.</summary>
         public void Add(JsonValue item)
         {
             var list = this as JsonList;
@@ -561,8 +588,11 @@ namespace RT.Util.Json
             list.List.Add(item);
         }
 
-        /// <summary>Removes the first instance of the specified <paramref name="item"/> from the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
-        /// <returns>True if an item was removed; otherwise, false.</returns>
+        /// <summary>
+        ///     Removes the first instance of the specified <paramref name="item"/> from the current list if it is a <see
+        ///     cref="JsonList"/>; otherwise, throws.</summary>
+        /// <returns>
+        ///     True if an item was removed; otherwise, false.</returns>
         public bool Remove(JsonValue item)
         {
             var list = this as JsonList;
@@ -571,7 +601,9 @@ namespace RT.Util.Json
             return list.List.Remove(item);
         }
 
-        /// <summary>Determines whether the specified <paramref name="item"/> is contained in the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Determines whether the specified <paramref name="item"/> is contained in the current list if it is a <see
+        ///     cref="JsonList"/>; otherwise, throws.</summary>
         public bool Contains(JsonValue item)
         {
             var list = this as JsonList;
@@ -580,7 +612,9 @@ namespace RT.Util.Json
             return list.List.Contains(item);
         }
 
-        /// <summary>Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list
+        ///     if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
         public void Insert(int index, JsonValue item)
         {
             var list = this as JsonList;
@@ -589,7 +623,9 @@ namespace RT.Util.Json
             list.List.Insert(index, item);
         }
 
-        /// <summary>Removes the item at the specified <paramref name="index"/> from the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Removes the item at the specified <paramref name="index"/> from the current list if it is a <see
+        ///     cref="JsonList"/>; otherwise, throws.</summary>
         public void RemoveAt(int index)
         {
             var list = this as JsonList;
@@ -598,8 +634,11 @@ namespace RT.Util.Json
             list.List.RemoveAt(index);
         }
 
-        /// <summary>Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
-        /// <returns>The index of the item, or -1 if the item is not in the list.</returns>
+        /// <summary>
+        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list if
+        ///     it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <returns>
+        ///     The index of the item, or -1 if the item is not in the list.</returns>
         public int IndexOf(JsonValue item)
         {
             var list = this as JsonList;
@@ -608,9 +647,14 @@ namespace RT.Util.Json
             return list.List.IndexOf(item);
         }
 
-        /// <summary>Copies the entire list to a compatible one-dimensional <paramref name="array"/>, starting at the specified <paramref name="arrayIndex"/> of the target array, if this is a <see cref="JsonList"/>; otherwise, throws.</summary>
-        /// <param name="array">The one-dimensional array that is the destination of the elements copied from the list. The array must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in array at which copying begins.</param>
+        /// <summary>
+        ///     Copies the entire list to a compatible one-dimensional <paramref name="array"/>, starting at the specified
+        ///     <paramref name="arrayIndex"/> of the target array, if this is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <param name="array">
+        ///     The one-dimensional array that is the destination of the elements copied from the list. The array must have
+        ///     zero-based indexing.</param>
+        /// <param name="arrayIndex">
+        ///     The zero-based index in array at which copying begins.</param>
         public void CopyTo(JsonValue[] array, int arrayIndex)
         {
             var list = this as JsonList;
@@ -623,7 +667,9 @@ namespace RT.Util.Json
 
         #region IDictionary
 
-        /// <summary>Gets or sets the value associated with the specified <paramref name="key"/> if this value is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Gets or sets the value associated with the specified <paramref name="key"/> if this value is a <see
+        ///     cref="JsonDict"/>; otherwise, throws.</summary>
         public JsonValue this[string key]
         {
             get
@@ -666,10 +712,16 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Attempts to retrieve the value associated with the specified <paramref name="key"/> if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        /// <param name="key">The key for which to try to retrieve the value.</param>
-        /// <param name="value">Receives the value associated with the specified <paramref name="key"/>, or null if the key is not in the dictionary. (Note that null may also be a valid value in case of success.)</param>
-        /// <returns>True if the key was in the dictionary; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to retrieve the value associated with the specified <paramref name="key"/> if this is a <see
+        ///     cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <param name="key">
+        ///     The key for which to try to retrieve the value.</param>
+        /// <param name="value">
+        ///     Receives the value associated with the specified <paramref name="key"/>, or null if the key is not in the
+        ///     dictionary. (Note that null may also be a valid value in case of success.)</param>
+        /// <returns>
+        ///     True if the key was in the dictionary; otherwise, false.</returns>
         public bool TryGetValue(string key, out JsonValue value)
         {
             var dict = this as JsonDict;
@@ -678,9 +730,12 @@ namespace RT.Util.Json
             return dict.Dict.TryGetValue(key, out value);
         }
 
-        /// <summary>Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        /// <param name="key">The key to add.</param>
-        /// <param name="value">The value to add.</param>
+        /// <summary>
+        ///     Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <param name="key">
+        ///     The key to add.</param>
+        /// <param name="value">
+        ///     The value to add.</param>
         public void Add(string key, JsonValue value)
         {
             var dict = this as JsonDict;
@@ -689,9 +744,13 @@ namespace RT.Util.Json
             dict.Dict.Add(key, value);
         }
 
-        /// <summary>Removes the entry with the specified <paramref name="key"/> from the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        /// <param name="key">The key that identifies the entry to remove.</param>
-        /// <returns>True if an entry was removed; false if the key wasn’t in the dictionary.</returns>
+        /// <summary>
+        ///     Removes the entry with the specified <paramref name="key"/> from the dictionary if this is a <see
+        ///     cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <param name="key">
+        ///     The key that identifies the entry to remove.</param>
+        /// <returns>
+        ///     True if an entry was removed; false if the key wasn’t in the dictionary.</returns>
         public bool Remove(string key)
         {
             var dict = this as JsonDict;
@@ -700,7 +759,9 @@ namespace RT.Util.Json
             return dict.Dict.Remove(key);
         }
 
-        /// <summary>Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary if this is a
+        ///     <see cref="JsonDict"/>; otherwise, throws.</summary>
         public bool ContainsKey(string key)
         {
             var dict = this as JsonDict;
@@ -711,15 +772,20 @@ namespace RT.Util.Json
 
         #endregion
 
-        /// <summary>Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks in the other overload, <see cref="Equals(JsonValue)"/>.)</summary>
+        /// <summary>
+        ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks in the other
+        ///     overload, <see cref="Equals(JsonValue)"/>.)</summary>
         public override bool Equals(object other)
         {
             return other is JsonValue ? Equals((JsonValue) other) : false;
         }
 
-        /// <summary>Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks.)</summary>
-        /// <remarks>Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never equal to a <see cref="JsonNumber"/> even if they contain the same number).
-        /// Lists are equal if they contain the same values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
+        /// <summary>
+        ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks.)</summary>
+        /// <remarks>
+        ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never
+        ///     equal to a <see cref="JsonNumber"/> even if they contain the same number). Lists are equal if they contain
+        ///     the same values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
         public bool Equals(JsonValue other)
         {
             if (other == null) return false;
@@ -768,22 +834,25 @@ namespace RT.Util.Json
         public abstract IEnumerable<string> ToEnumerable();
 
         /// <summary>
-        /// Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and comments.
-        /// Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are only replaced
-        /// outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are inserted unmodified.
-        /// </summary>
-        /// <param name="js">JavaScript code with placeholders.</param>
-        /// <param name="namevalues">Alternating names and associated values, for example ["user", "abc"] specifies one value named "user".</param>
+        ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
+        ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders
+        ///     are only replaced outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are
+        ///     inserted unmodified.</summary>
+        /// <param name="js">
+        ///     JavaScript code with placeholders.</param>
+        /// <param name="namevalues">
+        ///     Alternating names and associated values, for example ["user", "abc"] specifies one value named "user".</param>
         /// <example>
-        /// <para>The following code:</para>
-        /// <code>JsonValue.Fmt(@"Foo({{userid}}, {{username}}, {{options}});", "userid", userid, "username", username, "options", null)</code>
-        /// <para>might return the following string:</para>
-        /// <code>Foo(123, "Matthew Stranger", null);</code>
-        /// </example>
+        ///     <para>The following code:</para>
+        ///     <code>JsonValue.Fmt(@"Foo({{userid}}, {{username}}, {{options}});", "userid", userid, "username", username,
+        ///     "options", null)</code>
+        ///     <para>might return the following string:</para>
+        ///     <code>Foo(123, "Matthew Stranger", null);</code></example>
         /// <exception cref="ArgumentException">
-        /// <paramref name="namevalues"/> has an odd number of values. OR
-        /// <paramref name="js"/> contains a {{placeholder}} whose name is not listed in <paramref name="namevalues"/>.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="js"/> is null. OR <paramref name="namevalues"/> is null.</exception>
+        ///     <paramref name="namevalues"/> has an odd number of values. OR <paramref name="js"/> contains a
+        ///     {{placeholder}} whose name is not listed in <paramref name="namevalues"/>.</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="js"/> is null. OR <paramref name="namevalues"/> is null.</exception>
         public static string Fmt(string js, params JsonValue[] namevalues)
         {
             if (js == null)
@@ -836,7 +905,9 @@ namespace RT.Util.Json
         /// <summary>Constructs an empty list.</summary>
         public JsonList() { List = new List<JsonValue>(); }
 
-        /// <summary>Constructs a <see cref="JsonList"/> instance containing a copy of the specified collection of <paramref name="items"/>.</summary>
+        /// <summary>
+        ///     Constructs a <see cref="JsonList"/> instance containing a copy of the specified collection of <paramref
+        ///     name="items"/>.</summary>
         public JsonList(IEnumerable<JsonValue> items)
         {
             if (items == null)
@@ -845,9 +916,13 @@ namespace RT.Util.Json
             List.AddRange(items);
         }
 
-        /// <summary>Parses the specified JSON as a JSON list. All other types of JSON values result in a <see cref="JsonParseException"/>.</summary>
-        /// <param name="jsonList">JSON syntax to parse.</param>
-        /// <param name="allowJavaScript">See <see cref="JsonValue.Parse"/>.</param>
+        /// <summary>
+        ///     Parses the specified JSON as a JSON list. All other types of JSON values result in a <see
+        ///     cref="JsonParseException"/>.</summary>
+        /// <param name="jsonList">
+        ///     JSON syntax to parse.</param>
+        /// <param name="allowJavaScript">
+        ///     See <see cref="JsonValue.Parse"/>.</param>
         public static new JsonList Parse(string jsonList, bool allowJavaScript = false)
         {
             if (jsonList == null)
@@ -859,10 +934,14 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON list.</summary>
-        /// <param name="jsonNumber">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonList"/> representing the list, or null if unsuccessful.</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON list.</summary>
+        /// <param name="jsonNumber">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonList"/> representing the list, or null if unsuccessful.</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonNumber, out JsonList result)
         {
             try
@@ -949,9 +1028,13 @@ namespace RT.Util.Json
                 Dict.Add(item.Key, item.Value);
         }
 
-        /// <summary>Parses the specified JSON as a JSON dictionary. All other types of JSON values result in a <see cref="JsonParseException"/>.</summary>
-        /// <param name="jsonDict">JSON syntax to parse.</param>
-        /// <param name="allowJavaScript">See <see cref="JsonValue.Parse"/>.</param>
+        /// <summary>
+        ///     Parses the specified JSON as a JSON dictionary. All other types of JSON values result in a <see
+        ///     cref="JsonParseException"/>.</summary>
+        /// <param name="jsonDict">
+        ///     JSON syntax to parse.</param>
+        /// <param name="allowJavaScript">
+        ///     See <see cref="JsonValue.Parse"/>.</param>
         public static new JsonDict Parse(string jsonDict, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonDict, allowJavaScript);
@@ -961,10 +1044,14 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON dictionary.</summary>
-        /// <param name="jsonDict">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonDict"/> representing the dictionary, or null if unsuccessful.</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON dictionary.</summary>
+        /// <param name="jsonDict">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonDict"/> representing the dictionary, or null if unsuccessful.</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonDict, out JsonDict result)
         {
             try
@@ -1079,9 +1166,13 @@ namespace RT.Util.Json
             _value = value;
         }
 
-        /// <summary>Parses the specified JSON as a JSON string. All other types of JSON values result in a <see cref="JsonParseException"/>.</summary>
-        /// <param name="jsonString">JSON syntax to parse.</param>
-        /// <param name="allowJavaScript">See <see cref="JsonValue.Parse"/>.</param>
+        /// <summary>
+        ///     Parses the specified JSON as a JSON string. All other types of JSON values result in a <see
+        ///     cref="JsonParseException"/>.</summary>
+        /// <param name="jsonString">
+        ///     JSON syntax to parse.</param>
+        /// <param name="allowJavaScript">
+        ///     See <see cref="JsonValue.Parse"/>.</param>
         public static new JsonString Parse(string jsonString, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonString, allowJavaScript);
@@ -1091,10 +1182,14 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON string.</summary>
-        /// <param name="jsonString">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonString"/> representing the string, or null if unsuccessful.</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON string.</summary>
+        /// <param name="jsonString">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonString"/> representing the string, or null if unsuccessful.</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonString, out JsonString result)
         {
             try
@@ -1139,8 +1234,10 @@ namespace RT.Util.Json
             yield return _value.JsEscape(JsQuotes.Double);
         }
 
-        /// <summary>Returns a JavaScript-compatible representation of this string.</summary>
-        /// <param name="quotes">Specifies the style of quotes to use around the string.</param>
+        /// <summary>
+        ///     Returns a JavaScript-compatible representation of this string.</summary>
+        /// <param name="quotes">
+        ///     Specifies the style of quotes to use around the string.</param>
         public string ToString(JsQuotes quotes)
         {
             return _value.JsEscape(quotes);
@@ -1155,9 +1252,13 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonBool"/> from the specified boolean.</summary>
         public JsonBool(bool value) { _value = value; }
 
-        /// <summary>Parses the specified JSON as a JSON boolean. All other types of JSON values result in a <see cref="JsonParseException"/>.</summary>
-        /// <param name="jsonBool">JSON syntax to parse.</param>
-        /// <param name="allowJavaScript">See <see cref="JsonValue.Parse"/>.</param>
+        /// <summary>
+        ///     Parses the specified JSON as a JSON boolean. All other types of JSON values result in a <see
+        ///     cref="JsonParseException"/>.</summary>
+        /// <param name="jsonBool">
+        ///     JSON syntax to parse.</param>
+        /// <param name="allowJavaScript">
+        ///     See <see cref="JsonValue.Parse"/>.</param>
         public static new JsonBool Parse(string jsonBool, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonBool, allowJavaScript);
@@ -1167,10 +1268,14 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON boolean.</summary>
-        /// <param name="jsonBool">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonBool"/> representing the boolean, or null if unsuccessful.</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON boolean.</summary>
+        /// <param name="jsonBool">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonBool"/> representing the boolean, or null if unsuccessful.</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonBool, out JsonBool result)
         {
             try
@@ -1233,9 +1338,13 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonBool"/> from the specified 32-bit integer.</summary>
         public JsonNumber(int value) { _double = value; }
 
-        /// <summary>Parses the specified JSON as a JSON number. All other types of JSON values result in a <see cref="JsonParseException"/>.</summary>
-        /// <param name="jsonNumber">JSON syntax to parse.</param>
-        /// <param name="allowJavaScript">See <see cref="JsonValue.Parse"/>.</param>
+        /// <summary>
+        ///     Parses the specified JSON as a JSON number. All other types of JSON values result in a <see
+        ///     cref="JsonParseException"/>.</summary>
+        /// <param name="jsonNumber">
+        ///     JSON syntax to parse.</param>
+        /// <param name="allowJavaScript">
+        ///     See <see cref="JsonValue.Parse"/>.</param>
         public static new JsonNumber Parse(string jsonNumber, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonNumber, allowJavaScript);
@@ -1245,10 +1354,14 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>Attempts to parse the specified string into a JSON number.</summary>
-        /// <param name="jsonNumber">A string containing JSON syntax.</param>
-        /// <param name="result">Receives the <see cref="JsonNumber"/> representing the number, or null if unsuccessful.</param>
-        /// <returns>True if parsing was successful; otherwise, false.</returns>
+        /// <summary>
+        ///     Attempts to parse the specified string into a JSON number.</summary>
+        /// <param name="jsonNumber">
+        ///     A string containing JSON syntax.</param>
+        /// <param name="result">
+        ///     Receives the <see cref="JsonNumber"/> representing the number, or null if unsuccessful.</param>
+        /// <returns>
+        ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonNumber, out JsonNumber result)
         {
             try
@@ -1268,7 +1381,9 @@ namespace RT.Util.Json
         /// <summary>Converts the specified <see cref="JsonNumber"/> to a nullable double.</summary>
         public static implicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. (Throws if the number is not an integer or does not fit in the range of a 64-bit integer.)</summary>
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. (Throws if the number is not an integer
+        ///     or does not fit in the range of a 64-bit integer.)</summary>
         public static explicit operator long(JsonNumber value)
         {
             if (double.IsNaN(value._double))
@@ -1285,10 +1400,14 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. (Throws if the number is not an integer or does not fit in the range of a 64-bit integer.)</summary>
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. (Throws if the number is not an
+        ///     integer or does not fit in the range of a 64-bit integer.)</summary>
         public static explicit operator long?(JsonNumber value) { return value == null ? (long?) null : (long) value; }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. (Throws if the number is not an integer or does not fit in the range of a 32-bit integer.)</summary>
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. (Throws if the number is not an integer
+        ///     or does not fit in the range of a 32-bit integer.)</summary>
         public static explicit operator int(JsonNumber value)
         {
             if (double.IsNaN(value._double))
@@ -1307,7 +1426,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. (Throws if the number is not an integer or does not fit in the range of a 32-bit integer.)</summary>
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. (Throws if the number is not an
+        ///     integer or does not fit in the range of a 32-bit integer.)</summary>
         public static explicit operator int?(JsonNumber value) { return value == null ? (int?) null : (int) value; }
 
         /// <summary>Converts the specified double to a <see cref="JsonNumber"/> value.</summary>
@@ -1353,9 +1474,8 @@ namespace RT.Util.Json
     }
 
     /// <summary>
-    /// A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow embedding
-    /// arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.
-    /// </summary>
+    ///     A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow
+    ///     embedding arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.</summary>
     public class JsonRaw : JsonValue
     {
         /// <summary>Gets the raw JSON.</summary>
