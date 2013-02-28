@@ -406,7 +406,7 @@ namespace RT.Util.Json
         public static implicit operator JsonValue(int? value) { return value == null ? null : new JsonNumber(value.Value); }
 
         /// <summary>See <see cref="AsString"/>.</summary>
-        public static explicit operator string(JsonValue value) { return value.AsString; }
+        public static explicit operator string(JsonValue value) { return value == null ? (string) null : value.AsString; }
         /// <summary>See <see cref="AsBool"/>.</summary>
         public static explicit operator bool(JsonValue value) { return value.AsBool; }
         /// <summary>See <see cref="AsBool"/>.</summary>
@@ -452,7 +452,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value as a string if it is a <see cref="JsonString"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value as a string if it is a <see cref="JsonString"/>; otherwise, throws. Identical to an
+        ///     explicit cast to <c>string</c>, except that the explicit cast also supports nulls.</summary>
         public string AsString
         {
             get
@@ -464,7 +466,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value as a bool if it is a <see cref="JsonBool"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value as a bool if it is a <see cref="JsonBool"/>; otherwise, throws. Identical to an
+        ///     explicit cast to <c>bool</c>.</summary>
         public bool AsBool
         {
             get
@@ -476,7 +480,9 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns the current value as a double if it is a <see cref="JsonNumber"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Returns the current value as a double if it is a <see cref="JsonNumber"/>; otherwise, throws. Identical to an
+        ///     explicit cast to <c>double</c>.</summary>
         public double AsDouble
         {
             get
@@ -489,8 +495,22 @@ namespace RT.Util.Json
         }
 
         /// <summary>
+        ///     Returns the current value as a decimal if it is a <see cref="JsonNumber"/>; otherwise, throws. This property
+        ///     is slightly lossy; see Remarks on <see cref="JsonNumber"/>. Identical to an explicit cast to <c>decimal</c>.</summary>
+        public decimal AsDecimal
+        {
+            get
+            {
+                var v = this as JsonNumber;
+                if (v == null)
+                    throw new NotSupportedException("Only numeric values can be interpreted as decimal.");
+                return (decimal) v;
+            }
+        }
+
+        /// <summary>
         ///     Returns the current value as a long if it is a <see cref="JsonNumber"/> containing an integer within the
-        ///     range of long; otherwise, throws.</summary>
+        ///     range of long; otherwise, throws. Identical to an explicit cast to <c>long</c>.</summary>
         public long AsLong
         {
             get
@@ -504,7 +524,7 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Returns the current value as an int if it is a <see cref="JsonNumber"/> containing an integer within the
-        ///     range of int; otherwise, throws.</summary>
+        ///     range of int; otherwise, throws. Identical to an explicit cast to <c>int</c>.</summary>
         public int AsInt
         {
             get
@@ -805,6 +825,41 @@ namespace RT.Util.Json
 
         /// <summary>Returns a hash code representing this object.</summary>
         public abstract override int GetHashCode();
+
+        /// <summary>
+        ///     Converts this JSON value to <c>double</c>. Unlike <see cref="AsDouble"/>, this function also converts string
+        ///     values, provided the string is parseable as a JSON-compatible numeric value.</summary>
+        public virtual double ToDouble()
+        {
+            throw new NotSupportedException("Only numeric values and strings can be converted to double.");
+        }
+
+        /// <summary>
+        ///     Converts this JSON value to <c>decimal</c>. Unlike <see cref="AsDecimal"/>, this function also converts
+        ///     string values, provided the string is parseable as a JSON-compatible numeric value. This function is slightly
+        ///     lossy; see Remarks on <see cref="JsonNumber"/> (but not lossy when converting a string).</summary>
+        public virtual decimal ToDecimal()
+        {
+            throw new NotSupportedException("Only numeric values and strings can be converted to decimal.");
+        }
+
+        /// <summary>
+        ///     Converts this JSON value to <c>int</c>. Throws if the value is outside the range supported by <c>int</c>, or
+        ///     represents a number that isn't an integer. Unlike <see cref="AsInt"/>, this function also converts string
+        ///     values, provided the string is parseable as a JSON-compatible integer value.</summary>
+        public virtual int ToInt(bool allowZeroFraction = false)
+        {
+            throw new NotSupportedException("Only numeric values and strings can be converted to int.");
+        }
+
+        /// <summary>
+        ///     Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>, or
+        ///     represents a number that isn't an integer. Unlike <see cref="AsLong"/>, this function also converts string
+        ///     values, provided the string is parseable as a JSON-compatible integer value.</summary>
+        public virtual long ToLong(bool allowZeroFraction = false)
+        {
+            throw new NotSupportedException("Only numeric values and strings can be converted to long.");
+        }
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static string ToString(JsonValue value)
@@ -1209,6 +1264,50 @@ namespace RT.Util.Json
         /// <summary>Converts the specified ordinary string to a <see cref="JsonString"/> value.</summary>
         public static implicit operator JsonString(string value) { return value == null ? null : new JsonString(value); }
 
+        /// <summary>Converts this JSON string to <c>double</c>.</summary>
+        public override double ToDouble()
+        {
+            double result = double.Parse(_value);
+            if (double.IsNaN(result) || double.IsInfinity(result))
+                throw new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities.");
+            return result;
+        }
+
+        /// <summary>
+        ///     Converts this JSON string to <c>decimal</c>. Unlike <see cref="JsonValue.AsDecimal"/> or explicit casts, this
+        ///     function is not lossy, provided the string does not have more precision than can be supported by
+        ///     <c>decimal</c>.</summary>
+        public override decimal ToDecimal()
+        {
+            return decimal.Parse(_value);
+        }
+
+        /// <summary>Converts this JSON value to <c>int</c>.</summary>
+        public override int ToInt(bool allowZeroFraction = false)
+        {
+            if (allowZeroFraction)
+            {
+                decimal result = decimal.Parse(_value);
+                if (result != decimal.Truncate(result))
+                    throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value));
+                return (int) result;
+            }
+            return int.Parse(_value);
+        }
+
+        /// <summary>Converts this JSON value to <c>long</c>.</summary>
+        public override long ToLong(bool allowZeroFraction = false)
+        {
+            if (allowZeroFraction)
+            {
+                decimal result = decimal.Parse(_value);
+                if (result != decimal.Truncate(result))
+                    throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value));
+                return (long) result;
+            }
+            return long.Parse(_value);
+        }
+
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
         {
@@ -1325,18 +1424,34 @@ namespace RT.Util.Json
         }
     }
 
-    /// <summary>Encapsulates a number, which may be a floating-point number or an integer, as a <see cref="JsonValue"/>.</summary>
+    /// <summary>
+    ///     Encapsulates a number, which may be a floating-point number or an integer, as a <see cref="JsonValue"/>. See
+    ///     Remarks.</summary>
+    /// <remarks>
+    ///     JSON does not define any specific limits for numeric values. This implementation supports integers in the signed
+    ///     64-bit range, as well as IEEE 64-bit doubles (except NaNs and infinities). Conversions to/from <c>decimal</c> are
+    ///     exact for integers, but can be approximate for non-integers, depending on the exact value.</remarks>
     public class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
         private long _long;
         private double _double = double.NaN;
 
-        /// <summary>Constructs a <see cref="JsonBool"/> from the specified double-precision floating-point number.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified double-precision floating-point number.</summary>
         public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException("JSON disallows NaNs and infinities."); }
-        /// <summary>Constructs a <see cref="JsonBool"/> from the specified 64-bit integer.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
         public JsonNumber(long value) { _long = value; }
-        /// <summary>Constructs a <see cref="JsonBool"/> from the specified 32-bit integer.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
         public JsonNumber(int value) { _double = value; }
+        /// <summary>
+        ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        public JsonNumber(decimal value)
+        {
+            if (value == decimal.Truncate(value) && value >= long.MinValue && value <= long.MaxValue)
+                _long = (long) value;
+            else
+                _double = (double) value;
+        }
 
         /// <summary>
         ///     Parses the specified JSON as a JSON number. All other types of JSON values result in a <see
@@ -1382,8 +1497,17 @@ namespace RT.Util.Json
         public static implicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. (Throws if the number is not an integer
-        ///     or does not fit in the range of a 64-bit integer.)</summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a decimal. This operator is slightly lossy; see Remarks on
+        ///     <see cref="JsonNumber"/>.</summary>
+        public static explicit operator decimal(JsonNumber value) { return double.IsNaN(value._double) ? (decimal) value._long : (decimal) value._double; }
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a nullable decimal. This operator is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        public static explicit operator decimal?(JsonNumber value) { return value == null ? (decimal?) null : (decimal) value; }
+
+        /// <summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. Throws if the number is not an integer
+        ///     or does not fit in the range of a 64-bit integer.</summary>
         public static explicit operator long(JsonNumber value)
         {
             if (double.IsNaN(value._double))
@@ -1401,13 +1525,13 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. (Throws if the number is not an
-        ///     integer or does not fit in the range of a 64-bit integer.)</summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. Throws if the number is not an
+        ///     integer or does not fit in the range of a 64-bit integer.</summary>
         public static explicit operator long?(JsonNumber value) { return value == null ? (long?) null : (long) value; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. (Throws if the number is not an integer
-        ///     or does not fit in the range of a 32-bit integer.)</summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. Throws if the number is not an integer
+        ///     or does not fit in the range of a 32-bit integer.</summary>
         public static explicit operator int(JsonNumber value)
         {
             if (double.IsNaN(value._double))
@@ -1427,8 +1551,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. (Throws if the number is not an
-        ///     integer or does not fit in the range of a 32-bit integer.)</summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. Throws if the number is not an
+        ///     integer or does not fit in the range of a 32-bit integer.</summary>
         public static explicit operator int?(JsonNumber value) { return value == null ? (int?) null : (int) value; }
 
         /// <summary>Converts the specified double to a <see cref="JsonNumber"/> value.</summary>
@@ -1443,6 +1567,35 @@ namespace RT.Util.Json
         public static implicit operator JsonNumber(int value) { return new JsonNumber(value); }
         /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
         public static implicit operator JsonNumber(int? value) { return value == null ? null : new JsonNumber(value.Value); }
+        /// <summary>
+        ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        public static explicit operator JsonNumber(decimal value) { return new JsonNumber(value); }
+        /// <summary>
+        ///     Converts the specified nullable decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy;
+        ///     see Remarks on <see cref="JsonNumber"/>.</summary>
+        public static explicit operator JsonNumber(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
+
+        /// <summary>Converts this JSON value to <c>double</c>.</summary>
+        public override double ToDouble() { return (double) this; }
+
+        /// <summary>
+        ///     Converts this JSON value to <c>decimal</c>. This function is slightly lossy; see Remarks on <see
+        ///     cref="JsonNumber"/>.</summary>
+        public override decimal ToDecimal() { return (decimal) this; }
+
+        /// <summary>Converts this JSON value to <c>int</c>. Throws if the value is outside the range supported by <c>int</c>.</summary>
+        public override int ToInt(bool allowZeroFraction = false)
+        {
+            return (int) this;
+        }
+
+        /// <summary>
+        ///     Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>.</summary>
+        public override long ToLong(bool allowZeroFraction = false)
+        {
+            return (long) this;
+        }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
