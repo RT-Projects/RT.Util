@@ -107,13 +107,13 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
-            return source.OrderBy(x => x);
+            return source.OrderBy(Comparer<T>.Default.Compare);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparer.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
-            return source.OrderBy(x => x, comparer);
+            return source.OrderBy(comparer.Compare);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
