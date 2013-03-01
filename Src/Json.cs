@@ -9,6 +9,79 @@ using RT.Util.Text;
 
 namespace RT.Util.Json
 {
+    /// <summary>
+    ///     Specifies the degree of strictness or leniency when converting a <see cref="JsonValue" /> to a numerical type such as
+    ///     <c>int</c> or <c>double</c>.</summary>
+    [Flags]
+    public enum NumericConversionOptions
+    {
+        /// <summary>
+        ///     The conversion only succeeds if the object is a <see cref="JsonNumber" /> and its value is exactly representable
+        ///     by the target type.</summary>
+        Strict = 0,
+        /// <summary>The conversion succeeds if the object is a <see cref="JsonString" /> with numerical content.</summary>
+        AllowConversionFromString = 1 << 0,
+        /// <summary>
+        ///     Ignored unless <see cref="AllowConversionFromString" /> is also specified. A conversion to an integer type
+        ///     succeeds if the string contains a decimal followed by a zero fractional part.</summary>
+        AllowZeroFractionToInteger = 1 << 1,
+        /// <summary>
+        ///     The conversion succeeds if the object is a <see cref="JsonBool" />, which will convert to 0 if false and 1 if
+        ///     true.</summary>
+        AllowConversionFromBool = 1 << 2,
+        /// <summary>
+        ///     Allows conversion of non-integral numbers to integer types by truncation (rounding towards zero). If <see
+        ///     cref="AllowConversionFromString" /> is specified, strings containing a decimal part are also converted and rounded
+        ///     when converting to an integer type.</summary>
+        AllowRounding = 1 << 3,
+
+        /// <summary>Specifies maximum leniency.</summary>
+        Lenient = AllowConversionFromString | AllowZeroFractionToInteger | AllowConversionFromBool | AllowRounding,
+
+        /// <summary>Specifies that a failed conversion shall return 0 (zero) instead of throwing an exception.</summary>
+        DoNotThrow = 1 << 8
+    }
+
+    /// <summary>Specifies the degree of strictness or leniency when converting a <see cref="JsonValue" /> to a <c>string</c>.</summary>
+    [Flags]
+    public enum StringConversionOptions
+    {
+        /// <summary>The conversion only succeeds if the object is a <see cref="JsonString" />.</summary>
+        Strict = 0,
+        /// <summary>The conversion succeeds if the object is a <see cref="JsonNumber" />.</summary>
+        AllowConversionFromNumber = 1 << 0,
+        /// <summary>The conversion succeeds if the object is a <see cref="JsonBool" />.</summary>
+        AllowConversionFromBool = 1 << 1,
+
+        /// <summary>Specifies maximum leniency.</summary>
+        Lenient = AllowConversionFromNumber | AllowConversionFromBool,
+
+        /// <summary>Specifies that a failed conversion shall return null instead of throwing an exception.</summary>
+        DoNotThrow = 1 << 8
+    }
+
+    /// <summary>Specifies the degree of strictness or leniency when converting a <see cref="JsonValue" /> to a <c>bool</c>.</summary>
+    [Flags]
+    public enum BoolConversionOptions
+    {
+        /// <summary>The conversion only succeeds if the object is a <see cref="JsonBool" />.</summary>
+        Strict = 0,
+        /// <summary>
+        ///     The conversion succeeds if the object is a <see cref="JsonNumber" />. 0 (zero) is converted to false, all other
+        ///     values to true.</summary>
+        AllowConversionFromNumber = 1 << 0,
+        /// <summary>
+        ///     The conversion succeeds if the object is a <see cref="JsonString" />. "" (the empty string) is converted to false,
+        ///     all other strings to false.</summary>
+        AllowConversionFromString = 1 << 1,
+
+        /// <summary>Specifies maximum leniency.</summary>
+        Lenient = AllowConversionFromNumber | AllowConversionFromString,
+
+        /// <summary>Specifies that a failed conversion shall return false instead of throwing an exception.</summary>
+        DoNotThrow = 1 << 8
+    }
+
     /// <summary>Represents a JSON parsing exception.</summary>
     public class JsonParseException : Exception
     {
@@ -345,15 +418,16 @@ namespace RT.Util.Json
         /// <param name="jsonValue">
         ///     A string containing JSON syntax.</param>
         /// <param name="allowJavaScript">
-        ///     <para>True to allow certain notations that are allowed in JavaScript but not strictly in JSON:</para>
+        ///     <para>
+        ///         True to allow certain notations that are allowed in JavaScript but not strictly in JSON:</para>
         ///     <list type="bullet">
-        ///     <item><description>
-        ///         allows keys in dictionaries to be unquoted</description></item>
-        ///     <item><description>
-        ///         allows strings to be delimited with single-quotes in addition to double-quotes</description></item>
-        ///     </list></param>
+        ///         <item><description>
+        ///             allows keys in dictionaries to be unquoted</description></item>
+        ///         <item><description>
+        ///             allows strings to be delimited with single-quotes in addition to
+        ///             double-quotes</description></item></list></param>
         /// <returns>
-        ///     A <see cref="JsonValue"/> instance representing the value.</returns>
+        ///     A <see cref="JsonValue" /> instance representing the value.</returns>
         public static JsonValue Parse(string jsonValue, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonValue, allowJavaScript);
@@ -368,8 +442,8 @@ namespace RT.Util.Json
         /// <param name="jsonValue">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonValue"/> representing the value, or null if unsuccessful. (But note that null is
-        ///     also a possible valid value in case of success.)</param>
+        ///     Receives the <see cref="JsonValue" /> representing the value, or null if unsuccessful. (But note that null is also
+        ///     a possible valid value in case of success.)</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonValue, out JsonValue result)
@@ -386,301 +460,280 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified string.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified string.</summary>
         public static implicit operator JsonValue(string value) { return value == null ? null : new JsonString(value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified boolean.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified boolean.</summary>
         public static implicit operator JsonValue(bool value) { return new JsonBool(value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable boolean.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified nullable boolean.</summary>
         public static implicit operator JsonValue(bool? value) { return value == null ? null : new JsonBool(value.Value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified double.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified double.</summary>
         public static implicit operator JsonValue(double value) { return new JsonNumber(value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable double.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified nullable double.</summary>
         public static implicit operator JsonValue(double? value) { return value == null ? null : new JsonNumber(value.Value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified long.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified long.</summary>
         public static implicit operator JsonValue(long value) { return new JsonNumber(value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable long.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified nullable long.</summary>
         public static implicit operator JsonValue(long? value) { return value == null ? null : new JsonNumber(value.Value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified int.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified int.</summary>
         public static implicit operator JsonValue(int value) { return new JsonNumber(value); }
-        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable int.</summary>
+        /// <summary>Constructs a <see cref="JsonValue" /> from the specified nullable int.</summary>
         public static implicit operator JsonValue(int? value) { return value == null ? null : new JsonNumber(value.Value); }
 
-        /// <summary>See <see cref="AsString"/>.</summary>
-        public static explicit operator string(JsonValue value) { return value == null ? (string) null : value.AsString; }
-        /// <summary>See <see cref="AsBool"/>.</summary>
-        public static explicit operator bool(JsonValue value) { return value.AsBool; }
-        /// <summary>See <see cref="AsBool"/>.</summary>
-        public static explicit operator bool?(JsonValue value) { return value == null ? (bool?) null : value.AsBool; }
-        /// <summary>See <see cref="AsDouble"/>.</summary>
-        public static explicit operator double(JsonValue value) { return value.AsDouble; }
-        /// <summary>See <see cref="AsDouble"/>.</summary>
-        public static explicit operator double?(JsonValue value) { return value == null ? (double?) null : value.AsDouble; }
-        /// <summary>See <see cref="AsLong"/>.</summary>
-        public static explicit operator long(JsonValue value) { return value.AsLong; }
-        /// <summary>See <see cref="AsLong"/>.</summary>
-        public static explicit operator long?(JsonValue value) { return value == null ? (long?) null : value.AsLong; }
-        /// <summary>See <see cref="AsInt"/>.</summary>
-        public static explicit operator int(JsonValue value) { return value.AsInt; }
-        /// <summary>See <see cref="AsInt"/>.</summary>
-        public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.AsInt; }
+        /// <summary>See <see cref="StringConversionOptions.Strict" />.</summary>
+        public static explicit operator string(JsonValue value) { return value == null ? (string) null : value.GetString(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict" />.</summary>
+        public static explicit operator bool(JsonValue value) { return value.GetBool(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict" />.</summary>
+        public static explicit operator bool?(JsonValue value) { return value == null ? (bool?) null : value.GetBool(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator double(JsonValue value) { return value.GetDouble(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator double?(JsonValue value) { return value == null ? (double?) null : value.GetDouble(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator long(JsonValue value) { return value.GetLong(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator long?(JsonValue value) { return value == null ? (long?) null : value.GetLong(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator int(JsonValue value) { return value.GetInt(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict" />.</summary>
+        public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.GetInt(); }
 
-        /// <summary>
-        ///     Returns the current value cast to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise,
-        ///     throws.</summary>
-        public JsonList AsList
+        /// <summary>Returns the current value cast to <see cref="JsonList" /> if it is a <see cref="JsonList" />; otherwise, throws.</summary>
+        public JsonList GetList()
         {
-            get
-            {
-                var v = this as JsonList;
-                if (v == null)
-                    throw new NotSupportedException("Only list values can be interpreted as list.");
-                return v;
-            }
+            var list = GetListFailsafe();
+            if (list == null)
+                throw new InvalidOperationException("Only list values can be cast to list.");
+            return list;
+        }
+
+        /// <summary>Returns the current value cast to <see cref="JsonList" /> if it is a <see cref="JsonList" />; otherwise, null.</summary>
+        public virtual JsonList GetListFailsafe() { return null; }
+
+        /// <summary>Returns the current value cast to <see cref="JsonDict" /> if it is a <see cref="JsonDict" />; otherwise, throws.</summary>
+        public JsonDict GetDict()
+        {
+            var dict = GetDictFailsafe();
+            if (dict == null)
+                throw new InvalidOperationException("Only dict values can be cast to dict.");
+            return dict;
+        }
+
+        public virtual JsonDict GetDictFailsafe() { return null; }
+
+        /// <summary>Converts the current value to a <c>string</c>.</summary>
+        public virtual string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        {
+            if (options.HasFlag(StringConversionOptions.DoNotThrow))
+                return null;
+            throw new InvalidOperationException("Only string values can be cast to string.");
+        }
+
+        /// <summary>Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient" /> option.</summary>
+        public string GetStringLenient() { return GetString(StringConversionOptions.Lenient); }
+        /// <summary>
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.DoNotThrow" />
+        ///     option.</summary>
+        public string GetStringFailsafe() { return GetString(StringConversionOptions.DoNotThrow); }
+        /// <summary>
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient" /> and <see
+        ///     cref="StringConversionOptions.DoNotThrow" /> options.</summary>
+        public string GetStringLenientFailsafe() { return GetString(StringConversionOptions.Lenient | StringConversionOptions.DoNotThrow); }
+
+        /// <summary>Converts the current value to a <c>bool</c>.</summary>
+        public virtual bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
+        {
+            if (options.HasFlag(BoolConversionOptions.DoNotThrow))
+                return false;
+            throw new InvalidOperationException("Only bool values can be converted to bool.");
+        }
+
+        /// <summary>Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient" /> option.</summary>
+        public bool GetBoolLenient() { return GetBool(BoolConversionOptions.Lenient); }
+        /// <summary>Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.DoNotThrow" /> option.</summary>
+        public bool GetBoolFailsafe() { return GetBool(BoolConversionOptions.DoNotThrow); }
+        /// <summary>
+        ///     Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient" /> and <see
+        ///     cref="BoolConversionOptions.DoNotThrow" /> options.</summary>
+        public bool GetBoolLenientFailsafe() { return GetBool(BoolConversionOptions.Lenient | BoolConversionOptions.DoNotThrow); }
+
+        /// <summary>Converts the current value to a <c>double</c>.</summary>
+        public virtual double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                return 0d;
+            throw new InvalidOperationException("Only numeric values can be converted to double.");
+        }
+
+        /// <summary>Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient" /> option.</summary>
+        public double GetDoubleLenient() { return GetDouble(NumericConversionOptions.Lenient); }
+        /// <summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.DoNotThrow" />
+        ///     option.</summary>
+        public double GetDoubleFailsafe() { return GetDouble(NumericConversionOptions.DoNotThrow); }
+        /// <summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient" /> and
+        ///     <see cref="NumericConversionOptions.DoNotThrow" /> options.</summary>
+        public double GetDoubleLenientFailsafe() { return GetDouble(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+
+        /// <summary>Converts the current value to a <c>decimal</c>.</summary>
+        public virtual decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                return 0m;
+            throw new InvalidOperationException("Only numeric values can be converted to decimal.");
         }
 
         /// <summary>
-        ///     Returns the current value cast to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise,
-        ///     throws.</summary>
-        public JsonDict AsDict
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient" />
+        ///     option.</summary>
+        public decimal GetDecimalLenient() { return GetDecimal(NumericConversionOptions.Lenient); }
+        /// <summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.DoNotThrow" />
+        ///     option.</summary>
+        public decimal GetDecimalFailsafe() { return GetDecimal(NumericConversionOptions.DoNotThrow); }
+        /// <summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient" /> and
+        ///     <see cref="NumericConversionOptions.DoNotThrow" /> options.</summary>
+        public decimal GetDecimalLenientFailsafe() { return GetDecimal(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+
+        /// <summary>Converts the current value to a <c>long</c>.</summary>
+        public virtual long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            get
-            {
-                var v = this as JsonDict;
-                if (v == null)
-                    throw new NotSupportedException("Only dict values can be interpreted as dict.");
-                return v;
-            }
+            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                return 0L;
+            throw new InvalidOperationException("Only numeric values can be converted to long.");
         }
 
+        /// <summary>Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient" /> option.</summary>
+        public long GetLongLenient() { return GetLong(NumericConversionOptions.Lenient); }
         /// <summary>
-        ///     Returns the current value as a string if it is a <see cref="JsonString"/>; otherwise, throws. Identical to an
-        ///     explicit cast to <c>string</c>, except that the explicit cast also supports nulls.</summary>
-        public string AsString
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.DoNotThrow" />
+        ///     option.</summary>
+        public long GetLongFailsafe() { return GetLong(NumericConversionOptions.DoNotThrow); }
+        /// <summary>
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient" /> and <see
+        ///     cref="NumericConversionOptions.DoNotThrow" /> options.</summary>
+        public long GetLongLenientFailsafe() { return GetLong(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+
+        /// <summary>Converts the current value to a <c>int</c>.</summary>
+        public virtual int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            get
-            {
-                var v = this as JsonString;
-                if (v == null)
-                    throw new NotSupportedException("Only string values can be interpreted as string.");
-                return v;
-            }
+            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                return 0;
+            throw new InvalidOperationException("Only numeric values can be converted to int.");
         }
 
+        /// <summary>Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.Lenient" /> option.</summary>
+        public int GetIntLenient() { return GetInt(NumericConversionOptions.Lenient); }
+        /// <summary>Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.DoNotThrow" /> option.</summary>
+        public int GetIntFailsafe() { return GetInt(NumericConversionOptions.DoNotThrow); }
         /// <summary>
-        ///     Returns the current value as a bool if it is a <see cref="JsonBool"/>; otherwise, throws. Identical to an
-        ///     explicit cast to <c>bool</c>.</summary>
-        public bool AsBool
-        {
-            get
-            {
-                var v = this as JsonBool;
-                if (v == null)
-                    throw new NotSupportedException("Only bool values can be interpreted as bool.");
-                return (bool) v;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the current value as a double if it is a <see cref="JsonNumber"/>; otherwise, throws. Identical to an
-        ///     explicit cast to <c>double</c>.</summary>
-        public double AsDouble
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                    throw new NotSupportedException("Only numeric values can be interpreted as double.");
-                return (double) v;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the current value as a decimal if it is a <see cref="JsonNumber"/>; otherwise, throws. This property
-        ///     is slightly lossy; see Remarks on <see cref="JsonNumber"/>. Identical to an explicit cast to <c>decimal</c>.</summary>
-        public decimal AsDecimal
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                    throw new NotSupportedException("Only numeric values can be interpreted as decimal.");
-                return (decimal) v;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the current value as a long if it is a <see cref="JsonNumber"/> containing an integer within the
-        ///     range of long; otherwise, throws. Identical to an explicit cast to <c>long</c>.</summary>
-        public long AsLong
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                    throw new NotSupportedException("Only numeric values can be interpreted as long.");
-                return (long) v;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the current value as an int if it is a <see cref="JsonNumber"/> containing an integer within the
-        ///     range of int; otherwise, throws. Identical to an explicit cast to <c>int</c>.</summary>
-        public int AsInt
-        {
-            get
-            {
-                var v = this as JsonNumber;
-                if (v == null)
-                    throw new NotSupportedException("Only numeric values can be interpreted as int.");
-                return (int) v;
-            }
-        }
+        ///     Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.Lenient" /> and <see
+        ///     cref="NumericConversionOptions.DoNotThrow" /> options.</summary>
+        public int GetIntLenientFailsafe() { return GetInt(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
 
         #region Both IList and IDictionary
 
         /// <summary>
-        ///     Removes all items from the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>;
-        ///     otherwise, throws.</summary>
-        public void Clear()
+        ///     Removes all items from the current value if it is a <see cref="JsonList" /> or <see cref="JsonDict" />; otherwise,
+        ///     throws.</summary>
+        public virtual void Clear()
         {
-            if (this is JsonList)
-                (this as JsonList).List.Clear();
-            else if (this is JsonDict)
-                (this as JsonDict).Dict.Clear();
-            else
-                throw new NotSupportedException("This method is only supported on dictionary and list values.");
+            throw new InvalidOperationException("This method is only supported on dictionary and list values.");
         }
 
         /// <summary>
-        ///     Returns the number of items in the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"
-        ///     />; otherwise, throws.</summary>
-        public int Count
+        ///     Returns the number of items in the current value if it is a <see cref="JsonList" /> or <see cref="JsonDict" />;
+        ///     otherwise, throws.</summary>
+        public virtual int Count
         {
             get
             {
-                if (this is JsonList)
-                    return (this as JsonList).List.Count;
-                else if (this is JsonDict)
-                    return (this as JsonDict).Dict.Count;
-                else
-                    throw new NotSupportedException("This method is only supported on dictionary and list values.");
+                throw new InvalidOperationException("This method is only supported on dictionary and list values.");
             }
         }
 
-        /// <summary>
-        ///     Returns false if this value is a <see cref="JsonDict"/> or a <see cref="JsonList"/>; otherwise, returns
-        ///     true.</summary>
-        public bool IsReadOnly { get { return !(this is JsonDict || this is JsonList); } }
+        /// <summary>Returns true if this value is a <see cref="JsonDict" /> or a <see cref="JsonList" />; otherwise, returns false.</summary>
+        public virtual bool IsContainer { get { return false; } }
 
         #endregion
 
         #region IList
 
         /// <summary>
-        ///     Returns the item at the specified <paramref name="index"/> within the current list if it is a <see
-        ///     cref="JsonList"/>; otherwise, throws.</summary>
-        public JsonValue this[int index]
+        ///     Returns the item at the specified <paramref name="index" /> within the current list if it is a <see
+        ///     cref="JsonList" />; otherwise, throws.</summary>
+        public virtual JsonValue this[int index]
         {
-            get
-            {
-                var list = this as JsonList;
-                if (list == null)
-                    throw new NotSupportedException("This method is only supported on list values.");
-                return list.List[index];
-            }
-            set
-            {
-                var list = this as JsonList;
-                if (list == null)
-                    throw new NotSupportedException("This method is only supported on list values.");
-                list.List[index] = value;
-            }
+            get { throw new InvalidOperationException("This method is only supported on list values."); }
+            set { throw new InvalidOperationException("This method is only supported on list values."); }
         }
 
         /// <summary>
-        ///     Add the specified <paramref name="item"/> to the current list if it is a <see cref="JsonList"/>; otherwise,
+        ///     Add the specified <paramref name="item" /> to the current list if it is a <see cref="JsonList" />; otherwise,
         ///     throws.</summary>
-        public void Add(JsonValue item)
+        public virtual void Add(JsonValue item)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            list.List.Add(item);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Removes the first instance of the specified <paramref name="item"/> from the current list if it is a <see
-        ///     cref="JsonList"/>; otherwise, throws.</summary>
+        ///     Removes the first instance of the specified <paramref name="item" /> from the current list if it is a <see
+        ///     cref="JsonList" />; otherwise, throws.</summary>
         /// <returns>
         ///     True if an item was removed; otherwise, false.</returns>
-        public bool Remove(JsonValue item)
+        public virtual bool Remove(JsonValue item)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            return list.List.Remove(item);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Determines whether the specified <paramref name="item"/> is contained in the current list if it is a <see
-        ///     cref="JsonList"/>; otherwise, throws.</summary>
-        public bool Contains(JsonValue item)
+        ///     Determines whether the specified <paramref name="item" /> is contained in the current list if it is a <see
+        ///     cref="JsonList" />; otherwise, throws.</summary>
+        public virtual bool Contains(JsonValue item)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            return list.List.Contains(item);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list
-        ///     if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
-        public void Insert(int index, JsonValue item)
+        ///     Inserts the specified <paramref name="item" /> at the specified <paramref name="index" /> to the current list if
+        ///     it is a <see cref="JsonList" />; otherwise, throws.</summary>
+        public virtual void Insert(int index, JsonValue item)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            list.List.Insert(index, item);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Removes the item at the specified <paramref name="index"/> from the current list if it is a <see
-        ///     cref="JsonList"/>; otherwise, throws.</summary>
-        public void RemoveAt(int index)
+        ///     Removes the item at the specified <paramref name="index" /> from the current list if it is a <see cref="JsonList"
+        ///     />; otherwise, throws.</summary>
+        public virtual void RemoveAt(int index)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            list.List.RemoveAt(index);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list if
-        ///     it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        ///     Returns the index of the first occurrence of the specified <paramref name="item" /> within the current list if it
+        ///     is a <see cref="JsonList" />; otherwise, throws.</summary>
         /// <returns>
         ///     The index of the item, or -1 if the item is not in the list.</returns>
-        public int IndexOf(JsonValue item)
+        public virtual int IndexOf(JsonValue item)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            return list.List.IndexOf(item);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         /// <summary>
-        ///     Copies the entire list to a compatible one-dimensional <paramref name="array"/>, starting at the specified
-        ///     <paramref name="arrayIndex"/> of the target array, if this is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        ///     Copies the entire list to a compatible one-dimensional <paramref name="array" />, starting at the specified
+        ///     <paramref name="arrayIndex" /> of the target array, if this is a <see cref="JsonList" />; otherwise,
+        ///     throws.</summary>
         /// <param name="array">
         ///     The one-dimensional array that is the destination of the elements copied from the list. The array must have
         ///     zero-based indexing.</param>
         /// <param name="arrayIndex">
         ///     The zero-based index in array at which copying begins.</param>
-        public void CopyTo(JsonValue[] array, int arrayIndex)
+        public virtual void CopyTo(JsonValue[] array, int arrayIndex)
         {
-            var list = this as JsonList;
-            if (list == null)
-                throw new NotSupportedException("This method is only supported on list values.");
-            list.List.CopyTo(array, arrayIndex);
+            throw new InvalidOperationException("This method is only supported on list values.");
         }
 
         #endregion
@@ -688,124 +741,95 @@ namespace RT.Util.Json
         #region IDictionary
 
         /// <summary>
-        ///     Gets or sets the value associated with the specified <paramref name="key"/> if this value is a <see
-        ///     cref="JsonDict"/>; otherwise, throws.</summary>
-        public JsonValue this[string key]
+        ///     Gets or sets the value associated with the specified <paramref name="key" /> if this value is a <see
+        ///     cref="JsonDict" />; otherwise, throws.</summary>
+        public virtual JsonValue this[string key]
+        {
+            get { throw new InvalidOperationException("This method is only supported on dictionary values."); }
+            set { throw new InvalidOperationException("This method is only supported on dictionary values."); }
+        }
+
+        /// <summary>Returns the keys contained in the dictionary if this is a <see cref="JsonDict" />; otherwise, throws.</summary>
+        public virtual ICollection<string> Keys
         {
             get
             {
-                var dict = this as JsonDict;
-                if (dict == null)
-                    throw new NotSupportedException("This method is only supported on dictionary values.");
-                return dict.Dict[key];
-            }
-            set
-            {
-                var dict = this as JsonDict;
-                if (dict == null)
-                    throw new NotSupportedException("This method is only supported on dictionary values.");
-                dict.Dict[key] = value;
+                throw new InvalidOperationException("This method is only supported on dictionary values.");
             }
         }
 
-        /// <summary>Returns the keys contained in the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        public ICollection<string> Keys
+        /// <summary>Returns the values contained in the dictionary if this is a <see cref="JsonDict" />; otherwise, throws.</summary>
+        public virtual ICollection<JsonValue> Values
         {
             get
             {
-                var dict = this as JsonDict;
-                if (dict == null)
-                    throw new NotSupportedException("This method is only supported on dictionary values.");
-                return dict.Dict.Keys;
-            }
-        }
-
-        /// <summary>Returns the values contained in the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        public ICollection<JsonValue> Values
-        {
-            get
-            {
-                var dict = this as JsonDict;
-                if (dict == null)
-                    throw new NotSupportedException("This method is only supported on dictionary values.");
-                return dict.Dict.Values;
+                throw new InvalidOperationException("This method is only supported on dictionary values.");
             }
         }
 
         /// <summary>
-        ///     Attempts to retrieve the value associated with the specified <paramref name="key"/> if this is a <see
-        ///     cref="JsonDict"/>; otherwise, throws.</summary>
+        ///     Attempts to retrieve the value associated with the specified <paramref name="key" /> if this is a <see
+        ///     cref="JsonDict" />; otherwise, throws.</summary>
         /// <param name="key">
         ///     The key for which to try to retrieve the value.</param>
         /// <param name="value">
-        ///     Receives the value associated with the specified <paramref name="key"/>, or null if the key is not in the
+        ///     Receives the value associated with the specified <paramref name="key" />, or null if the key is not in the
         ///     dictionary. (Note that null may also be a valid value in case of success.)</param>
         /// <returns>
         ///     True if the key was in the dictionary; otherwise, false.</returns>
-        public bool TryGetValue(string key, out JsonValue value)
+        public virtual bool TryGetValue(string key, out JsonValue value)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            return dict.Dict.TryGetValue(key, out value);
+            throw new InvalidOperationException("This method is only supported on dictionary values.");
         }
 
         /// <summary>
-        ///     Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        ///     Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict" />; otherwise,
+        ///     throws.</summary>
         /// <param name="key">
         ///     The key to add.</param>
         /// <param name="value">
         ///     The value to add.</param>
-        public void Add(string key, JsonValue value)
+        public virtual void Add(string key, JsonValue value)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            dict.Dict.Add(key, value);
+            throw new InvalidOperationException("This method is only supported on dictionary values.");
         }
 
         /// <summary>
-        ///     Removes the entry with the specified <paramref name="key"/> from the dictionary if this is a <see
-        ///     cref="JsonDict"/>; otherwise, throws.</summary>
+        ///     Removes the entry with the specified <paramref name="key" /> from the dictionary if this is a <see cref="JsonDict"
+        ///     />; otherwise, throws.</summary>
         /// <param name="key">
         ///     The key that identifies the entry to remove.</param>
         /// <returns>
         ///     True if an entry was removed; false if the key wasn’t in the dictionary.</returns>
-        public bool Remove(string key)
+        public virtual bool Remove(string key)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            return dict.Dict.Remove(key);
+            throw new InvalidOperationException("This method is only supported on dictionary values.");
         }
 
         /// <summary>
-        ///     Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary if this is a
-        ///     <see cref="JsonDict"/>; otherwise, throws.</summary>
-        public bool ContainsKey(string key)
+        ///     Determines whether an entry with the specified <paramref name="key" /> exists in the dictionary if this is a <see
+        ///     cref="JsonDict" />; otherwise, throws.</summary>
+        public virtual bool ContainsKey(string key)
         {
-            var dict = this as JsonDict;
-            if (dict == null)
-                throw new NotSupportedException("This method is only supported on dictionary values.");
-            return dict.Dict.ContainsKey(key);
+            throw new InvalidOperationException("This method is only supported on dictionary values.");
         }
 
         #endregion
 
         /// <summary>
-        ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks in the other
-        ///     overload, <see cref="Equals(JsonValue)"/>.)</summary>
+        ///     Determines whether this value is equal to the <paramref name="other" /> value. (See also remarks in the other
+        ///     overload, <see cref="Equals(JsonValue)" />.)</summary>
         public override bool Equals(object other)
         {
             return other is JsonValue ? Equals((JsonValue) other) : false;
         }
 
         /// <summary>
-        ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks.)</summary>
+        ///     Determines whether this value is equal to the <paramref name="other" /> value. (See also remarks.)</summary>
         /// <remarks>
-        ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never
-        ///     equal to a <see cref="JsonNumber"/> even if they contain the same number). Lists are equal if they contain
-        ///     the same values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
+        ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString" /> is never equal
+        ///     to a <see cref="JsonNumber" /> even if they contain the same number). Lists are equal if they contain the same
+        ///     values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
         public bool Equals(JsonValue other)
         {
             if (other == null) return false;
@@ -825,41 +849,6 @@ namespace RT.Util.Json
 
         /// <summary>Returns a hash code representing this object.</summary>
         public abstract override int GetHashCode();
-
-        /// <summary>
-        ///     Converts this JSON value to <c>double</c>. Unlike <see cref="AsDouble"/>, this function also converts string
-        ///     values, provided the string is parseable as a JSON-compatible numeric value.</summary>
-        public virtual double ToDouble()
-        {
-            throw new NotSupportedException("Only numeric values and strings can be converted to double.");
-        }
-
-        /// <summary>
-        ///     Converts this JSON value to <c>decimal</c>. Unlike <see cref="AsDecimal"/>, this function also converts
-        ///     string values, provided the string is parseable as a JSON-compatible numeric value. This function is slightly
-        ///     lossy; see Remarks on <see cref="JsonNumber"/> (but not lossy when converting a string).</summary>
-        public virtual decimal ToDecimal()
-        {
-            throw new NotSupportedException("Only numeric values and strings can be converted to decimal.");
-        }
-
-        /// <summary>
-        ///     Converts this JSON value to <c>int</c>. Throws if the value is outside the range supported by <c>int</c>, or
-        ///     represents a number that isn't an integer. Unlike <see cref="AsInt"/>, this function also converts string
-        ///     values, provided the string is parseable as a JSON-compatible integer value.</summary>
-        public virtual int ToInt(bool allowZeroFraction = false)
-        {
-            throw new NotSupportedException("Only numeric values and strings can be converted to int.");
-        }
-
-        /// <summary>
-        ///     Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>, or
-        ///     represents a number that isn't an integer. Unlike <see cref="AsLong"/>, this function also converts string
-        ///     values, provided the string is parseable as a JSON-compatible integer value.</summary>
-        public virtual long ToLong(bool allowZeroFraction = false)
-        {
-            throw new NotSupportedException("Only numeric values and strings can be converted to long.");
-        }
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static string ToString(JsonValue value)
@@ -890,24 +879,30 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
-        ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders
-        ///     are only replaced outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are
-        ///     inserted unmodified.</summary>
+        ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are
+        ///     only replaced outside of JavaScript literal strings and regexes. <see cref="JsonRaw" /> instances are inserted
+        ///     unmodified.</summary>
         /// <param name="js">
         ///     JavaScript code with placeholders.</param>
         /// <param name="namevalues">
         ///     Alternating names and associated values, for example ["user", "abc"] specifies one value named "user".</param>
         /// <example>
-        ///     <para>The following code:</para>
-        ///     <code>JsonValue.Fmt(@"Foo({{userid}}, {{username}}, {{options}});", "userid", userid, "username", username,
-        ///     "options", null)</code>
-        ///     <para>might return the following string:</para>
-        ///     <code>Foo(123, "Matthew Stranger", null);</code></example>
+        ///     <para>
+        ///         The following code:</para>
+        ///     <code>
+        ///         JsonValue.Fmt(@"Foo({{userid}}, {{username}}, {{options}});",
+        ///             "userid", userid,
+        ///             "username", username,
+        ///             "options", null)</code>
+        ///     <para>
+        ///         might return the following string:</para>
+        ///     <code>
+        ///         Foo(123, "Matthew Stranger", null);</code></example>
         /// <exception cref="ArgumentException">
-        ///     <paramref name="namevalues"/> has an odd number of values. OR <paramref name="js"/> contains a
-        ///     {{placeholder}} whose name is not listed in <paramref name="namevalues"/>.</exception>
+        ///     <paramref name="namevalues" /> has an odd number of values. OR <paramref name="js" /> contains a {{placeholder}}
+        ///     whose name is not listed in <paramref name="namevalues" />.</exception>
         /// <exception cref="ArgumentNullException">
-        ///     <paramref name="js"/> is null. OR <paramref name="namevalues"/> is null.</exception>
+        ///     <paramref name="js" /> is null. OR <paramref name="namevalues" /> is null.</exception>
         public static string Fmt(string js, params JsonValue[] namevalues)
         {
             if (js == null)
@@ -929,7 +924,7 @@ namespace RT.Util.Json
                 if (m.Groups["placeholder"].Success)
                 {
                     var name = m.Groups["placeholder"].Value;
-                    var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].AsString == name);
+                    var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].GetString() == name);
                     if (index == -1)
                         throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
                     var raw = namevalues[2 * index + 1] as JsonRaw;
@@ -952,7 +947,7 @@ namespace RT.Util.Json
         }
     }
 
-    /// <summary>Encapsulates a list of <see cref="JsonValue"/> values.</summary>
+    /// <summary>Encapsulates a list of <see cref="JsonValue" /> values.</summary>
     public class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         internal List<JsonValue> List;
@@ -961,8 +956,8 @@ namespace RT.Util.Json
         public JsonList() { List = new List<JsonValue>(); }
 
         /// <summary>
-        ///     Constructs a <see cref="JsonList"/> instance containing a copy of the specified collection of <paramref
-        ///     name="items"/>.</summary>
+        ///     Constructs a <see cref="JsonList" /> instance containing a copy of the specified collection of <paramref
+        ///     name="items" />.</summary>
         public JsonList(IEnumerable<JsonValue> items)
         {
             if (items == null)
@@ -973,11 +968,11 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Parses the specified JSON as a JSON list. All other types of JSON values result in a <see
-        ///     cref="JsonParseException"/>.</summary>
+        ///     cref="JsonParseException" />.</summary>
         /// <param name="jsonList">
         ///     JSON syntax to parse.</param>
         /// <param name="allowJavaScript">
-        ///     See <see cref="JsonValue.Parse"/>.</param>
+        ///     See <see cref="JsonValue.Parse" />.</param>
         public static new JsonList Parse(string jsonList, bool allowJavaScript = false)
         {
             if (jsonList == null)
@@ -994,7 +989,7 @@ namespace RT.Util.Json
         /// <param name="jsonNumber">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonList"/> representing the list, or null if unsuccessful.</param>
+        ///     Receives the <see cref="JsonList" /> representing the list, or null if unsuccessful.</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonNumber, out JsonList result)
@@ -1011,6 +1006,9 @@ namespace RT.Util.Json
             }
         }
 
+        /// <summary>Returns this list.</summary>
+        public override JsonList GetListFailsafe() { return this; }
+
         /// <summary>Enumerates the values in this list.</summary>
         public IEnumerator<JsonValue> GetEnumerator()
         {
@@ -1022,13 +1020,13 @@ namespace RT.Util.Json
             return GetEnumerator();
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {
             return other is JsonList ? Equals((JsonList) other) : false;
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public bool Equals(JsonList other)
         {
             if (other == null) return false;
@@ -1048,7 +1046,7 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return "[";
@@ -1063,6 +1061,59 @@ namespace RT.Util.Json
             }
             yield return "]";
         }
+
+        /// <summary>Removes all items from the current list.</summary>
+        public override void Clear() { List.Clear(); }
+
+        /// <summary>Returns the number of items in the current list.</summary>
+        public override int Count { get { return List.Count; } }
+
+        /// <summary>Returns true.</summary>
+        public override bool IsContainer { get { return true; } }
+
+        /// <summary>Returns the item at the specified <paramref name="index" /> within the current list.</summary>
+        public override JsonValue this[int index]
+        {
+            get { return List[index]; }
+            set { List[index] = value; }
+        }
+
+        /// <summary>Add the specified <paramref name="item" /> to the current list.</summary>
+        public override void Add(JsonValue item) { List.Add(item); }
+
+        /// <summary>
+        ///     Removes the first instance of the specified <paramref name="item" /> from the current list.</summary>
+        /// <returns>
+        ///     True if an item was removed; otherwise, false.</returns>
+        public override bool Remove(JsonValue item) { return List.Remove(item); }
+
+        /// <summary>Determines whether the specified <paramref name="item" /> is contained in the current list.</summary>
+        public override bool Contains(JsonValue item) { return List.Contains(item); }
+
+        /// <summary>Inserts the specified <paramref name="item" /> at the specified <paramref name="index" /> to the current list.</summary>
+        public override void Insert(int index, JsonValue item) { List.Insert(index, item); }
+
+        /// <summary>Removes the item at the specified <paramref name="index" /> from the current list.</summary>
+        public override void RemoveAt(int index) { List.RemoveAt(index); }
+
+        /// <summary>
+        ///     Returns the index of the first occurrence of the specified <paramref name="item" /> within the current
+        ///     list.</summary>
+        /// <returns>
+        ///     The index of the item, or -1 if the item is not in the list.</returns>
+        public override int IndexOf(JsonValue item) { return List.IndexOf(item); }
+
+        /// <summary>
+        ///     Copies the entire list to a compatible one-dimensional <paramref name="array" />, starting at the specified
+        ///     <paramref name="arrayIndex" /> of the target array.</summary>
+        /// <param name="array">
+        ///     The one-dimensional array that is the destination of the elements copied from the list. The array must have
+        ///     zero-based indexing.</param>
+        /// <param name="arrayIndex">
+        ///     The zero-based index in array at which copying begins.</param>
+        public override void CopyTo(JsonValue[] array, int arrayIndex) { List.CopyTo(array, arrayIndex); }
+
+        bool ICollection<JsonValue>.IsReadOnly { get { return false; } }
     }
 
     /// <summary>Encapsulates a JSON dictionary (a set of key/value pairs).</summary>
@@ -1085,11 +1136,11 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Parses the specified JSON as a JSON dictionary. All other types of JSON values result in a <see
-        ///     cref="JsonParseException"/>.</summary>
+        ///     cref="JsonParseException" />.</summary>
         /// <param name="jsonDict">
         ///     JSON syntax to parse.</param>
         /// <param name="allowJavaScript">
-        ///     See <see cref="JsonValue.Parse"/>.</param>
+        ///     See <see cref="JsonValue.Parse" />.</param>
         public static new JsonDict Parse(string jsonDict, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonDict, allowJavaScript);
@@ -1104,7 +1155,7 @@ namespace RT.Util.Json
         /// <param name="jsonDict">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonDict"/> representing the dictionary, or null if unsuccessful.</param>
+        ///     Receives the <see cref="JsonDict" /> representing the dictionary, or null if unsuccessful.</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonDict, out JsonDict result)
@@ -1120,6 +1171,9 @@ namespace RT.Util.Json
                 return false;
             }
         }
+
+        /// <summary>Returns this dictionary.</summary>
+        public override JsonDict GetDictFailsafe() { return this; }
 
         /// <summary>Enumerates the key/value pairs in this dictionary.</summary>
         public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator()
@@ -1153,13 +1207,13 @@ namespace RT.Util.Json
 
         #endregion
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {
             return other is JsonDict && Equals((JsonDict) other);
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public bool Equals(JsonDict other)
         {
             if (other == null) return false;
@@ -1189,7 +1243,7 @@ namespace RT.Util.Json
             return result;
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return "{";
@@ -1206,6 +1260,60 @@ namespace RT.Util.Json
             }
             yield return "}";
         }
+
+        /// <summary>Removes all items from the current dictionary.</summary>
+        public override void Clear() { Dict.Clear(); }
+
+        /// <summary>Returns the number of items in the current dictionary.</summary>
+        public override int Count { get { return Dict.Count; } }
+
+        /// <summary>Returns true.</summary>
+        public override bool IsContainer { get { return true; } }
+
+        /// <summary>Gets or sets the value associated with the specified <paramref name="key" />.</summary>
+        public override JsonValue this[string key]
+        {
+            get { return Dict[key]; }
+            set { Dict[key] = value; }
+        }
+
+        /// <summary>Returns the keys contained in the dictionary.</summary>
+        public override ICollection<string> Keys { get { return Dict.Keys; } }
+
+        /// <summary>Returns the values contained in the dictionary.</summary>
+        public override ICollection<JsonValue> Values { get { return Dict.Values; } }
+
+        /// <summary>
+        ///     Attempts to retrieve the value associated with the specified <paramref name="key" />.</summary>
+        /// <param name="key">
+        ///     The key for which to try to retrieve the value.</param>
+        /// <param name="value">
+        ///     Receives the value associated with the specified <paramref name="key" />, or null if the key is not in the
+        ///     dictionary. (Note that null may also be a valid value in case of success.)</param>
+        /// <returns>
+        ///     True if the key was in the dictionary; otherwise, false.</returns>
+        public override bool TryGetValue(string key, out JsonValue value) { return Dict.TryGetValue(key, out value); }
+
+        /// <summary>
+        ///     Adds the specified key/value pair to the dictionary.</summary>
+        /// <param name="key">
+        ///     The key to add.</param>
+        /// <param name="value">
+        ///     The value to add.</param>
+        public override void Add(string key, JsonValue value) { Dict.Add(key, value); }
+
+        /// <summary>
+        ///     Removes the entry with the specified <paramref name="key" /> from the dictionary.</summary>
+        /// <param name="key">
+        ///     The key that identifies the entry to remove.</param>
+        /// <returns>
+        ///     True if an entry was removed; false if the key wasn’t in the dictionary.</returns>
+        public override bool Remove(string key) { return Dict.Remove(key); }
+
+        /// <summary>Determines whether an entry with the specified <paramref name="key" /> exists in the dictionary.</summary>
+        public override bool ContainsKey(string key) { return Dict.ContainsKey(key); }
+
+        bool ICollection<KeyValuePair<string, JsonValue>>.IsReadOnly { get { return false; } }
     }
 
     /// <summary>Encapsulates a string as a JSON value.</summary>
@@ -1213,7 +1321,7 @@ namespace RT.Util.Json
     {
         private string _value;
 
-        /// <summary>Constructs a <see cref="JsonString"/> instance from the specified string.</summary>
+        /// <summary>Constructs a <see cref="JsonString" /> instance from the specified string.</summary>
         public JsonString(string value)
         {
             if (value == null)
@@ -1223,11 +1331,11 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Parses the specified JSON as a JSON string. All other types of JSON values result in a <see
-        ///     cref="JsonParseException"/>.</summary>
+        ///     cref="JsonParseException" />.</summary>
         /// <param name="jsonString">
         ///     JSON syntax to parse.</param>
         /// <param name="allowJavaScript">
-        ///     See <see cref="JsonValue.Parse"/>.</param>
+        ///     See <see cref="JsonValue.Parse" />.</param>
         public static new JsonString Parse(string jsonString, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonString, allowJavaScript);
@@ -1242,7 +1350,7 @@ namespace RT.Util.Json
         /// <param name="jsonString">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonString"/> representing the string, or null if unsuccessful.</param>
+        ///     Receives the <see cref="JsonString" /> representing the string, or null if unsuccessful.</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonString, out JsonString result)
@@ -1259,62 +1367,130 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonString"/> value to an ordinary string.</summary>
+        /// <summary>Converts the specified <see cref="JsonString" /> value to an ordinary string.</summary>
         public static implicit operator string(JsonString value) { return value == null ? null : value._value; }
-        /// <summary>Converts the specified ordinary string to a <see cref="JsonString"/> value.</summary>
+        /// <summary>Converts the specified ordinary string to a <see cref="JsonString" /> value.</summary>
         public static implicit operator JsonString(string value) { return value == null ? null : new JsonString(value); }
 
         /// <summary>Converts this JSON string to <c>double</c>.</summary>
-        public override double ToDouble()
+        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            double result = double.Parse(_value);
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
+                return base.GetDouble(options);
+
+            double result;
+            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+            {
+                if (!double.TryParse(_value, out result))
+                    return 0d;
+            }
+            else
+                result = double.Parse(_value);
+
             if (double.IsNaN(result) || double.IsInfinity(result))
-                throw new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities.");
+                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0d : Ut.Throw<double>(new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."));
+
             return result;
         }
 
-        /// <summary>
-        ///     Converts this JSON string to <c>decimal</c>. Unlike <see cref="JsonValue.AsDecimal"/> or explicit casts, this
-        ///     function is not lossy, provided the string does not have more precision than can be supported by
-        ///     <c>decimal</c>.</summary>
-        public override decimal ToDecimal()
+        /// <summary>Converts this JSON string to <c>double</c>.</summary>
+        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            return decimal.Parse(_value);
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
+                return base.GetDecimal(options);
+
+            if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+                return decimal.Parse(_value);
+
+            decimal result;
+            return decimal.TryParse(_value, out result) ? result : 0m;
         }
 
         /// <summary>Converts this JSON value to <c>int</c>.</summary>
-        public override int ToInt(bool allowZeroFraction = false)
+        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            if (allowZeroFraction)
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
+                return base.GetInt(options);
+
+            if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
-                decimal result = decimal.Parse(_value);
+                if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+                    return int.Parse(_value);
+
+                int result;
+                return int.TryParse(_value, out result) ? result : 0;
+            }
+            else
+            {
+                decimal result;
+                if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                {
+                    if (!decimal.TryParse(_value, out result))
+                        return 0;
+                }
+                else
+                    result = decimal.Parse(_value);
+
                 if (result != decimal.Truncate(result))
-                    throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value));
+                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
+
+                if (options.HasFlag(NumericConversionOptions.DoNotThrow) && (result < int.MinValue || result > int.MaxValue))
+                    return 0;
+
                 return (int) result;
             }
-            return int.Parse(_value);
         }
 
         /// <summary>Converts this JSON value to <c>long</c>.</summary>
-        public override long ToLong(bool allowZeroFraction = false)
+        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            if (allowZeroFraction)
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
+                return base.GetLong(options);
+
+            if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
-                decimal result = decimal.Parse(_value);
+                if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+                    return long.Parse(_value);
+
+                long result;
+                return long.TryParse(_value, out result) ? result : 0L;
+            }
+            else
+            {
+                decimal result;
+                if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                {
+                    if (!decimal.TryParse(_value, out result))
+                        return 0;
+                }
+                else
+                    result = decimal.Parse(_value);
+
                 if (result != decimal.Truncate(result))
-                    throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value));
+                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
+
+                if (options.HasFlag(NumericConversionOptions.DoNotThrow) && (result < long.MinValue || result > long.MaxValue))
+                    return 0;
+
                 return (long) result;
             }
-            return long.Parse(_value);
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>Converts the current value to a <c>bool</c>.</summary>
+        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
+        {
+            if (!options.HasFlag(BoolConversionOptions.AllowConversionFromString))
+                return base.GetBool(options);
+            return _value != "";
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {
             return other is JsonString ? Equals((JsonString) other) : false;
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public bool Equals(JsonString other)
         {
             if (other == null) return false;
@@ -1327,7 +1503,7 @@ namespace RT.Util.Json
             return _value.GetHashCode();
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return _value.JsEscape(JsQuotes.Double);
@@ -1343,21 +1519,21 @@ namespace RT.Util.Json
         }
     }
 
-    /// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>
+    /// <summary>Encapsulates a boolean value as a <see cref="JsonValue" />.</summary>
     public class JsonBool : JsonValue, IEquatable<JsonBool>
     {
         private bool _value;
 
-        /// <summary>Constructs a <see cref="JsonBool"/> from the specified boolean.</summary>
+        /// <summary>Constructs a <see cref="JsonBool" /> from the specified boolean.</summary>
         public JsonBool(bool value) { _value = value; }
 
         /// <summary>
         ///     Parses the specified JSON as a JSON boolean. All other types of JSON values result in a <see
-        ///     cref="JsonParseException"/>.</summary>
+        ///     cref="JsonParseException" />.</summary>
         /// <param name="jsonBool">
         ///     JSON syntax to parse.</param>
         /// <param name="allowJavaScript">
-        ///     See <see cref="JsonValue.Parse"/>.</param>
+        ///     See <see cref="JsonValue.Parse" />.</param>
         public static new JsonBool Parse(string jsonBool, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonBool, allowJavaScript);
@@ -1372,7 +1548,7 @@ namespace RT.Util.Json
         /// <param name="jsonBool">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonBool"/> representing the boolean, or null if unsuccessful.</param>
+        ///     Receives the <see cref="JsonBool" /> representing the boolean, or null if unsuccessful.</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonBool, out JsonBool result)
@@ -1389,22 +1565,22 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonBool"/> value to an ordinary boolean.</summary>
+        /// <summary>Converts the specified <see cref="JsonBool" /> value to an ordinary boolean.</summary>
         public static explicit operator bool(JsonBool value) { return value._value; }
-        /// <summary>Converts the specified <see cref="JsonBool"/> value to a nullable boolean.</summary>
+        /// <summary>Converts the specified <see cref="JsonBool" /> value to a nullable boolean.</summary>
         public static implicit operator bool?(JsonBool value) { return value == null ? (bool?) null : value._value; }
-        /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool"/> value.</summary>
+        /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool" /> value.</summary>
         public static implicit operator JsonBool(bool value) { return new JsonBool(value); }
-        /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool"/> value or null.</summary>
+        /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool" /> value or null.</summary>
         public static implicit operator JsonBool(bool? value) { return value == null ? null : new JsonBool(value.Value); }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {
             return other is JsonBool ? Equals((JsonBool) other) : false;
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public bool Equals(JsonBool other)
         {
             if (other == null) return false;
@@ -1417,15 +1593,58 @@ namespace RT.Util.Json
             return _value ? 13259 : 22093;
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return _value ? "true" : "false";
         }
+
+        /// <summary>Converts the current value to a <c>bool</c>.</summary>
+        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict) { return _value; }
+
+        /// <summary>Converts the current value to a <c>decimal</c>.</summary>
+        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
+                return base.GetDecimal(options);
+            return _value ? 1m : 0m;
+        }
+
+        /// <summary>Converts the current value to a <c>double</c>.</summary>
+        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
+                return base.GetDouble(options);
+            return _value ? 1d : 0d;
+        }
+
+        /// <summary>Converts the current value to a <c>int</c>.</summary>
+        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
+                return base.GetInt(options);
+            return _value ? 1 : 0;
+        }
+
+        /// <summary>Converts the current value to a <c>long</c>.</summary>
+        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
+        {
+            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
+                return base.GetLong(options);
+            return _value ? 1L : 0L;
+        }
+
+        /// <summary>Converts the current value to a <c>string</c>.</summary>
+        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        {
+            if (!options.HasFlag(StringConversionOptions.AllowConversionFromBool))
+                return base.GetString(options);
+            return _value ? "true" : "false";
+        }
     }
 
     /// <summary>
-    ///     Encapsulates a number, which may be a floating-point number or an integer, as a <see cref="JsonValue"/>. See
+    ///     Encapsulates a number, which may be a floating-point number or an integer, as a <see cref="JsonValue" />. See
     ///     Remarks.</summary>
     /// <remarks>
     ///     JSON does not define any specific limits for numeric values. This implementation supports integers in the signed
@@ -1436,15 +1655,15 @@ namespace RT.Util.Json
         private long _long;
         private double _double = double.NaN;
 
-        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified double-precision floating-point number.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber" /> from the specified double-precision floating-point number.</summary>
         public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException("JSON disallows NaNs and infinities."); }
-        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber" /> from the specified 64-bit integer.</summary>
         public JsonNumber(long value) { _long = value; }
-        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
+        /// <summary>Constructs a <see cref="JsonNumber" /> from the specified 32-bit integer.</summary>
         public JsonNumber(int value) { _double = value; }
         /// <summary>
-        ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
-        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        ///     Constructs a <see cref="JsonNumber" /> from the specified decimal. This operation is slightly lossy; see Remarks
+        ///     on <see cref="JsonNumber" />.</summary>
         public JsonNumber(decimal value)
         {
             if (value == decimal.Truncate(value) && value >= long.MinValue && value <= long.MaxValue)
@@ -1455,11 +1674,11 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Parses the specified JSON as a JSON number. All other types of JSON values result in a <see
-        ///     cref="JsonParseException"/>.</summary>
+        ///     cref="JsonParseException" />.</summary>
         /// <param name="jsonNumber">
         ///     JSON syntax to parse.</param>
         /// <param name="allowJavaScript">
-        ///     See <see cref="JsonValue.Parse"/>.</param>
+        ///     See <see cref="JsonValue.Parse" />.</param>
         public static new JsonNumber Parse(string jsonNumber, bool allowJavaScript = false)
         {
             var ps = new JsonParserState(jsonNumber, allowJavaScript);
@@ -1474,7 +1693,7 @@ namespace RT.Util.Json
         /// <param name="jsonNumber">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonNumber"/> representing the number, or null if unsuccessful.</param>
+        ///     Receives the <see cref="JsonNumber" /> representing the number, or null if unsuccessful.</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonNumber, out JsonNumber result)
@@ -1491,119 +1710,136 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a double.</summary>
+        /// <summary>Converts the specified <see cref="JsonNumber" /> to a double.</summary>
         public static explicit operator double(JsonNumber value) { return double.IsNaN(value._double) ? (double) value._long : value._double; }
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a nullable double.</summary>
+        /// <summary>Converts the specified <see cref="JsonNumber" /> to a nullable double.</summary>
         public static implicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a decimal. This operator is slightly lossy; see Remarks on
-        ///     <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a decimal. This operator is slightly lossy; see Remarks on
+        ///     <see cref="JsonNumber" />.</summary>
         public static explicit operator decimal(JsonNumber value) { return double.IsNaN(value._double) ? (decimal) value._long : (decimal) value._double; }
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable decimal. This operator is slightly lossy; see
-        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a nullable decimal. This operator is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber" />.</summary>
         public static explicit operator decimal?(JsonNumber value) { return value == null ? (decimal?) null : (decimal) value; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. Throws if the number is not an integer
-        ///     or does not fit in the range of a 64-bit integer.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a 64-bit integer. See <see
+        ///     cref="NumericConversionOptions.Strict" />.</summary>
         public static explicit operator long(JsonNumber value)
         {
-            if (double.IsNaN(value._double))
-            {
-                return (long) value._long;
-            }
-            else
-            {
-                if (value._double != Math.Truncate(value._double))
-                    throw new InvalidCastException("Only integer values can be interpreted as long.");
-                if (value._double < long.MinValue || value._double > long.MaxValue)
-                    throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
-                return (long) value._double;
-            }
+            if (value == null)
+                throw new InvalidCastException("null cannot be cast to long.");
+            return value.GetLong(); // use default strict mode
         }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. Throws if the number is not an
-        ///     integer or does not fit in the range of a 64-bit integer.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a nullable 64-bit integer. See <see
+        ///     cref="NumericConversionOptions.Strict" />.</summary>
         public static explicit operator long?(JsonNumber value) { return value == null ? (long?) null : (long) value; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. Throws if the number is not an integer
-        ///     or does not fit in the range of a 32-bit integer.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a 32-bit integer. See <see
+        ///     cref="NumericConversionOptions.Strict" />.</summary>
         public static explicit operator int(JsonNumber value)
         {
-            if (double.IsNaN(value._double))
-            {
-                if (value._long < int.MinValue || value._long > int.MaxValue)
-                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-                return (int) value._long;
-            }
-            else
-            {
-                if (value._double != Math.Truncate(value._double))
-                    throw new InvalidCastException("Only integer values can be interpreted as int.");
-                if (value._double < int.MinValue || value._double > int.MaxValue)
-                    throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-                return (int) value._double;
-            }
+            if (value == null)
+                throw new InvalidCastException("null cannot be cast to int.");
+            return value.GetInt();  // use default strict mode
         }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. Throws if the number is not an
-        ///     integer or does not fit in the range of a 32-bit integer.</summary>
+        ///     Converts the specified <see cref="JsonNumber" /> to a nullable 32-bit integer. See <see
+        ///     cref="NumericConversionOptions.Strict" />.</summary>
         public static explicit operator int?(JsonNumber value) { return value == null ? (int?) null : (int) value; }
 
-        /// <summary>Converts the specified double to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified double to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(double value) { return new JsonNumber(value); }
-        /// <summary>Converts the specified nullable double to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified nullable double to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(double? value) { return value == null ? null : new JsonNumber(value.Value); }
-        /// <summary>Converts the specified 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified 64-bit integer to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(long value) { return new JsonNumber(value); }
-        /// <summary>Converts the specified nullable 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified nullable 64-bit integer to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(long? value) { return value == null ? null : new JsonNumber(value.Value); }
-        /// <summary>Converts the specified 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified 32-bit integer to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(int value) { return new JsonNumber(value); }
-        /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber" /> value.</summary>
         public static implicit operator JsonNumber(int? value) { return value == null ? null : new JsonNumber(value.Value); }
         /// <summary>
-        ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see
-        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified decimal to a <see cref="JsonNumber" /> value. This operator is slightly lossy; see Remarks
+        ///     on <see cref="JsonNumber" />.</summary>
         public static explicit operator JsonNumber(decimal value) { return new JsonNumber(value); }
         /// <summary>
-        ///     Converts the specified nullable decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy;
-        ///     see Remarks on <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified nullable decimal to a <see cref="JsonNumber" /> value. This operator is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber" />.</summary>
         public static explicit operator JsonNumber(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
 
         /// <summary>Converts this JSON value to <c>double</c>.</summary>
-        public override double ToDouble() { return (double) this; }
+        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict) { return (double) this; }
 
         /// <summary>
-        ///     Converts this JSON value to <c>decimal</c>. This function is slightly lossy; see Remarks on <see
-        ///     cref="JsonNumber"/>.</summary>
-        public override decimal ToDecimal() { return (decimal) this; }
+        ///     Converts this JSON value to <c>decimal</c>. This function is slightly lossy; see Remarks on <see cref="JsonNumber"
+        ///     />.</summary>
+        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict) { return (decimal) this; }
 
         /// <summary>Converts this JSON value to <c>int</c>. Throws if the value is outside the range supported by <c>int</c>.</summary>
-        public override int ToInt(bool allowZeroFraction = false)
+        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            return (int) this;
+            if (double.IsNaN(_double))
+            {
+                if (_long < int.MinValue || _long > int.MaxValue)
+                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
+                return (int) _long;
+            }
+
+            if (!options.HasFlag(NumericConversionOptions.AllowRounding) && _double != Math.Truncate(_double))
+                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Only integer values can be converted to int."));
+
+            if (_double < int.MinValue || _double > int.MaxValue)
+                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
+
+            return (int) _double;
         }
 
-        /// <summary>
-        ///     Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>.</summary>
-        public override long ToLong(bool allowZeroFraction = false)
+        /// <summary>Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>.</summary>
+        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
         {
-            return (long) this;
+            if (double.IsNaN(_double))
+                return _long;
+
+            if (!options.HasFlag(NumericConversionOptions.AllowRounding) && _double != Math.Truncate(_double))
+                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidCastException("Only integer values can be converted to long."));
+
+            if (_double < long.MinValue || _double > long.MaxValue)
+                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidCastException("Cannot cast to long because the value exceeds the representable range."));
+
+            return (long) _double;
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>Converts the current value to a <c>string</c>.</summary>
+        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        {
+            if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
+                return base.GetString(options);
+            return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
+        }
+
+        /// <summary>Converts the current value to a <c>bool</c>.</summary>
+        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
+        {
+            if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
+                return base.GetBool(options);
+            return double.IsNaN(_double) ? (_long != 0) : (_double != 0);
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {
             return other is JsonNumber ? Equals((JsonNumber) other) : false;
         }
 
-        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public bool Equals(JsonNumber other)
         {
             if (other == null) return false;
@@ -1619,7 +1855,7 @@ namespace RT.Util.Json
             return double.IsNaN(_double) ? _long.GetHashCode() : _double.GetHashCode();
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
@@ -1628,19 +1864,19 @@ namespace RT.Util.Json
 
     /// <summary>
     ///     A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow
-    ///     embedding arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.</summary>
+    ///     embedding arbitrary JavaScript code using <see cref="JsonValue.Fmt" />.</summary>
     public class JsonRaw : JsonValue
     {
         /// <summary>Gets the raw JSON.</summary>
         public string Raw { get; private set; }
 
-        /// <summary>Constructs a <see cref="JsonRaw"/> instance from the specified raw JSON.</summary>
+        /// <summary>Constructs a <see cref="JsonRaw" /> instance from the specified raw JSON.</summary>
         public JsonRaw(string raw)
         {
             Raw = raw;
         }
 
-        /// <summary>Generates a <see cref="JsonRaw"/> instance from the specified date/time stamp.</summary>
+        /// <summary>Generates a <see cref="JsonRaw" /> instance from the specified date/time stamp.</summary>
         public static JsonRaw FromDate(DateTime datetime)
         {
             return new JsonRaw
@@ -1651,7 +1887,7 @@ namespace RT.Util.Json
             );
         }
 
-        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        /// <summary>See <see cref="JsonValue.ToEnumerable()" />.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return Raw;
