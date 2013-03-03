@@ -468,6 +468,10 @@ namespace RT.Util.Json
         public static implicit operator JsonValue(double value) { return new JsonNumber(value); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable double.</summary>
         public static implicit operator JsonValue(double? value) { return value == null ? null : new JsonNumber(value.Value); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified decimal.</summary>
+        public static implicit operator JsonValue(decimal value) { return new JsonNumber(value); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable decimal.</summary>
+        public static implicit operator JsonValue(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified long.</summary>
         public static implicit operator JsonValue(long value) { return new JsonNumber(value); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable long.</summary>
@@ -487,6 +491,10 @@ namespace RT.Util.Json
         public static explicit operator double(JsonValue value) { return value.GetDouble(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator double?(JsonValue value) { return value == null ? (double?) null : value.GetDouble(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator decimal(JsonValue value) { return value.GetDecimal(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator decimal?(JsonValue value) { return value == null ? (decimal?) null : value.GetDecimal(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator long(JsonValue value) { return value.GetLong(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
