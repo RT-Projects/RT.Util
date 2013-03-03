@@ -8,16 +8,19 @@ using System.Text.RegularExpressions;
 
 namespace RT.Util.Drawing
 {
-    /// <summary>
-    /// Contains static methods for various graphics-related operations.
-    /// </summary>
+    /// <summary>Contains static methods for various graphics-related operations.</summary>
     public static class GraphicsUtil
     {
-        /// <summary>Blends the specified colors together.</summary>
-        /// <param name="color">Color to blend onto the background color.</param>
-        /// <param name="backColor">Color to blend the other color onto.</param>
-        /// <param name="amount">How much of <paramref name="color"/> to keep, “on top of” <paramref name="backColor"/>.</param>
-        /// <returns>The blended colors.</returns>
+        /// <summary>
+        ///     Blends the specified colors together.</summary>
+        /// <param name="color">
+        ///     Color to blend onto the background color.</param>
+        /// <param name="backColor">
+        ///     Color to blend the other color onto.</param>
+        /// <param name="amount">
+        ///     How much of <paramref name="color"/> to keep, “on top of” <paramref name="backColor"/>.</param>
+        /// <returns>
+        ///     The blended colors.</returns>
         public static Color ColorBlend(Color color, Color backColor, double amount)
         {
             byte r = (byte) ((color.R * amount) + backColor.R * (1 - amount));
@@ -116,13 +119,17 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws the specified <paramref name="image"/> into the destination rectangle <paramref name="destRect"/> of the <paramref name="graphics"/> object using the specified <paramref name="opacity"/>.
-        /// </summary>
-        /// <param name="graphics">Graphics object to alpha-blend the image onto.</param>
-        /// <param name="image">Image to draw.</param>
-        /// <param name="destRect">Destination rectangle within the target Graphics canvas.</param>
-        /// <param name="opacity">Opacity level to use when drawing the image. 0 means nothing changes.
-        /// 1 means the image is drawn normally. 0.5 means a 50% blend between source and destination.</param>
+        ///     Draws the specified <paramref name="image"/> into the destination rectangle <paramref name="destRect"/> of the
+        ///     <paramref name="graphics"/> object using the specified <paramref name="opacity"/>.</summary>
+        /// <param name="graphics">
+        ///     Graphics object to alpha-blend the image onto.</param>
+        /// <param name="image">
+        ///     Image to draw.</param>
+        /// <param name="destRect">
+        ///     Destination rectangle within the target Graphics canvas.</param>
+        /// <param name="opacity">
+        ///     Opacity level to use when drawing the image. 0 means nothing changes. 1 means the image is drawn normally. 0.5
+        ///     means a 50% blend between source and destination.</param>
         public static void DrawImageAlpha(this Graphics graphics, Image image, Rectangle destRect, float opacity)
         {
             ColorMatrix matrix = new ColorMatrix(new float[][] {
@@ -138,12 +145,19 @@ namespace RT.Util.Drawing
         }
 
 #if UNSAFE
-        /// <summary>Modifies the current bitmap’s transparency layer by setting it to the data from another bitmap.</summary>
-        /// <param name="source">The bitmap to be modified.</param>
-        /// <param name="transparencyLayer">The bitmap containing the transparency channel. Must be the same size as the source bitmap.</param>
-        /// <param name="channel">Which channel from <paramref name="transparencyLayer"/> to use: 0 for blue, 1 for green, 2 for red, and 3 for the alpha channel.</param>
-        /// <param name="invert">If true, the selected channel is inverted.</param>
-        /// <returns>A reference to the same bitmap that was modified.</returns>
+        /// <summary>
+        ///     Modifies the current bitmap’s transparency layer by setting it to the data from another bitmap.</summary>
+        /// <param name="source">
+        ///     The bitmap to be modified.</param>
+        /// <param name="transparencyLayer">
+        ///     The bitmap containing the transparency channel. Must be the same size as the source bitmap.</param>
+        /// <param name="channel">
+        ///     Which channel from <paramref name="transparencyLayer"/> to use: 0 for blue, 1 for green, 2 for red, and 3 for the
+        ///     alpha channel.</param>
+        /// <param name="invert">
+        ///     If true, the selected channel is inverted.</param>
+        /// <returns>
+        ///     A reference to the same bitmap that was modified.</returns>
         public static unsafe Bitmap SetTransparencyChannel(this Bitmap source, Bitmap transparencyLayer, int channel, bool invert = false)
         {
             if (source == null)
@@ -169,24 +183,39 @@ namespace RT.Util.Drawing
             return source;
         }
 
-        /// <summary>Generates an image by taking the color components from one image and the transparency (alpha) layer from another.</summary>
-        /// <param name="size">Size of the image to generate.</param>
-        /// <param name="initGraphics">Optional delegate to invoke on each of the two images.</param>
-        /// <param name="drawOpaqueLayer">Code to draw the color layers.</param>
-        /// <param name="drawTransparencyLayer">Code to draw the transparency (alpha) layer.</param>
-        /// <returns>The new bitmap generated.</returns>
+        /// <summary>
+        ///     Generates an image by taking the color components from one image and the transparency (alpha) layer from
+        ///     another.</summary>
+        /// <param name="size">
+        ///     Size of the image to generate.</param>
+        /// <param name="initGraphics">
+        ///     Optional delegate to invoke on each of the two images.</param>
+        /// <param name="drawOpaqueLayer">
+        ///     Code to draw the color layers.</param>
+        /// <param name="drawTransparencyLayer">
+        ///     Code to draw the transparency (alpha) layer.</param>
+        /// <returns>
+        ///     The new bitmap generated.</returns>
         public static unsafe Bitmap MakeSemitransparentImage(Size size, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer)
         {
             return MakeSemitransparentImage(size.Width, size.Height, initGraphics, drawOpaqueLayer, drawTransparencyLayer);
         }
 
-        /// <summary>Generates an image by taking the color components from one image and the transparency (alpha) layer from another.</summary>
-        /// <param name="width">The width of the image to generate.</param>
-        /// <param name="height">The height of the image to generate.</param>
-        /// <param name="initGraphics">Optional delegate to invoke on each of the two images.</param>
-        /// <param name="drawOpaqueLayer">Code to draw the color layers.</param>
-        /// <param name="drawTransparencyLayer">Code to draw the transparency (alpha) layer.</param>
-        /// <returns>The new bitmap generated.</returns>
+        /// <summary>
+        ///     Generates an image by taking the color components from one image and the transparency (alpha) layer from
+        ///     another.</summary>
+        /// <param name="width">
+        ///     The width of the image to generate.</param>
+        /// <param name="height">
+        ///     The height of the image to generate.</param>
+        /// <param name="initGraphics">
+        ///     Optional delegate to invoke on each of the two images.</param>
+        /// <param name="drawOpaqueLayer">
+        ///     Code to draw the color layers.</param>
+        /// <param name="drawTransparencyLayer">
+        ///     Code to draw the transparency (alpha) layer.</param>
+        /// <returns>
+        ///     The new bitmap generated.</returns>
         public static unsafe Bitmap MakeSemitransparentImage(int width, int height, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer)
         {
             var opaque = new Bitmap(width, height, PixelFormat.Format32bppArgb);
@@ -219,49 +248,77 @@ namespace RT.Util.Drawing
         }
 #endif
 
-        /// <summary>Draws a rounded rectangle.</summary>
-        /// <param name="g">Graphics object to draw on.</param>
-        /// <param name="pen">Pen to use when drawing the rounded rectangle.</param>
-        /// <param name="rectangle">Position of the rectangle.</param>
-        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        /// <summary>
+        ///     Draws a rounded rectangle.</summary>
+        /// <param name="g">
+        ///     Graphics object to draw on.</param>
+        /// <param name="pen">
+        ///     Pen to use when drawing the rounded rectangle.</param>
+        /// <param name="rectangle">
+        ///     Position of the rectangle.</param>
+        /// <param name="radius">
+        ///     Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">
+        ///     If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is
+        ///     thrown.</param>
         public static void DrawRoundedRectangle(this Graphics g, Pen pen, RectangleF rectangle, float radius, bool tolerant = false)
         {
             g.DrawPath(pen, RoundedRectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, radius, tolerant));
         }
 
-        /// <summary>Draws a rounded rectangle.</summary>
-        /// <param name="g">Graphics object to draw on.</param>
-        /// <param name="pen">Pen to use when drawing the rounded rectangle.</param>
-        /// <param name="x">Left edge of the rounded rectangle.</param>
-        /// <param name="y">Top edge of the rounded rectangle.</param>
-        /// <param name="width">Width of the rounded rectangle.</param>
-        /// <param name="height">Height of the rounded rectangle.</param>
-        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        /// <summary>
+        ///     Draws a rounded rectangle.</summary>
+        /// <param name="g">
+        ///     Graphics object to draw on.</param>
+        /// <param name="pen">
+        ///     Pen to use when drawing the rounded rectangle.</param>
+        /// <param name="x">
+        ///     Left edge of the rounded rectangle.</param>
+        /// <param name="y">
+        ///     Top edge of the rounded rectangle.</param>
+        /// <param name="width">
+        ///     Width of the rounded rectangle.</param>
+        /// <param name="height">
+        ///     Height of the rounded rectangle.</param>
+        /// <param name="radius">
+        ///     Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">
+        ///     If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is
+        ///     thrown.</param>
         public static void DrawRoundedRectangle(this Graphics g, Pen pen, float x, float y, float width, float height, float radius, bool tolerant = false)
         {
             g.DrawPath(pen, RoundedRectangle(x, y, width, height, radius, tolerant));
         }
 
-        /// <summary>Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
-        /// <param name="rectangle">Position of the rectangle.</param>
-        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        /// <summary>
+        ///     Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
+        /// <param name="rectangle">
+        ///     Position of the rectangle.</param>
+        /// <param name="radius">
+        ///     Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">
+        ///     If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is
+        ///     thrown.</param>
         public static GraphicsPath RoundedRectangle(RectangleF rectangle, float radius, bool tolerant = false)
         {
             return RoundedRectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, radius, tolerant);
         }
 
         /// <summary>
-        /// Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.
-        /// </summary>
-        /// <param name="x">Left edge of the rounded rectangle.</param>
-        /// <param name="y">Top edge of the rounded rectangle.</param>
-        /// <param name="width">Width of the rounded rectangle.</param>
-        /// <param name="height">Height of the rounded rectangle.</param>
-        /// <param name="radius">Radius of the rounding of each corner of the rectangle.</param>
-        /// <param name="tolerant">If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is thrown.</param>
+        ///     Returns a <see cref="GraphicsPath"/> object that represents a rounded rectangle.</summary>
+        /// <param name="x">
+        ///     Left edge of the rounded rectangle.</param>
+        /// <param name="y">
+        ///     Top edge of the rounded rectangle.</param>
+        /// <param name="width">
+        ///     Width of the rounded rectangle.</param>
+        /// <param name="height">
+        ///     Height of the rounded rectangle.</param>
+        /// <param name="radius">
+        ///     Radius of the rounding of each corner of the rectangle.</param>
+        /// <param name="tolerant">
+        ///     If true, the radius is reduced if it is too large to fit into the specified size. Otherwise, an exception is
+        ///     thrown.</param>
         public static GraphicsPath RoundedRectangle(float x, float y, float width, float height, float radius, bool tolerant = false)
         {
             if (width <= 0)
@@ -286,26 +343,45 @@ namespace RT.Util.Drawing
             return g;
         }
 
-        /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
-        /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
-        /// <param name="maximumSize">Maximum size (in pixels) the text should have.</param>
-        /// <param name="fontFamily">The font to measure.</param>
-        /// <param name="text">The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
-        /// <param name="style">Font style to apply.</param>
-        /// <param name="allowWordWrapping">True if the text is allowed to word-wrap within the specified bounds.</param>
+        /// <summary>
+        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the specified
+        ///     font.</summary>
+        /// <param name="graphics">
+        ///     Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
+        /// <param name="maximumSize">
+        ///     Maximum size (in pixels) the text should have.</param>
+        /// <param name="fontFamily">
+        ///     The font to measure.</param>
+        /// <param name="text">
+        ///     The text whose size mustn't exceed <paramref name="maximumSize"/>.</param>
+        /// <param name="style">
+        ///     Font style to apply.</param>
+        /// <param name="allowWordWrapping">
+        ///     True if the text is allowed to word-wrap within the specified bounds.</param>
         public static float GetMaximumFontSize(this Graphics graphics, SizeF maximumSize, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false)
         {
             return GetMaximumFontSize(graphics, fontFamily, text, style, allowWordWrapping, maximumSize.Width, maximumSize.Height);
         }
 
-        /// <summary>Determines the largest font size at which the specified text fits into the specified maximum size in the specified font.</summary>
-        /// <param name="graphics">Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
-        /// <param name="fontFamily">The font to measure.</param>
-        /// <param name="text">The text whose size mustn't exceed <paramref name="maxWidth"/> and <paramref name="maxHeight"/>.</param>
-        /// <param name="style">Font style to apply.</param>
-        /// <param name="allowWordWrapping">True if the text is allowed to word-wrap within the specified bounds.</param>
-        /// <param name="maxWidth">Maximum width the text may have, or null if only the maximum height should apply. If <paramref name="allowWordWrapping"/> is true, this cannot be null.</param>
-        /// <param name="maxHeight">Maximum width the text may have, or null if only the maximum width should apply. If <paramref name="maxWidth"/> is null, this cannot be null.</param>
+        /// <summary>
+        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the specified
+        ///     font.</summary>
+        /// <param name="graphics">
+        ///     Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
+        /// <param name="fontFamily">
+        ///     The font to measure.</param>
+        /// <param name="text">
+        ///     The text whose size mustn't exceed <paramref name="maxWidth"/> and <paramref name="maxHeight"/>.</param>
+        /// <param name="style">
+        ///     Font style to apply.</param>
+        /// <param name="allowWordWrapping">
+        ///     True if the text is allowed to word-wrap within the specified bounds.</param>
+        /// <param name="maxWidth">
+        ///     Maximum width the text may have, or null if only the maximum height should apply. If <paramref
+        ///     name="allowWordWrapping"/> is true, this cannot be null.</param>
+        /// <param name="maxHeight">
+        ///     Maximum width the text may have, or null if only the maximum width should apply. If <paramref name="maxWidth"/> is
+        ///     null, this cannot be null.</param>
         public static float GetMaximumFontSize(this Graphics graphics, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false, float? maxWidth = null, float? maxHeight = null)
         {
             if (graphics == null)
@@ -359,8 +435,9 @@ namespace RT.Util.Drawing
             return low;
         }
 
-        /// <summary>Sets the interpolation mode, smoothing mode, text rendering hint and compositing quality for the
-        /// specified Graphics object to high quality.</summary>
+        /// <summary>
+        ///     Sets the interpolation mode, smoothing mode, text rendering hint and compositing quality for the specified
+        ///     Graphics object to high quality.</summary>
         public static void SetHighQuality(this Graphics g)
         {
             g.InterpolationMode = InterpolationMode.High;
@@ -369,10 +446,15 @@ namespace RT.Util.Drawing
             g.CompositingQuality = CompositingQuality.HighQuality;
         }
 
-        /// <summary>Returns a rectangle that has the same aspect ratio as <paramref name="fitWhat"/> but fits into <paramref name="fitInto"/>.</summary>
-        /// <param name="fitWhat">Specifies the aspect ratio of the desired rectangle.</param>
-        /// <param name="fitInto">The rectangle into which to fit the result rectangle.</param>
-        /// <returns>The result rectangle which fits into <paramref name="fitInto"/>.</returns>
+        /// <summary>
+        ///     Returns a rectangle that has the same aspect ratio as <paramref name="fitWhat"/> but fits into <paramref
+        ///     name="fitInto"/>.</summary>
+        /// <param name="fitWhat">
+        ///     Specifies the aspect ratio of the desired rectangle.</param>
+        /// <param name="fitInto">
+        ///     The rectangle into which to fit the result rectangle.</param>
+        /// <returns>
+        ///     The result rectangle which fits into <paramref name="fitInto"/>.</returns>
         public static Rectangle FitIntoMaintainAspectRatio(this Size fitWhat, Rectangle fitInto)
         {
             int x, y, w, h;
@@ -395,10 +477,16 @@ namespace RT.Util.Drawing
             return new Rectangle(x, y, w, h);
         }
 
-        /// <summary>Creates a new bitmap by executing the specified drawing command(s) on a blank new 32-bit bitmap.</summary>
-        /// <param name="width">Width of the bitmap.</param>
-        /// <param name="height">Height of the bitmap.</param>
-        /// <param name="draw">Command(s) to execute on the new bitmap.</param>
+        /// <summary>
+        ///     Creates a new bitmap by executing the specified drawing command(s) on a blank new 32-bit bitmap.</summary>
+        /// <param name="width">
+        ///     Width of the bitmap.</param>
+        /// <param name="height">
+        ///     Height of the bitmap.</param>
+        /// <param name="draw">
+        ///     Command(s) to execute on the new bitmap.</param>
+        /// <param name="keepLowQuality">
+        ///     If false (the default), <see cref="SetHighQuality"/> is called on the graphics object automatically.</param>
         public static Bitmap DrawBitmap(int width, int height, Action<Graphics> draw, bool keepLowQuality = false)
         {
             var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
