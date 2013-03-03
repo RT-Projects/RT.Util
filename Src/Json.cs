@@ -1484,6 +1484,12 @@ namespace RT.Util.Json
             return _value != "";
         }
 
+        /// <summary>Converts the current value to a <c>string</c>.</summary>
+        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        {
+            return _value;
+        }
+
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)" />.</summary>
         public override bool Equals(object other)
         {

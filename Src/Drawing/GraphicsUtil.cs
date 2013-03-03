@@ -399,12 +399,13 @@ namespace RT.Util.Drawing
         /// <param name="width">Width of the bitmap.</param>
         /// <param name="height">Height of the bitmap.</param>
         /// <param name="draw">Command(s) to execute on the new bitmap.</param>
-        public static Bitmap DrawBitmap(int width, int height, Action<Graphics> draw)
+        public static Bitmap DrawBitmap(int width, int height, Action<Graphics> draw, bool keepLowQuality = false)
         {
             var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(bmp))
             {
-                g.SetHighQuality();
+                if (!keepLowQuality)
+                    g.SetHighQuality();
                 draw(g);
             }
             return bmp;

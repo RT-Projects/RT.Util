@@ -72,7 +72,7 @@ namespace RT.Util
             {
                 try
                 {
-                    settings = Ut.WaitSharingVio(() => deserialize<TSettings>(filename, serializer.Value), maximum: TimeSpan.FromSeconds(1.5));
+                    settings = deserialize<TSettings>(filename, serializer.Value);
                     ret = true;
                 }
                 catch (XmlException) { settings = new TSettings(); }
