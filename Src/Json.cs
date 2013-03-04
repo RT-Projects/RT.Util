@@ -34,10 +34,7 @@ namespace RT.Util.Json
         AllowTruncation = 1 << 3,
 
         /// <summary>Specifies maximum leniency.</summary>
-        Lenient = AllowConversionFromString | AllowZeroFractionToInteger | AllowConversionFromBool | AllowTruncation,
-
-        /// <summary>Specifies that a failed conversion shall return 0 (zero) instead of throwing an exception.</summary>
-        DoNotThrow = 1 << 8
+        Lenient = AllowConversionFromString | AllowZeroFractionToInteger | AllowConversionFromBool | AllowTruncation
     }
 
     /// <summary>Specifies the degree of strictness or leniency when converting a <see cref="JsonValue"/> to a <c>string</c>.</summary>
@@ -52,10 +49,7 @@ namespace RT.Util.Json
         AllowConversionFromBool = 1 << 1,
 
         /// <summary>Specifies maximum leniency.</summary>
-        Lenient = AllowConversionFromNumber | AllowConversionFromBool,
-
-        /// <summary>Specifies that a failed conversion shall return null instead of throwing an exception.</summary>
-        DoNotThrow = 1 << 8
+        Lenient = AllowConversionFromNumber | AllowConversionFromBool
     }
 
     /// <summary>Specifies the degree of strictness or leniency when converting a <see cref="JsonValue"/> to a <c>bool</c>.</summary>
@@ -69,15 +63,13 @@ namespace RT.Util.Json
         ///     values to true.</summary>
         AllowConversionFromNumber = 1 << 0,
         /// <summary>
-        ///     The conversion succeeds if the object is a <see cref="JsonString"/>. "" (the empty string) is converted to false,
-        ///     all other strings to false.</summary>
+        ///     The conversion succeeds if the object is a <see cref="JsonString"/> with specific content. The set of permissible
+        ///     strings is controlled by <see cref="JsonString.True"/>, <see cref="JsonString.False"/> and <see
+        ///     cref="JsonString.TrueFalseComparer"/>.</summary>
         AllowConversionFromString = 1 << 1,
 
         /// <summary>Specifies maximum leniency.</summary>
-        Lenient = AllowConversionFromNumber | AllowConversionFromString,
-
-        /// <summary>Specifies that a failed conversion shall return false instead of throwing an exception.</summary>
-        DoNotThrow = 1 << 8
+        Lenient = AllowConversionFromNumber | AllowConversionFromString
     }
 
     /// <summary>Represents a JSON parsing exception.</summary>
@@ -504,137 +496,161 @@ namespace RT.Util.Json
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.GetInt(); }
 
-        /// <summary>Returns the current value cast to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
-        public JsonList GetList()
-        {
-            var list = GetListFailsafe();
-            if (list == null)
-                throw new InvalidOperationException("Only list values can be cast to list.");
-            return list;
-        }
-
-        /// <summary>Returns the current value cast to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, null.</summary>
-        public virtual JsonList GetListFailsafe() { return null; }
-
-        /// <summary>Returns the current value cast to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
-        public JsonDict GetDict()
-        {
-            var dict = GetDictFailsafe();
-            if (dict == null)
-                throw new InvalidOperationException("Only dict values can be cast to dict.");
-            return dict;
-        }
-
-        /// <summary>Returns the current value cast to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, null.</summary>
-        public virtual JsonDict GetDictFailsafe() { return null; }
-
-        /// <summary>Converts the current value to a <c>string</c>.</summary>
-        public virtual string GetString(StringConversionOptions options = StringConversionOptions.Strict)
-        {
-            if (options.HasFlag(StringConversionOptions.DoNotThrow))
-                return null;
-            throw new InvalidOperationException("Only string values can be cast to string.");
-        }
-
-        /// <summary>Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> option.</summary>
-        public string GetStringLenient() { return GetString(StringConversionOptions.Lenient); }
         /// <summary>
-        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.DoNotThrow"/>
-        ///     option.</summary>
-        public string GetStringFailsafe() { return GetString(StringConversionOptions.DoNotThrow); }
+        ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers, when
+        ///     given an index or key not found in the list or dictionary, do not throw but instead return <see
+        ///     cref="JsonNoValue.Instance"/> whose getters (such as <see cref="GetString"/>) return null.</summary>
+        public JsonSafeValue Safe { get { return new JsonSafeValue(this); } }
+
+        /// <summary>Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        public JsonList GetList() { return getList(false); }
+
+        /// <summary>Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, returns null.</summary>
+        public JsonList GetListSafe() { return getList(true); }
+
         /// <summary>
-        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> and <see
-        ///     cref="StringConversionOptions.DoNotThrow"/> options.</summary>
-        public string GetStringLenientFailsafe() { return GetString(StringConversionOptions.Lenient | StringConversionOptions.DoNotThrow); }
+        ///     Converts the current value to <see cref="JsonList"/>.</summary>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual JsonList getList(bool safe) { return safe ? null : Ut.Throw<JsonList>(new InvalidOperationException("Only list values can be converted to list.")); }
 
-        /// <summary>Converts the current value to a <c>bool</c>.</summary>
-        public virtual bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
-        {
-            if (options.HasFlag(BoolConversionOptions.DoNotThrow))
-                return false;
-            throw new InvalidOperationException("Only bool values can be converted to bool.");
-        }
+        /// <summary>Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        public JsonDict GetDict() { return getDict(false); }
 
-        /// <summary>Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient"/> option.</summary>
-        public bool GetBoolLenient() { return GetBool(BoolConversionOptions.Lenient); }
-        /// <summary>Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.DoNotThrow"/> option.</summary>
-        public bool GetBoolFailsafe() { return GetBool(BoolConversionOptions.DoNotThrow); }
+        /// <summary>Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, returns null.</summary>
+        public JsonDict GetDictSafe() { return getDict(true); }
+
         /// <summary>
-        ///     Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient"/> and <see
-        ///     cref="BoolConversionOptions.DoNotThrow"/> options.</summary>
-        public bool GetBoolLenientFailsafe() { return GetBool(BoolConversionOptions.Lenient | BoolConversionOptions.DoNotThrow); }
+        ///     Converts the current value to <see cref="JsonDict"/>.</summary>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual JsonDict getDict(bool safe) { return safe ? null : Ut.Throw<JsonDict>(new InvalidOperationException("Only dict values can be converted to dict.")); }
 
-        /// <summary>Converts the current value to a <c>double</c>.</summary>
-        public virtual double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
-        {
-            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
-                return 0d;
-            throw new InvalidOperationException("Only numeric values can be converted to double.");
-        }
-
-        /// <summary>Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.</summary>
-        public double GetDoubleLenient() { return GetDouble(NumericConversionOptions.Lenient); }
+        /// <summary>Converts the current value to a <c>string</c>. Throws if the conversion is not valid.</summary>
+        public string GetString(StringConversionOptions options = StringConversionOptions.Strict) { return getString(options, false); }
         /// <summary>
-        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.DoNotThrow"/>
-        ///     option.</summary>
-        public double GetDoubleFailsafe() { return GetDouble(NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public string GetStringLenient() { return getString(StringConversionOptions.Lenient, false); }
+        /// <summary>Converts the current value to a <c>string</c>. Returns null if the conversion is not valid.</summary>
+        public string GetStringSafe(StringConversionOptions options = StringConversionOptions.Strict) { return getString(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> and <see
-        ///     cref="NumericConversionOptions.DoNotThrow"/> options.</summary>
-        public double GetDoubleLenientFailsafe() { return GetDouble(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public string GetStringLenientSafe() { return getString(StringConversionOptions.Lenient, true); }
 
-        /// <summary>Converts the current value to a <c>decimal</c>.</summary>
-        public virtual decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
-        {
-            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
-                return 0m;
-            throw new InvalidOperationException("Only numeric values can be converted to decimal.");
-        }
-
-        /// <summary>Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.</summary>
-        public decimal GetDecimalLenient() { return GetDecimal(NumericConversionOptions.Lenient); }
         /// <summary>
-        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.DoNotThrow"/>
-        ///     option.</summary>
-        public decimal GetDecimalFailsafe() { return GetDecimal(NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to <c>string</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual string getString(StringConversionOptions options, bool safe) { return safe ? null : Ut.Throw<string>(new InvalidOperationException("Only string values can be converted to string.")); }
+
+        /// <summary>Converts the current value to a <c>bool</c>. Throws if the conversion is not valid.</summary>
+        public bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict) { return getBool(options, false).Value; }
         /// <summary>
-        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> and
-        ///     <see cref="NumericConversionOptions.DoNotThrow"/> options.</summary>
-        public decimal GetDecimalLenientFailsafe() { return GetDecimal(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
-
-        /// <summary>Converts the current value to a <c>long</c>.</summary>
-        public virtual long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
-        {
-            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
-                return 0L;
-            throw new InvalidOperationException("Only numeric values can be converted to long.");
-        }
-
-        /// <summary>Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.</summary>
-        public long GetLongLenient() { return GetLong(NumericConversionOptions.Lenient); }
-        /// <summary>Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.DoNotThrow"/> option.</summary>
-        public long GetLongFailsafe() { return GetLong(NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public bool GetBoolLenient() { return getBool(BoolConversionOptions.Lenient, false).Value; }
+        /// <summary>Converts the current value to a <c>bool</c>. Returns null if the conversion is not valid.</summary>
+        public bool? GetBoolSafe(BoolConversionOptions options = BoolConversionOptions.Strict) { return getBool(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> and <see
-        ///     cref="NumericConversionOptions.DoNotThrow"/> options.</summary>
-        public long GetLongLenientFailsafe() { return GetLong(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to a <c>bool</c> by using the <see cref="BoolConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public bool? GetBoolLenientSafe() { return getBool(BoolConversionOptions.Lenient, true); }
 
-        /// <summary>Converts the current value to a <c>int</c>.</summary>
-        public virtual int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
-        {
-            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
-                return 0;
-            throw new InvalidOperationException("Only numeric values can be converted to int.");
-        }
-
-        /// <summary>Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.</summary>
-        public int GetIntLenient() { return GetInt(NumericConversionOptions.Lenient); }
-        /// <summary>Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.DoNotThrow"/> option.</summary>
-        public int GetIntFailsafe() { return GetInt(NumericConversionOptions.DoNotThrow); }
         /// <summary>
-        ///     Converts the current value to a <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> and <see
-        ///     cref="NumericConversionOptions.DoNotThrow"/> options.</summary>
-        public int GetIntLenientFailsafe() { return GetInt(NumericConversionOptions.Lenient | NumericConversionOptions.DoNotThrow); }
+        ///     Converts the current value to <c>bool</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual bool? getBool(BoolConversionOptions options, bool safe) { return safe ? null : Ut.Throw<bool?>(new InvalidOperationException("Only bool values can be converted to bool.")); }
+
+        /// <summary>Converts the current value to a <c>double</c>. Throws if the conversion is not valid.</summary>
+        public double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDouble(options, false).Value; }
+        /// <summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public double GetDoubleLenient() { return getDouble(NumericConversionOptions.Lenient, false).Value; }
+        /// <summary>Converts the current value to a <c>double</c>. Returns null if the conversion is not valid.</summary>
+        public double? GetDoubleSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDouble(options, true); }
+        /// <summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public double? GetDoubleLenientSafe() { return getDouble(NumericConversionOptions.Lenient, true); }
+
+        /// <summary>
+        ///     Converts the current value to <c>double</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual double? getDouble(NumericConversionOptions options, bool safe) { return safe ? null : Ut.Throw<double?>(new InvalidOperationException("Only numeric values can be converted to double.")); }
+
+        /// <summary>Converts the current value to a <c>decimal</c>. Throws if the conversion is not valid.</summary>
+        public decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDecimal(options, false).Value; }
+        /// <summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public decimal GetDecimalLenient() { return getDecimal(NumericConversionOptions.Lenient, false).Value; }
+        /// <summary>Converts the current value to a <c>decimal</c>. Returns null if the conversion is not valid.</summary>
+        public decimal? GetDecimalSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDecimal(options, true); }
+        /// <summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public decimal? GetDecimalLenientSafe() { return getDecimal(NumericConversionOptions.Lenient, true); }
+
+        /// <summary>
+        ///     Converts the current value to <c>decimal</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual decimal? getDecimal(NumericConversionOptions options, bool safe) { return safe ? null : Ut.Throw<decimal?>(new InvalidOperationException("Only numeric values can be converted to decimal.")); }
+
+        /// <summary>Converts the current value to a <c>long</c>. Throws if the conversion is not valid.</summary>
+        public long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict) { return getLong(options, false).Value; }
+        /// <summary>
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public long GetLongLenient() { return getLong(NumericConversionOptions.Lenient, false).Value; }
+        /// <summary>Converts the current value to a <c>long</c>. Returns null if the conversion is not valid.</summary>
+        public long? GetLongSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getLong(options, true); }
+        /// <summary>
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public long? GetLongLenientSafe() { return getLong(NumericConversionOptions.Lenient, true); }
+
+        /// <summary>
+        ///     Converts the current value to <c>long</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual long? getLong(NumericConversionOptions options, bool safe) { return safe ? null : Ut.Throw<long?>(new InvalidOperationException("Only numeric values can be converted to long.")); }
+
+        /// <summary>Converts the current value to an <c>int</c>. Throws if the conversion is not valid.</summary>
+        public int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict) { return getInt(options, false).Value; }
+        /// <summary>
+        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Throws if the conversion is not valid.</summary>
+        public int GetIntLenient() { return getInt(NumericConversionOptions.Lenient, false).Value; }
+        /// <summary>Converts the current value to an <c>int</c>. Returns null if the conversion is not valid.</summary>
+        public int? GetIntSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getInt(options, true); }
+        /// <summary>
+        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
+        ///     Returns null if the conversion is not valid.</summary>
+        public int? GetIntLenientSafe() { return getInt(NumericConversionOptions.Lenient, true); }
+
+        /// <summary>
+        ///     Converts the current value to <c>int</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected virtual int? getInt(NumericConversionOptions options, bool safe) { return safe ? null : Ut.Throw<int?>(new InvalidOperationException("Only numeric values can be converted to int.")); }
 
         #region Both IList and IDictionary
 
@@ -833,22 +849,7 @@ namespace RT.Util.Json
         ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never equal
         ///     to a <see cref="JsonNumber"/> even if they contain the same number). Lists are equal if they contain the same
         ///     values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
-        public bool Equals(JsonValue other)
-        {
-            if (other == null) return false;
-            if (this is JsonBool)
-                return other is JsonBool && (this as JsonBool).Equals(other as JsonBool);
-            else if (this is JsonString)
-                return other is JsonString && (this as JsonString).Equals(other as JsonString);
-            else if (this is JsonNumber)
-                return other is JsonNumber && (this as JsonNumber).Equals(other as JsonNumber);
-            else if (this is JsonList)
-                return other is JsonList && (this as JsonList).Equals(other as JsonList);
-            else if (this is JsonDict)
-                return other is JsonDict && (this as JsonDict).Equals(other as JsonDict);
-            else
-                return false;
-        }
+        public abstract bool Equals(JsonValue other);
 
         /// <summary>Returns a hash code representing this object.</summary>
         public abstract override int GetHashCode();
@@ -951,7 +952,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a list of <see cref="JsonValue"/> values.</summary>
-    public class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
+    public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         internal List<JsonValue> List;
 
@@ -1009,8 +1010,11 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns this list.</summary>
-        public override JsonList GetListFailsafe() { return this; }
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonList"/>.</summary>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override JsonList getList(bool safe) { return this; }
 
         /// <summary>Enumerates the values in this list.</summary>
         public IEnumerator<JsonValue> GetEnumerator()
@@ -1025,6 +1029,12 @@ namespace RT.Util.Json
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
+        {
+            return other is JsonList ? Equals((JsonList) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
         {
             return other is JsonList ? Equals((JsonList) other) : false;
         }
@@ -1120,7 +1130,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a JSON dictionary (a set of key/value pairs).</summary>
-    public class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
+    public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
     {
         internal Dictionary<string, JsonValue> Dict;
 
@@ -1175,8 +1185,11 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns this dictionary.</summary>
-        public override JsonDict GetDictFailsafe() { return this; }
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonDict"/>.</summary>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override JsonDict getDict(bool safe) { return this; }
 
         /// <summary>Enumerates the key/value pairs in this dictionary.</summary>
         public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator()
@@ -1214,6 +1227,12 @@ namespace RT.Util.Json
         public override bool Equals(object other)
         {
             return other is JsonDict && Equals((JsonDict) other);
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
+        {
+            return other is JsonDict ? Equals((JsonDict) other) : false;
         }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
@@ -1320,7 +1339,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a string as a JSON value.</summary>
-    public class JsonString : JsonValue, IEquatable<JsonString>
+    public sealed class JsonString : JsonValue, IEquatable<JsonString>
     {
         private string _value;
 
@@ -1375,120 +1394,173 @@ namespace RT.Util.Json
         /// <summary>Converts the specified ordinary string to a <see cref="JsonString"/> value.</summary>
         public static implicit operator JsonString(string value) { return value == null ? null : new JsonString(value); }
 
-        /// <summary>Converts this JSON string to <c>double</c>.</summary>
-        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>double</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override double? getDouble(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
-                return base.GetDouble(options);
+                return base.getDouble(options, safe);
 
             double result;
-            if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+            if (safe)
             {
                 if (!double.TryParse(_value, out result))
-                    return 0d;
+                    return null;
             }
             else
                 result = double.Parse(_value);
 
             if (double.IsNaN(result) || double.IsInfinity(result))
-                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0d : Ut.Throw<double>(new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."));
+                return safe ? null : Ut.Throw<double?>(new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."));
 
             return result;
         }
 
-        /// <summary>Converts this JSON string to <c>double</c>.</summary>
-        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>decimal</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
-                return base.GetDecimal(options);
+                return base.getDecimal(options, safe);
 
-            if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+            if (!safe)
                 return decimal.Parse(_value);
 
             decimal result;
-            return decimal.TryParse(_value, out result) ? result : 0m;
+            return decimal.TryParse(_value, out result) ? result : (decimal?) null;
         }
 
-        /// <summary>Converts this JSON value to <c>int</c>.</summary>
-        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>int</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override int? getInt(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
-                return base.GetInt(options);
+                return base.getInt(options, safe);
 
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
-                if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+                if (!safe)
                     return int.Parse(_value);
 
                 int result;
-                return int.TryParse(_value, out result) ? result : 0;
+                return int.TryParse(_value, out result) ? result : (int?) null;
             }
             else
             {
                 decimal result;
-                if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                if (safe)
                 {
                     if (!decimal.TryParse(_value, out result))
-                        return 0;
+                        return null;
                 }
                 else
                     result = decimal.Parse(_value);
 
                 if (result != decimal.Truncate(result))
-                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
+                    return safe ? null : Ut.Throw<int?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
 
-                if (options.HasFlag(NumericConversionOptions.DoNotThrow) && (result < int.MinValue || result > int.MaxValue))
-                    return 0;
+                if (safe && (result < int.MinValue || result > int.MaxValue))
+                    return null;
 
                 return (int) result;
             }
         }
 
-        /// <summary>Converts this JSON value to <c>long</c>.</summary>
-        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>long</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override long? getLong(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
-                return base.GetLong(options);
+                return base.getLong(options, safe);
 
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
-                if (!options.HasFlag(NumericConversionOptions.DoNotThrow))
+                if (!safe)
                     return long.Parse(_value);
 
                 long result;
-                return long.TryParse(_value, out result) ? result : 0L;
+                return long.TryParse(_value, out result) ? result : (long?) null;
             }
             else
             {
                 decimal result;
-                if (options.HasFlag(NumericConversionOptions.DoNotThrow))
+                if (safe)
                 {
                     if (!decimal.TryParse(_value, out result))
-                        return 0;
+                        return null;
                 }
                 else
                     result = decimal.Parse(_value);
 
                 if (result != decimal.Truncate(result))
-                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
+                    return safe ? null : Ut.Throw<long?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
 
-                if (options.HasFlag(NumericConversionOptions.DoNotThrow) && (result < long.MinValue || result > long.MaxValue))
-                    return 0;
+                if (safe && (result < long.MinValue || result > long.MaxValue))
+                    return null;
 
                 return (long) result;
             }
         }
 
-        /// <summary>Converts the current value to a <c>bool</c>.</summary>
-        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>bool</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override bool? getBool(BoolConversionOptions options, bool safe)
         {
             if (!options.HasFlag(BoolConversionOptions.AllowConversionFromString))
-                return base.GetBool(options);
-            return _value != "";
+                return base.getBool(options, safe);
+
+            return
+                False.Contains(_value, TrueFalseComparer) ? false :
+                True.Contains(_value, TrueFalseComparer) ? true :
+                (bool?) null;
         }
 
-        /// <summary>Converts the current value to a <c>string</c>.</summary>
-        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        /// <summary>
+        ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with <see
+        ///     cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
+        /// <remarks>
+        ///     The default is: <c>{ "", "false", "n", "no", "off", "disable", "disabled", "0" }</c>.</remarks>
+        public static readonly List<string> False = new List<string> { "", "false", "n", "no", "off", "disable", "disabled", "0" };
+        /// <summary>
+        ///     Controls which string values are converted to <c>true</c> when using <see cref="JsonValue.GetBool"/> with <see
+        ///     cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
+        /// <remarks>
+        ///     The default is: <c>{ "true", "y", "yes", "on", "enable", "enabled", "1" }</c>.</remarks>
+        public static readonly List<string> True = new List<string> { "true", "y", "yes", "on", "enable", "enabled", "1" };
+        /// <summary>
+        ///     Controls which string equality comparer is used when comparing strings against elements in <see cref="True"/> and
+        ///     <see cref="False"/> during conversion to bool by <see cref="JsonValue.GetBool"/>.</summary>
+        /// <remarks>
+        ///     The default is <see cref="StringComparer.OrdinalIgnoreCase"/>.</remarks>
+        public static readonly IEqualityComparer<string> TrueFalseComparer = StringComparer.OrdinalIgnoreCase;
+
+        /// <summary>
+        ///     Converts the current value to <c>string</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override string getString(StringConversionOptions options, bool safe)
         {
             return _value;
         }
@@ -1500,10 +1572,15 @@ namespace RT.Util.Json
         }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
+        {
+            return other is JsonString ? Equals((JsonString) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public bool Equals(JsonString other)
         {
-            if (other == null) return false;
-            return this._value == other._value;
+            return other != null && _value == other._value;
         }
 
         /// <summary>Returns a hash code representing this object.</summary>
@@ -1529,7 +1606,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>
-    public class JsonBool : JsonValue, IEquatable<JsonBool>
+    public sealed class JsonBool : JsonValue, IEquatable<JsonBool>
     {
         private bool _value;
 
@@ -1590,10 +1667,15 @@ namespace RT.Util.Json
         }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
+        {
+            return other is JsonBool ? Equals((JsonBool) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public bool Equals(JsonBool other)
         {
-            if (other == null) return false;
-            return this._value == other._value;
+            return other != null && _value == other._value;
         }
 
         /// <summary>Returns a hash code representing this object.</summary>
@@ -1608,46 +1690,76 @@ namespace RT.Util.Json
             yield return _value ? "true" : "false";
         }
 
-        /// <summary>Converts the current value to a <c>bool</c>.</summary>
-        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict) { return _value; }
+        /// <summary>
+        ///     Converts the current value to <c>bool</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override bool? getBool(BoolConversionOptions options, bool safe) { return _value; }
 
-        /// <summary>Converts the current value to a <c>decimal</c>.</summary>
-        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>decimal</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.GetDecimal(options);
+                return base.getDecimal(options, safe);
             return _value ? 1m : 0m;
         }
 
-        /// <summary>Converts the current value to a <c>double</c>.</summary>
-        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>double</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override double? getDouble(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.GetDouble(options);
+                return base.getDouble(options, safe);
             return _value ? 1d : 0d;
         }
 
-        /// <summary>Converts the current value to a <c>int</c>.</summary>
-        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>int</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override int? getInt(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.GetInt(options);
+                return base.getInt(options, safe);
             return _value ? 1 : 0;
         }
 
-        /// <summary>Converts the current value to a <c>long</c>.</summary>
-        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>long</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override long? getLong(NumericConversionOptions options, bool safe)
         {
             if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.GetLong(options);
+                return base.getLong(options, safe);
             return _value ? 1L : 0L;
         }
 
-        /// <summary>Converts the current value to a <c>string</c>.</summary>
-        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>string</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override string getString(StringConversionOptions options, bool safe)
         {
             if (!options.HasFlag(StringConversionOptions.AllowConversionFromBool))
-                return base.GetString(options);
+                return base.getString(options, safe);
             return _value ? "true" : "false";
         }
     }
@@ -1659,7 +1771,7 @@ namespace RT.Util.Json
     ///     JSON does not define any specific limits for numeric values. This implementation supports integers in the signed
     ///     64-bit range, as well as IEEE 64-bit doubles (except NaNs and infinities). Conversions to/from <c>decimal</c> are
     ///     exact for integers, but can be approximate for non-integers, depending on the exact value.</remarks>
-    public class JsonNumber : JsonValue, IEquatable<JsonNumber>
+    public sealed class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
         private long _long;
         private double _double = double.NaN;
@@ -1742,7 +1854,6 @@ namespace RT.Util.Json
                 throw new InvalidCastException("null cannot be cast to long.");
             return value.GetLong(); // use default strict mode
         }
-
         /// <summary>
         ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. See <see
         ///     cref="NumericConversionOptions.Strict"/>.</summary>
@@ -1757,7 +1868,6 @@ namespace RT.Util.Json
                 throw new InvalidCastException("null cannot be cast to int.");
             return value.GetInt();  // use default strict mode
         }
-
         /// <summary>
         ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. See <see
         ///     cref="NumericConversionOptions.Strict"/>.</summary>
@@ -1784,66 +1894,100 @@ namespace RT.Util.Json
         ///     Remarks on <see cref="JsonNumber"/>.</summary>
         public static explicit operator JsonNumber(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
 
-        /// <summary>Converts this JSON value to <c>double</c>.</summary>
-        public override double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict) { return (double) this; }
+        /// <summary>
+        ///     Converts the current value to <c>double</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override double? getDouble(NumericConversionOptions options, bool safe) { return (double) this; }
 
         /// <summary>
-        ///     Converts this JSON value to <c>decimal</c>. This function is slightly lossy; see Remarks on <see
-        ///     cref="JsonNumber"/>.</summary>
-        public override decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict) { return (decimal) this; }
+        ///     Converts the current value to <c>decimal</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe) { return (decimal) this; }
 
-        /// <summary>Converts this JSON value to <c>int</c>. Throws if the value is outside the range supported by <c>int</c>.</summary>
-        public override int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>int</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override int? getInt(NumericConversionOptions options, bool safe)
         {
             if (double.IsNaN(_double))
             {
                 if (_long < int.MinValue || _long > int.MaxValue)
-                    return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
+                    return safe ? null : Ut.Throw<int?>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
                 return (int) _long;
             }
 
             if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && _double != Math.Truncate(_double))
-                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Only integer values can be converted to int."));
+                return safe ? null : Ut.Throw<int?>(new InvalidCastException("Only integer values can be converted to int."));
 
             if (_double < int.MinValue || _double > int.MaxValue)
-                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0 : Ut.Throw<int>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
+                return safe ? null : Ut.Throw<int?>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
 
             return (int) _double;
         }
 
-        /// <summary>Converts this JSON value to <c>long</c>. Throws if the value is outside the range supported by <c>long</c>.</summary>
-        public override long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>long</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override long? getLong(NumericConversionOptions options, bool safe)
         {
             if (double.IsNaN(_double))
                 return _long;
 
             if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && _double != Math.Truncate(_double))
-                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidCastException("Only integer values can be converted to long."));
+                return safe ? null : Ut.Throw<long?>(new InvalidCastException("Only integer values can be converted to long."));
 
             if (_double < long.MinValue || _double > long.MaxValue)
-                return options.HasFlag(NumericConversionOptions.DoNotThrow) ? 0L : Ut.Throw<long>(new InvalidCastException("Cannot cast to long because the value exceeds the representable range."));
+                return safe ? null : Ut.Throw<long?>(new InvalidCastException("Cannot cast to long because the value exceeds the representable range."));
 
             return (long) _double;
         }
 
-        /// <summary>Converts the current value to a <c>string</c>.</summary>
-        public override string GetString(StringConversionOptions options = StringConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>string</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override string getString(StringConversionOptions options, bool safe)
         {
             if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
-                return base.GetString(options);
+                return base.getString(options, safe);
             return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
         }
 
-        /// <summary>Converts the current value to a <c>bool</c>.</summary>
-        public override bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict)
+        /// <summary>
+        ///     Converts the current value to <c>bool</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override bool? getBool(BoolConversionOptions options, bool safe)
         {
             if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
-                return base.GetBool(options);
+                return base.getBool(options, safe);
             return double.IsNaN(_double) ? (_long != 0) : (_double != 0);
         }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
+        {
+            return other is JsonNumber ? Equals((JsonNumber) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
         {
             return other is JsonNumber ? Equals((JsonNumber) other) : false;
         }
@@ -1868,6 +2012,180 @@ namespace RT.Util.Json
         public override IEnumerable<string> ToEnumerable()
         {
             yield return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
+        }
+    }
+
+    /// <summary>
+    ///     Represents a non-value when looking up a non-existent index or key in a list or dictionary.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             This is a singleton class; use <see cref="Instance"/> to access it.</description></item>
+    ///         <item><description>
+    ///             This class overloads the <c>==</c> operator such that comparing with <c>null</c> returns
+    ///             <c>true</c>.</description></item></list></remarks>
+    public sealed class JsonNoValue : JsonValue
+    {
+        private JsonNoValue() { }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(object other)
+        {
+            return other is JsonNoValue ? Equals((JsonNoValue) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
+        {
+            return other is JsonNoValue ? Equals((JsonNoValue) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public bool Equals(JsonNoValue other)
+        {
+            return other != null;
+        }
+
+        /// <summary>
+        ///     Always returns true.</summary>
+        /// <remarks>
+        ///     <para>
+        ///         This operator can only be invoked in three ways:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <c>JsonNoValue.Instance == JsonNoValue.Instance</c></description></item>
+        ///         <item><description>
+        ///             <c>JsonNoValue.Instance == null</c></description></item>
+        ///         <item><description>
+        ///             <c>null == JsonNoValue.Instance</c></description></item></list>
+        ///     <para>
+        ///         In all three cases, the intended comparison is <c>true</c>.</para></remarks>
+        public static bool operator ==(JsonNoValue one, JsonNoValue two) { return true; }
+
+        /// <summary>
+        ///     Always returns false.</summary>
+        /// <seealso cref="operator=="/>
+        public static bool operator !=(JsonNoValue one, JsonNoValue two) { return false; }
+
+        /// <summary>Returns a hash code representing this object.</summary>
+        public override int GetHashCode() { return 0; }
+
+        /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
+        public override IEnumerable<string> ToEnumerable() { return JsonValue.ToEnumerable(null); }
+
+        /// <summary>Returns the singleton instance of this type.</summary>
+        public static JsonNoValue Instance { get { return _instance; } }
+        private static readonly JsonNoValue _instance = new JsonNoValue();
+
+        /// <summary>
+        ///     Converts the current value to <c>bool</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override bool? getBool(BoolConversionOptions options, bool safe) { return null; }
+        /// <summary>
+        ///     Converts the current value to <c>decimal</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe) { return null; }
+        /// <summary>
+        ///     Converts the current value to <c>double</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override double? getDouble(NumericConversionOptions options, bool safe) { return null; }
+        /// <summary>
+        ///     Converts the current value to <c>int</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override int? getInt(NumericConversionOptions options, bool safe) { return null; }
+        /// <summary>
+        ///     Converts the current value to <c>long</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override long? getLong(NumericConversionOptions options, bool safe) { return null; }
+        /// <summary>
+        ///     Converts the current value to <c>string</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
+        protected override string getString(StringConversionOptions options, bool safe) { return null; }
+    }
+
+    /// <summary>Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
+    public sealed class JsonSafeValue
+    {
+        /// <summary>Gets the underlying JSON value associated with this object.</summary>
+        public JsonValue Value { get; private set; }
+
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="value">
+        ///     Specifies the underlying JSON value to provide safe access to.</param>
+        public JsonSafeValue(JsonValue value) { Value = value is JsonNoValue ? null : value; }
+
+        /// <summary>Returns a hash code representing this object.</summary>
+        public override int GetHashCode()
+        {
+            return Value == null ? 1 : Value.GetHashCode() + 1;
+        }
+
+        /// <summary>Determines whether the specified instance is equal to this one.</summary>
+        public override bool Equals(object obj)
+        {
+            return obj is JsonSafeValue ? Equals((JsonSafeValue) obj) : false;
+        }
+
+        /// <summary>
+        ///     Determines whether the specified instance is equal to this one. (See remarks.)</summary>
+        /// <remarks>
+        ///     Two instances of <see cref="JsonSafeValue"/> are considered equal if the underlying values are equal. See <see
+        ///     cref="JsonValue.Equals(JsonValue)"/> for details.</remarks>
+        public bool Equals(JsonSafeValue other)
+        {
+            if (other == null)
+                return false;
+            if (Value == null)
+                return other.Value == null;
+            return Value.Equals(other.Value);
+        }
+
+        /// <summary>
+        ///     If the underlying value is a list, and the specified <paramref name="index"/> exists within the list, returns the
+        ///     associated item; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
+        public JsonValue this[int index]
+        {
+            get
+            {
+                var list = Value as JsonList;
+                if (list == null || index < 0 || index >= list.Count)
+                    return JsonNoValue.Instance;
+                return ((JsonList) Value)[index] ?? JsonNoValue.Instance;
+            }
+        }
+
+        /// <summary>
+        ///     If the underlying value is a dictionary, and the specified <paramref name="key"/> exists within the dictionary,
+        ///     gets the value associated with that key; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
+        public JsonValue this[string key]
+        {
+            get
+            {
+                var dict = Value as JsonDict;
+                JsonValue value;
+                if (dict == null || !dict.TryGetValue(key, out value))
+                    return JsonNoValue.Instance;
+                return value ?? JsonNoValue.Instance;
+            }
         }
     }
 
@@ -1900,6 +2218,24 @@ namespace RT.Util.Json
         public override IEnumerable<string> ToEnumerable()
         {
             yield return Raw;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(object other)
+        {
+            return other is JsonRaw ? Equals((JsonRaw) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public override bool Equals(JsonValue other)
+        {
+            return other is JsonRaw ? Equals((JsonRaw) other) : false;
+        }
+
+        /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
+        public bool Equals(JsonRaw other)
+        {
+            return other != null && Raw == other.Raw;
         }
 
         /// <summary>Returns a hash code representing this object.</summary>
