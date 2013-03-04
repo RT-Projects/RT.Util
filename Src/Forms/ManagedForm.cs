@@ -88,14 +88,25 @@ namespace RT.Util.Forms
             _lastScreenResolution = vs.Width + "x" + vs.Height;
             if (!_settings.DimensionsByRes.ContainsKey(_lastScreenResolution))
             {
-                Left = _normalLeft = Screen.PrimaryScreen.WorkingArea.Left + Screen.PrimaryScreen.WorkingArea.Width / 2 - Width / 2;
-                Top = _normalTop = Screen.PrimaryScreen.WorkingArea.Top + Screen.PrimaryScreen.WorkingArea.Height / 2 - Height / 2;
+                var primaryScreenWA = Screen.PrimaryScreen.WorkingArea;
+                Left = _normalLeft = primaryScreenWA.Left + primaryScreenWA.Width / 2 - Width / 2;
+                Top = _normalTop = primaryScreenWA.Top + primaryScreenWA.Height / 2 - Height / 2;
                 _normalWidth = Width;
                 _normalHeight = Height;
             }
             else
             {
                 var dimensions = _settings.DimensionsByRes[_lastScreenResolution];
+                bool visible = false;
+                foreach (var screen in Screen.AllScreens)
+                    visible |= dimensions.Left >= screen.WorkingArea.Left + 10 - dimensions.Width && dimensions.Left <= screen.WorkingArea.Right - 10 &&
+                        dimensions.Top >= screen.WorkingArea.Top + 10 - dimensions.Height && dimensions.Top <= screen.WorkingArea.Bottom - 10;
+                if (!visible)
+                {
+                    var primaryScreenWA = Screen.PrimaryScreen.WorkingArea;
+                    dimensions.Left = primaryScreenWA.Left + primaryScreenWA.Width / 2 - dimensions.Width / 2;
+                    dimensions.Top = primaryScreenWA.Top + primaryScreenWA.Height / 2 - dimensions.Height / 2;
+                }
                 Left = _normalLeft = dimensions.Left;
                 Top = _normalTop = dimensions.Top;
                 Width = _normalWidth = dimensions.Width;

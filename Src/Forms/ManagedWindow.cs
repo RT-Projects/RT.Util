@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Threading;
 
 // Requirements:
@@ -49,7 +50,17 @@ namespace RT.Util.Forms
                 WindowDimensions dimensions;
                 if (_settings.DimensionsByRes.TryGetValue(resolution, out dimensions))
                 {
-                    // Restore the settings we already have for this window
+                    // Already have settings for this window/resolution. Make sure they don't put the window off every screen.
+                    bool visible = false;
+                    foreach (var screen in Screen.AllScreens)
+                        visible |= dimensions.Left >= screen.WorkingArea.Left + 10 - dimensions.Width && dimensions.Left <= screen.WorkingArea.Right - 10 &&
+                            dimensions.Top >= screen.WorkingArea.Top + 10 - dimensions.Height && dimensions.Top <= screen.WorkingArea.Bottom - 10;
+                    if (!visible)
+                    {
+                        var primaryScreenWA = Screen.PrimaryScreen.WorkingArea;
+                        dimensions.Left = primaryScreenWA.Left + primaryScreenWA.Width / 2 - dimensions.Width / 2;
+                        dimensions.Top = primaryScreenWA.Top + primaryScreenWA.Height / 2 - dimensions.Height / 2;
+                    }
                     SourceInitialized += delegate
                     {
                         // Can't do this in the constructor because then maximizing to secondary montor is broken, and also because XAML would then have priority.
