@@ -256,6 +256,20 @@ namespace RT.Util.ExtensionMethods
                 return defaultVal;
         }
 
+
+        /// <summary>Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey, TValue&gt;</c>.</summary>
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
+        {
+            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        /// <summary>Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey, TValue&gt;</c>.</summary>
+        /// <param name="comparer">An <c>IEqualityComparer&lt;T&gt;</c> to compare keys.</param>
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer)
+        {
+            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer);
+        }
+
         /// <summary>
         /// Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new array containing
         /// all items from the specified <paramref name="startIndex"/> onwards.
