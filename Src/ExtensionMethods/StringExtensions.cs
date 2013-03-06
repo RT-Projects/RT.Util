@@ -40,11 +40,16 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         /// <param name="input">The string to apply HTML or XML escaping to.</param>
         /// <returns>The specified string with the necessary HTML or XML escaping applied.</returns>
-        public static string HtmlEscape(this string input)
+        public static string HtmlEscape(this string input, bool leaveSingleQuotesAlone = false, bool leaveDoubleQuotesAlone = false)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("'", "&#39;").Replace("\"", "&quot;");
+            var result = input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+            if (!leaveSingleQuotesAlone)
+                result = result.Replace("'", "&#39;");
+            if (!leaveDoubleQuotesAlone)
+                result = result.Replace("\"", "&quot;");
+            return result;
         }
 
         /// <summary>
