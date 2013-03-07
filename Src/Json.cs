@@ -2244,4 +2244,57 @@ namespace RT.Util.Json
             return Raw.GetHashCode();
         }
     }
+
+    /// <summary>Provides extension methods for the JSON types.</summary>
+    public static class JsonExtensions
+    {
+        /// <summary>Creates a <see cref="JsonDict"/> from an input collection.</summary>
+        /// <typeparam name="T">Type of the input collection.</typeparam>
+        /// <param name="source">Input collection.</param>
+        /// <param name="keySelector">Function to map each input element to a key for the resulting dictionary.</param>
+        /// <param name="valueSelector">Function to map each input element to a value for the resulting dictionary.</param>
+        /// <returns>The constructed <see cref="JsonDict"/>.</returns>
+        public static JsonDict ToJsonDict<T>(this IEnumerable<T> source, Func<T, string> keySelector, Func<T, JsonValue> valueSelector)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (keySelector == null)
+                throw new ArgumentNullException("keySelector");
+            if (valueSelector == null)
+                throw new ArgumentNullException("valueSelector");
+
+            var newDict = new JsonDict();
+            foreach (var elem in source)
+                newDict.Add(keySelector(elem), valueSelector(elem));
+            return newDict;
+        }
+
+        /// <summary>Creates a <see cref="JsonList"/> from an input collection.</summary>
+        /// <typeparam name="T">Type of the input collection.</typeparam>
+        /// <param name="source">Input collection.</param>
+        /// <param name="elementSelector">Function to map each input element to a <see cref="JsonValue"/> for the resulting list.</param>
+        /// <returns>The constructed <see cref="JsonList"/>.</returns>
+        public static JsonList ToJsonList<T>(this IEnumerable<T> source, Func<T, JsonValue> elementSelector)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (elementSelector == null)
+                throw new ArgumentNullException("elementSelector");
+
+            var newList = new JsonList();
+            foreach (var elem in source)
+                newList.Add(elementSelector(elem));
+            return newList;
+        }
+
+        /// <summary>Creates a <see cref="JsonList"/> from an input collection.</summary>
+        /// <param name="source">Input collection.</param>
+        /// <returns>The constructed <see cref="JsonList"/>.</returns>
+        public static JsonList ToJsonList(this IEnumerable<JsonValue> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return new JsonList(source);
+        }
+    }
 }
