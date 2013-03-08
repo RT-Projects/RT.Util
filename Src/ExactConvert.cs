@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using RT.Util.ExtensionMethods;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
@@ -21,7 +21,7 @@ namespace RT.Util
     /// to expect of the corner cases.
     ///
     ///   Integer types:
-    ///       standard - byte, sbyte, short, ushort, int, uint, long, ulong
+    ///       standard - byte, sbyte, short, ushort, int, uint, long, ulong, or any enum type
     ///       bool - as integer this is defined exactly as 0 or 1
     ///       char - as integer this is the binary value of the char, identical to the "ushort" type
     ///       datetime - as integer, this is the number of ticks of the datetime as UTC.
@@ -1081,6 +1081,15 @@ namespace RT.Util
 
         #endregion
 
+        private static TEnum toEnum<TEnum>(byte value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(sbyte value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(short value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(ushort value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(int value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(uint value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(long value) { return (TEnum) (object) value; }
+        private static TEnum toEnum<TEnum>(ulong value) { return (TEnum) (object) value; }
+
         /// <summary>
         /// Converts the specified object to the type <paramref name="toType"/>.
         ///
@@ -1090,6 +1099,38 @@ namespace RT.Util
         /// </summary>
         public static bool Try(Type toType, object value, out object result)
         {
+            if (toType.IsEnum)
+            {
+                if (value is string)
+                {
+                    object[] parameters = { value, null };
+                    var succeeded = (bool) typeof(Enum).GetMethods(BindingFlags.Static | BindingFlags.Public).First(m => m.Name == "TryParse" && m.GetParameters().Length == 2).MakeGenericMethod(toType).Invoke(null, parameters);
+                    result = parameters[1];
+                    return succeeded;
+                }
+                else if (value != null && _isIntegerType[(int) Type.GetTypeCode(value.GetType())])
+                {
+                    try
+                    {
+                        // If “value” is some other enum, turn it into an integer first
+                        if (value is Enum)
+                            value = Convert.ChangeType(value, value.GetType().GetEnumUnderlyingType());
+                        // Now convert that integer into the underlying integer type for the target enum type
+                        if (!Try(toType.GetEnumUnderlyingType(), value, out result))
+                            return false;
+                        result = typeof(ExactConvert)
+                            .GetMethod("toEnum", BindingFlags.Static | BindingFlags.NonPublic, null, new[] { toType.GetEnumUnderlyingType() }, null)
+                            .MakeGenericMethod(toType)
+                            .Invoke(null, new object[] { result });
+                        return true;
+                    }
+                    catch { }
+                }
+
+                result = null;
+                return false;
+            }
+
             var code = Type.GetTypeCode(toType);
             bool success = false;
             object converted = null;

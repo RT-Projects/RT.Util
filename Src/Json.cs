@@ -866,6 +866,15 @@ namespace RT.Util.Json
             return ToEnumerable().JoinString();
         }
 
+        /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
+        public static string ToStringIndented(JsonValue value)
+        {
+            return value == null ? "null" : value.ToStringIndented();
+        }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public abstract string ToStringIndented();
+
         /// <summary>Lazy-converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static IEnumerable<string> ToEnumerable(JsonValue value)
         {
@@ -1075,6 +1084,28 @@ namespace RT.Util.Json
             yield return "]";
         }
 
+        /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
+        public override string ToStringIndented()
+        {
+            if (List.Count == 0)
+                return "[]";
+            var sb = new StringBuilder();
+            sb.Append("[");
+            bool first = true;
+            foreach (var value in List)
+            {
+                if (!first)
+                    sb.Append(",");
+                sb.AppendLine();
+                sb.Append("    ");
+                sb.Append(JsonValue.ToStringIndented(value).Indent(4, false));
+                first = false;
+            }
+            sb.AppendLine();
+            sb.Append("]");
+            return sb.ToString();
+        }
+
         /// <summary>Removes all items from the current list.</summary>
         public override void Clear() { List.Clear(); }
 
@@ -1281,6 +1312,30 @@ namespace RT.Util.Json
                 first = false;
             }
             yield return "}";
+        }
+
+        /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
+        public override string ToStringIndented()
+        {
+            if (Dict.Count == 0)
+                return "{}";
+            var sb = new StringBuilder();
+            sb.Append("{");
+            bool first = true;
+            foreach (var kvp in Dict)
+            {
+                if (!first)
+                    sb.Append(",");
+                sb.AppendLine();
+                sb.Append("    ");
+                sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
+                sb.Append(": ");
+                sb.Append(JsonValue.ToStringIndented(kvp.Value).Indent(4, false));
+                first = false;
+            }
+            sb.AppendLine();
+            sb.Append("}");
+            return sb.ToString();
         }
 
         /// <summary>Removes all items from the current dictionary.</summary>
@@ -1592,7 +1647,13 @@ namespace RT.Util.Json
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
-            yield return _value.JsEscape(JsQuotes.Double);
+            yield return ToStringIndented();
+        }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToStringIndented()
+        {
+            return _value.JsEscape(JsQuotes.Double);
         }
 
         /// <summary>
@@ -1687,7 +1748,13 @@ namespace RT.Util.Json
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
-            yield return _value ? "true" : "false";
+            yield return ToStringIndented();
+        }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToStringIndented()
+        {
+            return _value ? "true" : "false";
         }
 
         /// <summary>
@@ -1980,6 +2047,9 @@ namespace RT.Util.Json
             return double.IsNaN(_double) ? (_long != 0) : (_double != 0);
         }
 
+        /// <summary>Returns the value of this number as either a <c>double</c> or a <c>long</c>.</summary>
+        public object RawValue { get { return double.IsNaN(_double) ? (object) _long : (object) _double; } }
+
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
         {
@@ -2011,7 +2081,13 @@ namespace RT.Util.Json
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
-            yield return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
+            yield return ToStringIndented();
+        }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToStringIndented()
+        {
+            return double.IsNaN(_double) ? _long.ToString() : ExactConvert.ToString(_double);
         }
     }
 
@@ -2072,6 +2148,9 @@ namespace RT.Util.Json
 
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable() { return JsonValue.ToEnumerable(null); }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToStringIndented() { return JsonValue.ToStringIndented(null); }
 
         /// <summary>Returns the singleton instance of this type.</summary>
         public static JsonNoValue Instance { get { return _instance; } }
@@ -2243,6 +2322,9 @@ namespace RT.Util.Json
         {
             return Raw.GetHashCode();
         }
+
+        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
+        public override string ToStringIndented() { return Raw; }
     }
 
     /// <summary>Provides extension methods for the JSON types.</summary>

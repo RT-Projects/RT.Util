@@ -56,9 +56,8 @@ namespace RT.Util.ExtensionMethods
         /// <returns>The text read from the stream.</returns>
         public static string ReadAllText(this Stream stream, Encoding encoding = null)
         {
-            if (encoding == null)
-                encoding = Encoding.UTF8;
-            return encoding.GetString(stream.ReadAllBytes());
+            using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8))
+                return sr.ReadToEnd();
         }
 
         /// <summary>
