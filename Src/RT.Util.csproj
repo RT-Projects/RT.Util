@@ -183,6 +183,11 @@
     <Compile Include="RhoML.cs" />
     <Compile Include="RTSmtpClient.cs" />
     <Compile Include="RummageAttributes.cs" />
+    <Compile Include="Serialization\Classify.cs" />
+    <Compile Include="Serialization\ClassifyFormats.cs" />
+    <Compile Include="Serialization\IClassifyFormat.cs" />
+    <Compile Include="Serialization\JsonClassifyFormat.cs" />
+    <Compile Include="Serialization\XmlClassifyFormat.cs" />
     <Compile Include="Stopwatch.cs" />
     <Compile Include="Streams\BinaryStream.cs" />
     <Compile Include="Streams\ConsoleLoggingStream.cs" />

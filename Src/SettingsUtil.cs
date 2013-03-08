@@ -10,6 +10,7 @@ using System.Threading;
 using System.Xml;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
+using RT.Util.Serialization;
 using RT.Util.Xml;
 
 namespace RT.Util
@@ -257,9 +258,9 @@ namespace RT.Util
     public abstract class SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        [XmlIgnore, NonSerialized]
+        [XmlIgnore, ClassifyIgnore, NonSerialized]
         protected internal object _lock = new object();
-        [XmlIgnore, NonSerialized]
+        [XmlIgnore, ClassifyIgnore, NonSerialized]
         protected internal Thread _saveThread;
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
@@ -331,11 +332,11 @@ namespace RT.Util
     public abstract class SettingsThreadedBase : SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        [XmlIgnore, NonSerialized]
+        [XmlIgnore, ClassifyIgnore, NonSerialized]
         private SettingsBase _saveObj;
-        [XmlIgnore, NonSerialized]
+        [XmlIgnore, ClassifyIgnore, NonSerialized]
         private string _saveFilename;
-        [XmlIgnore, NonSerialized]
+        [XmlIgnore, ClassifyIgnore, NonSerialized]
         private SettingsSerializer? _saveSerializer;
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
