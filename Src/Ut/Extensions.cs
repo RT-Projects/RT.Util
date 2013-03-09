@@ -20,9 +20,9 @@ namespace RT.Util
     public delegate TResult FuncClassClass<in TInput, TResult>(TInput input)
         where TInput : class
         where TResult : class;
-    /// <summary>Provides a function delegate that accepts only value types as input.</summary>
-    public delegate TResult FuncClass<in TInput, TResult>(TInput input) where TInput : class;
     /// <summary>Provides a function delegate that accepts only reference types as input.</summary>
+    public delegate TResult FuncClass<in TInput, TResult>(TInput input) where TInput : class;
+    /// <summary>Provides a function delegate that accepts only value types as input.</summary>
     public delegate TResult FuncStruct<in TInput, TResult>(TInput input) where TInput : struct;
 
     /// <summary>Provides extension methods that apply to all types.</summary>
