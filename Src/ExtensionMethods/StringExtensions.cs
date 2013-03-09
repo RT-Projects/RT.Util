@@ -8,9 +8,7 @@ using RT.Util.Consoles;
 
 namespace RT.Util.ExtensionMethods
 {
-    /// <summary>
-    /// Provides extension methods on the <see cref="String"/> type.
-    /// </summary>
+    /// <summary>Provides extension methods on the <see cref="String"/> type.</summary>
     public static class StringExtensions
     {
         /// <summary>Contains the set of characters that are used in base64-url encoding.</summary>
@@ -19,11 +17,13 @@ namespace RT.Util.ExtensionMethods
         private static int[] _invBase64Url; // inverse base-64-url lookup table
 
         /// <summary>
-        /// Concatenates the specified number of repetitions of the current string.
-        /// </summary>
-        /// <param name="input">The string to be repeated.</param>
-        /// <param name="numTimes">The number of times to repeat the string.</param>
-        /// <returns>A concatenated string containing the original string the specified number of times.</returns>
+        ///     Concatenates the specified number of repetitions of the current string.</summary>
+        /// <param name="input">
+        ///     The string to be repeated.</param>
+        /// <param name="numTimes">
+        ///     The number of times to repeat the string.</param>
+        /// <returns>
+        ///     A concatenated string containing the original string the specified number of times.</returns>
         public static string Repeat(this string input, int numTimes)
         {
             if (numTimes == 0) return "";
@@ -36,10 +36,16 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Escapes all necessary characters in the specified string so as to make it usable safely in an HTML or XML context.
-        /// </summary>
-        /// <param name="input">The string to apply HTML or XML escaping to.</param>
-        /// <returns>The specified string with the necessary HTML or XML escaping applied.</returns>
+        ///     Escapes all necessary characters in the specified string so as to make it usable safely in an HTML or XML
+        ///     context.</summary>
+        /// <param name="input">
+        ///     The string to apply HTML or XML escaping to.</param>
+        /// <param name="leaveSingleQuotesAlone">
+        ///     If <c>true</c>, does not escape single quotes (<c>'</c>, U+0027).</param>
+        /// <param name="leaveDoubleQuotesAlone">
+        ///     If <c>true</c>, does not escape single quotes (<c>"</c>, U+0022).</param>
+        /// <returns>
+        ///     The specified string with the necessary HTML or XML escaping applied.</returns>
         public static string HtmlEscape(this string input, bool leaveSingleQuotesAlone = false, bool leaveDoubleQuotesAlone = false)
         {
             if (input == null)
@@ -52,9 +58,7 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
-        /// <summary>
-        /// Contains the set of ASCII characters allowed in a URL.
-        /// </summary>
+        /// <summary>Contains the set of ASCII characters allowed in a URL.</summary>
         private static byte[] _urlAllowedBytes
         {
             get
@@ -67,10 +71,11 @@ namespace RT.Util.ExtensionMethods
         private static byte[] _urlAllowedBytesCache = null;
 
         /// <summary>
-        /// Escapes all necessary characters in the specified string so as to make it usable safely in a URL.
-        /// </summary>
-        /// <param name="input">The string to apply URL escaping to.</param>
-        /// <returns>The specified string with the necessary URL escaping applied.</returns>
+        ///     Escapes all necessary characters in the specified string so as to make it usable safely in a URL.</summary>
+        /// <param name="input">
+        ///     The string to apply URL escaping to.</param>
+        /// <returns>
+        ///     The specified string with the necessary URL escaping applied.</returns>
         /// <seealso cref="UrlUnescape(string)"/>
         public static string UrlEscape(this string input)
         {
@@ -87,10 +92,12 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Reverses the escaping performed by <see cref="UrlEscape"/> by decoding hexadecimal URL escape sequences into their original characters.
-        /// </summary>
-        /// <param name="input">String containing URL escape sequences to be decoded.</param>
-        /// <returns>The specified string with all URL escape sequences decoded.</returns>
+        ///     Reverses the escaping performed by <see cref="UrlEscape"/> by decoding hexadecimal URL escape sequences into their
+        ///     original characters.</summary>
+        /// <param name="input">
+        ///     String containing URL escape sequences to be decoded.</param>
+        /// <returns>
+        ///     The specified string with all URL escape sequences decoded.</returns>
         /// <seealso cref="UrlEscape(string)"/>
         public static string UrlUnescape(this string input)
         {
@@ -133,9 +140,7 @@ namespace RT.Util.ExtensionMethods
             return Encoding.UTF8.GetString(buffer, 0, bufferSize);
         }
 
-        /// <summary>
-        /// Contains the set of characters disallowed in file names across all filesystems supported by our software.
-        /// </summary>
+        /// <summary>Contains the set of characters disallowed in file names across all filesystems supported by our software.</summary>
         private static char[] _filenameDisallowedCharacters
         {
             get
@@ -148,11 +153,10 @@ namespace RT.Util.ExtensionMethods
         private static char[] _filenameDisallowedCharactersCache = null;
 
         /// <summary>
-        /// Escapes all characters in this string which cannot form part of a valid filename on at least one
-        /// supported filesystem. The escaping is fully reversible (via <see cref="FilenameCharactersUnescape"/>),
-        /// but does not treat characters at specific positions differently (e.g. the "." at the end of the name is not escaped,
-        /// even though it will disappear on a Win32 system).
-        /// </summary>
+        ///     Escapes all characters in this string which cannot form part of a valid filename on at least one supported
+        ///     filesystem. The escaping is fully reversible (via <see cref="FilenameCharactersUnescape"/>), but does not treat
+        ///     characters at specific positions differently (e.g. the "." at the end of the name is not escaped, even though it
+        ///     will disappear on a Win32 system).</summary>
         public static string FilenameCharactersEscape(this string input)
         {
             if (input == null)
@@ -175,10 +179,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Reverses the transformation done by <see cref="FilenameCharactersEscape"/>. This routine will also
-        /// work on filenames that cannot have been generated by the above escape procedure; any "invalid" escapes
-        /// will be preserved as-is.
-        /// </summary>
+        ///     Reverses the transformation done by <see cref="FilenameCharactersEscape"/>. This routine will also work on
+        ///     filenames that cannot have been generated by the above escape procedure; any "invalid" escapes will be preserved
+        ///     as-is.</summary>
         public static string FilenameCharactersUnescape(this string input)
         {
             if (input == null)
@@ -246,10 +249,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified string to UTF-8.
-        /// </summary>
-        /// <param name="input">String to convert to UTF-8.</param>
-        /// <returns>The specified string, converted to a byte-array containing the UTF-8 encoding of the string.</returns>
+        ///     Converts the specified string to UTF-8.</summary>
+        /// <param name="input">
+        ///     String to convert to UTF-8.</param>
+        /// <returns>
+        ///     The specified string, converted to a byte-array containing the UTF-8 encoding of the string.</returns>
         public static byte[] ToUtf8(this string input)
         {
             if (input == null)
@@ -258,10 +262,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified string to UTF-16.
-        /// </summary>
-        /// <param name="input">String to convert to UTF-16.</param>
-        /// <returns>The specified string, converted to a byte-array containing the UTF-16 encoding of the string.</returns>
+        ///     Converts the specified string to UTF-16.</summary>
+        /// <param name="input">
+        ///     String to convert to UTF-16.</param>
+        /// <returns>
+        ///     The specified string, converted to a byte-array containing the UTF-16 encoding of the string.</returns>
         public static byte[] ToUtf16(this string input)
         {
             if (input == null)
@@ -270,10 +275,12 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified string to UTF-16 (Big Endian).
-        /// </summary>
-        /// <param name="input">String to convert to UTF-16 (Big Endian).</param>
-        /// <returns>The specified string, converted to a byte-array containing the UTF-16 (Big Endian) encoding of the string.</returns>
+        ///     Converts the specified string to UTF-16 (Big Endian).</summary>
+        /// <param name="input">
+        ///     String to convert to UTF-16 (Big Endian).</param>
+        /// <returns>
+        ///     The specified string, converted to a byte-array containing the UTF-16 (Big Endian) encoding of the
+        ///     string.</returns>
         public static byte[] ToUtf16BE(this string input)
         {
             if (input == null)
@@ -282,10 +289,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified raw UTF-8 data to a string.
-        /// </summary>
-        /// <param name="input">Data to interpret as UTF-8 text.</param>
-        /// <returns>A string containing the characters represented by the UTF-8-encoded input.</returns>
+        ///     Converts the specified raw UTF-8 data to a string.</summary>
+        /// <param name="input">
+        ///     Data to interpret as UTF-8 text.</param>
+        /// <returns>
+        ///     A string containing the characters represented by the UTF-8-encoded input.</returns>
         public static string FromUtf8(this byte[] input)
         {
             if (input == null)
@@ -294,10 +302,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified raw UTF-16 (little-endian) data to a string.
-        /// </summary>
-        /// <param name="input">Data to interpret as UTF-16 text.</param>
-        /// <returns>A string containing the characters represented by the UTF-16-encoded input.</returns>
+        ///     Converts the specified raw UTF-16 (little-endian) data to a string.</summary>
+        /// <param name="input">
+        ///     Data to interpret as UTF-16 text.</param>
+        /// <returns>
+        ///     A string containing the characters represented by the UTF-16-encoded input.</returns>
         public static string FromUtf16(this byte[] input)
         {
             if (input == null)
@@ -306,10 +315,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Converts the specified raw UTF-16 (big-endian) data to a string.
-        /// </summary>
-        /// <param name="input">Data to interpret as UTF-16BE text.</param>
-        /// <returns>A string containing the characters represented by the UTF-16BE-encoded input.</returns>
+        ///     Converts the specified raw UTF-16 (big-endian) data to a string.</summary>
+        /// <param name="input">
+        ///     Data to interpret as UTF-16BE text.</param>
+        /// <returns>
+        ///     A string containing the characters represented by the UTF-16BE-encoded input.</returns>
         public static string FromUtf16BE(this byte[] input)
         {
             if (input == null)
@@ -318,10 +328,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines the length of the UTF-8 encoding of the specified string.
-        /// </summary>
-        /// <param name="input">String to determined UTF-8 length of.</param>
-        /// <returns>The length of the string in bytes when encoded as UTF-8.</returns>
+        ///     Determines the length of the UTF-8 encoding of the specified string.</summary>
+        /// <param name="input">
+        ///     String to determined UTF-8 length of.</param>
+        /// <returns>
+        ///     The length of the string in bytes when encoded as UTF-8.</returns>
         public static int Utf8Length(this string input)
         {
             if (input == null)
@@ -329,19 +340,30 @@ namespace RT.Util.ExtensionMethods
             return Encoding.UTF8.GetByteCount(input);
         }
 
-        /// <summary>Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped. Returns "null" if the input is null.</summary>
-        /// <param name="input">String to escape.</param>
-        /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
-        /// <returns>JavaScript- or JSON-compatible representation of the input string, or the "null" keyword if the input is null.</returns>
+        /// <summary>
+        ///     Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.
+        ///     Returns "null" if the input is null.</summary>
+        /// <param name="input">
+        ///     String to escape.</param>
+        /// <param name="quotes">
+        ///     Specifies what type of quotes to put around the result, if any.</param>
+        /// <returns>
+        ///     JavaScript- or JSON-compatible representation of the input string, or the "null" keyword if the input is
+        ///     null.</returns>
         public static string JsEscapeNull(this string input, JsQuotes quotes = JsQuotes.Double)
         {
             return input == null ? "null" : input.JsEscape(quotes);
         }
 
-        /// <summary>Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.</summary>
-        /// <param name="input">String to escape.</param>
-        /// <param name="quotes">Specifies what type of quotes to put around the result, if any.</param>
-        /// <returns>JavaScript- or JSON-compatible representation of the input string.</returns>
+        /// <summary>
+        ///     Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters
+        ///     escaped.</summary>
+        /// <param name="input">
+        ///     String to escape.</param>
+        /// <param name="quotes">
+        ///     Specifies what type of quotes to put around the result, if any.</param>
+        /// <returns>
+        ///     JavaScript- or JSON-compatible representation of the input string.</returns>
         public static string JsEscape(this string input, JsQuotes quotes = JsQuotes.Double)
         {
             if (input == null)
@@ -379,10 +401,12 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns an SQL-compatible representation of the string in single-quotes with the appropriate characters escaped.
-        /// </summary>
-        /// <param name="input">String to escape.</param>
-        /// <returns>SQL-compatible representation of the input string.</returns>
+        ///     Returns an SQL-compatible representation of the string in single-quotes with the appropriate characters
+        ///     escaped.</summary>
+        /// <param name="input">
+        ///     String to escape.</param>
+        /// <returns>
+        ///     SQL-compatible representation of the input string.</returns>
         public static string SqlEscape(this string input)
         {
             if (input == null)
@@ -390,8 +414,9 @@ namespace RT.Util.ExtensionMethods
             return "'" + input.Replace("'", "''") + "'";
         }
 
-        /// <summary>Encodes this byte array to base-64-url format, which is safe for use in URLs and
-        /// does not contain the unnecessary padding when the number of bytes is not divisible by 3.</summary>
+        /// <summary>
+        ///     Encodes this byte array to base-64-url format, which is safe for use in URLs and does not contain the unnecessary
+        ///     padding when the number of bytes is not divisible by 3.</summary>
         /// <seealso cref="Base64UrlDecode"/>
         public static string Base64UrlEncode(this byte[] bytes)
         {
@@ -432,8 +457,9 @@ namespace RT.Util.ExtensionMethods
             return result.ToString();
         }
 
-        /// <summary>Decodes this string from base-64-url encoding, which is safe for use in URLs and does not
-        /// contain the unnecessary padding when the number of bytes is not divisible by 3, into a byte array.</summary>
+        /// <summary>
+        ///     Decodes this string from base-64-url encoding, which is safe for use in URLs and does not contain the unnecessary
+        ///     padding when the number of bytes is not divisible by 3, into a byte array.</summary>
         /// <seealso cref="Base64UrlEncode"/>
         public static byte[] Base64UrlDecode(this string input)
         {
@@ -499,8 +525,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Escapes all characters in this string whose code is less than 32 using C/C#-compatible backslash escapes.
-        /// </summary>
+        ///     Escapes all characters in this string whose code is less than 32 using C/C#-compatible backslash
+        ///     escapes.</summary>
         /// <seealso cref="CLiteralUnescape"/>
         public static string CLiteralEscape(this string value)
         {
@@ -537,9 +563,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Reverses the escaping done by <see cref="CLiteralEscape"/>. Note that unescaping is not fully C/C#-compatible
-        /// in the sense that not all strings that are valid string literals in C/C# can be correctly unescaped by this procedure.
-        /// </summary>
+        ///     Reverses the escaping done by <see cref="CLiteralEscape"/>. Note that unescaping is not fully C/C#-compatible in
+        ///     the sense that not all strings that are valid string literals in C/C# can be correctly unescaped by this
+        ///     procedure.</summary>
         /// <seealso cref="CLiteralEscape"/>
         public static string CLiteralUnescape(this string value)
         {
@@ -612,42 +638,33 @@ namespace RT.Util.ExtensionMethods
             return arr.Skip(begin).Take(end - begin + 1);
         }
 
-        /// <summary>
-        /// Formats a string using <see cref="string.Format(string, object[])"/>.
-        /// </summary>
+        /// <summary>Formats a string using <see cref="string.Format(string, object[])"/>.</summary>
         public static string Fmt(this string formatString, params object[] args)
         {
             return string.Format(formatString, args);
         }
 
-        /// <summary>
-        /// Formats a string using <see cref="string.Format(string, object)"/>.
-        /// </summary>
+        /// <summary>Formats a string using <see cref="string.Format(string, object)"/>.</summary>
         public static string Fmt(this string formatString, object arg0)
         {
             return string.Format(formatString, arg0);
         }
 
-        /// <summary>
-        /// Formats a string using <see cref="string.Format(string, object, object)"/>.
-        /// </summary>
+        /// <summary>Formats a string using <see cref="string.Format(string, object, object)"/>.</summary>
         public static string Fmt(this string formatString, object arg0, object arg1)
         {
             return string.Format(formatString, arg0, arg1);
         }
 
-        /// <summary>
-        /// Formats a string using <see cref="string.Format(string, object, object, object)"/>.
-        /// </summary>
+        /// <summary>Formats a string using <see cref="string.Format(string, object, object, object)"/>.</summary>
         public static string Fmt(this string formatString, object arg0, object arg1, object arg2)
         {
             return string.Format(formatString, arg0, arg1, arg2);
         }
 
         /// <summary>
-        /// Formats the specified objects into the format string. The result is an enumerable collection
-        /// which enumerates parts of the format string interspersed with the arguments as appropriate.
-        /// </summary>
+        ///     Formats the specified objects into the format string. The result is an enumerable collection which enumerates
+        ///     parts of the format string interspersed with the arguments as appropriate.</summary>
         public static IEnumerable<object> FmtEnumerable(this string formatString, params object[] args)
         {
             if (formatString == null)
@@ -712,15 +729,24 @@ namespace RT.Util.ExtensionMethods
                 yield return sb.ToString();
         }
 
-        /// <summary>Word-wraps the current string to a specified width. Supports unix-style newlines and indented paragraphs.</summary>
+        /// <summary>
+        ///     Word-wraps the current string to a specified width. Supports unix-style newlines and indented
+        ///     paragraphs.</summary>
         /// <remarks>
-        /// <para>The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
-        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
-        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
-        /// </remarks>
-        /// <param name="text">Text to be word-wrapped.</param>
-        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
-        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
+        ///     <para>
+        ///         The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a
+        ///         new line in the word-wrapped output, indented by the same number of spaces as in the input. All subsequent
+        ///         lines belonging to that paragraph will also be indented by the same amount.</para>
+        ///     <para>
+        ///         All multiple contiguous spaces will be replaced with a single space (except for the
+        ///         indentation).</para></remarks>
+        /// <param name="text">
+        ///     Text to be word-wrapped.</param>
+        /// <param name="maxWidth">
+        ///     The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
         public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent = 0)
         {
             if (text == null)
@@ -827,9 +853,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines whether the specified URL starts with the specified URL path.
-        /// For example, the URL "/directory/file" starts with "/directory" but not with "/dir".
-        /// </summary>
+        ///     Determines whether the specified URL starts with the specified URL path. For example, the URL "/directory/file"
+        ///     starts with "/directory" but not with "/dir".</summary>
         public static bool UrlStartsWith(this string url, string path)
         {
             if (url == null)
@@ -838,9 +863,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Same as <see cref="string.Substring(int)"/> but does not throw exceptions when the start index
-        /// falls outside the boundaries of the string. Instead the result is truncated as appropriate.
-        /// </summary>
+        ///     Same as <see cref="string.Substring(int)"/> but does not throw exceptions when the start index falls outside the
+        ///     boundaries of the string. Instead the result is truncated as appropriate.</summary>
         public static string SubstringSafe(this string source, int startIndex)
         {
             if (source == null)
@@ -854,9 +878,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Same as <see cref="string.Substring(int, int)"/> but does not throw exceptions when the start index
-        /// or length (or both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.
-        /// </summary>
+        ///     Same as <see cref="string.Substring(int, int)"/> but does not throw exceptions when the start index or length (or
+        ///     both) fall outside the boundaries of the string. Instead the result is truncated as appropriate.</summary>
         public static string SubstringSafe(this string source, int startIndex, int length)
         {
             if (source == null)
@@ -875,8 +898,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines whether this string is equal to the other string under the ordinal case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).
-        /// </summary>
+        ///     Determines whether this string is equal to the other string under the ordinal case-insensitive comparison (<see
+        ///     cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
         public static bool EqualsNoCase(this string strthis, string str)
         {
             if (strthis == null)
@@ -885,8 +908,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines whether this string contains the other string under the ordinal case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).
-        /// </summary>
+        ///     Determines whether this string contains the other string under the ordinal case-insensitive comparison (<see
+        ///     cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
         public static bool ContainsNoCase(this string strthis, string str)
         {
             if (strthis == null)
@@ -896,7 +919,8 @@ namespace RT.Util.ExtensionMethods
             return strthis.IndexOf(str, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
-        /// <summary>Returns true if and only if this string ends with the specified character.</summary>
+        /// <summary>
+        ///     Returns true if and only if this string ends with the specified character.</summary>
         /// <seealso cref="StartsWith"/>
         public static bool EndsWith(this string str, char? ch)
         {
@@ -907,7 +931,8 @@ namespace RT.Util.ExtensionMethods
             return str != null && str.Length > 0 && str[str.Length - 1] == ch.Value;
         }
 
-        /// <summary>Returns true if and only if this string starts with the specified character.</summary>
+        /// <summary>
+        ///     Returns true if and only if this string starts with the specified character.</summary>
         /// <seealso cref="EndsWith"/>
         public static bool StartsWith(this string str, char? ch)
         {
@@ -918,10 +943,14 @@ namespace RT.Util.ExtensionMethods
             return str != null && str.Length > 0 && str[0] == ch.Value;
         }
 
-        /// <summary>Colours the specified string in the specified console color.</summary>
-        /// <param name="str">The string to color.</param>
-        /// <param name="color">The color to color the string in.</param>
-        /// <returns>A potentially colorful string.</returns>
+        /// <summary>
+        ///     Colours the specified string in the specified console color.</summary>
+        /// <param name="str">
+        ///     The string to color.</param>
+        /// <param name="color">
+        ///     The color to color the string in.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
         public static ConsoleColoredString Color(this string str, ConsoleColor color)
         {
             if (str == null)
@@ -929,19 +958,27 @@ namespace RT.Util.ExtensionMethods
             return new ConsoleColoredString(str, color);
         }
 
-        /// <summary>Colours the specified character in the specified console color.</summary>
-        /// <param name="ch">The character to color.</param>
-        /// <param name="color">The color to color the character in.</param>
-        /// <returns>A potentially colorful character.</returns>
+        /// <summary>
+        ///     Colours the specified character in the specified console color.</summary>
+        /// <param name="ch">
+        ///     The character to color.</param>
+        /// <param name="color">
+        ///     The color to color the character in.</param>
+        /// <returns>
+        ///     A potentially colorful character.</returns>
         public static ConsoleColoredChar Color(this char ch, ConsoleColor color)
         {
             return new ConsoleColoredChar(ch, color);
         }
 
-        /// <summary>Returns the specified object as a colored string.</summary>
-        /// <param name="obj">The object to convert.</param>
-        /// <param name="defaultColor">The color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
-        /// <returns>A potentially colorful string.</returns>
+        /// <summary>
+        ///     Returns the specified object as a colored string.</summary>
+        /// <param name="obj">
+        ///     The object to convert.</param>
+        /// <param name="defaultColor">
+        ///     The color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
         public static ConsoleColoredString ToConsoleColoredString(this object obj, ConsoleColor defaultColor = ConsoleColor.Gray)
         {
             if (obj == null)
@@ -952,9 +989,7 @@ namespace RT.Util.ExtensionMethods
             return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultColor);
         }
 
-        /// <summary>
-        /// Reconstructs a byte array from its hexadecimal representation (“hexdump”).
-        /// </summary>
+        /// <summary>Reconstructs a byte array from its hexadecimal representation (“hexdump”).</summary>
         public static byte[] FromHex(this string input)
         {
             if (input == null || (input.Length % 2) != 0)
@@ -988,11 +1023,16 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
-        /// <summary>Inserts spaces at the beginning of every line contained within the specified string.</summary>
-        /// <param name="str">String to add indentation to.</param>
-        /// <param name="by">Number of spaces to add.</param>
-        /// <param name="indentFirstLine">If true (default), all lines are indented; otherwise, all lines except the first.</param>
-        /// <returns>The indented string.</returns>
+        /// <summary>
+        ///     Inserts spaces at the beginning of every line contained within the specified string.</summary>
+        /// <param name="str">
+        ///     String to add indentation to.</param>
+        /// <param name="by">
+        ///     Number of spaces to add.</param>
+        /// <param name="indentFirstLine">
+        ///     If true (default), all lines are indented; otherwise, all lines except the first.</param>
+        /// <returns>
+        ///     The indented string.</returns>
         public static string Indent(this string str, int by, bool indentFirstLine = true)
         {
             if (indentFirstLine)
@@ -1001,12 +1041,14 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Splits a string into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>,
-        /// but all chunks, if any, will contain at least 1 character.
-        /// </summary>
-        /// <param name="str">String to split into chunks.</param>
-        /// <param name="chunkSize">Size of each chunk. Must be greater than zero.</param>
-        /// <returns>A lazy-evaluated collection containing the chunks from the string.</returns>
+        ///     Splits a string into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>, but
+        ///     all chunks, if any, will contain at least 1 character.</summary>
+        /// <param name="str">
+        ///     String to split into chunks.</param>
+        /// <param name="chunkSize">
+        ///     Size of each chunk. Must be greater than zero.</param>
+        /// <returns>
+        ///     A lazy-evaluated collection containing the chunks from the string.</returns>
         public static IEnumerable<string> Split(this string str, int chunkSize)
         {
             if (str == null)
@@ -1023,8 +1065,9 @@ namespace RT.Util.ExtensionMethods
                 yield return str.Substring(offset, Math.Min(chunkSize, str.Length - offset));
         }
 
-        /// <summary>Returns a new string in which all occurrences of <paramref name="oldValue"/> in the current instance,
-        /// identified using the specified string comparison, are replaced with <paramref name="newValue"/>.</summary>
+        /// <summary>
+        ///     Returns a new string in which all occurrences of <paramref name="oldValue"/> in the current instance, identified
+        ///     using the specified string comparison, are replaced with <paramref name="newValue"/>.</summary>
         public static string Replace(this string str, string oldValue, string newValue, StringComparison comparison)
         {
             if (str == null)
@@ -1047,30 +1090,30 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Returns a string array that contains the substrings in this string that are delimited by elements of
-        /// a specified string array.
-        /// </summary>
-        /// <param name="str">String to be split.</param>
-        /// <param name="separator">Strings that delimit the substrings in this string.</param>
+        ///     Returns a string array that contains the substrings in this string that are delimited by elements of a specified
+        ///     string array.</summary>
+        /// <param name="str">
+        ///     String to be split.</param>
+        /// <param name="separator">
+        ///     Strings that delimit the substrings in this string.</param>
         /// <returns>
-        /// An array whose elements contain the substrings in this string that are delimited by
-        /// one or more strings in separator. For more information, see the Remarks section.
-        /// </returns>
+        ///     An array whose elements contain the substrings in this string that are delimited by one or more strings in
+        ///     separator. For more information, see the Remarks section.</returns>
         public static string[] Split(this string str, params string[] separator)
         {
             return str.Split(separator, StringSplitOptions.None);
         }
 
         /// <summary>
-        /// Returns a string array that contains the substrings in this string that are delimited by elements of
-        /// a specified string array. Empty items (zero-length strings) are filtered out.
-        /// </summary>
-        /// <param name="str">String to be split.</param>
-        /// <param name="separator">Strings that delimit the substrings in this string.</param>
+        ///     Returns a string array that contains the substrings in this string that are delimited by elements of a specified
+        ///     string array. Empty items (zero-length strings) are filtered out.</summary>
+        /// <param name="str">
+        ///     String to be split.</param>
+        /// <param name="separator">
+        ///     Strings that delimit the substrings in this string.</param>
         /// <returns>
-        /// An array whose elements contain the substrings in this string that are delimited by
-        /// one or more strings in separator. For more information, see the Remarks section.
-        /// </returns>
+        ///     An array whose elements contain the substrings in this string that are delimited by one or more strings in
+        ///     separator. For more information, see the Remarks section.</returns>
         public static string[] SplitNoEmpty(this string str, params string[] separator)
         {
             return str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
