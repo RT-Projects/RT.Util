@@ -7,19 +7,23 @@ using RT.Util.Collections;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>
-    /// Provides extension methods on various collection types or interfaces in the System.Collections.Generic namespace such as <see cref="Dictionary&lt;K,V&gt;"/> and on arrays.
-    /// </summary>
+    ///     Provides extension methods on various collection types or interfaces in the System.Collections.Generic namespace such
+    ///     as <see cref="Dictionary&lt;K,V&gt;"/> and on arrays.</summary>
     public static class CollectionExtensions
     {
         /// <summary>
-        /// Adds an element to a List&lt;V&gt; stored in the current IDictionary&lt;K, List&lt;V&gt;&gt;.
-        /// If the specified key does not exist in the current IDictionary, a new List is created.
-        /// </summary>
-        /// <typeparam name="K">Type of the key of the IDictionary.</typeparam>
-        /// <typeparam name="V">Type of the values in the Lists.</typeparam>
-        /// <param name="dic">IDictionary to operate on.</param>
-        /// <param name="key">Key at which the list is located in the IDictionary.</param>
-        /// <param name="value">Value to add to the List located at the specified Key.</param>
+        ///     Adds an element to a List&lt;V&gt; stored in the current IDictionary&lt;K, List&lt;V&gt;&gt;. If the specified key
+        ///     does not exist in the current IDictionary, a new List is created.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Key.</param>
         public static void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
         {
             if (dic == null)
@@ -32,14 +36,18 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Adds an element to a HashSet&lt;V&gt; stored in the current IDictionary&lt;K, HashSet&lt;V&gt;&gt;.
-        /// If the specified key does not exist in the current IDictionary, a new HashSet is created.
-        /// </summary>
-        /// <typeparam name="K">Type of the key of the IDictionary.</typeparam>
-        /// <typeparam name="V">Type of the values in the HashSets.</typeparam>
-        /// <param name="dic">IDictionary to operate on.</param>
-        /// <param name="key">Key at which the HashSet is located in the IDictionary.</param>
-        /// <param name="value">Value to add to the HashSet located at the specified Key.</param>
+        ///     Adds an element to a HashSet&lt;V&gt; stored in the current IDictionary&lt;K, HashSet&lt;V&gt;&gt;. If the
+        ///     specified key does not exist in the current IDictionary, a new HashSet is created.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the HashSets.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the HashSet is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the HashSet located at the specified Key.</param>
         public static bool AddSafe<K, V>(this IDictionary<K, HashSet<V>> dic, K key, V value)
         {
             if (dic == null)
@@ -52,17 +60,24 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Adds an element to a two-level Dictionary&lt;,&gt;.
-        /// If the specified key does not exist in the outer Dictionary, a new Dictionary is created.
-        /// </summary>
-        /// <typeparam name="K1">Type of the key of the outer Dictionary.</typeparam>
-        /// <typeparam name="K2">Type of the key of the inner Dictionary.</typeparam>
-        /// <typeparam name="V">Type of the values in the inner Dictionary.</typeparam>
-        /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key1">Key at which the inner Dictionary is located in the outer Dictionary.</param>
-        /// <param name="key2">Key at which the value is located in the inner Dictionary.</param>
-        /// <param name="value">Value to add to the inner Dictionary.</param>
-        /// <param name="comparer">Optional equality comparer to pass into the inner dictionary if a new one is created.</param>
+        ///     Adds an element to a two-level Dictionary&lt;,&gt;. If the specified key does not exist in the outer Dictionary, a
+        ///     new Dictionary is created.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the outer Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the inner Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the inner Dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the inner Dictionary is located in the outer Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the value is located in the inner Dictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the inner Dictionary.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer to pass into the inner dictionary if a new one is created.</param>
         public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value, IEqualityComparer<K2> comparer = null)
         {
             if (dic == null)
@@ -77,16 +92,22 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;.
-        /// If the specified key does not exist in the current Dictionary, a new List is created.
-        /// </summary>
-        /// <typeparam name="K1">Type of the key of the first-level Dictionary.</typeparam>
-        /// <typeparam name="K2">Type of the key of the second-level Dictionary.</typeparam>
-        /// <typeparam name="V">Type of the values in the Lists.</typeparam>
-        /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key1">Key at which the second-level Dictionary is located in the first-level Dictionary.</param>
-        /// <param name="key2">Key at which the list is located in the second-level Dictionary.</param>
-        /// <param name="value">Value to add to the List located at the specified Keys.</param>
+        ///     Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;. If the specified key does not exist
+        ///     in the current Dictionary, a new List is created.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the first-level Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the second-level Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the second-level Dictionary is located in the first-level Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the list is located in the second-level Dictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Keys.</param>
         public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
         {
             if (dic == null)
@@ -103,14 +124,18 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by the specified amount.
-        /// If the specified key does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.
-        /// </summary>
-        /// <typeparam name="K">Type of the key of the dictionary.</typeparam>
-        /// <param name="dic">Dictionary to operate on.</param>
-        /// <param name="key">Key at which the list is located in the dictionary.</param>
-        /// <param name="amount">The amount by which to increment the integer.</param>
-        /// <returns>The new value at the specified key.</returns>
+        ///     Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by the specified amount. If the specified key
+        ///     does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the dictionary.</param>
+        /// <param name="amount">
+        ///     The amount by which to increment the integer.</param>
+        /// <returns>
+        ///     The new value at the specified key.</returns>
         public static int IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
         {
             if (dic == null)
@@ -133,11 +158,16 @@ namespace RT.Util.ExtensionMethods
             return source.ContainsKey(key) && source[key].Contains(value);
         }
 
-        /// <summary>Brings the elements of the given list into a random order.</summary>
-        /// <typeparam name="T">Type of elements in the list.</typeparam>
-        /// <param name="list">List to shuffle.</param>
-        /// <param name="rnd">Random number generator, or null to use <see cref="Rnd"/>.</param>
-        /// <returns>The list operated on.</returns>
+        /// <summary>
+        ///     Brings the elements of the given list into a random order.</summary>
+        /// <typeparam name="T">
+        ///     Type of elements in the list.</typeparam>
+        /// <param name="list">
+        ///     List to shuffle.</param>
+        /// <param name="rnd">
+        ///     Random number generator, or null to use <see cref="Rnd"/>.</param>
+        /// <returns>
+        ///     The list operated on.</returns>
         public static IList<T> Shuffle<T>(this IList<T> list, Random rnd = null)
         {
             if (list == null)
@@ -156,9 +186,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Compares two dictionaries for equality, member-wise. Two dictionaries are equal if
-        /// they contain all the same key-value pairs.
-        /// </summary>
+        ///     Compares two dictionaries for equality, member-wise. Two dictionaries are equal if they contain all the same
+        ///     key-value pairs.</summary>
         public static bool DictionaryEqual<TK, TV>(this IDictionary<TK, TV> dictA, IDictionary<TK, TV> dictB)
             where TV : IEquatable<TV>
         {
@@ -179,20 +208,21 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Performs a binary search for the specified key on a <see cref="SortedList&lt;TK,TV&gt;"/>. When no
-        /// match exists, returns the nearest indices for interpolation/extrapolation purposes.
-        /// </summary>
+        ///     Performs a binary search for the specified key on a <see cref="SortedList&lt;TK,TV&gt;"/>. When no match exists,
+        ///     returns the nearest indices for interpolation/extrapolation purposes.</summary>
         /// <remarks>
-        /// If an exact match exists, index1 == index2 == the index of the match. If an exact match
-        /// is not found, index1 &lt; index2. If the key is less than every key in the list, index1
-        /// is int.MinValue and index2 is 0. If it's greater than every key, index1 = last item
-        /// index and index2 = int.MaxValue. Otherwise index1 and index2 are the indices of the items
-        /// that would surround the key were it present in the list.
-        /// </remarks>
-        /// <param name="list">List to operate on.</param>
-        /// <param name="key">The key to look for.</param>
-        /// <param name="index1">Receives the value of the first index (see remarks).</param>
-        /// <param name="index2">Receives the value of the second index (see remarks).</param>
+        ///     If an exact match exists, index1 == index2 == the index of the match. If an exact match is not found, index1 &lt;
+        ///     index2. If the key is less than every key in the list, index1 is int.MinValue and index2 is 0. If it's greater
+        ///     than every key, index1 = last item index and index2 = int.MaxValue. Otherwise index1 and index2 are the indices of
+        ///     the items that would surround the key were it present in the list.</remarks>
+        /// <param name="list">
+        ///     List to operate on.</param>
+        /// <param name="key">
+        ///     The key to look for.</param>
+        /// <param name="index1">
+        ///     Receives the value of the first index (see remarks).</param>
+        /// <param name="index2">
+        ///     Receives the value of the second index (see remarks).</param>
         public static void BinarySearch<TK, TV>(this SortedList<TK, TV> list, TK key, out int index1, out int index2)
         {
             if (list == null)
@@ -237,12 +267,14 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Gets a value from a dictionary by key. If the key does not exist in the dictionary,
-        /// the default value is returned instead.
-        /// </summary>
-        /// <param name="dict">Dictionary to operate on.</param>
-        /// <param name="key">Key to look up.</param>
-        /// <param name="defaultVal">Value to return if key is not contained in the dictionary.</param>
+        ///     Gets a value from a dictionary by key. If the key does not exist in the dictionary, the default value is returned
+        ///     instead.</summary>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key to look up.</param>
+        /// <param name="defaultVal">
+        ///     Value to return if key is not contained in the dictionary.</param>
         public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultVal)
         {
             if (dict == null)
@@ -257,24 +289,23 @@ namespace RT.Util.ExtensionMethods
         }
 
 
-        /// <summary>Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey, TValue&gt;</c>.</summary>
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
+        /// <summary>
+        ///     Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey,
+        ///     TValue&gt;</c>.</summary>
+        /// <param name="source">
+        ///     Source collection to convert to a dictionary.</param>
+        /// <param name="comparer">
+        ///     An optional equality comparer to compare keys.</param>
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer = null)
         {
-            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        }
-
-        /// <summary>Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey, TValue&gt;</c>.</summary>
-        /// <param name="comparer">An <c>IEqualityComparer&lt;T&gt;</c> to compare keys.</param>
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer)
-        {
-            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer);
+            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer ?? EqualityComparer<TKey>.Default);
         }
 
         /// <summary>
-        /// Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new array containing
-        /// all items from the specified <paramref name="startIndex"/> onwards.
-        /// </summary>
-        /// <remarks>Returns a new copy of the array even if <paramref name="startIndex"/> is 0.</remarks>
+        ///     Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new array containing all items from the
+        ///     specified <paramref name="startIndex"/> onwards.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if <paramref name="startIndex"/> is 0.</remarks>
         public static T[] Subarray<T>(this T[] array, int startIndex)
         {
             if (array == null)
@@ -283,11 +314,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new array containing
-        /// <paramref name="length"/> items from the specified <paramref name="startIndex"/> onwards.
-        /// </summary>
-        /// <remarks>Returns a new copy of the array even if <paramref name="startIndex"/> is 0 and
-        /// <paramref name="length"/> is the length of the input array.</remarks>
+        ///     Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new array containing <paramref
+        ///     name="length"/> items from the specified <paramref name="startIndex"/> onwards.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if <paramref name="startIndex"/> is 0 and <paramref name="length"/> is the
+        ///     length of the input array.</remarks>
         public static T[] Subarray<T>(this T[] array, int startIndex, int length)
         {
             if (array == null)
@@ -302,13 +333,17 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines whether a subarray within the current array is equal to the specified other array.
-        /// </summary>
-        /// <param name="sourceArray">First array to examine.</param>
-        /// <param name="sourceStartIndex">Start index of the subarray within the first array to compare.</param>
-        /// <param name="otherArray">Array to compare the subarray against.</param>
-        /// <param name="comparer">Optional equality comparer.</param>
-        /// <returns>True if the current array contains the specified subarray at the specified index; false otherwise.</returns>
+        ///     Determines whether a subarray within the current array is equal to the specified other array.</summary>
+        /// <param name="sourceArray">
+        ///     First array to examine.</param>
+        /// <param name="sourceStartIndex">
+        ///     Start index of the subarray within the first array to compare.</param>
+        /// <param name="otherArray">
+        ///     Array to compare the subarray against.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer.</param>
+        /// <returns>
+        ///     True if the current array contains the specified subarray at the specified index; false otherwise.</returns>
         public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, IEqualityComparer<T> comparer = null)
         {
             if (otherArray == null)
@@ -317,15 +352,21 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Determines whether the two arrays contain the same content in the specified location.
-        /// </summary>
-        /// <param name="sourceArray">First array to examine.</param>
-        /// <param name="sourceStartIndex">Start index of the subarray within the first array to compare.</param>
-        /// <param name="otherArray">Second array to examine.</param>
-        /// <param name="otherStartIndex">Start index of the subarray within the second array to compare.</param>
-        /// <param name="length">Length of the subarrays to compare.</param>
-        /// <param name="comparer">Optional equality comparer.</param>
-        /// <returns>True if the two arrays contain the same subarrays at the specified indexes; false otherwise.</returns>
+        ///     Determines whether the two arrays contain the same content in the specified location.</summary>
+        /// <param name="sourceArray">
+        ///     First array to examine.</param>
+        /// <param name="sourceStartIndex">
+        ///     Start index of the subarray within the first array to compare.</param>
+        /// <param name="otherArray">
+        ///     Second array to examine.</param>
+        /// <param name="otherStartIndex">
+        ///     Start index of the subarray within the second array to compare.</param>
+        /// <param name="length">
+        ///     Length of the subarrays to compare.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer.</param>
+        /// <returns>
+        ///     True if the two arrays contain the same subarrays at the specified indexes; false otherwise.</returns>
         public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, int otherStartIndex, int length, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
@@ -348,15 +389,22 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Searches the current array for a specified subarray and returns the index of the first occurrence, or -1 if not found.
-        /// </summary>
-        /// <param name="sourceArray">Array in which to search for the subarray.</param>
-        /// <param name="findWhat">Subarray to search for.</param>
-        /// <param name="startIndex">Index in <paramref name="sourceArray"/> at which to start searching.</param>
-        /// <param name="sourceLength">Maximum length of the source array to search starting from <paramref name="startIndex"/>.
-        /// The greatest index that can be returned is this minus the length of <paramref name="findWhat"/> plus <paramref name="startIndex"/>.</param>
-        /// <param name="comparer">Optional equality comparer.</param>
-        /// <returns>The index of the first match, or -1 if no match is found.</returns>
+        ///     Searches the current array for a specified subarray and returns the index of the first occurrence, or -1 if not
+        ///     found.</summary>
+        /// <param name="sourceArray">
+        ///     Array in which to search for the subarray.</param>
+        /// <param name="findWhat">
+        ///     Subarray to search for.</param>
+        /// <param name="startIndex">
+        ///     Index in <paramref name="sourceArray"/> at which to start searching.</param>
+        /// <param name="sourceLength">
+        ///     Maximum length of the source array to search starting from <paramref name="startIndex"/>. The greatest index that
+        ///     can be returned is this minus the length of <paramref name="findWhat"/> plus <paramref
+        ///     name="startIndex"/>.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer.</param>
+        /// <returns>
+        ///     The index of the first match, or -1 if no match is found.</returns>
         public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int? sourceLength = null, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
@@ -376,9 +424,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Creates and returns a read-only wrapper around this collection.
-        /// Note: a new wrapper is created on every call. Consider caching it.
-        /// </summary>
+        ///     Creates and returns a read-only wrapper around this collection. Note: a new wrapper is created on every call.
+        ///     Consider caching it.</summary>
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll)
         {
             if (coll == null)
@@ -387,10 +434,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Gets a read-only wrapper around this collection. If <paramref name="cache"/> is already
-        /// a wrapper for this collection returns that, otherwise creates a new wrapper, stores it
-        /// in <paramref name="cache"/>, and returns that.
-        /// </summary>
+        ///     Gets a read-only wrapper around this collection. If <paramref name="cache"/> is already a wrapper for this
+        ///     collection returns that, otherwise creates a new wrapper, stores it in <paramref name="cache"/>, and returns
+        ///     that.</summary>
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll, ref ReadOnlyCollection<T> cache)
         {
             if (coll == null)
@@ -401,9 +447,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Creates and returns a read-only wrapper around this dictionary.
-        /// Note: a new wrapper is created on every call. Consider caching it.
-        /// </summary>
+        ///     Creates and returns a read-only wrapper around this dictionary. Note: a new wrapper is created on every call.
+        ///     Consider caching it.</summary>
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict)
         {
             if (dict == null)
@@ -412,10 +457,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Gets a read-only wrapper around this dictionary. If <paramref name="cache"/> is already
-        /// a wrapper for this dictionary returns that, otherwise creates a new wrapper, stores it
-        /// in <paramref name="cache"/>, and returns that.
-        /// </summary>
+        ///     Gets a read-only wrapper around this dictionary. If <paramref name="cache"/> is already a wrapper for this
+        ///     dictionary returns that, otherwise creates a new wrapper, stores it in <paramref name="cache"/>, and returns
+        ///     that.</summary>
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict, ref ReadOnlyDictionary<TK, TV> cache)
         {
             if (dict == null)
@@ -426,9 +470,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Creates a new dictionary containing the union of the key/value pairs contained in the specified dictionaries.
-        /// Keys in <paramref name="second"/> overwrite keys in <paramref name="first"/>.
-        /// </summary>
+        ///     Creates a new dictionary containing the union of the key/value pairs contained in the specified dictionaries. Keys
+        ///     in <paramref name="second"/> overwrite keys in <paramref name="first"/>.</summary>
         public static IDictionary<TKey, TValue> CopyMerge<TKey, TValue>(this IDictionary<TKey, TValue> first, IDictionary<TKey, TValue> second)
         {
             if (first == null)
@@ -441,9 +484,7 @@ namespace RT.Util.ExtensionMethods
             return dict;
         }
 
-        /// <summary>
-        /// Generates a representation of the specified byte sequence as hexadecimal numbers (“hexdump”).
-        /// </summary>
+        /// <summary>Generates a representation of the specified byte sequence as hexadecimal numbers (“hexdump”).</summary>
         public static string ToHex(this IEnumerable<byte> data, int spacesEvery = 0)
         {
             if (data == null)
@@ -464,9 +505,7 @@ namespace RT.Util.ExtensionMethods
             return result.ToString();
         }
 
-        /// <summary>
-        /// Generates a representation of the specified byte array as hexadecimal numbers (“hexdump”).
-        /// </summary>
+        /// <summary>Generates a representation of the specified byte array as hexadecimal numbers (“hexdump”).</summary>
         public static string ToHex(this byte[] data)
         {
             if (data == null)
@@ -486,9 +525,7 @@ namespace RT.Util.ExtensionMethods
             return new string(charArr);
         }
 
-        /// <summary>
-        /// Generates a representation of the specified uint array as hexadecimal numbers (“hexdump”).
-        /// </summary>
+        /// <summary>Generates a representation of the specified uint array as hexadecimal numbers (“hexdump”).</summary>
         public static string ToHex(this uint[] data)
         {
             if (data == null)
@@ -510,43 +547,62 @@ namespace RT.Util.ExtensionMethods
             return new string(charArr);
         }
 
-        /// <summary>Removes all entries from a dictionary that satisfy a specified predicate.</summary>
-        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
-        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
-        /// <param name="dict">Dictionary to operate on.</param>
-        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        /// <summary>
+        ///     Removes all entries from a dictionary that satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">
+        ///     Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">
+        ///     Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="predicate">
+        ///     Specifies a predicate that determines which entries should be removed from the dictionary.</param>
         public static void RemoveAll<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<KeyValuePair<TKey, TVal>, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp)).ToArray())
                 dict.Remove(kvp.Key);
         }
 
-        /// <summary>Removes all entries from a dictionary whose keys satisfy a specified predicate.</summary>
-        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
-        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
-        /// <param name="dict">Dictionary to operate on.</param>
-        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        /// <summary>
+        ///     Removes all entries from a dictionary whose keys satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">
+        ///     Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">
+        ///     Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="predicate">
+        ///     Specifies a predicate that determines which entries should be removed from the dictionary.</param>
         public static void RemoveAllByKey<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<TKey, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp.Key)).ToArray())
                 dict.Remove(kvp.Key);
         }
 
-        /// <summary>Removes all entries from a dictionary whose values satisfy a specified predicate.</summary>
-        /// <typeparam name="TKey">Type of the keys in the dictionary.</typeparam>
-        /// <typeparam name="TVal">Type of the values in the dictionary.</typeparam>
-        /// <param name="dict">Dictionary to operate on.</param>
-        /// <param name="predicate">Specifies a predicate that determines which entries should be removed from the dictionary.</param>
+        /// <summary>
+        ///     Removes all entries from a dictionary whose values satisfy a specified predicate.</summary>
+        /// <typeparam name="TKey">
+        ///     Type of the keys in the dictionary.</typeparam>
+        /// <typeparam name="TVal">
+        ///     Type of the values in the dictionary.</typeparam>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="predicate">
+        ///     Specifies a predicate that determines which entries should be removed from the dictionary.</param>
         public static void RemoveAllByValue<TKey, TVal>(this IDictionary<TKey, TVal> dict, Func<TVal, bool> predicate)
         {
             foreach (var kvp in dict.Where(kvp => predicate(kvp.Value)).ToArray())
                 dict.Remove(kvp.Key);
         }
 
-        /// <summary>Enqueues several values into a <see cref="Queue&lt;T&gt;"/>.</summary>
-        /// <typeparam name="T">Type of the elements in the queue.</typeparam>
-        /// <param name="queue">Queue to insert items into.</param>
-        /// <param name="values">Values to enqueue.</param>
+        /// <summary>
+        ///     Enqueues several values into a <see cref="Queue&lt;T&gt;"/>.</summary>
+        /// <typeparam name="T">
+        ///     Type of the elements in the queue.</typeparam>
+        /// <param name="queue">
+        ///     Queue to insert items into.</param>
+        /// <param name="values">
+        ///     Values to enqueue.</param>
         public static void EnqueueRange<T>(this Queue<T> queue, IEnumerable<T> values)
         {
             foreach (var value in values)
@@ -567,7 +623,9 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Returns the sum of the values in the specified collection projected by the specified selector function, truncated to a 32-bit integer.</summary>
+        /// <summary>
+        ///     Returns the sum of the values in the specified collection projected by the specified selector function, truncated
+        ///     to a 32-bit integer.</summary>
         public static int SumUnchecked<T>(this IEnumerable<T> source, Func<T, int> selector)
         {
             if (source == null)
@@ -583,40 +641,57 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Projects each element of a sequence into a new form.</summary>
-        /// <typeparam name="TInput">The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TResult">The type of the value returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="source">A list of values to invoke the transform function on.</param>
-        /// <param name="selector">A transform function to apply to each element.</param>
-        /// <returns>A collection whose elements are the result of invoking the transform function on each element of <paramref name="source"/>.</returns>
-        /// <remarks>This method replaces <c>IEnumerable{T}.Select{TSource, TResult}(IEnumerable{TSource},Func{TSource,int,TResult})</c>
-        /// for the case where the input is an <c>IList&lt;T&gt;</c> with an implementation that makes a subsequent
-        /// <c>ToArray()</c> or <c>ToList()</c> run 15% faster.</remarks>
+        /// <summary>
+        ///     Projects each element of a sequence into a new form.</summary>
+        /// <typeparam name="TInput">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="source">
+        ///     A list of values to invoke the transform function on.</param>
+        /// <param name="selector">
+        ///     A transform function to apply to each element.</param>
+        /// <returns>
+        ///     A collection whose elements are the result of invoking the transform function on each element of <paramref
+        ///     name="source"/>.</returns>
+        /// <remarks>
+        ///     This method replaces <c>IEnumerable{T}.Select{TSource,
+        ///     TResult}(IEnumerable{TSource},Func{TSource,int,TResult})</c> for the case where the input is an
+        ///     <c>IList&lt;T&gt;</c> with an implementation that makes a subsequent <c>ToArray()</c> or <c>ToList()</c> run 15%
+        ///     faster.</remarks>
         public static ListSelectIterator<TInput, TResult> Select<TInput, TResult>(this IList<TInput> source, Func<TInput, TResult> selector)
         {
             return new ListSelectIterator<TInput, TResult>(source, selector);
         }
     }
 
-    /// <summary>Provides the implementation for <see cref="CollectionExtensions.Select{TInput,TResult}"/>.</summary>
-    /// <typeparam name="TInput">The type of the elements of the original collection.</typeparam>
-    /// <typeparam name="TResult">The type of the value returned by the selector function.</typeparam>
+    /// <summary>
+    ///     Provides the implementation for <see cref="CollectionExtensions.Select{TInput,TResult}"/>.</summary>
+    /// <typeparam name="TInput">
+    ///     The type of the elements of the original collection.</typeparam>
+    /// <typeparam name="TResult">
+    ///     The type of the value returned by the selector function.</typeparam>
     public sealed class ListSelectIterator<TInput, TResult> : IEnumerable<TResult>
     {
         private IList<TInput> _source;
         private Func<TInput, TResult> _selector;
 
-        /// <summary>Constructor.</summary>
-        /// <param name="source">A list of values to invoke the transform function on.</param>
-        /// <param name="selector">A transform function to apply to each element.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="source">
+        ///     A list of values to invoke the transform function on.</param>
+        /// <param name="selector">
+        ///     A transform function to apply to each element.</param>
         public ListSelectIterator(IList<TInput> source, Func<TInput, TResult> selector) { _source = source; _selector = selector; }
 
         /// <summary>Returns an enumerator to iterate over the collection.</summary>
         public IEnumerator<TResult> GetEnumerator() { return Enumerable.Select(_source, _selector).GetEnumerator(); }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
-        /// <summary>Creates an array from a projected list.</summary>
-        /// <remarks>This implementation fulfills the same function as <c>Enumerable.ToArray()</c>, but is 15% faster.</remarks>
+        /// <summary>
+        ///     Creates an array from a projected list.</summary>
+        /// <remarks>
+        ///     This implementation fulfills the same function as <c>Enumerable.ToArray()</c>, but is 15% faster.</remarks>
         public TResult[] ToArray()
         {
             var len = _source.Count;
@@ -626,8 +701,10 @@ namespace RT.Util.ExtensionMethods
             return arr;
         }
 
-        /// <summary>Creates a new list from a projected list.</summary>
-        /// <remarks>This implementation fulfills the same function as <c>Enumerable.ToList()</c>, but is 15% faster.</remarks>
+        /// <summary>
+        ///     Creates a new list from a projected list.</summary>
+        /// <remarks>
+        ///     This implementation fulfills the same function as <c>Enumerable.ToList()</c>, but is 15% faster.</remarks>
         public List<TResult> ToList()
         {
             var len = _source.Count;
@@ -637,13 +714,20 @@ namespace RT.Util.ExtensionMethods
             return list;
         }
 
-        /// <summary>Projects each element of a sequence into a new form.</summary>
-        /// <typeparam name="TNewResult">The type of the value returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="selector">A transform function to apply to each element.</param>
-        /// <returns>A collection whose elements are the result of invoking the transform function on each element of the current projected list.</returns>
-        /// <remarks>This method replaces <c>IEnumerable{T}.Select{TSource, TResult}(IEnumerable{TSource},Func{TSource,int,TResult})</c>
-        /// for the case where the input is a <c>ListSelectIterator&lt;TInput, TResult&gt;</c> with an implementation that makes a subsequent
-        /// <c>ToArray()</c> or <c>ToList()</c> run 15% faster.</remarks>
+        /// <summary>
+        ///     Projects each element of a sequence into a new form.</summary>
+        /// <typeparam name="TNewResult">
+        ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="selector">
+        ///     A transform function to apply to each element.</param>
+        /// <returns>
+        ///     A collection whose elements are the result of invoking the transform function on each element of the current
+        ///     projected list.</returns>
+        /// <remarks>
+        ///     This method replaces <c>IEnumerable{T}.Select{TSource,
+        ///     TResult}(IEnumerable{TSource},Func{TSource,int,TResult})</c> for the case where the input is a
+        ///     <c>ListSelectIterator&lt;TInput, TResult&gt;</c> with an implementation that makes a subsequent <c>ToArray()</c>
+        ///     or <c>ToList()</c> run 15% faster.</remarks>
         public ListSelectIterator<TInput, TNewResult> Select<TNewResult>(Func<TResult, TNewResult> selector)
         {
             return new ListSelectIterator<TInput, TNewResult>(_source, input => selector(_selector(input)));
