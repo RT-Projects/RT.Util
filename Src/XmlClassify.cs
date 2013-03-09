@@ -9,18 +9,15 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
-/*
- * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
- * Can the Follow attribute be implemented separately using XmlClassifyOptions?
- * Built-in versioning support using attribute like ver="1", an IXmlClassifyVersioned { Version { get } }, and passing it to IXmlClassifyProcess[Xml]
- */
-
 namespace RT.Util.Xml
 {
     /// <summary>
-    ///     Provides static methods to save objects of (almost) arbitrary classes into XML files and load them again. See the
-    ///     remarks section for features and limitations.</summary>
+    ///     This class is obsolete. Use <see cref="RT.Util.Serialization.Classify"/> instead. — Provides static methods to save
+    ///     objects of (almost) arbitrary classes into XML files and load them again. See the remarks section for features and
+    ///     limitations.</summary>
     /// <remarks>
+    ///     <para>
+    ///         This class is obsolete. New code should use <see cref="RT.Util.Serialization.Classify"/> instead.</para>
     ///     <para>
     ///         By default, XmlClassify persists the value of all instance fields, including private, inherited and
     ///         compiler-generated ones. It does not persist static members or the result of property getters. Each field is
@@ -948,37 +945,49 @@ namespace RT.Util.Xml
         ///     by <see cref="XmlClassify"/> and should not be called directly.</summary>
         void BeforeXmlClassify();
 
-        /// <summary>Post-processes this object after <see cref="XmlClassify"/> has restored it from XML.
-        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        /// <summary>
+        ///     Post-processes this object after <see cref="XmlClassify"/> has restored it from XML. This method is automatically
+        ///     invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
         void AfterXmlDeclassify();
     }
 
     /// <summary>
-    /// Contains methods to process an object and/or the associated XML before or after <see cref="XmlClassify"/> (de)serializes it.
-    /// To have effect, this interface must be implemented by the object being serialised.
-    /// </summary>
+    ///     Contains methods to process an object and/or the associated XML before or after <see cref="XmlClassify"/>
+    ///     (de)serializes it. To have effect, this interface must be implemented by the object being serialised.</summary>
     public interface IXmlClassifyProcess2
     {
-        /// <summary>Pre-processes this object before <see cref="XmlClassify"/> turns it into XML.
-        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
-        /// <param name="xml">The (initially empty) XML element which will be populated once this class returns. Any changes made to it by the
-        /// method may be either trampled upon the method's return, or conflict with <see cref="XmlClassify"/> changes and cause it to throw an exception.</param>
+        /// <summary>
+        ///     Pre-processes this object before <see cref="XmlClassify"/> turns it into XML. This method is automatically invoked
+        ///     by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        /// <param name="xml">
+        ///     The (initially empty) XML element which will be populated once this class returns. Any changes made to it by the
+        ///     method may be either trampled upon the method's return, or conflict with <see cref="XmlClassify"/> changes and
+        ///     cause it to throw an exception.</param>
         void BeforeXmlClassify(XElement xml);
 
-        /// <summary>Post-processes the XML produced by <see cref="XmlClassify"/> for this object.
-        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
-        /// <param name="xml">The XML element produced for this object. All changes made to it are final and will appear in <see cref="XmlClassify"/>'s output.</param>
+        /// <summary>
+        ///     Post-processes the XML produced by <see cref="XmlClassify"/> for this object. This method is automatically invoked
+        ///     by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        /// <param name="xml">
+        ///     The XML element produced for this object. All changes made to it are final and will appear in <see
+        ///     cref="XmlClassify"/>'s output.</param>
         void AfterXmlClassify(XElement xml);
 
-        /// <summary>Pre-processes this object's XML before <see cref="XmlClassify"/> has restored it from XML.
-        /// The object's fields have not yet been populated when this method is called.
-        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
-        /// <param name="xml">The XML element from which this object is about to be restored. All changes made to it will affect how the object is restored from XML.</param>
+        /// <summary>
+        ///     Pre-processes this object's XML before <see cref="XmlClassify"/> has restored it from XML. The object's fields
+        ///     have not yet been populated when this method is called. This method is automatically invoked by <see
+        ///     cref="XmlClassify"/> and should not be called directly.</summary>
+        /// <param name="xml">
+        ///     The XML element from which this object is about to be restored. All changes made to it will affect how the object
+        ///     is restored from XML.</param>
         void BeforeXmlDeclassify(XElement xml);
 
-        /// <summary>Post-processes this object after <see cref="XmlClassify"/> has restored it from XML.
-        /// This method is automatically invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
-        /// <param name="xml">The XML element from which this object was restored. Changes made to this XML will have no effect as the XML is discarded afterwards.</param>
+        /// <summary>
+        ///     Post-processes this object after <see cref="XmlClassify"/> has restored it from XML. This method is automatically
+        ///     invoked by <see cref="XmlClassify"/> and should not be called directly.</summary>
+        /// <param name="xml">
+        ///     The XML element from which this object was restored. Changes made to this XML will have no effect as the XML is
+        ///     discarded afterwards.</param>
         void AfterXmlDeclassify(XElement xml);
     }
 
