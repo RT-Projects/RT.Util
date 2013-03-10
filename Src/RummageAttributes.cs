@@ -18,13 +18,15 @@ namespace RT.Util
     {
     }
 
-    /// <summary>Instructs Rummage to keep the original name of a specific element. </summary>
+    /// <summary>Instructs Rummage to keep the original name of a specific element.</summary>
     [AttributeUsage(AttributeTargetSets.DefinitionsWithNames, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoRenameAttribute : Attribute
     {
     }
 
-    /// <summary>Instructs Rummage to keep the original name of a specific type, all of its members, and all the members in all of its nested types.</summary>
+    /// <summary>
+    ///     Instructs Rummage to keep the original name of a specific type, all of its members, and all the members in all of its
+    ///     nested types.</summary>
     [AttributeUsage(AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoRenameAnythingAttribute : Attribute
     {
@@ -42,7 +44,10 @@ namespace RT.Util
     {
     }
 
-    /// <summary>Instructs Rummage not to inline a specific method or property that would otherwise be automatically inlined. This attribute takes precedence over <see cref="RummageInlineAttribute"/> if both are specified on the same method or property.</summary>
+    /// <summary>
+    ///     Instructs Rummage not to inline a specific method or property that would otherwise be automatically inlined. This
+    ///     attribute takes precedence over <see cref="RummageInlineAttribute"/> if both are specified on the same method or
+    ///     property.</summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoInlineAttribute : Attribute
     {
@@ -68,9 +73,29 @@ namespace RT.Util
     {
     }
 
-    /// <summary>Use only on custom-attribute class declarations. Instructs Rummage to keep everything reflection-safe that uses the given custom attribute.</summary>
+    /// <summary>
+    ///     Use only on custom-attribute class declarations. Instructs Rummage to keep everything reflection-safe that uses the
+    ///     given custom attribute.</summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class RummageKeepUsersReflectionSafeAttribute : Attribute
     {
+    }
+
+    /// <summary>
+    ///     Use on a method or constructor parameter of type "Type". Instructs Rummage that this method uses the Type passed in in
+    ///     a way that is fully compatible with all obfuscations, including removing members not directly referenced, renaming
+    ///     members, unnesting types and so on.</summary>
+    [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageTypeUseIsSafeAttribute : Attribute
+    {
+    }
+
+    /// <summary>Contains methods used to augment the program with Rummage-related information.</summary>
+    public static class Rummage
+    {
+        /// <summary>
+        ///     Returns the type passed in. Use around a <c>typeof(SomeType)</c> to override Rummage's reflection safety analysis
+        ///     and make Rummage believe that this particular use is entirely safe.</summary>
+        public static Type Safe([RummageTypeUseIsSafe] Type type) { return type; }
     }
 }
