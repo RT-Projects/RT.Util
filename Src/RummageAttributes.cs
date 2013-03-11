@@ -85,8 +85,8 @@ namespace RT.Util
     ///     Use on a method or constructor parameter of type "Type". Instructs Rummage that this method uses the Type passed in in
     ///     a way that is fully compatible with all obfuscations, including removing members not directly referenced, renaming
     ///     members, unnesting types and so on.</summary>
-    [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
-    public sealed class RummageTypeUseIsSafeAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.GenericParameter, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageAssumeTypeSafeAttribute : Attribute
     {
     }
 
@@ -96,6 +96,6 @@ namespace RT.Util
         /// <summary>
         ///     Returns the type passed in. Use around a <c>typeof(SomeType)</c> to override Rummage's reflection safety analysis
         ///     and make Rummage believe that this particular use is entirely safe.</summary>
-        public static Type Safe([RummageTypeUseIsSafe] Type type) { return type; }
+        public static Type Safe([RummageAssumeTypeSafe] Type type) { return type; }
     }
 }
