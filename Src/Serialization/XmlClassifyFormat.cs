@@ -65,11 +65,10 @@ namespace RT.Util.Serialization
                 return element.Elements().FirstOrDefault();
             }
 
-            bool IClassifyFormat<XElement>.GetKeyValuePair(XElement element, out XElement key, out XElement value)
+            void IClassifyFormat<XElement>.GetKeyValuePair(XElement element, out XElement key, out XElement value)
             {
                 key = element.Element("key");
                 value = element.Element("value");
-                return key != null && value != null;
             }
 
             IEnumerable<KeyValuePair<object, XElement>> IClassifyFormat<XElement>.GetDictionary(XElement element)
@@ -213,11 +212,6 @@ namespace RT.Util.Serialization
             XElement IClassifyFormat<XElement>.FormatFollowID(string name, string id)
             {
                 return new XElement(name, new XAttribute("id", id));
-            }
-
-            bool IClassifyFormat<XElement>.IsEmpty(XElement element)
-            {
-                return !element.HasAttributes && !element.HasElements && element.FirstNode == null;
             }
         }
     }

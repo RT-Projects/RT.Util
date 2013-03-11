@@ -56,11 +56,10 @@ namespace RT.Util.Serialization
                 return element.GetList();
             }
 
-            bool IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element, out JsonValue key, out JsonValue value)
+            void IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element, out JsonValue key, out JsonValue value)
             {
                 key = element[0];
                 value = element[1];
-                return true;
             }
 
             IEnumerable<KeyValuePair<object, JsonValue>> IClassifyFormat<JsonValue>.GetDictionary(JsonValue element)
@@ -110,11 +109,6 @@ namespace RT.Util.Serialization
                     element.ContainsKey(":ref") ? element[":ref"].GetString() :
                     element.ContainsKey(":refid") ? element[":refid"].GetString() :
                     element.ContainsKey(":id") ? element[":id"].GetString() : null;
-            }
-
-            bool IClassifyFormat<JsonValue>.IsEmpty(JsonValue element)
-            {
-                return (element.IsContainer && element.Count == 0);
             }
 
             JsonValue IClassifyFormat<JsonValue>.FormatNullValue(string name)

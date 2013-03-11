@@ -440,40 +440,24 @@ namespace RT.Util.Serialization
                     // It’s a Tuple or KeyValuePair
                     var genericArguments = type.GetGenericArguments();
                     var tupleParams = new Func<object>[genericArguments.Length];
-                    bool valid;
                     if (genericDefinition == typeof(KeyValuePair<,>))
                     {
                         TElement key, value;
-                        valid = _format.GetKeyValuePair(elem, out key, out value);
-                        if (valid)
-                        {
-                            tupleParams[0] = declassify(genericArguments[0], key, null, parentNode);
-                            tupleParams[1] = declassify(genericArguments[1], value, null, parentNode);
-                        }
+                        _format.GetKeyValuePair(elem, out key, out value);
+                        tupleParams[0] = declassify(genericArguments[0], key, null, parentNode);
+                        tupleParams[1] = declassify(genericArguments[1], value, null, parentNode);
                     }
                     else
                     {
-                        var valuesRaw = _format.GetList(elem, genericArguments.Length);
-                        valid = valuesRaw != null;
-                        if (valid)
-                        {
-                            var values = valuesRaw.ToArray();
-                            for (int i = 0; i < genericArguments.Length; i++)
-                                if (i < values.Length && values[i] != null)
-                                    tupleParams[i] = declassify(genericArguments[i], values[i], null, parentNode);
-                        }
+                        var values = _format.GetList(elem, genericArguments.Length).ToArray();
+                        for (int i = 0; i < genericArguments.Length; i++)
+                            if (i < values.Length && values[i] != null)
+                                tupleParams[i] = declassify(genericArguments[i], values[i], null, parentNode);
                     }
-                    if (valid)
-                    {
-                        var constructor = type.GetConstructor(genericArguments);
-                        if (constructor == null)
-                            throw new InvalidOperationException("Could not find expected Tuple constructor.");
-                        result = () => constructor.Invoke(tupleParams.Select(act => act()).ToArray());
-                    }
-                    else
-                    {
-                        result = () => null;
-                    }
+                    var constructor = type.GetConstructor(genericArguments);
+                    if (constructor == null)
+                        throw new InvalidOperationException("Could not find expected Tuple constructor.");
+                    result = () => constructor.Invoke(tupleParams.Select(act => act()).ToArray());
                 }
                 else
                 {
