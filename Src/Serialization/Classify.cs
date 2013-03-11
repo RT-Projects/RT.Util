@@ -7,126 +7,149 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 
+/*
+ * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
+ * Can the Follow attribute be implemented separately using ClassifyOptions?
+ * Built-in versioning support (e.g. in XML, using attribute like ver="1"), an IClassifyVersioned { Version { get } }, and passing it to IClassify[Object/Type]Processor<TElement>
+ */
+
 namespace RT.Util.Serialization
 {
     /// <summary>
-    ///     This class is obsolete. Use <see cref="RT.Util.Serialization.Classify"/> instead. — Provides static methods to save
-    ///     objects of (almost) arbitrary classes into XML files and load them again. See the remarks section for features and
-    ///     limitations.</summary>
+    ///     Provides static methods to represent objects of (almost) arbitrary classes in various formats (such as XML or JSON)
+    ///     and to restore such objects again. See the remarks section for features and limitations.</summary>
     /// <remarks>
     ///     <para>
-    ///         This class is obsolete. New code should use <see cref="RT.Util.Serialization.Classify"/> instead.</para>
-    ///     <para>
-    ///         By default, XmlClassify persists the value of all instance fields, including private, inherited and
-    ///         compiler-generated ones. It does not persist static members or the result of property getters. Each field is
-    ///         persisted in an XML tag whose name is the field’s name minus any leading underscores. Compiler-generated fields
-    ///         for automatically-implemented properties are instead persisted in an XML tag whose name is the
+    ///         By default, when serializing a custom class, Classify persists the value of all instance fields, including
+    ///         private, inherited and compiler-generated ones. It does not persist static members or the result of property
+    ///         getters. Each field is persisted under a name that is the field’s name minus any leading underscores.
+    ///         Compiler-generated fields for automatically-implemented properties are instead named after the
     ///         automatically-implemented property’s name minus any leading underscores.</para>
+    ///     <para>
+    ///         Classify can also generate representations of basic types such as <c>string</c>, <c>int</c>, <c>bool</c>,
+    ///         etc.</para>
     ///     <para>
     ///         Features:</para>
     ///     <list type="bullet">
     ///         <item><description>
-    ///             XmlClassify fully supports all the built-in types which are keywords in C# except ‘object’ and ‘dynamic’. It
-    ///             also supports DateTime.</description></item>
+    ///             Classify fully supports all the built-in types which are keywords in C# except <c>object</c> and
+    ///             <c>dynamic</c>. It also supports <c>DateTime</c> and all enum types.</description></item>
     ///         <item><description>
-    ///             XmlClassify fully supports classes and structs that contain only fields of the above types as well as fields
+    ///             Classify fully supports classes and structs that contain only fields of the above types as well as fields
     ///             whose type is itself such a class or struct.</description></item>
     ///         <item><description>
-    ///             XmlClassify has special handling for classes that implement IDictionary&lt;K, V&gt;, where V must be a type
-    ///             also supported by XmlClassify. K must be string, an integer type, or an enum type. If the field is of a
-    ///             concrete type, that type is maintained. If the field is of the interface type IDictionary&lt;K, V&gt; itself,
-    ///             the type Dictionary&lt;K, V&gt; is used to reconstruct the object.</description></item>
+    ///             Classify has special handling for classes that implement <c>IDictionary&lt;TKey, TValue&gt;</c>, where
+    ///             <c>TValue</c> must be a type also supported by Classify. <c>TKey</c> must be <c>string</c>, an integer type or
+    ///             an enum type. If the field is of a concrete type, that type is maintained, but its extra fields are not
+    ///             persisted. If the field is of the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself, the type
+    ///             <c>Dictionary&lt;TKey, TValue&gt;</c> is used to reconstruct the object.</description></item>
     ///         <item><description>
-    ///             XmlClassify has special handling for classes that implement ICollection&lt;T&gt;, where T must be a type also
-    ///             supported by XmlClassify. If the field is of a concrete type, that type is maintained. If the field is of the
-    ///             interface type ICollection&lt;T&gt; itself, the type List&lt;T&gt; is used to reconstruct the object. If the
-    ///             type also implements IDictionary&lt;K, V&gt;, the special handling for that takes
+    ///             Classify has special handling for classes that implement <c>ICollection&lt;T&gt;</c>, where <c>T</c> must be a
+    ///             type also supported by Classify. If the field is of a concrete type, that type is maintained, but its extra
+    ///             fields are not persisted. If the field is of the interface type <c>ICollection&lt;T&gt;</c> or
+    ///             <c>IList&lt;T&gt;</c> itself, the type <c>List&lt;T&gt;</c> is used to reconstruct the object. If the type
+    ///             also implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes
     ///             precedence.</description></item>
     ///         <item><description>
-    ///             XmlClassify handles the <see cref="XElement"/> type by persisting the XML directly.</description></item>
+    ///             Classify also supports <see cref="KeyValuePair{TKey,TValue}"/> and all the different
+    ///             <c>System.Tuple&lt;...&gt;</c> types.</description></item>
     ///         <item><description>
-    ///             XmlClassify also supports <see cref="KeyValuePair{TKey,TValue}"/> and all the different Tuple
-    ///             types.</description></item>
+    ///             Classify handles the element type specially. For example, if you are classifying to XML, classifying an <see
+    ///             cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you are classifying to JSON, the same
+    ///             goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
     ///         <item><description>
-    ///             For classes that don’t implement any of the above-mentioned interfaces, XmlClassify supports polymorphism. The
-    ///             actual type of an instance is persisted if it is different from the declared type.</description></item>
+    ///             For classes that don’t implement any of the above-mentioned collection interfaces, Classify supports
+    ///             polymorphism. The actual type of an instance is persisted if it is different from the declared
+    ///             type.</description></item>
     ///         <item><description>
-    ///             XmlClassify supports auto-implemented properties. The XML tag’s name is the name of the property rather than
-    ///             the hidden auto-generated field, although the field’s value is persisted. All other properties are
+    ///             Classify supports auto-implemented properties. It uses the name of the property rather than the hidden
+    ///             auto-generated field, although the field’s value is persisted. All other properties are
     ///             ignored.</description></item>
     ///         <item><description>
-    ///             XmlClassify ignores the order of XML tags (except when handling collections and dictionaries). It uses tag
-    ///             names to identify which tag belongs to which field.</description></item>
+    ///             Classify ignores the order of input elements (except when handling collections and dictionaries). For example,
+    ///             XML tags or JSON dictionary keys are mapped to fields by their names; their order is considered
+    ///             immaterial.</description></item>
     ///         <item><description>
-    ///             XmlClassify silently discards unrecognised XML tags instead of throwing errors. This is by design because it
-    ///             enables the programmer to remove a field from a class without invalidating previously-saved XML
-    ///             files.</description></item>
+    ///             Classify silently discards unrecognized XML tags/JSON dictionary keys instead of throwing errors. This is by
+    ///             design because it enables the programmer to remove a field from a class without invalidating objects
+    ///             previously persisted.</description></item>
     ///         <item><description>
-    ///             XmlClassify silently ignores missing XML tags. A field whose XML tag is missing retains the value assigned to
-    ///             it by the parameterless constructor. This is by design because it enables the programmer to add a new field to
-    ///             a class (and to specify a default initialisation value for it) without invalidating previously-saved XML
-    ///             files.</description></item>
+    ///             Classify silently ignores missing elements. A field whose element is missing retains the value assigned to it
+    ///             by the parameterless constructor. This is by design because it enables the programmer to add a new field to a
+    ///             class (and to specify a default initialization value for it) without invalidating objects previously
+    ///             persisted.</description></item>
     ///         <item><description>
-    ///             The following custom attributes can be used to alter XmlClassify’s behaviour. See the custom attribute class’s
-    ///             documentation for more information: <see cref="XmlFollowIdAttribute"/>, <see cref="XmlIdAttribute"/>, <see
-    ///             cref="XmlIgnoreAttribute"/>, <see cref="XmlIgnoreIfAttribute"/>, <see cref="XmlIgnoreIfDefaultAttribute"/>,
-    ///             <see cref="XmlIgnoreIfEmptyAttribute"/>, <see cref="XmlParentAttribute"/>. Any attribute that can be used on a
-    ///             field, can equally well be used on an auto-implemented property, but not on any other
-    ///             properties.</description></item>
+    ///             The following custom attributes can be used to alter Classify’s behavior. See the custom attribute class’s
+    ///             documentation for more information: <see cref="ClassifyFollowIdAttribute"/>, <see
+    ///             cref="ClassifyIdAttribute"/>, <see cref="ClassifyIgnoreAttribute"/>, <see cref="ClassifyIgnoreIfAttribute"/>,
+    ///             <see cref="ClassifyIgnoreIfDefaultAttribute"/>, <see cref="ClassifyIgnoreIfEmptyAttribute"/>, <see
+    ///             cref="ClassifyParentAttribute"/>. Any attribute that can be used on a field, can equally well be used on an
+    ///             auto-implemented property, but not on any other properties.</description></item>
     ///         <item><description>
-    ///             XmlClassify maintains object identity and correctly handles cycles in the object graph (by using XML
-    ///             attributes to refer to earlier tags).</description></item>
+    ///             Classify maintains object identity and correctly handles cycles in the object graph. Only <c>string</c>s are
+    ///             exempt from this.</description></item>
     ///         <item><description>
-    ///             XmlClassify can make use of type substitutions. See <see cref="IXmlClassifySubstitute{TTrue,TSubstitute}"/>
-    ///             for more information.</description></item>
+    ///             Classify can make use of type substitutions. See <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> for more
+    ///             information.</description></item>
     ///         <item><description>
-    ///             XmlClassify allows you to pre-/post-process the objects serialised by it. See <see
-    ///             cref="IXmlClassifyProcess"/> for more information.</description></item>
-    ///         <item><description>
-    ///             XmlClassify allows you to pre-/post-process the XML generated by it. See <see cref="IXmlClassifyProcessXml"/>
-    ///             for more information.</description></item></list>
+    ///             Classify allows you to pre-/post-process the serialized form and/or the serialized objects. See <see
+    ///             cref="IClassifyObjectProcessor{TElement}"/> and <see cref="IClassifyTypeProcessor{TElement}"/> for more
+    ///             information.</description></item></list>
     ///     <para>
     ///         Limitations:</para>
     ///     <list type="bullet">
     ///         <item><description>
-    ///             XmlClassify requires that every type involved have a parameterless constructor, although it need not be
-    ///             public. This parameterless constructor is executed with all its side-effects before each object is
-    ///             reconstructed.</description></item>
+    ///             Classify requires that every type involved have a parameterless constructor, although it need not be public.
+    ///             This parameterless constructor is executed with all its side-effects before each object is reconstructed. An
+    ///             exception is made when a field in an object already has a non-null instance assigned to it by the constructor;
+    ///             in such cases, the object is reused.</description></item>
     ///         <item><description>
-    ///             If a field is of type ICollection&lt;T&gt;, IList&lt;T&gt;, IDictionary&lt;K, V&gt;, or any class that
-    ///             implements either of these, polymorphism is not supported, and nor is any information stored in those classes.
-    ///             In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A
-    ///             comparer assigned by the class’s parameterless constructor is also not
-    ///             used.</description></item></list></remarks>
+    ///             If a field is of type <c>ICollection&lt;T&gt;</c>, <c>IList&lt;T&gt;</c>, <c>IDictionary&lt;TKey,
+    ///             TValue&gt;</c>, or any class that implements either of these, polymorphism is not supported, and nor is any
+    ///             information stored in those classes. In particular, this means that the comparer used by a
+    ///             <c>SortedDictionary&lt;TKey, TValue&gt;</c> is not persisted. However, if the containing class’s constructor
+    ///             assigned a <c>SortedDictionary&lt;TKey, TValue&gt;</c> with a comparer, that instance, and hence its comparer,
+    ///             is reused.</description></item></list></remarks>
     public static class Classify
     {
         /// <summary>
         ///     Options used when null is passed to methods that take options. Make sure not to modify this instance if any thread
-        ///     in the application might be in the middle of using <see cref="XmlClassify"/>; ideally the options shoud be set
-        ///     once during startup and never changed after that.</summary>
+        ///     in the application might be in the middle of using <see cref="Classify"/>; ideally the options shoud be set once
+        ///     during startup and never changed after that.</summary>
         public static ClassifyOptions DefaultOptions = new ClassifyOptions();
 
         /// <summary>
-        ///     Reads an object of the specified type from the specified XML file.</summary>
+        ///     Reads an object of the specified type from the specified file.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of object to read.</typeparam>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
-        ///     Path and filename of the XML file to read from.</param>
+        ///     Path and filename of the file to read from.</param>
         /// <param name="options">
         ///     Options.</param>
+        /// <param name="parent">
+        ///     If the class to be declassified has a field with the [XmlParent] attribute, that field will receive this
+        ///     object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T LoadObjectFromFile<TElement, T>(IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null)
+        public static T LoadObjectFromFile<TElement, T>(IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
         {
-            return (T) LoadObjectFromFile<TElement>(typeof(T), format, filename, options);
+            return (T) LoadObjectFromFile<TElement>(typeof(T), format, filename, options, parent);
         }
 
         /// <summary>
-        ///     Reads an object of the specified type from the specified XML file.</summary>
+        ///     Reads an object of the specified type from the specified file.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="type">
         ///     Type of object to read.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
-        ///     Path and filename of the XML file to read from.</param>
+        ///     Path and filename of the file to read from.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <param name="parent">
@@ -144,11 +167,15 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object of the specified type from the specified XML tree.</summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of object to reconstruct.</typeparam>
         /// <param name="elem">
-        ///     XML tree to reconstruct object from.</param>
+        ///     Serialized form to reconstruct object from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -159,11 +186,15 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object of the specified type from the specified XML tree.</summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="type">
         ///     Type of object to reconstruct.</param>
         /// <param name="elem">
-        ///     XML tree to reconstruct object from.</param>
+        ///     Serialized form to reconstruct object from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -174,13 +205,16 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object of the specified type from the specified XML tree by applying the values to an existing
-        ///     instance of the type. Any objects contained within the object are instantiated anew; only the top-level object
-        ///     passed in is re-used.</summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form by applying the values to an
+        ///     existing instance of the type.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of object to reconstruct.</typeparam>
-        /// <param name="xml">
-        ///     XML tree to reconstruct object from.</param>
+        /// <param name="element">
+        ///     Serialized form to reconstruct object from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="intoObject">
         ///     Object to assign values to in order to reconstruct the original object.</param>
         /// <param name="options">
@@ -191,14 +225,17 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object from the specified XML file by applying the values to an existing instance of the desired
-        ///     type. Any objects contained within the object are instantiated anew; only the top-level object passed in is
-        ///     re-used. The type of object is inferred from the object passed in.</summary>
+        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
+        ///     The type of object is inferred from the object passed in.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="filename">
-        ///     Path and filename of the XML file to read from.</param>
+        ///     Path and filename of the file to read from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="intoObject">
         ///     Object to assign values to in order to reconstruct the original object. Also determines the type of object
-        ///     expected from the XML.</param>
+        ///     expected.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void ReadFileIntoObject<TElement>(string filename, IClassifyFormat<TElement> format, object intoObject, ClassifyOptions options = null)
@@ -210,13 +247,17 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Stores the specified object in an XML file with the given path and filename.</summary>
+        ///     Stores the specified object in a file with the given path and filename.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of the object to store.</typeparam>
         /// <param name="saveObject">
-        ///     Object to store in an XML file.</param>
+        ///     Object to store in a file.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
-        ///     Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
+        ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void SaveObjectToFile<TElement, T>(T saveObject, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null)
@@ -225,13 +266,17 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Stores the specified object in an XML file with the given path and filename.</summary>
+        ///     Stores the specified object in a file with the given path and filename.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="saveObject">
-        ///     Object to store in an XML file.</param>
+        ///     Object to store in a file.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="saveType">
         ///     Type of the object to store.</param>
         /// <param name="filename">
-        ///     Path and filename of the XML file to be created. If the file already exists, it is overwritten.</param>
+        ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void SaveObjectToFile<TElement>(object saveObject, IClassifyFormat<TElement> format, Type saveType, string filename, ClassifyOptions options = null)
@@ -244,30 +289,38 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Converts the specified object into an XML tree.</summary>
+        ///     Converts the specified object into a serialized form.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of object to convert.</typeparam>
         /// <param name="saveObject">
-        ///     Object to convert to an XML tree.</param>
+        ///     Object to be serialized.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
-        ///     XML tree generated from the object.</returns>
+        ///     The serialized form generated from the object.</returns>
         public static TElement ObjectToElement<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return new classifier<TElement>(format, options).Classify(saveObject, typeof(T))();
         }
 
         /// <summary>
-        ///     Converts the specified object into an XML tree.</summary>
+        ///     Converts the specified object into a serialized form.</summary>
+        /// <typeparam name="TElement">
+        ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="saveType">
         ///     Type of object to convert.</param>
         /// <param name="saveObject">
-        ///     Object to convert to an XML tree.</param>
+        ///     Object to be serialized.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
-        ///     XML tree generated from the object.</returns>
+        ///     The serialized form generated from the object.</returns>
         public static TElement ObjectToElement<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return new classifier<TElement>(format, options).Classify(saveObject, saveType)();
@@ -903,9 +956,9 @@ namespace RT.Util.Serialization
         ///     The type that must be Classify-able.</typeparam>
         /// <param name="rep">
         ///     Object to report post-build errors to.</param>
-        public static void PostBuildStep<TElement, T>(IClassifyFormat<TElement> format, IPostBuildReporter rep)
+        public static void PostBuildStep<T>(IPostBuildReporter rep)
         {
-            PostBuildStep(typeof(T), format, rep);
+            PostBuildStep(typeof(T), rep);
         }
 
         /// <summary>
@@ -916,7 +969,7 @@ namespace RT.Util.Serialization
         ///     The type that must be Classify-able.</param>
         /// <param name="rep">
         ///     Object to report post-build errors to.</param>
-        public static void PostBuildStep<TElement>(Type type, IClassifyFormat<TElement> format, IPostBuildReporter rep)
+        public static void PostBuildStep(Type type, IPostBuildReporter rep)
         {
             object obj;
             try
@@ -928,10 +981,10 @@ namespace RT.Util.Serialization
                 rep.Error("Unable to instantiate type {0}, required by Classify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(type, e.Message), "class", type.Name);
                 return;
             }
-            TElement testElement;
+            System.Xml.Linq.XElement testElement;
             try
             {
-                testElement = ObjectToElement(type, obj, format);
+                testElement = ObjectToElement(type, obj, ClassifyFormats.Xml);
             }
             catch (Exception e)
             {
@@ -940,7 +993,7 @@ namespace RT.Util.Serialization
             }
             try
             {
-                ObjectFromElement(type, testElement, format);
+                ObjectFromElement(type, testElement, ClassifyFormats.Xml);
             }
             catch (Exception e)
             {
@@ -953,6 +1006,8 @@ namespace RT.Util.Serialization
     /// <summary>
     ///     Contains methods to process an object and/or the associated serialized form before or after <see cref="Classify"/>
     ///     (de)serializes it. To have effect, this interface must be implemented by the object being serialized.</summary>
+    /// <typeparam name="TElement">
+    ///     Type of the serialized form.</typeparam>
     public interface IClassifyObjectProcessor<TElement>
     {
         /// <summary>
@@ -990,6 +1045,8 @@ namespace RT.Util.Serialization
     ///     Contains methods to process an object and/or the associated serialized form before or after <see cref="Classify"/>
     ///     (de)serializes it. To have effect, this interface must be implemented by a class derived from <see
     ///     cref="ClassifyTypeOptions"/> and associated with a type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
+    /// <typeparam name="TElement">
+    ///     Type of the serialized form.</typeparam>
     public interface IClassifyTypeProcessor<TElement>
     {
         /// <summary>
@@ -1012,9 +1069,6 @@ namespace RT.Util.Serialization
         /// <summary>
         ///     Pre-processes a serialized form before <see cref="Classify"/> restores the object from it. This method is
         ///     automatically invoked by <see cref="Classify"/> and should not be called directly.</summary>
-        /// <param name="obj">
-        ///     The object instance that will receive the deserialized values. The object’s fields have not yet been populated
-        ///     when this method is called.</param>
         /// <param name="element">
         ///     The serialized form from which this object is about to be restored. All changes made to it will affect how the
         ///     object is restored.</param>
