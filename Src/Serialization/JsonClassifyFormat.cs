@@ -1,10 +1,8 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.IO;
-using RT.Util;
-using RT.Util.ExtensionMethods;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RT.Util.ExtensionMethods;
 using RT.Util.Json;
 
 namespace RT.Util.Serialization
@@ -111,12 +109,12 @@ namespace RT.Util.Serialization
                     element.ContainsKey(":id") ? element[":id"].GetString() : null;
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatNullValue(string name)
+            JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
             {
                 return JsonNoValue.Instance;
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatSimpleValue(string name, object value)
+            JsonValue IClassifyFormat<JsonValue>.FormatSimpleValue(object value)
             {
                 if (value == null)
                     return null;
@@ -151,37 +149,37 @@ namespace RT.Util.Serialization
                 return ExactConvert.ToString(value);
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(string name, JsonValue value)
+            JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(JsonValue value)
             {
                 return value;
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatList(string name, bool isTuple, IEnumerable<JsonValue> values)
+            JsonValue IClassifyFormat<JsonValue>.FormatList(bool isTuple, IEnumerable<JsonValue> values)
             {
                 return new JsonList(values);
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatKeyValuePair(string name, JsonValue key, JsonValue value)
+            JsonValue IClassifyFormat<JsonValue>.FormatKeyValuePair(JsonValue key, JsonValue value)
             {
                 return new JsonList(new[] { key, value });
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatDictionary(string name, IEnumerable<KeyValuePair<object, JsonValue>> values)
+            JsonValue IClassifyFormat<JsonValue>.FormatDictionary(IEnumerable<KeyValuePair<object, JsonValue>> values)
             {
                 return values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key), kvp => kvp.Value);
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatObject(string name, IEnumerable<KeyValuePair<string, JsonValue>> fields)
+            JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<KeyValuePair<string, JsonValue>> fields)
             {
                 return new JsonDict(fields.Select(kvp => kvp.Key.StartsWith(':') ? new KeyValuePair<string, JsonValue>(":" + kvp.Key, kvp.Value) : kvp));
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatFollowID(string name, string id)
+            JsonValue IClassifyFormat<JsonValue>.FormatFollowID(string id)
             {
                 return new JsonDict { { ":id", id } };
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatReference(string name, string refId)
+            JsonValue IClassifyFormat<JsonValue>.FormatReference(string refId)
             {
                 return new JsonDict { { ":ref", refId } };
             }

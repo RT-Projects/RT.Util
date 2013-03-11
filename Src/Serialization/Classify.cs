@@ -334,7 +334,6 @@ namespace RT.Util.Serialization
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
             private string _baseDir;
-            private string _rootElementName;
             private IClassifyFormat<TElement> _format;
 
             public classifier(IClassifyFormat<TElement> format, ClassifyOptions options, string defaultBaseDir = null)
@@ -345,7 +344,6 @@ namespace RT.Util.Serialization
                 _options = options ?? DefaultOptions ?? new ClassifyOptions(); // in case someone set default options to null
                 _format = format;
                 _baseDir = _options.BaseDir ?? defaultBaseDir;
-                _rootElementName = _options.RootElementName ?? "item";
             }
 
             private Dictionary<string, Func<object>> _rememberD
@@ -683,9 +681,8 @@ namespace RT.Util.Serialization
                 }
             }
 
-            public Func<TElement> Classify(object saveObject, Type declaredType, string tagName = null)
+            public Func<TElement> Classify(object saveObject, Type declaredType)
             {
-                tagName = tagName ?? "item";
                 Func<TElement> elem;
 
                 // Add a “type” attribute if the instance type is different from the field’s declared type
@@ -719,7 +716,7 @@ namespace RT.Util.Serialization
                 }
 
                 if (saveObject == null)
-                    return () => _format.FormatNullValue(tagName);
+                    return () => _format.FormatNullValue();
 
                 // Preserve reference identity of reference types except string
                 if (!(originalObject is ValueType) && !(originalObject is string) && _rememberC.Contains(originalObject))
@@ -731,7 +728,7 @@ namespace RT.Util.Serialization
                         _nextId++;
                         _requireRefId[originalObject] = refId;
                     }
-                    return () => _format.FormatReference(tagName, refId.ToString());
+                    return () => _format.FormatReference(refId.ToString());
                 }
 
                 // Remember this object so that we can detect cycles and maintain reference equality
@@ -744,11 +741,11 @@ namespace RT.Util.Serialization
                     ((IClassifyTypeProcessor<TElement>) typeOptions).BeforeClassify(saveObject);
 
                 if (saveType == typeof(TElement))
-                    elem = () => _format.FormatSelfValue(tagName, (TElement) saveObject);
+                    elem = () => _format.FormatSelfValue((TElement) saveObject);
                 else if (SimpleTypes.Contains(saveType))
-                    elem = () => _format.FormatSimpleValue(tagName, saveObject);
+                    elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
-                    elem = () => _format.FormatSimpleValue(tagName, ExactConvert.ToString(saveObject));
+                    elem = () => _format.FormatSimpleValue(ExactConvert.ToString(saveObject));
                 else
                 {
                     Type[] typeParameters;
@@ -764,9 +761,9 @@ namespace RT.Util.Serialization
                             var valueProperty = saveType.GetProperty("Value");
                             if (keyProperty == null || valueProperty == null)
                                 throw new InvalidOperationException("Cannot find Key or Value property in KeyValuePair type.");
-                            var key = Classify(keyProperty.GetValue(saveObject, null), genericArguments[0], "key");
-                            var value = Classify(valueProperty.GetValue(saveObject, null), genericArguments[1], "value");
-                            elem = () => _format.FormatKeyValuePair(tagName, key(), value());
+                            var key = Classify(keyProperty.GetValue(saveObject, null), genericArguments[0]);
+                            var value = Classify(valueProperty.GetValue(saveObject, null), genericArguments[1]);
+                            elem = () => _format.FormatKeyValuePair(key(), value());
                         }
                         else
                         {
@@ -775,9 +772,9 @@ namespace RT.Util.Serialization
                                 var property = saveType.GetProperty("Item" + (i + 1));
                                 if (property == null)
                                     throw new InvalidOperationException("Cannot find expected item property in Tuple type.");
-                                return Classify(property.GetValue(saveObject, null), genericArguments[i], "item" + (i + 1));
+                                return Classify(property.GetValue(saveObject, null), genericArguments[i]);
                             }).ToArray();
-                            elem = () => _format.FormatList(tagName, true, items.Select(item => item()));
+                            elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
                     else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
@@ -798,21 +795,21 @@ namespace RT.Util.Serialization
                         var kvps = ((IEnumerable) saveObject).Cast<object>().Select(kvp => new
                         {
                             Key = keyProperty.GetValue(kvp, null),
-                            GetValue = Classify(valueProperty.GetValue(kvp, null), valueType, "item")
+                            GetValue = Classify(valueProperty.GetValue(kvp, null), valueType)
                         }).ToArray();
-                        elem = () => _format.FormatDictionary(tagName, kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
+                        elem = () => _format.FormatDictionary(kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
                     }
                     else if (declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || declaredType.IsArray)
                     {
                         // It’s an array or collection
                         var valueType = declaredType.IsArray ? declaredType.GetElementType() : typeParameters[0];
-                        var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Classify(val, valueType, "item")).ToArray();
-                        elem = () => _format.FormatList(tagName, false, items.Select(item => item()));
+                        var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Classify(val, valueType)).ToArray();
+                        elem = () => _format.FormatList(false, items.Select(item => item()));
                     }
                     else
                     {
                         var kvps = classifyObject(saveObject, saveType).ToArray();
-                        elem = () => _format.FormatObject(tagName, kvps.Select(kvp => new KeyValuePair<string, TElement>(kvp.Key, kvp.Value())));
+                        elem = () => _format.FormatObject(kvps.Select(kvp => new KeyValuePair<string, TElement>(kvp.Key, kvp.Value())));
                     }
                 }
 
@@ -921,12 +918,12 @@ namespace RT.Util.Serialization
                             SaveObjectToFile(deferredSaveValue.Value, _format, innerType, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _options);
                         }
 
-                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, () => _format.FormatFollowID(rFieldName, deferredSaveValue.Id));
+                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, () => _format.FormatFollowID(deferredSaveValue.Id));
                     }
                     else
                     {
                         // None of the special attributes — just classify the value
-                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, Classify(saveValue, field.FieldType, rFieldName));
+                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, Classify(saveValue, field.FieldType));
                     }
                 }
             }
@@ -1101,9 +1098,6 @@ namespace RT.Util.Serialization
         ///     The base directory from which to construct the paths for additional files whenever a field has an <see
         ///     cref="ClassifyFollowIdAttribute"/> attribute. Inferred automatically from filename if null.</summary>
         public string BaseDir = null;
-
-        /// <summary>The name of the root element for classified objects.</summary>
-        public string RootElementName = "item";
 
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
 

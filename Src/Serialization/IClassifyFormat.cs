@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util.Serialization
 {
@@ -176,15 +173,15 @@ namespace RT.Util.Serialization
         ///     or <see cref="FormatFollowID"/>.</remarks>
         string GetReferenceID(TElement element);
 
-        TElement FormatNullValue(string name);
-        TElement FormatSimpleValue(string name, object value);
-        TElement FormatSelfValue(string name, TElement value);
-        TElement FormatList(string name, bool isTuple, IEnumerable<TElement> values);
-        TElement FormatKeyValuePair(string name, TElement key, TElement value);
-        TElement FormatDictionary(string name, IEnumerable<KeyValuePair<object, TElement>> values);
-        TElement FormatObject(string name, IEnumerable<KeyValuePair<string, TElement>> fields);
-        TElement FormatFollowID(string name, string id);
-        TElement FormatReference(string name, string refId);
+        TElement FormatNullValue();
+        TElement FormatSimpleValue(object value);
+        TElement FormatSelfValue(TElement value);
+        TElement FormatList(bool isTuple, IEnumerable<TElement> values);
+        TElement FormatKeyValuePair(TElement key, TElement value);
+        TElement FormatDictionary(IEnumerable<KeyValuePair<object, TElement>> values);
+        TElement FormatObject(IEnumerable<KeyValuePair<string, TElement>> fields);
+        TElement FormatFollowID(string id);
+        TElement FormatReference(string refId);
         TElement FormatReferable(TElement element, string refId);
         TElement FormatWithType(TElement element, string type);
     }

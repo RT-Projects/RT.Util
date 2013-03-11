@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using RT.Util.Json;
+﻿using RT.Util.Json;
 
 namespace RT.Util.Serialization
 {
@@ -11,8 +6,8 @@ namespace RT.Util.Serialization
     public static partial class ClassifyFormats
     {
         /// <summary>Provides a format to serialize/deserialize objects as XML.</summary>
-        public static IClassifyFormat<XElement> Xml { get { return _xml; } }
-        private static IClassifyFormat<XElement> _xml = new xmlClassifyFormat();
+        public static XmlClassifyFormat Xml { get { return _xml; } }
+        private static XmlClassifyFormat _xml = new XmlClassifyFormat();
 
         /// <summary>Provides a format to serialize/deserialize objects as JSON.</summary>
         public static IClassifyFormat<JsonValue> Json { get { return _json; } }
