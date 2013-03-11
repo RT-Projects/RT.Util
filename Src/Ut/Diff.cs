@@ -21,10 +21,10 @@ namespace RT.Util
         /// <param name="postProcessor">If not null, provides a post-processing step for parts of the diff in between consecutive matches.
         /// Without a post-processing step, these parts are returned as a sequence of deletes followed by a sequence of
         /// inserts.</param>
-        /// <returns>An IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; representing the differences between <paramref name="old"/> and
-        /// <paramref name="new"/>. Each element in the returned IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt; corresponds either to an
-        /// element present only in <paramref name="old"/> (the element is considered "deleted"), an element present only in 
-        /// <paramref name="new"/> (the element is considered "inserted") or an element present in both.</returns>
+        /// <returns>An <c>IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt;</c> representing the differences between <paramref name="old"/> and
+        /// <paramref name="new"/>. Each element in the returned <c>IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt;</c> corresponds either to an
+        /// element present only in <paramref name="old"/> (the element is considered “deleted”), an element present only in 
+        /// <paramref name="new"/> (the element is considered “inserted”) or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new,
             IEqualityComparer<T> comparer = null, Func<T, bool> predicate = null,
             Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor = null)
