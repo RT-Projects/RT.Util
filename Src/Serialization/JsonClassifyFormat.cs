@@ -69,7 +69,7 @@ namespace RT.Util.Serialization
             {
                 if (fieldName.StartsWith(':'))
                     fieldName = ":" + fieldName;
-                return element.ContainsKey(fieldName);
+                return element is JsonDict && element.ContainsKey(fieldName);
             }
 
             JsonValue IClassifyFormat<JsonValue>.GetField(JsonValue element, string fieldName)
