@@ -329,6 +329,8 @@ namespace RT.Util.Serialization
         private sealed class classifier<TElement>
         {
             // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
+            // This list determines both which types are (de-)classified using GetSimpleValue/FormatSimpleValue, and which types of dictionary keys use GetDictionary/FormatDictionary (all others use GetList/FormatList with GetKeyValuePair/FormatKeyValuePair)
+            // All enum types are also treated as if they were listed here.
             private static Type[] SimpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
 
             private ClassifyOptions _options;
@@ -465,8 +467,10 @@ namespace RT.Util.Serialization
                     Type keyType = null, valueType = null;
                     if (type.IsArray)
                         valueType = type.GetElementType();
-                    else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+                    else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || SimpleTypes.Contains(typeParameters[0])))
                     {
+                        // Dictionaries which are stored specially (key is a simple type).
+                        // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
                         keyType = typeParameters[0];
                         valueType = typeParameters[1];
                     }
@@ -479,10 +483,7 @@ namespace RT.Util.Serialization
 
                         if (keyType != null)
                         {
-                            // It’s a dictionary.
-                            if (keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
-                                throw new InvalidOperationException("Classify encountered a dictionary with the key type {0}. Only string, integer types and enums are supported.".Fmt(keyType));
-
+                            // It’s a dictionary with simple-type keys.
                             object outputDict;
                             if (already != null)
                             {
@@ -778,14 +779,12 @@ namespace RT.Util.Serialization
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
-                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters))
+                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || SimpleTypes.Contains(typeParameters[0])))
                     {
-                        // It’s a dictionary
+                        // It’s a dictionary with a simple-type key.
+                        // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
                         var keyType = typeParameters[0];
                         var valueType = typeParameters[1];
-
-                        if (keyType != typeof(string) && !isIntegerType(keyType) && !keyType.IsEnum)
-                            throw new InvalidOperationException("Classify encountered a dictionary with the key type {0}. Only string, integer types and enums are supported.".Fmt(keyType.FullName));
 
                         var kvpType = typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType);
                         var keyProperty = kvpType.GetProperty("Key");
