@@ -209,14 +209,15 @@ namespace RT.Util.Serialization
             return element;
         }
 
-        string IClassifyFormat<XElement>.GetType(XElement element)
+        string IClassifyFormat<XElement>.GetType(XElement element, out bool isFullType)
         {
-            return element.Attribute("type").NullOr(e => e.Value);
+            isFullType = element.Attribute("fulltype") != null;
+            return element.Attribute(isFullType ? "fulltype" : "type").NullOr(e => e.Value);
         }
 
-        XElement IClassifyFormat<XElement>.FormatWithType(XElement element, string type)
+        XElement IClassifyFormat<XElement>.FormatWithType(XElement element, string type, bool isFullType)
         {
-            element.Add(new XAttribute("type", type));
+            element.Add(new XAttribute(isFullType ? "fulltype" : "type", type));
             return element;
         }
 

@@ -135,9 +135,9 @@ namespace RT.Util.Serialization
         ///     object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T LoadObjectFromFile<TElement, T>(IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
+        public static T ReadFromFile<TElement, T>(IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
         {
-            return (T) LoadObjectFromFile<TElement>(typeof(T), format, filename, options, parent);
+            return (T) ReadFromFile<TElement>(typeof(T), format, filename, options, parent);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace RT.Util.Serialization
         ///     object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object LoadObjectFromFile<TElement>(Type type, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
+        public static object ReadFromFile<TElement>(Type type, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             TElement elem;
@@ -180,7 +180,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T ObjectFromElement<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
+        public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return (T) new classifier<TElement>(format, options).Declassify(typeof(T), elem);
         }
@@ -199,7 +199,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object ObjectFromElement<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
+        public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return new classifier<TElement>(format, options).Declassify(type, elem);
         }
@@ -219,7 +219,7 @@ namespace RT.Util.Serialization
         ///     Object to assign values to in order to reconstruct the original object.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void ClassifyIntoObject<TElement, T>(TElement element, IClassifyFormat<TElement> format, T intoObject, ClassifyOptions options = null)
+        public static void IntoObject<TElement, T>(TElement element, IClassifyFormat<TElement> format, T intoObject, ClassifyOptions options = null)
         {
             new classifier<TElement>(format, options).IntoObject(element, intoObject, typeof(T), null);
         }
@@ -260,9 +260,9 @@ namespace RT.Util.Serialization
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void SaveObjectToFile<TElement, T>(T saveObject, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null)
+        public static void WriteToFile<TElement, T>(T saveObject, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null)
         {
-            SaveObjectToFile<TElement>(saveObject, format, typeof(T), filename, options);
+            WriteToFile<TElement>(saveObject, format, typeof(T), filename, options);
         }
 
         /// <summary>
@@ -279,7 +279,7 @@ namespace RT.Util.Serialization
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void SaveObjectToFile<TElement>(object saveObject, IClassifyFormat<TElement> format, Type saveType, string filename, ClassifyOptions options = null)
+        public static void WriteToFile<TElement>(object saveObject, IClassifyFormat<TElement> format, Type saveType, string filename, ClassifyOptions options = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             var element = new classifier<TElement>(format, options, defaultBaseDir).Classify(saveObject, saveType)();
@@ -302,7 +302,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
-        public static TElement ObjectToElement<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
+        public static TElement Serialize<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return new classifier<TElement>(format, options).Classify(saveObject, typeof(T))();
         }
@@ -321,7 +321,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
-        public static TElement ObjectToElement<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
+        public static TElement Serialize<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             return new classifier<TElement>(format, options).Classify(saveObject, saveType)();
         }
@@ -415,19 +415,20 @@ namespace RT.Util.Serialization
                         ((IClassifyTypeProcessor<TElement>) typeOptions).BeforeDeclassify(elem);
                 }
 
-                if (_format.IsNull(elem))
-                    result = () => null;
-                else if (_format.IsReference(elem))
+                if (_format.IsReference(elem))
                 {
                     var refID = _format.GetReferenceID(elem);
-                    result = () =>
+                    return () =>
                     {
                         if (!_rememberD.ContainsKey(refID))
                             throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refID));
                         return _rememberD[refID]();
                     };
                 }
-                else if (type == typeof(TElement))
+
+                if (_format.IsNull(elem))
+                    result = () => null;
+                else if (typeof(TElement).IsAssignableFrom(type))
                     result = () => _format.GetSelfValue(elem);
                 else if (SimpleTypes.Contains(type) || ExactConvert.IsSupportedType(type))
                     result = () => ExactConvert.To(type, _format.GetSimpleValue(elem));
@@ -549,13 +550,23 @@ namespace RT.Util.Serialization
                         object ret;
 
                         Type realType = type;
-                        var typeName = _format.GetType(elem);
+                        bool isFullType;
+                        var typeName = _format.GetType(elem, out isFullType);
                         if (typeName != null)
                         {
-                            var candidate = Type.GetType(typeName) ??
-                                type.Assembly.GetTypes().FirstOrDefault(t => !t.IsGenericType && !t.IsNested && ((t.Namespace == type.Namespace && t.Name == typeName) || t.FullName == typeName));
-                            if (candidate != null)
-                                realType = candidate;
+                            if (isFullType)
+                            {
+                                var t = Type.GetType(typeName);
+                                if (t != null)
+                                    realType = t;
+                            }
+                            else
+                            {
+                                var candidate = Type.GetType(typeName) ??
+                                    type.Assembly.GetTypes().FirstOrDefault(t => !t.IsGenericType && !t.IsNested && ((t.Namespace == type.Namespace && t.Name == typeName) || t.FullName == typeName));
+                                if (candidate != null)
+                                    realType = candidate;
+                            }
                         }
 
                         try
@@ -666,7 +677,7 @@ namespace RT.Util.Serialization
                                         .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(string) /* id */, typeof(Func<object>) /* generator */ }, null)
                                         .Invoke(Ut.NewArray<object>(
                                             followId /* id */,
-                                            new Func<object>(() => LoadObjectFromFile(innerType, _format, newFile, _options, intoObj)) /* generator */
+                                            new Func<object>(() => ReadFromFile(innerType, _format, newFile, _options, intoObj)) /* generator */
                                         ))
                                 );
                             }
@@ -690,6 +701,7 @@ namespace RT.Util.Serialization
                 // Add a “type” attribute if the instance type is different from the field’s declared type
                 Type saveType = declaredType;
                 string typeStr = null;
+                bool typeStrIsFull = false;
                 if (saveObject != null)
                 {
                     saveType = saveObject.GetType();
@@ -701,12 +713,33 @@ namespace RT.Util.Serialization
                         Type[] typeParameters;
                         if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                         {
-                            typeStr = saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested
-                                ? (saveType.Namespace.Equals(declaredType.Namespace) ? saveType.Name : saveType.FullName)
-                                : saveType.AssemblyQualifiedName;
+                            if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
+                                typeStr = saveType.Namespace.Equals(declaredType.Namespace) ? saveType.Name : saveType.FullName;
+                            else
+                            {
+                                typeStr = saveType.AssemblyQualifiedName;
+                                typeStrIsFull = true;
+                            }
                         }
                     }
                 }
+
+                // Preserve reference identity of reference types except string
+                if (!(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject))
+                {
+                    int refId;
+                    if (!_requireRefId.TryGetValue(saveObject, out refId))
+                    {
+                        refId = _nextId;
+                        _nextId++;
+                        _requireRefId[saveObject] = refId;
+                    }
+                    return () => _format.FormatReference(refId.ToString());
+                }
+
+                // Remember this object so that we can detect cycles and maintain reference equality
+                if (saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
+                    _rememberC.Add(saveObject);
 
                 // See if there’s a substitute type defined
                 ClassifyTypeOptions typeOptions;
@@ -720,29 +753,12 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
-                // Preserve reference identity of reference types except string
-                if (!(originalObject is ValueType) && !(originalObject is string) && _rememberC.Contains(originalObject))
-                {
-                    int refId;
-                    if (!_requireRefId.TryGetValue(originalObject, out refId))
-                    {
-                        refId = _nextId;
-                        _nextId++;
-                        _requireRefId[originalObject] = refId;
-                    }
-                    return () => _format.FormatReference(refId.ToString());
-                }
-
-                // Remember this object so that we can detect cycles and maintain reference equality
-                if (saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
-                    _rememberC.Add(saveObject);
-
                 if (saveObject is IClassifyObjectProcessor<TElement>)
                     ((IClassifyObjectProcessor<TElement>) saveObject).BeforeClassify();
                 if (typeOptions is IClassifyTypeProcessor<TElement>)
                     ((IClassifyTypeProcessor<TElement>) typeOptions).BeforeClassify(saveObject);
 
-                if (saveType == typeof(TElement))
+                if (typeof(TElement).IsAssignableFrom(saveType))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
                 else if (SimpleTypes.Contains(saveType) || saveType.IsEnum)
                     elem = () => _format.FormatSimpleValue(saveObject);
@@ -816,7 +832,7 @@ namespace RT.Util.Serialization
                 if (typeStr != null)
                 {
                     var prevElem = elem;
-                    elem = () => _format.FormatWithType(prevElem(), typeStr);
+                    elem = () => _format.FormatWithType(prevElem(), typeStr, typeStrIsFull);
                 }
 
                 // Make sure the classified element is only generated once,
@@ -915,7 +931,7 @@ namespace RT.Util.Serialization
                             if (_baseDir == null)
                                 throw new InvalidOperationException(@"An object that uses [ClassifyFollowId] can only be stored if a base directory is specified (see “BaseDir” in the ClassifyOptions class).");
                             var prop = field.FieldType.GetProperty("Value");
-                            SaveObjectToFile(deferredSaveValue.Value, _format, innerType, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _options);
+                            WriteToFile(deferredSaveValue.Value, _format, innerType, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _options);
                         }
 
                         yield return new KeyValuePair<string, Func<TElement>>(rFieldName, () => _format.FormatFollowID(deferredSaveValue.Id));
@@ -965,7 +981,7 @@ namespace RT.Util.Serialization
             System.Xml.Linq.XElement testElement;
             try
             {
-                testElement = ObjectToElement(type, obj, ClassifyFormats.Xml);
+                testElement = Serialize(type, obj, ClassifyFormats.Xml);
             }
             catch (Exception e)
             {
@@ -974,7 +990,7 @@ namespace RT.Util.Serialization
             }
             try
             {
-                ObjectFromElement(type, testElement, ClassifyFormats.Xml);
+                Deserialize(type, testElement, ClassifyFormats.Xml);
             }
             catch (Exception e)
             {

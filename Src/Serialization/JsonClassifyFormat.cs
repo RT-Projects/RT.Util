@@ -79,10 +79,14 @@ namespace RT.Util.Serialization
                 return element[fieldName];
             }
 
-            string IClassifyFormat<JsonValue>.GetType(JsonValue element)
+            string IClassifyFormat<JsonValue>.GetType(JsonValue element, out bool isFullType)
             {
                 if (element is JsonDict)
-                    return element.Safe[":type"].GetStringSafe();
+                {
+                    isFullType = element.ContainsKey(":fulltype");
+                    return element.Safe[isFullType ? ":fulltype" : ":type"].GetStringSafe();
+                }
+                isFullType = false;
                 return null;
             }
 
@@ -194,12 +198,12 @@ namespace RT.Util.Serialization
                 return element;
             }
 
-            JsonValue IClassifyFormat<JsonValue>.FormatWithType(JsonValue element, string type)
+            JsonValue IClassifyFormat<JsonValue>.FormatWithType(JsonValue element, string type, bool isFullType)
             {
                 if (!(element is JsonDict))
-                    return new JsonDict { { ":type", type }, { ":value", element } };
+                    return new JsonDict { { isFullType ? ":fulltype" : ":type", type }, { ":value", element } };
 
-                element[":type"] = type;
+                element[isFullType ? ":fulltype" : ":type"] = type;
                 return element;
             }
         }
