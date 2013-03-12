@@ -742,7 +742,7 @@ namespace RT.Util.Serialization
 
                 if (saveType == typeof(TElement))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
-                else if (SimpleTypes.Contains(saveType))
+                else if (SimpleTypes.Contains(saveType) || saveType.IsEnum)
                     elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
                     elem = () => _format.FormatSimpleValue(ExactConvert.ToString(saveObject));

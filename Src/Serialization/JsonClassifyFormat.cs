@@ -146,6 +146,7 @@ namespace RT.Util.Serialization
                 if (value is string)
                     return (string) value;
 
+                // This takes care of enum types
                 return ExactConvert.ToString(value);
             }
 

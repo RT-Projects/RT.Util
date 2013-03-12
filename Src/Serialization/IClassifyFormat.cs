@@ -36,13 +36,13 @@ namespace RT.Util.Serialization
         /// <summary>
         ///     Called when Classify expects the element to be one of the following types: <c>byte</c>, <c>sbyte</c>,
         ///     <c>short</c>, <c>ushort</c>, <c>int</c>, <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>decimal</c>, <c>float</c>,
-        ///     <c>double</c>, <c>bool</c>, <c>char</c>, <c>string</c>, or <c>DateTime</c>. The implementation is free to return a
-        ///     value of any of these types, and Classify will automatically use <see cref="ExactConvert"/> to convert the value
-        ///     to the required target type.</summary>
+        ///     <c>double</c>, <c>bool</c>, <c>char</c>, <c>string</c>, <c>DateTime</c> or an enum type. The implementation is
+        ///     free to return a value of any of these types, and Classify will automatically use <see cref="ExactConvert"/> to
+        ///     convert the value to the required target type.</summary>
         /// <remarks>
         ///     This should decode values passed into <see cref="FormatSimpleValue"/>, although it is acceptable if the type has
-        ///     changed. For example, all values may be returned as <c>string</c>, as long as <see cref="ExactConvert"/> will
-        ///     convert that <c>string</c> back to the original value.</remarks>
+        ///     changed, as long as <see cref="ExactConvert"/> will convert the decoded value back to the original
+        ///     value.</remarks>
         object GetSimpleValue(TElement element);
 
         /// <summary>
@@ -173,16 +173,131 @@ namespace RT.Util.Serialization
         ///     or <see cref="FormatFollowID"/>.</remarks>
         string GetReferenceID(TElement element);
 
+        /// <summary>
+        ///     Generates an element that represents a <c>null</c> value.</summary>
+        /// <returns>
+        ///     The serialized form of the <c>null</c> value.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="IsNull"/>.</remarks>
         TElement FormatNullValue();
+
+        /// <summary>
+        ///     Generates an element that represents a <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>, <c>int</c>,
+        ///     <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>decimal</c>, <c>float</c>, <c>double</c>, <c>bool</c>, <c>char</c>,
+        ///     <c>string</c>, <c>DateTime</c> or an enum type.</summary>
+        /// <param name="value">
+        ///     The value to encode.</param>
+        /// <returns>
+        ///     The serialized form of the <paramref name="value"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetSimpleValue"/>, but need not necessarily decode to the
+        ///     same type, as long as <see cref="ExactConvert"/> will convert it to the correct value.</remarks>
         TElement FormatSimpleValue(object value);
+
+        /// <summary>
+        ///     Generates an element that represents a value of the same type as serialized elements.</summary>
+        /// <param name="value">
+        ///     The value to encode.</param>
+        /// <returns>
+        ///     The serialized form of the <paramref name="value"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetSelfValue"/>.</remarks>
         TElement FormatSelfValue(TElement value);
+
+        /// <summary>
+        ///     Generates an element that represents a list.</summary>
+        /// <param name="isTuple">
+        ///     Specifies whether we are serializing a variable-length list, or a tuple (fixed-length list).</param>
+        /// <param name="values">
+        ///     The values to put into list form.</param>
+        /// <returns>
+        ///     The serialized list.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetList"/>.</remarks>
         TElement FormatList(bool isTuple, IEnumerable<TElement> values);
+
+        /// <summary>
+        ///     Generates an element that represents a key-value pair.</summary>
+        /// <param name="key">
+        ///     The element that represents the key.</param>
+        /// <param name="value">
+        ///     The element that represents the value.</param>
+        /// <returns>
+        ///     The serialized key-value pair.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetKeyValuePair"/>.</remarks>
         TElement FormatKeyValuePair(TElement key, TElement value);
+
+        /// <summary>
+        ///     Generates an element that represents a dictionary.</summary>
+        /// <param name="values">
+        ///     The key-value pairs that compose the dictionary. The keys may be <c>string</c>s, integers, or enum values.</param>
+        /// <returns>
+        ///     The serialized dictionary.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetDictionary"/>.</remarks>
         TElement FormatDictionary(IEnumerable<KeyValuePair<object, TElement>> values);
+
+        /// <summary>
+        ///     Generates an element that represents an object with fields.</summary>
+        /// <param name="fields">
+        ///     A collection of key-value pairs indicating the fields and their names.</param>
+        /// <returns>
+        ///     The serialized object.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="HasField"/> and <see cref="GetField"/>, irrespective of
+        ///     the order in which the fields are provided in <paramref name="fields"/>.</remarks>
         TElement FormatObject(IEnumerable<KeyValuePair<string, TElement>> fields);
+
+        /// <summary>
+        ///     Generates an element that represents a reference to another file.</summary>
+        /// <param name="id">
+        ///     The reference ID.</param>
+        /// <returns>
+        ///     An element that represents a reference to another file with the specified <paramref name="id"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="IsFollowID"/>.</remarks>
         TElement FormatFollowID(string id);
+
+        /// <summary>
+        ///     Generates an element that represents a reference to another object within the same serialized object
+        ///     graph.</summary>
+        /// <param name="refId">
+        ///     The reference ID.</param>
+        /// <returns>
+        ///     An element that represents a reference to another object with the specified <paramref name="refId"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="IsReference"/>.</remarks>
         TElement FormatReference(string refId);
+
+        /// <summary>
+        ///     Converts an existing element (which may represent, for example, an object, list or dictionary) into one that can
+        ///     be referred to by a reference (see <see cref="FormatReference"/>).</summary>
+        /// <param name="element">
+        ///     The original element to be converted.</param>
+        /// <param name="refId">
+        ///     The reference ID.</param>
+        /// <returns>
+        ///     A representation of the original <paramref name="element"/>, which additionally encodes the referable <paramref
+        ///     name="refId"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="IsReferable"/> as well as all the other methods that would
+        ///     have also recognized the original <paramref name="element"/>.</remarks>
         TElement FormatReferable(TElement element, string refId);
+
+        /// <summary>
+        ///     Converts an existing element (which may represent, for example, an object, list or dictionary) into one that
+        ///     additionally knows its type.</summary>
+        /// <param name="element">
+        ///     The original element to be converted.</param>
+        /// <param name="type">
+        ///     A string that identifies the type of the object.</param>
+        /// <returns>
+        ///     A representation of the original <paramref name="element"/>, which additionally encodes the <paramref
+        ///     name="type"/>.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetType"/> as well as all the other methods that would
+        ///     have also recognized the original <paramref name="element"/>.</remarks>
         TElement FormatWithType(TElement element, string type);
     }
 }
