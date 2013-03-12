@@ -328,6 +328,7 @@ namespace RT.Util.Serialization
 
         private sealed class classifier<TElement>
         {
+            // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
             private static Type[] SimpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
 
             private ClassifyOptions _options;
