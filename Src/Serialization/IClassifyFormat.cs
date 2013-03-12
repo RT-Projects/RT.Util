@@ -184,7 +184,7 @@ namespace RT.Util.Serialization
         /// <summary>
         ///     Generates an element that represents a <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>, <c>int</c>,
         ///     <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>decimal</c>, <c>float</c>, <c>double</c>, <c>bool</c>, <c>char</c>,
-        ///     <c>string</c>, <c>DateTime</c> or an enum type.</summary>
+        ///     <c>string</c>, <c>DateTime</c> or an enum value.</summary>
         /// <param name="value">
         ///     The value to encode.</param>
         /// <returns>
@@ -241,7 +241,7 @@ namespace RT.Util.Serialization
         /// <summary>
         ///     Generates an element that represents an object with fields.</summary>
         /// <param name="fields">
-        ///     A collection of key-value pairs indicating the fields and their names.</param>
+        ///     A collection of key-value pairs containing each fields’ name and serialized value.</param>
         /// <returns>
         ///     The serialized object.</returns>
         /// <remarks>
