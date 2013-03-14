@@ -640,12 +640,10 @@ namespace RT.Util.Serialization
                     var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
                     if (m.Success)
                     {
-                        var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                        rFieldName = m.Groups[1].Value;
+                        var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
-                        {
-                            rFieldName = m.Groups[1].Value;
                             getAttrsFrom = prop;
-                        }
                     }
 
                     // [ClassifyIgnore]
@@ -883,12 +881,10 @@ namespace RT.Util.Serialization
                     var m = Regex.Match(field.Name, @"^<(.*)>k__BackingField$");
                     if (m.Success)
                     {
-                        var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == m.Groups[1].Value);
+                        rFieldName = m.Groups[1].Value;
+                        var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
-                        {
-                            rFieldName = m.Groups[1].Value;
                             getAttrsFrom = prop;
-                        }
                     }
 
                     // [ClassifyIgnore], [ClassifyParent]
