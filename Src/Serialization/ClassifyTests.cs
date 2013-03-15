@@ -1282,12 +1282,13 @@ namespace RT.Util.Serialization
 
             var classified = Classify.Serialize(tester, ClassifyFormats.Xml);
 
-            //Assert.IsNotNull(classified.Element("Tester"));
-            //Assert.IsNotNull(classified.Attribute("refid"));
-            //Assert.IsNotNull(classified.Element("Tester").Attribute("ref"));
-            //Assert.IsTrue(classified.Element("Tester").Attribute("ref").Value == classified.Attribute("refid").Value);
+            Assert.IsNotNull(classified.Element("item"));
+            Assert.IsNotNull(classified.Element("item").Element("Tester"));
+            Assert.IsNotNull(classified.Element("item").Element("Tester").Attribute("ref"));
+            Assert.IsNotNull(classified.Attribute("refid"));
+            Assert.IsTrue(classified.Element("item").Element("Tester").Attribute("ref").Value == classified.Attribute("refid").Value);
 
-            var newTester = Classify.Deserialize<XElement, circularReferenceTester[]>(classified, ClassifyFormats.Xml);
+            var newTester = Classify.Deserialize<XElement, circularReferenceArrayTester[]>(classified, ClassifyFormats.Xml);
 
             Assert.IsNotNull(newTester);
             Assert.Greater(newTester.Length, 0);
