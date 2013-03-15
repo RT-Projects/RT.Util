@@ -103,6 +103,7 @@
     <Compile Include="Controls\TextBoxAutoHeight.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CustomCallStack.cs" />
     <Compile Include="CuteML.cs" />
     <Compile Include="CustomComparer.cs" />
     <Compile Include="ExtensionMethods\TextReaderWriterExtensions.cs" />
