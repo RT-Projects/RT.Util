@@ -1243,5 +1243,29 @@ namespace RT.Util.Serialization
             Assert.IsTrue(object.ReferenceEquals(newTester.Array[0], newTester.Specified));
             Assert.IsTrue(object.ReferenceEquals(newTester.Array[1], newTester.Specified));
         }
+
+        sealed class circularReferenceTester
+        {
+            public circularReferenceTester Tester;
+        }
+
+        [Test]
+        public void TestCircularReference()
+        {
+            var tester = new circularReferenceTester();
+            tester.Tester = tester;
+
+            var classified = Classify.Serialize(tester, ClassifyFormats.Xml);
+
+            Assert.IsNotNull(classified.Element("Tester"));
+            Assert.IsNotNull(classified.Attribute("refid"));
+            Assert.IsNotNull(classified.Element("Tester").Attribute("ref"));
+            Assert.IsTrue(classified.Element("Tester").Attribute("ref").Value == classified.Attribute("refid").Value);
+
+            var newTester = Classify.Deserialize<XElement, circularReferenceTester>(classified, ClassifyFormats.Xml);
+
+            Assert.IsNotNull(newTester.Tester);
+            Assert.IsTrue(object.ReferenceEquals(newTester, newTester.Tester));
+        }
     }
 }
