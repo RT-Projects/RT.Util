@@ -28,6 +28,8 @@ namespace RT.Util.Serialization
             public int key = 25; // to test Dictionary keys
             public double? nullable1 = null;
             public double? nullable2 = 58.47;
+            public object boxedInt = int.MinValue;
+            public object boxedLong = long.MinValue;
 
             public void AssertEqual(basicClass actual)
             {
@@ -42,6 +44,8 @@ namespace RT.Util.Serialization
                 Assert.AreEqual(key, actual.key);
                 Assert.AreEqual(nullable1, actual.nullable1);
                 Assert.AreEqual(nullable2, actual.nullable2);
+                Assert.AreEqual(boxedInt.NullOr(b => (int) b), actual.boxedInt.NullOr(b => (int) b));
+                Assert.AreEqual(boxedLong.NullOr(b => (long) b), actual.boxedLong.NullOr(b => (long) b));
             }
         }
 
@@ -149,6 +153,8 @@ namespace RT.Util.Serialization
                 ADateTime = DateTime.UtcNow,
                 nullable1 = null,
                 nullable2 = 47.48,
+                boxedInt = int.MinValue,
+                boxedLong = long.MinValue,
             };
             var xel = Classify.Serialize(clsEx, ClassifyFormats.Xml);
             var clsAc = Classify.Deserialize<XElement, basicClass>(xel, ClassifyFormats.Xml);
@@ -167,6 +173,8 @@ namespace RT.Util.Serialization
             Assert.IsFalse(clsEx.nullable2 == null);
             Assert.IsFalse(clsAc.nullable2 == null);
             Assert.AreEqual(clsEx.nullable2.Value, clsAc.nullable2.Value);
+            Assert.AreEqual((int) clsEx.boxedInt, (int) clsAc.boxedInt);
+            Assert.AreEqual((long) clsEx.boxedLong, (long) clsAc.boxedLong);
         }
 
         [Test]
@@ -1256,6 +1264,7 @@ namespace RT.Util.Serialization
             tester.Tester = tester;
 
             var classified = Classify.Serialize(tester, ClassifyFormats.Xml);
+            Assert.IsTrue(XNode.DeepEquals(classified, XElement.Parse(@"<item refid=""0""><Tester ref=""0"" /></item>")));
 
             Assert.IsNotNull(classified.Element("Tester"));
             Assert.IsNotNull(classified.Attribute("refid"));
@@ -1281,6 +1290,7 @@ namespace RT.Util.Serialization
             tester[0].Tester = tester;
 
             var classified = Classify.Serialize(tester, ClassifyFormats.Xml);
+            Assert.IsTrue(XNode.DeepEquals(classified, XElement.Parse(@"<item refid=""0""><item><Tester ref=""0"" /></item></item>")));
 
             Assert.IsNotNull(classified.Element("item"));
             Assert.IsNotNull(classified.Element("item").Element("Tester"));
@@ -1294,6 +1304,70 @@ namespace RT.Util.Serialization
             Assert.Greater(newTester.Length, 0);
             Assert.IsNotNull(newTester[0].Tester);
             Assert.IsTrue(object.ReferenceEquals(newTester, newTester[0].Tester));
+        }
+
+        sealed class tupleReferenceTester
+        {
+            public Tuple<object> Tester;
+        }
+
+        [Test]
+        public void TestTupleReference()
+        {
+            var tester = new tupleReferenceTester();
+            tester.Tester = Tuple.Create((object) tester);
+
+            var xml = Classify.Serialize(tester, ClassifyFormats.Xml);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item refid=""0""><Tester><item1 ref=""0"" /></Tester></item>")));
+
+            var newTester = Classify.Deserialize<XElement, tupleReferenceTester>(xml, ClassifyFormats.Xml);
+            Assert.IsTrue(newTester.Tester != null);
+            Assert.IsTrue(object.ReferenceEquals(newTester, newTester.Tester.Item1));
+
+            xml = Classify.Serialize(tester.Tester, ClassifyFormats.Xml);
+            var fulltype = typeof(tupleReferenceTester).AssemblyQualifiedName;
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item refid=""0""><item1 fulltype=""{0}""><Tester ref=""0"" /></item1></item>".Fmt(fulltype))));
+
+            var newTuple = Classify.Deserialize<XElement, Tuple<object>>(xml, ClassifyFormats.Xml);
+            Assert.IsTrue(newTuple.Item1 != null);
+            Assert.IsTrue(object.ReferenceEquals(newTuple, ((tupleReferenceTester) newTuple.Item1).Tester));
+        }
+
+        sealed class listSubstitutionTester
+        {
+            public List<int> AList;
+        }
+
+        sealed class listSubstOpts : ClassifyTypeOptions, IClassifySubstitute<List<int>, string>
+        {
+            public string ToSubstitute(List<int> instance)
+            {
+                return instance.NullOr(i => i.JoinString("|"));
+            }
+
+            public List<int> FromSubstitute(string instance)
+            {
+                return instance.NullOr(i => i.Split("|").Select(p => int.Parse(p)).ToList());
+            }
+        }
+
+        [Test]
+        public void TestListSubstitution()
+        {
+            var tester = new listSubstitutionTester { AList = new List<int> { 7, 5, 3, 1 } };
+            var opts = new ClassifyOptions().AddTypeOptions(typeof(List<int>), new listSubstOpts());
+
+            var xml = Classify.Serialize(tester, ClassifyFormats.Xml, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><AList>7|5|3|1</AList></item>")));
+
+            var newTester = Classify.Deserialize<XElement, listSubstitutionTester>(xml, ClassifyFormats.Xml, opts);
+            Assert.IsTrue(newTester.AList.SequenceEqual(new[] { 7, 5, 3, 1 }));
+
+            xml = Classify.Serialize(tester.AList, ClassifyFormats.Xml, opts);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item>7|5|3|1</item>")));
+
+            var newList = Classify.Deserialize<XElement, List<int>>(xml, ClassifyFormats.Xml, opts);
+            Assert.IsTrue(newList.SequenceEqual(new[] { 7, 5, 3, 1 }));
         }
     }
 }
