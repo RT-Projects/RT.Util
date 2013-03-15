@@ -1369,5 +1369,90 @@ namespace RT.Util.Serialization
             var newList = Classify.Deserialize<XElement, List<int>>(xml, ClassifyFormats.Xml, opts);
             Assert.IsTrue(newList.SequenceEqual(new[] { 7, 5, 3, 1 }));
         }
+
+        class refSubstClass<T> where T : refSubstClass<T>, new() { public string Name; public T Ref1; public T Ref2; }
+        sealed class refSubstClass1 : refSubstClass<refSubstClass1> { public int Marker1 = 1; }
+        sealed class refSubstClass2 : refSubstClass<refSubstClass2> { public int Marker2 = 2; }
+
+        sealed class refSubstOpts : ClassifyTypeOptions, IClassifySubstitute<refSubstClass1, refSubstClass2>
+        {
+            public refSubstClass2 ToSubstitute(refSubstClass1 instance)
+            {
+                return subst(instance, new Dictionary<refSubstClass1, refSubstClass2>());
+            }
+
+            public refSubstClass1 FromSubstitute(refSubstClass2 instance)
+            {
+                return subst(instance, new Dictionary<refSubstClass2, refSubstClass1>());
+            }
+
+            private T2 subst<T1, T2>(T1 instance, Dictionary<T1, T2> dictionary)
+                where T1 : refSubstClass<T1>, new()
+                where T2 : refSubstClass<T2>, new()
+            {
+                if (dictionary.ContainsKey(instance))
+                    return dictionary[instance];
+                dictionary[instance] = new T2 { Name = instance.Name }; // must assign first!
+                dictionary[instance].Ref1 = subst(instance.Ref1, dictionary);
+                dictionary[instance].Ref2 = subst(instance.Ref2, dictionary);
+                return dictionary[instance];
+            }
+        }
+
+        private void assertRefsWithSubs(refSubstClass1 a, refSubstClass1 b, refSubstClass1 c, refSubstClass1 d)
+        {
+            Assert.AreEqual("A", a.Name);
+            Assert.AreEqual("B", b.Name);
+            Assert.AreEqual("C", c.Name);
+            Assert.AreEqual("D", d.Name);
+            // First chain: a -> [b -> c -> d -> b]
+            Assert.IsTrue(object.ReferenceEquals(a.Ref1, b));
+            Assert.IsTrue(object.ReferenceEquals(b.Ref1, c));
+            Assert.IsTrue(object.ReferenceEquals(c.Ref1, d));
+            Assert.IsTrue(object.ReferenceEquals(d.Ref1, b));
+            // Second chain: b -> d -> [a -> c -> a]
+            Assert.IsTrue(object.ReferenceEquals(b.Ref2, d));
+            Assert.IsTrue(object.ReferenceEquals(d.Ref2, a));
+            Assert.IsTrue(object.ReferenceEquals(a.Ref2, c));
+            Assert.IsTrue(object.ReferenceEquals(c.Ref2, a));
+        }
+
+        [Test]
+        public void TestReferencesWithSubstitution()
+        {
+            refSubstClass1 a = new refSubstClass1 { Name = "A" }, b = new refSubstClass1 { Name = "B" }, c = new refSubstClass1 { Name = "C" }, d = new refSubstClass1 { Name = "D" };
+            // First chain: a -> [b -> c -> d -> b]
+            a.Ref1 = b;
+            b.Ref1 = c;
+            c.Ref1 = d;
+            d.Ref1 = b;
+            // Second chain: b -> d -> [a -> c -> a]
+            b.Ref2 = d;
+            d.Ref2 = a;
+            a.Ref2 = c;
+            c.Ref2 = a;
+
+            var opts = new ClassifyOptions().AddTypeOptions(typeof(refSubstClass1), new refSubstOpts());
+
+            var aXml = Classify.Serialize(a, ClassifyFormats.Xml, opts);
+            var aNew = Classify.Deserialize<XElement, refSubstClass1>(aXml, ClassifyFormats.Xml, opts);
+            assertRefsWithSubs(aNew, aNew.Ref1, aNew.Ref2, aNew.Ref1.Ref2);
+            //Assert.IsTrue(XNode.DeepEquals(aXml, XElement.Parse(@"<item></item>")));
+
+            var bXml = Classify.Serialize(b, ClassifyFormats.Xml, opts);
+            var bNew = Classify.Deserialize<XElement, refSubstClass1>(bXml, ClassifyFormats.Xml, opts);
+            assertRefsWithSubs(bNew.Ref2.Ref2, bNew, bNew.Ref1, bNew.Ref2);
+            //Assert.IsTrue(XNode.DeepEquals(bXml, XElement.Parse(@"<item></item>")));
+
+            var cXml = Classify.Serialize(c, ClassifyFormats.Xml, opts);
+            var cNew = Classify.Deserialize<XElement, refSubstClass1>(cXml, ClassifyFormats.Xml, opts);
+            assertRefsWithSubs(cNew.Ref2, cNew.Ref1.Ref1, cNew, cNew.Ref1);
+            //Assert.IsTrue(XNode.DeepEquals(cXml, XElement.Parse(@"<item></item>")));
+
+            var dXml = Classify.Serialize(d, ClassifyFormats.Xml, opts);
+            var dNew = Classify.Deserialize<XElement, refSubstClass1>(dXml, ClassifyFormats.Xml, opts);
+            assertRefsWithSubs(dNew.Ref2, dNew.Ref1, dNew.Ref1.Ref1, dNew);
+            //Assert.IsTrue(XNode.DeepEquals(dXml, XElement.Parse(@"<item></item>")));
+        }
     }
 }
