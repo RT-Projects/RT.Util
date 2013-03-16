@@ -182,7 +182,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T) new classifier<TElement>(format, options).Declassify(typeof(T), elem);
+            return (T) new classifier<TElement>(format, options).Declassify(typeof(T), elem, null);
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Declassify(type, elem);
+            return new classifier<TElement>(format, options).Declassify(type, elem, null);
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         public static void IntoObject<TElement, T>(TElement element, IClassifyFormat<TElement> format, T intoObject, ClassifyOptions options = null)
         {
-            new classifier<TElement>(format, options).IntoObject(element, intoObject, typeof(T), null);
+            new classifier<TElement>(format, options).IntoObject(typeof(T), element, intoObject, null);
         }
 
         /// <summary>
@@ -243,7 +243,7 @@ namespace RT.Util.Serialization
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            new classifier<TElement>(format, options).IntoObject(elem, intoObject, intoObject.GetType(), null);
+            new classifier<TElement>(format, options).IntoObject(intoObject.GetType(), elem, intoObject, null);
         }
 
         /// <summary>
@@ -389,20 +389,42 @@ namespace RT.Util.Serialization
                 return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
             }
 
-            public object Declassify(Type type, TElement elem, object parentNode = null)
+            public object Declassify(Type type, TElement elem, object parentNode)
             {
                 _doAtTheEnd = new List<Action>();
-                var result = declassify(type, elem, null, parentNode);
+                var result = CustomCallStack.Run(declassify(type, elem, null, parentNode));
                 foreach (var action in _doAtTheEnd)
                     action();
                 return result();
             }
 
-            // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
-            private Func<object> declassify(Type type, TElement elem, object already, object parentNode)
+            public void IntoObject(Type type, TElement elem, object intoObj, object parentNode)
             {
-                Func<object> result;
+                ClassifyTypeOptions typeOptions = null;
+                if (_options._typeOptions.TryGetValue(type, out typeOptions))
+                {
+                    if (typeOptions._substituteType != null)
+                        throw new InvalidOperationException("Cannot use type substitution when populating a provided object.");
+                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeclassify(elem); });
+                }
 
+                _doAtTheEnd = new List<Action>();
+
+                if (_format.IsReferable(elem))
+                    _rememberD[_format.GetReferenceID(elem)] = () => intoObj;
+
+                var result = CustomCallStack.Run(intoObject(elem, intoObj, type, parentNode));
+                foreach (var action in _doAtTheEnd)
+                    action();
+                result();
+
+                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
+                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(intoObj, elem); });
+            }
+
+            // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
+            private WorkNode<Func<object>> declassify(Type type, TElement elem, object already, object parentNode)
+            {
                 var originalType = type;
                 var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
 
@@ -411,55 +433,95 @@ namespace RT.Util.Serialization
                 {
                     if (typeOptions._substituteType != null)
                         type = typeOptions._substituteType;
-                    if (typeOptions is IClassifyTypeProcessor<TElement>)
-                        ((IClassifyTypeProcessor<TElement>) typeOptions).BeforeDeclassify(elem);
+                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeclassify(elem); });
                 }
 
                 if (_format.IsReference(elem))
                 {
                     var refID = _format.GetReferenceID(elem);
-                    return () =>
+                    return _ => new Func<object>(() =>
                     {
                         if (!_rememberD.ContainsKey(refID))
                             throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refID));
                         return _rememberD[refID]();
-                    };
+                    });
                 }
 
+                // Every object created by declassify goes through this function
+                var cleanUp = Ut.Lambda((Func<object> res) =>
+                {
+                    // Apply de-substitution (if any)
+                    if (originalType != type)
+                    {
+                        var prevRes = res;
+                        res = () => typeOptions._fromSubstitute(prevRes());
+                    }
+
+                    // Make sure the declassified object is only generated once
+                    {
+                        var retrieved = false;
+                        object retrievedObj = null;
+                        var prevRes = res;
+                        res = () =>
+                        {
+                            if (!retrieved)
+                            {
+                                retrieved = true;
+                                retrievedObj = prevRes();
+                                retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
+                                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(retrievedObj, elem); });
+                            }
+                            return retrievedObj;
+                        };
+                    }
+
+                    // Remember the result if something else refers to it
+                    if (_format.IsReferable(elem))
+                        _rememberD[_format.GetReferenceID(elem)] = res;
+
+                    return res;
+                });
+
                 if (_format.IsNull(elem))
-                    result = () => null;
+                    return _ => cleanUp(() => null);
                 else if (typeof(TElement).IsAssignableFrom(type))
-                    result = () => _format.GetSelfValue(elem);
+                    return _ => cleanUp(() => _format.GetSelfValue(elem));
                 else if (SimpleTypes.Contains(type) || ExactConvert.IsSupportedType(type))
-                    result = () => ExactConvert.To(type, _format.GetSimpleValue(elem));
+                    return _ => cleanUp(() => ExactConvert.To(type, _format.GetSimpleValue(elem)));
                 else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    result = declassify(type.GetGenericArguments()[0], elem, already, parentNode);
+                    return declassify(type.GetGenericArguments()[0], elem, already, parentNode);
                 }
                 else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
                 {
                     // It’s a Tuple or KeyValuePair
                     var genericArguments = type.GetGenericArguments();
                     var tupleParams = new Func<object>[genericArguments.Length];
+                    TElement[] values;
                     if (genericDefinition == typeof(KeyValuePair<,>))
                     {
                         TElement key, value;
                         _format.GetKeyValuePair(elem, out key, out value);
-                        tupleParams[0] = declassify(genericArguments[0], key, null, parentNode);
-                        tupleParams[1] = declassify(genericArguments[1], value, null, parentNode);
+                        values = new[] { key, value };
                     }
                     else
+                        values = _format.GetList(elem, genericArguments.Length).ToArray();
+
+                    int i = -1;
+                    return prevResult =>
                     {
-                        var values = _format.GetList(elem, genericArguments.Length).ToArray();
-                        for (int i = 0; i < genericArguments.Length; i++)
-                            if (i < values.Length && values[i] != null)
-                                tupleParams[i] = declassify(genericArguments[i], values[i], null, parentNode);
-                    }
-                    var constructor = type.GetConstructor(genericArguments);
-                    if (constructor == null)
-                        throw new InvalidOperationException("Could not find expected Tuple constructor.");
-                    result = () => constructor.Invoke(tupleParams.Select(act => act()).ToArray());
+                        if (i >= 0)
+                            tupleParams[i] = prevResult;
+                        do { i++; }
+                        while (i < values.Length && values[i] == null);
+                        if (i < genericArguments.Length && i < values.Length)
+                            return declassify(genericArguments[i], values[i], null, parentNode);
+                        var constructor = type.GetConstructor(genericArguments);
+                        if (constructor == null)
+                            throw new InvalidOperationException("Could not find expected Tuple constructor.");
+                        return cleanUp(() => constructor.Invoke(tupleParams.Select(act => act()).ToArray()));
+                    };
                 }
                 else
                 {
@@ -494,30 +556,54 @@ namespace RT.Util.Serialization
                             else
                                 outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type);
 
-                            if (outputDict is IClassifyObjectProcessor<TElement>)
-                                ((IClassifyObjectProcessor<TElement>) outputDict).BeforeDeclassify(elem);
+                            outputDict.IfType<IClassifyObjectProcessor<TElement>>(dict => { dict.BeforeDeclassify(elem); });
 
                             var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
-                            foreach (var kvp in _format.GetDictionary(elem))
+                            var e = _format.GetDictionary(elem).GetEnumerator();
+
+                            var keysToAdd = new List<object>();
+                            var valuesToAdd = new List<Func<object>>();
+                            return prevResult =>
                             {
-                                var key = ExactConvert.To(keyType, kvp.Key);
-                                var value = declassify(valueType, kvp.Value, null, parentNode);
-                                _doAtTheEnd.Add(() => { addMethod.Invoke(outputDict, new object[] { key, value() }); });
-                            }
-                            result = () => outputDict;
+                                if (keysToAdd.Count > 0)
+                                    valuesToAdd.Add(prevResult);
+
+                                if (e.MoveNext())
+                                {
+                                    keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
+                                    return declassify(valueType, e.Current.Value, null, parentNode);
+                                }
+
+                                Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
+                                _doAtTheEnd.Add(() =>
+                                {
+                                    for (int i = 0; i < keysToAdd.Count; i++)
+                                        addMethod.Invoke(outputDict, new object[] { keysToAdd[i], valuesToAdd[i]() });
+                                });
+                                return cleanUp(() => outputDict);
+                            };
                         }
                         else if (type.IsArray)
                         {
                             var input = _format.GetList(elem, null).ToArray();
                             var outputArray = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
                             var setMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
-                            for (int i = 0; i < input.Length; i++)
+                            var i = -1;
+                            var setters = new Func<object>[input.Length];
+                            return prevResult =>
                             {
-                                var index = i;
-                                var value = declassify(valueType, input[i], null, parentNode);
-                                _doAtTheEnd.Add(() => { setMethod.Invoke(outputArray, new object[] { index, value() }); });
-                            }
-                            result = () => outputArray;
+                                if (i >= 0)
+                                    setters[i] = prevResult;
+                                i++;
+                                if (i < input.Length)
+                                    return declassify(valueType, input[i], null, parentNode);
+                                _doAtTheEnd.Add(() =>
+                                {
+                                    for (int j = 0; j < setters.Length; j++)
+                                        setMethod.Invoke(outputArray, new object[] { j, setters[j]() });
+                                });
+                                return cleanUp(() => outputArray);
+                            };
                         }
                         else
                         {
@@ -531,16 +617,26 @@ namespace RT.Util.Serialization
                             else
                                 outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : type);
 
-                            if (outputList is IClassifyObjectProcessor<TElement>)
-                                ((IClassifyObjectProcessor<TElement>) outputList).BeforeDeclassify(elem);
+                            outputList.IfType<IClassifyObjectProcessor<TElement>>(list => { list.BeforeDeclassify(elem); });
 
                             var addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
-                            foreach (var item in _format.GetList(elem, null))
+                            var e = _format.GetList(elem, null).GetEnumerator();
+                            var first = true;
+                            var adders = new List<Func<object>>();
+                            return prevResult =>
                             {
-                                var value = declassify(valueType, item, null, parentNode);
-                                _doAtTheEnd.Add(() => { addMethod.Invoke(outputList, new object[] { value() }); });
-                            }
-                            result = () => outputList;
+                                if (!first)
+                                    adders.Add(prevResult);
+                                first = false;
+                                if (e.MoveNext())
+                                    return declassify(valueType, e.Current, null, parentNode);
+                                _doAtTheEnd.Add(() =>
+                                {
+                                    foreach (var adder in adders)
+                                        addMethod.Invoke(outputList, new object[] { adder() });
+                                });
+                                return cleanUp(() => outputList);
+                            };
                         }
                     }
                     else
@@ -578,58 +674,26 @@ namespace RT.Util.Serialization
                             throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
                         }
 
-                        intoObject(elem, ret, realType, parentNode);
-                        result = () => ret;
+                        var first = true;
+                        return prevResult =>
+                        {
+                            if (first)
+                            {
+                                first = false;
+                                return intoObject(elem, ret, realType, parentNode);
+                            }
+                            return cleanUp(prevResult);
+                        };
                     }
                 }
-
-                // Apply de-substitution (if any)
-                if (originalType != type)
-                {
-                    var unsubstitutedResult = result;
-                    result = () => typeOptions._fromSubstitute(unsubstitutedResult());
-                }
-
-                // Make sure the declassified object is only generated once
-                {
-                    bool retrieved = false;
-                    object retrievedObj = null;
-                    Func<object> previousResult = result;
-                    result = () =>
-                    {
-                        if (!retrieved)
-                        {
-                            retrieved = true;
-                            retrievedObj = previousResult();
-                            if (retrievedObj is IClassifyObjectProcessor<TElement>)
-                                ((IClassifyObjectProcessor<TElement>) retrievedObj).AfterDeclassify(elem);
-                            if (typeOptions is IClassifyTypeProcessor<TElement>)
-                                ((IClassifyTypeProcessor<TElement>) typeOptions).AfterDeclassify(retrievedObj, elem);
-                        }
-                        return retrievedObj;
-                    };
-                }
-
-                if (_format.IsReferable(elem))
-                    _rememberD[_format.GetReferenceID(elem)] = result;
-
-                return result;
             }
 
-            public void IntoObject(TElement elem, object intoObj, Type type, object parentNode)
+            private WorkNode<Func<object>> intoObject(TElement elem, object intoObj, Type type, object parentNode)
             {
-                _doAtTheEnd = new List<Action>();
-                if (_format.IsReferable(elem))
-                    _rememberD[_format.GetReferenceID(elem)] = () => intoObj;
-                intoObject(elem, intoObj, type, parentNode);
-                foreach (var action in _doAtTheEnd)
-                    action();
-            }
+                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeDeclassify(elem); });
 
-            private void intoObject(TElement elem, object intoObj, Type type, object parentNode)
-            {
-                if (intoObj is IClassifyObjectProcessor<TElement>)
-                    ((IClassifyObjectProcessor<TElement>) intoObj).BeforeDeclassify(elem);
+                var fieldsToAssignTo = new List<FieldInfo>();
+                var elementsToAssign = new List<TElement>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -685,11 +749,30 @@ namespace RT.Util.Serialization
                     // Fields with no special attributes
                     else if (_format.HasField(elem, rFieldName))
                     {
-                        var subElem = _format.GetField(elem, rFieldName);
-                        var declassified = declassify(field.FieldType, subElem, field.GetValue(intoObj), intoObj);
-                        _doAtTheEnd.Add(() => { field.SetValue(intoObj, declassified()); });
+                        fieldsToAssignTo.Add(field);
+                        elementsToAssign.Add(_format.GetField(elem, rFieldName));
                     }
                 }
+
+                Ut.Assert(fieldsToAssignTo.Count == elementsToAssign.Count);
+
+                var valuesToAssign = new Func<object>[fieldsToAssignTo.Count];
+                var i = -1;
+                return prevResult =>
+                {
+                    if (i >= 0)
+                        valuesToAssign[i] = prevResult;
+                    i++;
+                    if (i < fieldsToAssignTo.Count)
+                        return declassify(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj);
+
+                    _doAtTheEnd.Add(() =>
+                    {
+                        for (int j = 0; j < fieldsToAssignTo.Count; j++)
+                            fieldsToAssignTo[j].SetValue(intoObj, valuesToAssign[j]());
+                    });
+                    return new Func<object>(() => intoObj);
+                };
             }
 
             public Func<TElement> Classify(object saveObject, Type declaredType)
@@ -723,6 +806,7 @@ namespace RT.Util.Serialization
                 }
 
                 // Preserve reference identity of reference types except string
+                // NOTE: We preserve reference identity of the *original object*, not the substituted object.
                 if (!(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject))
                 {
                     int refId;
@@ -751,10 +835,8 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
-                if (saveObject is IClassifyObjectProcessor<TElement>)
-                    ((IClassifyObjectProcessor<TElement>) saveObject).BeforeClassify();
-                if (typeOptions is IClassifyTypeProcessor<TElement>)
-                    ((IClassifyTypeProcessor<TElement>) typeOptions).BeforeClassify(saveObject);
+                saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeClassify(); });
+                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeClassify(saveObject); });
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
@@ -846,12 +928,10 @@ namespace RT.Util.Serialization
                             retrieved = true;
                             retrievedElem = previousElem();
                             int refId;
-                            if (_requireRefId.TryGetValue(originalObject, out refId))
+                            if (_requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId.ToString());
-                            if (saveObject is IClassifyObjectProcessor<TElement>)
-                                ((IClassifyObjectProcessor<TElement>) saveObject).AfterClassify(retrievedElem);
-                            if (typeOptions is IClassifyTypeProcessor<TElement>)
-                                ((IClassifyTypeProcessor<TElement>) typeOptions).AfterClassify(saveObject, retrievedElem);
+                            saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterClassify(retrievedElem); });
+                            typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterClassify(saveObject, retrievedElem); });
                         }
                         return retrievedElem;
                     };

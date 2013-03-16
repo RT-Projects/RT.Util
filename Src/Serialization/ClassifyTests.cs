@@ -1370,7 +1370,11 @@ namespace RT.Util.Serialization
             Assert.IsTrue(newList.SequenceEqual(new[] { 7, 5, 3, 1 }));
         }
 
-        class refSubstClass<T> where T : refSubstClass<T>, new() { public string Name; public T Ref1; public T Ref2; }
+        class refSubstClass<T> where T : refSubstClass<T>, new()
+        {
+            public string Name; public T Ref1; public T Ref2;
+            public override string ToString() { return Name; }
+        }
         sealed class refSubstClass1 : refSubstClass<refSubstClass1> { public int Marker1 = 1; }
         sealed class refSubstClass2 : refSubstClass<refSubstClass2> { public int Marker2 = 2; }
 
