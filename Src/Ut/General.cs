@@ -411,6 +411,12 @@ namespace RT.Util
             throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
         }
 
+        public static void IfType<T>(this object obj, Action<T> action)
+        {
+            if (obj is T)
+                action((T) obj);
+        }
+
         /// <summary>
         /// Executes the specified action. If the action results in a file sharing violation exception, the action will be
         /// repeatedly retried after a short delay (which increases after every failed attempt).
