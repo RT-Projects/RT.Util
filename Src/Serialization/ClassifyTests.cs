@@ -1480,22 +1480,102 @@ namespace RT.Util.Serialization
             var aXml = VerifyXml(Classify.Serialize(a, ClassifyFormats.Xml, opts));
             var aNew = Classify.Deserialize<XElement, refSubstClass1>(aXml, ClassifyFormats.Xml, opts);
             assertRefsWithSubs(aNew, aNew.Ref1, aNew.Ref2, aNew.Ref1.Ref2);
-            //Assert.IsTrue(XNode.DeepEquals(aXml, XElement.Parse(@"<item></item>")));
+            Assert.IsTrue(XNode.DeepEquals(aXml, XElement.Parse(@"<item refid=""1"">
+  <Name>A</Name>
+  <Ref1 refid=""0"">
+    <Name>B</Name>
+    <Ref1 refid=""3"">
+      <Name>C</Name>
+      <Ref1 refid=""2"">
+        <Name>D</Name>
+        <Ref1 ref=""0"" />
+        <Ref2 ref=""1"" />
+        <Marker2>2</Marker2>
+      </Ref1>
+      <Ref2 ref=""1"" />
+      <Marker2>2</Marker2>
+    </Ref1>
+    <Ref2 ref=""2"" />
+    <Marker2>2</Marker2>
+  </Ref1>
+  <Ref2 ref=""3"" />
+  <Marker2>2</Marker2>
+</item>")));
 
             var bXml = VerifyXml(Classify.Serialize(b, ClassifyFormats.Xml, opts));
             var bNew = Classify.Deserialize<XElement, refSubstClass1>(bXml, ClassifyFormats.Xml, opts);
             assertRefsWithSubs(bNew.Ref2.Ref2, bNew, bNew.Ref1, bNew.Ref2);
-            //Assert.IsTrue(XNode.DeepEquals(bXml, XElement.Parse(@"<item></item>")));
+            Assert.IsTrue(XNode.DeepEquals(bXml, XElement.Parse(@"<item refid=""0"">
+  <Name>B</Name>
+  <Ref1 refid=""1"">
+    <Name>C</Name>
+    <Ref1 refid=""3"">
+      <Name>D</Name>
+      <Ref1 ref=""0"" />
+      <Ref2 refid=""2"">
+        <Name>A</Name>
+        <Ref1 ref=""0"" />
+        <Ref2 ref=""1"" />
+        <Marker2>2</Marker2>
+      </Ref2>
+      <Marker2>2</Marker2>
+    </Ref1>
+    <Ref2 ref=""2"" />
+    <Marker2>2</Marker2>
+  </Ref1>
+  <Ref2 ref=""3"" />
+  <Marker2>2</Marker2>
+</item>")));
 
             var cXml = VerifyXml(Classify.Serialize(c, ClassifyFormats.Xml, opts));
             var cNew = Classify.Deserialize<XElement, refSubstClass1>(cXml, ClassifyFormats.Xml, opts);
             assertRefsWithSubs(cNew.Ref2, cNew.Ref1.Ref1, cNew, cNew.Ref1);
-            //Assert.IsTrue(XNode.DeepEquals(cXml, XElement.Parse(@"<item></item>")));
+            Assert.IsTrue(XNode.DeepEquals(cXml, XElement.Parse(@"<item refid=""0"">
+  <Name>C</Name>
+  <Ref1 refid=""1"">
+    <Name>D</Name>
+    <Ref1 refid=""2"">
+      <Name>B</Name>
+      <Ref1 ref=""0"" />
+      <Ref2 ref=""1"" />
+      <Marker2>2</Marker2>
+    </Ref1>
+    <Ref2 refid=""3"">
+      <Name>A</Name>
+      <Ref1 ref=""2"" />
+      <Ref2 ref=""0"" />
+      <Marker2>2</Marker2>
+    </Ref2>
+    <Marker2>2</Marker2>
+  </Ref1>
+  <Ref2 ref=""3"" />
+  <Marker2>2</Marker2>
+</item>")));
 
             var dXml = VerifyXml(Classify.Serialize(d, ClassifyFormats.Xml, opts));
             var dNew = Classify.Deserialize<XElement, refSubstClass1>(dXml, ClassifyFormats.Xml, opts);
             assertRefsWithSubs(dNew.Ref2, dNew.Ref1, dNew.Ref1.Ref1, dNew);
-            //Assert.IsTrue(XNode.DeepEquals(dXml, XElement.Parse(@"<item></item>")));
+            Assert.IsTrue(XNode.DeepEquals(dXml, XElement.Parse(@"<item refid=""0"">
+  <Name>D</Name>
+  <Ref1 refid=""1"">
+    <Name>B</Name>
+    <Ref1 refid=""2"">
+      <Name>C</Name>
+      <Ref1 ref=""0"" />
+      <Ref2 refid=""3"">
+        <Name>A</Name>
+        <Ref1 ref=""1"" />
+        <Ref2 ref=""2"" />
+        <Marker2>2</Marker2>
+      </Ref2>
+      <Marker2>2</Marker2>
+    </Ref1>
+    <Ref2 ref=""0"" />
+    <Marker2>2</Marker2>
+  </Ref1>
+  <Ref2 ref=""3"" />
+  <Marker2>2</Marker2>
+</item>")));
         }
     }
 }

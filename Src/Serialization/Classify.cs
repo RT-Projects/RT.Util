@@ -349,16 +349,22 @@ namespace RT.Util.Serialization
                 _baseDir = _options.BaseDir ?? defaultBaseDir;
             }
 
-            private Dictionary<string, Func<object>> _rememberD
+            private sealed class declassifyRememberedObject
+            {
+                public Func<object> WithDesubstitution;
+                public Func<object> WithoutDesubstitution;
+            }
+
+            private Dictionary<string, declassifyRememberedObject> _rememberD
             {
                 get
                 {
                     if (_rememberCacheD == null)
-                        _rememberCacheD = new Dictionary<string, Func<object>>();
+                        _rememberCacheD = new Dictionary<string, declassifyRememberedObject>();
                     return _rememberCacheD;
                 }
             }
-            private Dictionary<string, Func<object>> _rememberCacheD;
+            private Dictionary<string, declassifyRememberedObject> _rememberCacheD;
 
             private HashSet<object> _rememberC
             {
@@ -398,6 +404,24 @@ namespace RT.Util.Serialization
                 return result();
             }
 
+            // Function to make sure a declassified object is only generated once
+            private Func<object> cachify(Func<object> res, TElement elem, ClassifyTypeOptions typeOptions)
+            {
+                var retrieved = false;
+                object retrievedObj = null;
+                return () =>
+                {
+                    if (!retrieved)
+                    {
+                        retrieved = true;
+                        retrievedObj = res();
+                        retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
+                        typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(retrievedObj, elem); });
+                    }
+                    return retrievedObj;
+                };
+            }
+
             public void IntoObject(Type type, TElement elem, object intoObj, object parentNode)
             {
                 ClassifyTypeOptions typeOptions = null;
@@ -411,7 +435,7 @@ namespace RT.Util.Serialization
                 _doAtTheEnd = new List<Action>();
 
                 if (_format.IsReferable(elem))
-                    _rememberD[_format.GetReferenceID(elem)] = () => intoObj;
+                    _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
                 var result = CustomCallStack.Run(intoObject(elem, intoObj, type, parentNode));
                 foreach (var action in _doAtTheEnd)
@@ -436,51 +460,42 @@ namespace RT.Util.Serialization
                     typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeclassify(elem); });
                 }
 
+                // Every object created by declassify goes through this function
+                var cleanUp = Ut.Lambda((Func<object> res) =>
+                {
+                    var withoutDesubstitution = cachify(res, elem, typeOptions);
+                    Func<object> withDesubstitution = null;
+
+                    // Apply de-substitution (if any)
+                    if (originalType != type)
+                        withDesubstitution = cachify(() => typeOptions._fromSubstitute(withoutDesubstitution()), elem, typeOptions);
+
+                    // Remember the result if something else refers to it
+                    if (_format.IsReferable(elem))
+                        _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject
+                        {
+                            WithDesubstitution = withDesubstitution,
+                            WithoutDesubstitution = withoutDesubstitution
+                        };
+
+                    return originalType != type ? withDesubstitution : withoutDesubstitution;
+                });
+
                 if (_format.IsReference(elem))
                 {
                     var refID = _format.GetReferenceID(elem);
                     return _ => new Func<object>(() =>
                     {
-                        if (!_rememberD.ContainsKey(refID))
+                        declassifyRememberedObject inf;
+                        if (!_rememberD.TryGetValue(refID, out inf))
                             throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refID));
-                        return _rememberD[refID]();
+                        if (type == originalType)
+                            return inf.WithoutDesubstitution();
+                        if (inf.WithDesubstitution == null)
+                            inf.WithDesubstitution = cachify(() => typeOptions._fromSubstitute(inf.WithoutDesubstitution()), elem, typeOptions);
+                        return inf.WithDesubstitution();
                     });
                 }
-
-                // Every object created by declassify goes through this function
-                var cleanUp = Ut.Lambda((Func<object> res) =>
-                {
-                    // Apply de-substitution (if any)
-                    if (originalType != type)
-                    {
-                        var prevRes = res;
-                        res = () => typeOptions._fromSubstitute(prevRes());
-                    }
-
-                    // Make sure the declassified object is only generated once
-                    {
-                        var retrieved = false;
-                        object retrievedObj = null;
-                        var prevRes = res;
-                        res = () =>
-                        {
-                            if (!retrieved)
-                            {
-                                retrieved = true;
-                                retrievedObj = prevRes();
-                                retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
-                                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(retrievedObj, elem); });
-                            }
-                            return retrievedObj;
-                        };
-                    }
-
-                    // Remember the result if something else refers to it
-                    if (_format.IsReferable(elem))
-                        _rememberD[_format.GetReferenceID(elem)] = res;
-
-                    return res;
-                });
 
                 if (_format.IsNull(elem))
                     return _ => cleanUp(() => null);
@@ -805,32 +820,37 @@ namespace RT.Util.Serialization
                     }
                 }
 
+                // See if there’s a substitute type defined
+                ClassifyTypeOptions typeOptions;
+                var originalObject = saveObject;
+                var originalType = saveType;
+
+                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions._substituteType != null)
+                {
+                    saveObject = typeOptions._toSubstitute(saveObject);
+                    saveType = typeOptions._substituteType;
+                }
+
                 // Preserve reference identity of reference types except string
-                // NOTE: We preserve reference identity of the *original object*, not the substituted object.
-                if (!(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject))
+                if ((!(originalObject is ValueType) && !(originalObject is string) && _rememberC.Contains(originalObject)) ||
+                    (saveType != originalType && !(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject)))
                 {
                     int refId;
-                    if (!_requireRefId.TryGetValue(saveObject, out refId))
+                    if (!_requireRefId.TryGetValue(originalObject, out refId) && !_requireRefId.TryGetValue(saveObject, out refId))
                     {
                         refId = _nextId;
                         _nextId++;
+                        _requireRefId[originalObject] = refId;
                         _requireRefId[saveObject] = refId;
                     }
                     return () => _format.FormatReference(refId.ToString());
                 }
 
                 // Remember this object so that we can detect cycles and maintain reference equality
-                if (saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
+                if (originalObject != null && !(originalObject is ValueType) && !(originalObject is string))
+                    _rememberC.Add(originalObject);
+                if (saveType != originalType && saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
                     _rememberC.Add(saveObject);
-
-                // See if there’s a substitute type defined
-                ClassifyTypeOptions typeOptions;
-                var originalObject = saveObject;
-                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions._substituteType != null)
-                {
-                    saveObject = typeOptions._toSubstitute(saveObject);
-                    saveType = typeOptions._substituteType;
-                }
 
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
@@ -928,7 +948,7 @@ namespace RT.Util.Serialization
                             retrieved = true;
                             retrievedElem = previousElem();
                             int refId;
-                            if (_requireRefId.TryGetValue(saveObject, out refId))
+                            if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId.ToString());
                             saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterClassify(retrievedElem); });
                             typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterClassify(saveObject, retrievedElem); });
