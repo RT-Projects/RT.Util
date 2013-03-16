@@ -119,51 +119,51 @@ namespace RT.Util.Serialization
         public static ClassifyOptions DefaultOptions = new ClassifyOptions();
 
         /// <summary>
-        ///     Reads an object of the specified type from the specified file.</summary>
+        ///     Reconstructs an object of the specified type from the specified file.</summary>
         /// <typeparam name="TElement">
         ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <typeparam name="T">
         ///     Type of object to read.</typeparam>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <param name="parent">
-        ///     If the class to be declassified has a field with the [XmlParent] attribute, that field will receive this
-        ///     object.</param>
+        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
+        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T ReadFromFile<TElement, T>(IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
+        public static T DeserializeFile<TElement, T>(string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null, object parent = null)
         {
-            return (T) ReadFromFile<TElement>(typeof(T), format, filename, options, parent);
+            return (T) DeserializeFile<TElement>(typeof(T), filename, format, options, parent);
         }
 
         /// <summary>
-        ///     Reads an object of the specified type from the specified file.</summary>
+        ///     Reconstructs an object of the specified type from the specified file.</summary>
         /// <typeparam name="TElement">
         ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="type">
         ///     Type of object to read.</param>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <param name="parent">
-        ///     If the class to be declassified has a field with the [XmlParent] attribute, that field will receive this
-        ///     object.</param>
+        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
+        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object ReadFromFile<TElement>(Type type, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null, object parent = null)
+        public static object DeserializeFile<TElement>(Type type, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null, object parent = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            return new classifier<TElement>(format, options, defaultBaseDir).Declassify(type, elem, parent);
+            return new classifier<TElement>(format, options, defaultBaseDir).Deserialize(type, elem, parent);
         }
 
         /// <summary>
@@ -175,14 +175,14 @@ namespace RT.Util.Serialization
         /// <param name="elem">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T) new classifier<TElement>(format, options).Declassify(typeof(T), elem, null);
+            return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem, null);
         }
 
         /// <summary>
@@ -194,14 +194,14 @@ namespace RT.Util.Serialization
         /// <param name="elem">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Declassify(type, elem, null);
+            return new classifier<TElement>(format, options).Deserialize(type, elem, null);
         }
 
         /// <summary>
@@ -213,15 +213,15 @@ namespace RT.Util.Serialization
         ///     Type of object to reconstruct.</typeparam>
         /// <param name="element">
         ///     Serialized form to reconstruct object from.</param>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="intoObject">
         ///     Object to assign values to in order to reconstruct the original object.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void IntoObject<TElement, T>(TElement element, IClassifyFormat<TElement> format, T intoObject, ClassifyOptions options = null)
+        public static void DeserializeIntoObject<TElement, T>(TElement element, T intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            new classifier<TElement>(format, options).IntoObject(typeof(T), element, intoObject, null);
+            new classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, null);
         }
 
         /// <summary>
@@ -231,19 +231,19 @@ namespace RT.Util.Serialization
         ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="intoObject">
         ///     Object to assign values to in order to reconstruct the original object. Also determines the type of object
         ///     expected.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void ReadFileIntoObject<TElement>(string filename, IClassifyFormat<TElement> format, object intoObject, ClassifyOptions options = null)
+        public static void DeserializeFileIntoObject<TElement>(string filename, object intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            new classifier<TElement>(format, options).IntoObject(intoObject.GetType(), elem, intoObject, null);
+            new classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, null);
         }
 
         /// <summary>
@@ -254,35 +254,35 @@ namespace RT.Util.Serialization
         ///     Type of the object to store.</typeparam>
         /// <param name="saveObject">
         ///     Object to store in a file.</param>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="filename">
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void WriteToFile<TElement, T>(T saveObject, IClassifyFormat<TElement> format, string filename, ClassifyOptions options = null)
+        public static void SerializeToFile<TElement, T>(T saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            WriteToFile<TElement>(saveObject, format, typeof(T), filename, options);
+            SerializeToFile<TElement>(typeof(T), saveObject, filename, format, options);
         }
 
         /// <summary>
         ///     Stores the specified object in a file with the given path and filename.</summary>
         /// <typeparam name="TElement">
         ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
-        /// <param name="saveObject">
-        ///     Object to store in a file.</param>
-        /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
         /// <param name="saveType">
         ///     Type of the object to store.</param>
+        /// <param name="saveObject">
+        ///     Object to store in a file.</param>
         /// <param name="filename">
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        public static void WriteToFile<TElement>(object saveObject, IClassifyFormat<TElement> format, Type saveType, string filename, ClassifyOptions options = null)
+        public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            var element = new classifier<TElement>(format, options, defaultBaseDir).Classify(saveObject, saveType)();
+            var element = new classifier<TElement>(format, options, defaultBaseDir).Serialize(saveObject, saveType)();
             PathUtil.CreatePathToFile(filename);
             using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.None))
                 format.WriteToStream(element, f);
@@ -297,14 +297,14 @@ namespace RT.Util.Serialization
         /// <param name="saveObject">
         ///     Object to be serialized.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
         public static TElement Serialize<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Classify(saveObject, typeof(T))();
+            return new classifier<TElement>(format, options).Serialize(saveObject, typeof(T))();
         }
 
         /// <summary>
@@ -316,14 +316,14 @@ namespace RT.Util.Serialization
         /// <param name="saveObject">
         ///     Object to be serialized.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyFormats"/> for some provided examples.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
         public static TElement Serialize<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Classify(saveObject, saveType)();
+            return new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
         }
 
         private sealed class classifier<TElement>
@@ -395,10 +395,10 @@ namespace RT.Util.Serialization
                 return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
             }
 
-            public object Declassify(Type type, TElement elem, object parentNode)
+            public object Deserialize(Type type, TElement elem, object parentNode)
             {
                 _doAtTheEnd = new List<Action>();
-                var result = CustomCallStack.Run(declassify(type, elem, null, parentNode));
+                var result = CustomCallStack.Run(deserialize(type, elem, null, parentNode));
                 foreach (var action in _doAtTheEnd)
                     action();
                 return result();
@@ -415,21 +415,21 @@ namespace RT.Util.Serialization
                     {
                         retrieved = true;
                         retrievedObj = res();
-                        retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
-                        typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(retrievedObj, elem); });
+                        retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeserialize(elem); });
+                        typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeserialize(retrievedObj, elem); });
                     }
                     return retrievedObj;
                 };
             }
 
-            public void IntoObject(Type type, TElement elem, object intoObj, object parentNode)
+            public void DeserializeIntoObject(Type type, TElement elem, object intoObj, object parentNode)
             {
                 ClassifyTypeOptions typeOptions = null;
                 if (_options._typeOptions.TryGetValue(type, out typeOptions))
                 {
                     if (typeOptions._substituteType != null)
                         throw new InvalidOperationException("Cannot use type substitution when populating a provided object.");
-                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeclassify(elem); });
+                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeserialize(elem); });
                 }
 
                 _doAtTheEnd = new List<Action>();
@@ -442,12 +442,12 @@ namespace RT.Util.Serialization
                     action();
                 result();
 
-                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeclassify(elem); });
-                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeclassify(intoObj, elem); });
+                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeserialize(elem); });
+                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeserialize(intoObj, elem); });
             }
 
             // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
-            private WorkNode<Func<object>> declassify(Type type, TElement elem, object already, object parentNode)
+            private WorkNode<Func<object>> deserialize(Type type, TElement elem, object already, object parentNode)
             {
                 var originalType = type;
                 var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
@@ -457,7 +457,7 @@ namespace RT.Util.Serialization
                 {
                     if (typeOptions._substituteType != null)
                         type = typeOptions._substituteType;
-                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeclassify(elem); });
+                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeserialize(elem); });
                 }
 
                 // Every object created by declassify goes through this function
@@ -506,7 +506,7 @@ namespace RT.Util.Serialization
                 else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    return declassify(type.GetGenericArguments()[0], elem, already, parentNode);
+                    return deserialize(type.GetGenericArguments()[0], elem, already, parentNode);
                 }
                 else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
                 {
@@ -531,7 +531,7 @@ namespace RT.Util.Serialization
                         do { i++; }
                         while (i < values.Length && values[i] == null);
                         if (i < genericArguments.Length && i < values.Length)
-                            return declassify(genericArguments[i], values[i], null, parentNode);
+                            return deserialize(genericArguments[i], values[i], null, parentNode);
                         var constructor = type.GetConstructor(genericArguments);
                         if (constructor == null)
                             throw new InvalidOperationException("Could not find expected Tuple constructor.");
@@ -571,7 +571,7 @@ namespace RT.Util.Serialization
                             else
                                 outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type);
 
-                            outputDict.IfType<IClassifyObjectProcessor<TElement>>(dict => { dict.BeforeDeclassify(elem); });
+                            outputDict.IfType<IClassifyObjectProcessor<TElement>>(dict => { dict.BeforeDeserialize(elem); });
 
                             var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
                             var e = _format.GetDictionary(elem).GetEnumerator();
@@ -586,7 +586,7 @@ namespace RT.Util.Serialization
                                 if (e.MoveNext())
                                 {
                                     keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
-                                    return declassify(valueType, e.Current.Value, null, parentNode);
+                                    return deserialize(valueType, e.Current.Value, null, parentNode);
                                 }
 
                                 Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
@@ -611,7 +611,7 @@ namespace RT.Util.Serialization
                                     setters[i] = prevResult;
                                 i++;
                                 if (i < input.Length)
-                                    return declassify(valueType, input[i], null, parentNode);
+                                    return deserialize(valueType, input[i], null, parentNode);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     for (int j = 0; j < setters.Length; j++)
@@ -632,7 +632,7 @@ namespace RT.Util.Serialization
                             else
                                 outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : type);
 
-                            outputList.IfType<IClassifyObjectProcessor<TElement>>(list => { list.BeforeDeclassify(elem); });
+                            outputList.IfType<IClassifyObjectProcessor<TElement>>(list => { list.BeforeDeserialize(elem); });
 
                             var addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
                             var e = _format.GetList(elem, null).GetEnumerator();
@@ -644,7 +644,7 @@ namespace RT.Util.Serialization
                                     adders.Add(prevResult);
                                 first = false;
                                 if (e.MoveNext())
-                                    return declassify(valueType, e.Current, null, parentNode);
+                                    return deserialize(valueType, e.Current, null, parentNode);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     foreach (var adder in adders)
@@ -705,7 +705,7 @@ namespace RT.Util.Serialization
 
             private WorkNode<Func<object>> intoObject(TElement elem, object intoObj, Type type, object parentNode)
             {
-                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeDeclassify(elem); });
+                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeDeserialize(elem); });
 
                 var fieldsToAssignTo = new List<FieldInfo>();
                 var elementsToAssign = new List<TElement>();
@@ -754,7 +754,7 @@ namespace RT.Util.Serialization
                                         .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(string) /* id */, typeof(Func<object>) /* generator */ }, null)
                                         .Invoke(Ut.NewArray<object>(
                                             followId /* id */,
-                                            new Func<object>(() => ReadFromFile(innerType, _format, newFile, _options, intoObj)) /* generator */
+                                            new Func<object>(() => DeserializeFile(innerType, newFile, _format, _options, intoObj)) /* generator */
                                         ))
                                 );
                             }
@@ -779,7 +779,7 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < fieldsToAssignTo.Count)
-                        return declassify(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj);
+                        return deserialize(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj);
 
                     _doAtTheEnd.Add(() =>
                     {
@@ -790,7 +790,7 @@ namespace RT.Util.Serialization
                 };
             }
 
-            public Func<TElement> Classify(object saveObject, Type declaredType)
+            public Func<TElement> Serialize(object saveObject, Type declaredType)
             {
                 Func<TElement> elem;
 
@@ -855,8 +855,8 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
-                saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeClassify(); });
-                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeClassify(saveObject); });
+                saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeSerialize(); });
+                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeSerialize(saveObject); });
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
@@ -879,8 +879,8 @@ namespace RT.Util.Serialization
                             var valueProperty = saveType.GetProperty("Value");
                             if (keyProperty == null || valueProperty == null)
                                 throw new InvalidOperationException("Cannot find Key or Value property in KeyValuePair type.");
-                            var key = Classify(keyProperty.GetValue(saveObject, null), genericArguments[0]);
-                            var value = Classify(valueProperty.GetValue(saveObject, null), genericArguments[1]);
+                            var key = Serialize(keyProperty.GetValue(saveObject, null), genericArguments[0]);
+                            var value = Serialize(valueProperty.GetValue(saveObject, null), genericArguments[1]);
                             elem = () => _format.FormatKeyValuePair(key(), value());
                         }
                         else
@@ -890,7 +890,7 @@ namespace RT.Util.Serialization
                                 var property = saveType.GetProperty("Item" + (i + 1));
                                 if (property == null)
                                     throw new InvalidOperationException("Cannot find expected item property in Tuple type.");
-                                return Classify(property.GetValue(saveObject, null), genericArguments[i]);
+                                return Serialize(property.GetValue(saveObject, null), genericArguments[i]);
                             }).ToArray();
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
@@ -911,7 +911,7 @@ namespace RT.Util.Serialization
                         var kvps = ((IEnumerable) saveObject).Cast<object>().Select(kvp => new
                         {
                             Key = keyProperty.GetValue(kvp, null),
-                            GetValue = Classify(valueProperty.GetValue(kvp, null), valueType)
+                            GetValue = Serialize(valueProperty.GetValue(kvp, null), valueType)
                         }).ToArray();
                         elem = () => _format.FormatDictionary(kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
                     }
@@ -919,12 +919,12 @@ namespace RT.Util.Serialization
                     {
                         // It’s an array or collection
                         var valueType = declaredType.IsArray ? declaredType.GetElementType() : typeParameters[0];
-                        var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Classify(val, valueType)).ToArray();
+                        var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Serialize(val, valueType)).ToArray();
                         elem = () => _format.FormatList(false, items.Select(item => item()));
                     }
                     else
                     {
-                        var kvps = classifyObject(saveObject, saveType).ToArray();
+                        var kvps = serializeObject(saveObject, saveType).ToArray();
                         elem = () => _format.FormatObject(kvps.Select(kvp => new KeyValuePair<string, TElement>(kvp.Key, kvp.Value())));
                     }
                 }
@@ -950,8 +950,8 @@ namespace RT.Util.Serialization
                             int refId;
                             if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId.ToString());
-                            saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterClassify(retrievedElem); });
-                            typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterClassify(saveObject, retrievedElem); });
+                            saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterSerialize(retrievedElem); });
+                            typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterSerialize(saveObject, retrievedElem); });
                         }
                         return retrievedElem;
                     };
@@ -960,7 +960,7 @@ namespace RT.Util.Serialization
                 return elem;
             }
 
-            private IEnumerable<KeyValuePair<string, Func<TElement>>> classifyObject(object saveObject, Type saveType)
+            private IEnumerable<KeyValuePair<string, Func<TElement>>> serializeObject(object saveObject, Type saveType)
             {
                 bool ignoreIfDefaultOnType = saveType.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
                 bool ignoreIfEmptyOnType = saveType.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
@@ -1027,7 +1027,7 @@ namespace RT.Util.Serialization
                             if (_baseDir == null)
                                 throw new InvalidOperationException(@"An object that uses [ClassifyFollowId] can only be stored if a base directory is specified (see “BaseDir” in the ClassifyOptions class).");
                             var prop = field.FieldType.GetProperty("Value");
-                            WriteToFile(deferredSaveValue.Value, _format, innerType, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _options);
+                            SerializeToFile(innerType, deferredSaveValue.Value, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _format, _options);
                         }
 
                         yield return new KeyValuePair<string, Func<TElement>>(rFieldName, () => _format.FormatFollowID(deferredSaveValue.Id));
@@ -1035,7 +1035,7 @@ namespace RT.Util.Serialization
                     else
                     {
                         // None of the special attributes — just classify the value
-                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, Classify(saveValue, field.FieldType));
+                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, Serialize(saveValue, field.FieldType));
                     }
                 }
             }
@@ -1077,7 +1077,7 @@ namespace RT.Util.Serialization
             System.Xml.Linq.XElement testElement;
             try
             {
-                testElement = Serialize(type, obj, ClassifyFormats.Xml);
+                testElement = Serialize(type, obj, ClassifyXmlFormat.Default);
             }
             catch (Exception e)
             {
@@ -1086,7 +1086,7 @@ namespace RT.Util.Serialization
             }
             try
             {
-                Deserialize(type, testElement, ClassifyFormats.Xml);
+                Deserialize(type, testElement, ClassifyXmlFormat.Default);
             }
             catch (Exception e)
             {
@@ -1106,7 +1106,7 @@ namespace RT.Util.Serialization
         /// <summary>
         ///     Pre-processes this object before <see cref="Classify"/> serializes it. This method is automatically invoked by
         ///     <see cref="Classify"/> and should not be called directly.</summary>
-        void BeforeClassify();
+        void BeforeSerialize();
 
         /// <summary>
         ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is automatically
@@ -1114,7 +1114,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form produced for this object. All changes made to it are final and will appear in <see
         ///     cref="Classify"/>’s output.</param>
-        void AfterClassify(TElement element);
+        void AfterSerialize(TElement element);
 
         /// <summary>
         ///     Pre-processes a serialized form before <see cref="Classify"/> restores the object from it. The object’s fields
@@ -1123,7 +1123,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form from which this object is about to be restored. All changes made to it will affect how the
         ///     object is restored.</param>
-        void BeforeDeclassify(TElement element);
+        void BeforeDeserialize(TElement element);
 
         /// <summary>
         ///     Post-processes this object after <see cref="Classify"/> has restored it from serialized form. This method is
@@ -1131,7 +1131,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form from which this object was restored. Changes made to this will have no effect on the
         ///     deserialization.</param>
-        void AfterDeclassify(TElement element);
+        void AfterDeserialize(TElement element);
     }
 
     /// <summary>
@@ -1147,7 +1147,7 @@ namespace RT.Util.Serialization
         ///     cref="Classify"/> and should not be called directly.</summary>
         /// <param name="obj">
         ///     The object about to be serialized.</param>
-        void BeforeClassify(object obj);
+        void BeforeSerialize(object obj);
 
         /// <summary>
         ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is automatically
@@ -1157,7 +1157,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form produced for this object. All changes made to it are final and will appear in <see
         ///     cref="Classify"/>’s output.</param>
-        void AfterClassify(object obj, TElement element);
+        void AfterSerialize(object obj, TElement element);
 
         /// <summary>
         ///     Pre-processes a serialized form before <see cref="Classify"/> restores the object from it. This method is
@@ -1165,7 +1165,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form from which this object is about to be restored. All changes made to it will affect how the
         ///     object is restored.</param>
-        void BeforeDeclassify(TElement element);
+        void BeforeDeserialize(TElement element);
 
         /// <summary>
         ///     Post-processes an object after <see cref="Classify"/> has restored it from serialized form. This method is
@@ -1175,7 +1175,7 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The serialized form from which this object was restored. Changes made to this will have no effect on the
         ///     deserialization.</param>
-        void AfterDeclassify(object obj, TElement element);
+        void AfterDeserialize(object obj, TElement element);
     }
 
     /// <summary>

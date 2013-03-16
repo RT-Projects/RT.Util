@@ -166,14 +166,14 @@ namespace RT.Util.Serialization
         [Test]
         public void TestBlankClass()
         {
-            XElement xel = VerifyXml(Classify.Serialize(new blankClass(), ClassifyFormats.Xml));
-            Classify.Deserialize<XElement, blankClass>(xel, ClassifyFormats.Xml);
+            XElement xel = VerifyXml(ClassifyXml.Serialize(new blankClass()));
+            ClassifyXml.Deserialize<blankClass>(xel);
         }
 
         [Test]
         public void TestRootElementName()
         {
-            XElement xel = VerifyXml(Classify.Serialize(new blankClass(), new XmlClassifyFormat(rootTagName: "BlankClass")));
+            XElement xel = VerifyXml(ClassifyXml.Serialize(new blankClass(), format: ClassifyXmlFormat.Create(rootTagName: "BlankClass")));
             Assert.IsTrue(XNode.DeepEquals(xel, XElement.Parse(@"<BlankClass/>")));
         }
 
@@ -195,8 +195,8 @@ namespace RT.Util.Serialization
                 boxedInt = int.MinValue,
                 boxedLong = long.MinValue,
             };
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, basicClass>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<basicClass>(xel);
 
             clsEx.AssertEqual(clsAc);
 
@@ -220,8 +220,8 @@ namespace RT.Util.Serialization
         public void TestStringNull()
         {
             var clsEx = new basicClass() { AString = null };
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, basicClass>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<basicClass>(xel);
 
             clsEx.AssertEqual(clsAc);
         }
@@ -236,8 +236,8 @@ namespace RT.Util.Serialization
             clsEx.ListDicts.Add(new Dictionary<string, string>());
             clsEx.ListDicts.Add(null);
             clsEx.ListDicts.Add(new Dictionary<string, string>() { { "abc", "def" }, { "key", "value" }, { "null", null } });
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, classWithList>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<classWithList>(xel);
 
             assertList(clsEx.List, clsAc.List);
             assertListDict(clsEx.ListDicts, clsAc.ListDicts);
@@ -256,8 +256,8 @@ namespace RT.Util.Serialization
                 { "single", new List<string>() { "def" } },
                 { "multple", new List<string>() { "one", null, "three" } }
             };
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, classWithDict>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<classWithDict>(xel);
 
             assertDict(clsEx.Dict, clsAc.Dict);
             assertDictList(clsEx.DictLists, clsAc.DictLists);
@@ -269,8 +269,8 @@ namespace RT.Util.Serialization
             var clsEx = new classWithDict();
             clsEx.DictClasses.Add("test1", new basicClass());
             clsEx.DictClasses.Add("test2", new basicClass() { AnInt = 63827, key = 429745 });
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, classWithDict>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<classWithDict>(xel);
 
             Assert.AreEqual(clsEx.DictClasses["test1"].AnInt, clsAc.DictClasses["test1"].AnInt);
             Assert.AreEqual(clsEx.DictClasses["test1"].key, clsAc.DictClasses["test1"].key);
@@ -290,8 +290,8 @@ namespace RT.Util.Serialization
                             new XElement("sub1.1")),
                         new XElement("sub2", new XAttribute("attr2", "val2")))
             };
-            var xel = VerifyXml(Classify.Serialize(clsEx, ClassifyFormats.Xml));
-            var clsAc = Classify.Deserialize<XElement, xmlClass>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
+            var clsAc = ClassifyXml.Deserialize<xmlClass>(xel);
 
             Assert.AreEqual(clsEx.Str, clsAc.Str);
             Assert.AreEqual(clsEx.Xml.ToString(SaveOptions.DisableFormatting), clsAc.Xml.ToString(SaveOptions.DisableFormatting));
@@ -316,8 +316,8 @@ namespace RT.Util.Serialization
                     }
                 }
             };
-            var xel = VerifyXml(Classify.Serialize(nestedEx, ClassifyFormats.Xml));
-            var nestedAc = Classify.Deserialize<XElement, nestedClass>(xel, ClassifyFormats.Xml);
+            var xel = VerifyXml(ClassifyXml.Serialize(nestedEx));
+            var nestedAc = ClassifyXml.Deserialize<nestedClass>(xel);
 
             // Full comparison
             nestedEx.AssertEqual(nestedAc);
@@ -385,7 +385,7 @@ namespace RT.Util.Serialization
         public void TestPartialLoad()
         {
             var elem = new XElement("item", new XElement("AULong", "987654"));
-            var loaded = Classify.Deserialize<XElement, basicClass>(elem, ClassifyFormats.Xml);
+            var loaded = ClassifyXml.Deserialize<basicClass>(elem);
 
             Assert.AreEqual(-123, loaded.AnInt);
             Assert.AreEqual(4747, loaded.AUShort);
@@ -399,19 +399,19 @@ namespace RT.Util.Serialization
         public void TestConstructors()
         {
             var elem = new XElement("item");
-            var loaded1 = Classify.Deserialize<XElement, classWithPrivateCtor>(elem, ClassifyFormats.Xml);
+            var loaded1 = ClassifyXml.Deserialize<classWithPrivateCtor>(elem);
             Assert.AreEqual(9867, loaded1.Field);
 
             try
             {
-                var loaded2 = Classify.Deserialize<XElement, classWithThrowingCtor>(elem, ClassifyFormats.Xml);
+                var loaded2 = ClassifyXml.Deserialize<classWithThrowingCtor>(elem);
                 Assert.Fail("Expected exception");
             }
             catch (Exception) { }
 
             try
             {
-                var loaded3 = Classify.Deserialize<XElement, classWithNoCtor>(elem, ClassifyFormats.Xml);
+                var loaded3 = ClassifyXml.Deserialize<classWithNoCtor>(elem);
                 Assert.Fail("Expected System.Exception");
             }
             catch { }
@@ -429,8 +429,8 @@ namespace RT.Util.Serialization
                 SortedDic = new SortedDictionary<int, string> { { 1, "one" }, { 2, "two" }, { 3, "three" }, { 4, "four" } }
             };
 
-            var xml = VerifyXml(Classify.Serialize(x, ClassifyFormats.Xml));
-            var x2 = Classify.Deserialize<XElement, classWithAdvancedTypes>(xml, ClassifyFormats.Xml);
+            var xml = VerifyXml(ClassifyXml.Serialize(x));
+            var x2 = ClassifyXml.Deserialize<classWithAdvancedTypes>(xml);
 
             Assert.IsTrue(x2.IntCollection != null);
             Assert.IsTrue(x2.IntCollection.SequenceEqual(new[] { 1, 2, 3, 4 }));
@@ -468,7 +468,7 @@ namespace RT.Util.Serialization
             co.List1 = co.List2 = new List<int>();
             co.List3 = new List<int>();
 
-            var xml = VerifyXml(Classify.Serialize(co, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(co));
             Assert.IsTrue(XNode.DeepEquals(XElement.Parse(@"<test>  <thingy stuff=""123"" /> </test>"), XElement.Parse(@"       <test  ><thingy    stuff  =  ""123""/>     </test>  ")));
             Assert.IsFalse(XNode.DeepEquals(XElement.Parse(@"<test>  <thingy stufff=""123"" /> </test>"), XElement.Parse(@"       <test  ><thingy    stuff  =  ""123""/>     </test>  ")));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
@@ -496,7 +496,7 @@ namespace RT.Util.Serialization
                   <List3 />
                 </item>")));
 
-            var cn = Classify.Deserialize<XElement, classRefTest1>(XElement.Parse(xml.ToString()), ClassifyFormats.Xml);
+            var cn = ClassifyXml.Deserialize<classRefTest1>(XElement.Parse(xml.ToString()));
             Assert.IsTrue(object.ReferenceEquals(cn.Version1, cn.Version2));
             Assert.IsFalse(object.ReferenceEquals(cn.Version1, cn.Version3));
             Assert.IsTrue(object.ReferenceEquals(cn.List1, cn.List2));
@@ -537,7 +537,7 @@ namespace RT.Util.Serialization
             co.ListList.Add(new List<int>());
             co.ListList.Add(co.ListList[0]);
 
-            var xml = VerifyXml(Classify.Serialize(co, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(co));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <ListInt>
@@ -571,7 +571,7 @@ namespace RT.Util.Serialization
                   </ListList>
                 </item>")));
 
-            var cn = Classify.Deserialize<XElement, classRefTest2>(XElement.Parse(xml.ToString()), ClassifyFormats.Xml);
+            var cn = ClassifyXml.Deserialize<classRefTest2>(XElement.Parse(xml.ToString()));
             Assert.IsTrue(object.ReferenceEquals(cn.ListVersion[0], cn.ListVersion[2]));
             Assert.IsFalse(object.ReferenceEquals(cn.ListVersion[0], cn.ListVersion[1]));
             Assert.IsTrue(object.ReferenceEquals(cn.ListList[0], cn.ListList[2]));
@@ -672,7 +672,7 @@ namespace RT.Util.Serialization
             var inst = new classWithVersion { Version = new Version(5, 3, 1) };
             inst.Version2 = inst.Version;
             var opts = new ClassifyOptions().AddTypeOptions(typeof(Version), new substituteVersion.Options());
-            var xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <Version refid=""0"">
@@ -685,7 +685,7 @@ namespace RT.Util.Serialization
             assertSubstVersion(inst, opts, xml);
 
             opts = new ClassifyOptions().AddTypeOptions(typeof(Version), new optionsVersionToString());
-            xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <Version refid=""0"">5.3.1</Version>
@@ -698,7 +698,7 @@ namespace RT.Util.Serialization
 
         private static void assertSubstVersion(classWithVersion inst, ClassifyOptions opts, XElement xml)
         {
-            var inst2 = Classify.Deserialize<XElement, classWithVersion>(xml, ClassifyFormats.Xml, opts);
+            var inst2 = ClassifyXml.Deserialize<classWithVersion>(xml, opts);
             Assert.IsTrue(object.ReferenceEquals(inst2.Version, inst2.Version2)); // reference identity preserved
             Assert.IsFalse(object.ReferenceEquals(inst.Version, inst2.Version)); // sanity check
             Assert.AreEqual(inst.Version2, inst2.Version);
@@ -720,7 +720,7 @@ namespace RT.Util.Serialization
                 GuidNullableNull = null
             };
             var opts = new ClassifyOptions().AddTypeOptions(typeof(Guid), new substituteGuid.Options());
-            var xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <Guid>
@@ -734,7 +734,7 @@ namespace RT.Util.Serialization
             assertSubstGuid(opts, xml);
 
             opts = new ClassifyOptions().AddTypeOptions(typeof(Guid), new optionsGuidToString());
-            xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <Guid>d3909698-14cb-4af2-886b-739c6dc567eb</Guid>
@@ -746,7 +746,7 @@ namespace RT.Util.Serialization
 
         private static void assertSubstGuid(ClassifyOptions opts, XElement xml)
         {
-            var inst2 = Classify.Deserialize<XElement, classWithGuid>(xml, ClassifyFormats.Xml, opts);
+            var inst2 = ClassifyXml.Deserialize<classWithGuid>(xml, opts);
             Assert.IsTrue(inst2.Guid.Equals(_testGuid));
             Assert.IsTrue(inst2.GuidNullableNotNull.Value.Equals(_testGuid));
             Assert.IsTrue(inst2.GuidNullableNull == null);
@@ -757,15 +757,15 @@ namespace RT.Util.Serialization
         {
             var inst = new stringWrapper { Value = "val" };
             var opts = new ClassifyOptions().AddTypeOptions(typeof(stringWrapper), new stringWrapper.Options());
-            var xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item>val</item>")));
-            var inst2 = Classify.Deserialize<XElement, stringWrapper>(xml, ClassifyFormats.Xml, opts);
+            var inst2 = ClassifyXml.Deserialize<stringWrapper>(xml, opts);
             Assert.AreEqual("val", inst2.Value);
 
             inst = new stringWrapper { Value = null };
-            xml = VerifyXml(Classify.Serialize(inst, ClassifyFormats.Xml, opts));
+            xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item null='1'/>")));
-            inst2 = Classify.Deserialize<XElement, stringWrapper>(xml, ClassifyFormats.Xml, opts);
+            inst2 = ClassifyXml.Deserialize<stringWrapper>(xml, opts);
             Assert.IsNull(inst2.Value);
         }
 
@@ -819,7 +819,7 @@ namespace RT.Util.Serialization
                     </S2>
                 </item>
             ");
-            var settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            var settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual("foo1", settings.S1.Something);
             Assert.AreEqual("bar1", settings.S1.Other);
             Assert.AreEqual("FOO1", settings.S2.Something);
@@ -836,7 +836,7 @@ namespace RT.Util.Serialization
                     <S3><Something>blah</Something></S3>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual("foo1", settings.S1.Something);
             Assert.AreEqual("bar", settings.S1.Other);
             Assert.AreEqual("FOO1", settings.S2.Something);
@@ -851,7 +851,7 @@ namespace RT.Util.Serialization
                     </S2>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual("foo", settings.S1.Something);
             Assert.AreEqual("bar", settings.S1.Other);
             Assert.AreEqual("FOO", settings.S2.Something);
@@ -861,7 +861,7 @@ namespace RT.Util.Serialization
                 <item>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual("foo", settings.S1.Something);
             Assert.AreEqual("bar", settings.S1.Other);
             Assert.AreEqual("FOO", settings.S2.Something);
@@ -880,7 +880,7 @@ namespace RT.Util.Serialization
                     </L>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(2, settings.L.Count);
             Assert.AreEqual("a", settings.L[0].Other);
             Assert.AreEqual("b", settings.L[1].Other);
@@ -891,7 +891,7 @@ namespace RT.Util.Serialization
                 <item>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(2, settings.L.Count);
             Assert.AreEqual("1", settings.L[0].Other);
             Assert.AreEqual("2", settings.L[1].Other);
@@ -906,7 +906,7 @@ namespace RT.Util.Serialization
                 <item>
                 </item>
             ");
-            var settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            var settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
             Assert.AreEqual(typeof(baseClass), settings.B.C2.GetType());
             Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
@@ -928,7 +928,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
             Assert.AreEqual("XML", settings.B.C1.Base);
             Assert.AreEqual("TEST", (settings.B.C1 as subClass).Derived);
@@ -942,7 +942,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C2.GetType());
             Assert.AreEqual("XML", settings.B.C2.Base);
             Assert.AreEqual("derived", (settings.B.C2 as subClass).Derived);
@@ -956,7 +956,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
             Assert.AreEqual("BASE", settings.B.C3.Base);
             Assert.AreEqual("XML", (settings.B.C3 as subClass).Derived);
@@ -970,7 +970,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C4.GetType());
             Assert.AreEqual("XML", settings.B.C4.Base);
             Assert.AreEqual("DERIVED", (settings.B.C4 as subClass).Derived);
@@ -984,7 +984,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C5.GetType());
             Assert.AreEqual("base", settings.B.C5.Base);
             Assert.AreEqual("XML", (settings.B.C5 as subClass).Derived);
@@ -998,7 +998,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C6.GetType());
             Assert.AreEqual("base", settings.B.C6.Base);
             Assert.AreEqual("XML", (settings.B.C6 as subClass).Derived);
@@ -1012,7 +1012,7 @@ namespace RT.Util.Serialization
                     </B>
                 </item>
             ");
-            settings = Classify.Deserialize<XElement, settingsClass>(xml, ClassifyFormats.Xml);
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
             Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
             Assert.AreEqual("base", settings.B.C1.Base); // not BASE because it's a different type, even if a subtype
             Assert.AreEqual("XML", (settings.B.C1 as subClass).Derived);
@@ -1041,20 +1041,20 @@ namespace RT.Util.Serialization
                 _list = new List<blankClass> { _specified };
             }
 
-            public void BeforeClassify()
+            public void BeforeSerialize()
             {
                 _colorAsString = "{0:X2}{1:X2}{2:X2}".Fmt(_color.R, _color.G, _color.B);
             }
 
-            public void AfterClassify(XElement element)
+            public void AfterSerialize(XElement element)
             {
             }
 
-            public void BeforeDeclassify(XElement element)
+            public void BeforeDeserialize(XElement element)
             {
             }
 
-            public void AfterDeclassify(XElement element)
+            public void AfterDeserialize(XElement element)
             {
                 _color = Color.FromArgb(
                     Convert.ToInt32(_colorAsString.Substring(0, 2), 16),
@@ -1073,10 +1073,10 @@ namespace RT.Util.Serialization
         public void TestPrePostprocess()
         {
             var instance = new TestPrePostProcess(Color.FromArgb(171, 205, 239));
-            var xml = VerifyXml(Classify.Serialize(instance, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(instance));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><colorAsString>ABCDEF</colorAsString><list><item refid='0'/></list><specified ref='0'/></item>")));
 
-            var reconstructed = Classify.Deserialize<XElement, TestPrePostProcess>(xml, ClassifyFormats.Xml);
+            var reconstructed = ClassifyXml.Deserialize<TestPrePostProcess>(xml);
             Assert.AreEqual(reconstructed.Color, Color.FromArgb(171, 205, 239));
         }
 
@@ -1088,21 +1088,21 @@ namespace RT.Util.Serialization
 
         private sealed class serializeThisOptions : ClassifyTypeOptions, IClassifyTypeProcessor<XElement>
         {
-            public void BeforeClassify(object obj)
+            public void BeforeSerialize(object obj)
             {
             }
 
-            public void AfterClassify(object obj, XElement element)
+            public void AfterSerialize(object obj, XElement element)
             {
                 element.Element("SetThisToXyz").Remove();
             }
 
-            public void BeforeDeclassify(XElement element)
+            public void BeforeDeserialize(XElement element)
             {
                 element.Add(new XElement("SetThisToXyz", "Xyz"));
             }
 
-            public void AfterDeclassify(object obj, XElement element)
+            public void AfterDeserialize(object obj, XElement element)
             {
             }
         }
@@ -1113,10 +1113,10 @@ namespace RT.Util.Serialization
             var opt = new ClassifyOptions().AddTypeOptions(typeof(SerializeThis), new serializeThisOptions());
 
             var instance = new SerializeThis { KeepThis = "Keep", SetThisToXyz = "abc" };
-            var xml = VerifyXml(Classify.Serialize(instance, ClassifyFormats.Xml, opt));
+            var xml = VerifyXml(ClassifyXml.Serialize(instance, opt));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><KeepThis>Keep</KeepThis></item>")));
 
-            var reconstructed = Classify.Deserialize<XElement, SerializeThis>(xml, ClassifyFormats.Xml, opt);
+            var reconstructed = ClassifyXml.Deserialize<SerializeThis>(xml, opt);
             Assert.IsNotNull(reconstructed);
             Assert.AreEqual(reconstructed.KeepThis, "Keep");
             Assert.AreEqual(reconstructed.SetThisToXyz, "Xyz");
@@ -1155,10 +1155,10 @@ namespace RT.Util.Serialization
             var weird2 = new explicitlyImplementedList();
             ((IList<string>) weird2).Add("Y");
 
-            var xml = VerifyXml(Classify.Serialize(new classWithExplicitlyImplementedList { List1 = weird1, List2 = weird2 }, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(new classWithExplicitlyImplementedList { List1 = weird1, List2 = weird2 }));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><List1><item>X</item></List1><List2><item>Y</item></List2></item>")));
 
-            var reconstructed = Classify.Deserialize<XElement, classWithExplicitlyImplementedList>(xml, ClassifyFormats.Xml);
+            var reconstructed = ClassifyXml.Deserialize<classWithExplicitlyImplementedList>(xml);
             Assert.IsNotNull(reconstructed);
             Assert.IsNotNull(reconstructed.List1);
             Assert.AreEqual(1, reconstructed.List1.Count);
@@ -1204,10 +1204,10 @@ namespace RT.Util.Serialization
             var weird2 = new explicitlyImplementedDictionary();
             ((IDictionary<string, string>) weird2).Add("Y", "Z");
 
-            var xml = VerifyXml(Classify.Serialize(new classWithExplicitlyImplementedDictionary { Dictionary1 = weird1, Dictionary2 = weird2 }, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(new classWithExplicitlyImplementedDictionary { Dictionary1 = weird1, Dictionary2 = weird2 }));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><Dictionary1><item key='X'>Y</item></Dictionary1><Dictionary2><item key='Y'>Z</item></Dictionary2></item>")));
 
-            var reconstructed = Classify.Deserialize<XElement, classWithExplicitlyImplementedDictionary>(xml, ClassifyFormats.Xml);
+            var reconstructed = ClassifyXml.Deserialize<classWithExplicitlyImplementedDictionary>(xml);
             Assert.IsNotNull(reconstructed);
             Assert.IsNotNull(reconstructed.Dictionary1);
             Assert.AreEqual(1, reconstructed.Dictionary1.Count);
@@ -1232,7 +1232,7 @@ namespace RT.Util.Serialization
                 List = new List<blankClass> { inner },
                 Specified = inner
             };
-            var classified = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml));
+            var classified = VerifyXml(ClassifyXml.Serialize(tester));
 
             Assert.IsNotNull(classified.Element("Specified"));
             Assert.IsNotNull(classified.Element("Specified").Attribute("ref"));
@@ -1246,7 +1246,7 @@ namespace RT.Util.Serialization
                 File.WriteAllText(tmpFile, classified.ToString());
 
                 var newTester = new xmlIntoObjectReferenceEqualityTester();
-                Classify.ReadFileIntoObject(tmpFile, ClassifyFormats.Xml, newTester);
+                ClassifyXml.DeserializeFileIntoObject(tmpFile, newTester);
 
                 Assert.IsNotNull(newTester.List);
                 Assert.AreEqual(1, newTester.List.Count);
@@ -1274,7 +1274,7 @@ namespace RT.Util.Serialization
                 Array = new blankClass[] { inner, inner },
                 Specified = inner
             };
-            var classified = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml));
+            var classified = VerifyXml(ClassifyXml.Serialize(tester));
 
             Assert.IsNotNull(classified.Element("Specified"));
             Assert.IsNotNull(classified.Element("Specified").Attribute("ref"));
@@ -1283,7 +1283,7 @@ namespace RT.Util.Serialization
             Assert.IsNotNull(classified.Element("Array").Element("item").Attribute("refid"));
             Assert.IsTrue(classified.Element("Specified").Attribute("ref").Value == classified.Element("Array").Element("item").Attribute("refid").Value);
 
-            var newTester = Classify.Deserialize<XElement, referenceEqualityInArraysTester>(classified, ClassifyFormats.Xml);
+            var newTester = ClassifyXml.Deserialize<referenceEqualityInArraysTester>(classified);
 
             Assert.IsNotNull(newTester.Array);
             Assert.AreEqual(2, newTester.Array.Length);
@@ -1302,7 +1302,7 @@ namespace RT.Util.Serialization
             var tester = new circularReferenceTester();
             tester.Tester = tester;
 
-            var classified = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml));
+            var classified = VerifyXml(ClassifyXml.Serialize(tester));
             Assert.IsTrue(XNode.DeepEquals(classified, XElement.Parse(@"<item refid=""0""><Tester ref=""0"" /></item>")));
 
             Assert.IsNotNull(classified.Element("Tester"));
@@ -1310,7 +1310,7 @@ namespace RT.Util.Serialization
             Assert.IsNotNull(classified.Element("Tester").Attribute("ref"));
             Assert.IsTrue(classified.Element("Tester").Attribute("ref").Value == classified.Attribute("refid").Value);
 
-            var newTester = Classify.Deserialize<XElement, circularReferenceTester>(classified, ClassifyFormats.Xml);
+            var newTester = ClassifyXml.Deserialize<circularReferenceTester>(classified);
 
             Assert.IsNotNull(newTester.Tester);
             Assert.IsTrue(object.ReferenceEquals(newTester, newTester.Tester));
@@ -1328,7 +1328,7 @@ namespace RT.Util.Serialization
             tester[0] = new circularReferenceArrayTester();
             tester[0].Tester = tester;
 
-            var classified = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml));
+            var classified = VerifyXml(ClassifyXml.Serialize(tester));
             Assert.IsTrue(XNode.DeepEquals(classified, XElement.Parse(@"<item refid=""0""><item><Tester ref=""0"" /></item></item>")));
 
             Assert.IsNotNull(classified.Element("item"));
@@ -1337,7 +1337,7 @@ namespace RT.Util.Serialization
             Assert.IsNotNull(classified.Attribute("refid"));
             Assert.IsTrue(classified.Element("item").Element("Tester").Attribute("ref").Value == classified.Attribute("refid").Value);
 
-            var newTester = Classify.Deserialize<XElement, circularReferenceArrayTester[]>(classified, ClassifyFormats.Xml);
+            var newTester = ClassifyXml.Deserialize<circularReferenceArrayTester[]>(classified);
 
             Assert.IsNotNull(newTester);
             Assert.Greater(newTester.Length, 0);
@@ -1356,18 +1356,18 @@ namespace RT.Util.Serialization
             var tester = new tupleReferenceTester();
             tester.Tester = Tuple.Create((object) tester);
 
-            var xml = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml));
+            var xml = VerifyXml(ClassifyXml.Serialize(tester));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item refid=""0""><Tester><item1 ref=""0"" /></Tester></item>")));
 
-            var newTester = Classify.Deserialize<XElement, tupleReferenceTester>(xml, ClassifyFormats.Xml);
+            var newTester = ClassifyXml.Deserialize<tupleReferenceTester>(xml);
             Assert.IsTrue(newTester.Tester != null);
             Assert.IsTrue(object.ReferenceEquals(newTester, newTester.Tester.Item1));
 
-            xml = VerifyXml(Classify.Serialize(tester.Tester, ClassifyFormats.Xml));
+            xml = VerifyXml(ClassifyXml.Serialize(tester.Tester));
             var fulltype = typeof(tupleReferenceTester).AssemblyQualifiedName;
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item refid=""0""><item1 fulltype=""{0}""><Tester ref=""0"" /></item1></item>".Fmt(fulltype))));
 
-            var newTuple = Classify.Deserialize<XElement, Tuple<object>>(xml, ClassifyFormats.Xml);
+            var newTuple = ClassifyXml.Deserialize<Tuple<object>>(xml);
             Assert.IsTrue(newTuple.Item1 != null);
             Assert.IsTrue(object.ReferenceEquals(newTuple, ((tupleReferenceTester) newTuple.Item1).Tester));
         }
@@ -1396,16 +1396,16 @@ namespace RT.Util.Serialization
             var tester = new listSubstitutionTester { AList = new List<int> { 7, 5, 3, 1 } };
             var opts = new ClassifyOptions().AddTypeOptions(typeof(List<int>), new listSubstOpts());
 
-            var xml = VerifyXml(Classify.Serialize(tester, ClassifyFormats.Xml, opts));
+            var xml = VerifyXml(ClassifyXml.Serialize(tester, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><AList>7|5|3|1</AList></item>")));
 
-            var newTester = Classify.Deserialize<XElement, listSubstitutionTester>(xml, ClassifyFormats.Xml, opts);
+            var newTester = ClassifyXml.Deserialize<listSubstitutionTester>(xml, opts);
             Assert.IsTrue(newTester.AList.SequenceEqual(new[] { 7, 5, 3, 1 }));
 
-            xml = VerifyXml(Classify.Serialize(tester.AList, ClassifyFormats.Xml, opts));
+            xml = VerifyXml(ClassifyXml.Serialize(tester.AList, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item>7|5|3|1</item>")));
 
-            var newList = Classify.Deserialize<XElement, List<int>>(xml, ClassifyFormats.Xml, opts);
+            var newList = ClassifyXml.Deserialize<List<int>>(xml, opts);
             Assert.IsTrue(newList.SequenceEqual(new[] { 7, 5, 3, 1 }));
         }
 
@@ -1477,8 +1477,8 @@ namespace RT.Util.Serialization
 
             var opts = new ClassifyOptions().AddTypeOptions(typeof(refSubstClass1), new refSubstOpts());
 
-            var aXml = VerifyXml(Classify.Serialize(a, ClassifyFormats.Xml, opts));
-            var aNew = Classify.Deserialize<XElement, refSubstClass1>(aXml, ClassifyFormats.Xml, opts);
+            var aXml = VerifyXml(ClassifyXml.Serialize(a, opts));
+            var aNew = ClassifyXml.Deserialize<refSubstClass1>(aXml, opts);
             assertRefsWithSubs(aNew, aNew.Ref1, aNew.Ref2, aNew.Ref1.Ref2);
             Assert.IsTrue(XNode.DeepEquals(aXml, XElement.Parse(@"<item refid=""1"">
   <Name>A</Name>
@@ -1502,8 +1502,8 @@ namespace RT.Util.Serialization
   <Marker2>2</Marker2>
 </item>")));
 
-            var bXml = VerifyXml(Classify.Serialize(b, ClassifyFormats.Xml, opts));
-            var bNew = Classify.Deserialize<XElement, refSubstClass1>(bXml, ClassifyFormats.Xml, opts);
+            var bXml = VerifyXml(ClassifyXml.Serialize(b, opts));
+            var bNew = ClassifyXml.Deserialize<refSubstClass1>(bXml, opts);
             assertRefsWithSubs(bNew.Ref2.Ref2, bNew, bNew.Ref1, bNew.Ref2);
             Assert.IsTrue(XNode.DeepEquals(bXml, XElement.Parse(@"<item refid=""0"">
   <Name>B</Name>
@@ -1527,8 +1527,8 @@ namespace RT.Util.Serialization
   <Marker2>2</Marker2>
 </item>")));
 
-            var cXml = VerifyXml(Classify.Serialize(c, ClassifyFormats.Xml, opts));
-            var cNew = Classify.Deserialize<XElement, refSubstClass1>(cXml, ClassifyFormats.Xml, opts);
+            var cXml = VerifyXml(ClassifyXml.Serialize(c, opts));
+            var cNew = ClassifyXml.Deserialize<refSubstClass1>(cXml, opts);
             assertRefsWithSubs(cNew.Ref2, cNew.Ref1.Ref1, cNew, cNew.Ref1);
             Assert.IsTrue(XNode.DeepEquals(cXml, XElement.Parse(@"<item refid=""0"">
   <Name>C</Name>
@@ -1552,8 +1552,8 @@ namespace RT.Util.Serialization
   <Marker2>2</Marker2>
 </item>")));
 
-            var dXml = VerifyXml(Classify.Serialize(d, ClassifyFormats.Xml, opts));
-            var dNew = Classify.Deserialize<XElement, refSubstClass1>(dXml, ClassifyFormats.Xml, opts);
+            var dXml = VerifyXml(ClassifyXml.Serialize(d, opts));
+            var dNew = ClassifyXml.Deserialize<refSubstClass1>(dXml, opts);
             assertRefsWithSubs(dNew.Ref2, dNew.Ref1, dNew.Ref1.Ref1, dNew);
             Assert.IsTrue(XNode.DeepEquals(dXml, XElement.Parse(@"<item refid=""0"">
   <Name>D</Name>
