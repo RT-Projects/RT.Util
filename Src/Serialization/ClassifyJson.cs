@@ -219,6 +219,8 @@ namespace RT.Util.Serialization
         public static IClassifyFormat<JsonValue> Default { get { return _default ?? (_default = new ClassifyJsonFormat()); } }
         private static ClassifyJsonFormat _default;
 
+        private ClassifyJsonFormat() { }
+
         JsonValue IClassifyFormat<JsonValue>.ReadFromStream(Stream stream)
         {
             return JsonValue.Parse(stream.ReadAllText());
