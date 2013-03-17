@@ -11,15 +11,15 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// This class offers some generic static functions which are hard to categorize
-    /// under any more specific classes.
-    /// </summary>
+    /// <summary>This class offers some generic static functions which are hard to categorize under any more specific classes.</summary>
     public static partial class Ut
     {
-        /// <summary>Converts file size in bytes to a string that uses KB, MB, GB or TB.</summary>
-        /// <param name="size">The file size in bytes.</param>
-        /// <returns>The converted string.</returns>
+        /// <summary>
+        ///     Converts file size in bytes to a string that uses KB, MB, GB or TB.</summary>
+        /// <param name="size">
+        ///     The file size in bytes.</param>
+        /// <returns>
+        ///     The converted string.</returns>
         public static string SizeToString(long size)
         {
             if (size == 0)
@@ -36,88 +36,73 @@ namespace RT.Util
                 return (size / 1024d / 1024d / 1024d / 1024d).ToString("#,###.## TB");
         }
 
-        /// <summary>
-        /// Returns the smaller of the two IComparable values. If the values are
-        /// equal, returns the first one.
-        /// </summary>
+        /// <summary>Returns the smaller of the two IComparable values. If the values are equal, returns the first one.</summary>
         public static T Min<T>(T val1, T val2) where T : IComparable<T>
         {
             return val1.CompareTo(val2) <= 0 ? val1 : val2;
         }
 
-        /// <summary>
-        /// Returns the smaller of the three IComparable values. If two values are
-        /// equal, returns the earlier one.
-        /// </summary>
+        /// <summary>Returns the smaller of the three IComparable values. If two values are equal, returns the earlier one.</summary>
         public static T Min<T>(T val1, T val2, T val3) where T : IComparable<T>
         {
             T c1 = val1.CompareTo(val2) <= 0 ? val1 : val2;
             return c1.CompareTo(val3) <= 0 ? c1 : val3;
         }
 
-        /// <summary>
-        /// Returns the smallest of all arguments passed in. Uses the Linq .Min
-        /// extension method to do the work.
-        /// </summary>
+        /// <summary>Returns the smallest of all arguments passed in. Uses the Linq .Min extension method to do the work.</summary>
         public static T Min<T>(params T[] args) where T : IComparable<T>
         {
             return args.Min();
         }
 
-        /// <summary>
-        /// Returns the larger of the two IComparable values. If the values are
-        /// equal, returns the first one.
-        /// </summary>
+        /// <summary>Returns the larger of the two IComparable values. If the values are equal, returns the first one.</summary>
         public static T Max<T>(T val1, T val2) where T : IComparable<T>
         {
             return val1.CompareTo(val2) >= 0 ? val1 : val2;
         }
 
-        /// <summary>
-        /// Returns the larger of the three IComparable values. If two values are
-        /// equal, returns the earlier one.
-        /// </summary>
+        /// <summary>Returns the larger of the three IComparable values. If two values are equal, returns the earlier one.</summary>
         public static T Max<T>(T val1, T val2, T val3) where T : IComparable<T>
         {
             T c1 = val1.CompareTo(val2) >= 0 ? val1 : val2;
             return c1.CompareTo(val3) >= 0 ? c1 : val3;
         }
 
-        /// <summary>
-        /// Returns the largest of all arguments passed in. Uses the Linq .Max
-        /// extension method to do the work.
-        /// </summary>
+        /// <summary>Returns the largest of all arguments passed in. Uses the Linq .Max extension method to do the work.</summary>
         public static T Max<T>(params T[] args) where T : IComparable<T>
         {
             return args.Max();
         }
 
         /// <summary>
-        /// Sends the specified sequence of key strokes to the active application. See remarks for details.
-        /// </summary>
-        /// <param name="keys">A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or <c>System.Tuple&lt;Keys, bool&gt;</c>.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="keys"/> was null.</exception>
+        ///     Sends the specified sequence of key strokes to the active application. See remarks for details.</summary>
+        /// <param name="keys">
+        ///     A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or <c>System.Tuple&lt;Keys,
+        ///     bool&gt;</c>.</param>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="keys"/> was null.</exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see cref="char"/> and
-        /// <c>System.Tuple&lt;System.Windows.Forms.Keys, bool&gt;</c> are accepted.
-        /// </exception>
+        ///     <paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see
+        ///     cref="char"/> and <c>System.Tuple&lt;System.Windows.Forms.Keys, bool&gt;</c> are accepted.</exception>
         /// <remarks>
-        /// <list type="bullet">
-        /// <item><description>For objects of type <see cref="Keys"/>, the relevant key is pressed and released.</description></item>
-        /// <item><description>For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and release.</description></item>
-        /// <item><description>For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a key-down (false) or only a key-up (true).</description></item>
-        /// </list>
-        /// </remarks>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             For objects of type <see cref="Keys"/>, the relevant key is pressed and released.</description></item>
+        ///         <item><description>
+        ///             For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and
+        ///             release.</description></item>
+        ///         <item><description>
+        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a key-down
+        ///             (false) or only a key-up (true).</description></item></list></remarks>
         /// <example>
-        /// <para>The following example demonstrates how to use this method to send the key combination Win+R:</para>
-        /// <code>
-        ///     Ut.SendKeystrokes(Ut.NewArray&lt;object&gt;(
-        ///         Tuple.Create(Keys.LWin, true),
-        ///         Keys.R,
-        ///         Tuple.Create(Keys.LWin, false)
-        ///     ));
-        /// </code>
-        /// </example>
+        ///     <para>
+        ///         The following example demonstrates how to use this method to send the key combination Win+R:</para>
+        ///     <code>
+        ///         Ut.SendKeystrokes(Ut.NewArray&lt;object&gt;(
+        ///             Tuple.Create(Keys.LWin, true),
+        ///             Keys.R,
+        ///             Tuple.Create(Keys.LWin, false)
+        ///         ));</code></example>
         public static void SendKeystrokes(IEnumerable<object> keys)
         {
             if (keys == null)
@@ -166,19 +151,18 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Sends the specified key the specified number of times.
-        /// </summary>
-        /// <param name="key">Key stroke to send.</param>
-        /// <param name="times">Number of times to send the <paramref name="key"/>.</param>
+        ///     Sends the specified key the specified number of times.</summary>
+        /// <param name="key">
+        ///     Key stroke to send.</param>
+        /// <param name="times">
+        ///     Number of times to send the <paramref name="key"/>.</param>
         public static void SendKeystrokes(Keys key, int times)
         {
             if (times > 0)
                 SendKeystrokes(Enumerable.Repeat((object) key, times));
         }
 
-        /// <summary>
-        /// Sends key strokes equivalent to typing the specified text.
-        /// </summary>
+        /// <summary>Sends key strokes equivalent to typing the specified text.</summary>
         public static void SendKeystrokesForText(string text)
         {
             if (!string.IsNullOrEmpty(text))
@@ -186,10 +170,11 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Reads the specified file and computes the SHA1 hash function from its contents.
-        /// </summary>
-        /// <param name="path">Path to the file to compute SHA1 hash function from.</param>
-        /// <returns>Result of the SHA1 hash function as a string of hexadecimal digits.</returns>
+        ///     Reads the specified file and computes the SHA1 hash function from its contents.</summary>
+        /// <param name="path">
+        ///     Path to the file to compute SHA1 hash function from.</param>
+        /// <returns>
+        ///     Result of the SHA1 hash function as a string of hexadecimal digits.</returns>
         public static string Sha1(string path)
         {
             using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -197,26 +182,27 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Reads the specified file and computes the MD5 hash function from its contents.
-        /// </summary>
-        /// <param name="path">Path to the file to compute MD5 hash function from.</param>
-        /// <returns>Result of the MD5 hash function as a string of hexadecimal digits.</returns>
+        ///     Reads the specified file and computes the MD5 hash function from its contents.</summary>
+        /// <param name="path">
+        ///     Path to the file to compute MD5 hash function from.</param>
+        /// <returns>
+        ///     Result of the MD5 hash function as a string of hexadecimal digits.</returns>
         public static string Md5(string path)
         {
             using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 return MD5.Create().ComputeHash(f).ToHex();
         }
 
-        /// <summary>
-        /// Returns the version of the entry assembly (the .exe file) in a standard format.
-        /// </summary>
+        /// <summary>Returns the version of the entry assembly (the .exe file) in a standard format.</summary>
         public static string VersionOfExe()
         {
             var v = Assembly.GetEntryAssembly().GetName().Version;
             return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Build, v.Revision); // in our use: v.Build is build#, v.Revision is p4 changelist
         }
 
-        /// <summary>Checks the specified condition and causes the debugger to break if it is false. Throws an <see cref="InternalErrorException"/> afterwards.</summary>
+        /// <summary>
+        ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
+        ///     cref="InternalErrorException"/> afterwards.</summary>
         public static void Assert(bool assertion, string message = null)
         {
             if (!assertion)
@@ -227,10 +213,14 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Throws the specified exception.</summary>
-        /// <typeparam name="TResult">The type to return.</typeparam>
-        /// <param name="exception">The exception to throw.</param>
-        /// <returns>This method never returns a value. It always throws.</returns>
+        /// <summary>
+        ///     Throws the specified exception.</summary>
+        /// <typeparam name="TResult">
+        ///     The type to return.</typeparam>
+        /// <param name="exception">
+        ///     The exception to throw.</param>
+        /// <returns>
+        ///     This method never returns a value. It always throws.</returns>
         public static TResult Throw<TResult>(Exception exception)
         {
             throw exception;
@@ -243,42 +233,72 @@ namespace RT.Util
         /// <summary>Determines whether the Shift key is pressed.</summary>
         public static bool Shift { get { return Control.ModifierKeys.HasFlag(Keys.Shift); } }
 
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action Lambda(Action method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action<T> Lambda<T>(Action<T> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action<T1, T2> Lambda<T1, T2>(Action<T1, T2> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action<T1, T2, T3> Lambda<T1, T2, T3>(Action<T1, T2, T3> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action<T1, T2, T3, T4> Lambda<T1, T2, T3, T4>(Action<T1, T2, T3, T4> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Action<T1, T2, T3, T4, T5> Lambda<T1, T2, T3, T4, T5>(Action<T1, T2, T3, T4, T5> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<TResult> Lambda<TResult>(Func<TResult> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<T, TResult> Lambda<T, TResult>(Func<T, TResult> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<T1, T2, TResult> Lambda<T1, T2, TResult>(Func<T1, T2, TResult> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<T1, T2, T3, TResult> Lambda<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<T1, T2, T3, T4, TResult> Lambda<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method) { return method; }
-        /// <summary>Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any difference.</summary>
+        /// <summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
+        ///     difference.</summary>
         public static Func<T1, T2, T3, T4, T5, TResult> Lambda<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> method) { return method; }
 
         /// <summary>Allows the use of type inference when creating .NET’s KeyValuePair&lt;TK,TV&gt;.</summary>
         public static KeyValuePair<TKey, TValue> KeyValuePair<TKey, TValue>(TKey key, TValue value) { return new KeyValuePair<TKey, TValue>(key, value); }
 
-        /// <summary>Returns the parameters as a new array.</summary>
-        /// <remarks>Useful to circumvent Visual Studio’s bug where multi-line literal arrays are not auto-formatted.</remarks>
+        /// <summary>
+        ///     Returns the parameters as a new array.</summary>
+        /// <remarks>
+        ///     Useful to circumvent Visual Studio’s bug where multi-line literal arrays are not auto-formatted.</remarks>
         public static T[] NewArray<T>(params T[] parameters) { return parameters; }
 
-        /// <summary>Instantiates a fully-initialized array with the specified dimensions.</summary>
-        /// <param name="size">Size of the first dimension.</param>
-        /// <param name="initialiser">Function to initialise the value of every element.</param>
-        /// <typeparam name="T">Type of the array element.</typeparam>
+        /// <summary>
+        ///     Instantiates a fully-initialized array with the specified dimensions.</summary>
+        /// <param name="size">
+        ///     Size of the first dimension.</param>
+        /// <param name="initialiser">
+        ///     Function to initialise the value of every element.</param>
+        /// <typeparam name="T">
+        ///     Type of the array element.</typeparam>
         public static T[] NewArray<T>(int size, Func<int, T> initialiser)
         {
             if (initialiser == null)
@@ -291,11 +311,16 @@ namespace RT.Util
             return result;
         }
 
-        /// <summary>Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
-        /// <param name="size1">Size of the first dimension.</param>
-        /// <param name="size2">Size of the second dimension.</param>
-        /// <param name="initialiser">Optional function to initialise the value of every element.</param>
-        /// <typeparam name="T">Type of the array element.</typeparam>
+        /// <summary>
+        ///     Instantiates a fully-initialized rectangular jagged array with the specified dimensions.</summary>
+        /// <param name="size1">
+        ///     Size of the first dimension.</param>
+        /// <param name="size2">
+        ///     Size of the second dimension.</param>
+        /// <param name="initialiser">
+        ///     Optional function to initialise the value of every element.</param>
+        /// <typeparam name="T">
+        ///     Type of the array element.</typeparam>
         public static T[][] NewArray<T>(int size1, int size2, Func<int, int, T> initialiser = null)
         {
             var result = new T[size1][];
@@ -310,12 +335,18 @@ namespace RT.Util
             return result;
         }
 
-        /// <summary>Instantiates a fully-initialized "rectangular" jagged array with the specified dimensions.</summary>
-        /// <param name="size1">Size of the first dimension.</param>
-        /// <param name="size2">Size of the second dimension.</param>
-        /// <param name="size3">Size of the third dimension.</param>
-        /// <param name="initialiser">Optional function to initialise the value of every element.</param>
-        /// <typeparam name="T">Type of the array element.</typeparam>
+        /// <summary>
+        ///     Instantiates a fully-initialized "rectangular" jagged array with the specified dimensions.</summary>
+        /// <param name="size1">
+        ///     Size of the first dimension.</param>
+        /// <param name="size2">
+        ///     Size of the second dimension.</param>
+        /// <param name="size3">
+        ///     Size of the third dimension.</param>
+        /// <param name="initialiser">
+        ///     Optional function to initialise the value of every element.</param>
+        /// <typeparam name="T">
+        ///     Type of the array element.</typeparam>
         public static T[][][] NewArray<T>(int size1, int size2, int size3, Func<int, int, int, T> initialiser = null)
         {
             var result = new T[size1][][];
@@ -335,20 +366,34 @@ namespace RT.Util
             return result;
         }
 
-        /// <summary>Returns the integer represented by the specified string, or null if the string does not represent a valid 32-bit integer.</summary>
+        /// <summary>
+        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 32-bit
+        ///     integer.</summary>
         public static int? ParseInt32(string value) { int result; return int.TryParse(value, out result) ? (int?) result : null; }
-        /// <summary>Returns the integer represented by the specified string, or null if the string does not represent a valid 64-bit integer.</summary>
+        /// <summary>
+        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 64-bit
+        ///     integer.</summary>
         public static long? ParseInt64(string value) { long result; return long.TryParse(value, out result) ? (long?) result : null; }
-        /// <summary>Returns the floating-point number represented by the specified string, or null if the string does not represent a valid double-precision floating-point number.</summary>
+        /// <summary>
+        ///     Returns the floating-point number represented by the specified string, or null if the string does not represent a
+        ///     valid double-precision floating-point number.</summary>
         public static double? ParseDouble(string value) { double result; return double.TryParse(value, out result) ? (double?) result : null; }
-        /// <summary>Returns the date/time stamp represented by the specified string, or null if the string does not represent a valid date/time stamp.</summary>
+        /// <summary>
+        ///     Returns the date/time stamp represented by the specified string, or null if the string does not represent a valid
+        ///     date/time stamp.</summary>
         public static DateTime? ParseDateTime(string value) { DateTime result; return DateTime.TryParse(value, out result) ? (DateTime?) result : null; }
-        /// <summary>Returns the enum value represented by the specified string, or null if the string does not represent a valid enum value.</summary>
+        /// <summary>
+        ///     Returns the enum value represented by the specified string, or null if the string does not represent a valid enum
+        ///     value.</summary>
         public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct { T result; return Enum.TryParse<T>(value, ignoreCase, out result) ? (T?) result : null; }
 
-        /// <summary>Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the specified method.</summary>
-        /// <param name="firstArgument">Object to call the method on, or null for static methods.</param>
-        /// <param name="method">The method to call.</param>
+        /// <summary>
+        ///     Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the specified
+        ///     method.</summary>
+        /// <param name="firstArgument">
+        ///     Object to call the method on, or null for static methods.</param>
+        /// <param name="method">
+        ///     The method to call.</param>
         public static Delegate CreateDelegate(object firstArgument, MethodInfo method)
         {
             var param = method.GetParameters();
@@ -411,6 +456,14 @@ namespace RT.Util
             throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
         }
 
+        /// <summary>
+        ///     Executes the specified action if the current object is of the specified type.</summary>
+        /// <typeparam name="T">
+        ///     Type the object must be to have the action executed.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="action">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
         public static void IfType<T>(this object obj, Action<T> action)
         {
             if (obj is T)
@@ -418,26 +471,30 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Executes the specified action. If the action results in a file sharing violation exception, the action will be
-        /// repeatedly retried after a short delay (which increases after every failed attempt).
-        /// </summary>
-        /// <param name="action">The action to be attempted and possibly retried.</param>
-        /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
-        /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
-        /// <param name="onSharingVio">Action to execute when a sharing violation does occur (is called before the waiting).</param>
+        ///     Executes the specified action. If the action results in a file sharing violation exception, the action will be
+        ///     repeatedly retried after a short delay (which increases after every failed attempt).</summary>
+        /// <param name="action">
+        ///     The action to be attempted and possibly retried.</param>
+        /// <param name="maximum">
+        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to the
+        ///     caller of this method. Use null to retry indefinitely.</param>
+        /// <param name="onSharingVio">
+        ///     Action to execute when a sharing violation does occur (is called before the waiting).</param>
         public static void WaitSharingVio(Action action, TimeSpan? maximum = null, Action onSharingVio = null)
         {
             WaitSharingVio<bool>(() => { action(); return true; }, maximum, onSharingVio);
         }
 
         /// <summary>
-        /// Executes the specified function. If the function results in a file sharing violation exception, the function will be
-        /// repeatedly retried after a short delay (which increases after every failed attempt).
-        /// </summary>
-        /// <param name="func">The function to be attempted and possibly retried.</param>
-        /// <param name="maximum">Maximum amount of time to keep retrying for. When expired, any sharing violation
-        /// exception will propagate to the caller of this method. Use null to retry indefinitely.</param>
-        /// <param name="onSharingVio">Action to execute when a sharing violation does occur (is called before the waiting).</param>
+        ///     Executes the specified function. If the function results in a file sharing violation exception, the function will
+        ///     be repeatedly retried after a short delay (which increases after every failed attempt).</summary>
+        /// <param name="func">
+        ///     The function to be attempted and possibly retried.</param>
+        /// <param name="maximum">
+        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to the
+        ///     caller of this method. Use null to retry indefinitely.</param>
+        /// <param name="onSharingVio">
+        ///     Action to execute when a sharing violation does occur (is called before the waiting).</param>
         public static T WaitSharingVio<T>(Func<T> func, TimeSpan? maximum = null, Action onSharingVio = null)
         {
             var started = DateTime.UtcNow;
@@ -476,9 +533,9 @@ namespace RT.Util
 
         /// <summary>
         ///     Given a set of values and a function that returns true when given this set, will efficiently remove items from
-        ///     this set which are not essential for making the function return true. The relative order of items is
-        ///     preserved. This method cannot generally guarantee that the result is optimal, but for some types of functions
-        ///     the result will be guaranteed optimal.</summary>
+        ///     this set which are not essential for making the function return true. The relative order of items is preserved.
+        ///     This method cannot generally guarantee that the result is optimal, but for some types of functions the result will
+        ///     be guaranteed optimal.</summary>
         /// <typeparam name="T">
         ///     Type of the values in the set.</typeparam>
         /// <param name="items">
@@ -487,11 +544,11 @@ namespace RT.Util
         ///     The function that examines the set. Must always return the same value for the same set.</param>
         /// <param name="breadthFirst">
         ///     A value selecting a breadth-first or a depth-first approach. Depth-first is best at quickly locating a single
-        ///     value which will be present in the final required set. Breadth-first is best at quickly placing a lower bound
-        ///     on the total number of individual items in the required set.</param>
+        ///     value which will be present in the final required set. Breadth-first is best at quickly placing a lower bound on
+        ///     the total number of individual items in the required set.</param>
         /// <param name="skipConsistencyTest">
-        ///     When the function is particularly slow, you might want to set this to true to disable calls which are not
-        ///     required to reduce the set and are only there to ensure that the function behaves consistently.</param>
+        ///     When the function is particularly slow, you might want to set this to true to disable calls which are not required
+        ///     to reduce the set and are only there to ensure that the function behaves consistently.</param>
         /// <returns>
         ///     A hopefully smaller set of values that still causes the function to return true.</returns>
         public static IEnumerable<T> ReduceRequiredSet<T>(IEnumerable<T> items, Func<ReduceRequiredSetState<T>, bool> test, bool breadthFirst = false, bool skipConsistencyTest = false)
@@ -537,8 +594,7 @@ namespace RT.Util
             return state.SetToTest;
         }
 
-        /// <summary>
-        ///     Encapsulates the state of the <see cref="Ut.ReduceRequiredSet" /> algorithm and exposes statistics about it.</summary>
+        /// <summary>Encapsulates the state of the <see cref="Ut.ReduceRequiredSet"/> algorithm and exposes statistics about it.</summary>
         public abstract class ReduceRequiredSetState<T>
         {
             /// <summary>Internal; do not use.</summary>
@@ -554,8 +610,8 @@ namespace RT.Util
             ///     definitely return these values, and maybe some others too.</summary>
             public IEnumerable<T> DefinitelyRequired { get { return Ranges.Where(r => r.Item1 == r.Item2).Select(r => Items[r.Item1]); } }
             /// <summary>
-            ///     Gets the current number of partitions containing uncertain items. The more of these, the slower the
-            ///     algorithm will converge from here onwards.</summary>
+            ///     Gets the current number of partitions containing uncertain items. The more of these, the slower the algorithm
+            ///     will converge from here onwards.</summary>
             public int PartitionsCount { get { return Ranges.Count - Ranges.Count(r => r.Item1 == r.Item2); } }
             /// <summary>
             ///     Gets the number of items in the smallest partition. This is the value that is halved upon a successful
