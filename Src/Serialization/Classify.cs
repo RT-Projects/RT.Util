@@ -355,16 +355,16 @@ namespace RT.Util.Serialization
                 public Func<object> WithoutDesubstitution;
             }
 
-            private Dictionary<string, declassifyRememberedObject> _rememberD
+            private Dictionary<int, declassifyRememberedObject> _rememberD
             {
                 get
                 {
                     if (_rememberCacheD == null)
-                        _rememberCacheD = new Dictionary<string, declassifyRememberedObject>();
+                        _rememberCacheD = new Dictionary<int, declassifyRememberedObject>();
                     return _rememberCacheD;
                 }
             }
-            private Dictionary<string, declassifyRememberedObject> _rememberCacheD;
+            private Dictionary<int, declassifyRememberedObject> _rememberCacheD;
 
             private HashSet<object> _rememberC
             {
@@ -843,7 +843,7 @@ namespace RT.Util.Serialization
                         _requireRefId[originalObject] = refId;
                         _requireRefId[saveObject] = refId;
                     }
-                    return () => _format.FormatReference(refId.ToString());
+                    return () => _format.FormatReference(refId);
                 }
 
                 // Remember this object so that we can detect cycles and maintain reference equality
@@ -949,7 +949,7 @@ namespace RT.Util.Serialization
                             retrievedElem = previousElem();
                             int refId;
                             if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
-                                retrievedElem = _format.FormatReferable(retrievedElem, refId.ToString());
+                                retrievedElem = _format.FormatReferable(retrievedElem, refId);
                             saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterSerialize(retrievedElem); });
                             typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterSerialize(saveObject, retrievedElem); });
                         }

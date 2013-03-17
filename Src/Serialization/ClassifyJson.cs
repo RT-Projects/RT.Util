@@ -313,12 +313,19 @@ namespace RT.Util.Serialization
             return element is JsonDict && element.ContainsKey(":id");
         }
 
-        string IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element)
+        int IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element)
         {
             return
-                element.ContainsKey(":ref") ? element[":ref"].GetString() :
-                element.ContainsKey(":refid") ? element[":refid"].GetString() :
-                element.ContainsKey(":id") ? element[":id"].GetString() : null;
+                element.ContainsKey(":ref") ? element[":ref"].GetInt() :
+                element.ContainsKey(":refid") ? element[":refid"].GetInt() :
+                Ut.Throw<int>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
+        }
+
+        string IClassifyFormat<JsonValue>.GetFollowID(JsonValue element)
+        {
+            return element.ContainsKey(":id")
+                ? element[":id"].GetString()
+                : Ut.Throw<string>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetFollowID() should not be called unless IsFollowID() returned true."));
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
@@ -392,12 +399,12 @@ namespace RT.Util.Serialization
             return new JsonDict { { ":id", id } };
         }
 
-        JsonValue IClassifyFormat<JsonValue>.FormatReference(string refId)
+        JsonValue IClassifyFormat<JsonValue>.FormatReference(int refId)
         {
             return new JsonDict { { ":ref", refId } };
         }
 
-        JsonValue IClassifyFormat<JsonValue>.FormatReferable(JsonValue element, string refId)
+        JsonValue IClassifyFormat<JsonValue>.FormatReferable(JsonValue element, int refId)
         {
             if (!(element is JsonDict))
                 return new JsonDict { { ":refid", refId }, { ":value", element } };

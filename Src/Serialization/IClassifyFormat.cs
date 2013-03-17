@@ -125,7 +125,8 @@ namespace RT.Util.Serialization
         /// <param name="element">
         ///     The element that represents an object.</param>
         /// <param name="isFullType">
-        ///     Receives a value indicating whether the type is a fully-qualified type name or not. This value is ignored if the method returns <c>null</c>.</param>
+        ///     Receives a value indicating whether the type is a fully-qualified type name or not. This value is ignored if the
+        ///     method returns <c>null</c>.</param>
         /// <returns>
         ///     <c>null</c> if no type information was persisted in this element; otherwise, the decoded type name.</returns>
         /// <remarks>
@@ -164,16 +165,27 @@ namespace RT.Util.Serialization
         bool IsFollowID(TElement element);
 
         /// <summary>
-        ///     Returns the ID encoded in this element. This is called only if <see cref="IsReference"/>, <see
-        ///     cref="IsReferable"/> or <see cref="IsFollowID"/> returned <c>true</c>.</summary>
+        ///     Returns the ID encoded in this element. This is called only if <see cref="IsReference"/> or <see
+        ///     cref="IsReferable"/> returned <c>true</c>.</summary>
         /// <param name="element">
         ///     The element to decode.</param>
         /// <returns>
         ///     The ID encoded in this element.</returns>
         /// <remarks>
-        ///     This should return the same ID that was passed into <see cref="FormatReference"/>, <see cref="FormatReferable"/>
-        ///     or <see cref="FormatFollowID"/>.</remarks>
-        string GetReferenceID(TElement element);
+        ///     This should return the same ID that was passed into <see cref="FormatReference"/> or <see
+        ///     cref="FormatReferable"/>.</remarks>
+        int GetReferenceID(TElement element);
+
+        /// <summary>
+        ///     Returns the ID encoded in this element. This is called only if <see cref="IsFollowID"/> returned
+        ///     <c>true</c>.</summary>
+        /// <param name="element">
+        ///     The element to decode.</param>
+        /// <returns>
+        ///     The ID encoded in this element.</returns>
+        /// <remarks>
+        ///     This should return the same ID that was passed into <see cref="FormatFollowID"/>.</remarks>
+        string GetFollowID(TElement element);
 
         /// <summary>
         ///     Generates an element that represents a <c>null</c> value.</summary>
@@ -270,7 +282,7 @@ namespace RT.Util.Serialization
         ///     An element that represents a reference to another object with the specified <paramref name="refId"/>.</returns>
         /// <remarks>
         ///     The returned element should be recognized by <see cref="IsReference"/>.</remarks>
-        TElement FormatReference(string refId);
+        TElement FormatReference(int refId);
 
         /// <summary>
         ///     Converts an existing element (which may represent, for example, an object, list or dictionary) into one that can
@@ -285,7 +297,7 @@ namespace RT.Util.Serialization
         /// <remarks>
         ///     The returned element should be recognized by <see cref="IsReferable"/> as well as all the other methods that would
         ///     have also recognized the original <paramref name="element"/>.</remarks>
-        TElement FormatReferable(TElement element, string refId);
+        TElement FormatReferable(TElement element, int refId);
 
         /// <summary>
         ///     Converts an existing element (which may represent, for example, an object, list or dictionary) into one that

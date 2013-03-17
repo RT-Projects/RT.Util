@@ -328,12 +328,19 @@ namespace RT.Util.Serialization
             return element.Attribute("id") != null;
         }
 
-        string IClassifyFormat<XElement>.GetReferenceID(XElement element)
+        int IClassifyFormat<XElement>.GetReferenceID(XElement element)
         {
-            return
+            return ExactConvert.ToInt(
                 element.Attribute("refid").NullOr(a => a.Value) ??
                 element.Attribute("ref").NullOr(a => a.Value) ??
-                element.Attribute("id").NullOr(a => a.Value);
+                Ut.Throw<string>(new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."))
+            );
+        }
+
+        string IClassifyFormat<XElement>.GetFollowID(XElement element)
+        {
+            return element.Attribute("id").NullOr(a => a.Value) ??
+                Ut.Throw<string>(new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetFollowID() should not be called unless IsFollowID() returned true."));
         }
 
         XElement IClassifyFormat<XElement>.FormatNullValue()
@@ -409,12 +416,12 @@ namespace RT.Util.Serialization
             return new XElement(_rootTagName, fields.Select(kvp => { kvp.Value.Name = kvp.Key; return kvp.Value; }));
         }
 
-        XElement IClassifyFormat<XElement>.FormatReference(string refId)
+        XElement IClassifyFormat<XElement>.FormatReference(int refId)
         {
             return new XElement(_rootTagName, new XAttribute("ref", refId));
         }
 
-        XElement IClassifyFormat<XElement>.FormatReferable(XElement element, string refId)
+        XElement IClassifyFormat<XElement>.FormatReferable(XElement element, int refId)
         {
             element.Add(new XAttribute("refid", refId));
             return element;
