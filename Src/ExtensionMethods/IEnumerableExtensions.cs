@@ -624,11 +624,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Creates a <see cref="HashSet&lt;T&gt;"/> from an enumerable collection.</summary>
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source)
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return new HashSet<T>(source);
+            return comparer == null ? new HashSet<T>(source) : new HashSet<T>(source, comparer);
         }
 
         /// <summary>Returns a collection of integer containing the indexes at which the elements of the source collection match the given predicate.</summary>
