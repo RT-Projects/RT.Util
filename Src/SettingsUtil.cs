@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
@@ -142,6 +143,12 @@ namespace RT.Util
                         // SaveObjectToXmlFile automatically creates the folder if necessary
                         XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
                         break;
+
+                    case SettingsSerializer.ClassifyXml:
+                        // SerializeToFile automatically creates the folder if necessary
+                        ClassifyXml.SerializeToFile(settingsType, settings, filename, format: ClassifyXmlFormat.Create("Settings"));
+                        break;
+
                     case SettingsSerializer.DotNetBinary:
                         PathUtil.CreatePathToFile(filename);
                         var bf = new BinaryFormatter();
@@ -162,6 +169,10 @@ namespace RT.Util
                 {
                     case SettingsSerializer.XmlClassify:
                         return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
+
+                    case SettingsSerializer.ClassifyXml:
+                        return ClassifyXml.DeserializeFile<TSettings>(filename);
+
                     case SettingsSerializer.DotNetBinary:
                         var bf = new BinaryFormatter();
                         using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -439,10 +450,22 @@ namespace RT.Util
     /// </summary>
     public enum SettingsSerializer
     {
-        /// <summary>Use the XmlClassify serializer.</summary>
+        /// <summary>Use the XmlClassify serializer (obsolete).</summary>
+        [SerializerInfo(defaultFileExtension: "xml")]
         XmlClassify,
         /// <summary>Use the .NET binary serializer.</summary>
+        [SerializerInfo(defaultFileExtension: "bin")]
         DotNetBinary,
+        /// <summary>Use the Classify serializer with the XML format.</summary>
+        [SerializerInfo(defaultFileExtension: "xml")]
+        ClassifyXml,
+    }
+
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    internal sealed class SerializerInfoAttribute : Attribute
+    {
+        public string DefaultFileExtension { get; private set; }
+        public SerializerInfoAttribute(string defaultFileExtension) { DefaultFileExtension = defaultFileExtension; }
     }
 
     /// <summary>
@@ -524,7 +547,13 @@ namespace RT.Util
                 default:
                     throw new InternalErrorException("unreachable (97628)");
             }
-            filename = filename.FilenameCharactersEscape() + ".Settings." + (Serializer == SettingsSerializer.XmlClassify ? "xml" : "bin");
+
+            var fileExtension = typeof(SettingsSerializer).GetFields(BindingFlags.Static | BindingFlags.Public)
+                .FirstOrDefault(f => f.GetValue(null).Equals(Serializer))
+                .NullOr(field => field.GetCustomAttributes<SerializerInfoAttribute>().FirstOrDefault().NullOr(inf => inf.DefaultFileExtension))
+                ?? "bin";
+
+            filename = filename.FilenameCharactersEscape() + ".Settings." + fileExtension;
 
             if (File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
             {
