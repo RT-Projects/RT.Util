@@ -75,13 +75,16 @@ namespace RT.Util
         /// <param name="method">The code to be executed.</param>
         /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
         /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
-        public static void OnExceptionRetry(Action method, int attempts = 3, int delayMs = 333)
+        /// <param name="onException">Optional action to execute when an exception occurs and the waiting period starts.</param>
+        public static void OnExceptionRetry(Action method, int attempts = 3, int delayMs = 333, Action onException = null)
         {
             while (attempts > 1)
             {
                 attempts--;
                 try { method(); return; }
                 catch { }
+                if (onException != null)
+                    onException();
                 Thread.Sleep(delayMs);
             }
             method();
@@ -115,13 +118,16 @@ namespace RT.Util
         /// <param name="method">The code to be executed.</param>
         /// <param name="attempts">The maximum number of times to retry the method before giving up.</param>
         /// <param name="delayMs">Delay, in milliseconds, before retrying the method.</param>
-        public static TResult OnExceptionRetry<TResult>(Func<TResult> method, int attempts = 3, int delayMs = 333)
+        /// <param name="onException">Optional action to execute when an exception occurs and the waiting period starts.</param>
+        public static TResult OnExceptionRetry<TResult>(Func<TResult> method, int attempts = 3, int delayMs = 333, Action onException = null)
         {
             while (attempts > 1)
             {
                 attempts--;
                 try { return method(); }
                 catch { }
+                if (onException != null)
+                    onException();
                 Thread.Sleep(delayMs);
             }
             return method();
