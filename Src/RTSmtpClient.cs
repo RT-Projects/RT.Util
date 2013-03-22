@@ -267,16 +267,29 @@ namespace RT.Util
 
             // Break lines that are longer than 76 characters
             var sb = new StringBuilder();
-            Match match;
-            while ((match = Regex.Match(encoded, "^[^\r]{77}", RegexOptions.Multiline)).Success)
+
+            var lastBreakIndex = 0;
+            for (int i = 0; i < encoded.Length; i++)
             {
-                var p = match.Value.IndexOf('=', 73);
-                if (p == -1 || p == 76)
-                    p = 75;
-                sb.Append(encoded.Substring(0, match.Index + p)).Append("=\r\n");
-                encoded = encoded.Substring(match.Index + p);
+                if (encoded[i] == '\r')
+                {
+                    sb.Append(encoded.Substring(lastBreakIndex, i - lastBreakIndex));
+                    lastBreakIndex = i;
+                }
+                else
+                {
+                    if (i - lastBreakIndex >= 77)
+                    {
+                        var substr = encoded.Substring(lastBreakIndex, 77);
+                        var p = substr.IndexOf('=', 73);
+                        if (p == -1 || p == 76)
+                            p = 75;
+                        sb.Append(encoded.Substring(lastBreakIndex, p)).Append("=\r\n");
+                        lastBreakIndex += p;
+                    }
+                }
             }
-            sb.Append(encoded);
+            sb.Append(encoded.Substring(lastBreakIndex));
             return sb.ToString();
         }
 
