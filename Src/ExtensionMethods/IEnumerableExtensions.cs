@@ -153,7 +153,7 @@ namespace RT.Util.ExtensionMethods
             yield return splitWhat.Skip(prevIndex);
         }
 
-        /// <summary>Adds a single element to the end of an IEnumerable.</summary>
+        /// <summary>Adds a single element to the end of an <see cref="IEnumerable{T}"/>.</summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing all the input elements, followed by the specified additional element.</returns>
         public static IEnumerable<T> Concat<T>(this IEnumerable<T> source, T element)
@@ -163,7 +163,7 @@ namespace RT.Util.ExtensionMethods
             return concatIterator(element, source, false);
         }
 
-        /// <summary>Adds a single element to the start of an IEnumerable.</summary>
+        /// <summary>Adds a single element to the start of an <see cref="IEnumerable{T}"/>.</summary>
         /// <typeparam name="T">Type of enumerable to return.</typeparam>
         /// <returns>IEnumerable containing the specified additional element, followed by all the input elements.</returns>
         public static IEnumerable<T> Concat<T>(this T head, IEnumerable<T> tail)
@@ -184,20 +184,20 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// This does the same as <see cref="Order&lt;T&gt;(IEnumerable&lt;T&gt;)"/>, but it is much faster if you intend to extract only the first few items using .Take().
+        /// This does the same as <see cref="Order{T}(IEnumerable{T})"/>, but it is much faster if you intend to extract only the first few items using .Take().
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
-        /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
+        /// <returns>The given <see cref="IEnumerable{T}"/> with its elements sorted progressively.</returns>
         public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source)
         {
             return OrderLazy(source, Comparer<T>.Default);
         }
 
         /// <summary>
-        /// This does the same as <see cref="Order&lt;T&gt;(IEnumerable&lt;T&gt;,IComparer&lt;T&gt;)"/>, but it is much faster if you intend to extract only the first few items using .Take().
+        /// This does the same as <see cref="Order{T}(IEnumerable{T},IComparer{T})"/>, but it is much faster if you intend to extract only the first few items using <see cref="Enumerable.Take"/>.
         /// </summary>
         /// <param name="source">The sequence to be sorted.</param>
-        /// <param name="comparer">An instance of <see cref="IComparer&lt;T&gt;"/> specifying the comparison to use on the items.</param>
+        /// <param name="comparer">An instance of <see cref="IComparer{T}"/> specifying the comparison to use on the items.</param>
         /// <returns>The given IEnumerable&lt;T&gt; with its elements sorted progressively.</returns>
         public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
@@ -408,7 +408,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         /// Returns the index of the first element in this <paramref name="source"/> satisfying
-        /// the specified <paramref name="predicate"/>. If no such elements are found, returns -1.
+        /// the specified <paramref name="predicate"/>. If no such elements are found, returns <c>-1</c>.
         /// </summary>
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
@@ -429,7 +429,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// Returns the index of the first element in this <paramref name="source"/> that is equal to
         /// the specified <paramref name="element"/> as determined by the specified <paramref name="comparer"/>.
-        /// If no such elements are found, returns -1.
+        /// If no such elements are found, returns <c>-1</c>.
         /// </summary>
         public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer = null)
         {
@@ -607,7 +607,7 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Creates a <see cref="Queue&lt;T&gt;"/> from an enumerable collection.</summary>
+        /// <summary>Creates a <see cref="Queue{T}"/> from an enumerable collection.</summary>
         public static Queue<T> ToQueue<T>(this IEnumerable<T> source)
         {
             if (source == null)
@@ -615,7 +615,7 @@ namespace RT.Util.ExtensionMethods
             return new Queue<T>(source);
         }
 
-        /// <summary>Creates a <see cref="Stack&lt;T&gt;"/> from an enumerable collection.</summary>
+        /// <summary>Creates a <see cref="Stack{T}"/> from an enumerable collection.</summary>
         public static Stack<T> ToStack<T>(this IEnumerable<T> source)
         {
             if (source == null)
@@ -623,7 +623,7 @@ namespace RT.Util.ExtensionMethods
             return new Stack<T>(source);
         }
 
-        /// <summary>Creates a <see cref="HashSet&lt;T&gt;"/> from an enumerable collection.</summary>
+        /// <summary>Creates a <see cref="HashSet{T}"/> from an enumerable collection.</summary>
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
         {
             if (source == null)

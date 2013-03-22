@@ -63,7 +63,7 @@ namespace RT.KitchenSink.Streams
 
         /// <summary>
         /// Reads a control code from the stream at the current position. If there is no control code at the current position,
-        /// returns -1. Otherwise returns the code read. Throws <see cref="EndOfStreamException"/> if the stream ends in
+        /// returns <c>-1</c>. Otherwise returns the code read. Throws <see cref="EndOfStreamException"/> if the stream ends in
         /// the middle of a control code.
         /// </summary>
         public virtual int ReadControlCode()
