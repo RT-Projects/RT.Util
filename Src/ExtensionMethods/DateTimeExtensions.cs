@@ -272,6 +272,18 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
+        /// <summary>
+        /// Parse the specified string as an ISO-formatted DateTime. Returns null if the string is null or cannot be parsed.
+        /// See <see cref="TryParseIso"/> for more info.
+        /// </summary>
+        public static DateTime? ParseIsoNullable(string str)
+        {
+            DateTime result;
+            if (str == null || !TryParseIso(str, out result))
+                return null;
+            return result;
+        }
+
         /// <summary>Returns a copy of this DateTime, truncated to whole milliseconds.</summary>
         public static DateTime TruncatedToMilliseconds(this DateTime datetime)
         {
