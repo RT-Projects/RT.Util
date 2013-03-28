@@ -457,17 +457,55 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the specified action if the current object is of the specified type.</summary>
+        ///     Executes the specified action if the current object is of the specified type, and the alternative action otherwise.</summary>
         /// <typeparam name="T">
         ///     Type the object must be to have the action executed.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action">
         ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
-        public static void IfType<T>(this object obj, Action<T> action)
+        /// <param name="elseAction">
+        ///     Action to execute otherwise. If it's null, this action is not performed.</param>
+        public static void IfType<T>(this object obj, Action<T> action, Action<object> elseAction = null)
         {
             if (obj is T)
+            {
                 action((T) obj);
+            }
+            else if (elseAction != null)
+            {
+                elseAction(obj);
+            }
+        }
+
+        /// <summary>
+        ///     Executes the specified function if the current object is of the specified type, and the alternative function otherwise.</summary>
+        /// <typeparam name="T">
+        ///     Type the object must be to have the action executed.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the functions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="function">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
+        /// <param name="elseFunction">
+        ///     Action to execute otherwise. If it's null, default(TResult) is returned.</param>
+        /// <returns>
+        ///     The result of the function called.</returns>
+        public static TResult IfType<T, TResult>(this object obj, Func<T, TResult> function, Func<object, TResult> elseFunction = null)
+        {
+            if (obj is T)
+            {
+                return function((T) obj);
+            }
+            else if (elseFunction != null)
+            {
+                return elseFunction(obj);
+            }
+            else
+            {
+                return default(TResult);
+            }
         }
 
         /// <summary>
