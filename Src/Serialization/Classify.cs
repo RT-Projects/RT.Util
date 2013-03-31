@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
+using RT.Util.Xml;
 
 /*
  * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
@@ -326,13 +327,13 @@ namespace RT.Util.Serialization
             return new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
         }
 
+        // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
+        // This list determines both which types are (de-)classified using GetSimpleValue/FormatSimpleValue, and which types of dictionary keys use GetDictionary/FormatDictionary (all others use GetList/FormatList with GetKeyValuePair/FormatKeyValuePair)
+        // All enum types are also treated as if they were listed here.
+        private static Type[] _simpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
+
         private sealed class classifier<TElement>
         {
-            // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
-            // This list determines both which types are (de-)classified using GetSimpleValue/FormatSimpleValue, and which types of dictionary keys use GetDictionary/FormatDictionary (all others use GetList/FormatList with GetKeyValuePair/FormatKeyValuePair)
-            // All enum types are also treated as if they were listed here.
-            private static Type[] SimpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
-
             private ClassifyOptions _options;
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
@@ -501,7 +502,7 @@ namespace RT.Util.Serialization
                     return _ => cleanUp(() => null);
                 else if (typeof(TElement).IsAssignableFrom(type))
                     return _ => cleanUp(() => _format.GetSelfValue(elem));
-                else if (SimpleTypes.Contains(type) || ExactConvert.IsSupportedType(type))
+                else if (_simpleTypes.Contains(type) || ExactConvert.IsSupportedType(type))
                     return _ => cleanUp(() => ExactConvert.To(type, _format.GetSimpleValue(elem)));
                 else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
@@ -545,7 +546,7 @@ namespace RT.Util.Serialization
                     Type keyType = null, valueType = null;
                     if (type.IsArray)
                         valueType = type.GetElementType();
-                    else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || SimpleTypes.Contains(typeParameters[0])))
+                    else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // Dictionaries which are stored specially (key is a simple type).
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -860,7 +861,7 @@ namespace RT.Util.Serialization
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
-                else if (SimpleTypes.Contains(saveType) || saveType.IsEnum)
+                else if (_simpleTypes.Contains(saveType) || saveType.IsEnum)
                     elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
                     elem = () => _format.FormatSimpleValue(ExactConvert.ToString(saveObject));
@@ -895,7 +896,7 @@ namespace RT.Util.Serialization
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
-                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || SimpleTypes.Contains(typeParameters[0])))
+                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // It’s a dictionary with a simple-type key.
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -1064,35 +1065,56 @@ namespace RT.Util.Serialization
         ///     Object to report post-build errors to.</param>
         public static void PostBuildStep(Type type, IPostBuildReporter rep)
         {
-            object obj;
-            try
+            var instance = Activator.CreateInstance(type, true);
+            postBuildStep(type, instance, null, rep);
+        }
+
+        private static void postBuildStep(Type type, object instance, FieldInfo field, IPostBuildReporter rep)
+        {
+            if (type == typeof(Pointer) || type == typeof(IntPtr))
             {
-                obj = Activator.CreateInstance(type, nonPublic: true);
+                if (field == null)
+                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName), type.Name);
+                else
+                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, field.DeclaringType.FullName, field.Name), type.Name, field.Name);
             }
-            catch (Exception e)
+            else if (_simpleTypes.Contains(type))
+                return; // these are safe
+            else
             {
-                rep.Error("Unable to instantiate type {0}, required by Classify. Check that it has a parameterless constructor and the constructor doesn't throw. Details: {1}".Fmt(type, e.Message), "class", type.Name);
-                return;
+                if (type.IsAbstract)
+                    return; // not much we can check there
+                if (instance == null && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
+                    rep.Error(
+                        "The field {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}."
+                            .Fmt(field.NullOr(f => f.DeclaringType.FullName), field.NullOr(f => f.Name), type.FullName),
+                        field.NullOr(f => f.DeclaringType.Name), field.NullOr(f => f.Name));
+                else
+                {
+                    var inst = instance ?? Activator.CreateInstance(type, true);
+                    foreach (var f in type.GetAllFields())
+                    {
+                        if (f.IsDefined<ClassifyIgnoreAttribute>())
+                            continue;
+                        postBuildStep(f.FieldType, f.GetValue(inst), f, rep);
+                        checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), f, rep);
+                        checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), f, rep);
+                    }
+                }
             }
-            System.Xml.Linq.XElement testElement;
-            try
-            {
-                testElement = Serialize(type, obj, ClassifyXmlFormat.Default);
-            }
-            catch (Exception e)
-            {
-                rep.Error("Unable to Classify type {0}. {1}".Fmt(type, e.Message), "class", type.Name);
-                return;
-            }
-            try
-            {
-                Deserialize(type, testElement, ClassifyXmlFormat.Default);
-            }
-            catch (Exception e)
-            {
-                rep.Error("Unable to de-Classify type {0}. {1}".Fmt(type, e.Message), "class", type.Name);
-                return;
-            }
+        }
+
+        private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, FieldInfo field, IPostBuildReporter rep)
+        {
+            if (field.IsDefined(xmlClassifyAttribute, false) && !field.IsDefined(classifyAttribute, true))
+                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(field.DeclaringType.FullName, field.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName));
+            if (!field.IsDefined(xmlClassifyAttribute, true) && field.IsDefined(classifyAttribute, true))
+                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(field.DeclaringType.FullName, field.Name, classifyAttribute.FullName, xmlClassifyAttribute.FullName));
         }
     }
 

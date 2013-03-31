@@ -175,9 +175,9 @@ namespace RT.Util
 
             private void output(string errorOrWarning, string message, params string[] tokens)
             {
-                if (tokens == null || tokens.Length == 0)
+                if (tokens == null || tokens.Length == 0 || tokens.All(t => t == null))
                 {
-                    Console.Error.WriteLine(errorOrWarning + message);
+                    Console.Error.WriteLine("{0} CS9999: {1}", errorOrWarning, message);
                     return;
                 }
                 try
@@ -185,13 +185,13 @@ namespace RT.Util
                     foreach (var f in new DirectoryInfo(_path).GetFiles("*.cs", SearchOption.AllDirectories))
                     {
                         var lines = File.ReadAllLines(f.FullName);
-                        var tokenIndex = 0;
+                        var tokenIndex = tokens.IndexOf(t => t != null);
                         for (int i = 0; i < lines.Length; i++)
                         {
                             Match match;
                             while ((match = Regex.Match(lines[i], "\\b" + Regex.Escape(tokens[tokenIndex]) + "\\b")).Success)
                             {
-                                tokenIndex++;
+                                do { tokenIndex++; } while (tokenIndex < tokens.Length && tokens[tokenIndex] == null);
                                 if (tokenIndex == tokens.Length)
                                 {
                                     Console.Error.WriteLine(@"{0}({1},{2},{1},{3}): {4} CS9999: {5}",
