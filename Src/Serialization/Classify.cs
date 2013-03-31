@@ -1065,7 +1065,16 @@ namespace RT.Util.Serialization
         ///     Object to report post-build errors to.</param>
         public static void PostBuildStep(Type type, IPostBuildReporter rep)
         {
-            var instance = Activator.CreateInstance(type, true);
+            object instance;
+            try
+            {
+                instance = Activator.CreateInstance(type, true);
+            }
+            catch (MissingMethodException)
+            {
+                rep.Error("The type {0} does not have a parameterless constructor.".Fmt(type.FullName), "class", type.Name);
+                return;
+            }
             postBuildStep(type, instance, null, rep);
         }
 
