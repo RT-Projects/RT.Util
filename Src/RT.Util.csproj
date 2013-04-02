@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmdLine.cs" />
+    <Compile Include="Collections\AutoDictionary.cs" />
     <Compile Include="Collections\AutoList.cs" />
     <Compile Include="Collections\ListSorted.cs" />
     <Compile Include="Collections\QueueViewable.cs" />
