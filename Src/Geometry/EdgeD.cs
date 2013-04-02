@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -96,7 +96,7 @@ namespace RT.Util.Geometry
         /// <returns>A string representation of the current <see cref="EdgeD"/>.</returns>
         public override string ToString()
         {
-            return Start + " ==> " + End;
+            return Start + " ⇒ " + End;
         }
 
         /// <summary>Compares two <see cref="EdgeD"/> objects for equality.</summary>
