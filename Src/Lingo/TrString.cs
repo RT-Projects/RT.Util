@@ -40,17 +40,24 @@ namespace RT.Util.Lingo
         /// <summary>Formats a string using <see cref="StringExtensions.FmtEnumerable"/>.</summary>
         public IEnumerable<object> FmtEnumerable(params object[] args) { return Translation.FmtEnumerable(args); }
 
-        /// <summary>Returns the translation.</summary>
-        /// <returns>The translation.</returns>
+        /// <summary>
+        ///     Returns the translation.</summary>
+        /// <returns>
+        ///     The translation.</returns>
         public override string ToString() { return Translation; }
 
-        /// <summary>Returns the translation in the specified console colour.</summary>
-        /// <param name="color">The colour in which to colour the translation.</param>
-        /// <returns>A potentially colourful string.</returns>
+        /// <summary>
+        ///     Returns the translation in the specified console colour.</summary>
+        /// <param name="color">
+        ///     The colour in which to colour the translation.</param>
+        /// <returns>
+        ///     A potentially colourful string.</returns>
         public ConsoleColoredString Color(ConsoleColor color) { return new ConsoleColoredString(Translation, color); }
     }
 
-    /// <summary>Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a language's <see cref="NumberSystem"/>.</summary>
+    /// <summary>
+    ///     Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a
+    ///     language's <see cref="NumberSystem"/>.</summary>
     public sealed class TrStringNum
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
@@ -65,38 +72,58 @@ namespace RT.Util.Lingo
         /// <summary>Default constructor (required for XmlClassify).</summary>
         public TrStringNum() { Translations = new string[0]; IsNumber = new[] { true }; }
 
-        /// <summary>Constructs a new translatable string with the specified translations.</summary>
-        /// <param name="translations">Specifies the translations for this string. The number of elements is expected to be equal to the number
-        /// of strings as defined by your native language's NumberSystem, multiplied by the number of elements in <paramref name="isNumber"/> that are true.</param>
-        /// <param name="isNumber">Specifies which of the interpolated variables are integers.</param>
+        /// <summary>
+        ///     Constructs a new translatable string with the specified translations.</summary>
+        /// <param name="translations">
+        ///     Specifies the translations for this string. The number of elements is expected to be equal to the number of
+        ///     strings as defined by your native language's NumberSystem, multiplied by the number of elements in <paramref
+        ///     name="isNumber"/> that are true.</param>
+        /// <param name="isNumber">
+        ///     Specifies which of the interpolated variables are integers.</param>
         /// <example>
-        /// The following example code demonstrates how to instantiate a string that interpolates both a string (file name) and an integer (number of bytes) correctly.
-        /// <code>
-        /// TrStringNumbers MyString = new TrStringNumbers(new[] { "The file {0} contains {1} byte.", "The file {0} contains {1} bytes." }, new[] { false, true });
-        /// </code>
-        /// </example>
+        ///     <para>
+        ///         The following example code demonstrates how to instantiate a string that interpolates both a string (file
+        ///         name) and an integer (number of bytes) correctly.</para>
+        ///     <code>
+        ///         TrStringNum MyString = new TrStringNum(
+        ///             new[] { "The file {0} contains {1} byte.", "The file {0} contains {1} bytes." },
+        ///             new[] { false, true }
+        ///         );</code></example>
         public TrStringNum(string[] translations, bool[] isNumber) { Translations = translations; IsNumber = isNumber; }
 
-        /// <summary>Constructs a new translatable string with one interpolated integer and no other interpolated arguments, and the specified translations.</summary>
+        /// <summary>
+        ///     Constructs a new translatable string with one interpolated integer and no other interpolated arguments, and the
+        ///     specified translations.</summary>
         public TrStringNum(params string[] translations) { Translations = translations; IsNumber = new[] { true }; }
 
-        /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
-        /// <param name="tr">Current translation. Its language's number system will be used to interpolate the translation.</param>
-        /// <param name="args">Arguments to be interpolated into the translation.</param>
+        /// <summary>
+        ///     Selects the correct string and interpolates the specified arguments.</summary>
+        /// <param name="tr">
+        ///     Current translation. Its language’s number system will be used to interpolate the translation.</param>
+        /// <param name="args">
+        ///     Arguments to be interpolated into the translation.</param>
         public string Fmt(TranslationBase tr, params object[] args)
         {
             return Fmt(tr.Language.GetNumberSystem(), args);
         }
 
-        /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
-        /// <param name="lang">Current translation's language. Its number system will be used to interpolate the translation.</param>
-        /// <param name="args">Arguments to be interpolated into the translation.</param>
+        /// <summary>
+        ///     Selects the correct string and interpolates the specified arguments.</summary>
+        /// <param name="lang">
+        ///     Current translation’s language. Its number system will be used to interpolate the translation.</param>
+        /// <param name="args">
+        ///     Arguments to be interpolated into the translation.</param>
         public string Fmt(Language lang, params object[] args)
         {
             return Fmt(lang.GetNumberSystem(), args);
         }
 
-        /// <summary>Selects the correct string and interpolates the specified arguments.</summary>
+        /// <summary>
+        ///     Selects the correct string and interpolates the specified arguments.</summary>
+        /// <param name="ns">
+        ///     Number system to use to interpolate the translation.</param>
+        /// <param name="args">
+        ///     Arguments to be interpolated into the translation.</param>
         public string Fmt(NumberSystem ns, params object[] args)
         {
             try
