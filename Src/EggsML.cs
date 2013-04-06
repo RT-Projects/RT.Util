@@ -8,20 +8,36 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
-    /// <summary>Implements a parser for the minimalist text mark-up language EggsML.</summary>
+    /// <summary>
+    ///     Implements a parser for the minimalist text mark-up language EggsML.</summary>
     /// <remarks>
-    ///     <para>The “rules” of EggsML are, in summary:</para>
+    ///     <para>
+    ///         The “rules” of EggsML are, in summary:</para>
     ///     <list type="bullet">
-    ///         <item><description>In EggsML, the following non-alphanumeric characters are “special” (have meaning): <c>~ @ # $ % ^ &amp; * _ = + / \ | [ ] { } &lt; &gt; ` "</c></description></item>
-    ///         <item><description>All other characters are always literal.</description></item>
-    ///         <item><description>All the special characters can be escaped by doubling them.</description></item>
-    ///         <item><description>The characters <c>~ @ # $ % ^ &amp; * _ = + / \ | [ { &lt;</c> can be used to open a “tag”.</description></item>
-    ///         <item><description>Tags that start with <c>[ { &lt;</c> are closed with <c>] } &gt;</c>. All other tags are closed with the same character.</description></item>
-    ///         <item><description>Tags can be nested arbitrarily. In order to start a nested tag of the same character as its immediate parent, triple the tag character. For example, <c>*one ***two* three*</c> contains an asterisk tag nested inside another asterisk tag, while <c>*one *two* three*</c> would be parsed as two asterisk tags, one containing “one ” and the other containing “ three”.</description></item>
-    ///         <item><description>The backtick character (<c>`</c>) can be used to “unjoin” multiple copies of the same character. For example, <c>**</c> is a literal asterisk, but <c>*`*</c> is an empty tag containing no text.</description></item>
-    ///         <item><description>The double-quote character (<c>"</c>) can be used to escape long strings of special characters, e.g. URLs.</description></item>
-    ///     </list>
-    ///</remarks>
+    ///         <item><description>
+    ///             In EggsML, the following non-alphanumeric characters are “special” (have meaning): <c>~ @ # $ % ^ &amp; * _ =
+    ///             + / \ | [ ] { } &lt; &gt; ` "</c></description></item>
+    ///         <item><description>
+    ///             All other characters are always literal.</description></item>
+    ///         <item><description>
+    ///             All the special characters can be escaped by doubling them.</description></item>
+    ///         <item><description>
+    ///             The characters <c>~ @ # $ % ^ &amp; * _ = + / \ | [ { &lt;</c> can be used to open a
+    ///             “tag”.</description></item>
+    ///         <item><description>
+    ///             Tags that start with <c>[ { &lt;</c> are closed with <c>] } &gt;</c>. All other tags are closed with the same
+    ///             character.</description></item>
+    ///         <item><description>
+    ///             Tags can be nested arbitrarily. In order to start a nested tag of the same character as its immediate parent,
+    ///             triple the tag character. For example, <c>*one ***two* three*</c> contains an asterisk tag nested inside
+    ///             another asterisk tag, while <c>*one *two* three*</c> would be parsed as two asterisk tags, one containing “one
+    ///             ” and the other containing “ three”.</description></item>
+    ///         <item><description>
+    ///             The backtick character (<c>`</c>) can be used to “unjoin” multiple copies of the same character. For example,
+    ///             <c>**</c> is a literal asterisk, but <c>*`*</c> is an empty tag containing no text.</description></item>
+    ///         <item><description>
+    ///             The double-quote character (<c>"</c>) can be used to escape long strings of special characters, e.g.
+    ///             URLs.</description></item></list></remarks>
     public static class EggsML
     {
         /// <summary>Returns an array containing all characters that have a special meaning in EggsML.</summary>
@@ -36,18 +52,28 @@ namespace RT.Util
         }
         private static char[] _specialCharacters = null;
 
-        /// <summary>Parses the specified EggsML input.</summary>
-        /// <param name="input">The EggsML text to parse.</param>
-        /// <returns>The resulting parse-tree.</returns>
+        /// <summary>
+        ///     Parses the specified EggsML input.</summary>
+        /// <param name="input">
+        ///     The EggsML text to parse.</param>
+        /// <returns>
+        ///     The resulting parse-tree.</returns>
         /// <remarks>
         ///     <list type="bullet">
-        ///         <description><item>Tags are parsed into instances of <see cref="EggsTag"/>.</item></description>
-        ///         <description><item>The top-level nodes are contained in an instance of <see cref="EggsTag"/> whose <see cref="EggsTag.Tag"/> property is set to null.</item></description>
-        ///         <description><item>All the literal text is parsed into instances of <see cref="EggsText"/>. All continuous text is consolidated, so there are no two consecutive EggsText instances in any list of children.</item></description>
-        ///     </list>
-        /// </remarks>
-        /// <exception cref="EggsMLParseException">Invalid syntax was encountered. The exception object contains the string index at which the error was detected.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="input"/> was null.</exception>
+        ///         <item><description>
+        ///             Tags are parsed into instances of <see cref="EggsTag"/>.</description></item>
+        ///         <item><description>
+        ///             The top-level nodes are contained in an instance of <see cref="EggsTag"/> whose <see cref="EggsTag.Tag"/>
+        ///             property is set to null.</description></item>
+        ///         <item><description>
+        ///             All the literal text is parsed into instances of <see cref="EggsText"/>. All continuous text is
+        ///             consolidated, so there are no two consecutive EggsText instances in any list of
+        ///             children.</description></item></list></remarks>
+        /// <exception cref="EggsMLParseException">
+        ///     Invalid syntax was encountered. The exception object contains the string index at which the error was
+        ///     detected.</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="input"/> was null.</exception>
         public static EggsNode Parse(string input)
         {
             if (input == null)
@@ -170,7 +196,9 @@ namespace RT.Util
             return curTag;
         }
 
-        /// <summary>Escapes the input string such that it can be used in EggsML syntax. The result will either have no special characters in it or be entirely enclosed in double-quotes.</summary>
+        /// <summary>
+        ///     Escapes the input string such that it can be used in EggsML syntax. The result will either have no special
+        ///     characters in it or be entirely enclosed in double-quotes.</summary>
         public static string Escape(string input)
         {
             if (!input.Any(ch => SpecialCharacters.Contains(ch)))
@@ -191,36 +219,62 @@ namespace RT.Util
         internal static bool alwaysOpens(char? p) { return p == '[' || p == '<' || p == '{'; }
         private static bool alwaysCloses(char? p) { return p == ']' || p == '>' || p == '}'; }
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color, etc.) the string is in.</param>
-        /// <param name="text">The string to render.</param>
-        /// <param name="width">The measured width of the string.</param>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color, etc.) the string is in.</param>
+        /// <param name="text">
+        ///     The string to render.</param>
+        /// <param name="width">
+        ///     The measured width of the string.</param>
         public delegate void EggRender<TState>(TState state, string text, int width);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which measures the width of a string.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="text">The text whose width to measure.</param>
-        /// <returns>The width of the text in any arbitrary unit, as long as the “width” parameter in the call to
-        /// <see cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which measures the width of a string.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color etc.) of the text.</param>
+        /// <param name="text">
+        ///     The text whose width to measure.</param>
+        /// <returns>
+        ///     The width of the text in any arbitrary unit, as long as the “width” parameter in the call to <see
+        ///     cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
         public delegate int EggMeasure<TState>(TState state, string text);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="newParagraph">‘true’ if a new paragraph begins, ‘false’ if a word is being wrapped within a paragraph.</param>
-        /// <param name="indent">If <paramref name="newParagraph"/> is false, the indentation of the current paragraph as measured only by its leading spaces; otherwise, zero.</param>
-        /// <returns>The indentation for the next line. Use this to implement, for example, hanging indents.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color etc.) of the text.</param>
+        /// <param name="newParagraph">
+        ///     ‘true’ if a new paragraph begins, ‘false’ if a word is being wrapped within a paragraph.</param>
+        /// <param name="indent">
+        ///     If <paramref name="newParagraph"/> is false, the indentation of the current paragraph as measured only by its
+        ///     leading spaces; otherwise, zero.</param>
+        /// <returns>
+        ///     The indentation for the next line. Use this to implement, for example, hanging indents.</returns>
         public delegate int EggNextLine<TState>(TState state, bool newParagraph, int indent);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
-        /// changes for a given EggsML tag character. This delegate is called for all tags except for <c>+...+</c> and <c>&lt;...&gt;</c>.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="oldState">The previous state (for the parent tag).</param>
-        /// <param name="eggTag">The EggsML tag character.</param>
-        /// <param name="parameter">The contents of the immediately preceding “&lt;...&gt;” tag (if any), which can be used to parameterize other tags.</param>
-        /// <returns>The next state (return the old state for all tags that should not have a meaning) and an integer indicating the amount by which opening this tag has advanced the text position.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color
+        ///     etc.) changes for a given EggsML tag character. This delegate is called for all tags except for <c>+...+</c> and
+        ///     <c>&lt;...&gt;</c>.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="oldState">
+        ///     The previous state (for the parent tag).</param>
+        /// <param name="eggTag">
+        ///     The EggsML tag character.</param>
+        /// <param name="parameter">
+        ///     The contents of the immediately preceding <c>&lt;...&gt;</c> tag (if any), which can be used to parameterize other
+        ///     tags.</param>
+        /// <returns>
+        ///     The next state (return the old state for all tags that should not have a meaning) and an integer indicating the
+        ///     amount by which opening this tag has advanced the text position.</returns>
         public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag, string parameter);
 
         private sealed class eggWalkData<TState>
@@ -396,25 +450,38 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Word-wraps a given piece of EggsML, assuming that it is linearly flowing text. Newline (\n) characters can be used to split the text into multiple paragraphs.
-        /// See remarks for the special meaning of <c>+...+</c> and <c>&lt;...&gt;</c>.</summary>
-        /// <typeparam name="TState">The type of the text state that an EggsML can change, e.g. font or color.</typeparam>
-        /// <param name="node">The root node of the EggsML tree to word-wrap.</param>
-        /// <param name="initialState">The initial text state.</param>
-        /// <param name="wrapWidth">The maximum width at which to word-wrap. This width can be measured in any unit,
-        /// as long as <paramref name="measure"/> uses the same unit.</param>
-        /// <param name="measure">A delegate that measures the width of any piece of text.</param>
-        /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
-        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
-        /// <param name="nextState">A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
-        /// <returns>The maximum width of the text.</returns>
+        /// <summary>
+        ///     Word-wraps a given piece of EggsML, assuming that it is linearly flowing text. Newline (<c>\n</c>) characters can
+        ///     be used to split the text into multiple paragraphs. See remarks for the special meaning of <c>+...+</c> and
+        ///     <c>&lt;...&gt;</c>.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state that an EggsML can change, e.g. font or color.</typeparam>
+        /// <param name="node">
+        ///     The root node of the EggsML tree to word-wrap.</param>
+        /// <param name="initialState">
+        ///     The initial text state.</param>
+        /// <param name="wrapWidth">
+        ///     The maximum width at which to word-wrap. This width can be measured in any unit, as long as <paramref
+        ///     name="measure"/> uses the same unit.</param>
+        /// <param name="measure">
+        ///     A delegate that measures the width of any piece of text.</param>
+        /// <param name="render">
+        ///     A delegate that is called whenever a piece of text is ready to be rendered.</param>
+        /// <param name="advanceToNextLine">
+        ///     A delegate that is called to advance to the next line.</param>
+        /// <param name="nextState">
+        ///     A delegate that determines how each EggsML tag character modifies the state (font, color etc.).</param>
+        /// <returns>
+        ///     The maximum width of the text.</returns>
         /// <remarks>
-        /// <list type="bullet">
-        ///     <item><description>The <c>+...+</c> tag marks text that may not be broken by wrapping (effectively turning all spaces into non-breaking spaces).</description></item>
-        ///     <item><description>The <c>&lt;...&gt;</c> tag marks a parameter to an immediately following tag. For example, if the input EggsML contains <c>&lt;X&gt;{Foo}</c>,
-        ///                                     the text “X” will be passed as the parameter to <paramref name="nextState"/> when the <c>{</c> tag is processed.</description></item>
-        /// </list>
-        /// </remarks>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             The <c>+...+</c> tag marks text that may not be broken by wrapping (effectively turning all spaces into
+        ///             non-breaking spaces).</description></item>
+        ///         <item><description>
+        ///             The <c>&lt;...&gt;</c> tag marks a parameter to an immediately following tag. For example, if the input
+        ///             EggsML contains <c>&lt;X&gt;{Foo}</c>, the text “X” will be passed as the parameter to <paramref
+        ///             name="nextState"/> when the <c>{</c> tag is processed.</description></item></list></remarks>
         public static int WordWrap<TState>(EggsNode node, TState initialState, int wrapWidth,
             EggMeasure<TState> measure, EggRender<TState> render, EggNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
@@ -442,7 +509,7 @@ namespace RT.Util
         }
     }
 
-    /// <summary>Contains a node in the EggsML parse tree.</summary>
+    /// <summary>Contains a node in the <see cref="EggsML"/> parse tree.</summary>
     public abstract class EggsNode
     {
         /// <summary>Returns the EggsML parse tree as XML.</summary>
@@ -457,14 +524,21 @@ namespace RT.Util
         /// <summary>Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
         public EggsTag Parent { get; internal set; }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="index">The index within the original string where this node starts.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="index">
+        ///     The index within the original string where this node starts.</param>
         public EggsNode(int index) { Index = index; }
 
-        /// <summary>Turns a list of child nodes into EggsML mark-up.</summary>
-        /// <param name="children">List of children to turn into mark-up.</param>
-        /// <param name="tag">If non-null, assumes we are directly inside a tag with the specified character, causing necessary escaping to be performed.</param>
-        /// <returns>EggsML mark-up representing the same tree structure as this node.</returns>
+        /// <summary>
+        ///     Turns a list of child nodes into EggsML mark-up.</summary>
+        /// <param name="children">
+        ///     List of children to turn into mark-up.</param>
+        /// <param name="tag">
+        ///     If non-null, assumes we are directly inside a tag with the specified character, causing necessary escaping to be
+        ///     performed.</param>
+        /// <returns>
+        ///     EggsML mark-up representing the same tree structure as this node.</returns>
         protected static string stringify(List<EggsNode> children, char? tag)
         {
             if (children == null || children.Count == 0)
@@ -502,11 +576,13 @@ namespace RT.Util
         internal abstract void textify(StringBuilder builder);
     }
 
-    /// <summary>Represents a node in the EggsML parse tree that corresponds to an EggsML tag or the top-level node.</summary>
+    /// <summary>Represents a node in the <see cref="EggsML"/> parse tree that corresponds to an EggsML tag or the top-level node.</summary>
     public sealed class EggsTag : EggsNode
     {
-        /// <summary>Adds a new child node to this tag’s children.</summary>
-        /// <param name="child">The child node to add.</param>
+        /// <summary>
+        ///     Adds a new child node to this tag’s children.</summary>
+        /// <param name="child">
+        ///     The child node to add.</param>
         internal void Add(EggsNode child) { child.Parent = this; _children.Add(child); }
 
         /// <summary>The children of this node.</summary>
@@ -522,13 +598,19 @@ namespace RT.Util
         /// <summary>The character used to open the tag (e.g. “[”), or null if this is the top-level node.</summary>
         public char? Tag { get; private set; }
 
-        /// <summary>Constructs a new EggsML parse-tree node that represents an EggsML tag.</summary>
-        /// <param name="tag">The character used to open the tag (e.g. '[').</param>
-        /// <param name="index">The index in the original string where this tag was opened.</param>
+        /// <summary>
+        ///     Constructs a new EggsML parse-tree node that represents an EggsML tag.</summary>
+        /// <param name="tag">
+        ///     The character used to open the tag (e.g. '[').</param>
+        /// <param name="index">
+        ///     The index in the original string where this tag was opened.</param>
         public EggsTag(char? tag, int index) : base(index) { Tag = tag; _children = new List<EggsNode>(); }
 
-        /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
-        /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
+        /// <summary>
+        ///     Reconstructs the original EggsML that is represented by this node.</summary>
+        /// <remarks>
+        ///     This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the
+        ///     <c>`</c> character are removed.</remarks>
         public override string ToString()
         {
             if (_children.Count == 0)
@@ -584,15 +666,18 @@ namespace RT.Util
         }
     }
 
-    /// <summary>Represents a node in the EggsML parse tree that corresponds to a piece of text.</summary>
+    /// <summary>Represents a node in the <see cref="EggsML"/> parse tree that corresponds to a piece of text.</summary>
     public sealed class EggsText : EggsNode
     {
         /// <summary>The text contained in this node.</summary>
         public string Text { get; private set; }
 
-        /// <summary>Constructs a new EggsML text node.</summary>
-        /// <param name="text">The text for this node to contain.</param>
-        /// <param name="index">The index in the original string where this text starts.</param>
+        /// <summary>
+        ///     Constructs a new EggsML text node.</summary>
+        /// <param name="text">
+        ///     The text for this node to contain.</param>
+        /// <param name="index">
+        ///     The index in the original string where this text starts.</param>
         public EggsText(string text, int index = 0)
             : base(index)
         {
@@ -601,8 +686,11 @@ namespace RT.Util
             Text = text;
         }
 
-        /// <summary>Reconstructs the original EggsML that is represented by this node.</summary>
-        /// <remarks>This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the "`" character are removed.</remarks>
+        /// <summary>
+        ///     Reconstructs the original EggsML that is represented by this node.</summary>
+        /// <remarks>
+        ///     This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the
+        ///     <c>`</c> character are removed.</remarks>
         public override string ToString()
         {
             if (Text.Where(ch => EggsML.SpecialCharacters.Contains(ch) && ch != '"').Take(3).Count() >= 3)
@@ -629,15 +717,24 @@ namespace RT.Util
         /// <summary>The length of the text in the original string where the error occurred.</summary>
         public int Length { get; private set; }
 
-        /// <summary>The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</summary>
+        /// <summary>
+        ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+        ///     that is missing its end tag).</summary>
         public int? FirstIndex { get; private set; }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Message.</param>
-        /// <param name="index">The character index into the original string where the error occurred.</param>
-        /// <param name="length">The length of the text in the original string where the error occurred.</param>
-        /// <param name="firstIndex">The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</param>
-        /// <param name="inner">An inner exception to pass to the base Exception class.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="message">
+        ///     Message.</param>
+        /// <param name="index">
+        ///     The character index into the original string where the error occurred.</param>
+        /// <param name="length">
+        ///     The length of the text in the original string where the error occurred.</param>
+        /// <param name="firstIndex">
+        ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+        ///     that is missing its end tag).</param>
+        /// <param name="inner">
+        ///     An inner exception to pass to the base Exception class.</param>
         public EggsMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
     }
 }

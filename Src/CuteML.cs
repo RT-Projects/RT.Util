@@ -9,32 +9,52 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
-    /// <summary>Implements a parser for the minimalist text mark-up language CuteML.</summary>
+    /// <summary>
+    ///     Implements a parser for the minimalist text mark-up language CuteML.</summary>
     /// <remarks>
-    ///     <para>The “rules” of CuteML are, in summary:</para>
+    ///     <para>
+    ///         The “rules” of CuteML are, in summary:</para>
     ///     <list type="bullet">
-    ///         <item><description>A CuteML tag starts with <c>[</c> and ends with <c>]</c>.</description></item>
-    ///         <item><description>The character following the <c>[</c> is the tag name. This can be any character except for <c>&lt;</c>. For example, the following is legal CuteML: <c>this is [*bold] text.</c></description></item>
-    ///         <item><description>Optional attribute data may be inserted between the <c>[</c> and the tag name enclosed in <c>&lt;...&gt;</c>. For example, the following is legal CuteML: <c>this is [&lt;red&gt;:red] text.</c>
-    ///                                         This attribute data may not contain the characters <c>[</c>, <c>]</c> or <c>&lt;</c>.</description></item>
-    ///         <item><description>The special tags <c>[(]</c> and <c>[)]</c> can be used to insert an opening and closing literal square bracket, respectively.</description></item>
-    ///         <item><description>The special tag <c>[ ...]</c> (i.e., the tag name is the space character) can be used to insert a matching literal square bracket. In other words, <c>[ xyz]</c> is equivalent to <c>[(]xyz[)]</c>.</description></item>
-    ///     </list>
-    ///</remarks>
+    ///         <item><description>
+    ///             A CuteML tag starts with <c>[</c> and ends with <c>]</c>.</description></item>
+    ///         <item><description>
+    ///             The character following the <c>[</c> is the tag name. This can be any character except for <c>&lt;</c>. For
+    ///             example, the following is legal CuteML: <c>this is [*bold] text.</c></description></item>
+    ///         <item><description>
+    ///             Optional attribute data may be inserted between the <c>[</c> and the tag name enclosed in <c>&lt;...&gt;</c>.
+    ///             For example, the following is legal CuteML: <c>this is [&lt;red&gt;:red] text.</c> This attribute data may not
+    ///             contain the characters <c>[</c>, <c>]</c> or <c>&lt;</c>.</description></item>
+    ///         <item><description>
+    ///             The special tags <c>[(]</c> and <c>[)]</c> can be used to insert an opening and closing literal square
+    ///             bracket, respectively.</description></item>
+    ///         <item><description>
+    ///             The special tag <c>[ ...]</c> (i.e., the tag name is the space character) can be used to insert a matching
+    ///             literal square bracket. In other words, <c>[ xyz]</c> is equivalent to
+    ///             <c>[(]xyz[)]</c>.</description></item></list></remarks>
     public static class CuteML
     {
-        /// <summary>Parses the specified CuteML input.</summary>
-        /// <param name="input">The CuteML text to parse.</param>
-        /// <returns>The resulting parse-tree.</returns>
+        /// <summary>
+        ///     Parses the specified CuteML input.</summary>
+        /// <param name="input">
+        ///     The CuteML text to parse.</param>
+        /// <returns>
+        ///     The resulting parse-tree.</returns>
         /// <remarks>
         ///     <list type="bullet">
-        ///         <description><item>Tags are parsed into instances of <see cref="CuteTag"/>.</item></description>
-        ///         <description><item>The top-level nodes are contained in an instance of <see cref="CuteTag"/> whose <see cref="CuteTag.Tag"/> property is set to null.</item></description>
-        ///         <description><item>All the literal text is parsed into instances of <see cref="CuteText"/>. All continuous text is consolidated, so there are no two consecutive <see cref="CuteText"/> instances in any list of children.</item></description>
-        ///     </list>
-        /// </remarks>
-        /// <exception cref="CuteMLParseException">Invalid syntax was encountered. The exception object contains the string index at which the error was detected.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="input"/> was null.</exception>
+        ///         <item><description>
+        ///             Tags are parsed into instances of <see cref="CuteTag"/>.</description></item>
+        ///         <item><description>
+        ///             The top-level nodes are contained in an instance of <see cref="CuteTag"/> whose <see cref="CuteTag.Tag"/>
+        ///             property is set to null.</description></item>
+        ///         <item><description>
+        ///             All the literal text is parsed into instances of <see cref="CuteText"/>. All continuous text is
+        ///             consolidated, so there are no two consecutive <see cref="CuteText"/> instances in any list of
+        ///             children.</description></item></list></remarks>
+        /// <exception cref="CuteMLParseException">
+        ///     Invalid syntax was encountered. The exception object contains the string index at which the error was
+        ///     detected.</exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="input"/> was null.</exception>
         public static CuteNode ParseCuteML(this string input)
         {
             if (input == null)
@@ -174,7 +194,9 @@ namespace RT.Util
             return curTag;
         }
 
-        /// <summary>Escapes the input string such that it can be used in CuteML syntax. The result will have its <c>[</c> and <c>]</c> replaced with <c>[(]</c> and <c>[)]</c>.</summary>
+        /// <summary>
+        ///     Escapes the input string such that it can be used in CuteML syntax. The result will have its <c>[</c> and <c>]</c>
+        ///     replaced with <c>[(]</c> and <c>[)]</c>.</summary>
         public static string EscapeCuteML(this string input)
         {
             var builder = new StringBuilder();
@@ -193,36 +215,61 @@ namespace RT.Util
             return builder.ToString();
         }
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color, etc.) the string is in.</param>
-        /// <param name="text">The string to render.</param>
-        /// <param name="width">The measured width of the string.</param>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color, etc.) the string is in.</param>
+        /// <param name="text">
+        ///     The string to render.</param>
+        /// <param name="width">
+        ///     The measured width of the string.</param>
         public delegate void CuteRender<TState>(TState state, string text, int width);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which measures the width of a string.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="text">The text whose width to measure.</param>
-        /// <returns>The width of the text in any arbitrary unit, as long as the “width” parameter in the call to
-        /// <see cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which measures the width of a string.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color etc.) of the text.</param>
+        /// <param name="text">
+        ///     The text whose width to measure.</param>
+        /// <returns>
+        ///     The width of the text in any arbitrary unit, as long as the “width” parameter in the call to <see
+        ///     cref="WordWrap&lt;TState&gt;"/> is in the same unit.</returns>
         public delegate int CuteMeasure<TState>(TState state, string text);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="state">The state (font, color etc.) of the text.</param>
-        /// <param name="newParagraph">‘true’ if a new paragraph begins, ‘false’ if a word is being wrapped within a paragraph.</param>
-        /// <param name="indent">If <paramref name="newParagraph"/> is false, the indentation of the current paragraph as measured only by its leading spaces; otherwise, zero.</param>
-        /// <returns>The indentation for the next line. Use this to implement, for example, hanging indents.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which advances to the next line.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="state">
+        ///     The state (font, color etc.) of the text.</param>
+        /// <param name="newParagraph">
+        ///     ‘true’ if a new paragraph begins, ‘false’ if a word is being wrapped within a paragraph.</param>
+        /// <param name="indent">
+        ///     If <paramref name="newParagraph"/> is false, the indentation of the current paragraph as measured only by its
+        ///     leading spaces; otherwise, zero.</param>
+        /// <returns>
+        ///     The indentation for the next line. Use this to implement, for example, hanging indents.</returns>
         public delegate int CuteNextLine<TState>(TState state, bool newParagraph, int indent);
 
-        /// <summary>Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color etc.)
-        /// changes for a given CuteML tag character. This delegate is called for all tags except for <c>[+...]</c>, which is automatically processed to mean “nowrap”.</summary>
-        /// <typeparam name="TState">The type of the text state, e.g. font or color.</typeparam>
-        /// <param name="oldState">The previous state (for the parent tag).</param>
-        /// <param name="cuteTag">The CuteML tag character.</param>
-        /// <param name="parameter">The contents of the tag attribute, which can be used to parameterize tags.</param>
-        /// <returns>The next state (return the old state for all tags that should not have a meaning) and an integer indicating the amount by which opening this tag has advanced the text position.</returns>
+        /// <summary>
+        ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which determines how the text state (font, color
+        ///     etc.) changes for a given CuteML tag character. This delegate is called for all tags except for <c>[+...]</c>,
+        ///     which is automatically processed to mean “nowrap”.</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state, e.g. font or color.</typeparam>
+        /// <param name="oldState">
+        ///     The previous state (for the parent tag).</param>
+        /// <param name="cuteTag">
+        ///     The CuteML tag character.</param>
+        /// <param name="parameter">
+        ///     The contents of the tag attribute, which can be used to parameterize tags.</param>
+        /// <returns>
+        ///     The next state (return the old state for all tags that should not have a meaning) and an integer indicating the
+        ///     amount by which opening this tag has advanced the text position.</returns>
         public delegate Tuple<TState, int> CuteNextState<TState>(TState oldState, char cuteTag, string parameter);
 
         private sealed class cuteWalkData<TState>
@@ -385,18 +432,29 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Word-wraps a given piece of CuteML, assuming that it is linearly flowing text. Newline (\n) characters can be used to split the text into multiple paragraphs.
-        /// The special <c>[+...]</c> tag marks text that may not be broken by wrapping (effectively turning all spaces into non-breaking spaces).</summary>
-        /// <typeparam name="TState">The type of the text state that a tag can change, e.g. font or color.</typeparam>
-        /// <param name="node">The root node of the CuteML tree to word-wrap.</param>
-        /// <param name="initialState">The initial text state.</param>
-        /// <param name="wrapWidth">The maximum width at which to word-wrap. This width can be measured in any unit,
-        /// as long as <paramref name="measure"/> uses the same unit.</param>
-        /// <param name="measure">A delegate that measures the width of any piece of text.</param>
-        /// <param name="render">A delegate that is called whenever a piece of text is ready to be rendered.</param>
-        /// <param name="advanceToNextLine">A delegate that is called to advance to the next line.</param>
-        /// <param name="nextState">A delegate that determines how each CuteML tag character modifies the state (font, color etc.).</param>
-        /// <returns>The maximum width of the text.</returns>
+        /// <summary>
+        ///     Word-wraps a given piece of CuteML, assuming that it is linearly flowing text. Newline (<c>\n</c>) characters can
+        ///     be used to split the text into multiple paragraphs. The special <c>[+...]</c> tag marks text that may not be
+        ///     broken by wrapping (effectively turning all spaces into non-breaking spaces).</summary>
+        /// <typeparam name="TState">
+        ///     The type of the text state that a tag can change, e.g. font or color.</typeparam>
+        /// <param name="node">
+        ///     The root node of the CuteML tree to word-wrap.</param>
+        /// <param name="initialState">
+        ///     The initial text state.</param>
+        /// <param name="wrapWidth">
+        ///     The maximum width at which to word-wrap. This width can be measured in any unit, as long as <paramref
+        ///     name="measure"/> uses the same unit.</param>
+        /// <param name="measure">
+        ///     A delegate that measures the width of any piece of text.</param>
+        /// <param name="render">
+        ///     A delegate that is called whenever a piece of text is ready to be rendered.</param>
+        /// <param name="advanceToNextLine">
+        ///     A delegate that is called to advance to the next line.</param>
+        /// <param name="nextState">
+        ///     A delegate that determines how each CuteML tag character modifies the state (font, color etc.).</param>
+        /// <returns>
+        ///     The maximum width of the text.</returns>
         public static int WordWrap<TState>(CuteNode node, TState initialState, int wrapWidth,
             CuteMeasure<TState> measure, CuteRender<TState> render, CuteNextLine<TState> advanceToNextLine, CuteNextState<TState> nextState)
         {
@@ -439,8 +497,10 @@ namespace RT.Util
         /// <summary>Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
         public CuteTag Parent { get; internal set; }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="index">The index within the original string where this node starts.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="index">
+        ///     The index within the original string where this node starts.</param>
         public CuteNode(int index) { Index = index; }
 
         /// <summary>Gets the text of this node and/or sub-nodes concatenated into one string.</summary>
@@ -458,21 +518,40 @@ namespace RT.Util
 
         internal abstract void textify(StringBuilder builder);
 
-        /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from a CuteML parse tree by word-wrapping the output at a specified character width.</summary>
-        /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
-        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
-        /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the CuteML parse tree.</returns>
-        /// <remarks><para>The following CuteML tags are processed:</para>
-        /// <list type="bullet">
-        /// <item><description><c>[&lt;color&gt;:...]</c> = use the specified console color, for example <c>[&lt;darkred&gt;:...]</c>.</description></item>
-        /// <item><description><c>[*blah]</c> = Brightens the current color, for example turning dark-red into red or light-gray into white.</description></item>
-        /// <item><description><c>[-blah]</c> = Darkens the current color, for example turning red into dark-red or white into light-gray.</description></item>
-        /// <item><description><c>[.blah]</c> = Creates a bullet point. Surround a whole paragraph with this to add the bullet point and indent the paragraph. Use this to create bulleted lists. The default bullet point character is <c>*</c>; you can use an attribute to specify another one, for example <c>[&lt;-&gt;.blah]</c>.</description></item>
-        /// <item><description><c>[+blah]</c> = Suppresses word-wrapping within a certain stretch of text. In other words, the contents of a <c>[+...]</c> tag are treated as if they were a single word.
-        /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</description></item>
-        /// </list>
-        /// <para>Text which is not inside a color tag defaults to light gray.</para>
-        /// </remarks>
+        /// <summary>
+        ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from a CuteML parse tree by word-wrapping the output
+        ///     at a specified character width.</summary>
+        /// <param name="wrapWidth">
+        ///     The number of characters at which to word-wrap the output.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
+        /// <returns>
+        ///     The sequence of <see cref="ConsoleColoredString"/>s generated from the CuteML parse tree.</returns>
+        /// <remarks>
+        ///     <para>
+        ///         The following CuteML tags are processed:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <c>[&lt;color&gt;:...]</c> = use the specified console color, for example
+        ///             <c>[&lt;darkred&gt;:...]</c>.</description></item>
+        ///         <item><description>
+        ///             <c>[*blah]</c> = Brightens the current color, for example turning dark-red into red or light-gray into
+        ///             white.</description></item>
+        ///         <item><description>
+        ///             <c>[-blah]</c> = Darkens the current color, for example turning red into dark-red or white into
+        ///             light-gray.</description></item>
+        ///         <item><description>
+        ///             <c>[.blah]</c> = Creates a bullet point. Surround a whole paragraph with this to add the bullet point and
+        ///             indent the paragraph. Use this to create bulleted lists. The default bullet point character is <c>*</c>;
+        ///             you can use an attribute to specify another one, for example <c>[&lt;-&gt;.blah]</c>.</description></item>
+        ///         <item><description>
+        ///             <c>[+blah]</c> = Suppresses word-wrapping within a certain stretch of text. In other words, the contents
+        ///             of a <c>[+...]</c> tag are treated as if they were a single word. Use this in preference to U+00A0
+        ///             (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented
+        ///             here.</description></item></list>
+        ///     <para>
+        ///         Text which is not inside a color tag defaults to light gray.</para></remarks>
         public IEnumerable<ConsoleColoredString> ToConsoleColoredStrings(int wrapWidth = int.MaxValue, int hangingIndent = 0)
         {
             var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
@@ -525,12 +604,16 @@ namespace RT.Util
     /// <summary>Represents a node in the CuteML parse tree that corresponds to a CuteML tag or the top-level node.</summary>
     public sealed class CuteTag : CuteNode
     {
-        /// <summary>Adds a new child node to this tag’s children.</summary>
-        /// <param name="child">The child node to add.</param>
+        /// <summary>
+        ///     Adds a new child node to this tag’s children.</summary>
+        /// <param name="child">
+        ///     The child node to add.</param>
         internal void Add(CuteNode child) { child.Parent = this; _children.Add(child); }
 
-        /// <summary>Adds the specified child nodes to this tag’s children.</summary>
-        /// <param name="children">The child nodes to add.</param>
+        /// <summary>
+        ///     Adds the specified child nodes to this tag’s children.</summary>
+        /// <param name="children">
+        ///     The child nodes to add.</param>
         internal void AddRange(IEnumerable<CuteNode> children)
         {
             foreach (var child in children)
@@ -562,10 +645,14 @@ namespace RT.Util
         /// <summary>The character that constitutes the tag name (e.g. <c>*</c>), or null if this is the top-level node.</summary>
         public char? Tag { get; private set; }
 
-        /// <summary>Constructs a new CuteML parse-tree node that represents a CuteML tag.</summary>
-        /// <param name="tag">The character that constitutes the tag name (e.g. <c>*</c>).</param>
-        /// <param name="attribute">The attribute string provided with the tag, or null if none.</param>
-        /// <param name="index">The index in the original string where this tag was opened.</param>
+        /// <summary>
+        ///     Constructs a new CuteML parse-tree node that represents a CuteML tag.</summary>
+        /// <param name="tag">
+        ///     The character that constitutes the tag name (e.g. <c>*</c>).</param>
+        /// <param name="attribute">
+        ///     The attribute string provided with the tag, or null if none.</param>
+        /// <param name="index">
+        ///     The index in the original string where this tag was opened.</param>
         public CuteTag(char? tag, string attribute, int index) : base(index) { Tag = tag; Attribute = attribute; _children = new List<CuteNode>(); }
 
         /// <summary>Returns an XML representation of this CuteML node.</summary>
@@ -605,9 +692,12 @@ namespace RT.Util
         /// <summary>The text contained in this node.</summary>
         public string Text { get; private set; }
 
-        /// <summary>Constructs a new CuteML text node.</summary>
-        /// <param name="text">The text for this node to contain.</param>
-        /// <param name="index">The index in the original string where this text starts.</param>
+        /// <summary>
+        ///     Constructs a new CuteML text node.</summary>
+        /// <param name="text">
+        ///     The text for this node to contain.</param>
+        /// <param name="index">
+        ///     The index in the original string where this text starts.</param>
         public CuteText(string text, int index = 0)
             : base(index)
         {
@@ -638,15 +728,24 @@ namespace RT.Util
         /// <summary>The length of the text in the original string where the error occurred.</summary>
         public int Length { get; private set; }
 
-        /// <summary>The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</summary>
+        /// <summary>
+        ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+        ///     that is missing its end tag).</summary>
         public int? FirstIndex { get; private set; }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Message.</param>
-        /// <param name="index">The character index into the original string where the error occurred.</param>
-        /// <param name="length">The length of the text in the original string where the error occurred.</param>
-        /// <param name="firstIndex">The character index of an earlier position in the original string where the error started (e.g. the start of a tag that is missing its end tag).</param>
-        /// <param name="inner">An inner exception to pass to the base Exception class.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="message">
+        ///     Message.</param>
+        /// <param name="index">
+        ///     The character index into the original string where the error occurred.</param>
+        /// <param name="length">
+        ///     The length of the text in the original string where the error occurred.</param>
+        /// <param name="firstIndex">
+        ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+        ///     that is missing its end tag).</param>
+        /// <param name="inner">
+        ///     An inner exception to pass to the base Exception class.</param>
         public CuteMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
     }
 }

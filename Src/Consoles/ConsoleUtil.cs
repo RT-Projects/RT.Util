@@ -8,9 +8,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Consoles
 {
-    /// <summary>
-    /// Console-related utility functions.
-    /// </summary>
+    /// <summary>Console-related utility functions.</summary>
     public static class ConsoleUtil
     {
         private static void initialiseConsoleInfo()
@@ -30,9 +28,7 @@ namespace RT.Util.Consoles
                 _stdErrState = WinAPI.GetFileType(hErr) == WinAPI.FILE_TYPE_CHAR ? ConsoleState.Console : ConsoleState.Redirected;
         }
 
-        /// <summary>
-        /// Represents the state of a console output stream.
-        /// </summary>
+        /// <summary>Represents the state of a console output stream.</summary>
         public enum ConsoleState
         {
             /// <summary>This output stream is not available - eg when the program is not a console program.</summary>
@@ -48,9 +44,8 @@ namespace RT.Util.Consoles
         private static ConsoleState _stdErrState;
 
         /// <summary>
-        /// Determines the state of the standard output stream. The first call determines the state
-        /// and caches it; subsequent calls return the cached value.
-        /// </summary>
+        ///     Determines the state of the standard output stream. The first call determines the state and caches it; subsequent
+        ///     calls return the cached value.</summary>
         public static ConsoleState StdOutState()
         {
             if (!_consoleInfoInitialised)
@@ -59,9 +54,8 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        /// Determines the state of the standard error stream. The first call determines the state
-        /// and caches it; subsequent calls return the cached value.
-        /// </summary>
+        ///     Determines the state of the standard error stream. The first call determines the state and caches it; subsequent
+        ///     calls return the cached value.</summary>
         public static ConsoleState StdErrState()
         {
             if (!_consoleInfoInitialised)
@@ -70,10 +64,9 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        /// Returns the maximum line width that all code wishing to correctly word-wrap its text output
-        /// should use. If the output is redirected to a file this will return an arbitrary but sensible value,
-        /// otherwise the value reflects the width of the console buffer.
-        /// </summary>
+        ///     Returns the maximum line width that console applications should use to correctly word-wrap their output. If the
+        ///     output is redirected to a file, this will return an arbitrary but sensible value, otherwise the value reflects the
+        ///     width of the console buffer.</summary>
         public static int WrapToWidth()
         {
             if (StdOutState() == ConsoleState.Redirected || StdErrState() == ConsoleState.Redirected)
@@ -83,12 +76,13 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
-        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
-        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
-        /// </summary>
-        /// <param name="message">The message to output.</param>
-        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        ///     Outputs the specified message to the console window, treating newlines as paragraph breaks. All paragraphs are
+        ///     word-wrapped to fit in the console buffer, or to a sensible width if redirected to a file. Each paragraph is
+        ///     indented by the number of spaces at the start of the corresponding line.</summary>
+        /// <param name="message">
+        ///     The message to output.</param>
+        /// <param name="hangingIndent">
+        ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         public static void WriteParagraphs(string message, int hangingIndent = 0)
         {
             // Special case: if message is empty, WordWrap would output nothing
@@ -112,14 +106,16 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        /// Outputs the specified coloured message, marked up using EggsML, to the console window, treating
-        /// newlines as paragraph breaks. All paragraphs are word-wrapped to fit in the console buffer, or to a
-        /// sensible width if redirected to a file. Each paragraph is indented by the number of spaces at the start
-        /// of the corresponding line.
-        /// </summary>
-        /// <param name="message">The message to output.</param>
-        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
-        /// <remarks>See <see cref="ConsoleColoredString.FromEggsNodeWordWrap"/> for the colour syntax.</remarks>
+        ///     Outputs the specified coloured message, marked up using EggsML, to the console window, treating newlines as
+        ///     paragraph breaks. All paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if
+        ///     redirected to a file. Each paragraph is indented by the number of spaces at the start of the corresponding
+        ///     line.</summary>
+        /// <param name="message">
+        ///     The message to output.</param>
+        /// <param name="hangingIndent">
+        ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        /// <remarks>
+        ///     See <see cref="ConsoleColoredString.FromEggsNodeWordWrap"/> for the colour syntax.</remarks>
         public static void WriteParagraphs(EggsNode message, int hangingIndent = 0)
         {
             int width;
@@ -146,12 +142,13 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        /// Outputs the specified message to the console window, treating newlines as paragraph breaks. All
-        /// paragraphs are word-wrapped to fit in the console buffer, or to a sensible width if redirected to
-        /// a file. Each paragraph is indented by the number of spaces at the start of the corresponding line.
-        /// </summary>
-        /// <param name="message">The message to output.</param>
-        /// <param name="hangingIndent">Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
+        ///     Outputs the specified message to the console window, treating newlines as paragraph breaks. All paragraphs are
+        ///     word-wrapped to fit in the console buffer, or to a sensible width if redirected to a file. Each paragraph is
+        ///     indented by the number of spaces at the start of the corresponding line.</summary>
+        /// <param name="message">
+        ///     The message to output.</param>
+        /// <param name="hangingIndent">
+        ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
         {
             int width;
@@ -181,8 +178,11 @@ namespace RT.Util.Consoles
             (stdErr ? Console.Error : Console.Out).WriteLine();
         }
 
-        /// <summary>Writes the specified or current stack trace to the console in pretty colors.</summary>
-        /// <param name="stackTraceLines">The stack trace. Each string in this collection is expected to be one line of the stack trace. If null, defaults to the current stack trace.</param>
+        /// <summary>
+        ///     Writes the specified or current stack trace to the console in pretty colors.</summary>
+        /// <param name="stackTraceLines">
+        ///     The stack trace. Each string in this collection is expected to be one line of the stack trace. If <c>null</c>,
+        ///     defaults to the current stack trace.</param>
         public static void WriteStackTrace(IEnumerable<string> stackTraceLines = null)
         {
             if (stackTraceLines == null)
