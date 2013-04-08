@@ -457,55 +457,123 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the specified action if the current object is of the specified type, and the alternative action otherwise.</summary>
-        /// <typeparam name="T">
-        ///     Type the object must be to have the action executed.</typeparam>
+        ///     Executes the specified action if the current object is of the specified type, and the alternative action
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest">
+        ///     Type the object must have at runtime to execute the action.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action">
         ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
         /// <param name="elseAction">
         ///     Action to execute otherwise. If it's null, this action is not performed.</param>
-        public static void IfType<T>(this object obj, Action<T> action, Action<object> elseAction = null)
+        public static void IfType<TObj, TTest>(this TObj obj, Action<TTest> action, Action<TObj> elseAction = null)
         {
-            if (obj is T)
-            {
-                action((T) obj);
-            }
+            if (obj is TTest)
+                action((TTest) (object) obj);
             else if (elseAction != null)
-            {
                 elseAction(obj);
-            }
         }
 
         /// <summary>
-        ///     Executes the specified function if the current object is of the specified type, and the alternative function otherwise.</summary>
-        /// <typeparam name="T">
-        ///     Type the object must be to have the action executed.</typeparam>
+        ///     Executes the relevant function depending on the type of the current object, or the alternative function
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest">
+        ///     Type the object must have at runtime to execute the function.</typeparam>
         /// <typeparam name="TResult">
         ///     Type of the result returned by the functions.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="function">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
         /// <param name="elseFunction">
-        ///     Action to execute otherwise. If it's null, default(TResult) is returned.</param>
+        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
         /// <returns>
         ///     The result of the function called.</returns>
-        public static TResult IfType<T, TResult>(this object obj, Func<T, TResult> function, Func<object, TResult> elseFunction = null)
+        public static TResult IfType<TObj, TTest, TResult>(this TObj obj, Func<TTest, TResult> function, Func<TObj, TResult> elseFunction = null)
         {
-            if (obj is T)
-            {
-                return function((T) obj);
-            }
+            if (obj is TTest)
+                return function((TTest) (object) obj);
             else if (elseFunction != null)
-            {
                 return elseFunction(obj);
-            }
             else
-            {
                 return default(TResult);
-            }
+        }
+
+        /// <summary>
+        ///     Executes the relevant function depending on the type of the current object, or the alternative function
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the functions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="function1">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="function2">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="elseFunction">
+        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the function called.</returns>
+        public static TResult IfType<TObj, TTest1, TTest2, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TObj, TResult> elseFunction = null)
+        {
+            if (obj is TTest1)
+                return function1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                return function2((TTest2) (object) obj);
+            else if (elseFunction != null)
+                return elseFunction(obj);
+            else
+                return default(TResult);
+        }
+
+        /// <summary>
+        ///     Executes the relevant function depending on the type of the current object, or the alternative function
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
+        /// <typeparam name="TTest3">
+        ///     Type the object must have at runtime to execute <paramref name="function3"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the functions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="function1">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="function2">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="function3">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
+        /// <param name="elseFunction">
+        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the function called.</returns>
+        public static TResult IfType<TObj, TTest1, TTest2, TTest3, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TTest3, TResult> function3, Func<TObj, TResult> elseFunction = null)
+        {
+            if (obj is TTest1)
+                return function1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                return function2((TTest2) (object) obj);
+            else if (obj is TTest3)
+                return function3((TTest3) (object) obj);
+            else if (elseFunction != null)
+                return elseFunction(obj);
+            else
+                return default(TResult);
         }
 
         /// <summary>

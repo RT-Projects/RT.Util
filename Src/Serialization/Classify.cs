@@ -416,8 +416,8 @@ namespace RT.Util.Serialization
                     {
                         retrieved = true;
                         retrievedObj = res();
-                        retrievedObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeserialize(elem); });
-                        typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeserialize(retrievedObj, elem); });
+                        retrievedObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                        typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(retrievedObj, elem); });
                     }
                     return retrievedObj;
                 };
@@ -430,7 +430,7 @@ namespace RT.Util.Serialization
                 {
                     if (typeOptions._substituteType != null)
                         throw new InvalidOperationException("Cannot use type substitution when populating a provided object.");
-                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeserialize(elem); });
+                    typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeDeserialize(elem); });
                 }
 
                 _doAtTheEnd = new List<Action>();
@@ -443,8 +443,8 @@ namespace RT.Util.Serialization
                     action();
                 result();
 
-                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterDeserialize(elem); });
-                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterDeserialize(intoObj, elem); });
+                intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(intoObj, elem); });
             }
 
             // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
@@ -458,7 +458,7 @@ namespace RT.Util.Serialization
                 {
                     if (typeOptions._substituteType != null)
                         type = typeOptions._substituteType;
-                    typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeDeserialize(elem); });
+                    typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeDeserialize(elem); });
                 }
 
                 // Every object created by declassify goes through this function
@@ -572,7 +572,7 @@ namespace RT.Util.Serialization
                             else
                                 outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type);
 
-                            outputDict.IfType<IClassifyObjectProcessor<TElement>>(dict => { dict.BeforeDeserialize(elem); });
+                            outputDict.IfType((IClassifyObjectProcessor<TElement> dict) => { dict.BeforeDeserialize(elem); });
 
                             var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
                             var e = _format.GetDictionary(elem).GetEnumerator();
@@ -633,7 +633,7 @@ namespace RT.Util.Serialization
                             else
                                 outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : type);
 
-                            outputList.IfType<IClassifyObjectProcessor<TElement>>(list => { list.BeforeDeserialize(elem); });
+                            outputList.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
 
                             var addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
                             var e = _format.GetList(elem, null).GetEnumerator();
@@ -706,7 +706,7 @@ namespace RT.Util.Serialization
 
             private WorkNode<Func<object>> intoObject(TElement elem, object intoObj, Type type, object parentNode)
             {
-                intoObj.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeDeserialize(elem); });
+                intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
 
                 var fieldsToAssignTo = new List<FieldInfo>();
                 var elementsToAssign = new List<TElement>();
@@ -856,8 +856,8 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
-                saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.BeforeSerialize(); });
-                typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.BeforeSerialize(saveObject); });
+                saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeSerialize(); });
+                typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeSerialize(saveObject); });
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
@@ -951,8 +951,8 @@ namespace RT.Util.Serialization
                             int refId;
                             if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId);
-                            saveObject.IfType<IClassifyObjectProcessor<TElement>>(obj => { obj.AfterSerialize(retrievedElem); });
-                            typeOptions.IfType<IClassifyTypeProcessor<TElement>>(opt => { opt.AfterSerialize(saveObject, retrievedElem); });
+                            saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterSerialize(retrievedElem); });
+                            typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterSerialize(saveObject, retrievedElem); });
                         }
                         return retrievedElem;
                     };
