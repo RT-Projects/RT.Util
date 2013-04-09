@@ -108,6 +108,7 @@
     <Compile Include="CuteML.cs" />
     <Compile Include="CustomComparer.cs" />
     <Compile Include="ExtensionMethods\TextReaderWriterExtensions.cs" />
+    <Compile Include="HClient.cs" />
     <Compile Include="ILReader.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
     <Compile Include="Drawing\Canvas.cs" />
