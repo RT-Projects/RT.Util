@@ -221,7 +221,7 @@ namespace RT.Util.Serialization
         private static ClassifyXmlFormat _default;
 
         /// <summary>
-        ///     Creates an XML classify format with the specified XML-specific options.</summary>
+        ///     Creates an XML Classify format with the specified XML-specific options.</summary>
         /// <param name="rootTagName">
         ///     Specifies the XML tag name to use for the root element of a serialized object.</param>
         /// <returns/>
