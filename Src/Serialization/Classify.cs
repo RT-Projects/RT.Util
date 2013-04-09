@@ -450,6 +450,9 @@ namespace RT.Util.Serialization
             // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
             private WorkNode<Func<object>> deserialize(Type type, TElement elem, object already, object parentNode)
             {
+                if (type.IsPointer || type.IsByRef)
+                    throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
+
                 var originalType = type;
                 var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
 
@@ -793,6 +796,9 @@ namespace RT.Util.Serialization
 
             public Func<TElement> Serialize(object saveObject, Type declaredType)
             {
+                if (declaredType.IsPointer || declaredType.IsByRef)
+                    throw new NotSupportedException("Classify cannot serialize pointers or by-reference variables.");
+
                 Func<TElement> elem;
 
                 // Add a “type” attribute if the instance type is different from the field’s declared type
