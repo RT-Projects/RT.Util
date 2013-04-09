@@ -215,7 +215,7 @@ namespace RT.Util.Serialization
     ///     which are format-specific. To use this format, see <see cref="Default"/>.</summary>
     public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
     {
-        /// <summary>Gets the json classify format with all options at their defaults.</summary>
+        /// <summary>Gets the JSON Classify format with all options at their defaults.</summary>
         public static IClassifyFormat<JsonValue> Default { get { return _default ?? (_default = new ClassifyJsonFormat()); } }
         private static ClassifyJsonFormat _default;
 

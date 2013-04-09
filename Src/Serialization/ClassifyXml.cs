@@ -216,7 +216,7 @@ namespace RT.Util.Serialization
     ///     also <see cref="Default"/>.</summary>
     public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
     {
-        /// <summary>Gets the XML classify format with all options at their defaults.</summary>
+        /// <summary>Gets the XML Classify format with all options at their defaults.</summary>
         public static IClassifyFormat<XElement> Default { get { return _default ?? (_default = new ClassifyXmlFormat()); } }
         private static ClassifyXmlFormat _default;
 
