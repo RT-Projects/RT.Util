@@ -972,6 +972,109 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Colours the specified string in the specified console color.</summary>
+        /// <param name="str">
+        ///     The string to color.</param>
+        /// <param name="color">
+        ///     The color to color the string in.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public static ConsoleColoredString Color(this ConsoleColoredString str, ConsoleColor color)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            return new ConsoleColoredString(str.ToString(), color);
+        }
+
+        /// <summary>
+        ///     Colours the specified range within the specified string in a specified color.</summary>
+        /// <param name="str">
+        ///     The string to partially colour.</param>
+        /// <param name="index">
+        ///     The index at which to start colouring.</param>
+        /// <param name="length">
+        ///     The number of characters to colour.</param>
+        /// <param name="color">
+        ///     The colour to assign to the range of characters.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public static ConsoleColoredString ColorSubstring(this string str, int index, int length, ConsoleColor color)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (index < 0 || index > str.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+            if (length < 0 || index + length > str.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+
+            return str.Substring(0, index) + str.Substring(index, length).Color(color) + str.Substring(index + length);
+        }
+
+        /// <summary>
+        ///     Colours the specified range within the specified string in a specified color.</summary>
+        /// <param name="str">
+        ///     The string to partially colour.</param>
+        /// <param name="index">
+        ///     The index at which to start colouring.</param>
+        /// <param name="length">
+        ///     The number of characters to colour.</param>
+        /// <param name="color">
+        ///     The colour to assign to the range of characters.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public static ConsoleColoredString ColorSubstring(this ConsoleColoredString str, int index, int length, ConsoleColor color)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (index < 0 || index > str.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+            if (length < 0 || index + length > str.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+
+            return str.Substring(0, index) + str.Substring(index, length).Color(color) + str.Substring(index + length);
+        }
+
+        /// <summary>
+        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
+        /// <param name="str">
+        ///     The string to partially colour.</param>
+        /// <param name="index">
+        ///     The index at which to start colouring.</param>
+        /// <param name="color">
+        ///     The colour to assign to the characters starting from the character at <paramref name="index"/>.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public static ConsoleColoredString ColorSubstring(this string str, int index, ConsoleColor color)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (index < 0 || index > str.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+
+            return str.Substring(0, index) + str.Substring(index).Color(color);
+        }
+
+        /// <summary>
+        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
+        /// <param name="str">
+        ///     The string to partially colour.</param>
+        /// <param name="index">
+        ///     The index at which to start colouring.</param>
+        /// <param name="color">
+        ///     The colour to assign to the characters starting from the character at <paramref name="index"/>.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public static ConsoleColoredString ColorSubstring(this ConsoleColoredString str, int index, ConsoleColor color)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (index < 0 || index > str.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+
+            return str.Substring(0, index) + str.Substring(index).Color(color);
+        }
+
+        /// <summary>
         ///     Returns the specified object as a colored string.</summary>
         /// <param name="obj">
         ///     The object to convert.</param>
