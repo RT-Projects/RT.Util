@@ -6,23 +6,31 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Consoles
 {
-    /// <summary>Encapsulates a string in which each character can have an associated <see cref="ConsoleColor"/>.</summary>
-    /// <remarks>Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</remarks>
+    /// <summary>
+    ///     Encapsulates a string in which each character can have an associated <see cref="ConsoleColor"/>.</summary>
+    /// <remarks>
+    ///     Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see
+    ///     cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</remarks>
     public sealed class ConsoleColoredString
     {
         /// <summary>Represents an empty colored string. This field is read-only.</summary>
         public static ConsoleColoredString Empty { get { if (_empty == null) _empty = new ConsoleColoredString(); return _empty; } }
         private static ConsoleColoredString _empty = null;
 
-        /// <summary>Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This field is read-only.</summary>
+        /// <summary>
+        ///     Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This field
+        ///     is read-only.</summary>
         public static ConsoleColoredString NewLine { get { if (_newline == null) _newline = new ConsoleColoredString(Environment.NewLine, ConsoleColor.Gray); return _newline; } }
         private static ConsoleColoredString _newline = null;
 
         private string _text;
         private ConsoleColor[] _colors;
 
-        /// <summary>Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a default color of <see cref="ConsoleColor.Gray"/>.</summary>
-        /// <param name="input">The string to convert.</param>
+        /// <summary>
+        ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a default
+        ///     color of <see cref="ConsoleColor.Gray"/>.</summary>
+        /// <param name="input">
+        ///     The string to convert.</param>
         public static implicit operator ConsoleColoredString(string input)
         {
             if (input == null)
@@ -30,8 +38,11 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(input, ConsoleColor.Gray);
         }
 
-        /// <summary>Provides explicit conversion from <see cref="ConsoleColoredString"/> to <see cref="string"/> by discarding all color information.</summary>
-        /// <param name="input">The string to convert.</param>
+        /// <summary>
+        ///     Provides explicit conversion from <see cref="ConsoleColoredString"/> to <see cref="string"/> by discarding all
+        ///     color information.</summary>
+        /// <param name="input">
+        ///     The string to convert.</param>
         public static explicit operator string(ConsoleColoredString input)
         {
             if (input == null)
@@ -39,9 +50,12 @@ namespace RT.Util.Consoles
             return input._text;
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
-        /// <param name="input">The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
-        /// <param name="color">The color to assign to the whole string.</param>
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
+        /// <param name="input">
+        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
+        /// <param name="color">
+        ///     The color to assign to the whole string.</param>
         public ConsoleColoredString(string input, ConsoleColor color)
         {
             if (input == null)
@@ -53,9 +67,15 @@ namespace RT.Util.Consoles
                     _colors[i] = color;
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors for each character.</summary>
-        /// <param name="input">The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this string must match the number of elements in <paramref name="characterColors"/>.</param>
-        /// <param name="characterColors">The colors to assign to each character in the string. The length of this array must match the number of characters in <paramref name="input"/>.</param>
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors for each
+        ///     character.</summary>
+        /// <param name="input">
+        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this string
+        ///     must match the number of elements in <paramref name="characterColors"/>.</param>
+        /// <param name="characterColors">
+        ///     The colors to assign to each character in the string. The length of this array must match the number of characters
+        ///     in <paramref name="input"/>.</param>
         public ConsoleColoredString(string input, ConsoleColor[] characterColors)
         {
             if (input == null)
@@ -68,17 +88,25 @@ namespace RT.Util.Consoles
             _colors = characterColors;
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
-        /// <param name="strings">Input strings to concatenate.</param>
-        /// <remarks>The color of each character in the input strings is preserved.</remarks>
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see
+        ///     cref="ConsoleColoredString"/>s.</summary>
+        /// <param name="strings">
+        ///     Input strings to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the input strings is preserved.</remarks>
         public ConsoleColoredString(params ConsoleColoredString[] strings)
             : this((ICollection<ConsoleColoredString>) strings)
         {
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see cref="ConsoleColoredString"/>s.</summary>
-        /// <param name="strings">Input strings to concatenate.</param>
-        /// <remarks>The color of each character in the input strings is preserved.</remarks>
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see
+        ///     cref="ConsoleColoredString"/>s.</summary>
+        /// <param name="strings">
+        ///     Input strings to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the input strings is preserved.</remarks>
         public ConsoleColoredString(ICollection<ConsoleColoredString> strings)
         {
             var builder = new StringBuilder();
@@ -99,10 +127,14 @@ namespace RT.Util.Consoles
         /// <summary>Returns the raw text of this <see cref="ConsoleColoredString"/> by discarding all the color information.</summary>
         public override string ToString() { return _text; }
 
-        /// <summary>Concatenates two <see cref="ConsoleColoredString"/>s.</summary>
-        /// <param name="string1">First input string to concatenate.</param>
-        /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The color of each character in the input strings is preserved.</remarks>
+        /// <summary>
+        ///     Concatenates two <see cref="ConsoleColoredString"/>s.</summary>
+        /// <param name="string1">
+        ///     First input string to concatenate.</param>
+        /// <param name="string2">
+        ///     Second input string to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the input strings is preserved.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2)
         {
             if (string1 == null || string1.Length == 0)
@@ -112,10 +144,15 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(string1, string2);
         }
 
-        /// <summary>Concatenates a string onto a <see cref="ConsoleColoredString"/>.</summary>
-        /// <param name="string1">First input string to concatenate.</param>
-        /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The color of each character in the first input string is preserved. The second input string is given the color <see cref="ConsoleColor.Gray"/>.</remarks>
+        /// <summary>
+        ///     Concatenates a string onto a <see cref="ConsoleColoredString"/>.</summary>
+        /// <param name="string1">
+        ///     First input string to concatenate.</param>
+        /// <param name="string2">
+        ///     Second input string to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the first input string is preserved. The second input string is given the color
+        ///     <see cref="ConsoleColor.Gray"/>.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
         {
             if (string1 == null || string1.Length == 0)
@@ -130,10 +167,15 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(string1._text + string2, colors);
         }
 
-        /// <summary>Concatenates a <see cref="ConsoleColoredString"/> onto a string.</summary>
-        /// <param name="string1">First input string to concatenate.</param>
-        /// <param name="string2">Second input string to concatenate.</param>
-        /// <remarks>The color of each character in the second input string is preserved. The first input string is given the color <see cref="ConsoleColor.Gray"/>.</remarks>
+        /// <summary>
+        ///     Concatenates a <see cref="ConsoleColoredString"/> onto a string.</summary>
+        /// <param name="string1">
+        ///     First input string to concatenate.</param>
+        /// <param name="string2">
+        ///     Second input string to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the second input string is preserved. The first input string is given the color
+        ///     <see cref="ConsoleColor.Gray"/>.</remarks>
         public static ConsoleColoredString operator +(string string1, ConsoleColoredString string2)
         {
             if (string2 == null || string2.Length == 0)
@@ -148,22 +190,35 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(string1 + string2._text, colors);
         }
 
-        /// <summary>Constructs a <see cref="ConsoleColoredString"/> from an EggsML parse tree.</summary>
-        /// <param name="node">The root node of the EggsML parse tree.</param>
-        /// <returns>The <see cref="ConsoleColoredString"/> constructed from the EggsML parse tree.</returns>
-        /// <remarks><para>The following EggsML tags map to the following console colors:</para>
-        /// <list type="bullet">
-        /// <item><description><c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>$</c> = dark green, or green if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>&amp;</c> = dark cyan, or cyan if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>=</c> = dark gray (independent of <c>*</c> tag)</description></item>
-        /// </list>
-        /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
-        /// </remarks>
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> from an EggsML parse tree.</summary>
+        /// <param name="node">
+        ///     The root node of the EggsML parse tree.</param>
+        /// <returns>
+        ///     The <see cref="ConsoleColoredString"/> constructed from the EggsML parse tree.</returns>
+        /// <remarks>
+        ///     <para>
+        ///         The following EggsML tags map to the following console colors:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>$</c> = dark green, or green if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>&amp;</c> = dark cyan, or cyan if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>=</c> = dark gray (independent of <c>*</c> tag)</description></item></list>
+        ///     <para>
+        ///         Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c>
+        ///         tag.</para></remarks>
         public static ConsoleColoredString FromEggsNode(EggsNode node)
         {
             StringBuilder text = new StringBuilder();
@@ -217,26 +272,46 @@ namespace RT.Util.Consoles
             }
         }
 
-        /// <summary>Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output at a specified character width.</summary>
-        /// <param name="node">The root node of the EggsML parse tree.</param>
-        /// <param name="wrapWidth">The number of characters at which to word-wrap the output.</param>
-        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
-        /// <returns>The sequence of <see cref="ConsoleColoredString"/>s generated from the EggsML parse tree.</returns>
-        /// <remarks><para>The following EggsML tags map to the following console colors:</para>
-        /// <list type="bullet">
-        /// <item><description><c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>$</c> = dark green, or green if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>&amp;</c> = dark cyan, or cyan if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
-        /// <item><description><c>=</c> = dark gray (independent of <c>*</c> tag)</description></item>
-        /// </list>
-        /// <para>Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c> tag.</para>
-        /// <para>Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In other words, the contents of a <c>+</c> tag are treated as if they were a single word.
-        /// Use this in preference to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever implemented here.</para>
-        /// </remarks>
+        /// <summary>
+        ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output
+        ///     at a specified character width.</summary>
+        /// <param name="node">
+        ///     The root node of the EggsML parse tree.</param>
+        /// <param name="wrapWidth">
+        ///     The number of characters at which to word-wrap the output.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
+        /// <returns>
+        ///     The sequence of <see cref="ConsoleColoredString"/>s generated from the EggsML parse tree.</returns>
+        /// <remarks>
+        ///     <para>
+        ///         The following EggsML tags map to the following console colors:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>$</c> = dark green, or green if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>&amp;</c> = dark cyan, or cyan if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>=</c> = dark gray (independent of <c>*</c> tag)</description></item></list>
+        ///     <para>
+        ///         Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c>
+        ///         tag.</para>
+        ///     <para>
+        ///         Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In
+        ///         other words, the contents of a <c>+</c> tag are treated as if they were a single word. Use this in preference
+        ///         to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever
+        ///         implemented here.</para></remarks>
         public static IEnumerable<ConsoleColoredString> FromEggsNodeWordWrap(EggsNode node, int wrapWidth, int hangingIndent = 0)
         {
             var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
@@ -271,9 +346,12 @@ namespace RT.Util.Consoles
             return results;
         }
 
-        /// <summary>Returns the character at the specified index.</summary>
-        /// <param name="index">A character position in the current <see cref="ConsoleColoredString"/>.</param>
-        /// <returns>The character at the specified index.</returns>
+        /// <summary>
+        ///     Returns the character at the specified index.</summary>
+        /// <param name="index">
+        ///     A character position in the current <see cref="ConsoleColoredString"/>.</param>
+        /// <returns>
+        ///     The character at the specified index.</returns>
         public char CharAt(int index)
         {
             if (index < 0 || index >= _text.Length)
@@ -281,14 +359,22 @@ namespace RT.Util.Consoles
             return _text[index];
         }
 
-        /// <summary>Word-wraps the current <see cref="ConsoleColoredString"/> to a specified width. Supports UNIX-style newlines and indented paragraphs.</summary>
+        /// <summary>
+        ///     Word-wraps the current <see cref="ConsoleColoredString"/> to a specified width. Supports UNIX-style newlines and
+        ///     indented paragraphs.</summary>
         /// <remarks>
-        /// <para>The supplied text will be split into "paragraphs" at the newline characters. Every paragraph will begin on a new line in the word-wrapped output, indented
-        /// by the same number of spaces as in the input. All subsequent lines belonging to that paragraph will also be indented by the same amount.</para>
-        /// <para>All multiple contiguous spaces will be replaced with a single space (except for the indentation).</para>
-        /// </remarks>
-        /// <param name="maxWidth">The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
-        /// <param name="hangingIndent">The number of spaces to add to each line except the first of each paragraph, thus creating a hanging indentation.</param>
+        ///     <para>
+        ///         The supplied text will be split into "paragraphs" at the newline characters. Every paragraph will begin on a
+        ///         new line in the word-wrapped output, indented by the same number of spaces as in the input. All subsequent
+        ///         lines belonging to that paragraph will also be indented by the same amount.</para>
+        ///     <para>
+        ///         All multiple contiguous spaces will be replaced with a single space (except for the
+        ///         indentation).</para></remarks>
+        /// <param name="maxWidth">
+        ///     The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
         public IEnumerable<ConsoleColoredString> WordWrap(int maxWidth, int hangingIndent = 0)
         {
             if (_text.Length == 0)
@@ -387,13 +473,39 @@ namespace RT.Util.Consoles
         /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int,int,StringComparison)"/>.</summary>
         public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
 
-        /// <summary>Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited by elements of a specified string array.
-        /// Parameters specify the maximum number of substrings to return and whether to return empty array elements.</summary>
-        /// <param name="separator">An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that contains no delimiters, or null.</param>
-        /// <param name="count">The maximum number of substrings to return, or null to return all.</param>
-        /// <param name="options">Specify <see cref="System.StringSplitOptions.RemoveEmptyEntries"/> to omit empty array elements from the array returned, 
-        /// or <see cref="System.StringSplitOptions.None"/> to include empty array elements in the array returned.</param>
-        /// <returns>A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited by one or more strings in <paramref name="separator"/>.</returns>
+        /// <summary>
+        ///     Returns a new string in which a specified string is inserted at a specified index position in this
+        ///     instance.</summary>
+        /// <param name="startIndex">
+        ///     The zero-based index position of the insertion.</param>
+        /// <param name="value">
+        ///     The string to insert.</param>
+        /// <returns>
+        ///     A new string that is equivalent to this instance, but with <paramref name="value"/> inserted at position <paramref
+        ///     name="startIndex"/>.</returns>
+        public ConsoleColoredString Insert(int startIndex, ConsoleColoredString value)
+        {
+            if (startIndex < 0 || startIndex > Length)
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative or greater than the length of the string.");
+            return Substring(0, startIndex) + value + Substring(startIndex);
+        }
+
+        /// <summary>
+        ///     Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited
+        ///     by elements of a specified string array. Parameters specify the maximum number of substrings to return and whether
+        ///     to return empty array elements.</summary>
+        /// <param name="separator">
+        ///     An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that
+        ///     contains no delimiters, or null.</param>
+        /// <param name="count">
+        ///     The maximum number of substrings to return, or null to return all.</param>
+        /// <param name="options">
+        ///     Specify <see cref="System.StringSplitOptions.RemoveEmptyEntries"/> to omit empty array elements from the array
+        ///     returned, or <see cref="System.StringSplitOptions.None"/> to include empty array elements in the array
+        ///     returned.</param>
+        /// <returns>
+        ///     A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited
+        ///     by one or more strings in <paramref name="separator"/>.</returns>
         public IEnumerable<ConsoleColoredString> Split(string[] separator, int? count = null, StringSplitOptions options = StringSplitOptions.None)
         {
             if (separator == null)
@@ -425,19 +537,30 @@ namespace RT.Util.Consoles
             }
         }
 
-        /// <summary>Retrieves a substring from this instance. The substring starts at a specified character position.</summary>
-        /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
-        /// <returns>A <see cref="ConsoleColoredString"/> object equivalent to the substring that begins at <paramref name="startIndex"/> in this instance.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startIndex"/> is less than zero or greater than the length of this instance.</exception>
+        /// <summary>
+        ///     Retrieves a substring from this instance. The substring starts at a specified character position.</summary>
+        /// <param name="startIndex">
+        ///     The zero-based starting character position of a substring in this instance.</param>
+        /// <returns>
+        ///     A <see cref="ConsoleColoredString"/> object equivalent to the substring that begins at <paramref
+        ///     name="startIndex"/> in this instance.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <paramref name="startIndex"/> is less than zero or greater than the length of this instance.</exception>
         public ConsoleColoredString Substring(int startIndex)
         {
             return new ConsoleColoredString(_text.Substring(startIndex), _colors.Subarray(startIndex));
         }
 
-        /// <summary>Retrieves a substring from this instance. The substring starts at a specified character position and has a specified length.</summary>
-        /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
-        /// <param name="length">The number of characters in the substring.</param>
-        /// <returns>A <see cref="ConsoleColoredString"/> equivalent to the substring of length length that begins at <paramref name="startIndex"/> in this instance.</returns>
+        /// <summary>
+        ///     Retrieves a substring from this instance. The substring starts at a specified character position and has a
+        ///     specified length.</summary>
+        /// <param name="startIndex">
+        ///     The zero-based starting character position of a substring in this instance.</param>
+        /// <param name="length">
+        ///     The number of characters in the substring.</param>
+        /// <returns>
+        ///     A <see cref="ConsoleColoredString"/> equivalent to the substring of length length that begins at <paramref
+        ///     name="startIndex"/> in this instance.</returns>
         public ConsoleColoredString Substring(int startIndex, int length)
         {
             return new ConsoleColoredString(_text.Substring(startIndex, length), _colors.Subarray(startIndex, length));
@@ -461,21 +584,33 @@ namespace RT.Util.Consoles
             Console.ResetColor();
         }
 
-        /// <summary>Replaces each format item in a specified string with the string representation of a corresponding object in a specified array.</summary>
-        /// <param name="format">A composite format string.</param>
-        /// <param name="args">An object array that contains zero or more objects to format.</param>
-        /// <returns>A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of the corresponding objects in <paramref name="args"/>.</returns>
+        /// <summary>
+        ///     Replaces each format item in a specified string with the string representation of a corresponding object in a
+        ///     specified array.</summary>
+        /// <param name="format">
+        ///     A composite format string.</param>
+        /// <param name="args">
+        ///     An object array that contains zero or more objects to format.</param>
+        /// <returns>
+        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
+        ///     the corresponding objects in <paramref name="args"/>.</returns>
         public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args)
         {
             return ConsoleColoredString.Format(null, format, args);
         }
 
-        /// <summary>Replaces the format item in a specified string with the string representation of a corresponding object in a specified array.
-        /// A specified parameter supplies culture-specific formatting information.</summary>
-        /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-        /// <param name="format">A composite format string.</param>
-        /// <param name="args">An object array that contains zero or more objects to format.</param>
-        /// <returns>A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of the corresponding objects in <paramref name="args"/>.</returns>
+        /// <summary>
+        ///     Replaces the format item in a specified string with the string representation of a corresponding object in a
+        ///     specified array. A specified parameter supplies culture-specific formatting information.</summary>
+        /// <param name="provider">
+        ///     An object that supplies culture-specific formatting information.</param>
+        /// <param name="format">
+        ///     A composite format string.</param>
+        /// <param name="args">
+        ///     An object array that contains zero or more objects to format.</param>
+        /// <returns>
+        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
+        ///     the corresponding objects in <paramref name="args"/>.</returns>
         public static ConsoleColoredString Format(IFormatProvider provider, ConsoleColoredString format, params object[] args)
         {
             var index = 0;
@@ -606,17 +741,23 @@ namespace RT.Util.Consoles
             return ConsoleColoredString.Format(null, this, args);
         }
 
-        /// <summary>Returns an array describing the color of every character in the current string.</summary>
-        /// <returns>A copy of the internal color array. Modifying the returned array is safe.</returns>
+        /// <summary>
+        ///     Returns an array describing the color of every character in the current string.</summary>
+        /// <returns>
+        ///     A copy of the internal color array. Modifying the returned array is safe.</returns>
         public ConsoleColor[] GetColors()
         {
             return _colors.ToArray();
         }
 
-        /// <summary>Gets the character and color at a specified character position in the current colored string.</summary>
-        /// <param name="index">A character position in the current colored string.</param>
-        /// <returns>A tuple containing a Unicode character and a console color.</returns>
-        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is greater than or equal to the length of this object or less than zero.</exception>
+        /// <summary>
+        ///     Gets the character and color at a specified character position in the current colored string.</summary>
+        /// <param name="index">
+        ///     A character position in the current colored string.</param>
+        /// <returns>
+        ///     A tuple containing a Unicode character and a console color.</returns>
+        /// <exception cref="IndexOutOfRangeException">
+        ///     <paramref name="index"/> is greater than or equal to the length of this object or less than zero.</exception>
         public ConsoleColoredChar this[int index]
         {
             get
@@ -635,9 +776,12 @@ namespace RT.Util.Consoles
         public char Character { get; private set; }
         /// <summary>Gets the console color.</summary>
         public ConsoleColor Color { get; private set; }
-        /// <summary>Constructor.</summary>
-        /// <param name="character">The character.</param>
-        /// <param name="color">The console color.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="character">
+        ///     The character.</param>
+        /// <param name="color">
+        ///     The console color.</param>
         public ConsoleColoredChar(char character, ConsoleColor color)
         {
             Character = character;
