@@ -866,7 +866,10 @@ namespace RT.Util.Serialization
                 typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeSerialize(saveObject); });
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
+                {
                     elem = () => _format.FormatSelfValue((TElement) saveObject);
+                    typeStr = null;
+                }
                 else if (_simpleTypes.Contains(saveType) || saveType.IsEnum)
                     elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
@@ -1086,12 +1089,12 @@ namespace RT.Util.Serialization
 
         private static void postBuildStep(Type type, object instance, FieldInfo field, IPostBuildReporter rep)
         {
-            if (type == typeof(Pointer) || type == typeof(IntPtr))
+            if (type == typeof(Pointer) || type == typeof(IntPtr) || type.IsPointer || type.IsByRef)
             {
                 if (field == null)
-                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName), type.Name);
+                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName));
                 else
-                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, field.DeclaringType.FullName, field.Name), type.Name, field.Name);
+                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, field.DeclaringType.FullName, field.Name), field.DeclaringType.Name, field.Name);
             }
             else if (_simpleTypes.Contains(type))
                 return; // these are safe

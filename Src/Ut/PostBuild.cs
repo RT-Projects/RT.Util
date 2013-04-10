@@ -177,7 +177,8 @@ namespace RT.Util
             {
                 if (tokens == null || tokens.Length == 0 || tokens.All(t => t == null))
                 {
-                    Console.Error.WriteLine("{0} CS9999: {1}", errorOrWarning, message);
+                    var frame = new StackFrame(2, true);
+                    outputLine(errorOrWarning, frame.GetFileName(), "{0},{1}".Fmt(frame.GetFileLineNumber(), frame.GetFileColumnNumber()), message);
                     return;
                 }
                 try
