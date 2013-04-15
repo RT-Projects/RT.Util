@@ -466,7 +466,7 @@ namespace RT.Util
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="T"/>.</param>
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
         /// <param name="elseAction">
         ///     Action to execute otherwise. If it's null, this action is not performed.</param>
         public static void IfType<TObj, TTest>(this TObj obj, Action<TTest> action, Action<TObj> elseAction = null)

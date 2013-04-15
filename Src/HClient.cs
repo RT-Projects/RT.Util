@@ -124,7 +124,7 @@ namespace RT.Util
         ///     The response received from the server.</returns>
         /// <remarks>
         ///     Choose this format for requests that need to be small and do not contain any file uploads.</remarks>
-        /// <seealso cref="Post"/>
+        /// <seealso cref="Post(string,HArg[])"/>
         public HResponse PostUrlencoded(string url, params HArg[] args)
         {
             var invalid = args.FirstOrDefault(a => !a.ValidForUrlEncoded);
@@ -146,7 +146,7 @@ namespace RT.Util
         ///     The response received from the server.</returns>
         /// <remarks>
         ///     Choose this format for requests that need to contain file uploads.</remarks>
-        /// <seealso cref="Post"/>
+        /// <seealso cref="Post(string,HArg[])"/>
         public HResponse PostFormdata(string url, params HArg[] args)
         {
             var invalid = args.FirstOrDefault(a => !a.Valid);
