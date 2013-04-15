@@ -213,7 +213,7 @@ namespace RT.Util
                 {
                     Console.Error.WriteLine("Error: " + e.Message + " (" + e.GetType().FullName + ")");
                 }
-                Console.Error.WriteLine(errorOrWarning + message);
+                Console.Error.WriteLine("{0} CS9999: {1}", errorOrWarning, message);
             }
         }
     }

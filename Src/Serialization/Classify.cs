@@ -1089,6 +1089,20 @@ namespace RT.Util.Serialization
 
         private static void postBuildStep(Type type, object instance, FieldInfo field, IPostBuildReporter rep)
         {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                postBuildStep(type.GetGenericArguments()[0], instance, field, rep);
+                return;
+            }
+
+            Type[] genericTypeArguments;
+            if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out genericTypeArguments))
+            {
+                foreach (var typeArg in genericTypeArguments)
+                    postBuildStep(typeArg, null, field, rep);
+                return;
+            }
+
             if (type == typeof(Pointer) || type == typeof(IntPtr) || type.IsPointer || type.IsByRef)
             {
                 if (field == null)
