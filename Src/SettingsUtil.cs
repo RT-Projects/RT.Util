@@ -65,7 +65,7 @@ namespace RT.Util
             if (serializer == null)
                 serializer = attr.Serializer;
 
-            bool ret = false;
+            bool success = false;
             if (!File.Exists(filename))
             {
                 settings = new TSettings();
@@ -75,18 +75,21 @@ namespace RT.Util
                 try
                 {
                     settings = deserialize<TSettings>(filename, serializer.Value);
-                    ret = true;
+                    success = true;
                 }
                 catch (XmlException) { settings = new TSettings(); }
                 catch (IOException) { settings = new TSettings(); }
                 catch (SerializationException) { settings = new TSettings(); }
 
-                try { File.Copy(filename, PathUtil.AppendBeforeExtension(filename, ".LoadFailedBackup"), overwrite: true); }
-                catch { }
+                if (!success)
+                {
+                    try { File.Copy(filename, PathUtil.AppendBeforeExtension(filename, ".LoadFailedBackup"), overwrite: true); }
+                    catch { }
+                }
             }
 
             settings.AfterLoad();
-            return ret;
+            return success;
         }
 
         internal static void save(SettingsBase settings, string filename, SettingsSerializer? serializer, SettingsOnFailure onFailure)
