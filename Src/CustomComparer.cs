@@ -155,7 +155,7 @@ namespace RT.Util
         /// the result of a string selector function.</summary>
         /// <param name="selector">Function selecting the actual string value to be compared.</param>
         /// <param name="ignoreCase">If false, an invariant culture string comparison is used. Otherwise, an ordinal no-case comparison (suitable for filenames etc).</param>
-        public static CustomEqualityComparer<T> By(Func<T, string> selector, bool ignoreCase = false)
+        public static CustomEqualityComparer<T> By(Func<T, string> selector, bool ignoreCase)
         {
             if (selector == null) throw new ArgumentNullException("selector");
             return CustomEqualityComparer<T>.By(selector, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture);
