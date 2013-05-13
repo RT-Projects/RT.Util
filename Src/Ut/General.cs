@@ -774,5 +774,14 @@ namespace RT.Util
                 IncludedRange = splitRange;
             }
         }
+
+        /// <summary>
+        ///     Queues the specified action to be executed on the thread pool. This is just a shortcut for
+        ///     <c>ThreadPool.QueueUserWorkItem</c>, and also does not require the method to accept a parameter (which has been
+        ///     useless ever since C# gained support for lambdas).</summary>
+        public static void ThreadPool(Action task)
+        {
+            System.Threading.ThreadPool.QueueUserWorkItem(_ => task());
+        }
     }
 }
