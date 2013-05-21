@@ -783,5 +783,13 @@ namespace RT.Util
         {
             System.Threading.ThreadPool.QueueUserWorkItem(_ => task());
         }
+
+        /// <summary>Swaps the values of the specified two variables.</summary>
+        public static void Swap<T>(ref T one, ref T two)
+        {
+            T t = one;
+            one = two;
+            two = t;
+        }
     }
 }
