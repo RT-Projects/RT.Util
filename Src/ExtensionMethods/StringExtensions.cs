@@ -525,8 +525,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Escapes all characters in this string whose code is less than 32 using C/C#-compatible backslash
-        ///     escapes.</summary>
+        ///     Escapes all characters in this string whose code is less than 32 or form invalid UTF-16 using C/C#-compatible
+        ///     backslash escapes.</summary>
         /// <seealso cref="CLiteralUnescape"/>
         public static string CLiteralEscape(this string value)
         {
@@ -551,10 +551,30 @@ namespace RT.Util.ExtensionMethods
                     case '\\': result.Append(@"\\"); break;
                     case '"': result.Append(@"\"""); break;
                     default:
-                        if (c >= ' ')
+                        if (c >= 0xD800 && c < 0xDC00)
+                        {
+                            if (i == value.Length - 1) // string ends on a broken surrogate pair
+                                result.AppendFormat(@"\u{0:X4}", (int) c);
+                            else
+                            {
+                                char c2 = value[i + 1];
+                                if (c2 >= 0xDC00 && c2 <= 0xDFFF)
+                                {
+                                    // nothing wrong with this surrogate pair
+                                    i++;
+                                    result.Append(c);
+                                    result.Append(c2);
+                                }
+                                else // first half of a surrogate pair is not followed by a second half
+                                    result.AppendFormat(@"\u{0:X4}", (int) c);
+                            }
+                        }
+                        else if (c >= 0xDC00 && c <= 0xDFFF) // the second half of a broken surrogate pair
+                            result.AppendFormat(@"\u{0:X4}", (int) c);
+                        else if (c >= ' ')
                             result.Append(c);
                         else // the character is in the 0..31 range
-                            result.AppendFormat(@"\x{0:X2}", (int) c);
+                            result.AppendFormat(@"\u{0:X4}", (int) c);
                         break;
                 }
             }
