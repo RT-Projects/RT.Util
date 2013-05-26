@@ -606,6 +606,7 @@ namespace RT.Util.ExtensionMethods
                         throw new ArgumentException("String ends before the escape sequence at position {0} is complete".Fmt(i), "value");
                     i++;
                     c = value[i];
+                    int code;
                     switch (c)
                     {
                         case '0': result.Append('\0'); break;
@@ -626,9 +627,17 @@ namespace RT.Util.ExtensionMethods
                                 len++;
                             if (len == 0)
                                 throw new ArgumentException(@"Invalid hex escape sequence ""\x"" at position {0}".Fmt(i - 2), "value");
-                            int code = int.Parse(value.Substring(i, len), NumberStyles.AllowHexSpecifier);
+                            code = int.Parse(value.Substring(i, len), NumberStyles.AllowHexSpecifier);
                             result.Append((char) code);
                             i += len - 1;
+                            break;
+                        case 'u':
+                            if (i + 4 >= value.Length)
+                                throw new ArgumentException(@"Invalid hex escape sequence ""\u"" at position {0}".Fmt(i), "value");
+                            i++;
+                            code = int.Parse(value.Substring(i, 4), NumberStyles.AllowHexSpecifier);
+                            result.Append((char) code);
+                            i += 3;
                             break;
                         default:
                             throw new ArgumentException("Unrecognised escape sequence at position {0}: \\{1}".Fmt(i - 1, c), "value");

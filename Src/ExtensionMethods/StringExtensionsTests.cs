@@ -49,9 +49,10 @@ namespace RT.Util.ExtensionMethods
             AssertCLiteralEscape("", @"");
             AssertCLiteralEscape("test, прове́рка", @"test, прове́рка");
             AssertCLiteralEscape("\0\a\b\t\n\v\f\r\\", @"\0\a\b\t\n\v\f\r\\");
-            AssertCLiteralEscape("test\r\n; \tstuff\x15\x1A", @"test\r\n; \tstuff\x15\x1A");
+            AssertCLiteralEscape("test\r\n; \tstuff\x15\x1A", @"test\r\n; \tstuff\u0015\u001A");
             AssertCLiteralEscape("\"", @"\""");
-            Assert.AreEqual("test\\x0D\\x0A; \\x09stuff\\x15\\x1A -- \\x41".CLiteralUnescape(), "test\\r\\n; \\tstuff\\x15\\x1A -- A".CLiteralUnescape());
+            AssertCLiteralEscape(((char) 0xD812) + "123", @"\uD812123");
+            Assert.AreEqual("test\\u000D\\u000A; \\u0009stuff\\u0015\\u001A -- \\u0041".CLiteralUnescape(), "test\\r\\n; \\tstuff\\u0015\\u001A -- A".CLiteralUnescape());
             try { @"test, \z stuff".CLiteralUnescape(); Assert.Fail(); }
             catch (ArgumentException e) { Assert.IsTrue(e.Message.Contains("6")); Assert.IsTrue(e.Message.Contains(@"\z")); }
             Assert.Throws<ArgumentException>(() => { @"test, \".CLiteralUnescape(); Assert.Fail(); });
