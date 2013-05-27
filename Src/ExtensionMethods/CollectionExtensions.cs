@@ -609,6 +609,20 @@ namespace RT.Util.ExtensionMethods
                 queue.Enqueue(value);
         }
 
+        /// <summary>
+        ///     Adds several values into a <see cref="HashSet&lt;T&gt;"/>.</summary>
+        /// <typeparam name="T">
+        ///     Type of the elements in the hash set.</typeparam>
+        /// <param name="set">
+        ///     The set to add the items to.</param>
+        /// <param name="values">
+        ///     Values to add.</param>
+        public static void AddRange<T>(this HashSet<T> set, IEnumerable<T> values)
+        {
+            foreach (var value in values)
+                set.Add(value);
+        }
+
         /// <summary>Returns the sum of the values in the specified collection, truncated to a 32-bit integer.</summary>
         public static int SumUnchecked(this IEnumerable<int> source)
         {
@@ -685,7 +699,11 @@ namespace RT.Util.ExtensionMethods
         public ListSelectIterator(IList<TInput> source, Func<TInput, TResult> selector) { _source = source; _selector = selector; }
 
         /// <summary>Returns an enumerator to iterate over the collection.</summary>
-        public IEnumerator<TResult> GetEnumerator() { return Enumerable.Select(_source, _selector).GetEnumerator(); }
+        public IEnumerator<TResult> GetEnumerator()
+        {
+            for (int i = 0; i < _source.Count; i++)
+                yield return _selector(_source[i]);
+        }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
         /// <summary>
