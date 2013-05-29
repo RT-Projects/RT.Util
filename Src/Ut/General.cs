@@ -505,6 +505,31 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Executes the relevant function depending on the type of the current object, or returns the alternative value
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest">
+        ///     Type the object must have at runtime to execute the function.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the functions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="function">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
+        /// <param name="elseValue">
+        ///     Value to return otherwise.</param>
+        /// <returns>
+        ///     The result of <paramref name="function"/> or the value of <paramref name="elseValue"/>.</returns>
+        public static TResult IfType<TObj, TTest, TResult>(this TObj obj, Func<TTest, TResult> function, TResult elseValue)
+        {
+            if (obj is TTest)
+                return function((TTest) (object) obj);
+            else
+                return elseValue;
+        }
+
+        /// <summary>
         ///     Executes the relevant function depending on the type of the current object, or the alternative function
         ///     otherwise.</summary>
         /// <typeparam name="TObj">
