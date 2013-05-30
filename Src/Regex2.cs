@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace RT.Util
 {
     /// <summary>
-    /// Exposes a number of convenience methods to compensate for a couple of shortcomings of the built-in Regex class:
-    /// namely, returning a non-generic collection of matches, and defaulting to "." not matching newlines.
-    /// </summary>
+    ///     Exposes a number of convenience methods to compensate for a couple of shortcomings of the built-in Regex class:
+    ///     namely, returning a non-generic collection of matches, and defaulting to "." not matching newlines.</summary>
     public static class Regex2
     {
         /// <summary>An easier-to-use version of <see cref="Regex.Matches(string, string)"/>.</summary>
@@ -50,22 +48,25 @@ namespace RT.Util
         None = 0,
         /// <summary>Specifies case-insensitive matching.</summary>
         IgnoreCase = 1,
-        /// <summary>Changes the meaning of ^ and $ so they match at the beginning
-        /// and end, respectively, of any line, and not just the beginning and end of
-        /// the entire string.</summary>
+        /// <summary>
+        ///     Changes the meaning of ^ and $ so they match at the beginning and end, respectively, of any line, and not just the
+        ///     beginning and end of the entire string.</summary>
         NewlineMatchedAtHatAndDollar = 2,
         /// <summary>Changes the meaning of the dot (.) so it matches every character except \n.</summary>
         NewlineNotMatchedByDot = 16,
-        /// <summary>Specifies that the only valid captures are explicitly named or numbered groups
-        /// of the form (?&lt;name&gt;…). This allows unnamed parentheses to act as noncapturing
-        /// groups without the syntactic clumsiness of the expression (?:…).</summary>
+        /// <summary>
+        ///     Specifies that the only valid captures are explicitly named or numbered groups of the form (?&lt;name&gt;…). This
+        ///     allows unnamed parentheses to act as noncapturing groups without the syntactic clumsiness of the expression
+        ///     (?:…).</summary>
         ExplicitCapture = 4,
-        /// <summary>Specifies that the regular expression is compiled to an assembly. This yields
-        /// faster execution but increases startup time.</summary>
+        /// <summary>
+        ///     Specifies that the regular expression is compiled to an assembly. This yields faster execution but increases
+        ///     startup time.</summary>
         Compiled = 8,
-        /// <summary>Eliminates unescaped white space from the pattern and enables comments marked
-        /// with #. However, the System.Text.RegularExpressions.RegexOptions.IgnorePatternWhitespace
-        /// value does not affect or eliminate white space in character classes.</summary>
+        /// <summary>
+        ///     Eliminates unescaped white space from the pattern and enables comments marked with #. However, the
+        ///     System.Text.RegularExpressions.RegexOptions.IgnorePatternWhitespace value does not affect or eliminate white space
+        ///     in character classes.</summary>
         IgnorePatternWhitespace = 32,
         /// <summary>Specifies that the search will be from right to left instead of from left to right.</summary>
         RightToLeft = 64,

@@ -12,9 +12,13 @@ namespace RT.Util
     /// <summary>Exposes methods related to the RhoML language.</summary>
     public static class RhoML
     {
-        /// <summary>Parses the specified string as RhoML.</summary>
-        /// <param name="input">The string to parse.</param>
-        /// <returns>The root element of the parse tree. This element is a tag with no name, even if the entire input was a text node.</returns>
+        /// <summary>
+        ///     Parses the specified string as RhoML.</summary>
+        /// <param name="input">
+        ///     The string to parse.</param>
+        /// <returns>
+        ///     The root element of the parse tree. This element is a tag with no name, even if the entire input was a text
+        ///     node.</returns>
         public static RhoTag Parse(string input)
         {
             return new RhoParserState(input).Parse();
@@ -24,8 +28,9 @@ namespace RT.Util
     /// <summary>Encapsulates one of the two possible types of RhoML nodes.</summary>
     public abstract class RhoNode
     {
-        /// <summary>Appends this node and all children to the specified string builder, converting them to RhoML format that
-        /// would parse back into this tree.</summary>
+        /// <summary>
+        ///     Appends this node and all children to the specified string builder, converting them to RhoML format that would
+        ///     parse back into this tree.</summary>
         public abstract void AppendTo(StringBuilder builder);
 
         /// <summary>Converts this node to a RhoML string.</summary>
@@ -62,8 +67,9 @@ namespace RT.Util
             Text = text;
         }
 
-        /// <summary>Appends this node and all children to the specified string builder, converting them to RhoML format that
-        /// would parse back into this tree.</summary>
+        /// <summary>
+        ///     Appends this node and all children to the specified string builder, converting them to RhoML format that would
+        ///     parse back into this tree.</summary>
         public override void AppendTo(StringBuilder builder)
         {
             builder.Append(Regex.Replace(_text, @"{[`}a-zA-Z]", match => "{" + match.Value));
@@ -83,7 +89,9 @@ namespace RT.Util
             get { return _attributes; }
             set { if (value == null) throw new ArgumentNullException("value"); _attributes = value; }
         }
-        /// <summary>Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/> instance in any order whatsoever.</summary>
+        /// <summary>
+        ///     Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/>
+        ///     instance in any order whatsoever.</summary>
         public IList<RhoNode> Children
         {
             get { return _children; }
@@ -140,8 +148,9 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Appends this node and all children to the specified string builder, converting them to RhoML format that
-        /// would parse back into this tree.</summary>
+        /// <summary>
+        ///     Appends this node and all children to the specified string builder, converting them to RhoML format that would
+        ///     parse back into this tree.</summary>
         public override void AppendTo(StringBuilder builder)
         {
             if (Name != null)

@@ -1,25 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Media;
-using System.Threading;
-using RT.Util;
 using System.Runtime.InteropServices;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// The way SoundPlayer was meant to be, but someone screwed it up.
-    /// This is the official MS workaround.
-    /// </summary>
+    /// <summary>The way SoundPlayer was meant to be, but someone screwed it up. This is the official MS workaround.</summary>
     public sealed class SoundPlayerAsync : IDisposable
     {
         private byte[] _bytesToPlay = null;
 
-        /// <summary>
-        /// Gets or sets the bytes representing the wave data to be played.
-        /// </summary>
+        /// <summary>Gets or sets the bytes representing the wave data to be played.</summary>
         public byte[] BytesToPlay
         {
             get { return _bytesToPlay; }
@@ -32,25 +21,18 @@ namespace RT.Util
 
         private GCHandle? _gcHandle = null;
 
-        /// <summary>
-        /// Creates a new player using the specified stream as the source of wave data to play.
-        /// </summary>
+        /// <summary>Creates a new player using the specified stream as the source of wave data to play.</summary>
         public SoundPlayerAsync(System.IO.Stream stream)
         {
             LoadStream(stream);
         }
 
-        /// <summary>
-        /// Creates a new player.
-        /// </summary>
+        /// <summary>Creates a new player.</summary>
         public SoundPlayerAsync()
         {
         }
 
-        /// <summary>
-        /// Loads the wave data to play from the specified stream. The stream can be
-        /// closed immediately afterwards.
-        /// </summary>
+        /// <summary>Loads the wave data to play from the specified stream. The stream can be closed immediately afterwards.</summary>
         public void LoadStream(System.IO.Stream stream)
         {
             byte[] bytesToPlay = new byte[stream.Length];
@@ -58,18 +40,13 @@ namespace RT.Util
             BytesToPlay = bytesToPlay;
         }
 
-        /// <summary>
-        /// Plays the loaded file once, asynchronously.
-        /// </summary>
+        /// <summary>Plays the loaded file once, asynchronously.</summary>
         public void Play()
         {
             PlayASync(NativeMethods.SoundFlags.SND_ASYNC);
         }
 
-        /// <summary>
-        /// Plays the loaded file forever in a loop, asynchronously. This class provides
-        /// no methods for stopping this.
-        /// </summary>
+        /// <summary>Plays the loaded file forever in a loop, asynchronously. This class provides no methods for stopping this.</summary>
         public void PlayLoop()
         {
             PlayASync(NativeMethods.SoundFlags.SND_ASYNC | NativeMethods.SoundFlags.SND_LOOP);
@@ -103,9 +80,7 @@ namespace RT.Util
 
         #region IDisposable Members
 
-        /// <summary>
-        /// Disposes of the class
-        /// </summary>
+        /// <summary>Disposes of the class</summary>
         public void Dispose()
         {
             Dispose(true);
@@ -120,9 +95,7 @@ namespace RT.Util
             }
         }
 
-        /// <summary>
-        /// Destroys the class
-        /// </summary>
+        /// <summary>Destroys the class</summary>
         ~SoundPlayerAsync()
         {
             Dispose(false);

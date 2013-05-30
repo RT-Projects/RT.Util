@@ -8,9 +8,9 @@ namespace RT.Util
     /// <summary>
     ///     Simplifies submitting POST requests with data encoded in the multipart/form-data format. See Remarks.</summary>
     /// <remarks>
-    ///     The simplest use example is to create a web request using <c>(HttpWebRequest) WebRequest.Create(...)</c>, add
-    ///     the data using <see cref="AddField"/> and <see cref="AddFile(string, string, string)"/> methods, and complete the
-    ///     request using <see cref="GetResponse"/>.</remarks>
+    ///     The simplest use example is to create a web request using <c>(HttpWebRequest) WebRequest.Create(...)</c>, add the data
+    ///     using <see cref="AddField"/> and <see cref="AddFile(string, string, string)"/> methods, and complete the request using
+    ///     <see cref="GetResponse"/>.</remarks>
     public sealed class MultipartFormDataHelper
     {
         private HttpWebRequest _request;
@@ -22,9 +22,10 @@ namespace RT.Util
         /// <summary>
         ///     Constructor.</summary>
         /// <param name="request">
-        ///     The request to be used for the form data submission. This class automatically sets several fields which should not be
-        ///     modified by the caller afterwards. These are: Method, ContentType. You MUST NOT call <see cref="HttpWebRequest.GetRequestStream()"/>
-        ///     or <see cref="HttpWebRequest.GetResponse()"/> on this request. You may modify request headers until the first call to an Add* method.</param>
+        ///     The request to be used for the form data submission. This class automatically sets several fields which should not
+        ///     be modified by the caller afterwards. These are: Method, ContentType. You MUST NOT call <see
+        ///     cref="HttpWebRequest.GetRequestStream()"/> or <see cref="HttpWebRequest.GetResponse()"/> on this request. You may
+        ///     modify request headers until the first call to an Add* method.</param>
         public MultipartFormDataHelper(HttpWebRequest request)
         {
             if (request == null)
@@ -38,8 +39,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Finalizes the request and sends it to the remote host (or, if the request is not buffered, ensures the entire request has been sent).
-        ///     Waits for response and returns the response object.</summary>
+        ///     Finalizes the request and sends it to the remote host (or, if the request is not buffered, ensures the entire
+        ///     request has been sent). Waits for response and returns the response object.</summary>
         public HttpWebResponse GetResponse()
         {
             if (_request == null)
@@ -68,11 +69,11 @@ namespace RT.Util
         /// <summary>
         ///     Adds a named text value to the POST request.</summary>
         /// <param name="name">
-        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this name. This field
-        ///     is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
+        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this
+        ///     name. This field is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
         /// <param name="value">
-        ///     The content to add as the value. Note that this is interpreted as Unicode text, and is a poor choice for binary data. For binary data,
-        ///     see <see cref="AddFile(string,string,string)"/>.</param>
+        ///     The content to add as the value. Note that this is interpreted as Unicode text, and is a poor choice for binary
+        ///     data. For binary data, see <see cref="AddFile(string,string,string)"/>.</param>
         public void AddField(string name, string value)
         {
             if (name == null)
@@ -97,18 +98,20 @@ namespace RT.Util
         /// <summary>
         ///     Adds a named file (or, generally, a binary data field) to the POST request.</summary>
         /// <param name="name">
-        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this name. This field
-        ///     is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
+        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this
+        ///     name. This field is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
         /// <param name="filename">
-        ///     The filename to use. The server may interpret this as it pleases, but this value will often end up being exposed as the name of the
-        ///     uploaded file. For maximum compatibility with servers, use only printable ASCII characters in this name. This field
-        ///     is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
+        ///     The filename to use. The server may interpret this as it pleases, but this value will often end up being exposed
+        ///     as the name of the uploaded file. For maximum compatibility with servers, use only printable ASCII characters in
+        ///     this name. This field is encoded using UTF-8, which is supported by some modern servers, but not by
+        ///     others.</param>
         /// <param name="contentType">
-        ///     The content type to specify for this data/file. Some servers decide whether to accept or reject an upload based on the content type.
-        ///     Specify <c>null</c> to prevent the inclusion of the Content-Type header.</param>
+        ///     The content type to specify for this data/file. Some servers decide whether to accept or reject an upload based on
+        ///     the content type. Specify <c>null</c> to prevent the inclusion of the Content-Type header.</param>
         /// <returns>
-        ///     A stream into which the binary data is to be written. You may close this stream when done, but if you don't, it will be closed
-        ///     automatically next time you add a field or a file, or if you call <see cref="GetResponse"/> (which prevents further writing).</returns>
+        ///     A stream into which the binary data is to be written. You may close this stream when done, but if you don't, it
+        ///     will be closed automatically next time you add a field or a file, or if you call <see cref="GetResponse"/> (which
+        ///     prevents further writing).</returns>
         public MultipartFileStream AddFile(string name, string filename, string contentType = "application/octet-stream")
         {
             if (name == null)
@@ -142,17 +145,18 @@ namespace RT.Util
         /// <summary>
         ///     Adds a named file (or, generally, a binary data field) to the POST request.</summary>
         /// <param name="name">
-        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this name. This field
-        ///     is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
+        ///     The name of the value to add. For maximum compatibility with servers, use only printable ASCII characters in this
+        ///     name. This field is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
         /// <param name="filename">
-        ///     The filename to use. The server may interpret this as it pleases, but this value will often end up being exposed as the name of the
-        ///     uploaded file. For maximum compatibility with servers, use only printable ASCII characters in this name. This field
-        ///     is encoded using UTF-8, which is supported by some modern servers, but not by others.</param>
+        ///     The filename to use. The server may interpret this as it pleases, but this value will often end up being exposed
+        ///     as the name of the uploaded file. For maximum compatibility with servers, use only printable ASCII characters in
+        ///     this name. This field is encoded using UTF-8, which is supported by some modern servers, but not by
+        ///     others.</param>
         /// <param name="data">
         ///     The binary data to send as the content of this file.</param>
         /// <param name="contentType">
-        ///     The content type to specify for this data/file. Some servers decide whether to accept or reject an upload based on the content type.
-        ///     Specify <c>null</c> to prevent the inclusion of the Content-Type header.</param>
+        ///     The content type to specify for this data/file. Some servers decide whether to accept or reject an upload based on
+        ///     the content type. Specify <c>null</c> to prevent the inclusion of the Content-Type header.</param>
         public void AddFile(string name, string filename, byte[] data, string contentType = "application/octet-stream")
         {
             if (data == null)
@@ -176,9 +180,10 @@ namespace RT.Util
             }
 
             /// <summary>
-            ///     Closes the stream and prevents further writing to this stream. You may call this explicitly; you may call <see cref="Stream.Dispose()"/>
-            ///     instead, or you could just leave it up to <see cref="MultipartFormDataHelper"/> to close this stream automatically next time
-            ///     a new field or file is added, or when the helper itself is closed.</summary>
+            ///     Closes the stream and prevents further writing to this stream. You may call this explicitly; you may call <see
+            ///     cref="Stream.Dispose()"/> instead, or you could just leave it up to <see cref="MultipartFormDataHelper"/> to
+            ///     close this stream automatically next time a new field or file is added, or when the helper itself is
+            ///     closed.</summary>
             public override void Close()
             {
                 if (_stream == null)
@@ -188,8 +193,7 @@ namespace RT.Util
                 base.Close();
             }
 
-            /// <summary>
-            ///     Writes file data to the request stream.</summary>
+            /// <summary>Writes file data to the request stream.</summary>
             public override void Write(byte[] buffer, int offset, int count)
             {
                 if (_stream == null)
@@ -197,17 +201,13 @@ namespace RT.Util
                 _stream.Write(buffer, offset, count);
             }
 
-            /// <summary>
-            ///     Always <c>true</c>.</summary>
+            /// <summary>Always <c>true</c>.</summary>
             public override bool CanWrite { get { return true; } }
-            /// <summary>
-            ///     Always <c>false</c>.</summary>
+            /// <summary>Always <c>false</c>.</summary>
             public override bool CanRead { get { return false; } }
-            /// <summary>
-            ///     Always <c>false</c>.</summary>
+            /// <summary>Always <c>false</c>.</summary>
             public override bool CanSeek { get { return false; } }
-            /// <summary>
-            ///     Flushes the request stream.</summary>
+            /// <summary>Flushes the request stream.</summary>
             public override void Flush() { _stream.Flush(); }
 
             /// <summary>Throws a <c>NotSupportedException</c>.</summary>

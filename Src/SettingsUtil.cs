@@ -16,13 +16,14 @@ using RT.Util.Xml;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// Provides convenience methods for loading and saving application settings.
-    /// </summary>
+    /// <summary>Provides convenience methods for loading and saving application settings.</summary>
     public static class SettingsUtil
     {
-        /// <summary>Retrieves the mandatory <see cref="SettingsAttribute"/> for the specified settings class type. Throws if the type doesn't have it specified.</summary>
-        /// <param name="settingsType">Type of the settings class whose attribute is to be retrieved</param>
+        /// <summary>
+        ///     Retrieves the mandatory <see cref="SettingsAttribute"/> for the specified settings class type. Throws if the type
+        ///     doesn't have it specified.</summary>
+        /// <param name="settingsType">
+        ///     Type of the settings class whose attribute is to be retrieved</param>
         public static SettingsAttribute GetAttribute(Type settingsType)
         {
             var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
@@ -31,19 +32,25 @@ namespace RT.Util
             return attr;
         }
 
-        /// <summary>Retrieves the mandatory <see cref="SettingsAttribute"/> for the type <typeparamref name="TSettings"/>. Throws if the type doesn't have it specified.</summary>
-        /// <typeparam name="TSettings">Type of the settings class whose attribute is to be retrieved</typeparam>
+        /// <summary>
+        ///     Retrieves the mandatory <see cref="SettingsAttribute"/> for the type <typeparamref name="TSettings"/>. Throws if
+        ///     the type doesn't have it specified.</summary>
+        /// <typeparam name="TSettings">
+        ///     Type of the settings class whose attribute is to be retrieved</typeparam>
         public static SettingsAttribute GetAttribute<TSettings>() where TSettings : SettingsBase, new()
         {
             return GetAttribute(typeof(TSettings));
         }
 
         /// <summary>
-        /// Performs safety checks to ensure that a settings object conforms to various requirements imposed by SettingsUtil methods. Run this method as a post-build
-        /// step to ensure reliability of execution. For an example of use, see <see cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.
-        /// </summary>
-        /// <typeparam name="TSettings">The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil methods at normal run-time.</typeparam>
-        /// <param name="rep">Object to report post-build errors to.</param>
+        ///     Performs safety checks to ensure that a settings object conforms to various requirements imposed by SettingsUtil
+        ///     methods. Run this method as a post-build step to ensure reliability of execution. For an example of use, see <see
+        ///     cref="Ut.RunPostBuildChecks"/>. This method is available only in DEBUG mode.</summary>
+        /// <typeparam name="TSettings">
+        ///     The type of the settings object, derived from <see cref="SettingsBase"/>, which would be passed to SettingsUtil
+        ///     methods at normal run-time.</typeparam>
+        /// <param name="rep">
+        ///     Object to report post-build errors to.</param>
         public static void PostBuildStep<TSettings>(IPostBuildReporter rep) where TSettings : SettingsBase
         {
             try { GetAttribute(typeof(TSettings)); }
@@ -51,12 +58,22 @@ namespace RT.Util
             XmlClassify.PostBuildStep<TSettings>(rep);
         }
 
-        /// <summary>Loads settings into the specified class, or, if not available, creates a new instance of the class. See Remarks.</summary>
-        /// <remarks>If the settings file exists but can't be loaded, this function will automatically create a backup of the settings file. If the file is opened exclusively by other code, will retry reading from it for up to 1.5 seconds.</remarks>
-        /// <param name="settings">Destination - the settings class will be placed here</param>
-        /// <param name="filename">If specified, overrides the filename that is normally derived from the values specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
-        /// <param name="serializer">If specified, overrides the serializer specified in the <see cref="SettingsAttribute"/> on the settings class.</param>
-        /// <returns>true if loaded an existing file, false if created a new one.</returns>
+        /// <summary>
+        ///     Loads settings into the specified class, or, if not available, creates a new instance of the class. See
+        ///     Remarks.</summary>
+        /// <remarks>
+        ///     If the settings file exists but can't be loaded, this function will automatically create a backup of the settings
+        ///     file. If the file is opened exclusively by other code, will retry reading from it for up to 1.5 seconds.</remarks>
+        /// <param name="settings">
+        ///     Destination - the settings class will be placed here</param>
+        /// <param name="filename">
+        ///     If specified, overrides the filename that is normally derived from the values specified in the <see
+        ///     cref="SettingsAttribute"/> on the settings class.</param>
+        /// <param name="serializer">
+        ///     If specified, overrides the serializer specified in the <see cref="SettingsAttribute"/> on the settings
+        ///     class.</param>
+        /// <returns>
+        ///     true if loaded an existing file, false if created a new one.</returns>
         public static bool LoadSettings<TSettings>(out TSettings settings, string filename = null, SettingsSerializer? serializer = null) where TSettings : SettingsBase, new()
         {
             var attr = GetAttribute<TSettings>();
@@ -186,10 +203,14 @@ namespace RT.Util
             }, TimeSpan.FromSeconds(5));
         }
 
-        /// <summary>Encrypts a password using AES. The result is encoded into base 64 for easy storage.</summary>
-        /// <param name="plain">Plaintext password to encrypt.</param>
-        /// <param name="key">The key to use for encryption. Must be exactly 32 bytes long.</param>
-        /// <returns>The encrypted password as a base64-encoded string.</returns>
+        /// <summary>
+        ///     Encrypts a password using AES. The result is encoded into base 64 for easy storage.</summary>
+        /// <param name="plain">
+        ///     Plaintext password to encrypt.</param>
+        /// <param name="key">
+        ///     The key to use for encryption. Must be exactly 32 bytes long.</param>
+        /// <returns>
+        ///     The encrypted password as a base64-encoded string.</returns>
         public static string EncryptPassword(string plain, byte[] key)
         {
             if (plain == null) return null;
@@ -209,10 +230,14 @@ namespace RT.Util
             return memoryStream.ToArray().Base64UrlEncode();
         }
 
-        /// <summary>Decrypts a password encrypted with <see cref="EncryptPassword"/>.</summary>
-        /// <param name="cipher">The output of <see cref="EncryptPassword"/>.</param>
-        /// <param name="key">The key used to encrypt the password.</param>
-        /// <returns>The decrypted password.</returns>
+        /// <summary>
+        ///     Decrypts a password encrypted with <see cref="EncryptPassword"/>.</summary>
+        /// <param name="cipher">
+        ///     The output of <see cref="EncryptPassword"/>.</param>
+        /// <param name="key">
+        ///     The key used to encrypt the password.</param>
+        /// <returns>
+        ///     The decrypted password.</returns>
         public static string DecryptPassword(string cipher, byte[] key)
         {
             if (cipher == null) return null;
@@ -235,39 +260,37 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Provides a base class for settings classes, implementing certain common usage patterns.
-    /// See remarks for detailed usage instructions.
-    /// </summary>
+    ///     Provides a base class for settings classes, implementing certain common usage patterns. See remarks for detailed usage
+    ///     instructions.</summary>
     /// <remarks>
-    /// <para>Derive a class from this one and add the fields you wish to persist. Mark those you don't want stored
-    /// with the <see cref="XmlIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>.</para>
-    /// <para>Once the above is done, the settings can be saved by calling <see cref="Save"/>/<see cref="SaveQuiet"/>,
-    /// depending on intent. To load, call <see cref="SettingsUtil.LoadSettings&lt;T&gt;"/>, making sure that the
-    /// generic type is the type of your descendant class. For example:
-    /// </para>
-    /// <code>
-    /// static class Program
-    /// {
-    ///     public static MySettings Settings;
-    ///     
-    ///     static void Main(string[] args)
-    ///     {
-    ///         SettingsUtil.LoadSettings(out Settings);
-    ///         DoWork();
-    ///         Settings.Save();
-    ///     }
-    /// }
-    /// 
-    /// [Settings("MyApplicationName", SettingsKind.UserSpecific)]
-    /// class MySettings : SettingsBase
-    /// {
-    ///     public string SomeSetting = "initial/default value";
-    /// }
-    /// </code>
-    /// 
-    /// <para><see cref="SettingsThreadedBase"/> implements an extra method to enable settings to be
-    /// queued for a save on a separate thread, to reduce the performance impact of less important saves.</para>
-    /// </remarks>
+    ///     <para>
+    ///         Derive a class from this one and add the fields you wish to persist. Mark those you don't want stored with the
+    ///         <see cref="XmlIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>.</para>
+    ///     <para>
+    ///         Once the above is done, the settings can be saved by calling <see cref="Save"/>/<see cref="SaveQuiet"/>, depending
+    ///         on intent. To load, call <see cref="SettingsUtil.LoadSettings&lt;T&gt;"/>, making sure that the generic type is
+    ///         the type of your descendant class. For example:</para>
+    ///     <code>
+    ///         static class Program
+    ///         {
+    ///             public static MySettings Settings;
+    ///             
+    ///             static void Main(string[] args)
+    ///             {
+    ///                 SettingsUtil.LoadSettings(out Settings);
+    ///                 DoWork();
+    ///                 Settings.Save();
+    ///             }
+    ///         }
+    ///         
+    ///         [Settings("MyApplicationName", SettingsKind.UserSpecific)]
+    ///         class MySettings : SettingsBase
+    ///         {
+    ///             public string SomeSetting = "initial/default value";
+    ///         }</code>
+    ///     <para>
+    ///         <see cref="SettingsThreadedBase"/> implements an extra method to enable settings to be queued for a save on a
+    ///         separate thread, to reduce the performance impact of less important saves.</para></remarks>
     [Serializable]
     public abstract class SettingsBase
     {
@@ -279,27 +302,27 @@ namespace RT.Util
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
-        /// This method is called just before the settings class is written out to disk, allowing any required changes to
-        /// be made to the fields. The base implementation does nothing. Note that this may be called on a different thread
-        /// than the one invoking a Save* operation (but the same as the thread performing the save immediately after this
-        /// method returns).
-        /// </summary>
+        ///     This method is called just before the settings class is written out to disk, allowing any required changes to be
+        ///     made to the fields. The base implementation does nothing. Note that this may be called on a different thread than
+        ///     the one invoking a Save* operation (but the same as the thread performing the save immediately after this method
+        ///     returns).</summary>
         public virtual void BeforeSave()
         {
         }
 
         /// <summary>
-        /// This method is called just before the settings class is restored from disk, allowing any required changes to
-        /// be made to the fields. The base implementation does nothing.
-        /// </summary>
+        ///     This method is called just before the settings class is restored from disk, allowing any required changes to be
+        ///     made to the fields. The base implementation does nothing.</summary>
         public virtual void AfterLoad()
         {
         }
 
         /// <summary>
-        /// <para>Saves the settings.</para>
-        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
-        /// </summary>
+        ///     <para>
+        ///         Saves the settings.</para>
+        ///     <para>
+        ///         This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any
+        ///         pending earlier (older) saves.</para></summary>
         public virtual void Save(string filename = null, SettingsSerializer? serializer = null, SettingsOnFailure onFailure = SettingsOnFailure.Throw)
         {
             // Save must not be interrupted or superseded by a SaveThreaded
@@ -315,9 +338,12 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// <para>Saves the settings. Intended to be used whenever the settings are important enough to bug the user if this fails.</para>
-        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
-        /// </summary>
+        ///     <para>
+        ///         Saves the settings. Intended to be used whenever the settings are important enough to bug the user if this
+        ///         fails.</para>
+        ///     <para>
+        ///         This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any
+        ///         pending earlier (older) saves.</para></summary>
         public virtual void SaveLoud(string filename = null, SettingsSerializer? serializer = null)
         {
             Save(filename, serializer, onFailure: SettingsOnFailure.ShowRetryOnly);
@@ -325,9 +351,12 @@ namespace RT.Util
 
 
         /// <summary>
-        /// <para>Saves the settings. Intended to be used whenever the settings are not important enough to bug the user if this fails.</para>
-        /// <para>This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any pending earlier (older) saves.</para>
-        /// </summary>
+        ///     <para>
+        ///         Saves the settings. Intended to be used whenever the settings are not important enough to bug the user if this
+        ///         fails.</para>
+        ///     <para>
+        ///         This method is fully compatible with <see cref="SettingsThreadedBase.SaveThreaded"/>, and will cancel any
+        ///         pending earlier (older) saves.</para></summary>
         public virtual void SaveQuiet(string filename = null, SettingsSerializer? serializer = null)
         {
             Save(filename, serializer, onFailure: SettingsOnFailure.DoNothing);
@@ -340,9 +369,7 @@ namespace RT.Util
         }
     }
 
-    /// <summary>
-    /// Like <see cref="SettingsBase"/>, but implements an additional save method.
-    /// </summary>
+    /// <summary>Like <see cref="SettingsBase"/>, but implements an additional save method.</summary>
     public abstract class SettingsThreadedBase : SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
@@ -355,20 +382,20 @@ namespace RT.Util
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
-        /// Must return a deep clone of this class. This will be used to create a snapshot of the settings
-        /// at the time when <see cref="SaveThreaded"/> is called.
-        /// </summary>
+        ///     Must return a deep clone of this class. This will be used to create a snapshot of the settings at the time when
+        ///     <see cref="SaveThreaded"/> is called.</summary>
         protected abstract SettingsThreadedBase CloneForSaveThreaded();
 
         /// <summary>
-        /// <para>Saves the settings. Intended for frequent use at any point where it would make sense to
-        /// commit settings, but would not make sense to bug the user about any failures. This method
-        /// is like <see cref="SettingsBase.SaveQuiet"/>, except that the actual save occurs slightly later on a separate
-        /// thread. The method returns as soon as <see cref="CloneForSaveThreaded"/> returns.</para>
-        /// <para>Note that this method is NOT guaranteed to save settings, but it usually will. Make sure
-        /// you call <see cref="SettingsBase.Save"/> when you want to guarantee a save, especially just before the
-        /// program terminates.</para>
-        /// </summary>
+        ///     <para>
+        ///         Saves the settings. Intended for frequent use at any point where it would make sense to commit settings, but
+        ///         would not make sense to bug the user about any failures. This method is like <see
+        ///         cref="SettingsBase.SaveQuiet"/>, except that the actual save occurs slightly later on a separate thread. The
+        ///         method returns as soon as <see cref="CloneForSaveThreaded"/> returns.</para>
+        ///     <para>
+        ///         Note that this method is NOT guaranteed to save settings, but it usually will. Make sure you call <see
+        ///         cref="SettingsBase.Save"/> when you want to guarantee a save, especially just before the program
+        ///         terminates.</para></summary>
         public virtual void SaveThreaded(string filename = null, SettingsSerializer? serializer = null)
         {
             lock (_lock)
@@ -399,43 +426,34 @@ namespace RT.Util
 
     }
 
-    /// <summary>
-    /// Determines what the settings in the settings file are logically "attached" to.
-    /// </summary>
+    /// <summary>Determines what the settings in the settings file are logically "attached" to.</summary>
     public enum SettingsKind
     {
         /// <summary>
-        /// These settings are specific to a particular computer.
-        /// In normal mode: shared among all user accounts, and do not roam.
-        /// In portable mode: separate settings stored for every machine name; user account doesn't matter.
-        /// </summary>
+        ///     These settings are specific to a particular computer. In normal mode: shared among all user accounts, and do not
+        ///     roam. In portable mode: separate settings stored for every machine name; user account doesn't matter.</summary>
         MachineSpecific,
 
         /// <summary>
-        /// These settings are specific to a particular user.
-        /// In normal mode: separate settings for each user account; will roam to other machines if roaming is configured.
-        /// In portable mode: always shared; user account and machine name do not matter.
-        /// </summary>
+        ///     These settings are specific to a particular user. In normal mode: separate settings for each user account; will
+        ///     roam to other machines if roaming is configured. In portable mode: always shared; user account and machine name do
+        ///     not matter.</summary>
         UserSpecific,
 
         /// <summary>
-        /// These settings are specific to a particular combination of user and machine.
-        /// In normal mode: separate settings for each user account on each machine; will not roam.
-        /// In portable mode: separate settings stored for every machine name; user account doesn't matter.
-        /// </summary>
+        ///     These settings are specific to a particular combination of user and machine. In normal mode: separate settings for
+        ///     each user account on each machine; will not roam. In portable mode: separate settings stored for every machine
+        ///     name; user account doesn't matter.</summary>
         UserAndMachineSpecific,
 
         /// <summary>
-        /// These settings are intended to be global, with constraints imposed by reality.
-        /// In normal mode: shared among all user accounts, and do not roam.
-        /// In portable mode: always shared; user account and machine name do not matter.
-        /// </summary>
+        ///     These settings are intended to be global, with constraints imposed by reality. In normal mode: shared among all
+        ///     user accounts, and do not roam. In portable mode: always shared; user account and machine name do not
+        ///     matter.</summary>
         Global,
     }
 
-    /// <summary>
-    /// Specifies what to do in case of operation failing.
-    /// </summary>
+    /// <summary>Specifies what to do in case of operation failing.</summary>
     public enum SettingsOnFailure
     {
         /// <summary>Just ignore the failure: no exceptions thrown, no dialogs shown</summary>
@@ -448,9 +466,7 @@ namespace RT.Util
         ShowRetryWithCancel,
     }
 
-    /// <summary>
-    /// Determines which serializer the settings are read/written by.
-    /// </summary>
+    /// <summary>Determines which serializer the settings are read/written by.</summary>
     public enum SettingsSerializer
     {
         /// <summary>Use the XmlClassify serializer (obsolete).</summary>
@@ -471,9 +487,7 @@ namespace RT.Util
         public SerializerInfoAttribute(string defaultFileExtension) { DefaultFileExtension = defaultFileExtension; }
     }
 
-    /// <summary>
-    /// Indicates that the user chose to cancel the current operation.
-    /// </summary>
+    /// <summary>Indicates that the user chose to cancel the current operation.</summary>
     public sealed class SettingsCancelException : RTException
     {
         /// <summary>Creates an exception instance with the specified message.</summary>
@@ -482,21 +496,21 @@ namespace RT.Util
         { }
     }
 
-    /// <summary>
-    /// Describes the intended usage of a "settings" class to <see cref="SettingsUtil"/> methods.
-    /// </summary>
+    /// <summary>Describes the intended usage of a "settings" class to <see cref="SettingsUtil"/> methods.</summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public sealed class SettingsAttribute : Attribute
     {
         /// <summary>
-        /// Creates an instance of this attribute.
-        /// </summary>
-        /// <param name="appName">The name of the settings file is formed from this <paramref name="appName"/>
-        /// according to certain rules. This should be a string equal to the name of the application. Paths and extensions
-        /// should be omitted. It is important to specify the same name for settings of different <paramref name="kind"/>,
-        /// because this allows their portability to be controlled with the same {name}.IsPortable.txt file.</param>
-        /// <param name="kind">Specifies what the settings in this settings class are logically "attached" to.</param>
-        /// <param name="serializer">Specifies which serializer to use.</param>
+        ///     Creates an instance of this attribute.</summary>
+        /// <param name="appName">
+        ///     The name of the settings file is formed from this <paramref name="appName"/> according to certain rules. This
+        ///     should be a string equal to the name of the application. Paths and extensions should be omitted. It is important
+        ///     to specify the same name for settings of different <paramref name="kind"/>, because this allows their portability
+        ///     to be controlled with the same {name}.IsPortable.txt file.</param>
+        /// <param name="kind">
+        ///     Specifies what the settings in this settings class are logically "attached" to.</param>
+        /// <param name="serializer">
+        ///     Specifies which serializer to use.</param>
         public SettingsAttribute(string appName, SettingsKind kind, SettingsSerializer serializer = SettingsSerializer.XmlClassify)
         {
             AppName = appName;
@@ -505,28 +519,21 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// The name of the settings file is formed from this <see cref="AppName"/> according to certain rules.
-        /// This should normally be a string equal to the name of the application. Paths and
-        /// extensions should be omitted.
-        /// </summary>
+        ///     The name of the settings file is formed from this <see cref="AppName"/> according to certain rules. This should
+        ///     normally be a string equal to the name of the application. Paths and extensions should be omitted.</summary>
         public string AppName { get; private set; }
 
-        /// <summary>
-        /// Specifies what the settings in this settings class are logically "attached" to.
-        /// </summary>
+        /// <summary>Specifies what the settings in this settings class are logically "attached" to.</summary>
         public SettingsKind Kind { get; private set; }
 
-        /// <summary>
-        /// Specifies which serializer is used to read/write the settings file.
-        /// </summary>
+        /// <summary>Specifies which serializer is used to read/write the settings file.</summary>
         public SettingsSerializer Serializer { get; private set; }
 
         /// <summary>
-        /// Returns the full path and file name that should be used to store the settings class marked with this attribute.
-        /// Note that the return value may change depending on external factors (the existence of a file). The recommended
-        /// approach is to load settings once, and then save them whenever necessary to whichever path is returned
-        /// by this function.
-        /// </summary>
+        ///     Returns the full path and file name that should be used to store the settings class marked with this attribute.
+        ///     Note that the return value may change depending on external factors (the existence of a file). The recommended
+        ///     approach is to load settings once, and then save them whenever necessary to whichever path is returned by this
+        ///     function.</summary>
         public string GetFileName()
         {
             string filename = AppName;

@@ -4,9 +4,7 @@ using System.Text;
 
 namespace RT.Util
 {
-    /// <summary>
-    /// WinAPI function wrappers
-    /// </summary>
+    /// <summary>WinAPI function wrappers</summary>
     public static class WinAPI
     {
         static WinAPI()
@@ -15,16 +13,14 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// This field is statically initialised by calling QueryPerformanceFrequency.
-        /// It contains the frequency of the performance counter for the current system.
-        /// </summary>
+        ///     This field is statically initialised by calling QueryPerformanceFrequency. It contains the frequency of the
+        ///     performance counter for the current system.</summary>
         public static readonly long PerformanceFreq;
 
         /// <summary>
-        /// Normally an unhandled exception will result in Windows showing a generic error dialog, while keeping the
-        /// process alive and stopped. This method will disable that: an unhandled exception will result in the process
-        /// terminating quietly.
-        /// </summary>
+        ///     Normally an unhandled exception will result in Windows showing a generic error dialog, while keeping the process
+        ///     alive and stopped. This method will disable that: an unhandled exception will result in the process terminating
+        ///     quietly.</summary>
         public static void DisableGeneralProtectionFaultErrorBox()
         {
             SetErrorMode(SetErrorMode(0) | ErrorModes.SEM_NOGPFAULTERRORBOX);
@@ -279,9 +275,7 @@ namespace RT.Util
 
         #endregion
 
-        /// <summary>
-        /// Defines the callback type for a keyboard hook procedure.
-        /// </summary>
+        /// <summary>Defines the callback type for a keyboard hook procedure.</summary>
         public delegate int KeyboardHookProc(int code, int wParam, ref KeyboardHookStruct lParam);
 
         #region Function imports
@@ -368,40 +362,49 @@ namespace RT.Util
         public static extern bool FreeLibrary(IntPtr hModule);
 
         /// <summary>
-        /// Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null
-        /// </summary>
-        /// <param name="idHook">The id of the event you want to hook</param>
-        /// <param name="callback">The callback.</param>
-        /// <param name="hInstance">The handle you want to attach the event to, can be null</param>
-        /// <param name="threadId">The thread you want to attach the event to, can be null</param>
-        /// <returns>a handle to the desired hook</returns>
+        ///     Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null</summary>
+        /// <param name="idHook">
+        ///     The id of the event you want to hook</param>
+        /// <param name="callback">
+        ///     The callback.</param>
+        /// <param name="hInstance">
+        ///     The handle you want to attach the event to, can be null</param>
+        /// <param name="threadId">
+        ///     The thread you want to attach the event to, can be null</param>
+        /// <returns>
+        ///     a handle to the desired hook</returns>
         [DllImport("user32.dll")]
         public static extern IntPtr SetWindowsHookEx(int idHook, WinAPI.KeyboardHookProc callback, IntPtr hInstance, uint threadId);
 
         /// <summary>
-        /// Unhooks the windows hook.
-        /// </summary>
-        /// <param name="hInstance">The hook handle that was returned from SetWindowsHookEx</param>
-        /// <returns>True if successful, false otherwise</returns>
+        ///     Unhooks the windows hook.</summary>
+        /// <param name="hInstance">
+        ///     The hook handle that was returned from SetWindowsHookEx</param>
+        /// <returns>
+        ///     True if successful, false otherwise</returns>
         [DllImport("user32.dll")]
         public static extern bool UnhookWindowsHookEx(IntPtr hInstance);
 
         /// <summary>
-        /// Calls the next hook.
-        /// </summary>
-        /// <param name="idHook">The hook id</param>
-        /// <param name="nCode">The hook code</param>
-        /// <param name="wParam">The wparam.</param>
-        /// <param name="lParam">The lparam.</param>
-        /// <returns></returns>
+        ///     Calls the next hook.</summary>
+        /// <param name="idHook">
+        ///     The hook id</param>
+        /// <param name="nCode">
+        ///     The hook code</param>
+        /// <param name="wParam">
+        ///     The wparam.</param>
+        /// <param name="lParam">
+        ///     The lparam.</param>
+        /// <returns/>
         [DllImport("user32.dll")]
         public static extern int CallNextHookEx(IntPtr idHook, int nCode, int wParam, ref KeyboardHookStruct lParam);
 
         /// <summary>
-        /// Loads the library.
-        /// </summary>
-        /// <param name="lpFileName">Name of the library</param>
-        /// <returns>A handle to the library</returns>
+        ///     Loads the library.</summary>
+        /// <param name="lpFileName">
+        ///     Name of the library</param>
+        /// <returns>
+        ///     A handle to the library</returns>
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string lpFileName);
 
@@ -447,11 +450,15 @@ namespace RT.Util
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleOutputCP(uint wCodePageID);
 
-        /// <summary>Returns the window handle of the console window associated with the current process, or IntPtr.Zero if there is no console window.</summary>
+        /// <summary>
+        ///     Returns the window handle of the console window associated with the current process, or IntPtr.Zero if there is no
+        ///     console window.</summary>
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetConsoleWindow();
 
-        /// <summary>Shows or hides the window identified by <paramref name="hWnd"/>. For <paramref name="nCmdShow"/>, use <see cref="SW_SHOW"/> et al.</summary>
+        /// <summary>
+        ///     Shows or hides the window identified by <paramref name="hWnd"/>. For <paramref name="nCmdShow"/>, use <see
+        ///     cref="SW_SHOW"/> et al.</summary>
         [DllImport("user32.dll")]
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
@@ -495,9 +502,9 @@ namespace RT.Util
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
-        /// Retrieves the window handle of the focused control in the currently active window.
-        /// </summary>
-        /// <param name="ownHandle">The handle to one of your own windows.</param>
+        ///     Retrieves the window handle of the focused control in the currently active window.</summary>
+        /// <param name="ownHandle">
+        ///     The handle to one of your own windows.</param>
         public static IntPtr GetFocusedControlInActiveWindow(IntPtr ownHandle)
         {
             IntPtr activeWindowHandle = GetForegroundWindow();
