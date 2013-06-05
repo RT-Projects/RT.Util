@@ -481,7 +481,7 @@ namespace RT.Util
     /// respected.
     /// </summary>
     [Serializable]
-    public sealed class MulticastLogger : LoggerBase
+    public class MulticastLogger : LoggerBase
     {
         /// <summary>
         /// Add or remove the underlying loggers here. Every logger in this dictionary
