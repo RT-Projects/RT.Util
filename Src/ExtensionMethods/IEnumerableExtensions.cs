@@ -579,7 +579,14 @@ namespace RT.Util.ExtensionMethods
         ///     usage of this method is proportional to <paramref name="count"/>, but the source collection is only enumerated
         ///     once, and in a lazy fashion. Also, enumerating the first item will take longer than enumerating subsequent
         ///     items.</summary>
-        public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count)
+        /// <param name="source">
+        ///     Source collection.</param>
+        /// <param name="count">
+        ///     Number of items to skip from the end of the collection.</param>
+        /// <param name="throwIfNotEnough">
+        ///     If <c>true</c>, the enumerator throws at the end of the enumeration if the source collection contained fewer than
+        ///     <paramref name="count"/> elements.</param>
+        public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count, bool throwIfNotEnough = false)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -590,11 +597,15 @@ namespace RT.Util.ExtensionMethods
 
             var collection = source as ICollection<T>;
             if (collection != null)
+            {
+                if (throwIfNotEnough && collection.Count < count)
+                    throw new InvalidOperationException("The collection does not contain enough elements.");
                 return collection.Take(Math.Max(0, collection.Count - count));
+            }
 
-            return skipLastIterator(source, count);
+            return skipLastIterator(source, count, throwIfNotEnough);
         }
-        private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count)
+        private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count, bool throwIfNotEnough)
         {
             var queue = new T[count];
             int headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
@@ -617,6 +628,9 @@ namespace RT.Util.ExtensionMethods
                     headtail++;
                 }
             }
+
+            if (throwIfNotEnough && collected < count)
+                throw new InvalidOperationException("The collection does not contain enough elements.");
         }
 
         /// <summary>
