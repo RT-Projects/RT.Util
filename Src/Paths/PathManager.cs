@@ -7,47 +7,58 @@ using RT.Util;
 namespace RT.Util.Paths
 {
     /// <summary>
-    /// PathManager builds a list of paths via calls to <see cref="AddIncludePath"/> and
-    /// <see cref="AddExcludePath"/>, which include/exclude a path with all subdirectories.
-    /// Redundant entries are automatically removed.
-    /// </summary>
+    ///     Maintains a selection of paths in the filesystem and offers methods for enumerating all the included paths and/or
+    ///     files.</summary>
+    /// <remarks>
+    ///     <para>
+    ///         Initially empty. Paths may be added to the set (with all subpaths) by calling <see cref="AddIncludePath"/>, and
+    ///         removed from the set using <see cref="AddExcludePath"/> (again, with subpaths). The order of these calls is
+    ///         important.</para>
+    ///     <para>
+    ///         There is currently no support for including or excluding non-recursively, nor for including/excluding specific
+    ///         files.</para></remarks>
     [Serializable]
-    public sealed class PathManager : ICloneable
+    public sealed class PathManager
     {
-        /// <summary>
-        /// Default constructor for PathManager - invokes <see cref="Reset"/>.
-        /// </summary>
+        /// <summary>Constructs an empty instance.</summary>
         public PathManager()
         {
+            Paths = new List<PathInfo>();
             Reset();
         }
 
-        /// <summary>
-        /// The structure used to store path information
-        /// </summary>
+        /// <summary>Constructs an instance containing all of the specified paths (with all subpaths).</summary>
+        public PathManager(params string[] paths)
+            : this()
+        {
+            foreach (var item in paths)
+                AddIncludePath(item);
+        }
+
+        /// <summary>Constructs an instance containing all of the specified paths (with all subpaths).</summary>
+        public PathManager(IEnumerable<string> paths)
+            : this()
+        {
+            foreach (var item in paths)
+                AddIncludePath(item);
+        }
+
+        /// <summary>The structure used to store path information</summary>
         [Serializable]
         public sealed class PathInfo
         {
-            /// <summary>
-            /// An absolute path to a directory.
-            /// </summary>
-            public string Path;
+            /// <summary>An absolute path to a directory.</summary>
+            public string Path { get; set; }
 
-            /// <summary>
-            /// Whether everything under the specified path is included or excluded from the set of files.
-            /// </summary>
-            public bool Include;
+            /// <summary>Whether everything under the specified path is included or excluded from the set.</summary>
+            public bool Include { get; set; }
         }
 
-        /// <summary>
-        /// Contains the list of all included and excluded paths.
-        /// </summary>
-        public List<PathInfo> Paths;
+        /// <summary>Contains the list of all included and excluded paths.</summary>
+        public List<PathInfo> Paths { get; set; }
 
-        /// <summary>
-        /// Creates a new instance of this class, copying all the included/excluded paths to it.
-        /// </summary>
-        public object Clone()
+        /// <summary>Creates a deep clone of this class.</summary>
+        public PathManager Clone()
         {
             PathManager pm = new PathManager();
             pm.Paths = new List<PathInfo>(Paths.Count);
@@ -55,10 +66,8 @@ namespace RT.Util.Paths
             return pm;
         }
 
-        /// <summary>
-        /// Returns the index of the specified path or -1 if not found
-        /// </summary>
-        private int FindPathEntry(string path)
+        /// <summary>Returns the index of the specified path or -1 if not found</summary>
+        private int findPathEntry(string path)
         {
             for (int i = 0; i < Paths.Count; i++)
                 if (Paths[i].Path.ToUpper() == path.ToUpper())
@@ -66,24 +75,20 @@ namespace RT.Util.Paths
             return -1;
         }
 
-        /// <summary>
-        /// Adds an include/exclude entry 
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="include"></param>
-        private void AddPathEntry(string path, bool include)
+        /// <summary>Adds an include/exclude entry</summary>
+        private void addPathEntry(string path, bool include)
         {
             // Delete the entry for this path, if it exists
-            int i = FindPathEntry(path);
+            int i = findPathEntry(path);
             if (i != -1)
                 Paths.RemoveAt(i);
             // Delete any entries which are subpaths of this path
-            DeleteSubpathEntries(path);
+            deleteSubpathEntries(path);
             // Check if the path is currently included/excluded; if so - done
             if (!IsPathIncluded(path) ^ include)
                 return;
             // Add an entry for this path
-            PathInfo pi = new PathInfo();
+            var pi = new PathInfo();
             pi.Path = PathUtil.NormPath(path);
             pi.Include = include;
             // Find where to insert it
@@ -101,10 +106,8 @@ namespace RT.Util.Paths
                 Paths.Insert(fp, pi);
         }
 
-        /// <summary>
-        /// Deletes all entries which are subpaths of the specified path.
-        /// </summary>
-        private void DeleteSubpathEntries(string path)
+        /// <summary>Deletes all entries which are subpaths of the specified path.</summary>
+        private void deleteSubpathEntries(string path)
         {
             for (int i = Paths.Count - 1; i >= 0; i--)
                 if (PathUtil.IsSubpathOf(Paths[i].Path, path))
@@ -112,43 +115,53 @@ namespace RT.Util.Paths
         }
 
         /// <summary>
-        /// Includes the specified path to the paths tree. This operation
-        /// removes any entries which refer to subpaths of the specified path.
-        /// </summary>
+        ///     Makes the specified path and all subpaths included into the set of paths.</summary>
+        /// <remarks>
+        ///     The exact way in which this call affects <see cref="Paths"/> is not part of the contract. This method only
+        ///     guarantees that this path and all subpaths will be part of the set after the call returns.</remarks>
         public void AddIncludePath(string path)
         {
-            AddPathEntry(path, true);
+            addPathEntry(path, true);
         }
 
         /// <summary>
-        /// Excludes the specified path from the paths tree. This operation
-        /// removes any entries which refer to subpaths of the specified path.
-        /// </summary>
+        ///     Makes the specified path and all subpaths excluded from the set of paths.</summary>
+        /// <remarks>
+        ///     The exact way in which this call affects <see cref="Paths"/> is not part of the contract. This method only
+        ///     guarantees that this path and all subpaths will not be part of the set after the call returns.</remarks>
         public void AddExcludePath(string path)
         {
-            AddPathEntry(path, false);
+            addPathEntry(path, false);
         }
 
-        /// <summary>
-        /// Resets the paths to a state where all paths are excluded.
-        /// </summary>
+        /// <summary>A synonym for <see cref="AddIncludePath"/>, only chainable (returns <c>this</c>).</summary>
+        public PathManager Include(string path)
+        {
+            AddIncludePath(path);
+            return this;
+        }
+
+        /// <summary>A synonym for <see cref="AddExcludePath"/>, only chainable (returns <c>this</c>).</summary>
+        public PathManager Exclude(string path)
+        {
+            AddExcludePath(path);
+            return this;
+        }
+
+        /// <summary>Resets the set of paths to a state where all paths are excluded.</summary>
         public void Reset()
         {
-            Paths = new List<PathInfo>();
+            Paths.Clear();
         }
 
-        /// <summary>
-        /// Checks whether a path is included or excluded.
-        /// </summary>
-        /// <param name="path">The path to be checked</param>
-        /// <returns>Whether the path is included/excluded</returns>
+        /// <summary>Returns true iff the specified path is part of the path set.</summary>
         public bool IsPathIncluded(string path)
         {
             int mindist = int.MaxValue;
             int mindistn = -1;
             for (int i = 0; i < Paths.Count; i++)
             {
-                int d = PathLevelDistance(Paths[i].Path, path);
+                int d = pathLevelDistance(Paths[i].Path, path);
 
                 if (d == int.MaxValue || d < 0)
                     continue;
@@ -165,10 +178,7 @@ namespace RT.Util.Paths
                 return Paths[mindistn].Include;
         }
 
-        /// <summary>
-        /// Returns true only if the specified path is included as well as all
-        /// subfiles and subpaths, recursively.
-        /// </summary>
+        /// <summary>Returns true iff the specified path and all the subpaths are part of the path set.</summary>
         public bool IsPathIncludedWithAllSubpaths(string path)
         {
             // This is true if and only if the nearest path above is Include
@@ -177,7 +187,7 @@ namespace RT.Util.Paths
             int mindistn = -1;
             for (int i = 0; i < Paths.Count; i++)
             {
-                int d = PathLevelDistance(Paths[i].Path, path);
+                int d = pathLevelDistance(Paths[i].Path, path);
 
                 if (d == int.MaxValue)
                     continue;
@@ -196,52 +206,14 @@ namespace RT.Util.Paths
                 return Paths[mindistn].Include;
         }
 
-        /// <summary>
-        /// Returns true only if none of the immediate children of the specified
-        /// path are to be excluded from the scan.
-        /// 
-        /// Note: this doesn't check whether the specified path itself is included,
-        /// nor whether the excluded directories actually exist. The files are currently
-        /// always listed so this only checks to see whether there are any immediate
-        /// exclude paths, that's it.
-        /// </summary>
-        public bool AllImmediateChildrenIncluded(string path)
-        {
-            for (int i = 0; i < Paths.Count; i++)
-                if (PathLevelDistance(path, Paths[i].Path) == 1 && !Paths[i].Include)
-                    return false;
-            return true;
-        }
-
-        /// <summary>
-        /// Returns the number of paths marked as "include". Mainly intended to verify
-        /// that there is at least one path included.
-        /// </summary>
-        public int IncludedPathCount
-        {
-            get
-            {
-                int n = 0;
-                for (int i = 0; i < Paths.Count; i++)
-                    if (Paths[i].Include)
-                        n++;
-                return n;
-            }
-        }
-
         #region Enumeration & failed files list/event
 
         /// <summary>
-        /// If assigned, this delegate will be called whenever a directory cannot be
-        /// enumerated, e.g. due to being unreadable etc. This function must return
-        /// "false" in order to terminate scanning or "true" to continue.
-        /// </summary>
+        ///     If assigned, this delegate will be called whenever a directory cannot be enumerated, e.g. due to being unreadable
+        ///     etc. This function must return "false" in order to terminate scanning or "true" to continue.</summary>
         public Func<FileSystemInfo, Exception, bool> ReportFail = null;
 
-        /// <summary>
-        /// Paths which could not be read while enumerating PathManager. This is automatically
-        /// cleared for each enumeration.
-        /// </summary>
+        /// <summary>Paths which could not be read while enumerating PathManager. Automatically cleared before each enumeration.</summary>
         public List<FileSystemInfo> FailedFiles;
 
         private bool doReportFail(FileSystemInfo filedir, Exception excp)
@@ -253,25 +225,28 @@ namespace RT.Util.Paths
                 return ReportFail(filedir, excp);
         }
 
-        /// <summary>Enumerates all files and directories according to the paths that were added using <see cref="AddIncludePath"/>
-        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
-        /// which is cleared before enumeration begins.</summary>
+        /// <summary>
+        ///     Enumerates all files and directories according to the paths that were added using <see cref="AddIncludePath"/> and
+        ///     <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/>
+        ///     list, which is cleared before enumeration begins.</summary>
         public IEnumerable<FileSystemInfo> GetEntries()
         {
             return get(true, true);
         }
 
-        /// <summary>Enumerates all files (not folders) according to the paths that were added using <see cref="AddIncludePath"/>
-        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
-        /// which is cleared before enumeration begins.</summary>
+        /// <summary>
+        ///     Enumerates all files (not folders) according to the paths that were added using <see cref="AddIncludePath"/> and
+        ///     <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/>
+        ///     list, which is cleared before enumeration begins.</summary>
         public IEnumerable<FileInfo> GetFiles()
         {
             return get(false, true).Cast<FileInfo>();
         }
 
-        /// <summary>Enumerates all directories (not files) according to the paths that were added using <see cref="AddIncludePath"/>
-        /// and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see cref="FailedFiles"/> list,
-        /// which is cleared before enumeration begins.</summary>
+        /// <summary>
+        ///     Enumerates all directories (not files) according to the paths that were added using <see cref="AddIncludePath"/>
+        ///     and <see cref="AddExcludePath"/>. If any paths cannot be enumerated, they are added to the <see
+        ///     cref="FailedFiles"/> list, which is cleared before enumeration begins.</summary>
         public IEnumerable<DirectoryInfo> GetDirectories()
         {
             return get(true, false).Cast<DirectoryInfo>();
@@ -300,6 +275,9 @@ namespace RT.Util.Paths
                 DirectoryInfo curDir = toScan.Pop();
                 FileInfo[] files = null;
                 DirectoryInfo[] dirs;
+
+                if (includeDirs)
+                    yield return curDir;
 
                 // Until we can handle this properly, skip all reparse points to be safe.
                 if (curDir.Attributes.HasFlag(FileAttributes.ReparsePoint))
@@ -344,20 +322,21 @@ namespace RT.Util.Paths
                             yield break;
                     }
                     toScan.Push(di);
-                    if (includeDirs)
-                        yield return di;
                 }
             }
         }
 
         /// <summary>
-        /// Determines the number of sublevels <paramref name="path"/> is away from <paramref name="ref_path"/>.
-        /// Positive numbers indicate that <paramref name="path"/> is deeper than <paramref name="ref_path"/>;
-        /// negative that it's above <paramref name="ref_path"/>.</summary>
-        /// <param name="ref_path">Reference path</param>
-        /// <param name="path">Path to be compared</param>
-        /// <returns>The number of sublevels, or int.MaxValue if neither path is a subpath of the other.</returns>
-        public static int PathLevelDistance(string ref_path, string path)
+        ///     Determines the number of sublevels <paramref name="path"/> is away from <paramref name="ref_path"/>. Positive
+        ///     numbers indicate that <paramref name="path"/> is deeper than <paramref name="ref_path"/>; negative that it's above
+        ///     <paramref name="ref_path"/>.</summary>
+        /// <param name="ref_path">
+        ///     Reference path</param>
+        /// <param name="path">
+        ///     Path to be compared</param>
+        /// <returns>
+        ///     The number of sublevels, or int.MaxValue if neither path is a subpath of the other.</returns>
+        private static int pathLevelDistance(string ref_path, string path)
         {
             string p1 = PathUtil.NormPath(ref_path.ToUpper());
             string p2 = PathUtil.NormPath(path.ToUpper());
