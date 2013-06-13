@@ -19,57 +19,40 @@ namespace RT.Util
         Debug
     }
 
-    /// <summary>
-    /// Abstract base class for all loggers. Implements some common functionality.
-    /// </summary>
+    /// <summary>Abstract base class for all loggers. Implements some common functionality.</summary>
     [Serializable]
     public abstract class LoggerBase
     {
         /// <summary>
-        /// Holds the current verbosity limit for each of the log types. Only messages
-        /// with same or lower verbosity will be printed. Defaults to level 1 for
-        /// all messages except debug, which defaults to 0.
-        /// 
-        /// NOTE: applications <i>can</i> print a message with a verbosity level of 0 -
-        /// such messages cannot be disabled.
-        /// </summary>
+        ///     Holds the current verbosity limit for each of the log types. Only messages with same or lower verbosity will be
+        ///     printed. Defaults to level 1 for all messages except debug, which defaults to 0.</summary>
+        /// <remarks>
+        ///     Applications can print a message with a verbosity level of 0 - such messages cannot be disabled.</remarks>
         public Dictionary<LogType, uint> VerbosityLimit = new Dictionary<LogType, uint>();
 
         /// <summary>
-        /// Holds a format string for printing the date/time at which a log entry
-        /// was added. Defaults to a full ISO-formatted date/time string with
-        /// milliseconds.
-        /// </summary>
+        ///     Holds a format string for printing the date/time at which a log entry was added. Defaults to a full ISO-formatted
+        ///     date/time string with milliseconds.</summary>
         public string TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff";
 
         /// <summary>
-        /// Holds a format string for the log information message. This will receive the
-        /// following arguments: {0}: timestamp, {1}: message type string, {2}: message
-        /// verbosity level. The actual message will be printed immediately after the
-        /// log information message.
-        /// </summary>
+        ///     Holds a format string for the log information message. This will receive the following arguments: {0}: timestamp,
+        ///     {1}: message type string, {2}: message verbosity level. The actual message will be printed immediately after the
+        ///     log information message.</summary>
         public string MessageFormat = "{0} | {2}/{1,-5} | ";
 
         /// <summary>
-        /// When printing multi-line (e.g. wrapped) messages, the indent text will consist
-        /// of a number of spaces and end with this suffix.
-        /// </summary>
+        ///     When printing multi-line (e.g. wrapped) messages, the indent text will consist of a number of spaces and end with
+        ///     this suffix.</summary>
         public string IndentFormatSuffix = "| ";
 
-        /// <summary>
-        /// If true, the timestamps will be printed in UTC. Otherwise in local time.
-        /// Defaults to false.
-        /// </summary>
+        /// <summary>If true, the timestamps will be printed in UTC. Otherwise in local time. Defaults to false.</summary>
         public bool TimestampInUTC = false;
 
-        /// <summary>
-        /// Used internally to make the Log operation atomic.
-        /// </summary>
+        /// <summary>Used internally to make the Log operation atomic.</summary>
         protected object _logLock = new object();
 
-        /// <summary>
-        /// Initialises some members to their default values.
-        /// </summary>
+        /// <summary>Initialises some members to their default values.</summary>
         public LoggerBase()
         {
             // Default visibility levels
@@ -79,9 +62,7 @@ namespace RT.Util
             VerbosityLimit[LogType.Debug] = 0;
         }
 
-        /// <summary>
-        /// Specifies a short string describing each log type (INFO, WARN, ERROR, or DEBUG).
-        /// </summary>
+        /// <summary>Specifies a short string describing each log type (INFO, WARN, ERROR, or DEBUG).</summary>
         public string GetMessageTypeString(LogType type)
         {
             switch (type)
@@ -95,22 +76,35 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Takes a string which encodes verbosity limit configuration, parses it
-        /// and sets the limits accordingly. On failure throws an ArgumentException
-        /// with a fairly detailed description of the string format.
-        /// </summary>
+        ///     Takes a string which encodes verbosity limit configuration, parses it and sets the limits accordingly. On failure
+        ///     throws an ArgumentException with a fairly detailed description of the string format.</summary>
         /// <remarks>
-        /// <para>Examples of valid strings:</para>
-        /// <list type="table">
-        ///     <item><term>""</term><description>sets default values</description></item>
-        ///     <item><term>"3"</term><description>sets all limits to 3</description></item>
-        ///     <item><term>"2d0"</term><description>sets all limits to 2, then set the debug limit to 0</description></item>
-        ///     <item><term>"i0w1e2d3"</term><description>sets info=0, warning=1, error=2, debug=3</description></item>
-        /// </list>
-        /// <para>Intended use: configuring the logger via a command-line option.</para>
-        /// </remarks>
+        ///     <para>
+        ///         Examples of valid strings:</para>
+        ///     <list type="table">
+        ///         <item><term>
+        ///             ""</term>
+        ///         <description>
+        ///             sets default values</description></item>
+        ///         <item><term>
+        ///             "3"</term>
+        ///         <description>
+        ///             sets all limits to 3</description></item>
+        ///         <item><term>
+        ///             "2d0"</term>
+        ///         <description>
+        ///             sets all limits to 2, then set the debug limit to 0</description></item>
+        ///         <item><term>
+        ///             "i0w1e2d3"</term>
+        ///         <description>
+        ///             sets info=0, warning=1, error=2, debug=3</description></item></list>
+        ///     <para>
+        ///         Intended use: configuring the logger via a command-line option.</para></remarks>
         public virtual void ConfigureVerbosity(string settings)
         {
+            if (settings == null)
+                throw new ArgumentNullException("settings");
+
             // 0 - set all types to this level
             // w1 - set warning log to this level
             // executed in the order in which they occur
@@ -149,11 +143,9 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Helps prepare a log message to the derived classes. Takes the parameters
-        /// supplied by a call to one of the Log methods and generates two strings:
-        /// the <paramref name="fmtInfo"/> which is the message header and the
-        /// <paramref name="indent"/> which is the indent text.
-        /// </summary>
+        ///     Helps prepare a log message to the derived classes. Takes the parameters supplied by a call to one of the Log
+        ///     methods and generates two strings: the <paramref name="fmtInfo"/> which is the message header and the <paramref
+        ///     name="indent"/> which is the indent text.</summary>
         protected virtual void GetFormattedStrings(out string fmtInfo, out string indent, uint verbosity, LogType type)
         {
             string timestamp = (TimestampInUTC ? DateTime.Now.ToUniversalTime() : DateTime.Now).ToString(TimestampFormat);
@@ -162,26 +154,23 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Appends an entry to the log. Derived classes implement this to put the
-        /// log data where necessary.
-        /// </summary>
+        ///     Appends an entry to the log. Derived classes implement this to put the log data where necessary.</summary>
         /// <remarks>
-        /// Note that the various specialised functions such as <see cref="Warn(string)"/> simply
-        /// call this method to do the work.
-        /// </remarks>
-        /// <param name="verbosity">Verbosity level of this message.</param>
-        /// <param name="type">Message type (info, warning, error or debug).</param>
-        /// <param name="message">The message itself.</param>
+        ///     Note that the various specialised functions such as <see cref="Warn(string)"/> simply call this method to do the
+        ///     work.</remarks>
+        /// <param name="verbosity">
+        ///     Verbosity level of this message.</param>
+        /// <param name="type">
+        ///     Message type (info, warning, error or debug).</param>
+        /// <param name="message">
+        ///     The message itself.</param>
         /// <seealso cref="GetFormattedStrings"/>
         public abstract void Log(uint verbosity, LogType type, string message);
 
         /// <summary>Creates a visual separation in the log, for example if a new section starts.</summary>
         public abstract void Separator();
 
-        /// <summary>
-        /// Returns true if a message of the specified verbosity and type will actually
-        /// end up being logged.
-        /// </summary>
+        /// <summary>Returns true if a message of the specified verbosity and type will actually end up being logged.</summary>
         public virtual bool IsLogOn(uint verbosity, LogType type)
         {
             return VerbosityLimit[type] >= verbosity;
@@ -217,9 +206,8 @@ namespace RT.Util
         public void Exception(Exception exception, LogType type = LogType.Error) { Exception(exception, 1, type); }
 
         /// <summary>
-        /// Logs an exception with a stack trace at the specified verbosity and message type.
-        /// Any InnerExceptions are also logged as appropriate.
-        /// </summary>
+        ///     Logs an exception with a stack trace at the specified verbosity and message type. Any InnerExceptions are also
+        ///     logged as appropriate.</summary>
         public void Exception(Exception exception, uint verbosity, LogType type)
         {
             if (!IsLogOn(verbosity, type))
@@ -234,9 +222,8 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which doesn't do anything with the log messages. Use this as the
-    /// default logger where no logging is wanted by default, to avoid checks for null in every log message.
-    /// </summary>
+    ///     Implements a logger which doesn't do anything with the log messages. Use this as the default logger where no logging
+    ///     is wanted by default, to avoid checks for null in every log message.</summary>
     public sealed class NullLogger : LoggerBase
     {
         /// <summary>Provides a preallocated instance of <see cref="NullLogger"/>.</summary>
@@ -250,28 +237,20 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which outputs messages to the console, word-wrapping
-    /// long messages. Can use different colors for the different message types.
-    /// </summary>
+    ///     Implements a logger which outputs messages to the console, word-wrapping long messages. Can use different colors for
+    ///     the different message types.</summary>
     [Serializable]
     public sealed class ConsoleLogger : LoggerBase
     {
-        /// <summary>
-        /// Set this to false to disable the word-wrapping of messages to the
-        /// width of the console window.
-        /// </summary>
+        /// <summary>Set this to false to disable the word-wrapping of messages to the width of the console window.</summary>
         public bool WordWrap = true;
 
         /// <summary>
-        /// Set this to false to ensure that all messages are printed to StdOut
-        /// (aka Console.Out). By default error messages will be printed to
-        /// StdErr instead (aka Console.Error).
-        /// </summary>
+        ///     Set this to false to ensure that all messages are printed to StdOut (aka Console.Out). By default error messages
+        ///     will be printed to StdErr instead (aka Console.Error).</summary>
         public bool ErrorsToStdErr = true;
 
-        /// <summary>
-        /// Constructs a new console logger.
-        /// </summary>
+        /// <summary>Constructs a new console logger.</summary>
         public ConsoleLogger()
         {
         }
@@ -279,9 +258,7 @@ namespace RT.Util
         /// <summary>Set this to true to interpret all the messages as EggsML.</summary>
         public bool InterpretMessagesAsEggsML = false;
 
-        /// <summary>
-        /// Gets a text color for each of the possible message types.
-        /// </summary>
+        /// <summary>Gets a text color for each of the possible message types.</summary>
         public ConsoleColor GetMessageTypeColor(LogType type)
         {
             switch (type)
@@ -352,9 +329,8 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which puts messages into any <see cref="Stream"/> by creating a TextWriter wrapper around it.
-    /// Use this logger only if the stream will remain open for the duration of the execution.
-    /// </summary>
+    ///     Implements a logger which puts messages into any <see cref="Stream"/> by creating a TextWriter wrapper around it. Use
+    ///     this logger only if the stream will remain open for the duration of the execution.</summary>
     [Serializable]
     public sealed class StreamLogger : LoggerBase
     {
@@ -372,9 +348,7 @@ namespace RT.Util
             Stream = underlyingStream;
         }
 
-        /// <summary>
-        /// Gets or sets the stream to which messages are logged.
-        /// </summary>
+        /// <summary>Gets or sets the stream to which messages are logged.</summary>
         public Stream Stream
         {
             get { return _underlyingStream; }
@@ -387,10 +361,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Gets the <see cref="System.IO.StreamWriter"/> used by this StreamLogger for writing
-        /// text. Intended use is to enable the caller to write arbitrary text to the
-        /// underlying stream.
-        /// </summary>
+        ///     Gets the <see cref="System.IO.StreamWriter"/> used by this StreamLogger for writing text. Intended use is to
+        ///     enable the caller to write arbitrary text to the underlying stream.</summary>
         public StreamWriter StreamWriter
         {
             get { return _streamWriter; }
@@ -424,9 +396,8 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which appends messages to a file by opening and closing the file each time.
-    /// This is in contrast to <see cref="StreamLogger"/>, which keeps the stream open.
-    /// </summary>
+    ///     Implements a logger which appends messages to a file by opening and closing the file each time. This is in contrast to
+    ///     <see cref="StreamLogger"/>, which keeps the stream open.</summary>
     [Serializable]
     public sealed class FileAppendLogger : LoggerBase
     {
@@ -436,9 +407,7 @@ namespace RT.Util
         /// <summary>Creates a new instance.</summary>
         public FileAppendLogger(string filename) { Filename = filename; }
 
-        /// <summary>
-        /// Gets or sets the path to the file to which messages are logged.
-        /// </summary>
+        /// <summary>Gets or sets the path to the file to which messages are logged.</summary>
         public string Filename { get; set; }
 
         /// <summary>Logs a message to the underlying stream.</summary>
@@ -476,18 +445,16 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a logger which can log messages to several other loggers. The
-    /// underlying loggers can be configured as necessary; their settings will be
-    /// respected.
-    /// </summary>
+    ///     Implements a logger which can log messages to several other loggers. The underlying loggers can be configured as
+    ///     necessary; their settings will be respected.</summary>
     [Serializable]
     public class MulticastLogger : LoggerBase
     {
-        /// <summary>
-        /// Add or remove the underlying loggers here. Every logger in this dictionary
-        /// will be logged to.
-        /// </summary>
+        /// <summary>Add or remove the underlying loggers here. Every logger in this dictionary will be logged to.</summary>
         public readonly Dictionary<string, LoggerBase> Loggers = new Dictionary<string, LoggerBase>();
+
+        /// <summary>Initializes a <see cref="MulticastLogger"/> with initially no loggers configured. Use <see cref="Loggers"/> to add them.</summary>
+        public MulticastLogger() { }
 
         /// <summary>Logs a message to the underlying loggers.</summary>
         public override void Log(uint verbosity, LogType type, string message)
@@ -510,10 +477,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        /// Returns false if logging a message with the specified settings would not
-        /// actually result in any logger producing any output. When this is false it
-        /// is safe for a program to skip logging a message with these settings.
-        /// </summary>
+        ///     Returns false if logging a message with the specified settings would not actually result in any logger producing
+        ///     any output. When this is false it is safe for a program to skip logging a message with these settings.</summary>
         public override bool IsLogOn(uint verbosity, LogType type)
         {
             foreach (LoggerBase logger in Loggers.Values)
@@ -523,7 +488,9 @@ namespace RT.Util
             return false;
         }
 
-        /// <summary>Configures the verbosity of every underlying logger. See <see cref="LoggerBase.ConfigureVerbosity"/> for more info.</summary>
+        /// <summary>
+        ///     Configures the verbosity of every underlying logger. See <see cref="LoggerBase.ConfigureVerbosity"/> for more
+        ///     info.</summary>
         public override void ConfigureVerbosity(string settings)
         {
             foreach (var logger in Loggers.Values)
