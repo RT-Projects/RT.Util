@@ -602,6 +602,51 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Executes the relevant function depending on the type of the current object, or the alternative function
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
+        /// <typeparam name="TTest3">
+        ///     Type the object must have at runtime to execute <paramref name="function3"/>.</typeparam>
+        /// <typeparam name="TTest4">
+        ///     Type the object must have at runtime to execute <paramref name="function4"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the functions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="function1">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="function2">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="function3">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
+        /// <param name="function4">
+        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest4"/>.</param>
+        /// <param name="elseFunction">
+        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the function called.</returns>
+        public static TResult IfType<TObj, TTest1, TTest2, TTest3, TTest4, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TTest3, TResult> function3, Func<TTest4, TResult> function4, Func<TObj, TResult> elseFunction = null)
+        {
+            if (obj is TTest1)
+                return function1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                return function2((TTest2) (object) obj);
+            else if (obj is TTest3)
+                return function3((TTest3) (object) obj);
+            else if (obj is TTest4)
+                return function4((TTest4) (object) obj);
+            else if (elseFunction != null)
+                return elseFunction(obj);
+            else
+                return default(TResult);
+        }
+
+        /// <summary>
         ///     Executes the specified action. If the action results in a file sharing violation exception, the action will be
         ///     repeatedly retried after a short delay (which increases after every failed attempt).</summary>
         /// <param name="action">
