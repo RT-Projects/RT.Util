@@ -759,11 +759,11 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Word-wraps the current string to a specified width. Supports unix-style newlines and indented
+        ///     Word-wraps the current string to a specified width. Supports UNIX-style newlines and indented
         ///     paragraphs.</summary>
         /// <remarks>
         ///     <para>
-        ///         The supplied text will be split into "paragraphs" on the newline characters. Every paragraph will begin on a
+        ///         The supplied text will be split into "paragraphs" at the newline characters. Every paragraph will begin on a
         ///         new line in the word-wrapped output, indented by the same number of spaces as in the input. All subsequent
         ///         lines belonging to that paragraph will also be indented by the same amount.</para>
         ///     <para>
@@ -784,91 +784,157 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
             if (hangingIndent < 0)
                 throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
-            if (text == null || text == "")
-                return new string[0];
+            if (text == null || text.Length == 0)
+                return Enumerable.Empty<string>();
 
-            return wordWrap(text, maxWidth, hangingIndent);
-        }
-
-        private static IEnumerable<string> wordWrap(this string text, int maxWidth, int hangingIndent)
-        {
-            Regex regexSplitOnWindowsNewline = new Regex(@"\r\n", RegexOptions.Compiled);
-            Regex regexSplitOnUnixMacNewline = new Regex(@"[\r\n]", RegexOptions.Compiled);
-            Regex regexKillDoubleSpaces = new Regex(@"  +", RegexOptions.Compiled);
-
-            // Split into "paragraphs"
-            foreach (string para in regexSplitOnWindowsNewline.Split(text))
-            {
-                foreach (string paragraph in regexSplitOnUnixMacNewline.Split(para))
+            return wordWrap(
+                text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None),
+                maxWidth,
+                hangingIndent,
+                (txt, substrIndex) => txt.Substring(substrIndex).Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries),
+                str => str.Length,
+                txt =>
                 {
                     // Count the number of spaces at the start of the paragraph
                     int indentLen = 0;
-                    while (indentLen < paragraph.Length && paragraph[indentLen] == ' ')
+                    while (indentLen < txt.Length && txt[indentLen] == ' ')
                         indentLen++;
+                    return indentLen;
+                },
+                num => new string(' ', num),
+                () => new StringBuilder(),
+                sb => sb.Length,
+                (sb, str) => { sb.Append(str); },
+                sb => sb.ToString(),
+                (str, start, length) => length == null ? str.Substring(start) : str.Substring(start, length.Value),
+                (str1, str2) => str1 + str2);
+        }
 
-                    // Get a list of words
-                    string[] words = regexKillDoubleSpaces.Replace(paragraph.Substring(indentLen), " ").Split(' ');
+        /// <summary>
+        ///     Word-wraps the current <see cref="ConsoleColoredString"/> to a specified width. Supports UNIX-style newlines and
+        ///     indented paragraphs.</summary>
+        /// <remarks>
+        ///     <para>
+        ///         The supplied text will be split into "paragraphs" at the newline characters. Every paragraph will begin on a
+        ///         new line in the word-wrapped output, indented by the same number of spaces as in the input. All subsequent
+        ///         lines belonging to that paragraph will also be indented by the same amount.</para>
+        ///     <para>
+        ///         All multiple contiguous spaces will be replaced with a single space (except for the
+        ///         indentation).</para></remarks>
+        /// <param name="text">
+        ///     Text to be word-wrapped.</param>
+        /// <param name="maxWidth">
+        ///     The maximum number of characters permitted on a single line, not counting the end-of-line terminator.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
+        public static IEnumerable<ConsoleColoredString> WordWrap(this ConsoleColoredString text, int maxWidth, int hangingIndent = 0)
+        {
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (maxWidth < 1)
+                throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
+            if (hangingIndent < 0)
+                throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
+            if (text == null || text.Length == 0)
+                return Enumerable.Empty<ConsoleColoredString>();
 
-                    StringBuilder curLine = new StringBuilder();
-                    string indent = new string(' ', indentLen + hangingIndent);
-                    string space = new string(' ', indentLen);
+            return wordWrap(
+                text.Split(new string[] { "\r\n", "\r", "\n" }),
+                maxWidth,
+                hangingIndent,
+                (txt, substrIndex) => txt.Substring(substrIndex).Split(new string[] { " " }, options: StringSplitOptions.RemoveEmptyEntries),
+                cc => cc.Length,
+                txt =>
+                {
+                    // Count the number of spaces at the start of the paragraph
+                    int indentLen = 0;
+                    while (indentLen < txt.Length && txt.CharAt(indentLen) == ' ')
+                        indentLen++;
+                    return indentLen;
+                },
+                num => new string(' ', num),
+                () => new List<ConsoleColoredString>(),
+                list => list.Sum(c => c.Length),
+                (list, cc) => { list.Add(cc); },
+                list => new ConsoleColoredString(list),
+                (str, start, length) => length == null ? str.Substring(start) : str.Substring(start, length.Value),
+                (str1, str2) => str1 + str2);
+        }
 
-                    for (int i = 0; i < words.Length; i++)
+        private static IEnumerable<T> wordWrap<T, TBuilder>(IEnumerable<T> paragraphs, int maxWidth, int hangingIndent, Func<T, int, IEnumerable<T>> splitSubstringIntoWords,
+            Func<T, int> getLength, Func<T, int> getIndent, Func<int, T> spaces, Func<TBuilder> getBuilder, Func<TBuilder, int> getTotalLength, Action<TBuilder, T> add,
+            Func<TBuilder, T> getString, Func<T, int, int?, T> substring, Func<T, T, T> concat)
+        {
+            foreach (var paragraph in paragraphs)
+            {
+                var indentLen = getIndent(paragraph);
+                var indent = spaces(indentLen + hangingIndent);
+                var space = spaces(indentLen);
+                var numSpaces = indentLen;
+                var curLine = getBuilder();
+
+                // Split into words
+                foreach (var wordForeach in splitSubstringIntoWords(paragraph, indentLen))
+                {
+                    var word = wordForeach;
+                    var curLineLength = getTotalLength(curLine);
+
+                    if (curLineLength + numSpaces + getLength(word) > maxWidth)
                     {
-                        string word = words[i];
-
-                        if (curLine.Length + space.Length + word.Length > maxWidth)
+                        // Need to wrap
+                        if (getLength(word) > maxWidth)
                         {
-                            // Need to wrap
-                            if (word.Length > maxWidth)
+                            // This is a very long word
+                            // Leave part of the word on the current line if at least 2 chars fit
+                            if (curLineLength + numSpaces + 2 <= maxWidth || getTotalLength(curLine) == 0)
                             {
-                                // This is a very long word
-                                // Leave part of the word on the current line if at least 2 chars fit
-                                if (curLine.Length + space.Length + 2 <= maxWidth || curLine.Length == 0)
-                                {
-                                    int length = maxWidth - curLine.Length - space.Length;
-                                    curLine.Append(space);
-                                    curLine.Append(word.Substring(0, length));
-                                    word = word.Substring(length);
-                                }
-                                // Commit the current line
-                                yield return curLine.ToString();
-
-                                // Now append full lines' worth of text until we're left with less than a full line
-                                while (indent.Length + word.Length > maxWidth)
-                                {
-                                    yield return indent + word.Substring(0, maxWidth - indent.Length);
-                                    word = word.Substring(maxWidth - indent.Length);
-                                }
-
-                                // Start a new line with whatever is left
-                                curLine = new StringBuilder();
-                                curLine.Append(indent);
-                                curLine.Append(word);
+                                int length = maxWidth - getTotalLength(curLine) - numSpaces;
+                                add(curLine, space);
+                                add(curLine, substring(word, 0, length));
+                                word = substring(word, length, null);
                             }
-                            else
+                            // Commit the current line
+                            yield return getString(curLine);
+
+                            // Now append full lines' worth of text until we're left with less than a full line
+                            while (indentLen + getLength(word) > maxWidth)
                             {
-                                // This word is not very long and it doesn't fit so just wrap it to the next line
-                                yield return curLine.ToString();
-
-                                // Start a new line
-                                curLine = new StringBuilder();
-                                curLine.Append(indent);
-                                curLine.Append(word);
+                                yield return concat(indent, substring(word, 0, maxWidth - indentLen));
+                                word = substring(word, maxWidth - indentLen, null);
                             }
+
+                            // Start a new line with whatever is left
+                            curLine = getBuilder();
+                            add(curLine, indent);
+                            add(curLine, word);
                         }
                         else
                         {
-                            // No need to wrap yet
-                            curLine.Append(space);
-                            curLine.Append(word);
-                        }
+                            // This word is not very long and it doesn't fit so just wrap it to the next line
+                            yield return getString(curLine);
 
-                        space = " ";
+                            // Start a new line
+                            curLine = getBuilder();
+                            add(curLine, indent);
+                            add(curLine, word);
+                        }
+                    }
+                    else
+                    {
+                        // No need to wrap yet
+                        add(curLine, space);
+                        add(curLine, word);
                     }
 
-                    yield return curLine.ToString();
+                    if (numSpaces != 1)
+                    {
+                        space = spaces(1);
+                        numSpaces = 1;
+                    }
                 }
+
+                yield return getString(curLine);
             }
         }
 
@@ -1064,7 +1130,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
+        ///     Colours a range of characters beginning at a specified index within the specified string in a specified
+        ///     color.</summary>
         /// <param name="str">
         ///     The string to partially colour.</param>
         /// <param name="index">
@@ -1084,7 +1151,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
+        ///     Colours a range of characters beginning at a specified index within the specified string in a specified
+        ///     color.</summary>
         /// <param name="str">
         ///     The string to partially colour.</param>
         /// <param name="index">
