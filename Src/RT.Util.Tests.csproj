@@ -72,6 +72,7 @@
     <Compile Include="UtilTests.cs" />
     <Compile Include="Ut\DiffTests.cs" />
     <Compile Include="Ut\ExtensionsTests.cs" />
+    <Compile Include="Ut\GeneralTests.cs" />
     <Compile Include="XmlClassifyTests.cs" />
   </ItemGroup>
   <ItemGroup>

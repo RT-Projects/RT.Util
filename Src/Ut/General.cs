@@ -861,5 +861,39 @@ namespace RT.Util
             one = two;
             two = t;
         }
+
+        /// <summary>
+        ///     Finds the longest substring that all of the specified input strings contain.</summary>
+        /// <param name="strings">
+        ///     Strings to examine.</param>
+        /// <returns>
+        ///     The longest shared substring. This may be the empty string, but not will not be <c>null</c>.</returns>
+        public static string GetLongestCommonSubstring(params string[] strings)
+        {
+            if (strings == null)
+                throw new ArgumentNullException("strings");
+            if (strings.Length < 1)
+                throw new ArgumentException("The 'strings' array must contain at least one value.", "strings");
+
+            if (strings.Length == 1)
+                return strings[0];
+
+            // Optimisation: Instantiate these things only once (including the closure class for the lambda)
+            var skipped = strings.Skip(1);
+            string substr = null;
+            Func<string, bool> contains = s => s.Contains(substr);
+
+            for (var len = strings.Min(str => str.Length); len >= 1; len--)
+            {
+                var maxIndex = strings[0].Length - len;
+                for (var index = 0; index <= maxIndex; index++)
+                {
+                    substr = strings[0].Substring(index, len);
+                    if (skipped.All(contains))
+                        return substr;
+                }
+            }
+            return "";
+        }
     }
 }
