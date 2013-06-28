@@ -716,6 +716,15 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Pops the specified number of elements from the stack. There must be at least that many items on the stack,
+        ///     otherwise an exception is thrown.</summary>
+        public static void Pop<T>(this Stack<T> stack, int count)
+        {
+            for (int i = 0; i < count; i++)
+                stack.Pop();
+        }
+
+        /// <summary>
         ///     Returns a collection of integer containing the indexes at which the elements of the source collection match the
         ///     given predicate.</summary>
         /// <typeparam name="T">
