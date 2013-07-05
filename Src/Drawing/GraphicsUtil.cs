@@ -399,7 +399,7 @@ namespace RT.Util.Drawing
 
             float low = 1;
             float? high = null;
-            string[] words = allowWordWrapping ? Regex.Matches(text, @"\S+", RegexOptions.Singleline).Cast<Match>().Select(m => m.Value).ToArray() : null;
+            string[] words = allowWordWrapping ? Regex.Split(text.Trim(), @"\s+|(?<=(?<!\s)-)\s*", RegexOptions.Singleline) : null;
             while (high == null || high.Value - low > 0.1)
             {
                 float trySize = high == null ? low + 1024 : (low + high.Value) / 2;
