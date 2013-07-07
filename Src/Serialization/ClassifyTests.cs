@@ -775,7 +775,7 @@ namespace RT.Util.Serialization
             public setting S2 = new setting { Something = "FOO", Other = "BAR" };
             public setting S3 = null;
             public List<setting> L = new List<setting> { new setting { Other = "1", Something = "1" }, new setting { Other = "2" } };
-            public bunch B = new bunch { C1 = new subClass { Derived = "TEST" } };
+            public bunch B = new bunch { C1 = new bunchDerivedClass { Derived = "TEST" } };
         }
 
         private sealed class setting
@@ -786,20 +786,20 @@ namespace RT.Util.Serialization
 
         private class bunch
         {
-            public baseClass C1 = new baseClass { Base = "BASE" };
-            public baseClass C2 = new baseClass { Base = "BASE" };
-            public baseClass C3 = new subClass { Base = "BASE" };
-            public baseClass C4 = new subClass { Base = "BASE", Derived = "DERIVED" };
-            public baseClass C5 = new subClass();
-            public baseClass C6 = null;
+            public bunchBaseClass C1 = new bunchBaseClass { Base = "BASE" };
+            public bunchBaseClass C2 = new bunchBaseClass { Base = "BASE" };
+            public bunchBaseClass C3 = new bunchDerivedClass { Base = "BASE" };
+            public bunchBaseClass C4 = new bunchDerivedClass { Base = "BASE", Derived = "DERIVED" };
+            public bunchBaseClass C5 = new bunchDerivedClass();
+            public bunchBaseClass C6 = null;
         }
 
-        private class baseClass
+        private class bunchBaseClass
         {
             public string Base = "base";
         }
 
-        private class subClass : baseClass
+        private class bunchDerivedClass : bunchBaseClass
         {
             public string Derived = "derived";
         }
@@ -907,115 +907,115 @@ namespace RT.Util.Serialization
                 </item>
             ");
             var settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
-            Assert.AreEqual(typeof(baseClass), settings.B.C2.GetType());
-            Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
-            Assert.AreEqual(typeof(subClass), settings.B.C4.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C1.GetType());
+            Assert.AreEqual(typeof(bunchBaseClass), settings.B.C2.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C3.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C4.GetType());
             Assert.AreEqual("base", settings.B.C1.Base);
-            Assert.AreEqual("TEST", (settings.B.C1 as subClass).Derived);
+            Assert.AreEqual("TEST", (settings.B.C1 as bunchDerivedClass).Derived);
             Assert.AreEqual("BASE", settings.B.C2.Base);
             Assert.AreEqual("BASE", settings.B.C3.Base);
-            Assert.AreEqual("derived", (settings.B.C3 as subClass).Derived);
+            Assert.AreEqual("derived", (settings.B.C3 as bunchDerivedClass).Derived);
             Assert.AreEqual("BASE", settings.B.C4.Base);
-            Assert.AreEqual("DERIVED", (settings.B.C4 as subClass).Derived);
+            Assert.AreEqual("DERIVED", (settings.B.C4 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C1>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C1.GetType());
             Assert.AreEqual("XML", settings.B.C1.Base);
-            Assert.AreEqual("TEST", (settings.B.C1 as subClass).Derived);
+            Assert.AreEqual("TEST", (settings.B.C1 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C2 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C2 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C2>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C2.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C2.GetType());
             Assert.AreEqual("XML", settings.B.C2.Base);
-            Assert.AreEqual("derived", (settings.B.C2 as subClass).Derived);
+            Assert.AreEqual("derived", (settings.B.C2 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C3 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C3 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C3>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C3.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C3.GetType());
             Assert.AreEqual("BASE", settings.B.C3.Base);
-            Assert.AreEqual("XML", (settings.B.C3 as subClass).Derived);
+            Assert.AreEqual("XML", (settings.B.C3 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C4 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C4 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C4>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C4.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C4.GetType());
             Assert.AreEqual("XML", settings.B.C4.Base);
-            Assert.AreEqual("DERIVED", (settings.B.C4 as subClass).Derived);
+            Assert.AreEqual("DERIVED", (settings.B.C4 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C5 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C5 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C5>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C5.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C5.GetType());
             Assert.AreEqual("base", settings.B.C5.Base);
-            Assert.AreEqual("XML", (settings.B.C5 as subClass).Derived);
+            Assert.AreEqual("XML", (settings.B.C5 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C6 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C6 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C6>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C6.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C6.GetType());
             Assert.AreEqual("base", settings.B.C6.Base);
-            Assert.AreEqual("XML", (settings.B.C6 as subClass).Derived);
+            Assert.AreEqual("XML", (settings.B.C6 as bunchDerivedClass).Derived);
 
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+subClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C1>
                     </B>
                 </item>
             ");
             settings = ClassifyXml.Deserialize<settingsClass>(xml);
-            Assert.AreEqual(typeof(subClass), settings.B.C1.GetType());
+            Assert.AreEqual(typeof(bunchDerivedClass), settings.B.C1.GetType());
             Assert.AreEqual("base", settings.B.C1.Base); // not BASE because it's a different type, even if a subtype
-            Assert.AreEqual("XML", (settings.B.C1 as subClass).Derived);
+            Assert.AreEqual("XML", (settings.B.C1 as bunchDerivedClass).Derived);
         }
 
         private sealed class TestPrePostProcess : IClassifyObjectProcessor<XElement>
@@ -1576,6 +1576,43 @@ namespace RT.Util.Serialization
   <Ref2 ref=""3"" />
   <Marker2>2</Marker2>
 </item>")));
+        }
+
+        private class hiddenFieldBaseClass
+        {
+            private string _hiddenField = "47";
+            public string BaseHidden { get { return _hiddenField; } }
+
+            public string NormalField = "normal";
+        }
+        private class hiddenFieldDerivedClass : hiddenFieldBaseClass
+        {
+            private string _hiddenField = "42";
+            public string DerivedHidden { get { return _hiddenField; } }
+        }
+
+        [Test]
+        public void TestHiddenFields()
+        {
+            var derived = new hiddenFieldDerivedClass();
+            {
+                // XML
+                var serialized = ClassifyXml.Serialize(derived);
+                var deserialized = ClassifyXml.Deserialize<hiddenFieldDerivedClass>(serialized);
+
+                Assert.AreEqual("47", deserialized.BaseHidden);
+                Assert.AreEqual("42", deserialized.DerivedHidden);
+                Assert.AreEqual("normal", deserialized.NormalField);
+            }
+            {
+                // JSON
+                var serialized = ClassifyJson.Serialize(derived);
+                var deserialized = ClassifyJson.Deserialize<hiddenFieldDerivedClass>(serialized);
+
+                Assert.AreEqual("47", deserialized.BaseHidden);
+                Assert.AreEqual("42", deserialized.DerivedHidden);
+                Assert.AreEqual("normal", deserialized.NormalField);
+            }
         }
     }
 }

@@ -275,18 +275,24 @@ namespace RT.Util.Serialization
             return element.GetDict().Select(kvp => new KeyValuePair<object, JsonValue>(kvp.Key, kvp.Value));
         }
 
-        bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName)
+        bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName, string declaringType)
         {
             if (fieldName.StartsWith(':'))
                 fieldName = ":" + fieldName;
-            return element is JsonDict && element.ContainsKey(fieldName);
+            return element is JsonDict && element.ContainsKey(fieldName) && (
+                !(element[fieldName] is JsonDict) ||
+                !element[fieldName].ContainsKey(":declaringTypes") ||
+                element[fieldName][":declaringTypes"].Contains(declaringType));
         }
 
-        JsonValue IClassifyFormat<JsonValue>.GetField(JsonValue element, string fieldName)
+        JsonValue IClassifyFormat<JsonValue>.GetField(JsonValue element, string fieldName, string declaringType)
         {
             if (fieldName.StartsWith(':'))
                 fieldName = ":" + fieldName;
-            return element[fieldName];
+            var consider = element[fieldName];
+            if (consider is JsonDict && consider.ContainsKey(":declaringTypes"))
+                return consider[":values"][consider[":declaringTypes"].IndexOf(declaringType)];
+            return consider;
         }
 
         string IClassifyFormat<JsonValue>.GetType(JsonValue element, out bool isFullType)
@@ -391,9 +397,20 @@ namespace RT.Util.Serialization
             return values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key), kvp => kvp.Value);
         }
 
-        JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<KeyValuePair<string, JsonValue>> fields)
+        JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<ObjectFieldInfo<JsonValue>> fields)
         {
-            return new JsonDict(fields.Select(kvp => kvp.Key.StartsWith(':') ? new KeyValuePair<string, JsonValue>(":" + kvp.Key, kvp.Value) : kvp));
+            return new JsonDict(fields
+                .GroupBy(f => f.FieldName)
+                .Select(gr => new KeyValuePair<string, JsonValue>(
+                    gr.Key.StartsWith(':') ? ":" + gr.Key : gr.Key,
+                    gr.Skip(1).Any()
+                        ? new JsonDict
+                            {
+                                { ":declaringTypes", new JsonList(gr.Select(elem => (JsonValue) elem.DeclaringType)) },
+                                { ":values", new JsonList(gr.Select(elem => (JsonValue) elem.Value)) }
+                            }
+                        : gr.First().Value
+                )));
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatFollowID(string id)

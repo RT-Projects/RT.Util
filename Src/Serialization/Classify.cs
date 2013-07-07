@@ -729,6 +729,8 @@ namespace RT.Util.Serialization
                             getAttrsFrom = prop;
                     }
 
+                    var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
+
                     // [ClassifyIgnore]
                     if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
                         continue;
@@ -744,9 +746,9 @@ namespace RT.Util.Serialization
                             throw new Exception("The field {0}.{1} uses ClassifyFollowIdAttribute, but does not have the type ClassifyDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
 
                         Type innerType = field.FieldType.GetGenericArguments()[0];
-                        if (_format.HasField(elem, rFieldName))
+                        if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                         {
-                            var subElem = _format.GetField(elem, rFieldName);
+                            var subElem = _format.GetField(elem, rFieldName, fieldDeclaringType);
                             if (_format.IsFollowID(subElem))
                             {
                                 var followId = _format.GetReferenceID(subElem);
@@ -766,10 +768,10 @@ namespace RT.Util.Serialization
                     }
 
                     // Fields with no special attributes
-                    else if (_format.HasField(elem, rFieldName))
+                    else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
                         fieldsToAssignTo.Add(field);
-                        elementsToAssign.Add(_format.GetField(elem, rFieldName));
+                        elementsToAssign.Add(_format.GetField(elem, rFieldName, fieldDeclaringType));
                     }
                 }
 
@@ -934,8 +936,8 @@ namespace RT.Util.Serialization
                     }
                     else
                     {
-                        var kvps = serializeObject(saveObject, saveType).ToArray();
-                        elem = () => _format.FormatObject(kvps.Select(kvp => new KeyValuePair<string, TElement>(kvp.Key, kvp.Value())));
+                        var infs = serializeObject(saveObject, saveType).ToArray();
+                        elem = () => _format.FormatObject(infs.Select(inf => new ObjectFieldInfo<TElement>(inf.FieldName, inf.DeclaringType, inf.Value())));
                     }
                 }
 
@@ -970,10 +972,14 @@ namespace RT.Util.Serialization
                 return elem;
             }
 
-            private IEnumerable<KeyValuePair<string, Func<TElement>>> serializeObject(object saveObject, Type saveType)
+            private IEnumerable<ObjectFieldInfo<Func<TElement>>> serializeObject(object saveObject, Type saveType)
             {
                 bool ignoreIfDefaultOnType = saveType.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
                 bool ignoreIfEmptyOnType = saveType.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
+
+                var results = new List<Tuple<string, Type, Func<TElement>>>();
+                var namesAlreadySeen = new HashSet<string>();
+                var needsDeclaringType = new HashSet<string>();
 
                 foreach (var field in saveType.GetAllFields())
                 {
@@ -1023,6 +1029,11 @@ namespace RT.Util.Serialization
                     if (ignoreIfEmpty && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                         continue;
 
+                    if (!namesAlreadySeen.Add(rFieldName))
+                        needsDeclaringType.Add(rFieldName);
+
+                    Func<TElement> elem;
+
                     // [ClassifyFollowId]
                     if (getAttrsFrom.IsDefined<ClassifyFollowIdAttribute>())
                     {
@@ -1040,14 +1051,19 @@ namespace RT.Util.Serialization
                             SerializeToFile(innerType, deferredSaveValue.Value, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _format, _options);
                         }
 
-                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, () => _format.FormatFollowID(deferredSaveValue.Id));
+                        elem = () => _format.FormatFollowID(deferredSaveValue.Id);
                     }
                     else
                     {
                         // None of the special attributes — just classify the value
-                        yield return new KeyValuePair<string, Func<TElement>>(rFieldName, Serialize(saveValue, field.FieldType));
+                        elem = Serialize(saveValue, field.FieldType);
                     }
+
+                    results.Add(new Tuple<string, Type, Func<TElement>>(rFieldName, field.DeclaringType, elem));
                 }
+
+                foreach (var result in results)
+                    yield return new ObjectFieldInfo<Func<TElement>>(result.Item1, needsDeclaringType.Contains(result.Item1) ? result.Item2.AssemblyQualifiedName : null, result.Item3);
             }
         }
 

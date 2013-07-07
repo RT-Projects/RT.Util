@@ -303,14 +303,22 @@ namespace RT.Util.Serialization
             }
         }
 
-        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName)
+        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType)
         {
-            return element.Element(fieldName) != null;
+            return element.Elements(fieldName).Any(elem =>
+            {
+                var attr = elem.Attribute("declaringType");
+                return attr == null || attr.Value == declaringType;
+            });
         }
 
-        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName)
+        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType)
         {
-            return element.Element(fieldName);
+            return element.Elements(fieldName).FirstOrDefault(elem =>
+            {
+                var attr = elem.Attribute("declaringType");
+                return attr == null || attr.Value == declaringType;
+            });
         }
 
         bool IClassifyFormat<XElement>.IsReference(XElement element)
@@ -411,9 +419,15 @@ namespace RT.Util.Serialization
             }));
         }
 
-        XElement IClassifyFormat<XElement>.FormatObject(IEnumerable<KeyValuePair<string, XElement>> fields)
+        XElement IClassifyFormat<XElement>.FormatObject(IEnumerable<ObjectFieldInfo<XElement>> fields)
         {
-            return new XElement(_rootTagName, fields.Select(kvp => { kvp.Value.Name = kvp.Key; return kvp.Value; }));
+            return new XElement(_rootTagName, fields.Select(kvp =>
+            {
+                kvp.Value.Name = kvp.FieldName;
+                if (kvp.DeclaringType != null)
+                    kvp.Value.Add(new XAttribute("declaringType", kvp.DeclaringType));
+                return kvp.Value;
+            }));
         }
 
         XElement IClassifyFormat<XElement>.FormatReference(int refId)
