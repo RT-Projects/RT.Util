@@ -533,8 +533,8 @@ namespace RT.Util
         ///     Returns the full path and file name that should be used to store the settings class marked with this attribute.
         ///     Note that the return value may change depending on external factors (the existence of a file). The recommended
         ///     approach is to load settings once, and then save them whenever necessary to whichever path is returned by this
-        ///     function.</summary>
-        public string GetFileName()
+        ///     function. </summary>
+        public string GetFileName(bool checkPortable = true)
         {
             string filename = AppName;
             switch (Kind)
@@ -564,8 +564,8 @@ namespace RT.Util
                 ?? "bin";
 
             filename = filename.FilenameCharactersEscape() + ".Settings." + fileExtension;
-
-            if (File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
+            
+            if (checkPortable && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
             {
                 return PathUtil.AppPathCombine(filename);
             }
