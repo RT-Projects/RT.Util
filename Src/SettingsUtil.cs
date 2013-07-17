@@ -362,6 +362,55 @@ namespace RT.Util
             Save(filename, serializer, onFailure: SettingsOnFailure.DoNothing);
         }
 
+        /// <summary>Deletes the settings file.</summary>
+        public virtual void Delete(string filename = null, SettingsOnFailure onFailure = SettingsOnFailure.Throw)
+        {
+            // Save must not be interrupted or superseded by a SaveThreaded
+            lock (_lock)
+            {
+                if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
+                {
+                    _saveThread.Abort();
+                    _saveThread = null;
+                }
+                var attr = SettingsUtil.GetAttribute(GetType());
+                if (filename == null)
+                    filename = attr.GetFileName();
+
+                if (onFailure == SettingsOnFailure.Throw)
+                {
+                    File.Delete(filename);
+                }
+                else if (onFailure == SettingsOnFailure.DoNothing)
+                {
+                    try { File.Delete(filename); }
+                    catch { }
+                }
+                else
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            File.Delete(filename);
+                            break;
+                        }
+                        catch (Exception e)
+                        {
+                            var choices = new List<string>() { "Try &again", "&Don't delete settings" };
+                            if (onFailure == SettingsOnFailure.ShowRetryWithCancel)
+                                choices.Add("&Cancel");
+                            int choice = DlgMessage.ShowWarning("Program settings could not be deleted.\n({0})\n\nWould you like to try again?".Fmt(e.Message), choices.ToArray());
+                            if (choice == 1)
+                                return;
+                            if (choice == 2)
+                                throw new SettingsCancelException();
+                        }
+                    };
+                }
+            }
+        }
+
         /// <summary>Gets the <see cref="SettingsAttribute"/> instance specified on this settings class, or null if none are specified.</summary>
         public SettingsAttribute Attribute
         {
@@ -531,9 +580,15 @@ namespace RT.Util
 
         /// <summary>
         ///     Returns the full path and file name that should be used to store the settings class marked with this attribute.
-        ///     Note that the return value may change depending on external factors (the existence of a file). The recommended
-        ///     approach is to load settings once, and then save them whenever necessary to whichever path is returned by this
-        ///     function. </summary>
+        ///     Note that the return value may change depending on external factors (see remarks). The recommended approach is to
+        ///     load settings once, and then save them whenever necessary to whichever path is returned by this
+        ///     function.</summary>
+        /// <param name="checkPortable">
+        ///     If <c>false</c>, skips the checks for the file that indicates that the app is portable.</param>
+        /// <remarks>
+        ///     If <paramref name="checkPortable"/> is <c>true</c> (the default), this method checks if a file by the name
+        ///     <c>(AppName).IsPortable.txt</c> exists in the application path (see <see cref="PathUtil.AppPath"/>). If that file
+        ///     exists, the settings are always stored in that application path.</remarks>
         public string GetFileName(bool checkPortable = true)
         {
             string filename = AppName;
@@ -564,25 +619,21 @@ namespace RT.Util
                 ?? "bin";
 
             filename = filename.FilenameCharactersEscape() + ".Settings." + fileExtension;
-            
+
             if (checkPortable && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
-            {
                 return PathUtil.AppPathCombine(filename);
-            }
-            else
+
+            switch (Kind)
             {
-                switch (Kind)
-                {
-                    case SettingsKind.Global:
-                    case SettingsKind.MachineSpecific:
-                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
-                    case SettingsKind.UserSpecific:
-                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName, filename);
-                    case SettingsKind.UserAndMachineSpecific:
-                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
-                    default:
-                        throw new InternalErrorException("unreachable (97629)");
-                }
+                case SettingsKind.Global:
+                case SettingsKind.MachineSpecific:
+                    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppName, filename);
+                case SettingsKind.UserSpecific:
+                    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName, filename);
+                case SettingsKind.UserAndMachineSpecific:
+                    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName, filename);
+                default:
+                    throw new InternalErrorException("unreachable (97629)");
             }
         }
     }
