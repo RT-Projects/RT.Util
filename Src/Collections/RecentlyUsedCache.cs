@@ -3,9 +3,9 @@
 namespace RT.Util.Collections
 {
     /// <summary>
-    ///     Implements a key-value store which remembers which keys were used more recently than others, and automatically trims
-    ///     the older entries once a threshold is reached. Lookups are O(1) and are comparable in speed to a Dictionary`2. So are
-    ///     additions, except when a trim is triggered.</summary>
+    ///     Implements a key-value store which remembers which keys were used more recently than others, and automatically
+    ///     trims the older entries once a threshold is reached. Lookups are O(1) and are comparable in speed to a
+    ///     Dictionary`2. So are additions, except when a trim is triggered.</summary>
     class RecentlyUsedCache<TKey, TValue>
     {
         private struct Entry
@@ -43,8 +43,8 @@ namespace RT.Util.Collections
         /// <param name="key">
         ///     The key to retrieve.</param>
         /// <param name="value">
-        ///     Receives the value in case of successful lookup, or <c>default(TValue)</c> if the specified key is not currently
-        ///     stored.</param>
+        ///     Receives the value in case of successful lookup, or <c>default(TValue)</c> if the specified key is not
+        ///     currently stored.</param>
         /// <returns>
         ///     True if the key was found, false otherwise.</returns>
         public bool Retrieve(TKey key, out TValue value)
@@ -65,9 +65,9 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
-        ///     Stores the specified key/value pair in the cache and records the key as recently used. Triggers a (comparatively
-        ///     slow) trim operation if the total number of entries exceed the threshold specified when the cache was
-        ///     instantiated.</summary>
+        ///     Stores the specified key/value pair in the cache and records the key as recently used. Triggers a
+        ///     (comparatively slow) trim operation if the total number of entries exceed the threshold specified when the
+        ///     cache was instantiated.</summary>
         public void Store(TKey key, TValue value)
         {
             _current++;

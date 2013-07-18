@@ -6,13 +6,13 @@ using System.Runtime.Serialization;
 namespace RT.Util.Collections
 {
     /// <summary>
-    ///     Implements a dictionary with a slightly different indexer, namely one that pretends every key has been pre-initialized
-    ///     using an initializer function. See Remarks.</summary>
+    ///     Implements a dictionary with a slightly different indexer, namely one that pretends every key has been
+    ///     pre-initialized using an initializer function. See Remarks.</summary>
     /// <remarks>
     ///     Only the indexer behaviour is changed; in every other way this behaves just like a standard, non-prepopulated
-    ///     dictionary. Moreover, the implementation is such that the new behaviour is only effective when used directly through
-    ///     the class; accessing the indexer through the <c>IDictionary</c> interface or the <c>Dictionary</c> base class will
-    ///     currently behave the same as it would for a standard dictionary.</remarks>
+    ///     dictionary. Moreover, the implementation is such that the new behaviour is only effective when used directly
+    ///     through the class; accessing the indexer through the <c>IDictionary</c> interface or the <c>Dictionary</c> base
+    ///     class will currently behave the same as it would for a standard dictionary.</remarks>
     public class AutoDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private Dictionary<TKey, TValue> _inner;

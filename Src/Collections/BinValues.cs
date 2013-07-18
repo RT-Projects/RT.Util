@@ -8,10 +8,10 @@ namespace RT.Util.Collections
     /// <summary>
     ///     Encapsulates a binary value 128 bits long. See Remarks.</summary>
     /// <remarks>
-    ///     This type is significantly more memory-efficient compared to <c>byte[16]</c> when only one copy of the value needs to
-    ///     be stored. Specifically, the byte array uses four extra IntPtrs per instance, which, on a 64-bit platform, amounts to
-    ///     a three-fold RAM usage increase. It can also be compared for equality using just two integer comparisons in safe
-    ///     code.</remarks>
+    ///     This type is significantly more memory-efficient compared to <c>byte[16]</c> when only one copy of the value needs
+    ///     to be stored. Specifically, the byte array uses four extra IntPtrs per instance, which, on a 64-bit platform,
+    ///     amounts to a three-fold RAM usage increase. It can also be compared for equality using just two integer
+    ///     comparisons in safe code.</remarks>
     public struct Bin128
     {
         /// <summary>Gets a 128-bit binary value consisting of all zeroes.</summary>

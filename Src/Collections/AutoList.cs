@@ -7,18 +7,19 @@ using System.Text;
 namespace RT.Util.Collections
 {
     /// <summary>
-    ///     Encapsulates a list which dynamically grows as items are written to non-existent indexes. Any gaps are populated with
-    ///     default values. The behaviour of this list's indexed getter and setter is indistinguishable from that of an infinitely
-    ///     long list pre-populated by invoking the initializer function (assuming it is side-effect free). See Remarks.</summary>
+    ///     Encapsulates a list which dynamically grows as items are written to non-existent indexes. Any gaps are populated
+    ///     with default values. The behaviour of this list's indexed getter and setter is indistinguishable from that of an
+    ///     infinitely long list pre-populated by invoking the initializer function (assuming it is side-effect free). See
+    ///     Remarks.</summary>
     /// <remarks>
     ///     <para>
-    ///         Only the indexer behaviour is changed; in every other way this behaves just like a standard, non-infinite list.
-    ///         Moreover, the implementation is such that the new behaviour is only effective when used directly through the
-    ///         class; accessing the indexer through the <c>IList</c> interface or the <c>List</c> base class will currently
-    ///         behave the same as it would for a standard list.</para>
+    ///         Only the indexer behaviour is changed; in every other way this behaves just like a standard, non-infinite
+    ///         list. Moreover, the implementation is such that the new behaviour is only effective when used directly through
+    ///         the class; accessing the indexer through the <c>IList</c> interface or the <c>List</c> base class will
+    ///         currently behave the same as it would for a standard list.</para>
     ///     <para>
-    ///         Note that this is not a sparse list; accessing elements at a given index will grow the list to contain all of the
-    ///         items below the index too.</para></remarks>
+    ///         Note that this is not a sparse list; accessing elements at a given index will grow the list to contain all of
+    ///         the items below the index too.</para></remarks>
     public class AutoList<T> : IList<T>
     {
         private List<T> _inner;

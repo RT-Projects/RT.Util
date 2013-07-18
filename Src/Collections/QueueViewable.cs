@@ -7,10 +7,10 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Collections
 {
     /// <summary>
-    /// A queue whose queued items can be accessed by index. The item at the head of the queue
-    /// has index 0 and is the next item to be dequeued.
-    /// </summary>
-    /// <typeparam name="T">The type of the elements stored in the queue.</typeparam>
+    ///     A queue whose queued items can be accessed by index. The item at the head of the queue has index 0 and is the next
+    ///     item to be dequeued.</summary>
+    /// <typeparam name="T">
+    ///     The type of the elements stored in the queue.</typeparam>
     public sealed class QueueViewable<T> : IEnumerable<T>, ICollection<T>, IList<T>
     {
         private T[] _data;
@@ -25,15 +25,19 @@ namespace RT.Util.Collections
             _data = new T[8];
         }
 
-        /// <summary>Constructor.</summary>
-        /// <param name="initialCapacity">An appropriate initial capacity will help avoid unnecessarily growing the internal buffer.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="initialCapacity">
+        ///     An appropriate initial capacity will help avoid unnecessarily growing the internal buffer.</param>
         public QueueViewable(int initialCapacity)
         {
             _data = new T[initialCapacity];
         }
 
-        /// <summary>Constructor.</summary>
-        ///<param name="items">Items that the new queue should contain. The first item of the enumerable will be at the head of the queue.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="items">
+        ///     Items that the new queue should contain. The first item of the enumerable will be at the head of the queue.</param>
         public QueueViewable(IEnumerable<T> items)
         {
             _data = items.ToArray();
@@ -65,9 +69,8 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
-        /// Accesses the Nth queued item. The next item to be dequeued always has the index 0.
-        /// The existing items can be both read and assigned. No new items can be added using this indexer.
-        /// </summary>
+        ///     Accesses the Nth queued item. The next item to be dequeued always has the index 0. The existing items can be
+        ///     both read and assigned. No new items can be added using this indexer.</summary>
         public T this[int index]
         {
             get
@@ -85,9 +88,8 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
-        /// Gets the current capacity of the queue (that is, the maximum number of items it can store before
-        /// the internal store needs to be resized).
-        /// </summary>
+        ///     Gets the current capacity of the queue (that is, the maximum number of items it can store before the internal
+        ///     store needs to be resized).</summary>
         public int Capacity { get { return _data.Length; } }
 
         private void growCapacity()
@@ -100,9 +102,8 @@ namespace RT.Util.Collections
         }
 
         /// <summary>
-        /// Copies all elements to an array, in the order in which they would be dequeued.
-        /// The destination array must have enough space for all items.
-        /// </summary>
+        ///     Copies all elements to an array, in the order in which they would be dequeued. The destination array must have
+        ///     enough space for all items.</summary>
         public void CopyTo(T[] array, int arrayIndex)
         {
             if (_head < _tail)
@@ -164,7 +165,9 @@ namespace RT.Util.Collections
             get { return false; }
         }
 
-        /// <summary>Returns a read-only wrapper for this collection. Any changes to this collection will be immediately visible through the wrapper.</summary>
+        /// <summary>
+        ///     Returns a read-only wrapper for this collection. Any changes to this collection will be immediately visible
+        ///     through the wrapper.</summary>
         public ICollection<T> AsReadOnly()
         {
             if (_asReadOnly == null)
