@@ -325,7 +325,7 @@ namespace RT.Util
         ///         pending earlier (older) saves.</para></summary>
         public virtual void Save(string filename = null, SettingsSerializer? serializer = null, SettingsOnFailure onFailure = SettingsOnFailure.Throw)
         {
-            // Save must not be interrupted or superseded by a SaveThreaded
+            // Save and delete must not be interrupted or superseded by a SaveThreaded
             lock (_lock)
             {
                 if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
@@ -365,7 +365,7 @@ namespace RT.Util
         /// <summary>Deletes the settings file.</summary>
         public virtual void Delete(string filename = null, SettingsOnFailure onFailure = SettingsOnFailure.Throw)
         {
-            // Save must not be interrupted or superseded by a SaveThreaded
+            // Save and delete must not be interrupted or superseded by a SaveThreaded
             lock (_lock)
             {
                 if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
@@ -591,7 +591,7 @@ namespace RT.Util
         ///     If <paramref name="checkPortable"/> is <c>true</c> (the default), this method checks if a file by the name
         ///     <c>(AppName).IsPortable.txt</c> exists in the application path (see <see cref="PathUtil.AppPath"/>). If that
         ///     file exists, the settings are always stored in that application path.</remarks>
-        public string GetFileName(bool checkPortable = true)
+        public string GetFileName()
         {
             string filename = AppName;
             switch (Kind)
@@ -622,7 +622,7 @@ namespace RT.Util
 
             filename = filename.FilenameCharactersEscape() + ".Settings." + fileExtension;
 
-            if (checkPortable && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
+            if (Assembly.GetEntryAssembly() != null && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
                 return PathUtil.AppPathCombine(filename);
 
             switch (Kind)
