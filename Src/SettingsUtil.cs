@@ -585,12 +585,10 @@ namespace RT.Util
         ///     attribute. Note that the return value may change depending on external factors (see remarks). The recommended
         ///     approach is to load settings once, and then save them whenever necessary to whichever path is returned by this
         ///     function.</summary>
-        /// <param name="checkPortable">
-        ///     If <c>false</c>, skips the checks for the file that indicates that the app is portable.</param>
         /// <remarks>
-        ///     If <paramref name="checkPortable"/> is <c>true</c> (the default), this method checks if a file by the name
-        ///     <c>(AppName).IsPortable.txt</c> exists in the application path (see <see cref="PathUtil.AppPath"/>). If that
-        ///     file exists, the settings are always stored in that application path.</remarks>
+        ///     This method checks if a file by the name <c>(AppName).IsPortable.txt</c> exists in the application path (see
+        ///     <see cref="PathUtil.AppPath"/>). If that file exists, the settings are always stored in that application path.
+        ///     This check is skipped if there is no entry assembly (<see cref="Assembly.GetEntryAssembly"/> is null).</remarks>
         public string GetFileName()
         {
             string filename = AppName;
