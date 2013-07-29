@@ -284,6 +284,7 @@ namespace RT.Util
             public List<TState> WordPiecesState;
             public List<int> WordPiecesWidths;
             public int WordPiecesWidthsSum;
+            public string Spaces;
             public TState SpaceState;
             public EggMeasure<TState> Measure;
             public EggRender<TState> Render;
@@ -337,11 +338,12 @@ namespace RT.Util
                     if (CurParameter != null)
                         throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
                     var txt = text.Text;
-                    for (int i = 0; i < txt.Length; i++)
+                    var i = 0;
+                    while (i < txt.Length)
                     {
                         // Check whether we are looking at a whitespace character or not, and if not, find the end of the word.
                         int lengthOfWord = 0;
-                        while (lengthOfWord + i < txt.Length && (curNowrap || !char.IsWhiteSpace(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
+                        while (lengthOfWord + i < txt.Length && (curNowrap || !isWrappableAfter(txt, lengthOfWord + i)) && txt[lengthOfWord + i] != '\n')
                             lengthOfWord++;
 
                         if (lengthOfWord > 0)
@@ -371,7 +373,7 @@ namespace RT.Util
                                     advanceToNextLine(state, false);
                                 }
                             }
-                            else if (!AtStartOfLine && X + Measure(state, " ") + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
+                            else if (!AtStartOfLine && X + Measure(state, Spaces) + WordPiecesWidthsSum + fragmentWidth > WrapWidth)
                             {
                                 // We have already rendered some text on this line, but the word we’re looking at right now doesn’t
                                 // fit into the rest of the line, so leave the rest of this line blank and advance to the next line.
@@ -388,7 +390,7 @@ namespace RT.Util
                             WordPiecesState.Add(state);
                             WordPiecesWidths.Add(fragmentWidth);
                             WordPiecesWidthsSum += fragmentWidth;
-                            i += lengthOfWord - 1;
+                            i += lengthOfWord;
                             continue;
                         }
 
@@ -399,22 +401,54 @@ namespace RT.Util
                             AtStartOfLine = false;
                         }
 
-                        SpaceState = state;
-
                         if (txt[i] == '\n')
                         {
                             // If the whitespace character is actually a newline, start a new paragraph.
                             advanceToNextLine(state, true);
+                            i++;
                         }
-                        else if (AtStartOfLine)
+                        else
                         {
-                            // Otherwise, if we are at the beginning of the line, treat this space as the paragraph’s indentation.
-                            CurParagraphIndent += renderSpace(state);
+                            // Discover the extent of the spaces.
+                            var lengthOfSpaces = 0;
+                            while (lengthOfSpaces + i < txt.Length && isWrappableAfter(txt, lengthOfSpaces + i) && txt[lengthOfSpaces + i] != '\n')
+                                lengthOfSpaces++;
+
+                            Spaces = txt.Substring(i, lengthOfSpaces);
+                            SpaceState = state;
+                            i += lengthOfSpaces;
+
+                            if (AtStartOfLine)
+                            {
+                                // If we are at the beginning of the line, treat these spaces as the paragraph’s indentation.
+                                CurParagraphIndent += renderSpaces(Spaces, state);
+                            }
                         }
                     }
                 }
                 else
                     throw new InvalidOperationException("An EggsNode is expected to be either EggsTag or EggsText, not {0}.".Fmt(node.GetType().FullName));
+            }
+
+            private static bool isWrappableAfter(string txt, int index)
+            {
+                // Return false for all the whitespace characters that should NOT be wrappable
+                switch (txt[index])
+                {
+                    case '\u00a0':   // NO-BREAK SPACE
+                    case '\u202f':    // NARROW NO-BREAK SPACE
+                        return false;
+                }
+
+                // Return true for all the NON-whitespace characters that SHOULD be wrappable
+                switch (txt[index])
+                {
+                    case '\u200b':   // ZERO WIDTH SPACE
+                        return true;
+                }
+
+                // Apart from the above exceptions, wrap at whitespace characters.
+                return char.IsWhiteSpace(txt, index);
             }
 
             private void advanceToNextLine(TState state, bool newParagraph)
@@ -425,10 +459,10 @@ namespace RT.Util
                 AtStartOfLine = true;
             }
 
-            private int renderSpace(TState state)
+            private int renderSpaces(string spaces, TState state)
             {
-                var w = Measure(state, " ");
-                Render(state, " ", w);
+                var w = Measure(state, spaces);
+                Render(state, spaces, w);
                 X += w;
                 ActualWidth = Math.Max(ActualWidth, X);
                 return w;
@@ -438,7 +472,7 @@ namespace RT.Util
             {
                 // Add a space if we are not at the beginning of the line.
                 if (!AtStartOfLine)
-                    renderSpace(SpaceState);
+                    renderSpaces(Spaces, SpaceState);
                 for (int j = 0; j < WordPieces.Count; j++)
                     Render(WordPiecesState[j], WordPieces[j], WordPiecesWidths[j]);
                 X += WordPiecesWidthsSum;
