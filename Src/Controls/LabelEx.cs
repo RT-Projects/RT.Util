@@ -185,6 +185,36 @@ namespace RT.Util.Controls
             }
         }
 
+        /// <summary>Gets or sets the alignment of text in the label. The default is TopLeft.</summary>
+        [Localizable(true), DefaultValue(ContentAlignment.TopLeft)]
+        public ContentAlignment TextAlign
+        {
+            get { return _textAlign; }
+            set
+            {
+                switch (value)
+                {
+                    case ContentAlignment.TopLeft:
+                    case ContentAlignment.TopCenter:
+                    case ContentAlignment.TopRight:
+                    case ContentAlignment.MiddleLeft:
+                    case ContentAlignment.MiddleCenter:
+                    case ContentAlignment.MiddleRight:
+                    case ContentAlignment.BottomLeft:
+                    case ContentAlignment.BottomCenter:
+                    case ContentAlignment.BottomRight:
+                        _textAlign = value;
+                        _cachedRendering = null;
+                        Invalidate();
+                        break;
+
+                    default:
+                        throw new ArgumentException("value must be one of the ContentAlignment enum values.", "value");
+                }
+            }
+        }
+        private ContentAlignment _textAlign = ContentAlignment.TopLeft;
+
         /// <summary>Contains information about a parse error that describes in what way the current value of
         /// <see cref="Text"/> is invalid EggsML, or null if it is valid.</summary>
         public EggsMLParseException ParseError { get; private set; }
@@ -493,11 +523,13 @@ namespace RT.Util.Controls
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
             List<renderingInfo> renderings = null, List<locationInfo> locations = null)
         {
-            var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
+             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
             int hangingIndent = _hangingIndent * (_hangingIndentUnit == IndentUnit.Spaces ? measure(initialFont, " ", g).Width : 1);
             bool atBeginningOfLine = false;
+
+            // STEP 1: Run the word-wrapping as if TextAlign were TopLeft
 
             int actualWidth = EggsML.WordWrap(node, new renderState(initialFont, initialForeColor), wrapWidth,
                 (state, text) => measure(state.Font, text, g).Width,
@@ -598,7 +630,82 @@ namespace RT.Util.Controls
                     }
                     return Tuple.Create(state, 0);
                 });
-            return new Size(actualWidth + glyphOverhang.Width, y + measure(initialFont, " ", g).Height + glyphOverhang.Height);
+
+            var totalSize = new Size(actualWidth + glyphOverhang.Width, y + measure(initialFont, " ", g).Height + glyphOverhang.Height);
+
+            // STEP 2: Fix everything according to TextAlign.
+            if (renderings != null)
+            {
+                // 2a: vertical alignment
+                int offsetY = 0;
+                switch (_textAlign)
+                {
+                    case ContentAlignment.TopCenter:
+                    case ContentAlignment.TopLeft:
+                    case ContentAlignment.TopRight:
+                        // Already top-aligned: nothing to do
+                        break;
+
+                    case ContentAlignment.MiddleCenter:
+                    case ContentAlignment.MiddleLeft:
+                    case ContentAlignment.MiddleRight:
+                        offsetY = ClientSize.Height / 2 - totalSize.Height / 2;
+                        goto default;
+
+                    case ContentAlignment.BottomCenter:
+                    case ContentAlignment.BottomLeft:
+                    case ContentAlignment.BottomRight:
+                        offsetY = ClientSize.Height - totalSize.Height;
+                        goto default;
+
+                    default:
+                        foreach (var inf in renderings)
+                        {
+                            var rect = inf.Rectangle;
+                            rect.Y += offsetY;
+                            inf.Rectangle = rect;
+                        }
+                        break;
+                }
+
+                // 2b: horizontal alignment
+                foreach (var group in renderings.GroupConsecutiveBy(inf => inf.Rectangle.Y))
+                {
+                    var width = group.Max(elem => elem.Rectangle.Right);
+                    int offsetX = 0;
+                    switch (_textAlign)
+                    {
+                        case ContentAlignment.TopLeft:
+                        case ContentAlignment.MiddleLeft:
+                        case ContentAlignment.BottomLeft:
+                            // Already left-aligned: nothing to do
+                            break;
+
+                        case ContentAlignment.TopCenter:
+                        case ContentAlignment.MiddleCenter:
+                        case ContentAlignment.BottomCenter:
+                            offsetX = ClientSize.Width / 2 - width / 2;
+                            goto default;
+
+                        case ContentAlignment.TopRight:
+                        case ContentAlignment.MiddleRight:
+                        case ContentAlignment.BottomRight:
+                            offsetX = ClientSize.Width - width;
+                            goto default;
+
+                        default:
+                            foreach (var inf in group)
+                            {
+                                var rect = inf.Rectangle;
+                                rect.X += offsetX;
+                                inf.Rectangle = rect;
+                            }
+                            break;
+                    }
+                }
+            }
+
+            return totalSize;
         }
 
         /// <summary>Override; see base.</summary>
