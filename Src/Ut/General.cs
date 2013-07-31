@@ -478,6 +478,117 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the actions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="action1">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="action2">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="elseAction">
+        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the action called.</returns>
+        public static void IfType<TObj, TTest1, TTest2>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TObj> elseAction = null)
+        {
+            if (obj is TTest1)
+                action1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                action2((TTest2) (object) obj);
+            else if (elseAction != null)
+                elseAction(obj);
+        }
+
+        /// <summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
+        /// <typeparam name="TTest3">
+        ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the actions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="action1">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="action2">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="action3">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
+        /// <param name="elseAction">
+        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the action called.</returns>
+        public static void IfType<TObj, TTest1, TTest2, TTest3>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TTest3> action3, Action<TObj> elseAction = null)
+        {
+            if (obj is TTest1)
+                action1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                action2((TTest2) (object) obj);
+            else if (obj is TTest3)
+                action3((TTest3) (object) obj);
+            else if (elseAction != null)
+                elseAction(obj);
+        }
+
+        /// <summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action
+        ///     otherwise.</summary>
+        /// <typeparam name="TObj">
+        ///     Static type of the object to examine.</typeparam>
+        /// <typeparam name="TTest1">
+        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
+        /// <typeparam name="TTest2">
+        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
+        /// <typeparam name="TTest3">
+        ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
+        /// <typeparam name="TTest4">
+        ///     Type the object must have at runtime to execute <paramref name="action4"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result returned by the actions.</typeparam>
+        /// <param name="obj">
+        ///     Object whose type is to be examined.</param>
+        /// <param name="action1">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
+        /// <param name="action2">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
+        /// <param name="action3">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
+        /// <param name="action4">
+        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest4"/>.</param>
+        /// <param name="elseAction">
+        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
+        /// <returns>
+        ///     The result of the action called.</returns>
+        public static void IfType<TObj, TTest1, TTest2, TTest3, TTest4>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TTest3> action3, Action<TTest4> action4, Action<TObj> elseAction = null)
+        {
+            if (obj is TTest1)
+                action1((TTest1) (object) obj);
+            else if (obj is TTest2)
+                action2((TTest2) (object) obj);
+            else if (obj is TTest3)
+                action3((TTest3) (object) obj);
+            else if (obj is TTest4)
+                action4((TTest4) (object) obj);
+            else if (elseAction != null)
+                elseAction(obj);
+        }
+
+        /// <summary>
         ///     Executes the relevant function depending on the type of the current object, or the alternative function
         ///     otherwise.</summary>
         /// <typeparam name="TObj">
