@@ -362,6 +362,14 @@ namespace RT.Util.Controls
             checkForLinksAndTooltips(PointToClient(Control.MousePosition));
         }
 
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            _cachedRendering = null;
+            Invalidate();
+            base.OnEnabledChanged(e);
+            checkForLinksAndTooltips(PointToClient(Control.MousePosition));
+        }
+
         /// <summary>Override; see base.</summary>
         protected override void OnTextChanged(EventArgs e)
         {
