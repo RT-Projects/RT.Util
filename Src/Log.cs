@@ -421,11 +421,16 @@ namespace RT.Util
                 string fmtInfo, indent;
                 GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
-                using (var f = File.AppendText(Filename))
+                Ut.WaitSharingVio(() =>
                 {
-                    f.Write(fmtInfo);
-                    f.WriteLine(message);
-                }
+                    // Ensure that other processes can only read from the file, but not also write to it
+                    using (var f = File.Open(Filename, FileMode.Append, FileAccess.Write, FileShare.Read))
+                    using (var s = new StreamWriter(f))
+                    {
+                        s.Write(fmtInfo);
+                        s.WriteLine(message);
+                    }
+                });
             }
         }
 
