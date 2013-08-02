@@ -410,6 +410,9 @@ namespace RT.Util
         /// <summary>Gets or sets the path to the file to which messages are logged.</summary>
         public string Filename { get; set; }
 
+        /// <summary>Gets or sets the amount of time to wait when the log file is in use. <c>null</c> waits indefinitely.</summary>
+        public TimeSpan? SharingVioWait { get; set; }
+
         /// <summary>Logs a message to the underlying stream.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
@@ -421,7 +424,7 @@ namespace RT.Util
                 string fmtInfo, indent;
                 GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
 
-                Ut.WaitSharingVio(() =>
+                Ut.WaitSharingVio(maximum: SharingVioWait, action: () =>
                 {
                     // Ensure that other processes can only read from the file, but not also write to it
                     using (var f = File.Open(Filename, FileMode.Append, FileAccess.Write, FileShare.Read))
