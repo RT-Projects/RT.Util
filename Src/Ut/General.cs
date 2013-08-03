@@ -486,8 +486,6 @@ namespace RT.Util
         ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
         /// <typeparam name="TTest2">
         ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the actions.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action1">
@@ -519,8 +517,6 @@ namespace RT.Util
         ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
         /// <typeparam name="TTest3">
         ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the actions.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action1">
@@ -558,8 +554,6 @@ namespace RT.Util
         ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
         /// <typeparam name="TTest4">
         ///     Type the object must have at runtime to execute <paramref name="action4"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the actions.</typeparam>
         /// <param name="obj">
         ///     Object whose type is to be examined.</param>
         /// <param name="action1">
