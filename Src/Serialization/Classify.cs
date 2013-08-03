@@ -1100,14 +1100,17 @@ namespace RT.Util.Serialization
                 rep.Error("The type {0} does not have a parameterless constructor.".Fmt(type.FullName), "class", type.Name);
                 return;
             }
-            postBuildStep(type, instance, null, rep);
+            postBuildStep(type, instance, null, rep, new HashSet<Type>());
         }
 
-        private static void postBuildStep(Type type, object instance, FieldInfo field, IPostBuildReporter rep)
+        private static void postBuildStep(Type type, object instance, MemberInfo member, IPostBuildReporter rep, HashSet<Type> alreadyChecked)
         {
+            if (!alreadyChecked.Add(type))
+                return;
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                postBuildStep(type.GetGenericArguments()[0], instance, field, rep);
+                postBuildStep(type.GetGenericArguments()[0], instance, member, rep, alreadyChecked);
                 return;
             }
 
@@ -1115,54 +1118,61 @@ namespace RT.Util.Serialization
             if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out genericTypeArguments))
             {
                 foreach (var typeArg in genericTypeArguments)
-                    postBuildStep(typeArg, null, field, rep);
+                    postBuildStep(typeArg, null, member, rep, alreadyChecked);
                 return;
             }
 
             if (type == typeof(Pointer) || type == typeof(IntPtr) || type.IsPointer || type.IsByRef)
             {
-                if (field == null)
+                if (member == null)
                     rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName));
                 else
-                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, field.DeclaringType.FullName, field.Name), field.DeclaringType.Name, field.Name);
+                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, member.DeclaringType.FullName, member.Name), member.DeclaringType.Name, member.Name);
             }
             else if (_simpleTypes.Contains(type))
                 return; // these are safe
             else
             {
-                if (type.IsAbstract)
-                    return; // not much we can check there
-                if (instance == null && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
-                    rep.Error(
-                        "The field {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}."
-                            .Fmt(field.NullOr(f => f.DeclaringType.FullName), field.NullOr(f => f.Name), type.FullName),
-                        field.NullOr(f => f.DeclaringType.Name), field.NullOr(f => f.Name));
-                else
+                if (!type.IsAbstract)
                 {
-                    var inst = instance ?? Activator.CreateInstance(type, true);
-                    foreach (var f in type.GetAllFields())
+                    if (instance == null && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
+                        rep.Error(
+                            "The {3} {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}."
+                                .Fmt(member.NullOr(m => m.DeclaringType.FullName), member.NullOr(m => m.Name), type.FullName, member is FieldInfo ? "field" : "property"),
+                            member.NullOr(m => m.DeclaringType.Name), member.NullOr(m => m.Name));
+                    else
                     {
-                        if (f.IsDefined<ClassifyIgnoreAttribute>())
-                            continue;
-                        postBuildStep(f.FieldType, f.GetValue(inst), f, rep);
-                        checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), f, rep);
-                        checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), f, rep);
+                        var inst = instance ?? (type.ContainsGenericParameters ? null : Activator.CreateInstance(type, true));
+                        foreach (var f in type.GetAllFields())
+                        {
+                            if (f.IsDefined<ClassifyIgnoreAttribute>())
+                                continue;
+                            MemberInfo m = f;
+                            if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
+                                m = type.GetProperty(f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) ?? (MemberInfo) f;
+                            postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), f, rep, alreadyChecked);
+                            checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), m, rep);
+                            checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), m, rep);
+                        }
                     }
                 }
+                foreach (var derivedType in type.Assembly.GetTypes())
+                    if (type.IsAssignableFrom(derivedType))
+                        postBuildStep(derivedType, null, member, rep, alreadyChecked);
             }
         }
 
-        private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, FieldInfo field, IPostBuildReporter rep)
+        private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, MemberInfo member, IPostBuildReporter rep)
         {
-            if (field.IsDefined(xmlClassifyAttribute, false) && !field.IsDefined(classifyAttribute, true))
-                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(field.DeclaringType.FullName, field.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName));
-            if (!field.IsDefined(xmlClassifyAttribute, true) && field.IsDefined(classifyAttribute, true))
-                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(field.DeclaringType.FullName, field.Name, classifyAttribute.FullName, xmlClassifyAttribute.FullName));
+            if (member.IsDefined(xmlClassifyAttribute, false) && !member.IsDefined(classifyAttribute, true))
+                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName), member.DeclaringType.Name, member.Name);
+            if (!member.IsDefined(xmlClassifyAttribute, true) && member.IsDefined(classifyAttribute, true))
+                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, classifyAttribute.FullName, xmlClassifyAttribute.FullName), member.DeclaringType.Name, member.Name);
         }
     }
 
