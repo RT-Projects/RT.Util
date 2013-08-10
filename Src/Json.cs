@@ -2392,5 +2392,18 @@ namespace RT.Util.Json
                 throw new ArgumentNullException("source");
             return new JsonList(source);
         }
+
+        /// <summary>
+        ///     Creates a <see cref="JsonList"/> from an input collection.</summary>
+        /// <param name="source">
+        ///     Input collection.</param>
+        /// <returns>
+        ///     The constructed <see cref="JsonList"/>.</returns>
+        public static JsonList ToJsonList(this IEnumerable<string> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            return new JsonList(source.Select(str => (JsonValue) str));
+        }
     }
 }
