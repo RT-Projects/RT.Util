@@ -10,22 +10,24 @@ using RT.Util.Text;
 namespace RT.Util.Json
 {
     /// <summary>
-    ///     Specifies the degree of strictness or leniency when converting a <see cref="JsonValue"/> to a numerical type such as
-    ///     <c>int</c> or <c>double</c>.</summary>
+    ///     Specifies the degree of strictness or leniency when converting a <see cref="JsonValue"/> to a numerical type such
+    ///     as <c>int</c> or <c>double</c>.</summary>
     [Flags]
     public enum NumericConversionOptions
     {
         /// <summary>
-        ///     The conversion only succeeds if the object is a <see cref="JsonNumber"/> and its value is exactly representable by
-        ///     the target type.</summary>
+        ///     The conversion only succeeds if the object is a <see cref="JsonNumber"/> and its value is exactly
+        ///     representable by the target type.</summary>
         Strict = 0,
         /// <summary>The conversion succeeds if the object is a <see cref="JsonString"/> with numerical content.</summary>
         AllowConversionFromString = 1 << 0,
         /// <summary>
-        ///     Ignored unless <see cref="AllowConversionFromString"/> is also specified. A conversion to an integer type succeeds
-        ///     if the string contains a decimal followed by a zero fractional part.</summary>
+        ///     Ignored unless <see cref="AllowConversionFromString"/> is also specified. A conversion to an integer type
+        ///     succeeds if the string contains a decimal followed by a zero fractional part.</summary>
         AllowZeroFractionToInteger = 1 << 1,
-        /// <summary>The conversion succeeds if the object is a <see cref="JsonBool"/>, which will convert to 0 if false and 1 if true.</summary>
+        /// <summary>
+        ///     The conversion succeeds if the object is a <see cref="JsonBool"/>, which will convert to 0 if false and 1 if
+        ///     true.</summary>
         AllowConversionFromBool = 1 << 2,
         /// <summary>
         ///     Allows conversion of non-integral numbers to integer types by truncation (rounding towards zero). If <see
@@ -63,8 +65,8 @@ namespace RT.Util.Json
         ///     values to true.</summary>
         AllowConversionFromNumber = 1 << 0,
         /// <summary>
-        ///     The conversion succeeds if the object is a <see cref="JsonString"/> with specific content. The set of permissible
-        ///     strings is controlled by <see cref="JsonString.True"/>, <see cref="JsonString.False"/> and <see
+        ///     The conversion succeeds if the object is a <see cref="JsonString"/> with specific content. The set of
+        ///     permissible strings is controlled by <see cref="JsonString.True"/>, <see cref="JsonString.False"/> and <see
         ///     cref="JsonString.TrueFalseComparer"/>.</summary>
         AllowConversionFromString = 1 << 1,
 
@@ -432,8 +434,8 @@ namespace RT.Util.Json
         /// <param name="jsonValue">
         ///     A string containing JSON syntax.</param>
         /// <param name="result">
-        ///     Receives the <see cref="JsonValue"/> representing the value, or null if unsuccessful. (But note that null is also
-        ///     a possible valid value in case of success.)</param>
+        ///     Receives the <see cref="JsonValue"/> representing the value, or null if unsuccessful. (But note that null is
+        ///     also a possible valid value in case of success.)</param>
         /// <returns>
         ///     True if parsing was successful; otherwise, false.</returns>
         public static bool TryParse(string jsonValue, out JsonValue result)
@@ -497,15 +499,18 @@ namespace RT.Util.Json
         public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.GetInt(); }
 
         /// <summary>
-        ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers, when
-        ///     given an index or key not found in the list or dictionary, do not throw but instead return <see
+        ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers,
+        ///     when given an index or key not found in the list or dictionary, do not throw but instead return <see
         ///     cref="JsonNoValue.Instance"/> whose getters (such as <see cref="GetString"/>) return null.</summary>
         public JsonSafeValue Safe { get { return new JsonSafeValue(this); } }
 
-        /// <summary>Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
         public JsonList GetList() { return getList(false); }
 
-        /// <summary>Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, returns null.</summary>
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, returns
+        ///     null.</summary>
         public JsonList GetListSafe() { return getList(true); }
 
         /// <summary>
@@ -514,10 +519,13 @@ namespace RT.Util.Json
         ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
         protected virtual JsonList getList(bool safe) { return safe ? null : Ut.Throw<JsonList>(new InvalidOperationException("Only list values can be converted to list.")); }
 
-        /// <summary>Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
         public JsonDict GetDict() { return getDict(false); }
 
-        /// <summary>Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, returns null.</summary>
+        /// <summary>
+        ///     Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, returns
+        ///     null.</summary>
         public JsonDict GetDictSafe() { return getDict(true); }
 
         /// <summary>
@@ -529,14 +537,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current value to a <c>string</c>. Throws if the conversion is not valid.</summary>
         public string GetString(StringConversionOptions options = StringConversionOptions.Strict) { return getString(options, false); }
         /// <summary>
-        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> option.
-        ///     Throws if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
         public string GetStringLenient() { return getString(StringConversionOptions.Lenient, false); }
         /// <summary>Converts the current value to a <c>string</c>. Returns null if the conversion is not valid.</summary>
         public string GetStringSafe(StringConversionOptions options = StringConversionOptions.Strict) { return getString(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/> option.
-        ///     Returns null if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>string</c> by using the <see cref="StringConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
         public string GetStringLenientSafe() { return getString(StringConversionOptions.Lenient, true); }
 
         /// <summary>
@@ -571,14 +579,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current value to a <c>double</c>. Throws if the conversion is not valid.</summary>
         public double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDouble(options, false).Value; }
         /// <summary>
-        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Throws if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
         public double GetDoubleLenient() { return getDouble(NumericConversionOptions.Lenient, false).Value; }
         /// <summary>Converts the current value to a <c>double</c>. Returns null if the conversion is not valid.</summary>
         public double? GetDoubleSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDouble(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Returns null if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>double</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
         public double? GetDoubleLenientSafe() { return getDouble(NumericConversionOptions.Lenient, true); }
 
         /// <summary>
@@ -592,14 +600,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current value to a <c>decimal</c>. Throws if the conversion is not valid.</summary>
         public decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDecimal(options, false).Value; }
         /// <summary>
-        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Throws if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
         public decimal GetDecimalLenient() { return getDecimal(NumericConversionOptions.Lenient, false).Value; }
         /// <summary>Converts the current value to a <c>decimal</c>. Returns null if the conversion is not valid.</summary>
         public decimal? GetDecimalSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getDecimal(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Returns null if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>decimal</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
         public decimal? GetDecimalLenientSafe() { return getDecimal(NumericConversionOptions.Lenient, true); }
 
         /// <summary>
@@ -613,14 +621,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current value to a <c>long</c>. Throws if the conversion is not valid.</summary>
         public long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict) { return getLong(options, false).Value; }
         /// <summary>
-        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Throws if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
         public long GetLongLenient() { return getLong(NumericConversionOptions.Lenient, false).Value; }
         /// <summary>Converts the current value to a <c>long</c>. Returns null if the conversion is not valid.</summary>
         public long? GetLongSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getLong(options, true); }
         /// <summary>
-        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Returns null if the conversion is not valid.</summary>
+        ///     Converts the current value to a <c>long</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
         public long? GetLongLenientSafe() { return getLong(NumericConversionOptions.Lenient, true); }
 
         /// <summary>
@@ -634,14 +642,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current value to an <c>int</c>. Throws if the conversion is not valid.</summary>
         public int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict) { return getInt(options, false).Value; }
         /// <summary>
-        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Throws if the conversion is not valid.</summary>
+        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
         public int GetIntLenient() { return getInt(NumericConversionOptions.Lenient, false).Value; }
         /// <summary>Converts the current value to an <c>int</c>. Returns null if the conversion is not valid.</summary>
         public int? GetIntSafe(NumericConversionOptions options = NumericConversionOptions.Strict) { return getInt(options, true); }
         /// <summary>
-        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/> option.
-        ///     Returns null if the conversion is not valid.</summary>
+        ///     Converts the current value to an <c>int</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
         public int? GetIntLenientSafe() { return getInt(NumericConversionOptions.Lenient, true); }
 
         /// <summary>
@@ -655,8 +663,8 @@ namespace RT.Util.Json
         #region Both IList and IDictionary
 
         /// <summary>
-        ///     Removes all items from the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>; otherwise,
-        ///     throws.</summary>
+        ///     Removes all items from the current value if it is a <see cref="JsonList"/> or <see cref="JsonDict"/>;
+        ///     otherwise, throws.</summary>
         public virtual void Clear()
         {
             throw new InvalidOperationException("This method is only supported on dictionary and list values.");
@@ -673,7 +681,8 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Returns true if this value is a <see cref="JsonDict"/> or a <see cref="JsonList"/>; otherwise, returns false.</summary>
+        /// <summary>
+        ///     Returns true if this value is a <see cref="JsonDict"/> or a <see cref="JsonList"/>; otherwise, returns false.</summary>
         public virtual bool IsContainer { get { return false; } }
 
         #endregion
@@ -716,8 +725,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list if it
-        ///     is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        ///     Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list if
+        ///     it is a <see cref="JsonList"/>; otherwise, throws.</summary>
         public virtual void Insert(int index, JsonValue item)
         {
             throw new InvalidOperationException("This method is only supported on list values.");
@@ -732,8 +741,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list if it
-        ///     is a <see cref="JsonList"/>; otherwise, throws.</summary>
+        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list if
+        ///     it is a <see cref="JsonList"/>; otherwise, throws.</summary>
         /// <returns>
         ///     The index of the item, or -1 if the item is not in the list.</returns>
         public virtual int IndexOf(JsonValue item)
@@ -743,8 +752,7 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Copies the entire list to a compatible one-dimensional <paramref name="array"/>, starting at the specified
-        ///     <paramref name="arrayIndex"/> of the target array, if this is a <see cref="JsonList"/>; otherwise,
-        ///     throws.</summary>
+        ///     <paramref name="arrayIndex"/> of the target array, if this is a <see cref="JsonList"/>; otherwise, throws.</summary>
         /// <param name="array">
         ///     The one-dimensional array that is the destination of the elements copied from the list. The array must have
         ///     zero-based indexing.</param>
@@ -802,8 +810,7 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict"/>; otherwise,
-        ///     throws.</summary>
+        ///     Adds the specified key/value pair to the dictionary if this is a <see cref="JsonDict"/>; otherwise, throws.</summary>
         /// <param name="key">
         ///     The key to add.</param>
         /// <param name="value">
@@ -826,8 +833,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary if this is a <see
-        ///     cref="JsonDict"/>; otherwise, throws.</summary>
+        ///     Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary if this is a
+        ///     <see cref="JsonDict"/>; otherwise, throws.</summary>
         public virtual bool ContainsKey(string key)
         {
             throw new InvalidOperationException("This method is only supported on dictionary values.");
@@ -846,9 +853,9 @@ namespace RT.Util.Json
         /// <summary>
         ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks.)</summary>
         /// <remarks>
-        ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never equal
-        ///     to a <see cref="JsonNumber"/> even if they contain the same number). Lists are equal if they contain the same
-        ///     values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
+        ///     Two values are only considered equal if they are of the same type (e.g. a <see cref="JsonString"/> is never
+        ///     equal to a <see cref="JsonNumber"/> even if they contain the same number). Lists are equal if they contain the
+        ///     same values in the same order. Dictionaries are equal if they contain the same set of key/value pairs.</remarks>
         public abstract bool Equals(JsonValue other);
 
         /// <summary>Returns a hash code representing this object.</summary>
@@ -892,9 +899,9 @@ namespace RT.Util.Json
 
         /// <summary>
         ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
-        ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders are
-        ///     only replaced outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are inserted
-        ///     unmodified.</summary>
+        ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders
+        ///     are only replaced outside of JavaScript literal strings and regexes. <see cref="JsonRaw"/> instances are
+        ///     inserted unmodified.</summary>
         /// <param name="js">
         ///     JavaScript code with placeholders.</param>
         /// <param name="namevalues">
@@ -1134,15 +1141,15 @@ namespace RT.Util.Json
         /// <summary>Determines whether the specified <paramref name="item"/> is contained in the current list.</summary>
         public override bool Contains(JsonValue item) { return List.Contains(item); }
 
-        /// <summary>Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list.</summary>
+        /// <summary>
+        ///     Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list.</summary>
         public override void Insert(int index, JsonValue item) { List.Insert(index, item); }
 
         /// <summary>Removes the item at the specified <paramref name="index"/> from the current list.</summary>
         public override void RemoveAt(int index) { List.RemoveAt(index); }
 
         /// <summary>
-        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current
-        ///     list.</summary>
+        ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list.</summary>
         /// <returns>
         ///     The index of the item, or -1 if the item is not in the list.</returns>
         public override int IndexOf(JsonValue item) { return List.IndexOf(item); }
@@ -1591,8 +1598,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with <see
-        ///     cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
+        ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with
+        ///     <see cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
         /// <remarks>
         ///     The default is: <c>{ "", "false", "n", "no", "off", "disable", "disabled", "0" }</c>.</remarks>
         public static readonly List<string> False = new List<string> { "", "false", "n", "no", "off", "disable", "disabled", "0" };
@@ -1603,8 +1610,8 @@ namespace RT.Util.Json
         ///     The default is: <c>{ "true", "y", "yes", "on", "enable", "enabled", "1" }</c>.</remarks>
         public static readonly List<string> True = new List<string> { "true", "y", "yes", "on", "enable", "enabled", "1" };
         /// <summary>
-        ///     Controls which string equality comparer is used when comparing strings against elements in <see cref="True"/> and
-        ///     <see cref="False"/> during conversion to bool by <see cref="JsonValue.GetBool"/>.</summary>
+        ///     Controls which string equality comparer is used when comparing strings against elements in <see cref="True"/>
+        ///     and <see cref="False"/> during conversion to bool by <see cref="JsonValue.GetBool"/>.</summary>
         /// <remarks>
         ///     The default is <see cref="StringComparer.OrdinalIgnoreCase"/>.</remarks>
         public static readonly IEqualityComparer<string> TrueFalseComparer = StringComparer.OrdinalIgnoreCase;
@@ -1850,8 +1857,8 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
         public JsonNumber(int value) { _double = value; }
         /// <summary>
-        ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see Remarks on
-        ///     <see cref="JsonNumber"/>.</summary>
+        ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber"/>.</summary>
         public JsonNumber(decimal value)
         {
             if (value == decimal.Truncate(value) && value >= long.MinValue && value <= long.MaxValue)
@@ -1904,8 +1911,8 @@ namespace RT.Util.Json
         public static implicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
 
         /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a decimal. This operator is slightly lossy; see Remarks on <see
-        ///     cref="JsonNumber"/>.</summary>
+        ///     Converts the specified <see cref="JsonNumber"/> to a decimal. This operator is slightly lossy; see Remarks on
+        ///     <see cref="JsonNumber"/>.</summary>
         public static explicit operator decimal(JsonNumber value) { return double.IsNaN(value._double) ? (decimal) value._long : (decimal) value._double; }
         /// <summary>
         ///     Converts the specified <see cref="JsonNumber"/> to a nullable decimal. This operator is slightly lossy; see
@@ -1953,12 +1960,12 @@ namespace RT.Util.Json
         /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
         public static implicit operator JsonNumber(int? value) { return value == null ? null : new JsonNumber(value.Value); }
         /// <summary>
-        ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see Remarks
-        ///     on <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see
+        ///     Remarks on <see cref="JsonNumber"/>.</summary>
         public static explicit operator JsonNumber(decimal value) { return new JsonNumber(value); }
         /// <summary>
-        ///     Converts the specified nullable decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see
-        ///     Remarks on <see cref="JsonNumber"/>.</summary>
+        ///     Converts the specified nullable decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy;
+        ///     see Remarks on <see cref="JsonNumber"/>.</summary>
         public static explicit operator JsonNumber(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
 
         /// <summary>
@@ -2200,7 +2207,8 @@ namespace RT.Util.Json
         protected override string getString(StringConversionOptions options, bool safe) { return null; }
     }
 
-    /// <summary>Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
+    /// <summary>
+    ///     Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
     public sealed class JsonSafeValue
     {
         /// <summary>Gets the underlying JSON value associated with this object.</summary>
@@ -2239,8 +2247,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     If the underlying value is a list, and the specified <paramref name="index"/> exists within the list, returns the
-        ///     associated item; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
+        ///     If the underlying value is a list, and the specified <paramref name="index"/> exists within the list, returns
+        ///     the associated item; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
         public JsonValue this[int index]
         {
             get
@@ -2253,8 +2261,8 @@ namespace RT.Util.Json
         }
 
         /// <summary>
-        ///     If the underlying value is a dictionary, and the specified <paramref name="key"/> exists within the dictionary,
-        ///     gets the value associated with that key; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
+        ///     If the underlying value is a dictionary, and the specified <paramref name="key"/> exists within the
+        ///     dictionary, gets the value associated with that key; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
         public JsonValue this[string key]
         {
             get
