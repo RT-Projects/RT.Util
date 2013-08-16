@@ -32,8 +32,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns an enumeration of tuples containing all unique pairs of distinct elements from the source collection. For
-        ///     example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.</summary>
+        ///     Returns an enumeration of tuples containing all unique pairs of distinct elements from the source collection.
+        ///     For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.</summary>
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
@@ -120,9 +120,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Splits the specified IEnumerable at every element that satisfies a specified predicate and returns a collection
-        ///     containing each sequence of elements in between each pair of such elements. The elements satisfying the predicate
-        ///     are not included.</summary>
+        ///     Splits the specified IEnumerable at every element that satisfies a specified predicate and returns a
+        ///     collection containing each sequence of elements in between each pair of such elements. The elements satisfying
+        ///     the predicate are not included.</summary>
         /// <param name="splitWhat">
         ///     The collection to be split.</param>
         /// <param name="splitWhere">
@@ -185,8 +185,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     This does the same as <see cref="Order{T}(IEnumerable{T})"/>, but it is much faster if you intend to extract only
-        ///     the first few items using .Take().</summary>
+        ///     This does the same as <see cref="Order{T}(IEnumerable{T})"/>, but it is much faster if you intend to extract
+        ///     only the first few items using .Take().</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <returns>
@@ -197,8 +197,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     This does the same as <see cref="Order{T}(IEnumerable{T},IComparer{T})"/>, but it is much faster if you intend to
-        ///     extract only the first few items using <see cref="Enumerable.Take"/>.</summary>
+        ///     This does the same as <see cref="Order{T}(IEnumerable{T},IComparer{T})"/>, but it is much faster if you intend
+        ///     to extract only the first few items using <see cref="Enumerable.Take"/>.</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <param name="comparer">
@@ -327,8 +327,7 @@ namespace RT.Util.ExtensionMethods
         /// <param name="source">
         ///     The <see cref="IEnumerable&lt;T&gt;"/> to return the first element of.</param>
         /// <returns>
-        ///     <c>null</c> if <paramref name="source"/> is empty; otherwise, the first element in <paramref
-        ///     name="source"/>.</returns>
+        ///     <c>null</c> if <paramref name="source"/> is empty; otherwise, the first element in <paramref name="source"/>.</returns>
         public static T? FirstOrNull<T>(this IEnumerable<T> source) where T : struct
         {
             if (source == null)
@@ -404,14 +403,14 @@ namespace RT.Util.ExtensionMethods
         /// <param name="predicate">
         ///     A function to test each element for a condition.</param>
         /// <param name="resultSelector">
-        ///     A function to transform the first element into the result value. Will only be called if the sequence contains an
-        ///     element that passes the test specified by <paramref name="predicate"/>.</param>
+        ///     A function to transform the first element into the result value. Will only be called if the sequence contains
+        ///     an element that passes the test specified by <paramref name="predicate"/>.</param>
         /// <param name="default">
         ///     The default value to return if the sequence contains no elements.</param>
         /// <returns>
         ///     <paramref name="default"/> if <paramref name="source"/> is empty or if no element passes the test specified by
-        ///     <paramref name="predicate"/>; otherwise, the transformed first element in <paramref name="source"/> that passes
-        ///     the test specified by <paramref name="predicate"/>.</returns>
+        ///     <paramref name="predicate"/>; otherwise, the transformed first element in <paramref name="source"/> that
+        ///     passes the test specified by <paramref name="predicate"/>.</returns>
         public static TResult FirstOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, Func<TSource, TResult> resultSelector, TResult @default)
         {
             if (source == null)
@@ -430,8 +429,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the only element of a sequence that satisfies a specified condition, the type's default value if no such
-        ///     element exists, and throws an exception if more than one such element exists.</summary>
+        ///     Returns the only element of a sequence that satisfies a specified condition, the type's default value if no
+        ///     such element exists, and throws an exception if more than one such element exists.</summary>
         /// <typeparam name="T">
         ///     The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">
@@ -511,9 +510,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the index of the first element in this <paramref name="source"/> that is equal to the specified <paramref
-        ///     name="element"/> as determined by the specified <paramref name="comparer"/>. If no such elements are found,
-        ///     returns <c>-1</c>.</summary>
+        ///     Returns the index of the first element in this <paramref name="source"/> that is equal to the specified
+        ///     <paramref name="element"/> as determined by the specified <paramref name="comparer"/>. If no such elements are
+        ///     found, returns <c>-1</c>.</summary>
         public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
@@ -531,8 +530,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the first element from the input sequence for which the value selector returns the smallest
-        ///     value.</summary>
+        ///     Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
         public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
@@ -541,16 +539,15 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or a
-        ///     default value if the collection is empty.</summary>
+        ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or
+        ///     a default value if the collection is empty.</summary>
         public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
         {
             return minMaxElement(source, valueSelector, true, false, defaultValue);
         }
 
         /// <summary>
-        ///     Returns the first element from the input sequence for which the value selector returns the largest
-        ///     value.</summary>
+        ///     Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
         public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
@@ -596,17 +593,17 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Enumerates the items of this collection, skipping the last <paramref name="count"/> items. Note that the memory
-        ///     usage of this method is proportional to <paramref name="count"/>, but the source collection is only enumerated
-        ///     once, and in a lazy fashion. Also, enumerating the first item will take longer than enumerating subsequent
-        ///     items.</summary>
+        ///     Enumerates the items of this collection, skipping the last <paramref name="count"/> items. Note that the
+        ///     memory usage of this method is proportional to <paramref name="count"/>, but the source collection is only
+        ///     enumerated once, and in a lazy fashion. Also, enumerating the first item will take longer than enumerating
+        ///     subsequent items.</summary>
         /// <param name="source">
         ///     Source collection.</param>
         /// <param name="count">
         ///     Number of items to skip from the end of the collection.</param>
         /// <param name="throwIfNotEnough">
-        ///     If <c>true</c>, the enumerator throws at the end of the enumeration if the source collection contained fewer than
-        ///     <paramref name="count"/> elements.</param>
+        ///     If <c>true</c>, the enumerator throws at the end of the enumeration if the source collection contained fewer
+        ///     than <paramref name="count"/> elements.</param>
         public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count, bool throwIfNotEnough = false)
         {
             if (source == null)
@@ -655,9 +652,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns a collection containing only the last <paramref name="count"/> items of the input collection. This method
-        ///     enumerates the entire collection to the end once before returning. Note also that the memory usage of this method
-        ///     is proportional to <paramref name="count"/>.</summary>
+        ///     Returns a collection containing only the last <paramref name="count"/> items of the input collection. This
+        ///     method enumerates the entire collection to the end once before returning. Note also that the memory usage of
+        ///     this method is proportional to <paramref name="count"/>.</summary>
         public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
         {
             if (source == null)
@@ -737,6 +734,83 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Creates a two-level dictionary from an enumerable collection according to two specified key selector functions
+        ///     and optional key comparers.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TKey1">
+        ///     The type of the keys returned by <paramref name="key1Selector"/>.</typeparam>
+        /// <typeparam name="TKey2">
+        ///     The type of the keys returned by <paramref name="key2Selector"/>.</typeparam>
+        /// <param name="source">
+        ///     Source collection to create a dictionary from.</param>
+        /// <param name="key1Selector">
+        ///     A function to extract the first-level key from each element.</param>
+        /// <param name="key2Selector">
+        ///     A function to extract the second-level key from each element.</param>
+        /// <param name="comparer1">
+        ///     An equality comparer to compare the first-level keys.</param>
+        /// <param name="comparer2">
+        ///     An equality comparer to compare the second-level keys.</param>
+        public static Dictionary<TKey1, Dictionary<TKey2, TSource>> ToDictionary2<TSource, TKey1, TKey2>(this IEnumerable<TSource> source,
+            Func<TSource, TKey1> key1Selector, Func<TSource, TKey2> key2Selector, IEqualityComparer<TKey1> comparer1 = null, IEqualityComparer<TKey2> comparer2 = null)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (key1Selector == null)
+                throw new ArgumentNullException("key1Selector");
+            if (key2Selector == null)
+                throw new ArgumentNullException("key2Selector");
+
+            var newDic = new Dictionary<TKey1, Dictionary<TKey2, TSource>>(comparer1 ?? EqualityComparer<TKey1>.Default);
+            foreach (var elem in source)
+                newDic.AddSafe(key1Selector(elem), key2Selector(elem), elem, comparer2);
+            return newDic;
+        }
+
+        /// <summary>
+        ///     Creates a two-level dictionary from an enumerable collection according to two specified key selector functions
+        ///     and optional key comparers.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TKey1">
+        ///     The type of the keys returned by <paramref name="key1Selector"/>.</typeparam>
+        /// <typeparam name="TKey2">
+        ///     The type of the keys returned by <paramref name="key2Selector"/>.</typeparam>
+        /// <typeparam name="TValue">
+        ///     The type of the value returned by <paramref name="elementSelector"/>.</typeparam>
+        /// <param name="source">
+        ///     Source collection to create a dictionary from.</param>
+        /// <param name="key1Selector">
+        ///     A function to extract the first-level key from each element.</param>
+        /// <param name="key2Selector">
+        ///     A function to extract the second-level key from each element.</param>
+        /// <param name="elementSelector">
+        ///     A transform function to produce a result element value from each element.</param>
+        /// <param name="comparer1">
+        ///     An equality comparer to compare the first-level keys.</param>
+        /// <param name="comparer2">
+        ///     An equality comparer to compare the second-level keys.</param>
+        public static Dictionary<TKey1, Dictionary<TKey2, TValue>> ToDictionary2<TSource, TKey1, TKey2, TValue>(this IEnumerable<TSource> source,
+            Func<TSource, TKey1> key1Selector, Func<TSource, TKey2> key2Selector, Func<TSource, TValue> elementSelector,
+            IEqualityComparer<TKey1> comparer1 = null, IEqualityComparer<TKey2> comparer2 = null)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (key1Selector == null)
+                throw new ArgumentNullException("key1Selector");
+            if (key2Selector == null)
+                throw new ArgumentNullException("key2Selector");
+            if (elementSelector == null)
+                throw new ArgumentNullException("elementSelector");
+
+            var newDic = new Dictionary<TKey1, Dictionary<TKey2, TValue>>(comparer1 ?? EqualityComparer<TKey1>.Default);
+            foreach (var elem in source)
+                newDic.AddSafe(key1Selector(elem), key2Selector(elem), elementSelector(elem), comparer2);
+            return newDic;
+        }
+
+        /// <summary>
         ///     Pops the specified number of elements from the stack. There must be at least that many items on the stack,
         ///     otherwise an exception is thrown.</summary>
         public static void Pop<T>(this Stack<T> stack, int count)
@@ -746,8 +820,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns a collection of integer containing the indexes at which the elements of the source collection match the
-        ///     given predicate.</summary>
+        ///     Returns a collection of integer containing the indexes at which the elements of the source collection match
+        ///     the given predicate.</summary>
         /// <typeparam name="T">
         ///     The type of elements in the collection.</typeparam>
         /// <param name="source">
@@ -779,8 +853,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Transforms every element of an input collection using two selector functions and returns a collection containing
-        ///     all the results.</summary>
+        ///     Transforms every element of an input collection using two selector functions and returns a collection
+        ///     containing all the results.</summary>
         /// <typeparam name="TSource">
         ///     Type of the elements in the source collection.</typeparam>
         /// <typeparam name="TResult">
@@ -792,8 +866,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="selector2">
         ///     Second selector function.</param>
         /// <returns>
-        ///     A collection containing the transformed elements from both selectors, thus containing twice as many elements as
-        ///     the original collection.</returns>
+        ///     A collection containing the transformed elements from both selectors, thus containing twice as many elements
+        ///     as the original collection.</returns>
         public static IEnumerable<TResult> SelectTwo<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
         {
             if (source == null)
@@ -814,8 +888,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Turns all elements in the enumerable to strings and joins them using the specified <paramref name="separator"/>
-        ///     and the specified <paramref name="prefix"/> and <paramref name="suffix"/> for each string.</summary>
+        ///     Turns all elements in the enumerable to strings and joins them using the specified <paramref
+        ///     name="separator"/> and the specified <paramref name="prefix"/> and <paramref name="suffix"/> for each string.</summary>
         /// <param name="values">
         ///     The sequence of elements to join into a string.</param>
         /// <param name="separator">
@@ -830,7 +904,7 @@ namespace RT.Util.ExtensionMethods
         ///     <code>
         ///         // Returns "[Paris], [London], [Tokyo]"
         ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]")
-        ///         
+        /// 
         ///         // Returns "[Paris], [London] and [Tokyo]"
         ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]", " and ");</code></example>
         public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)
@@ -931,8 +1005,8 @@ namespace RT.Util.ExtensionMethods
         /// <param name="and">
         ///     The element to insert between the second-last and last element of the input collection.</param>
         /// <returns>
-        ///     A collection containing the original collection with the extra element inserted. For example, new[] { "a", "b",
-        ///     "c" }.InsertBetweenWithAnd(", ", " and ") returns { "a", ", ", "b", " and ", "c" }.</returns>
+        ///     A collection containing the original collection with the extra element inserted. For example, new[] { "a",
+        ///     "b", "c" }.InsertBetweenWithAnd(", ", " and ") returns { "a", ", ", "b", " and ", "c" }.</returns>
         public static IEnumerable<T> InsertBetweenWithAnd<T>(this IEnumerable<T> source, T comma, T and)
         {
             if (source == null)
@@ -984,8 +1058,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Splits a collection into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>,
-        ///     but all chunks, if any, will contain at least one item.</summary>
+        ///     Splits a collection into chunks of equal size. The last chunk may be smaller than <paramref
+        ///     name="chunkSize"/>, but all chunks, if any, will contain at least one item.</summary>
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, int chunkSize)
         {
             if (chunkSize <= 0)
@@ -1104,8 +1178,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Enumerates a chain of objects where each object refers to the next one. The chain starts with the specified object
-        ///     and ends when null is encountered.</summary>
+        ///     Enumerates a chain of objects where each object refers to the next one. The chain starts with the specified
+        ///     object and ends when null is encountered.</summary>
         /// <typeparam name="T">
         ///     Type of object to enumerate.</typeparam>
         /// <param name="obj">
@@ -1201,8 +1275,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Returns an enumerator that iterates through the collection.</summary>
         /// <returns>
-        ///     A <see cref="System.Collections.Generic.IEnumerator{T}"/> that can be used to iterate through the
-        ///     collection.</returns>
+        ///     A <see cref="System.Collections.Generic.IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
         public IEnumerator<TItem> GetEnumerator() { return _group.GetEnumerator(); }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
