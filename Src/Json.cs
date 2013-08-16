@@ -707,6 +707,14 @@ namespace RT.Util.Json
         }
 
         /// <summary>
+        ///     Add the specified <paramref name="items"/> to the current list if it is a <see cref="JsonList"/>; otherwise,
+        ///     throws.</summary>
+        public virtual void AddRange(IEnumerable<JsonValue> items)
+        {
+            throw new InvalidOperationException("This method is only supported on list values.");
+        }
+
+        /// <summary>
         ///     Removes the first instance of the specified <paramref name="item"/> from the current list if it is a <see
         ///     cref="JsonList"/>; otherwise, throws.</summary>
         /// <returns>
@@ -816,6 +824,14 @@ namespace RT.Util.Json
         /// <param name="value">
         ///     The value to add.</param>
         public virtual void Add(string key, JsonValue value)
+        {
+            throw new InvalidOperationException("This method is only supported on dictionary values.");
+        }
+
+        /// <summary>
+        ///     Add the specified <paramref name="items"/> to the current dictionary if it is a <see cref="JsonDict"/>;
+        ///     otherwise, throws.</summary>
+        public virtual void AddRange(IEnumerable<KeyValuePair<string, JsonValue>> items)
         {
             throw new InvalidOperationException("This method is only supported on dictionary values.");
         }
@@ -1129,8 +1145,11 @@ namespace RT.Util.Json
             set { List[index] = value; }
         }
 
-        /// <summary>Add the specified <paramref name="item"/> to the current list.</summary>
+        /// <summary>Adds the specified <paramref name="item"/> to the current list.</summary>
         public override void Add(JsonValue item) { List.Add(item); }
+
+        /// <summary>Adds the specified <paramref name="items"/> to the current list.</summary>
+        public override void AddRange(IEnumerable<JsonValue> items) { List.AddRange(items); }
 
         /// <summary>
         ///     Removes the first instance of the specified <paramref name="item"/> from the current list.</summary>
@@ -1385,6 +1404,13 @@ namespace RT.Util.Json
         /// <param name="value">
         ///     The value to add.</param>
         public override void Add(string key, JsonValue value) { Dict.Add(key, value); }
+
+        /// <summary>Adds the specified key/value pairs to the dictionary.</summary>
+        public override void AddRange(IEnumerable<KeyValuePair<string, JsonValue>> items)
+        {
+            foreach (var item in items)
+                ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Add(item);
+        }
 
         /// <summary>
         ///     Removes the entry with the specified <paramref name="key"/> from the dictionary.</summary>
