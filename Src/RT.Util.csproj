@@ -184,6 +184,7 @@
     <Compile Include="NameGenerator.cs" />
     <Compile Include="Paths\PathManager.cs" />
     <Compile Include="Paths\PathUtil.cs" />
+    <Compile Include="CommandRunner.cs" />
     <Compile Include="Regex2.cs" />
     <Compile Include="RhoML.cs" />
     <Compile Include="RTSmtpClient.cs" />
