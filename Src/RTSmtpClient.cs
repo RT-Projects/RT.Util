@@ -193,9 +193,9 @@ namespace RT.Util
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
             _log.Info(1, "Sending email to " + toHeader);
 
-            sendAndExpect(@"MAIL FROM: ""{0}"" <{1}>".Fmt(from.DisplayName, from.Address), 250);
+            sendAndExpect(@"MAIL FROM: <{0}>".Fmt(from.Address), 250);
             foreach (var toAddr in to)
-                sendAndExpect(@"RCPT TO: ""{0}"" <{1}>".Fmt(toAddr.DisplayName, toAddr.Address), 250);
+                sendAndExpect(@"RCPT TO: <{0}>".Fmt(toAddr.Address), 250);
             sendAndExpect(@"DATA", 354);
 
             Action<string> sendLine = str =>
