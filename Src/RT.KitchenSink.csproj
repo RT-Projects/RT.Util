@@ -66,6 +66,7 @@
     <Compile Include="RateCalculator.cs" />
     <Compile Include="Streams\ControlCodedStream.cs" />
     <Compile Include="Streams\PeekableStream.cs" />
+    <Compile Include="Streams\ReversePolarityStream.cs" />
     <Compile Include="ValueStat.cs" />
     <Compile Include="VoronoiDiagram.cs" />
   </ItemGroup>
