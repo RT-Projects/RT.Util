@@ -1233,6 +1233,17 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Removes spaces from the beginning of every line in such a way that the smallest indentation is reduced to
+        ///     zero. Lines which contain only whitespace are not considered in the calculation and may therefore become
+        ///     empty.</summary>
+        /// <param name="str">
+        ///     The string to transform.</param>
+        public static string RemoveCommonIndentation(this string str)
+        {
+            return Regex.Replace(str, "^(?> {1}{0}{2})|^(?> {1}0,{0}{2}(\r|$))".Fmt(Regex.Matches(str, @"^(?> *)(?!\r|$| )", RegexOptions.Multiline).Cast<Match>().Min(m => m.Length), "{", "}"), "", RegexOptions.Multiline);
+        }
+
+        /// <summary>
         ///     Splits a string into chunks of equal size. The last chunk may be smaller than <paramref name="chunkSize"/>,
         ///     but all chunks, if any, will contain at least 1 character.</summary>
         /// <param name="str">
