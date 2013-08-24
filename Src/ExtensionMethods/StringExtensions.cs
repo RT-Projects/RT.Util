@@ -1240,7 +1240,16 @@ namespace RT.Util.ExtensionMethods
         ///     The string to transform.</param>
         public static string RemoveCommonIndentation(this string str)
         {
-            return Regex.Replace(str, "^(?> {1}{0}{2})|^(?> {1}0,{0}{2}(\r|$))".Fmt(Regex.Matches(str, @"^(?> *)(?!\r|$| )", RegexOptions.Multiline).Cast<Match>().Min(m => m.Length), "{", "}"), "", RegexOptions.Multiline);
+            return Regex.Replace(
+                str,
+                "^(?> {1}{0}{2})|^(?> {1}0,{0}{2}(\r|$))".Fmt(
+                    Regex.Matches(str, @"^(?> *)(?!\r|$| )", RegexOptions.Multiline)
+                        .Cast<Match>()
+                        .Min(m => m.Length),
+                    "{",
+                    "}"),
+                "",
+                RegexOptions.Multiline);
         }
 
         /// <summary>
