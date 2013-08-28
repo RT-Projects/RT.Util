@@ -162,7 +162,7 @@ namespace RT.Util
                 if (!m.Success)
                     throw new RTSmtpException("Expected status code '{0}', got unexpected line: {1}".Fmt(statusCode, line), _conversation);
                 if (int.Parse(m.Groups[1].Value) != statusCode)
-                    throw new RTSmtpException("Expected status code '{0}', got '{1}'.".Fmt(statusCode, m.Groups[1].Value), _conversation);
+                    throw new RTSmtpException("Expected status code '{0}', got: {1}.".Fmt(statusCode, line), _conversation);
                 response += m.Groups[3].Value.Trim() + Environment.NewLine;
             }
             while (m.Groups[2].Value == "-");
