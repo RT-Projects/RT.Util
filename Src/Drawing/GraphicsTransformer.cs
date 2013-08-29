@@ -63,7 +63,7 @@ namespace RT.Util.Drawing
         /// <summary>Scales the graphics by the specified factors.</summary>
         public GraphicsTransformer Scale(double scaleX, double scaleY) { return Scale((float) scaleX, (float) scaleY); }
 
-        /// <summary>Rotates the graphics by the specified angle in radians.</summary>
+        /// <summary>Rotates the graphics by the specified angle in degrees.</summary>
         public GraphicsTransformer Rotate(float angle)
         {
             var m = _transforms[_graphics].Peek();
@@ -72,7 +72,7 @@ namespace RT.Util.Drawing
             return this;
         }
 
-        /// <summary>Rotates the graphics clockwise by the specified angle in radians about the specified center point.</summary>
+        /// <summary>Rotates the graphics clockwise by the specified angle in degrees about the specified center point.</summary>
         public GraphicsTransformer RotateAt(float angle, PointF point)
         {
             var m = _transforms[_graphics].Peek();
@@ -81,7 +81,7 @@ namespace RT.Util.Drawing
             return this;
         }
 
-        /// <summary>Rotates the graphics clockwise by the specified angle in radians about the specified center point.</summary>
+        /// <summary>Rotates the graphics clockwise by the specified angle in degrees about the specified center point.</summary>
         public GraphicsTransformer RotateAt(float angle, float x, float y) { return RotateAt(angle, new PointF(x, y)); }
 
         /// <summary>Returns the Transform of the Graphics object back to its original value.</summary>
