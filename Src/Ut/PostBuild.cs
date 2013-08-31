@@ -59,25 +59,31 @@ namespace RT.Util
                 }
                 catch (Exception e)
                 {
-                    var realException = e;
-                    while (realException is TargetInvocationException && realException.InnerException != null)
-                        realException = realException.InnerException;
-
-                    var st = new StackTrace(realException, true);
-                    string fileLine = null;
-                    for (int i = 0; i < st.FrameCount; i++)
-                    {
-                        var frame = st.GetFrame(i);
-                        if (frame.GetFileName() != null)
-                        {
-                            fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
-                            break;
-                        }
-                    }
-
-                    Console.Error.WriteLine(fileLine + "Error: " + realException.Message.Replace("\n", " ").Replace("\r", "") + " (" + realException.GetType().FullName + ")");
-                    Console.Error.WriteLine(realException.StackTrace);
                     rep.AnyErrors = true;
+                    string indent = "";
+                    while (e != null)
+                    {
+                        var st = new StackTrace(e, true);
+                        string fileLine = null;
+                        for (int i = 0; i < st.FrameCount; i++)
+                        {
+                            var frame = st.GetFrame(i);
+                            if (frame.GetFileName() != null)
+                            {
+                                fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
+                                break;
+                            }
+                        }
+
+                        Console.Error.WriteLine("{0}Error: {1}{2} ({3})".Fmt(
+                            fileLine,
+                            indent,
+                            e.Message.Replace("\n", " ").Replace("\r", ""),
+                            e.GetType().FullName));
+                        Console.Error.WriteLine(e.StackTrace);
+                        e = e.InnerException;
+                        indent += "---- ";
+                    }
                 }
             });
 
