@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace RT.Util.Streams
+namespace RT.KitchenSink.Streams
 {
+    /// <summary>Provides functionality to create a stream object that has reading and writing reversed.</summary>
     public static class ReversePolarityStream
     {
         /// <summary>
@@ -14,8 +15,6 @@ namespace RT.Util.Streams
         ///     returning a stream that can be used to consume the data by reading from it.</summary>
         /// <param name="writer">
         ///     An action that generates data and writes it to a stream.</param>
-        /// <param name="readingAction">
-        ///     An action that will want to read information from a stream.</param>
         public static Stream CreateFromWriter(Action<Stream> writer)
         {
             // Everything the writer writes will be stored in here until the reader consumes it
