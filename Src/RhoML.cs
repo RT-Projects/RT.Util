@@ -9,7 +9,62 @@ using RT.Util.Text;
 
 namespace RT.Util
 {
-    /// <summary>Exposes methods related to the RhoML language.</summary>
+    /// <summary>
+    ///     Exposes methods related to the RhoML language. See Remarks.</summary>
+    /// <remarks>
+    ///     <para>
+    ///         RhoML is a language which parses into a tree somewhat reminiscent of XML. The document is represented by a
+    ///         root <see cref="RhoElement"/>, and consists of a tree of <see cref="RhoNode"/>s. Two types of nodes exist:
+    ///         elements, which have a name and may have attributes, and text nodes, which simply contain raw text. Only
+    ///         elements may contain sub-nodes.</para>
+    ///     <para>
+    ///         Except for the root element, all elements must have a name, which can be an arbitrary string. The root
+    ///         element's name is null. An element may have a default attribute value, as well as any number of additional
+    ///         named attribute/value pairs. The attribute names and values can also be arbitrary strings. A named attribute
+    ///         is not required to have a value.</para>
+    ///     <para>
+    ///         Syntactically, an element is delimited by an opening and a closing tag. The closing tag is always <c>{}</c>
+    ///         for all elements. The opening tag begins with a <c>{</c>, followed by the element name, the default attribute
+    ///         value (<c>=</c> followed by the value), any number of named attributes (name, <c>=</c>, value, delimited by
+    ///         <c>,</c>), and ends with a <c>}</c>.</para>
+    ///     <para>
+    ///         The following is an example of valid RhoML with an explanation of what is represented:</para>
+    ///     <code>
+    ///         Basic {font=Times New Roman}example{}: element named "font" with the default attribute set.
+    ///          Another {blah,foo=bar,stuff}example{}: element named "blah", no default attribute, two named attributes
+    ///          ("foo" and "stuff"), the first of which has the value "bar" while the second one has no value. Other than the
+    ///          two elements, the rest of this RhoML is literal text.</code>
+    ///     <para>
+    ///         The element name and attribute names/values can all be specified using either quoted or unquoted syntax.
+    ///         Unquoted syntax is limited in what strings can be expressed, while quoted syntax allows every possible string
+    ///         to be represented:</para>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             Unquoted values always terminate at <c>{</c>, <c>}</c>, <c>=</c>, <c>,</c>, <c>`</c>, newlines and tabs,
+    ///             and these cannot be escaped. All other characters are allowed and are interpreted literally. Spaces are
+    ///             allowed but leading and trailing spaces will be ignored.</description></item>
+    ///         <item><description>
+    ///             Quoted values begin and end with a <c>`</c>. Actual backticks can be represented by <c>``</c>. All other
+    ///             characters are interpreted literally inside a quoted value, and there are no special escape sequences for
+    ///             newlines or other non-printing characters.</description></item></list>
+    ///     <para>
+    ///         Whitespace is significant in all contexts, with some exceptions inside the opening tag of an element.
+    ///         Specifically, whitespace is ignored inside the opening tag between all syntactic elements (but not inside
+    ///         names/values), with the sole exception of immediately after <c>{</c>: this character must be followed by a
+    ///         <c>`</c> (beginning the element name in quoted syntax) or a Unicode letter or digit (beginning the tag name in
+    ///         unquoted syntax). Otherwise the <c>{</c> character is interpreted as a literal opening curly bracket.</para>
+    ///     <para>
+    ///         Within a run of text, only the <c>{</c> character needs special attention; all other characters are
+    ///         interpreted literally. The <c>{</c> character is also interpreted literally unless followed by a <c>{</c> (in
+    ///         which case the two are interpreted as a single literal curly bracket), <c>}</c> (interpreted as the closing
+    ///         tag), or a <c>`</c>/letter/digit (interpreted as the start of an opening tag).</para>
+    ///     <para>
+    ///         A more complex example (the entire example is valid RhoML):</para>
+    ///     <code>
+    ///         This curly bracket { is interpreted literally, as is this } one. This {{ is a single open curly.
+    ///         Here {` is ``{ `}an element{} whose name is " is `{ ", containing a text node with the text "an element".
+    ///         Here's an element with some generous {use = of spaces ,   you   =   see}.{}; this represents an element named
+    ///         "use", with a default attribute value "of spaces", and an attribute named "you" with a value "see".</code></remarks>
     public static class RhoML
     {
         /// <summary>
@@ -17,9 +72,9 @@ namespace RT.Util
         /// <param name="input">
         ///     The string to parse.</param>
         /// <returns>
-        ///     The root element of the parse tree. This element is a tag with no name, even if the entire input was a text
-        ///     node.</returns>
-        public static RhoTag Parse(string input)
+        ///     The root element of the parse tree. The root element has a null name, and contains the RhoML content as child
+        ///     nodes, even if the parsed content has a single top-level node.</returns>
+        public static RhoElement Parse(string input)
         {
             return new RhoParserState(input).Parse();
         }
@@ -76,14 +131,16 @@ namespace RT.Util
         }
     }
 
-    /// <summary>Encapsulates a tag node in a RhoML tree.</summary>
-    public sealed class RhoTag : RhoNode
+    /// <summary>Encapsulates an element node in a RhoML tree.</summary>
+    public sealed class RhoElement : RhoNode
     {
-        /// <summary>Gets or sets the name of the tag. Null for the root tag, otherwise non-null.</summary>
+        /// <summary>Gets or sets the name of the element. Null for the root element, otherwise non-null.</summary>
         public string Name { get; set; }
-        /// <summary>Gets or sets the value of the default attribute. Null if none, empty string if has an empty value.</summary>
+        /// <summary>Gets or sets the value of the default attribute. Null if the default attribute was omitted.</summary>
         public string Value { get; set; }
-        /// <summary>Gets or sets a dictionary of attributes. Not null. Value is null if none, empty string if has an empty value.</summary>
+        /// <summary>
+        ///     Gets or sets a dictionary of attributes. Not null. There is a key for each named attribute specified on the
+        ///     element. Attributes whose value was omitted will have the value of null in this dictionary.</summary>
         public IDictionary<string, string> Attributes
         {
             get { return _attributes; }
@@ -91,7 +148,7 @@ namespace RT.Util
         }
         /// <summary>
         ///     Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/>
-        ///     instance in any order whatsoever.</summary>
+        ///     instance in any order.</summary>
         public IList<RhoNode> Children
         {
             get { return _children; }
@@ -102,14 +159,14 @@ namespace RT.Util
         private IList<RhoNode> _children;
 
         /// <summary>Constructor.</summary>
-        public RhoTag()
+        public RhoElement()
         {
             _attributes = new Dictionary<string, string>();
             _children = new List<RhoNode>();
         }
 
         /// <summary>Constructor.</summary>
-        public RhoTag(string name, string value = null)
+        public RhoElement(string name, string value = null)
             : this()
         {
             Name = name;
@@ -117,7 +174,7 @@ namespace RT.Util
         }
 
         /// <summary>Constructor.</summary>
-        public RhoTag(string name, string value, IDictionary<string, string> attributes, List<RhoNode> elements)
+        public RhoElement(string name, string value, IDictionary<string, string> attributes, List<RhoNode> elements)
         {
             if (attributes == null)
                 throw new ArgumentNullException("attributes");
@@ -134,6 +191,8 @@ namespace RT.Util
         {
             get
             {
+                // If a specific order is needed, this can be implemented backwards-compatibly at a later stage.
+                // For now it's a breadth-first enumeration of the nested nodes.
                 var queue = new Queue<RhoNode>();
                 queue.EnqueueRange(this.Children);
 
@@ -141,7 +200,7 @@ namespace RT.Util
                 {
                     var cur = queue.Dequeue();
                     yield return cur;
-                    var tag = cur as RhoTag;
+                    var tag = cur as RhoElement;
                     if (tag != null)
                         queue.EnqueueRange(tag.Children);
                 }
@@ -162,7 +221,7 @@ namespace RT.Util
                     builder.Append('=');
                     builder.Append(escapedAttrString(Value));
                 }
-                foreach (var attr in Attributes)
+                foreach (var attr in Attributes.OrderBy(a => a.Key))
                 {
                     builder.Append(',');
                     builder.Append(escapedAttrString(attr.Key));
@@ -236,12 +295,12 @@ namespace RT.Util
             return Snippet;
         }
 
-        public RhoTag Parse()
+        public RhoElement Parse()
         {
             var elems = parseElements();
             if (Cur != null)
                 throw new RhoParseException(this, "Expected end of input");
-            return new RhoTag(null, null, new Dictionary<string, string>(), elems);
+            return new RhoElement(null, null, new Dictionary<string, string>(), elems);
         }
 
         private List<RhoNode> parseElements()
@@ -256,7 +315,7 @@ namespace RT.Util
                     return result;
                 if (Cur == '{' && Next == '}')
                     return result;
-                result.Add(parseTag());
+                result.Add(parseElement());
             }
         }
 
@@ -283,7 +342,7 @@ namespace RT.Util
                 if (Input[pos] == '{')
                 {
                     char next = Input[pos + 1];
-                    if (next == '`' || next == '}' || (next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z'))
+                    if (next == '`' || next == '}' || char.IsLetterOrDigit(next))
                         break;
                     // Otherwise the next character cannot possibly start a tag
                     if (next == '{')
@@ -301,7 +360,7 @@ namespace RT.Util
             return sb.ToString();
         }
 
-        private RhoTag parseTag()
+        private RhoElement parseElement()
         {
             // Opening tag
             if (Cur != '{')
@@ -330,6 +389,8 @@ namespace RT.Util
                     consumeWhitespace();
                     attrValue = parseAttrString();
                 }
+                if (attrs.ContainsKey(attrName))
+                    throw new RhoParseException(this, "Duplicate attribute name");
                 attrs[attrName] = attrValue;
             }
 
@@ -346,7 +407,7 @@ namespace RT.Util
             Pos += 2;
 
             // Done!
-            return new RhoTag(name, value, attrs, elems);
+            return new RhoElement(name, value, attrs, elems);
         }
 
         private string parseAttrString()
