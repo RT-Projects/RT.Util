@@ -435,7 +435,7 @@ namespace RT.Util.Serialization
                 if (_format.IsReferable(elem))
                     _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
-                var result = CustomCallStack.Run(intoObject(elem, intoObj, type, parentNode));
+                var result = CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type, parentNode));
                 foreach (var action in _doAtTheEnd)
                     action();
                 result();
@@ -696,7 +696,7 @@ namespace RT.Util.Serialization
                             if (first)
                             {
                                 first = false;
-                                return intoObject(elem, ret, realType, parentNode);
+                                return deserializeIntoObject(elem, ret, realType, parentNode);
                             }
                             return cleanUp(prevResult);
                         };
@@ -704,7 +704,7 @@ namespace RT.Util.Serialization
                 }
             }
 
-            private WorkNode<Func<object>> intoObject(TElement elem, object intoObj, Type type, object parentNode)
+            private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, object parentNode)
             {
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
 
@@ -767,8 +767,12 @@ namespace RT.Util.Serialization
                     // Fields with no special attributes
                     else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
-                        fieldsToAssignTo.Add(field);
-                        elementsToAssign.Add(_format.GetField(elem, rFieldName, fieldDeclaringType));
+                        var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
+                        if (!_format.IsNull(value) || !getAttrsFrom.IsDefined<ClassifyNotNullAttribute>())
+                        {
+                            fieldsToAssignTo.Add(field);
+                            elementsToAssign.Add(value);
+                        }
                     }
                 }
 
@@ -1429,6 +1433,13 @@ namespace RT.Util.Serialization
         /// <summary>Retrieves the value which causes a field or automatically-implemented property to be ignored.</summary>
         public object Value { get { return _value; } }
     }
+
+    /// <summary>
+    ///     Specifies that Classify shall not set this field or automatically-implemented property to <c>null</c>. If the
+    ///     serialized form is <c>null</c>, the field or automatically-implemented property is instead left at the default
+    ///     value assigned by the object’s default constructor.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public sealed class ClassifyNotNullAttribute : Attribute { }
 
     /// <summary>
     ///     When reconstructing an interconnected graph of objects using <see cref="Classify"/>, a field or
