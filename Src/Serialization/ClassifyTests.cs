@@ -1614,5 +1614,26 @@ namespace RT.Util.Serialization
                 Assert.AreEqual("normal", deserialized.NormalField);
             }
         }
+
+        private class nonNullableTester
+        {
+            public string NullableString = "default";
+            [ClassifyNotNull]
+            public string NonNullableString = "default";
+        }
+
+        [Test]
+        public void TestNonNullableFields()
+        {
+            var json = ClassifyJson.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
+            var obj = ClassifyJson.Deserialize<nonNullableTester>(json);
+            Assert.IsNull(obj.NullableString);
+            Assert.IsNotNull(obj.NonNullableString);
+
+            var xml = ClassifyXml.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
+            obj = ClassifyXml.Deserialize<nonNullableTester>(xml);
+            Assert.IsNull(obj.NullableString);
+            Assert.IsNotNull(obj.NonNullableString);
+        }
     }
 }
