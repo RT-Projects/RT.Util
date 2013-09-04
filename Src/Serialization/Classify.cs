@@ -17,8 +17,8 @@ using RT.Util.Xml;
 namespace RT.Util.Serialization
 {
     /// <summary>
-    ///     Provides static methods to represent objects of (almost) arbitrary classes in various formats (such as XML or JSON)
-    ///     and to restore such objects again. See the remarks section for features and limitations.</summary>
+    ///     Provides static methods to represent objects of (almost) arbitrary classes in various formats (such as XML or
+    ///     JSON) and to restore such objects again. See the remarks section for features and limitations.</summary>
     /// <remarks>
     ///     <para>
     ///         By default, when serializing a custom class, Classify persists the value of all instance fields, including
@@ -27,8 +27,7 @@ namespace RT.Util.Serialization
     ///         Compiler-generated fields for automatically-implemented properties are instead named after the
     ///         automatically-implemented property’s name minus any leading underscores.</para>
     ///     <para>
-    ///         Classify can also generate representations of basic types such as <c>string</c>, <c>int</c>, <c>bool</c>,
-    ///         etc.</para>
+    ///         Classify can also generate representations of basic types such as <c>string</c>, <c>int</c>, <c>bool</c>, etc.</para>
     ///     <para>
     ///         Features:</para>
     ///     <list type="bullet">
@@ -40,58 +39,56 @@ namespace RT.Util.Serialization
     ///             whose type is itself such a class or struct.</description></item>
     ///         <item><description>
     ///             Classify has special handling for classes that implement <c>IDictionary&lt;TKey, TValue&gt;</c>, where
-    ///             <c>TValue</c> must be a type also supported by Classify. <c>TKey</c> must be <c>string</c>, an integer type or
-    ///             an enum type. If the field is of a concrete type, that type is maintained, but its extra fields are not
-    ///             persisted. If the field is of the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself, the type
-    ///             <c>Dictionary&lt;TKey, TValue&gt;</c> is used to reconstruct the object.</description></item>
+    ///             <c>TValue</c> must be a type also supported by Classify. <c>TKey</c> must be <c>string</c>, an integer
+    ///             type or an enum type. If the field is of a concrete type, that type is maintained, but its extra fields
+    ///             are not persisted. If the field is of the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself,
+    ///             the type <c>Dictionary&lt;TKey, TValue&gt;</c> is used to reconstruct the object.</description></item>
     ///         <item><description>
-    ///             Classify has special handling for classes that implement <c>ICollection&lt;T&gt;</c>, where <c>T</c> must be a
-    ///             type also supported by Classify. If the field is of a concrete type, that type is maintained, but its extra
-    ///             fields are not persisted. If the field is of the interface type <c>ICollection&lt;T&gt;</c> or
+    ///             Classify has special handling for classes that implement <c>ICollection&lt;T&gt;</c>, where <c>T</c> must
+    ///             be a type also supported by Classify. If the field is of a concrete type, that type is maintained, but its
+    ///             extra fields are not persisted. If the field is of the interface type <c>ICollection&lt;T&gt;</c> or
     ///             <c>IList&lt;T&gt;</c> itself, the type <c>List&lt;T&gt;</c> is used to reconstruct the object. If the type
-    ///             also implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes
-    ///             precedence.</description></item>
+    ///             also implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes precedence.</description></item>
     ///         <item><description>
     ///             Classify also supports <see cref="KeyValuePair{TKey,TValue}"/> and all the different
     ///             <c>System.Tuple&lt;...&gt;</c> types.</description></item>
     ///         <item><description>
-    ///             Classify handles the element type specially. For example, if you are classifying to XML, classifying an <see
-    ///             cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you are classifying to JSON, the same
-    ///             goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
+    ///             Classify handles the element type specially. For example, if you are classifying to XML, classifying an
+    ///             <see cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you are classifying to JSON,
+    ///             the same goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
     ///         <item><description>
     ///             For classes that don’t implement any of the above-mentioned collection interfaces, Classify supports
-    ///             polymorphism. The actual type of an instance is persisted if it is different from the declared
-    ///             type.</description></item>
+    ///             polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
     ///         <item><description>
     ///             Classify supports auto-implemented properties. It uses the name of the property rather than the hidden
-    ///             auto-generated field, although the field’s value is persisted. All other properties are
-    ///             ignored.</description></item>
+    ///             auto-generated field, although the field’s value is persisted. All other properties are ignored.</description></item>
     ///         <item><description>
-    ///             Classify ignores the order of input elements (except when handling collections and dictionaries). For example,
-    ///             XML tags or JSON dictionary keys are mapped to fields by their names; their order is considered
+    ///             Classify ignores the order of input elements (except when handling collections and dictionaries). For
+    ///             example, XML tags or JSON dictionary keys are mapped to fields by their names; their order is considered
     ///             immaterial.</description></item>
     ///         <item><description>
-    ///             Classify silently discards unrecognized XML tags/JSON dictionary keys instead of throwing errors. This is by
-    ///             design because it enables the programmer to remove a field from a class without invalidating objects
+    ///             Classify silently discards unrecognized XML tags/JSON dictionary keys instead of throwing errors. This is
+    ///             by design because it enables the programmer to remove a field from a class without invalidating objects
     ///             previously persisted.</description></item>
     ///         <item><description>
-    ///             Classify silently ignores missing elements. A field whose element is missing retains the value assigned to it
-    ///             by the parameterless constructor. This is by design because it enables the programmer to add a new field to a
-    ///             class (and to specify a default initialization value for it) without invalidating objects previously
-    ///             persisted.</description></item>
+    ///             Classify silently ignores missing elements. A field whose element is missing retains the value assigned to
+    ///             it by the parameterless constructor. This is by design because it enables the programmer to add a new
+    ///             field to a class (and to specify a default initialization value for it) without invalidating objects
+    ///             previously persisted.</description></item>
     ///         <item><description>
     ///             The following custom attributes can be used to alter Classify’s behavior. See the custom attribute class’s
     ///             documentation for more information: <see cref="ClassifyFollowIdAttribute"/>, <see
-    ///             cref="ClassifyIdAttribute"/>, <see cref="ClassifyIgnoreAttribute"/>, <see cref="ClassifyIgnoreIfAttribute"/>,
-    ///             <see cref="ClassifyIgnoreIfDefaultAttribute"/>, <see cref="ClassifyIgnoreIfEmptyAttribute"/>, <see
-    ///             cref="ClassifyParentAttribute"/>. Any attribute that can be used on a field, can equally well be used on an
-    ///             auto-implemented property, but not on any other properties.</description></item>
+    ///             cref="ClassifyIdAttribute"/>, <see cref="ClassifyIgnoreAttribute"/>, <see
+    ///             cref="ClassifyIgnoreIfAttribute"/>, <see cref="ClassifyIgnoreIfDefaultAttribute"/>, <see
+    ///             cref="ClassifyIgnoreIfEmptyAttribute"/>, <see cref="ClassifyParentAttribute"/>. Any attribute that can be
+    ///             used on a field, can equally well be used on an auto-implemented property, but not on any other
+    ///             properties.</description></item>
     ///         <item><description>
-    ///             Classify maintains object identity and correctly handles cycles in the object graph. Only <c>string</c>s are
-    ///             exempt from this.</description></item>
+    ///             Classify maintains object identity and correctly handles cycles in the object graph. Only <c>string</c>s
+    ///             are exempt from this.</description></item>
     ///         <item><description>
-    ///             Classify can make use of type substitutions. See <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> for more
-    ///             information.</description></item>
+    ///             Classify can make use of type substitutions. See <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> for
+    ///             more information.</description></item>
     ///         <item><description>
     ///             Classify allows you to pre-/post-process the serialized form and/or the serialized objects. See <see
     ///             cref="IClassifyObjectProcessor{TElement}"/> and <see cref="IClassifyTypeProcessor{TElement}"/> for more
@@ -100,23 +97,23 @@ namespace RT.Util.Serialization
     ///         Limitations:</para>
     ///     <list type="bullet">
     ///         <item><description>
-    ///             Classify requires that every type involved have a parameterless constructor, although it need not be public.
-    ///             This parameterless constructor is executed with all its side-effects before each object is reconstructed. An
-    ///             exception is made when a field in an object already has a non-null instance assigned to it by the constructor;
-    ///             in such cases, the object is reused.</description></item>
+    ///             Classify requires that every type involved have a parameterless constructor, although it need not be
+    ///             public. This parameterless constructor is executed with all its side-effects before each object is
+    ///             reconstructed. An exception is made when a field in an object already has a non-null instance assigned to
+    ///             it by the constructor; in such cases, the object is reused.</description></item>
     ///         <item><description>
     ///             If a field is of type <c>ICollection&lt;T&gt;</c>, <c>IList&lt;T&gt;</c>, <c>IDictionary&lt;TKey,
-    ///             TValue&gt;</c>, or any class that implements either of these, polymorphism is not supported, and nor is any
-    ///             information stored in those classes. In particular, this means that the comparer used by a
-    ///             <c>SortedDictionary&lt;TKey, TValue&gt;</c> is not persisted. However, if the containing class’s constructor
-    ///             assigned a <c>SortedDictionary&lt;TKey, TValue&gt;</c> with a comparer, that instance, and hence its comparer,
-    ///             is reused.</description></item></list></remarks>
+    ///             TValue&gt;</c>, or any class that implements either of these, polymorphism is not supported, and nor is
+    ///             any information stored in those classes. In particular, this means that the comparer used by a
+    ///             <c>SortedDictionary&lt;TKey, TValue&gt;</c> is not persisted. However, if the containing class’s
+    ///             constructor assigned a <c>SortedDictionary&lt;TKey, TValue&gt;</c> with a comparer, that instance, and
+    ///             hence its comparer, is reused.</description></item></list></remarks>
     public static class Classify
     {
         /// <summary>
-        ///     Options used when null is passed to methods that take options. Make sure not to modify this instance if any thread
-        ///     in the application might be in the middle of using <see cref="Classify"/>; ideally the options shoud be set once
-        ///     during startup and never changed after that.</summary>
+        ///     Options used when null is passed to methods that take options. Make sure not to modify this instance if any
+        ///     thread in the application might be in the middle of using <see cref="Classify"/>; ideally the options shoud be
+        ///     set once during startup and never changed after that.</summary>
         public static ClassifyOptions DefaultOptions = new ClassifyOptions();
 
         /// <summary>
@@ -226,8 +223,8 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
-        ///     The type of object is inferred from the object passed in.</summary>
+        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired
+        ///     type. The type of object is inferred from the object passed in.</summary>
         /// <typeparam name="TElement">
         ///     Type of the serialized form (see <paramref name="format"/>).</typeparam>
         /// <param name="filename">
@@ -1189,8 +1186,8 @@ namespace RT.Util.Serialization
         void BeforeSerialize();
 
         /// <summary>
-        ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is automatically
-        ///     invoked by <see cref="Classify"/> and should not be called directly.</summary>
+        ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is
+        ///     automatically invoked by <see cref="Classify"/> and should not be called directly.</summary>
         /// <param name="element">
         ///     The serialized form produced for this object. All changes made to it are final and will appear in <see
         ///     cref="Classify"/>’s output.</param>
@@ -1223,15 +1220,15 @@ namespace RT.Util.Serialization
     public interface IClassifyTypeProcessor<TElement>
     {
         /// <summary>
-        ///     Pre-processes the object before <see cref="Classify"/> serializes it. This method is automatically invoked by <see
-        ///     cref="Classify"/> and should not be called directly.</summary>
+        ///     Pre-processes the object before <see cref="Classify"/> serializes it. This method is automatically invoked by
+        ///     <see cref="Classify"/> and should not be called directly.</summary>
         /// <param name="obj">
         ///     The object about to be serialized.</param>
         void BeforeSerialize(object obj);
 
         /// <summary>
-        ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is automatically
-        ///     invoked by <see cref="Classify"/> and should not be called directly.</summary>
+        ///     Post-processes the serialization produced by <see cref="Classify"/> for this object. This method is
+        ///     automatically invoked by <see cref="Classify"/> and should not be called directly.</summary>
         /// <param name="obj">
         ///     The object that has just been serialized.</param>
         /// <param name="element">
@@ -1259,8 +1256,8 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Implement this interface in a subclass of <see cref="ClassifyTypeOptions"/> to specify how to substitute a type for
-    ///     another type during Classify.</summary>
+    ///     Implement this interface in a subclass of <see cref="ClassifyTypeOptions"/> to specify how to substitute a type
+    ///     for another type during Classify.</summary>
     /// <typeparam name="TTrue">
     ///     The type that is actually used for instances in memory.</typeparam>
     /// <typeparam name="TSubstitute">
@@ -1298,9 +1295,9 @@ namespace RT.Util.Serialization
         /// <param name="type">
         ///     The type to which these options apply.</param>
         /// <param name="options">
-        ///     Options that apply to the <paramref name="type"/>. To enable type substitution, pass an instance of a class that
-        ///     implements <see cref="IClassifySubstitute{TTrue,TSubstitute}"/>. To use pre-/post-processing of the object or its
-        ///     serialized form, pass an instance of a class that implements <see
+        ///     Options that apply to the <paramref name="type"/>. To enable type substitution, pass an instance of a class
+        ///     that implements <see cref="IClassifySubstitute{TTrue,TSubstitute}"/>. To use pre-/post-processing of the
+        ///     object or its serialized form, pass an instance of a class that implements <see
         ///     cref="IClassifyTypeProcessor{TElement}"/>.</param>
         /// <returns>
         ///     Itself.</returns>
@@ -1321,19 +1318,19 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Provides an abstract base type to derive from to specify type-specific options for use in Classify. See remarks for
-    ///     more information.</summary>
+    ///     Provides an abstract base type to derive from to specify type-specific options for use in Classify. See remarks
+    ///     for more information.</summary>
     /// <remarks>
     ///     <para>
     ///         Derive from this type and implement <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> to enable type
     ///         substitution during Classify.</para>
     ///     <para>
-    ///         Derive from this type and implement <see cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the object
-    ///         or its serialized form before/after Classify. (You can also implement <see
+    ///         Derive from this type and implement <see cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the
+    ///         object or its serialized form before/after Classify. (You can also implement <see
     ///         cref="IClassifyObjectProcessor{TElement}"/> on the serialized type itself.)</para>
     ///     <para>
-    ///         Intended use is to declare a class derived from <see cref="ClassifyTypeOptions"/> and pass an instance of it into
-    ///         <see cref="ClassifyOptions.AddTypeOptions"/>.</para></remarks>
+    ///         Intended use is to declare a class derived from <see cref="ClassifyTypeOptions"/> and pass an instance of it
+    ///         into <see cref="ClassifyOptions.AddTypeOptions"/>.</para></remarks>
     public abstract class ClassifyTypeOptions
     {
         internal Type _substituteType;
@@ -1372,18 +1369,18 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> stores an ID that
-    ///     points to another, separate file which in turn contains the actual object. This is only allowed on fields or
-    ///     automatically-implemented properties of type <see cref="ClassifyDeferredObject&lt;T&gt;"/> for some type T. Use <see
-    ///     cref="ClassifyDeferredObject&lt;T&gt;.Value"/> to retrieve the object. This retrieval is deferred until first use. Use
-    ///     <see cref="ClassifyDeferredObject&lt;T&gt;.Id"/> to retrieve the ID used to reference the object. You can also capture
-    ///     the ID into the type T by using the <see cref="ClassifyIdAttribute"/> attribute within that type.</summary>
+    ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> stores an ID
+    ///     that points to another, separate file which in turn contains the actual object. This is only allowed on fields or
+    ///     automatically-implemented properties of type <see cref="ClassifyDeferredObject&lt;T&gt;"/> for some type T. Use
+    ///     <see cref="ClassifyDeferredObject&lt;T&gt;.Value"/> to retrieve the object. This retrieval is deferred until first
+    ///     use. Use <see cref="ClassifyDeferredObject&lt;T&gt;.Id"/> to retrieve the ID used to reference the object. You can
+    ///     also capture the ID into the type T by using the <see cref="ClassifyIdAttribute"/> attribute within that type.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyFollowIdAttribute : Attribute { }
 
     /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, it is ignored by <see cref="Classify"/>.
-    ///     Data stored in this field or automatically-implemented property is not persisted.</summary>
+    ///     If this attribute is used on a field or automatically-implemented property, it is ignored by <see
+    ///     cref="Classify"/>. Data stored in this field or automatically-implemented property is not persisted.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyIgnoreAttribute : Attribute { }
 
@@ -1394,8 +1391,8 @@ namespace RT.Util.Serialization
     /// <remarks>
     ///     <list type="bullet">
     ///         <item><description>
-    ///             Using this together with <see cref="ClassifyIgnoreIfEmptyAttribute"/> will cause the distinction between null
-    ///             and an empty collection to be lost. However, a collection containing only null elements is persisted
+    ///             Using this together with <see cref="ClassifyIgnoreIfEmptyAttribute"/> will cause the distinction between
+    ///             null and an empty collection to be lost. However, a collection containing only null elements is persisted
     ///             correctly.</description></item>
     ///         <item><description>
     ///             Do not use this custom attribute on a field that has a non-default value set in the containing class’s
@@ -1409,8 +1406,8 @@ namespace RT.Util.Serialization
     ///     serialization if that serialization would be completely empty. If it is used on a type, it applies to all
     ///     collection-type fields in the type. See also remarks.</summary>
     /// <remarks>
-    ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between null and an
-    ///     empty collection to be lost. However, a collection containing only null elements is persisted correctly.</remarks>
+    ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between null
+    ///     and an empty collection to be lost. However, a collection containing only null elements is persisted correctly.</remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class ClassifyIgnoreIfEmptyAttribute : Attribute { }
 
@@ -1418,8 +1415,8 @@ namespace RT.Util.Serialization
     ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> omits its
     ///     serialization if the field’s or property’s value is equal to the specified value. See also remarks.</summary>
     /// <remarks>
-    ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between the type’s
-    ///     default value and the specified value to be lost.</remarks>
+    ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between the
+    ///     type’s default value and the specified value to be lost.</remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyIgnoreIfAttribute : Attribute
     {
@@ -1435,31 +1432,30 @@ namespace RT.Util.Serialization
 
     /// <summary>
     ///     When reconstructing an interconnected graph of objects using <see cref="Classify"/>, a field or
-    ///     automatically-implemented property with this attribute receives a reference to an object which refers to this object.
-    ///     This can be used when serializing tree structures to receive a node’s parent. See also remarks.</summary>
+    ///     automatically-implemented property with this attribute receives a reference to an object which refers to this
+    ///     object. This can be used when serializing tree structures to receive a node’s parent. See also remarks.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item><description>
     ///             If the field or automatically-implemented property is of an incompatible type, a run-time exception
     ///             occurs.</description></item>
     ///         <item><description>
-    ///             If there was no parent node, the field or automatically-implemented property is set to
-    ///             null.</description></item>
+    ///             If there was no parent node, the field or automatically-implemented property is set to null.</description></item>
     ///         <item><description>
-    ///             When persisting objects, fields and automatically-implemented properties with this attribute are
-    ///             skipped.</description></item></list></remarks>
+    ///             When persisting objects, fields and automatically-implemented properties with this attribute are skipped.</description></item></list></remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyParentAttribute : Attribute { }
 
     /// <summary>
-    ///     When reconstructing persisted objects using <see cref="Classify"/>, a field or automatically-implemented property with
-    ///     this attribute receives the ID that was used to refer to the file that stores this object. See <see
-    ///     cref="ClassifyFollowIdAttribute"/> for more information. The field or automatically-implemented property must be of
-    ///     type string.</summary>
+    ///     When reconstructing persisted objects using <see cref="Classify"/>, a field or automatically-implemented property
+    ///     with this attribute receives the ID that was used to refer to the file that stores this object. See <see
+    ///     cref="ClassifyFollowIdAttribute"/> for more information. The field or automatically-implemented property must be
+    ///     of type string.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyIdAttribute : Attribute { }
 
-    /// <summary>Provides access to <see cref="ClassifyDeferredObject{T}"/> properties that do not depend on its type parameter.</summary>
+    /// <summary>
+    ///     Provides access to <see cref="ClassifyDeferredObject{T}"/> properties that do not depend on its type parameter.</summary>
     internal interface IClassifyDeferredObject
     {
         /// <summary>Determines whether the object has been computed.</summary>
@@ -1469,8 +1465,8 @@ namespace RT.Util.Serialization
         string Id { get; }
 
         /// <summary>
-        ///     Gets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. Causes the object to be evaluated
-        ///     when called.</summary>
+        ///     Gets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. Causes the object to be
+        ///     evaluated when called.</summary>
         object Value { get; }
     }
 
@@ -1521,9 +1517,9 @@ namespace RT.Util.Serialization
         private string _id;
 
         /// <summary>
-        ///     Gets or sets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. The property getter causes
-        ///     the object to be evaluated when called. The setter overrides the object with a pre-computed object whose
-        ///     evaluation is not deferred.</summary>
+        ///     Gets or sets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. The property getter
+        ///     causes the object to be evaluated when called. The setter overrides the object with a pre-computed object
+        ///     whose evaluation is not deferred.</summary>
         public T Value
         {
             get
