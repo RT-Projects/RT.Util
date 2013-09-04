@@ -51,6 +51,13 @@ namespace RT.Util
                 return _rnd.Next(min, max);
         }
 
+        /// <summary>Returns a random boolean.</summary>
+        public static bool NextBoolean()
+        {
+            lock (_rnd)
+                return _rnd.Next(0, 2) != 0;
+        }
+
         /// <summary>Fills the specified buffer with random bytes.</summary>
         public static void NextBytes(byte[] buffer)
         {
