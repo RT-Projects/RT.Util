@@ -373,6 +373,8 @@ namespace RT.Util
         /// <summary>Logs a message to the underlying stream.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
+            if (message == null)
+                message = "<null>";
             lock (_logLock)
             {
                 if (VerbosityLimit[type] < verbosity || _streamWriter == null)
@@ -420,6 +422,8 @@ namespace RT.Util
         {
             if (VerbosityLimit[type] < verbosity || Filename == null)
                 return;
+            if (message == null)
+                message = "<null>";
 
             lock (_logLock)
             {
