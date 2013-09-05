@@ -169,6 +169,11 @@ namespace RT.Util
                         ClassifyXml.SerializeToFile(settingsType, settings, filename, format: ClassifyXmlFormat.Create("Settings"));
                         break;
 
+                    case SettingsSerializer.ClassifyJson:
+                        // SerializeToFile automatically creates the folder if necessary
+                        ClassifyJson.SerializeToFile(settingsType, settings, filename);
+                        break;
+
                     case SettingsSerializer.DotNetBinary:
                         PathUtil.CreatePathToFile(filename);
                         var bf = new BinaryFormatter();
@@ -193,10 +198,14 @@ namespace RT.Util
                     case SettingsSerializer.ClassifyXml:
                         return ClassifyXml.DeserializeFile<TSettings>(filename);
 
+                    case SettingsSerializer.ClassifyJson:
+                        return ClassifyJson.DeserializeFile<TSettings>(filename);
+
                     case SettingsSerializer.DotNetBinary:
                         var bf = new BinaryFormatter();
                         using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                             return (TSettings) bf.Deserialize(fs);
+
                     default:
                         throw new InternalErrorException("6843184");
                 }
@@ -529,6 +538,9 @@ namespace RT.Util
         /// <summary>Use the Classify serializer with the XML format.</summary>
         [SerializerInfo(defaultFileExtension: "xml")]
         ClassifyXml,
+        /// <summary>Use the Classify serializer with the JSON format.</summary>
+        [SerializerInfo(defaultFileExtension: "json")]
+        ClassifyJson,
     }
 
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
