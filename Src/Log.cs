@@ -274,6 +274,8 @@ namespace RT.Util
         /// <summary>Logs a message to the console.</summary>
         public override void Log(uint verbosity, LogType type, string message)
         {
+            if (message == null)
+                message = "<null>";
             lock (_logLock)
             {
                 if (VerbosityLimit[type] < verbosity)
