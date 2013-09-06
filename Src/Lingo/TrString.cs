@@ -26,18 +26,9 @@ namespace RT.Util.Lingo
         public static implicit operator string(TrString translatable) { return translatable == null ? null : translatable.Translation; }
 
         /// <summary>Formats a string using <see cref="string.Format(string, object[])"/>.</summary>
-        public string Fmt(params object[] args) { try { return string.Format(Translation, args); } catch { return Translation; } }
+        public string Fmt(params object[] args) { try { return Translation.Fmt(args); } catch { return Translation; } }
 
-        /// <summary>Formats a string using <see cref="string.Format(string, object)"/>.</summary>
-        public string Fmt(object arg0) { try { return string.Format(Translation, arg0); } catch { return Translation; } }
-
-        /// <summary>Formats a string using <see cref="string.Format(string, object, object)"/>.</summary>
-        public string Fmt(object arg0, object arg1) { try { return string.Format(Translation, arg0, arg1); } catch { return Translation; } }
-
-        /// <summary>Formats a string using <see cref="string.Format(string, object, object, object)"/>.</summary>
-        public string Fmt(object arg0, object arg1, object arg2) { try { return string.Format(Translation, arg0, arg1, arg2); } catch { return Translation; } }
-
-        /// <summary>Formats a string using <see cref="StringExtensions.FmtEnumerable"/>.</summary>
+        /// <summary>Formats a string using <see cref="StringExtensions.FmtEnumerable(string,object[])"/>.</summary>
         public IEnumerable<object> FmtEnumerable(params object[] args) { return Translation.FmtEnumerable(args); }
 
         /// <summary>

@@ -501,7 +501,9 @@ namespace RT.Util.Consoles
         ///     the corresponding objects in <paramref name="args"/>.</returns>
         public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args)
         {
-            return ConsoleColoredString.Format(null, format, args);
+            if (format == null)
+                throw new ArgumentNullException("format");
+            return format.Fmt(args);
         }
 
         /// <summary>
@@ -516,37 +518,85 @@ namespace RT.Util.Consoles
         /// <returns>
         ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
         ///     the corresponding objects in <paramref name="args"/>.</returns>
-        public static ConsoleColoredString Format(IFormatProvider provider, ConsoleColoredString format, params object[] args)
+        public static ConsoleColoredString Format(ConsoleColoredString format, IFormatProvider provider, params object[] args)
+        {
+            if (format == null)
+                throw new ArgumentNullException("format");
+            return format.Fmt(provider, args);
+        }
+
+        /// <summary>Equivalent to <see cref="ConsoleColoredString.Format(ConsoleColoredString,object[])"/>.</summary>
+        public ConsoleColoredString Fmt(params object[] args)
+        {
+            return Fmt(null, args);
+        }
+
+        /// <summary>Equivalent to <see cref="ConsoleColoredString.Format(ConsoleColoredString,IFormatProvider,object[])"/>.</summary>
+        public ConsoleColoredString Fmt(IFormatProvider provider, params object[] args)
+        {
+            if (args == null)
+                throw new ArgumentNullException("args");
+            return FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.Stringify, provider, args).JoinColoredString();
+        }
+
+        /// <summary>
+        ///     Formats the specified objects into this format string. The result is an enumerable collection which enumerates
+        ///     parts of the format string interspersed with the arguments as appropriate.</summary>
+        public IEnumerable<object> FmtEnumerable(params object[] args)
+        {
+            return FmtEnumerable(null, args);
+        }
+
+        /// <summary>
+        ///     Formats the specified objects into this format string. The result is an enumerable collection which enumerates
+        ///     parts of the format string interspersed with the arguments as appropriate.</summary>
+        public IEnumerable<object> FmtEnumerable(IFormatProvider provider, params object[] args)
+        {
+            if (args == null)
+                throw new ArgumentNullException("args");
+            return FmtEnumerableInternal(FormatBehavior.Colored, provider, args);
+        }
+
+        [Flags]
+        internal enum FormatBehavior
+        {
+            Stringify = 1,
+            Colored = 2
+        }
+
+        internal IEnumerable<object> FmtEnumerableInternal(FormatBehavior behavior, IFormatProvider provider, params object[] args)
         {
             var index = 0;
             var oldIndex = 0;
-            var fmt = format._text;
-            var result = new List<ConsoleColoredString>();
             var customFormatter = provider == null ? null : provider.GetFormat(typeof(ICustomFormatter)) as ICustomFormatter;
+            var substring = behavior.HasFlag(FormatBehavior.Colored)
+                ? Ut.Lambda((int ix, int length) => (object) Substring(ix, length))
+                : Ut.Lambda((int ix, int length) => (object) _text.Substring(ix, length));
 
-            while (index < fmt.Length)
+            while (index < _text.Length)
             {
-                char ch = fmt[index];
+                char ch = _text[index];
                 if (ch == '{')
                 {
                     index++;
-                    if (index == fmt.Length)
+                    if (index == _text.Length)
                         throw new FormatException("The specified format string is invalid.");
-                    ch = fmt[index];
+                    ch = _text[index];
                     if (ch == '{')
                     {
                         if (index > oldIndex)
-                            result.Add(format.Substring(oldIndex, index - oldIndex));
+                            yield return substring(oldIndex, index - oldIndex);
                     }
                     else
                     {
-                        ConsoleColor color = format._colors[index - 1];
+                        var implicitColor = _colors[index - 1];
                         if (index - 1 > oldIndex)
-                            result.Add(format.Substring(oldIndex, index - oldIndex - 1));
+                            yield return substring(oldIndex, index - oldIndex - 1);
                         var num = 0;
                         var leftAlign = false;
                         var align = 0;
-                        StringBuilder colorBuilder = null, formatBuilder = null;
+                        int colorStartIndex = -1, formatStartIndex = -1;
+                        int colorLength = 0, formatLength = 0;
 
                         // Syntax: {num[,alignment][/color][:format]}
                         // States: 0 = before first digit of num; 1 = during num; 2 = before align; 3 = during align; 4 = during color; 5 = during format
@@ -556,7 +606,7 @@ namespace RT.Util.Consoles
                         {
                             if (ch == '}')
                             {
-                                if (index + 1 == fmt.Length || fmt[index + 1] != '}')
+                                if (index + 1 == _text.Length || _text[index + 1] != '}')
                                     break;
                                 index++;
                             }
@@ -580,70 +630,91 @@ namespace RT.Util.Consoles
                             }
                             else if ((state == 1 || state == 3) && ch == '/')
                             {
-                                colorBuilder = new StringBuilder();
+                                colorStartIndex = index + 1;
                                 state = 4;
                             }
                             else if ((state == 1 || state == 3 || state == 4) && ch == ':')
                             {
-                                formatBuilder = new StringBuilder();
+                                formatStartIndex = index + 1;
                                 state = 5;
                             }
                             else if (state == 4)
-                                colorBuilder.Append(ch);
+                                colorLength++;
                             else if (state == 5)
-                                formatBuilder.Append(ch);
+                                formatLength++;
                             else
                                 throw new FormatException("The specified format string is invalid.");
 
                             index++;
-                            if (index == fmt.Length)
+                            if (index == _text.Length)
                                 throw new FormatException("The specified format string is invalid.");
-                            ch = fmt[index];
+                            ch = _text[index];
                         }
 
                         if (num >= args.Length)
                             throw new FormatException("The specified format string references an array index outside the bounds of the supplied arguments.");
-                        string str;
-                        // Side-effect: This sets “color”
-                        if (colorBuilder != null && !Enum.TryParse<ConsoleColor>(str = colorBuilder.ToString(), true, out color))
-                            throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(str));
 
-                        object obj = args[num];
-                        ConsoleColoredString ccstr;
-                        IFormattable objFmt;
+                        if (behavior.HasFlag(FormatBehavior.Stringify))
+                        {
+                            var colorString = colorStartIndex == -1 ? null : _text.Substring(colorStartIndex, colorLength);
 
-                        // Side-effect: This sets “ccstr” inside the if expression
-                        if (colorBuilder != null || (ccstr = obj as ConsoleColoredString) == null)
-                            ccstr = new ConsoleColoredString(
-                                formatBuilder != null && (objFmt = obj as IFormattable) != null ? objFmt.ToString(formatBuilder.ToString(), provider) :
-                                formatBuilder != null && customFormatter != null ? customFormatter.Format(formatBuilder.ToString(), obj, provider) :
-                                obj.ToString(),
-                                color);
-                        if (ccstr.Length < align)
-                            ccstr = leftAlign ? ccstr + new string(' ', align - ccstr.Length) : new string(' ', align - ccstr.Length) + ccstr;
-                        result.Add(ccstr);
+                            ConsoleColor color = 0;
+                            // Side-effect: This sets “color”
+                            if (colorString != null && !Enum.TryParse<ConsoleColor>(colorString, true, out color))
+                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorString));
+
+                            var formatString = formatStartIndex == -1 ? null : _text.Substring(formatStartIndex, formatLength);
+
+                            if (behavior.HasFlag(FormatBehavior.Colored))
+                            {
+                                var objFormattable = args[num] as IFormattable;
+                                var result = args[num] as ConsoleColoredString;
+
+                                // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
+                                // otherwise use IFormattable and/or the custom formatter and color the result of that.
+                                if (colorString != null || result == null)
+                                    result = new ConsoleColoredString(
+                                        formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                        formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                                        args[num].ToString(),
+                                        colorString == null ? implicitColor : color);
+
+                                // Alignment
+                                if (result.Length < align)
+                                    result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                                yield return result;
+                            }
+                            else
+                            {
+                                var objFormattable = args[num] as IFormattable;
+                                var result =
+                                    formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                    formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                                    args[num].ToString();
+
+                                // Alignment
+                                if (result.Length < align)
+                                    result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                                yield return result;
+                            }
+                        }
+                        else
+                            yield return args[num];
                     }
                     oldIndex = index + 1;
                 }
                 else if (ch == '}')
                 {
                     index++;
-                    if (index == fmt.Length || ch != '}')
+                    if (index == _text.Length || ch != '}')
                         throw new FormatException("The specified format string is invalid.");
-                    result.Add(format.Substring(oldIndex, index - oldIndex));
+                    yield return substring(oldIndex, index - oldIndex);
                     oldIndex = index + 1;
                 }
                 index++;
             }
             if (index > oldIndex)
-                result.Add(format.Substring(oldIndex, index - oldIndex));
-            return new ConsoleColoredString(result);
-        }
-
-        /// <summary>Equivalent to <see cref="ConsoleColoredString.Format(ConsoleColoredString,object[])"/>.</summary>
-        public ConsoleColoredString Fmt(params object[] args)
-        {
-            return ConsoleColoredString.Format(null, this, args);
+                yield return substring(oldIndex, index - oldIndex);
         }
 
         /// <summary>

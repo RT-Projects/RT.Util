@@ -664,28 +664,20 @@ namespace RT.Util.ExtensionMethods
             return arr.Skip(begin).Take(end - begin + 1);
         }
 
-        /// <summary>Formats a string using <see cref="string.Format(string, object[])"/>.</summary>
+        /// <summary>Formats a string in a way compatible with <see cref="string.Format(string, object[])"/>.</summary>
         public static string Fmt(this string formatString, params object[] args)
         {
-            return string.Format(formatString, args);
+            return Fmt(formatString, null, args);
         }
 
-        /// <summary>Formats a string using <see cref="string.Format(string, object)"/>.</summary>
-        public static string Fmt(this string formatString, object arg0)
+        /// <summary>Formats a string in a way compatible with <see cref="string.Format(string, object[])"/>.</summary>
+        public static string Fmt(this string formatString, IFormatProvider provider, object[] args)
         {
-            return string.Format(formatString, arg0);
-        }
-
-        /// <summary>Formats a string using <see cref="string.Format(string, object, object)"/>.</summary>
-        public static string Fmt(this string formatString, object arg0, object arg1)
-        {
-            return string.Format(formatString, arg0, arg1);
-        }
-
-        /// <summary>Formats a string using <see cref="string.Format(string, object, object, object)"/>.</summary>
-        public static string Fmt(this string formatString, object arg0, object arg1, object arg2)
-        {
-            return string.Format(formatString, arg0, arg1, arg2);
+            if (formatString == null)
+                throw new ArgumentNullException("formatString");
+            if (args == null)
+                throw new ArgumentNullException("args");
+            return formatString.Color(0).FmtEnumerableInternal(ConsoleColoredString.FormatBehavior.Stringify, provider, args).JoinString();
         }
 
         /// <summary>
@@ -693,66 +685,19 @@ namespace RT.Util.ExtensionMethods
         ///     parts of the format string interspersed with the arguments as appropriate.</summary>
         public static IEnumerable<object> FmtEnumerable(this string formatString, params object[] args)
         {
-            if (formatString == null)
-                throw new ArgumentNullException("formatString");
-            return fmtEnumerableIterator(formatString, args);
+            return FmtEnumerable(formatString, null, args);
         }
 
-        private static IEnumerable<object> fmtEnumerableIterator(this string formatString, params object[] args)
+        /// <summary>
+        ///     Formats the specified objects into the format string. The result is an enumerable collection which enumerates
+        ///     parts of the format string interspersed with the arguments as appropriate.</summary>
+        public static IEnumerable<object> FmtEnumerable(this string formatString, IFormatProvider provider, params object[] args)
         {
-            StringBuilder sb = new StringBuilder(formatString.Length);
-            int i = 0;
-            while (i < formatString.Length)
-            {
-                if (formatString[i] == '{')
-                {
-                    i++;
-                    if (i >= formatString.Length)
-                        throw new ArgumentException("Unexpected end of format string in the middle of a format specifier.");
-                    if (formatString[i] == '{')
-                    {
-                        sb.Append('{');
-                    }
-                    else
-                    {
-                        // Only support single digit references
-                        if (!(formatString[i] >= '0' && formatString[i] <= '9'))
-                            throw new ArgumentException("Format specifier must contain a single digit after the opening curly bracket.");
-                        int argNumber = (int) (formatString[i] - '0');
-                        i++;
-                        if (i >= formatString.Length)
-                            throw new ArgumentException("Unexpected end of format string in the middle of a format specifier.");
-                        if (formatString[i] != '}')
-                            throw new ArgumentException("Format specifier did not end with a closing curly bracket immediately after the single digit group number.");
-                        i++;
-                        // Return the stuff we have!
-                        if (argNumber >= args.Length)
-                            throw new ArgumentException("Format specifier refers to argument index {{{0}}}, but only {1} argument(s) were supplied.".Fmt(argNumber, args.Length));
-                        if (sb.Length > 0)
-                            yield return sb.ToString();
-                        yield return args[argNumber];
-                        // Reset the buffer
-                        sb.Clear();
-                    }
-                }
-                else if (formatString[i] == '}')
-                {
-                    i++;
-                    if (i >= formatString.Length)
-                        throw new ArgumentException("Unexpected end of format string with a single closing curly bracket.");
-                    if (formatString[i] == '}')
-                        sb.Append('}');
-                    else
-                        throw new ArgumentException("Unescaped closing curly bracket in format string which is not part of a valid format specifier.");
-                }
-                else
-                {
-                    sb.Append(formatString[i]);
-                    i++;
-                }
-            }
-            if (sb.Length > 0)
-                yield return sb.ToString();
+            if (formatString == null)
+                throw new ArgumentNullException("formatString");
+            if (args == null)
+                throw new ArgumentNullException("args");
+            return formatString.Color(0).FmtEnumerableInternal(0, provider, args);
         }
 
         /// <summary>
