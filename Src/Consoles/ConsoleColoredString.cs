@@ -576,139 +576,126 @@ namespace RT.Util.Consoles
             while (index < _text.Length)
             {
                 char ch = _text[index];
-                if (ch == '{')
+                if (ch == '{' && index < _text.Length - 1 && _text[index + 1] == '{')
                 {
+                    yield return substring(oldIndex, index + 1 - oldIndex);
                     index++;
-                    if (index == _text.Length)
-                        throw new FormatException("The specified format string is invalid.");
-                    ch = _text[index];
-                    if (ch == '{')
+                    oldIndex = index + 1;
+                }
+                else if (ch == '{' && index < _text.Length - 1 && _text[index + 1] >= '0' && _text[index + 1] <= '9')
+                {
+                    var implicitColor = _colors[index];
+                    if (index > oldIndex)
+                        yield return substring(oldIndex, index - oldIndex);
+                    var num = 0;
+                    var leftAlign = false;
+                    var align = 0;
+                    StringBuilder colorBuilder = null, formatBuilder = null;
+
+                    // Syntax: {num[,alignment][/color][:format]}
+                    // States: 0 = before first digit of num; 1 = during num; 2 = before align; 3 = during align; 4 = during color; 5 = during format
+                    var state = 0;
+
+                    while (true)
                     {
-                        if (index > oldIndex)
-                            yield return substring(oldIndex, index - oldIndex);
+                        index++;
+                        if (index == _text.Length)
+                            throw new FormatException("The specified format string is invalid.");
+                        ch = _text[index];
+
+                        if (ch == '}')
+                        {
+                            if (index + 1 == _text.Length || _text[index + 1] != '}')
+                                break;
+                            index++;
+                        }
+
+                        if ((state == 0 || state == 1) && ch >= '0' && ch <= '9')
+                        {
+                            num = (num * 10) + (ch - '0');
+                            state = 1;
+                        }
+                        else if (state == 1 && ch == ',')
+                            state = 2;
+                        else if (state == 2 && ch == '-')
+                        {
+                            leftAlign = true;
+                            state = 3;
+                        }
+                        else if ((state == 2 || state == 3) && ch >= '0' && ch <= '9')
+                        {
+                            align = (align * 10) + (ch - '0');
+                            state = 3;
+                        }
+                        else if ((state == 1 || state == 3) && ch == '/')
+                        {
+                            colorBuilder = new StringBuilder();
+                            state = 4;
+                        }
+                        else if ((state == 1 || state == 3 || state == 4) && ch == ':')
+                        {
+                            formatBuilder = new StringBuilder();
+                            state = 5;
+                        }
+                        else if (state == 4)
+                            colorBuilder.Append(ch);
+                        else if (state == 5)
+                            formatBuilder.Append(ch);
+                        else
+                            throw new FormatException("The specified format string is invalid.");
+                    }
+
+                    if (num >= args.Length)
+                        throw new FormatException("The specified format string references an array index outside the bounds of the supplied arguments.");
+
+                    var formatString = formatBuilder == null ? null : formatBuilder.ToString();
+
+                    if (behavior == (FormatBehavior.Stringify | FormatBehavior.Colored))
+                    {
+                        ConsoleColor color = 0;
+                        if (colorBuilder != null && !Enum.TryParse<ConsoleColor>(colorBuilder.ToString(), true, out color))
+                            throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorBuilder.ToString()));
+
+                        var objFormattable = args[num] as IFormattable;
+                        var result = args[num] as ConsoleColoredString;
+
+                        // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
+                        // otherwise use IFormattable and/or the custom formatter and color the result of that.
+                        if (colorBuilder != null || result == null)
+                            result = new ConsoleColoredString(
+                                formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                                args[num].ToString(),
+                                colorBuilder == null ? implicitColor : color);
+
+                        // Alignment
+                        if (result.Length < align)
+                            result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                        yield return result;
+                    }
+                    else if (behavior == FormatBehavior.Stringify)
+                    {
+                        var objFormattable = args[num] as IFormattable;
+                        var result =
+                            formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                            formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                            args[num].ToString();
+
+                        // Alignment
+                        if (result.Length < align)
+                            result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                        yield return result;
                     }
                     else
-                    {
-                        var implicitColor = _colors[index - 1];
-                        if (index - 1 > oldIndex)
-                            yield return substring(oldIndex, index - oldIndex - 1);
-                        var num = 0;
-                        var leftAlign = false;
-                        var align = 0;
-                        int colorStartIndex = -1, formatStartIndex = -1;
-                        int colorLength = 0, formatLength = 0;
+                        yield return args[num];
 
-                        // Syntax: {num[,alignment][/color][:format]}
-                        // States: 0 = before first digit of num; 1 = during num; 2 = before align; 3 = during align; 4 = during color; 5 = during format
-                        var state = 0;
-
-                        while (true)
-                        {
-                            if (ch == '}')
-                            {
-                                if (index + 1 == _text.Length || _text[index + 1] != '}')
-                                    break;
-                                index++;
-                            }
-
-                            if ((state == 0 || state == 1) && ch >= '0' && ch <= '9')
-                            {
-                                num = (num * 10) + (ch - '0');
-                                state = 1;
-                            }
-                            else if (state == 1 && ch == ',')
-                                state = 2;
-                            else if (state == 2 && ch == '-')
-                            {
-                                leftAlign = true;
-                                state = 3;
-                            }
-                            else if ((state == 2 || state == 3) && ch >= '0' && ch <= '9')
-                            {
-                                align = (align * 10) + (ch - '0');
-                                state = 3;
-                            }
-                            else if ((state == 1 || state == 3) && ch == '/')
-                            {
-                                colorStartIndex = index + 1;
-                                state = 4;
-                            }
-                            else if ((state == 1 || state == 3 || state == 4) && ch == ':')
-                            {
-                                formatStartIndex = index + 1;
-                                state = 5;
-                            }
-                            else if (state == 4)
-                                colorLength++;
-                            else if (state == 5)
-                                formatLength++;
-                            else
-                                throw new FormatException("The specified format string is invalid.");
-
-                            index++;
-                            if (index == _text.Length)
-                                throw new FormatException("The specified format string is invalid.");
-                            ch = _text[index];
-                        }
-
-                        if (num >= args.Length)
-                            throw new FormatException("The specified format string references an array index outside the bounds of the supplied arguments.");
-
-                        if (behavior.HasFlag(FormatBehavior.Stringify))
-                        {
-                            var colorString = colorStartIndex == -1 ? null : _text.Substring(colorStartIndex, colorLength);
-
-                            ConsoleColor color = 0;
-                            // Side-effect: This sets “color”
-                            if (colorString != null && !Enum.TryParse<ConsoleColor>(colorString, true, out color))
-                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorString));
-
-                            var formatString = formatStartIndex == -1 ? null : _text.Substring(formatStartIndex, formatLength);
-
-                            if (behavior.HasFlag(FormatBehavior.Colored))
-                            {
-                                var objFormattable = args[num] as IFormattable;
-                                var result = args[num] as ConsoleColoredString;
-
-                                // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
-                                // otherwise use IFormattable and/or the custom formatter and color the result of that.
-                                if (colorString != null || result == null)
-                                    result = new ConsoleColoredString(
-                                        formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
-                                        formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
-                                        args[num].ToString(),
-                                        colorString == null ? implicitColor : color);
-
-                                // Alignment
-                                if (result.Length < align)
-                                    result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
-                                yield return result;
-                            }
-                            else
-                            {
-                                var objFormattable = args[num] as IFormattable;
-                                var result =
-                                    formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
-                                    formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
-                                    args[num].ToString();
-
-                                // Alignment
-                                if (result.Length < align)
-                                    result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
-                                yield return result;
-                            }
-                        }
-                        else
-                            yield return args[num];
-                    }
                     oldIndex = index + 1;
                 }
                 else if (ch == '}')
                 {
-                    index++;
-                    if (index == _text.Length || ch != '}')
-                        throw new FormatException("The specified format string is invalid.");
-                    yield return substring(oldIndex, index - oldIndex);
+                    yield return substring(oldIndex, index + 1 - oldIndex);
+                    if (index < _text.Length - 1 && _text[index + 1] == '}')
+                        index++;
                     oldIndex = index + 1;
                 }
                 index++;
