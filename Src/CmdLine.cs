@@ -591,8 +591,10 @@ namespace RT.Util.CommandLine
                 getFieldsForHelp(type, out optionalOptions, out mandatoryOptions, out optionalPositional, out mandatoryPositional);
 
                 help.Add(
-                    mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))
-                    .Concat(mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }).Concat(optionalPositional.Select(fld => new { Mandatory = false, Field = fld })))
+                    mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }).Concat(
+                    optionalPositional.Select(fld => new { Mandatory = false, Field = fld }).Concat(
+                    mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(
+                    optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))))
                     .Select(f => " " + f.Field.FormatParameterUsage(f.Mandatory))
                     .JoinColoredString());
 
@@ -603,12 +605,12 @@ namespace RT.Util.CommandLine
                 var anyCommandsWithSuboptions = false;
                 var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int requiredRow = 0;
-                foreach (var f in mandatoryOptions.Select(fld => new { Positional = false, Field = fld }).Concat(mandatoryPositional.Select(fld => new { Positional = true, Field = fld })))
+                foreach (var f in mandatoryPositional.Select(fld => new { Positional = true, Field = fld }).Concat(mandatoryOptions.Select(fld => new { Positional = false, Field = fld })))
                     anyCommandsWithSuboptions |= createParameterHelpRow(ref requiredRow, requiredParamsTable, f.Field, f.Positional, type, applicationTr);
 
                 var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int optionalRow = 0;
-                foreach (var f in optionalOptions.Select(fld => new { Positional = false, Field = fld }).Concat(optionalPositional.Select(fld => new { Positional = true, Field = fld })))
+                foreach (var f in optionalPositional.Select(fld => new { Positional = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Positional = false, Field = fld })))
                     anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type, applicationTr);
 
                 // Word-wrap the usage line
@@ -676,8 +678,16 @@ namespace RT.Util.CommandLine
                 if (positional)
                 {
                     var topRow = row;
+                    var doc = getDocumentation(field, type, applicationTr);
+                    if (doc.HasText)
+                    {
+                        table.SetCell(2, row, doc, colSpan: 4);
+                        row++;
+                    }
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public))
                     {
+                        if (el.IsDefined<UndocumentedAttribute>())
+                            continue;
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
@@ -686,7 +696,7 @@ namespace RT.Util.CommandLine
                         table.SetCell(4, row, getDocumentation(el, type, applicationTr), colSpan: 2);
                         row++;
                     }
-                    table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2, rowSpan: row - topRow);
+                    table.SetCell(0, topRow, cmdName, noWrap: true, colSpan: 2, rowSpan: row - topRow);
                 }
                 // ### ENUM fields, “-x foo” scheme
                 else if (field.IsDefined<OptionAttribute>())
@@ -912,7 +922,7 @@ namespace RT.Util.CommandLine
                         // check that the enum values all have documentation
                         checkDocumentation(rep, enumField, commandLineType, applicationTrType, sensibleDocMethods, true);
 
-                        if (options != null)
+                        if (options != null || positional)
                         {
                             // check that the enum values all have at least one CommandName, and they do not clash
                             var cmdNames = enumField.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
