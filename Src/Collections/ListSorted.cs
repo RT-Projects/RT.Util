@@ -9,6 +9,7 @@ namespace RT.Util.Collections
     ///     Implements a list whose items are always stored in a sorted order. Multiple equal items are allowed, and will
     ///     always be added to the end of a run of equal items. Insertion, and removal are O(N); lookups are O(log N); access
     ///     by index is supported.</summary>
+    [Serializable]
     public sealed class ListSorted<T> : IList<T>
     {
         private List<T> _list;

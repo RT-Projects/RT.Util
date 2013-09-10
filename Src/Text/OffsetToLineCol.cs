@@ -8,6 +8,7 @@ namespace RT.Util.Text
     /// is best suited for multiple lookups on a single fixed string, and is suboptimal for single lookups into many
     /// different strings. All common newline styles are supported.
     /// </summary>
+    [Serializable]
     public sealed class OffsetToLineCol
     {
         private int[] _lineStarts;
