@@ -75,6 +75,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Represents a JSON parsing exception.</summary>
+    [Serializable]
     public class JsonParseException : Exception
     {
         private JsonParserState _state;
@@ -94,6 +95,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Keeps track of the JSON parser state.</summary>
+    [Serializable]
     internal class JsonParserState
     {
         public string Json;
@@ -403,6 +405,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a JSON value (e.g. a boolean, a number, a string, a list, a dictionary, etc.)</summary>
+    [Serializable]
     public abstract class JsonValue : IEquatable<JsonValue>
     {
         /// <summary>
@@ -984,6 +987,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a list of <see cref="JsonValue"/> values.</summary>
+    [Serializable]
     public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         internal List<JsonValue> List;
@@ -1187,6 +1191,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a JSON dictionary (a set of key/value pairs).</summary>
+    [Serializable]
     public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
     {
         internal Dictionary<string, JsonValue> Dict;
@@ -1427,6 +1432,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a string as a JSON value.</summary>
+    [Serializable]
     public sealed class JsonString : JsonValue, IEquatable<JsonString>
     {
         private string _value;
@@ -1700,6 +1706,7 @@ namespace RT.Util.Json
     }
 
     /// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>
+    [Serializable]
     public sealed class JsonBool : JsonValue, IEquatable<JsonBool>
     {
         private bool _value;
@@ -1871,6 +1878,7 @@ namespace RT.Util.Json
     ///     JSON does not define any specific limits for numeric values. This implementation supports integers in the signed
     ///     64-bit range, as well as IEEE 64-bit doubles (except NaNs and infinities). Conversions to/from <c>decimal</c> are
     ///     exact for integers, but can be approximate for non-integers, depending on the exact value.</remarks>
+    [Serializable]
     public sealed class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
         private long _long;
@@ -2133,6 +2141,7 @@ namespace RT.Util.Json
     ///         <item><description>
     ///             This class overloads the <c>==</c> operator such that comparing with <c>null</c> returns
     ///             <c>true</c>.</description></item></list></remarks>
+    [Serializable]
     public sealed class JsonNoValue : JsonValue
     {
         private JsonNoValue() { }
@@ -2235,6 +2244,7 @@ namespace RT.Util.Json
 
     /// <summary>
     ///     Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
+    [Serializable]
     public sealed class JsonSafeValue
     {
         /// <summary>Gets the underlying JSON value associated with this object.</summary>
@@ -2305,6 +2315,7 @@ namespace RT.Util.Json
     /// <summary>
     ///     A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow
     ///     embedding arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.</summary>
+    [Serializable]
     public class JsonRaw : JsonValue
     {
         /// <summary>Gets the raw JSON.</summary>
