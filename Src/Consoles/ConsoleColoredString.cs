@@ -652,39 +652,45 @@ namespace RT.Util.Consoles
 
                     if (behavior == (FormatBehavior.Stringify | FormatBehavior.Colored))
                     {
-                        ConsoleColor color = 0;
-                        if (colorBuilder != null && !Enum.TryParse<ConsoleColor>(colorBuilder.ToString(), true, out color))
-                            throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorBuilder.ToString()));
+                        if (args[num] != null)
+                        {
+                            ConsoleColor color = 0;
+                            if (colorBuilder != null && !Enum.TryParse<ConsoleColor>(colorBuilder.ToString(), true, out color))
+                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorBuilder.ToString()));
 
-                        var objFormattable = args[num] as IFormattable;
-                        var result = args[num] as ConsoleColoredString;
+                            var objFormattable = args[num] as IFormattable;
+                            var result = args[num] as ConsoleColoredString;
 
-                        // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
-                        // otherwise use IFormattable and/or the custom formatter and color the result of that.
-                        if (colorBuilder != null || result == null)
-                            result = new ConsoleColoredString(
-                                formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
-                                formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
-                                args[num].ToString(),
-                                colorBuilder == null ? implicitColor : color);
+                            // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
+                            // otherwise use IFormattable and/or the custom formatter and color the result of that.
+                            if (colorBuilder != null || result == null)
+                                result = new ConsoleColoredString(
+                                    formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                    formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                                    args[num].ToString(),
+                                    colorBuilder == null ? implicitColor : color);
 
-                        // Alignment
-                        if (result.Length < align)
-                            result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
-                        yield return result;
+                            // Alignment
+                            if (result.Length < align)
+                                result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                            yield return result;
+                        }
                     }
                     else if (behavior == FormatBehavior.Stringify)
                     {
-                        var objFormattable = args[num] as IFormattable;
-                        var result =
-                            formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
-                            formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
-                            args[num].ToString();
+                        if (args[num] != null)
+                        {
+                            var objFormattable = args[num] as IFormattable;
+                            var result =
+                                formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
+                                args[num].ToString();
 
-                        // Alignment
-                        if (result.Length < align)
-                            result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
-                        yield return result;
+                            // Alignment
+                            if (result.Length < align)
+                                result = leftAlign ? result + new string(' ', align - result.Length) : new string(' ', align - result.Length) + result;
+                            yield return result;
+                        }
                     }
                     else
                         yield return args[num];
