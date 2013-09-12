@@ -1889,7 +1889,7 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
         public JsonNumber(long value) { _long = value; }
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
-        public JsonNumber(int value) { _double = value; }
+        public JsonNumber(int value) { _long = value; }
         /// <summary>
         ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
         ///     Remarks on <see cref="JsonNumber"/>.</summary>
