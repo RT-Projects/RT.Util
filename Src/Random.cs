@@ -22,8 +22,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Returns a random double between <paramref name="min"/> and <paramref name="max"/>. It is unclear whether <paramref
-        ///     name="min"/> or <paramref name="max"/> can ever be returned.</summary>
+        ///     Returns a random double between <paramref name="min"/> and <paramref name="max"/>. It is unclear whether
+        ///     <paramref name="min"/> or <paramref name="max"/> can ever be returned.</summary>
         public static double NextDouble(double min, double max)
         {
             lock (_rnd)
@@ -44,7 +44,8 @@ namespace RT.Util
                 return _rnd.Next(max);
         }
 
-        /// <summary>Returns a random integer between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive).</summary>
+        /// <summary>
+        ///     Returns a random integer between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive).</summary>
         public static int Next(int min, int max)
         {
             lock (_rnd)
@@ -74,9 +75,15 @@ namespace RT.Util
             return buffer;
         }
 
+        /// <summary>Returns a random non-negative 64-bit integer.</summary>
+        public static long NextLong()
+        {
+            lock (_rnd)
+                return BitConverter.ToInt64(NextBytes(8), 0) & 0x7fffffffffffffff;
+        }
+
         /// <summary>
-        ///     Generates a random string of the specified length, taking characters from the specified arsenal of
-        ///     characters.</summary>
+        ///     Generates a random string of the specified length, taking characters from the specified arsenal of characters.</summary>
         /// <param name="length">
         ///     Length of the string to generate.</param>
         /// <param name="takeCharactersFrom">
@@ -91,7 +98,8 @@ namespace RT.Util
         }
     }
 
-    /// <summary>This class offers static functions which generate cryptographically-strong random numbers in a thread-safe manner.</summary>
+    /// <summary>
+    ///     This class offers static functions which generate cryptographically-strong random numbers in a thread-safe manner.</summary>
     public static class RndCrypto
     {
         /// <summary>This class is documented to be completely thread-safe, so no locking is required.</summary>
@@ -103,7 +111,8 @@ namespace RT.Util
             _rnd.GetBytes(buffer);
         }
 
-        /// <summary>Returns a new array with the specified number of elements, filled with cryptographically-strong random bytes.</summary>
+        /// <summary>
+        ///     Returns a new array with the specified number of elements, filled with cryptographically-strong random bytes.</summary>
         public static byte[] NextBytes(int count)
         {
             var bytes = new byte[count];
@@ -112,8 +121,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Generates a random string of the specified length, taking characters from the specified arsenal of
-        ///     characters.</summary>
+        ///     Generates a random string of the specified length, taking characters from the specified arsenal of characters.</summary>
         /// <param name="length">
         ///     Length of the string to generate.</param>
         /// <param name="takeCharactersFrom">
