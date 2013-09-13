@@ -139,5 +139,18 @@ namespace RT.Util.ExtensionMethods
             var meth = Property.GetGetMethod();
             return meth == null ? Property.GetSetMethod().IsStatic : meth.IsStatic;
         }
+
+        /// <summary>
+        ///     Returns the equivalent of <c>default(T)</c> for a <c>Type</c> object. For reference or nullable types, this is
+        ///     <c>null</c>, while for value types, it is the default value (e.g. <c>false</c>, <c>0</c>, etc.).</summary>
+        /// <param name="type">
+        ///     The type to retrieve the default value for.</param>
+        public static object GetDefaultValue(this Type type)
+        {
+            if (!type.IsValueType)
+                return null;
+            // This works for nullables too
+            return Activator.CreateInstance(type);
+        }
     }
 }

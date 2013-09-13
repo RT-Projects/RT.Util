@@ -91,8 +91,8 @@ namespace RT.Util.Serialization
     ///             more information.</description></item>
     ///         <item><description>
     ///             Classify allows you to pre-/post-process the serialized form and/or the serialized objects. See <see
-    ///             cref="IClassifyObjectProcessor{TElement}"/> and <see cref="IClassifyTypeProcessor{TElement}"/> for more
-    ///             information.</description></item></list>
+    ///             cref="IClassifyObjectProcessor"/>, <see cref="IClassifyObjectProcessor{TElement}"/>, <see
+    ///             cref="IClassifyTypeProcessor"/> and <see cref="IClassifyTypeProcessor{TElement}"/> for more information.</description></item></list>
     ///     <para>
     ///         Limitations:</para>
     ///     <list type="bullet">
@@ -396,10 +396,13 @@ namespace RT.Util.Serialization
             public object Deserialize(Type type, TElement elem, object parentNode)
             {
                 _doAtTheEnd = new List<Action>();
-                var result = CustomCallStack.Run(deserialize(type, elem, null, parentNode));
+                var resultFunc = CustomCallStack.Run(deserialize(type, elem, null, parentNode, _options.EnforceEnums));
                 foreach (var action in _doAtTheEnd)
                     action();
-                return result();
+                var result = resultFunc();
+                if (type.IsEnum && _options.EnforceEnums && !allowEnumValue(type, result))
+                    return type.GetDefaultValue();
+                return result;
             }
 
             // Function to make sure a declassified object is only generated once
@@ -413,7 +416,9 @@ namespace RT.Util.Serialization
                     {
                         retrieved = true;
                         retrievedObj = res();
+                        retrievedObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
                         retrievedObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                        typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.AfterDeserialize(retrievedObj); });
                         typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(retrievedObj, elem); });
                     }
                     return retrievedObj;
@@ -440,12 +445,26 @@ namespace RT.Util.Serialization
                     action();
                 result();
 
+                intoObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.AfterDeserialize(intoObj); });
                 typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(intoObj, elem); });
             }
 
-            // “already” = an object that was already stored in a field that we’re declassifying. We re-use this object in case it has no default constructor
-            private WorkNode<Func<object>> deserialize(Type type, TElement elem, object already, object parentNode)
+            /// <summary>
+            ///     Deserializes an object from its serialized form.</summary>
+            /// <param name="type">
+            ///     The type to deserialize to.</param>
+            /// <param name="elem">
+            ///     The serialized form.</param>
+            /// <param name="already">
+            ///     An object that we may potentially re-use (e.g. the object already stored in the field when deserializing a
+            ///     field inside an outer object).</param>
+            /// <param name="parentNode">
+            ///     The value for a [ClassifyParent] field.</param>
+            /// <param name="enforceEnums">
+            ///     <c>true</c> if [ClassifyEnforceEnums] semantics are in effect for this object.</param>
+            private WorkNode<Func<object>> deserialize(Type type, TElement elem, object already, object parentNode, bool enforceEnums)
             {
                 if (type.IsPointer || type.IsByRef)
                     throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
@@ -507,7 +526,7 @@ namespace RT.Util.Serialization
                 else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    return deserialize(type.GetGenericArguments()[0], elem, already, parentNode);
+                    return deserialize(type.GetGenericArguments()[0], elem, already, parentNode, enforceEnums);
                 }
                 else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
                 {
@@ -532,7 +551,7 @@ namespace RT.Util.Serialization
                         do { i++; }
                         while (i < values.Length && values[i] == null);
                         if (i < genericArguments.Length && i < values.Length)
-                            return deserialize(genericArguments[i], values[i], null, parentNode);
+                            return deserialize(genericArguments[i], values[i], null, parentNode, enforceEnums);
                         var constructor = type.GetConstructor(genericArguments);
                         if (constructor == null)
                             throw new InvalidOperationException("Could not find expected Tuple constructor.");
@@ -587,14 +606,19 @@ namespace RT.Util.Serialization
                                 if (e.MoveNext())
                                 {
                                     keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
-                                    return deserialize(valueType, e.Current.Value, null, parentNode);
+                                    return deserialize(valueType, e.Current.Value, null, parentNode, enforceEnums);
                                 }
 
                                 Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     for (int i = 0; i < keysToAdd.Count; i++)
-                                        addMethod.Invoke(outputDict, new object[] { keysToAdd[i], valuesToAdd[i]() });
+                                    {
+                                        var keyToAdd = keysToAdd[i];
+                                        var valueToAdd = valuesToAdd[i]();
+                                        if (!enforceEnums || ((!keyType.IsEnum || allowEnumValue(keyType, keyToAdd)) && (!valueType.IsEnum || allowEnumValue(valueType, valueToAdd))))
+                                            addMethod.Invoke(outputDict, new object[] { keyToAdd, valueToAdd });
+                                    }
                                 });
                                 return cleanUp(() => outputDict);
                             };
@@ -602,7 +626,7 @@ namespace RT.Util.Serialization
                         else if (type.IsArray)
                         {
                             var input = _format.GetList(elem, null).ToArray();
-                            var outputArray = type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
+                            var outputArray = (already != null && ((Array) already).GetLength(0) == input.Length) ? already : type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
                             var setMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
                             var i = -1;
                             var setters = new Func<object>[input.Length];
@@ -612,11 +636,15 @@ namespace RT.Util.Serialization
                                     setters[i] = prevResult;
                                 i++;
                                 if (i < input.Length)
-                                    return deserialize(valueType, input[i], null, parentNode);
+                                    return deserialize(valueType, input[i], null, parentNode, enforceEnums);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     for (int j = 0; j < setters.Length; j++)
-                                        setMethod.Invoke(outputArray, new object[] { j, setters[j]() });
+                                    {
+                                        var valueToSet = setters[j]();
+                                        if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToSet))
+                                            setMethod.Invoke(outputArray, new object[] { j, valueToSet });
+                                    }
                                 });
                                 return cleanUp(() => outputArray);
                             };
@@ -625,7 +653,7 @@ namespace RT.Util.Serialization
                         {
                             // It’s a list, but not an array or a dictionary.
                             object outputList;
-                            if (already != null)
+                            if (!type.IsArray && already != null)
                             {
                                 outputList = already;
                                 typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Clear").Invoke(outputList, null);
@@ -645,11 +673,15 @@ namespace RT.Util.Serialization
                                     adders.Add(prevResult);
                                 first = false;
                                 if (e.MoveNext())
-                                    return deserialize(valueType, e.Current, null, parentNode);
+                                    return deserialize(valueType, e.Current, null, parentNode, enforceEnums);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     foreach (var adder in adders)
-                                        addMethod.Invoke(outputList, new object[] { adder() });
+                                    {
+                                        var valueToAdd = adder();
+                                        if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
+                                            addMethod.Invoke(outputList, new object[] { valueToAdd });
+                                    }
                                 });
                                 return cleanUp(() => outputList);
                             };
@@ -710,6 +742,7 @@ namespace RT.Util.Serialization
 
                 var fieldsToAssignTo = new List<FieldInfo>();
                 var elementsToAssign = new List<TElement>();
+                var getAttrsFroms = new List<MemberInfo>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -772,6 +805,7 @@ namespace RT.Util.Serialization
                         {
                             fieldsToAssignTo.Add(field);
                             elementsToAssign.Add(value);
+                            getAttrsFroms.Add(getAttrsFrom);
                         }
                     }
                 }
@@ -786,15 +820,40 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < fieldsToAssignTo.Count)
-                        return deserialize(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj);
+                        return deserialize(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj, getAttrsFroms[i].IsDefined<ClassifyEnforceEnumAttribute>());
 
                     _doAtTheEnd.Add(() =>
                     {
                         for (int j = 0; j < fieldsToAssignTo.Count; j++)
-                            fieldsToAssignTo[j].SetValue(intoObj, valuesToAssign[j]());
+                        {
+                            var valueToAssign = valuesToAssign[j]();
+                            if (!fieldsToAssignTo[j].FieldType.IsEnum || !getAttrsFroms[j].IsDefined<ClassifyEnforceEnumAttribute>() || allowEnumValue(fieldsToAssignTo[j].FieldType, valueToAssign))
+                                fieldsToAssignTo[j].SetValue(intoObj, valueToAssign);
+                        }
                     });
                     return new Func<object>(() => intoObj);
                 };
+            }
+
+            private bool allowEnumValue(Type enumType, object enumValue)
+            {
+                if (!enumType.IsDefined<FlagsAttribute>())
+                    return Array.IndexOf(Enum.GetValues(enumType), enumValue) != -1;
+
+                if (Enum.GetUnderlyingType(enumType) == typeof(ulong))
+                {
+                    var ulongValue = (ulong) enumValue;
+                    foreach (ulong allowedValue in Enum.GetValues(enumType))
+                        ulongValue &= ~allowedValue;
+                    return ulongValue == 0;
+                }
+                else    // everything else can be represented in a long
+                {
+                    var longValue = Convert.ToInt64(enumValue);
+                    foreach (var allowedValue in Enum.GetValues(enumType))
+                        longValue &= ~Convert.ToInt64(allowedValue);
+                    return longValue == 0;
+                }
             }
 
             public Func<TElement> Serialize(object saveObject, Type declaredType)
@@ -865,7 +924,9 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
+                saveObject.IfType((IClassifyObjectProcessor obj) => { obj.BeforeSerialize(); });
                 saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeSerialize(); });
+                typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.BeforeSerialize(saveObject); });
                 typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeSerialize(saveObject); });
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
@@ -1216,6 +1277,22 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
+    ///     Contains methods to process an object before or after <see cref="Classify"/> (de)serializes it, irrespective of
+    ///     the serialization format used. To have effect, this interface must be implemented by the object being serialized.</summary>
+    public interface IClassifyObjectProcessor
+    {
+        /// <summary>
+        ///     Pre-processes this object before <see cref="Classify"/> serializes it. This method is automatically invoked by
+        ///     <see cref="Classify"/> and should not be called directly.</summary>
+        void BeforeSerialize();
+
+        /// <summary>
+        ///     Post-processes this object after <see cref="Classify"/> has restored it from serialized form. This method is
+        ///     automatically invoked by <see cref="Classify"/> and should not be called directly.</summary>
+        void AfterDeserialize();
+    }
+
+    /// <summary>
     ///     Contains methods to process an object and/or the associated serialized form before or after <see cref="Classify"/>
     ///     (de)serializes it. To have effect, this interface must be implemented by a class derived from <see
     ///     cref="ClassifyTypeOptions"/> and associated with a type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
@@ -1260,6 +1337,27 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
+    ///     Contains methods to process an object before or after <see cref="Classify"/> (de)serializes it. To have effect,
+    ///     this interface must be implemented by a class derived from <see cref="ClassifyTypeOptions"/> and associated with a
+    ///     type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
+    public interface IClassifyTypeProcessor
+    {
+        /// <summary>
+        ///     Pre-processes the object before <see cref="Classify"/> serializes it. This method is automatically invoked by
+        ///     <see cref="Classify"/> and should not be called directly.</summary>
+        /// <param name="obj">
+        ///     The object about to be serialized.</param>
+        void BeforeSerialize(object obj);
+
+        /// <summary>
+        ///     Post-processes an object after <see cref="Classify"/> has restored it from serialized form. This method is
+        ///     automatically invoked by <see cref="Classify"/> and should not be called directly.</summary>
+        /// <param name="obj">
+        ///     The deserialized object.</param>
+        void AfterDeserialize(object obj);
+    }
+
+    /// <summary>
     ///     Implement this interface in a subclass of <see cref="ClassifyTypeOptions"/> to specify how to substitute a type
     ///     for another type during Classify.</summary>
     /// <typeparam name="TTrue">
@@ -1292,6 +1390,12 @@ namespace RT.Util.Serialization
         ///     cref="ClassifyFollowIdAttribute"/> attribute. Inferred automatically from filename if null.</summary>
         public string BaseDir = null;
 
+        /// <summary>
+        ///     This option is only relevant if deserializing an enum value or a collection or dictionary involving enum keys
+        ///     or values. If <c>true</c>, only enum values declared in the enum type are allowed. See <see
+        ///     cref="ClassifyEnforceEnumAttribute"/> for details.</summary>
+        public bool EnforceEnums = false;
+
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
 
         /// <summary>
@@ -1302,7 +1406,7 @@ namespace RT.Util.Serialization
         ///     Options that apply to the <paramref name="type"/>. To enable type substitution, pass an instance of a class
         ///     that implements <see cref="IClassifySubstitute{TTrue,TSubstitute}"/>. To use pre-/post-processing of the
         ///     object or its serialized form, pass an instance of a class that implements <see
-        ///     cref="IClassifyTypeProcessor{TElement}"/>.</param>
+        ///     cref="IClassifyTypeProcessor"/> or <see cref="IClassifyTypeProcessor{TElement}"/>.</param>
         /// <returns>
         ///     Itself.</returns>
         public ClassifyOptions AddTypeOptions(Type type, ClassifyTypeOptions options)
@@ -1329,8 +1433,9 @@ namespace RT.Util.Serialization
     ///         Derive from this type and implement <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> to enable type
     ///         substitution during Classify.</para>
     ///     <para>
-    ///         Derive from this type and implement <see cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the
-    ///         object or its serialized form before/after Classify. (You can also implement <see
+    ///         Derive from this type and implement <see cref="IClassifyTypeProcessor"/> or <see
+    ///         cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the object or its serialized form before/after
+    ///         Classify. (You can also implement <see cref="IClassifyObjectProcessor"/> or <see
     ///         cref="IClassifyObjectProcessor{TElement}"/> on the serialized type itself.)</para>
     ///     <para>
     ///         Intended use is to declare a class derived from <see cref="ClassifyTypeOptions"/> and pass an instance of it
@@ -1440,6 +1545,16 @@ namespace RT.Util.Serialization
     ///     value assigned by the object’s default constructor.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyNotNullAttribute : Attribute { }
+
+    /// <summary>
+    ///     To be used on a field or automatically-implemented property of an enum type or a collection involving an enum
+    ///     type. Specifies that Classify shall not allow integer values that are not explicitly declared in the relevant enum
+    ///     type. If the serialized form is such an integer, fields or automatically-implemented properties of an enum type
+    ///     are instead left at the default value assigned by the object’s default constructor, while in collections, the
+    ///     relevant element is omitted (changing the size of the collection). If the enum type has the [Flags] attribute,
+    ///     bitwise combinations of the declared values are allowed.</summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public sealed class ClassifyEnforceEnumAttribute : Attribute { }
 
     /// <summary>
     ///     When reconstructing an interconnected graph of objects using <see cref="Classify"/>, a field or

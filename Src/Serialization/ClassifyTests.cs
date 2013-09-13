@@ -1635,5 +1635,247 @@ namespace RT.Util.Serialization
             Assert.IsNull(obj.NullableString);
             Assert.IsNotNull(obj.NonNullableString);
         }
+
+        private enum nonFlagsEnum { Zero = 0, One = 1, Two = 2 }
+
+        [Flags]
+        private enum flagsEnum { One = 1, Two = 2 }
+
+        private class enforceEnumsTester
+        {
+            public nonFlagsEnum NonFlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public nonFlagsEnum NonFlagsEnforce;
+            public flagsEnum FlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public flagsEnum FlagsEnforce;
+        }
+
+        private class enforceEnumsArraysTester
+        {
+            public nonFlagsEnum[] NonFlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public nonFlagsEnum[] NonFlagsEnforce;
+            public flagsEnum[] FlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public flagsEnum[] FlagsEnforce;
+        }
+
+        private class enforceEnumsListsTester
+        {
+            public List<nonFlagsEnum> NonFlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public List<nonFlagsEnum> NonFlagsEnforce;
+            public List<flagsEnum> FlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public List<flagsEnum> FlagsEnforce;
+        }
+
+        private class enforceEnumsDictionariesTester
+        {
+            public Dictionary<nonFlagsEnum, string> NonFlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public Dictionary<nonFlagsEnum, string> NonFlagsEnforce;
+            public Dictionary<flagsEnum, string> FlagsNonEnforce;
+            [ClassifyEnforceEnum]
+            public Dictionary<flagsEnum, string> FlagsEnforce;
+        }
+
+        [Test]
+        public void TestEnforceEnumsFields()
+        {
+            nonFlagsEnum[] allowedNonFlagsValues = new[] { 0, 1, 2 }.Select(i => (nonFlagsEnum) i).ToArray();
+            flagsEnum[] allowedFlagsValues = new[] { 0, 1, 2, 3 }.Select(i => (flagsEnum) i).ToArray();
+
+            foreach (var enforce in new[] { false, true })
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    var iFlags = (flagsEnum) i;
+                    var iNonFlags = (nonFlagsEnum) i;
+
+                    Assert.AreEqual(
+                        allowedFlagsValues.Contains(iFlags) || !enforce ? iFlags : 0,
+                        roundTrip(iFlags, enforce));
+                    Assert.AreEqual(
+                        allowedNonFlagsValues.Contains(iNonFlags) || !enforce ? iNonFlags : 0,
+                        roundTrip(iNonFlags, enforce));
+
+                    var test1 = roundTrip(new enforceEnumsTester
+                    {
+                        FlagsEnforce = iFlags,
+                        FlagsNonEnforce = iFlags,
+                        NonFlagsEnforce = iNonFlags,
+                        NonFlagsNonEnforce = iNonFlags
+                    }, enforce);
+                    Assert.AreEqual(allowedFlagsValues.Contains(iFlags) ? iFlags : 0, test1.FlagsEnforce);
+                    Assert.AreEqual(iFlags, test1.FlagsNonEnforce);
+                    Assert.AreEqual(allowedNonFlagsValues.Contains(iNonFlags) ? iNonFlags : 0, test1.NonFlagsEnforce);
+                    Assert.AreEqual(iNonFlags, test1.NonFlagsNonEnforce);
+                }
+
+                var test2 = roundTrip(new enforceEnumsArraysTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
+                }, enforce);
+                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
+                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
+                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                var test3 = roundTrip(new enforceEnumsListsTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
+                }, enforce);
+                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
+                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
+                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                var test4 = roundTrip(new enforceEnumsDictionariesTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
+                }, enforce);
+                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
+                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two"));
+                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
+                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
+            }
+        }
+
+        private class aipEnforceEnumsTester
+        {
+            public nonFlagsEnum NonFlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public nonFlagsEnum NonFlagsEnforce { get; set; }
+            public flagsEnum FlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public flagsEnum FlagsEnforce { get; set; }
+        }
+
+        private class aipEnforceEnumsArraysTester
+        {
+            public nonFlagsEnum[] NonFlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public nonFlagsEnum[] NonFlagsEnforce { get; set; }
+            public flagsEnum[] FlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public flagsEnum[] FlagsEnforce { get; set; }
+        }
+
+        private class aipEnforceEnumsListsTester
+        {
+            public List<nonFlagsEnum> NonFlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public List<nonFlagsEnum> NonFlagsEnforce { get; set; }
+            public List<flagsEnum> FlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public List<flagsEnum> FlagsEnforce { get; set; }
+        }
+
+        private class aipEnforceEnumsDictionariesTester
+        {
+            public Dictionary<nonFlagsEnum, string> NonFlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public Dictionary<nonFlagsEnum, string> NonFlagsEnforce { get; set; }
+            public Dictionary<flagsEnum, string> FlagsNonEnforce { get; set; }
+            [ClassifyEnforceEnum]
+            public Dictionary<flagsEnum, string> FlagsEnforce { get; set; }
+        }
+
+        [Test]
+        public void TestEnforceEnumsProperties()
+        {
+            nonFlagsEnum[] allowedNonFlagsValues = new[] { 0, 1, 2 }.Select(i => (nonFlagsEnum) i).ToArray();
+            flagsEnum[] allowedFlagsValues = new[] { 0, 1, 2, 3 }.Select(i => (flagsEnum) i).ToArray();
+
+            foreach (var enforce in new[] { false, true })
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    var iFlags = (flagsEnum) i;
+                    var iNonFlags = (nonFlagsEnum) i;
+
+                    Assert.AreEqual(
+                        allowedFlagsValues.Contains(iFlags) || !enforce ? iFlags : 0,
+                        roundTrip(iFlags, enforce));
+                    Assert.AreEqual(
+                        allowedNonFlagsValues.Contains(iNonFlags) || !enforce ? iNonFlags : 0,
+                        roundTrip(iNonFlags, enforce));
+
+                    var test1 = roundTrip(new aipEnforceEnumsTester
+                    {
+                        FlagsEnforce = iFlags,
+                        FlagsNonEnforce = iFlags,
+                        NonFlagsEnforce = iNonFlags,
+                        NonFlagsNonEnforce = iNonFlags
+                    }, enforce);
+                    Assert.AreEqual(allowedFlagsValues.Contains(iFlags) ? iFlags : 0, test1.FlagsEnforce);
+                    Assert.AreEqual(iFlags, test1.FlagsNonEnforce);
+                    Assert.AreEqual(allowedNonFlagsValues.Contains(iNonFlags) ? iNonFlags : 0, test1.NonFlagsEnforce);
+                    Assert.AreEqual(iNonFlags, test1.NonFlagsNonEnforce);
+                }
+
+                var test2 = roundTrip(new aipEnforceEnumsArraysTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
+                }, enforce);
+                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
+                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
+                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                var test3 = roundTrip(new aipEnforceEnumsListsTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
+                }, enforce);
+                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
+                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
+                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                var test4 = roundTrip(new aipEnforceEnumsDictionariesTester
+                {
+                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
+                }, enforce);
+                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
+                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+
+                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two"));
+                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
+                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
+            }
+        }
+
+        private T roundTrip<T>(T testObject, bool enforce)
+        {
+            return ClassifyJson.Deserialize<T>(ClassifyJson.Serialize(testObject), new ClassifyOptions { EnforceEnums = enforce });
+        }
     }
 }
