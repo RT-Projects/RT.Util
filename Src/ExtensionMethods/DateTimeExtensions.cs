@@ -15,6 +15,8 @@ namespace RT.Util.ExtensionMethods
         CompactReadable,
         /// <summary>A delimited, readable format without spaces usable in filenames. Not ISO-8601, and not supported by <see cref="DateTimeExtensions.TryParseIso"/>. Example: <c>2007.12.31-21.15</c>.</summary>
         FilenameReadable,
+        /// <summary>The standard ISO-8601 format. Example: <c>2007-12-31T21:15</c>.</summary>
+        Iso8601
     }
 
     /// <summary>Defines a precision for a date/time stamp.</summary>
@@ -116,6 +118,7 @@ namespace RT.Util.ExtensionMethods
                 case IsoDateFormat.Compact: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: 'T', includeTimezone: includeTimezone);
                 case IsoDateFormat.CompactReadable: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: '-', includeTimezone: includeTimezone);
                 case IsoDateFormat.FilenameReadable: return datetime.ToIsoStringCustom(precision, charInDate: '.', charInTime: '.', charBetween: '-', includeTimezone: includeTimezone);
+                case IsoDateFormat.Iso8601: return datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: 'T', includeTimezone: includeTimezone);
                 default: throw new InternalErrorException("usbwdg");
             }
         }
