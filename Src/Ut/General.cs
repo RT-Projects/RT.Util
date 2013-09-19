@@ -92,8 +92,8 @@ namespace RT.Util
         ///             For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and
         ///             release.</description></item>
         ///         <item><description>
-        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a key-down
-        ///             (false) or only a key-up (true).</description></item></list></remarks>
+        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a
+        ///             key-down (false) or only a key-up (true).</description></item></list></remarks>
         /// <example>
         ///     <para>
         ///         The following example demonstrates how to use this method to send the key combination Win+R:</para>
@@ -234,52 +234,52 @@ namespace RT.Util
         public static bool Shift { get { return Control.ModifierKeys.HasFlag(Keys.Shift); } }
 
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action Lambda(Action method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action<T> Lambda<T>(Action<T> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action<T1, T2> Lambda<T1, T2>(Action<T1, T2> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action<T1, T2, T3> Lambda<T1, T2, T3>(Action<T1, T2, T3> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action<T1, T2, T3, T4> Lambda<T1, T2, T3, T4>(Action<T1, T2, T3, T4> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Action<T1, T2, T3, T4, T5> Lambda<T1, T2, T3, T4, T5>(Action<T1, T2, T3, T4, T5> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<TResult> Lambda<TResult>(Func<TResult> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<T, TResult> Lambda<T, TResult>(Func<T, TResult> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<T1, T2, TResult> Lambda<T1, T2, TResult>(Func<T1, T2, TResult> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<T1, T2, T3, TResult> Lambda<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<T1, T2, T3, T4, TResult> Lambda<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> method) { return method; }
         /// <summary>
-        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make any
-        ///     difference.</summary>
+        ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
+        ///     any difference.</summary>
         public static Func<T1, T2, T3, T4, T5, TResult> Lambda<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> method) { return method; }
 
         /// <summary>Allows the use of type inference when creating .NET’s KeyValuePair&lt;TK,TV&gt;.</summary>
@@ -367,29 +367,29 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 32-bit
-        ///     integer.</summary>
+        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid
+        ///     32-bit integer.</summary>
         public static int? ParseInt32(string value) { int result; return int.TryParse(value, out result) ? (int?) result : null; }
         /// <summary>
-        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 64-bit
-        ///     integer.</summary>
+        ///     Returns the integer represented by the specified string, or null if the string does not represent a valid
+        ///     64-bit integer.</summary>
         public static long? ParseInt64(string value) { long result; return long.TryParse(value, out result) ? (long?) result : null; }
         /// <summary>
-        ///     Returns the floating-point number represented by the specified string, or null if the string does not represent a
-        ///     valid double-precision floating-point number.</summary>
+        ///     Returns the floating-point number represented by the specified string, or null if the string does not
+        ///     represent a valid double-precision floating-point number.</summary>
         public static double? ParseDouble(string value) { double result; return double.TryParse(value, out result) ? (double?) result : null; }
         /// <summary>
-        ///     Returns the date/time stamp represented by the specified string, or null if the string does not represent a valid
-        ///     date/time stamp.</summary>
+        ///     Returns the date/time stamp represented by the specified string, or null if the string does not represent a
+        ///     valid date/time stamp.</summary>
         public static DateTime? ParseDateTime(string value) { DateTime result; return DateTime.TryParse(value, out result) ? (DateTime?) result : null; }
         /// <summary>
-        ///     Returns the enum value represented by the specified string, or null if the string does not represent a valid enum
-        ///     value.</summary>
+        ///     Returns the enum value represented by the specified string, or null if the string does not represent a valid
+        ///     enum value.</summary>
         public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct { T result; return Enum.TryParse<T>(value, ignoreCase, out result) ? (T?) result : null; }
 
         /// <summary>
-        ///     Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the specified
-        ///     method.</summary>
+        ///     Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the
+        ///     specified method.</summary>
         /// <param name="firstArgument">
         ///     Object to call the method on, or null for static methods.</param>
         /// <param name="method">
@@ -478,8 +478,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action
-        ///     otherwise.</summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
         /// <typeparam name="TObj">
         ///     Static type of the object to examine.</typeparam>
         /// <typeparam name="TTest1">
@@ -507,8 +506,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action
-        ///     otherwise.</summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
         /// <typeparam name="TObj">
         ///     Static type of the object to examine.</typeparam>
         /// <typeparam name="TTest1">
@@ -542,8 +540,7 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action
-        ///     otherwise.</summary>
+        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
         /// <typeparam name="TObj">
         ///     Static type of the object to examine.</typeparam>
         /// <typeparam name="TTest1">
@@ -757,8 +754,8 @@ namespace RT.Util
         /// <param name="action">
         ///     The action to be attempted and possibly retried.</param>
         /// <param name="maximum">
-        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to the
-        ///     caller of this method. Use null to retry indefinitely.</param>
+        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to
+        ///     the caller of this method. Use null to retry indefinitely.</param>
         /// <param name="onSharingVio">
         ///     Action to execute when a sharing violation does occur (is called before the waiting).</param>
         public static void WaitSharingVio(Action action, TimeSpan? maximum = null, Action onSharingVio = null)
@@ -767,13 +764,13 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Executes the specified function. If the function results in a file sharing violation exception, the function will
-        ///     be repeatedly retried after a short delay (which increases after every failed attempt).</summary>
+        ///     Executes the specified function. If the function results in a file sharing violation exception, the function
+        ///     will be repeatedly retried after a short delay (which increases after every failed attempt).</summary>
         /// <param name="func">
         ///     The function to be attempted and possibly retried.</param>
         /// <param name="maximum">
-        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to the
-        ///     caller of this method. Use null to retry indefinitely.</param>
+        ///     Maximum amount of time to keep retrying for. When expired, any sharing violation exception will propagate to
+        ///     the caller of this method. Use null to retry indefinitely.</param>
         /// <param name="onSharingVio">
         ///     Action to execute when a sharing violation does occur (is called before the waiting).</param>
         public static T WaitSharingVio<T>(Func<T> func, TimeSpan? maximum = null, Action onSharingVio = null)
@@ -813,147 +810,9 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Given a set of values and a function that returns true when given this set, will efficiently remove items from
-        ///     this set which are not essential for making the function return true. The relative order of items is preserved.
-        ///     This method cannot generally guarantee that the result is optimal, but for some types of functions the result will
-        ///     be guaranteed optimal.</summary>
-        /// <typeparam name="T">
-        ///     Type of the values in the set.</typeparam>
-        /// <param name="items">
-        ///     The set of items to reduce.</param>
-        /// <param name="test">
-        ///     The function that examines the set. Must always return the same value for the same set.</param>
-        /// <param name="breadthFirst">
-        ///     A value selecting a breadth-first or a depth-first approach. Depth-first is best at quickly locating a single
-        ///     value which will be present in the final required set. Breadth-first is best at quickly placing a lower bound on
-        ///     the total number of individual items in the required set.</param>
-        /// <param name="skipConsistencyTest">
-        ///     When the function is particularly slow, you might want to set this to true to disable calls which are not required
-        ///     to reduce the set and are only there to ensure that the function behaves consistently.</param>
-        /// <returns>
-        ///     A hopefully smaller set of values that still causes the function to return true.</returns>
-        public static IEnumerable<T> ReduceRequiredSet<T>(IEnumerable<T> items, Func<ReduceRequiredSetState<T>, bool> test, bool breadthFirst = false, bool skipConsistencyTest = false)
-        {
-            var state = new ReduceRequiredSetStateInternal<T>(items);
-
-            if (!skipConsistencyTest)
-                if (!test(state))
-                    throw new Exception("The function does not return true for the original set.");
-
-            while (state.AnyPartitions)
-            {
-                if (!skipConsistencyTest)
-                    if (!test(state))
-                        throw new Exception("The function is not consistently returning the same value for the same set, or there is an internal error in this algorithm.");
-
-                var rangeToSplit = breadthFirst ? state.LargestRange : state.SmallestRange;
-                int mid = (rangeToSplit.Item1 + rangeToSplit.Item2) / 2;
-                var split1 = Tuple.Create(rangeToSplit.Item1, mid);
-                var split2 = Tuple.Create(mid + 1, rangeToSplit.Item2);
-
-                state.ApplyTemporarySplit(rangeToSplit, split1);
-                if (test(state))
-                {
-                    state.RemoveRange(rangeToSplit);
-                    state.AddRange(split1);
-                    continue;
-                }
-                state.ApplyTemporarySplit(rangeToSplit, split2);
-                if (test(state))
-                {
-                    state.RemoveRange(rangeToSplit);
-                    state.AddRange(split2);
-                    continue;
-                }
-                state.ResetTemporarySplit();
-                state.RemoveRange(rangeToSplit);
-                state.AddRange(split1);
-                state.AddRange(split2);
-            }
-
-            state.ResetTemporarySplit();
-            return state.SetToTest;
-        }
-
-        /// <summary>Encapsulates the state of the <see cref="Ut.ReduceRequiredSet"/> algorithm and exposes statistics about it.</summary>
-        public abstract class ReduceRequiredSetState<T>
-        {
-            /// <summary>Internal; do not use.</summary>
-            protected List<Tuple<int, int>> Ranges;
-            /// <summary>Internal; do not use.</summary>
-            protected List<T> Items;
-            /// <summary>Internal; do not use.</summary>
-            protected Tuple<int, int> ExcludedRange, IncludedRange;
-
-            /// <summary>
-            ///     Enumerates every item that is known to be in the final required set. "Definitely" doesn't mean that there
-            ///     exists no subset resulting in "true" without these members. Rather, it means that the algorithm will
-            ///     definitely return these values, and maybe some others too.</summary>
-            public IEnumerable<T> DefinitelyRequired { get { return Ranges.Where(r => r.Item1 == r.Item2).Select(r => Items[r.Item1]); } }
-            /// <summary>
-            ///     Gets the current number of partitions containing uncertain items. The more of these, the slower the algorithm
-            ///     will converge from here onwards.</summary>
-            public int PartitionsCount { get { return Ranges.Count - Ranges.Count(r => r.Item1 == r.Item2); } }
-            /// <summary>
-            ///     Gets the number of items in the smallest partition. This is the value that is halved upon a successful
-            ///     depth-first iteration.</summary>
-            public int SmallestPartitionSize { get { return Ranges.Where(r => r.Item1 != r.Item2).Min(r => r.Item2 - r.Item1 + 1); } }
-            /// <summary>
-            ///     Gets the number of items in the largest partition. This is the value that is halved upon a successful
-            ///     breadth-first iteration.</summary>
-            public int LargestPartitionSize { get { return Ranges.Max(r => r.Item2 - r.Item1 + 1); } }
-            /// <summary>Gets the total number of items about which the algorithm is currently undecided.</summary>
-            public int ItemsRemaining { get { return Ranges.Where(r => r.Item1 != r.Item2).Sum(r => r.Item2 - r.Item1 + 1); } }
-
-            /// <summary>Gets the set of items for which the function should be evaluated in the current step.</summary>
-            public IEnumerable<T> SetToTest
-            {
-                get
-                {
-                    var ranges = Ranges.AsEnumerable();
-                    if (ExcludedRange != null)
-                        ranges = ranges.Where(r => r != ExcludedRange);
-                    if (IncludedRange != null)
-                        ranges = ranges.Concat(IncludedRange);
-                    return ranges
-                        .SelectMany(range => Enumerable.Range(range.Item1, range.Item2 - range.Item1 + 1))
-                        .Order()
-                        .Select(i => Items[i]);
-                }
-            }
-        }
-
-        internal sealed class ReduceRequiredSetStateInternal<T> : ReduceRequiredSetState<T>
-        {
-            public ReduceRequiredSetStateInternal(IEnumerable<T> items)
-            {
-                Items = items.ToList();
-                Ranges = new List<Tuple<int, int>>();
-                Ranges.Add(Tuple.Create(0, Items.Count - 1));
-            }
-
-            public bool AnyPartitions { get { return Ranges.Any(r => r.Item1 != r.Item2); } }
-            public Tuple<int, int> LargestRange { get { return Ranges.MaxElement(t => t.Item2 - t.Item1); } }
-            public Tuple<int, int> SmallestRange { get { return Ranges.Where(r => r.Item1 != r.Item2).MinElement(t => t.Item2 - t.Item1); } }
-
-            public void AddRange(Tuple<int, int> range) { Ranges.Add(range); }
-            public void RemoveRange(Tuple<int, int> range) { if (!Ranges.Remove(range)) throw new InvalidOperationException("Ut.ReduceRequiredSet has a bug. Code: 826432"); }
-
-            public void ResetTemporarySplit()
-            {
-                ExcludedRange = IncludedRange = null;
-            }
-            public void ApplyTemporarySplit(Tuple<int, int> rangeToSplit, Tuple<int, int> splitRange)
-            {
-                ExcludedRange = rangeToSplit;
-                IncludedRange = splitRange;
-            }
-        }
-
-        /// <summary>
         ///     Queues the specified action to be executed on the thread pool. This is just a shortcut for
-        ///     <c>ThreadPool.QueueUserWorkItem</c>, and also does not require the method to accept a parameter (which has been
-        ///     useless ever since C# gained support for lambdas).</summary>
+        ///     <c>ThreadPool.QueueUserWorkItem</c>, and also does not require the method to accept a parameter (which has
+        ///     been useless ever since C# gained support for lambdas).</summary>
         public static void ThreadPool(Action task)
         {
             System.Threading.ThreadPool.QueueUserWorkItem(_ => task());
