@@ -225,6 +225,7 @@
     <Compile Include="Ut\General.cs" />
     <Compile Include="Ut\InternalError.cs" />
     <Compile Include="Random.cs" />
+    <Compile Include="Ut\ReduceRequiredSet.cs" />
     <Compile Include="Ut\RunMain.cs" />
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Waiter.cs" />

@@ -749,6 +749,25 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Executes the specified function with the specified argument.</summary>
+        /// <typeparam name="TSource">
+        ///     Type of the argument to the function.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result of the function.</typeparam>
+        /// <param name="source">
+        ///     The argument to the function.</param>
+        /// <param name="func">
+        ///     The function to execute.</param>
+        /// <returns>
+        ///     The result of the function.</returns>
+        public static TResult Apply<TSource, TResult>(this TSource source, Func<TSource, TResult> func)
+        {
+            if (func == null)
+                throw new ArgumentNullException("func");
+            return func(source);
+        }
+
+        /// <summary>
         ///     Executes the specified action. If the action results in a file sharing violation exception, the action will be
         ///     repeatedly retried after a short delay (which increases after every failed attempt).</summary>
         /// <param name="action">
