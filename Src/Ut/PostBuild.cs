@@ -120,6 +120,7 @@ namespace RT.Util
                                 {
                                     var constructor = (ConstructorInfo) instructions[i].Operand;
                                     string wrong = null;
+                                    string wrongException = "ArgumentNullException";
                                     if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
                                         if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value)
                                             if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 1].Operand))
@@ -128,17 +129,30 @@ namespace RT.Util
                                         if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value && instructions[i - 2].OpCode.Value == OpCodes.Ldstr.Value)
                                             if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 2].Operand))
                                                 wrong = (string) instructions[i - 2].Operand;
+                                    if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string), typeof(string)))
+                                        if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value)
+                                            if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 1].Operand))
+                                            {
+                                                wrong = (string) instructions[i - 1].Operand;
+                                                wrongException = "ArgumentException";
+                                            }
 
                                     if (wrong != null)
                                     {
                                         rep.Error(
-                                            @"The method ""{0}.{1}"" constructs an ArgumentNullException with a parameter name ""{2}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrong),
+                                            @"The method ""{0}.{1}"" constructs an {2} with a parameter name ""{3}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrongException, wrong),
                                             meth.DeclaringType.IsValueType ? "struct " : "class " + genericsConvert(meth.DeclaringType.Name),
                                             genericsConvert(meth.Name),
-                                            "ArgumentNullException",
+                                            wrongException,
                                             wrong
                                         );
                                     }
+
+                                    if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
+                                        rep.Error(@"The method ""{0}.{1}"" uses the single-argument constructor to ArgumentException. Please use the two-argument constructor and specify the parameter name. If there is no parameter involved, use InvalidOperationException.".Fmt(type.FullName, meth.Name),
+                                            meth.DeclaringType.IsValueType ? "struct " : "class " + genericsConvert(meth.DeclaringType.Name),
+                                            genericsConvert(meth.Name),
+                                            "ArgumentException");
                                 }
                         });
 
