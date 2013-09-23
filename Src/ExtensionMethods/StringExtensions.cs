@@ -293,11 +293,14 @@ namespace RT.Util.ExtensionMethods
         ///     Data to interpret as UTF-8 text.</param>
         /// <returns>
         ///     A string containing the characters represented by the UTF-8-encoded input.</returns>
-        public static string FromUtf8(this byte[] input)
+        public static string FromUtf8(this byte[] input, bool removeBom = false)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            return Encoding.UTF8.GetString(input);
+            var result = Encoding.UTF8.GetString(input);
+            if (removeBom && result.StartsWith("\ufeff"))
+                return result.Substring(1);
+            return result;
         }
 
         /// <summary>
