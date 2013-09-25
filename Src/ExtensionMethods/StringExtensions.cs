@@ -291,6 +291,8 @@ namespace RT.Util.ExtensionMethods
         ///     Converts the specified raw UTF-8 data to a string.</summary>
         /// <param name="input">
         ///     Data to interpret as UTF-8 text.</param>
+        /// <param name="removeBom">
+        ///     <c>true</c> to remove the first character if it is a UTF-8 BOM.</param>
         /// <returns>
         ///     A string containing the characters represented by the UTF-8-encoded input.</returns>
         public static string FromUtf8(this byte[] input, bool removeBom = false)
