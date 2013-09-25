@@ -965,7 +965,7 @@ namespace RT.Util.Json
                     var name = m.Groups["placeholder"].Value;
                     var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].GetString() == name);
                     if (index == -1)
-                        throw new ArgumentException("namevalues does not contain a value named \"{0}\".".Fmt(name));
+                        throw new InvalidOperationException("namevalues does not contain a value named \"{0}\".".Fmt(name));
                     var raw = namevalues[2 * index + 1] as JsonRaw;
                     var value = raw == null ? JsonValue.ToString(namevalues[2 * index + 1]) : raw.Raw;
                     if (raw != null) hadRaw = true;

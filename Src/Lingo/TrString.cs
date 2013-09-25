@@ -140,7 +140,7 @@ namespace RT.Util.Lingo
                             isInteger = true;
                         }
                         else
-                            throw new ArgumentException("Argument #{0} was expected to be a number, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "nums");
+                            throw new ArgumentException("Argument #{0} was expected to be a number, but a {1} was given.".Fmt(i, args[i].GetType().FullName), "args");
 
                         if (isInteger)
                             n += ns.GetString(numI) * m;

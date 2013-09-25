@@ -18,7 +18,7 @@ namespace RT.Util.ExtensionMethods
         public static int Clip(this int value, int minimumValue, int maximumValue)
         {
             if (minimumValue > maximumValue)
-                throw new ArgumentException("Clip: minimumValue is greater than maximumValue");
+                throw new ArgumentException("Clip: minimumValue cannot be greater than maximumValue.", "maximumValue");
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
 
@@ -35,7 +35,7 @@ namespace RT.Util.ExtensionMethods
         public static double Clip(this double value, double minimumValue, double maximumValue)
         {
             if (minimumValue > maximumValue)
-                throw new ArgumentException("Clip: minimumValue is greater than maximumValue");
+                throw new ArgumentException("Clip: minimumValue cannot be greater than maximumValue.", "maximumValue");
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
 
@@ -52,7 +52,7 @@ namespace RT.Util.ExtensionMethods
         public static decimal Clip(this decimal value, decimal minimumValue, decimal maximumValue)
         {
             if (minimumValue > maximumValue)
-                throw new ArgumentException("Clip: minimumValue is greater than maximumValue");
+                throw new ArgumentException("Clip: minimumValue cannot be greater than maximumValue.", "maximumValue");
             return value <= minimumValue ? minimumValue : value >= maximumValue ? maximumValue : value;
         }
 

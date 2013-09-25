@@ -461,7 +461,7 @@ namespace RT.Util
             if (node == null)
                 throw new ArgumentNullException("node");
             if (wrapWidth <= 0)
-                throw new ArgumentException("Wrap width must be greater than zero.");
+                throw new ArgumentException("Wrap width must be greater than zero.", "wrapWidth");
             var data = new cuteWalkData<TState>
             {
                 AtStartOfLine = true,

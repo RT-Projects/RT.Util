@@ -136,7 +136,7 @@ namespace RT.Util.ExtensionMethods
             IsoDatePrecision minPrecision = IsoDatePrecision.Days, IsoDatePrecision maxPrecision = IsoDatePrecision.Full, bool includeTimezone = false)
         {
             if (minPrecision > maxPrecision)
-                throw new ArgumentException("Minimum precision must not exceed maximum precision.");
+                throw new ArgumentException("Minimum precision must not exceed maximum precision.", "maxPrecision");
             IsoDatePrecision precision;
             if (datetime.Nanosecond() % 1000000 != 0 && maxPrecision > IsoDatePrecision.Milliseconds)
                 precision = IsoDatePrecision.Full;

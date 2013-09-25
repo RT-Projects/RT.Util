@@ -1097,7 +1097,7 @@ namespace RT.Util.Xml
             var substInterfaces = GetType().GetInterfaces()
                 .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IXmlClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
             if (substInterfaces.Length > 1)
-                throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName));
+                throw new ArgumentException("The type {0} implements more than one IXmlClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName), "type");
             else if (substInterfaces.Length == 1)
             {
                 _substituteType = substInterfaces[0].GetGenericArguments()[1];

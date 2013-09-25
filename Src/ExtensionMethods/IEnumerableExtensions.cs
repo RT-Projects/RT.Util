@@ -92,7 +92,7 @@ namespace RT.Util.ExtensionMethods
                         yield break;
                     var prev = e.Current;
                     if (!e.MoveNext())
-                        throw new ArgumentException("The number of elements in input sequence is not divisible by 2.");
+                        throw new InvalidOperationException("The number of elements in the input sequence is not divisible by 2.");
                     yield return Tuple.Create(prev, e.Current);
                 }
         }

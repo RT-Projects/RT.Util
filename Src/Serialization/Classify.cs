@@ -1451,7 +1451,7 @@ namespace RT.Util.Serialization
             var substInterfaces = GetType().GetInterfaces()
                 .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
             if (substInterfaces.Length > 1)
-                throw new ArgumentException("The type {0} implements more than one IClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName));
+                throw new ArgumentException("The type {0} implements more than one IClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName), "type");
             else if (substInterfaces.Length == 1)
             {
                 _substituteType = substInterfaces[0].GetGenericArguments()[1];

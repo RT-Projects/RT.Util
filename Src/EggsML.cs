@@ -522,7 +522,7 @@ namespace RT.Util
             if (node == null)
                 throw new ArgumentNullException("node");
             if (wrapWidth <= 0)
-                throw new ArgumentException("Wrap width must be greater than zero.");
+                throw new ArgumentException("Wrap width must be greater than zero.", "wrapWidth");
             var data = new eggWalkData<TState>
             {
                 AtStartOfLine = true,
@@ -688,7 +688,7 @@ namespace RT.Util
                 case '<': tagName = "angle"; break;
                 case '|': tagName = "pipe"; break;
                 default:
-                    throw new ArgumentException("Unexpected tag character ‘{0}’.".Fmt(Tag));
+                    throw new InvalidOperationException("Unexpected tag character ‘{0}’.".Fmt(Tag));
             }
             return new XElement(tagName, _children.Select(child => child.ToXml()));
         }

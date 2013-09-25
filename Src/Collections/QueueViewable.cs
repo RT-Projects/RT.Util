@@ -76,13 +76,13 @@ namespace RT.Util.Collections
             get
             {
                 if (index >= _count)
-                    throw new ArgumentException("Cannot access element at index {0} because only {1} elements are in the queue".Fmt(index, _count));
+                    throw new ArgumentException("Cannot access element at index {0} because only {1} elements are in the queue".Fmt(index, _count), "index");
                 return _data[(_head + index) % _data.Length];
             }
             set
             {
                 if (index >= _count)
-                    throw new ArgumentException("Cannot set element at index {0} because only {1} elements are in the queue. Use Enqueue instead.".Fmt(index, _count));
+                    throw new ArgumentException("Cannot set element at index {0} because only {1} elements are in the queue. Use Enqueue instead.".Fmt(index, _count), "index");
                 _data[(_head + index) % _data.Length] = value;
             }
         }

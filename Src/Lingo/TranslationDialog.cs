@@ -102,11 +102,11 @@ namespace RT.Util.Lingo
         {
             var type = groupEnum.GetType();
             if (!type.IsEnum)
-                throw new ArgumentException(@"The type ""{0}"" is not an enum type.".Fmt(type.FullName));
+                throw new InvalidOperationException(@"The type ""{0}"" is not an enum type.".Fmt(type.FullName));
             var field = type.GetField(groupEnum.ToString(), BindingFlags.Static | BindingFlags.Public);
             var attr = field.GetCustomAttributes<LingoGroupAttribute>().FirstOrDefault();
             if (attr == null)
-                throw new ArgumentException(@"The enum value ""{0}.{1}"" does not have a LingoGroupAttribute.".Fmt(type.FullName, groupEnum));
+                throw new InvalidOperationException(@"The enum value ""{0}.{1}"" does not have a LingoGroupAttribute.".Fmt(type.FullName, groupEnum));
             return new TranslationGroup { Label = attr.GroupName, Notes = attr.Description };
         }
     }
@@ -204,7 +204,7 @@ namespace RT.Util.Lingo
             set
             {
                 if (value == false)
-                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.");
+                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", "value");
                 TranslationTr.Old = NewOriginal;
             }
         }
@@ -234,7 +234,7 @@ namespace RT.Util.Lingo
             set
             {
                 if (value == false)
-                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.");
+                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", "value");
                 TranslationTr.Old = NewOriginal.ToArray();
             }
         }

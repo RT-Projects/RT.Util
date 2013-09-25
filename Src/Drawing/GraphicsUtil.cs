@@ -165,9 +165,9 @@ namespace RT.Util.Drawing
             if (transparencyLayer == null)
                 throw new ArgumentNullException("transparencyLayer");
             if (source.Width != transparencyLayer.Width || source.Height != transparencyLayer.Height)
-                throw new ArgumentException("transparencyLayer must be the same size as opaqueLayer.");
+                throw new ArgumentException("transparencyLayer must be the same size as source.", "transparencyLayer");
             if (channel < 0 || channel > 3)
-                throw new ArgumentException("channel must be 0, 1, 2 or 3.");
+                throw new ArgumentException("channel must be 0, 1, 2 or 3.", "channel");
 
             var sBits = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             var tBits = transparencyLayer.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);

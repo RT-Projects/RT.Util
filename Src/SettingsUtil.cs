@@ -28,7 +28,7 @@ namespace RT.Util
         {
             var attr = settingsType.GetCustomAttributes<SettingsAttribute>(false).FirstOrDefault();
             if (attr == null)
-                throw new ArgumentException("The type {0} must have a {1} on it to be used with SettingsUtil.".Fmt(settingsType.FullName, typeof(SettingsAttribute).FullName));
+                throw new ArgumentException("The type {0} must have a {1} on it to be used with SettingsUtil.".Fmt(settingsType.FullName, typeof(SettingsAttribute).FullName), "settingsType");
             return attr;
         }
 

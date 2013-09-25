@@ -115,7 +115,7 @@ namespace RT.Util.Controls
                 if (_paragraphSpacing == value)
                     return;
                 if (value < 0)
-                    throw new ArgumentException("ParagraphSpacing cannot be negative.");
+                    throw new ArgumentException("ParagraphSpacing cannot be negative.", "value");
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _paragraphSpacing = value;
@@ -431,7 +431,7 @@ namespace RT.Util.Controls
             if (tag.Tag == '&')
             {
                 if (tag.Children.Count != 1 || !(tag.Children.First() is EggsText) || ((EggsText) tag.Children.First()).Text.Length != 1)
-                    throw new ArgumentException("'&' mnemonic tag must not contain anything other than a single character.");
+                    throw new InvalidOperationException("'&' mnemonic tag must not contain anything other than a single character.");
                 _mnemonic = char.ToUpperInvariant(((EggsText) tag.Children.First()).Text[0]);
             }
             else if (tag.Tag == '{')
@@ -532,7 +532,7 @@ namespace RT.Util.Controls
         private Size doPaintOrMeasure(Graphics g, EggsNode node, Font initialFont, Color initialForeColor, int constrainingWidth,
             List<renderingInfo> renderings = null, List<locationInfo> locations = null)
         {
-             var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
+            var glyphOverhang = TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize) - TextRenderer.MeasureText(g, "Wg", initialFont, _dummySize, TextFormatFlags.NoPadding);
             int x = glyphOverhang.Width / 2, y = glyphOverhang.Height / 2;
             int wrapWidth = WordWrap ? Math.Max(1, constrainingWidth - glyphOverhang.Width) : int.MaxValue;
             int hangingIndent = _hangingIndent * (_hangingIndentUnit == IndentUnit.Spaces ? measure(initialFont, " ", g).Width : 1);

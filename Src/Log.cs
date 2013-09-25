@@ -133,12 +133,12 @@ namespace RT.Util
                         case 'e': VerbosityLimit[LogType.Error] = lvl; break;
                         case 'd': VerbosityLimit[LogType.Debug] = lvl; break;
                         default:
-                            throw new ArgumentException(errorMessage);
+                            throw new InvalidOperationException(errorMessage);
                     }
                     pos += 2;
                 }
                 else
-                    throw new ArgumentException(errorMessage);
+                    throw new InvalidOperationException(errorMessage);
             }
         }
 

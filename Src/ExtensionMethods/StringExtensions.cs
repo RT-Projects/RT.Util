@@ -466,7 +466,7 @@ namespace RT.Util.ExtensionMethods
             if (input == null)
                 throw new ArgumentNullException("input");
             if (input.Any(ch => !CharsBase64Url.Contains(ch)))
-                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
+                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.", "input");
 
             if (_invBase64Url == null)
             {
@@ -481,7 +481,7 @@ namespace RT.Util.ExtensionMethods
             // See how many bytes are encoded at the end of the string
             int padding = input.Length % 4;
             if (padding == 1)
-                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
+                throw new InvalidOperationException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.");
             if (padding > 0)
                 padding--;
 

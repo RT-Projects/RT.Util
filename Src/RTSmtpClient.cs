@@ -184,7 +184,7 @@ namespace RT.Util
             if (to.Count() == 0)
                 return;
             if (bodyPlain == null && bodyHtml == null)
-                throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "html");
+                throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "bodyHtml");
             if (subject == null)
                 subject = "";
             if (bodyPlain == null)

@@ -194,7 +194,7 @@ namespace RT.Util
         public static long UnboxIntegerToLong(object integer, TypeCode typeCode)
         {
             if (integer == null)
-                throw new NullReferenceException("Cannot unbox a null object to a long.");
+                throw new ArgumentNullException("integer", "Cannot unbox a null object to a long.");
             switch (typeCode)
             {
                 case TypeCode.Byte:
@@ -224,10 +224,10 @@ namespace RT.Util
                         case DateTimeKind.Local:
                             return ((DateTime) integer).ToUniversalTime().Ticks;
                         default:
-                            throw new ArgumentException("Unexpected DateTime.Kind while unboxing it to a long.");
+                            throw new InvalidOperationException("Unexpected DateTime.Kind while unboxing it to a long.");
                     }
                 default:
-                    throw new ArgumentException(string.Format("Cannot unbox an object of type {0} to a long.", typeCode));
+                    throw new InvalidOperationException("Cannot unbox an object of type {0} to a long.".Fmt(typeCode));
             }
         }
 
