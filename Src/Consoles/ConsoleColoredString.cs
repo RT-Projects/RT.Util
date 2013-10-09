@@ -609,6 +609,8 @@ namespace RT.Util.Consoles
                                 break;
                             index++;
                         }
+                        if (state == 5 && ch == '{' && index + 1 < _text.Length && _text[index + 1] == '{')
+                            index++;
 
                         if ((state == 0 || state == 1) && ch >= '0' && ch <= '9')
                         {

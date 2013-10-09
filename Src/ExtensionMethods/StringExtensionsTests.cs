@@ -221,41 +221,39 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestFmt()
         {
-            assertFmtsSame("5", "{0}", 5);
-            assertFmtsSame("{", "{{");
-            assertFmtsSame("}", "}}", "dummy");
-            assertFmtsSame("", "");
-            assertFmtsSame("thingy2stuff1blah", "thingy{1}stuff{0}blah", 1, 2);
-            assertFmtsSame("=1,000,000,000=", "={0:#,0}=", 1e9);
-            assertFmtsSame("=11{12}13=", "={0:dd{{MM}}yy}=", new DateTime(2013, 12, 11));
-            assertFmtsSame("={x}=", "={{{0}}}=", "x");
+            assertFmts("5", "5", "{0}", 5);
+            assertFmts("{", "{", "{{");
+            assertFmts("}", "}", "}}", "dummy");
+            assertFmts("{", null, "{");
+            assertFmts("}", null, "}");
+            assertFmts("", "", "");
+            assertFmts("thingy3stuff2blah", "thingy3stuff2blah", "thingy{2}stuff{1}blah", 1, 2, 3);
+            assertFmts("=1,000,000,000=", "=1,000,000,000=", "={0:#,0}=", 1e9);
+            assertFmts("=11{12yy}=", null, "={0:dd{MM}yy}=", new DateTime(2013, 12, 11));
+            assertFmts("=11{12}13}=", "=11{12}13}=", "={0:dd{{MM}}yy}}}=", new DateTime(2013, 12, 11));
+            assertFmts("={x}=", "={x}=", "={{{0}}}=", "x");
         }
 
-        private void assertFmtsSame(string expected, string format, params object[] args)
+        private void assertFmts(string expectedFmt, string expectedFormat, string format, params object[] args)
         {
-            // If neither throws, the results must be identical. If string.Format throws, Fmt may throw or may produce the specified value.
-            // If string.Format doesn't throw, .Fmt mustn't throw either.
-            string resultFormat, resultFmt;
-            var fmt = CultureInfo.InvariantCulture;
+            string resultFmt, resultFormat;
+            var culture = CultureInfo.InvariantCulture;
 
-            try { resultFormat = string.Format(fmt, format, args); }
-            catch { resultFormat = null; }
+            if (expectedFmt != null && expectedFormat != null && expectedFmt != expectedFormat)
+                throw new Exception("Bug in Fmt tests");
 
-            try { resultFmt = format.Fmt(fmt, args); }
+            try { resultFmt = format.Fmt(culture, args); }
             catch { resultFmt = null; }
 
-            if (resultFmt != null || resultFormat != null)
-            {
-                if (resultFmt != null && resultFormat != null)
-                {
-                    Assert.AreEqual(expected, resultFmt);
-                    Assert.AreEqual(expected, resultFormat);
-                }
-                else if (resultFmt != null)
-                    Assert.AreEqual(expected, resultFmt);
-                else
-                    Assert.Fail("string.Format didn't throw but Fmt did.");
-            }
+            try { resultFormat = string.Format(culture, format, args); }
+            catch { resultFormat = null; }
+
+            Assert.AreEqual(expectedFmt == null, resultFmt == null);
+            Assert.AreEqual(expectedFormat == null, resultFormat == null);
+            if (expectedFmt != null)
+                Assert.AreEqual(expectedFmt, resultFmt);
+            if (expectedFormat != null)
+                Assert.AreEqual(expectedFormat, resultFormat);
         }
     }
 }
