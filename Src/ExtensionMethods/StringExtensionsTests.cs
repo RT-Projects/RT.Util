@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
@@ -215,6 +216,46 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual("Once Upon A Time There Was A Beau!!iful Princess.", "Once Upon A Time There Was A Beautiful Princess.".Replace("t", "!!", StringComparison.Ordinal));
             Assert.AreEqual("But She Had An !!chantm!!t Upon Her Of A Fearful Sort,", "But She Had An Enchantment Upon Her Of A Fearful Sort,".Replace("en", "!!", StringComparison.OrdinalIgnoreCase));
             Assert.AreEqual("Which Could Only Be Broken By Love’s First Kiss.", "Which Could Only Be Broken By Love’s First Kiss.".Replace("X", "Y", StringComparison.Ordinal));
+        }
+
+        [Test]
+        public void TestFmt()
+        {
+            assertFmtsSame("5", "{0}", 5);
+            assertFmtsSame("{", "{{");
+            assertFmtsSame("}", "}}", "dummy");
+            assertFmtsSame("", "");
+            assertFmtsSame("thingy2stuff1blah", "thingy{1}stuff{0}blah", 1, 2);
+            assertFmtsSame("=1,000,000,000=", "={0:#,0}=", 1e9);
+            assertFmtsSame("=11{12}13=", "={0:dd{{MM}}yy}=", new DateTime(2013, 12, 11));
+            assertFmtsSame("={x}=", "={{{0}}}=", "x");
+        }
+
+        private void assertFmtsSame(string expected, string format, params object[] args)
+        {
+            // If neither throws, the results must be identical. If string.Format throws, Fmt may throw or may produce the specified value.
+            // If string.Format doesn't throw, .Fmt mustn't throw either.
+            string resultFormat, resultFmt;
+            var fmt = CultureInfo.InvariantCulture;
+
+            try { resultFormat = string.Format(fmt, format, args); }
+            catch { resultFormat = null; }
+
+            try { resultFmt = format.Fmt(fmt, args); }
+            catch { resultFmt = null; }
+
+            if (resultFmt != null || resultFormat != null)
+            {
+                if (resultFmt != null && resultFormat != null)
+                {
+                    Assert.AreEqual(expected, resultFmt);
+                    Assert.AreEqual(expected, resultFormat);
+                }
+                else if (resultFmt != null)
+                    Assert.AreEqual(expected, resultFmt);
+                else
+                    Assert.Fail("string.Format didn't throw but Fmt did.");
+            }
         }
     }
 }
