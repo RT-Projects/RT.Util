@@ -605,7 +605,7 @@ namespace RT.Util.Consoles
 
                         if (ch == '}')
                         {
-                            if (index + 1 == _text.Length || _text[index + 1] != '}')
+                            if (index + 1 == _text.Length || _text[index + 1] != '}' || state == 1 || state == 3)
                                 break;
                             index++;
                         }
