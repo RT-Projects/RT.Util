@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -72,7 +73,7 @@ namespace RT.Util.ExtensionMethods
         {
             string value = attribute.Value;
             double result;
-            if (double.TryParse(value, out result))
+            if (double.TryParse(value, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out result))
                 return result;
             else
                 throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")".Fmt(attribute.Path()));
