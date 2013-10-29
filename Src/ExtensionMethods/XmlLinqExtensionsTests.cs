@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Xml.Linq;
+using System.Globalization;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -86,7 +87,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestAsDouble()
         {
-            Assert.AreEqual(double.Parse("600.5"), root.Element("actions").Element("action").Attribute("timeout").AsDouble());
+            Assert.AreEqual(double.Parse("600.5", CultureInfo.InvariantCulture), root.Element("actions").Element("action").Attribute("timeout").AsDouble());
             try
             {
                 double dummy = root.Attribute("unique-id").AsDouble();
