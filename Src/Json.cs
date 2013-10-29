@@ -237,7 +237,7 @@ namespace RT.Util.Json
                                     if (hex.Length != 4)
                                         throw new JsonParseException(this, "unexpected end of a \\u escape sequence");
                                     int code;
-                                    if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, null, out code))
+                                    if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out code))
                                         throw new JsonParseException(this, "expected a four-digit hex code");
                                     sb.Append((char) code);
                                     Pos += 4;
@@ -321,10 +321,10 @@ namespace RT.Util.Json
             JsonNumber result;
             string number = Json.Substring(fromPos, Pos - fromPos);
             long lng;
-            if (!long.TryParse(number, out lng))
+            if (!long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out lng))
             {
                 double dbl;
-                if (!double.TryParse(number, out dbl))
+                if (!double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out dbl))
                     throw new JsonParseException(this, "expected a number");
                 result = dbl;
             }
@@ -1502,11 +1502,11 @@ namespace RT.Util.Json
             double result;
             if (safe)
             {
-                if (!double.TryParse(_value, out result))
+                if (!double.TryParse(_value, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out result))
                     return null;
             }
             else
-                result = double.Parse(_value);
+                result = double.Parse(_value, CultureInfo.InvariantCulture);
 
             if (double.IsNaN(result) || double.IsInfinity(result))
                 return safe ? null : Ut.Throw<double?>(new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."));
@@ -1526,10 +1526,10 @@ namespace RT.Util.Json
                 return base.getDecimal(options, safe);
 
             if (!safe)
-                return decimal.Parse(_value);
+                return decimal.Parse(_value, CultureInfo.InvariantCulture);
 
             decimal result;
-            return decimal.TryParse(_value, out result) ? result : (decimal?) null;
+            return decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result) ? result : (decimal?) null;
         }
 
         /// <summary>
@@ -1546,21 +1546,21 @@ namespace RT.Util.Json
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
                 if (!safe)
-                    return int.Parse(_value);
+                    return int.Parse(_value, CultureInfo.InvariantCulture);
 
                 int result;
-                return int.TryParse(_value, out result) ? result : (int?) null;
+                return int.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result) ? result : (int?) null;
             }
             else
             {
                 decimal result;
                 if (safe)
                 {
-                    if (!decimal.TryParse(_value, out result))
+                    if (!decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
                         return null;
                 }
                 else
-                    result = decimal.Parse(_value);
+                    result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
                 if (result != decimal.Truncate(result))
                     return safe ? null : Ut.Throw<int?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
@@ -1586,21 +1586,21 @@ namespace RT.Util.Json
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
                 if (!safe)
-                    return long.Parse(_value);
+                    return long.Parse(_value, CultureInfo.InvariantCulture);
 
                 long result;
-                return long.TryParse(_value, out result) ? result : (long?) null;
+                return long.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result) ? result : (long?) null;
             }
             else
             {
                 decimal result;
                 if (safe)
                 {
-                    if (!decimal.TryParse(_value, out result))
+                    if (!decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
                         return null;
                 }
                 else
-                    result = decimal.Parse(_value);
+                    result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
                 if (result != decimal.Truncate(result))
                     return safe ? null : Ut.Throw<long?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
