@@ -70,20 +70,6 @@ namespace RT.Util.Text
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
         }
 
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span.</param>
-        /// <param name="rowSpan">The number of rows to span.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
-        public void SetCell(int col, int row, EggsNode content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
-        {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
-        }
-
         private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment)
         {
             if (col < 0)
@@ -389,7 +375,7 @@ namespace RT.Util.Text
         }
         private sealed class trueCell : cell
         {
-            public object Value;                               // either string, ConsoleColoredString, or EggsNode
+            public object Value;                               // either string or ConsoleColoredString
             public object[] WordwrappedValue;    // either string[] or ConsoleColoredString[]
             public int WordwrappedIndex, ColSpan, RowSpan;
             public bool NoWrap;
@@ -413,54 +399,8 @@ namespace RT.Util.Text
             private int getLongest(char sep, bool para, ref int? cache)
             {
                 if (cache == null)
-                {
-                    if (Value is string || Value is ConsoleColoredString)
-                        cache = Value.ToString().Split(sep).Max(s => s.Length);
-                    else
-                    {
-                        int longestSoFar = 0;
-                        int curLength = 0;
-                        longestEggWalk((EggsNode) Value, ref longestSoFar, ref curLength, false, para);
-                        cache = longestSoFar;
-                    }
-                }
+                    cache = Value.ToString().Split(sep).Max(s => s.Length);
                 return cache.Value;
-            }
-            private void longestEggWalk(EggsNode node, ref int longestSoFar, ref int curLength, bool curNowrap, bool para)
-            {
-                var tag = node as EggsTag;
-                if (tag != null)
-                {
-                    foreach (var child in tag.Children)
-                        longestEggWalk(child, ref longestSoFar, ref curLength, curNowrap || tag.Tag == '+', para);
-                }
-                else if (node is EggsText && curNowrap && !para)
-                {
-                    curLength += ((EggsText) node).Text.Length;
-                    if (curLength > longestSoFar)
-                        longestSoFar = curLength;
-                    return;
-                }
-                else if (node is EggsText)
-                {
-                    var i = 0;
-                    var txt = ((EggsText) node).Text;
-                    while (i < txt.Length)
-                    {
-                        if (!para && char.IsWhiteSpace(txt, i))
-                            curLength = 0;
-                        else if (para && txt[i] == '\n')
-                            curLength = 0;
-                        else
-                        {
-                            curLength++;
-                            if (curLength > longestSoFar)
-                                longestSoFar = curLength;
-                        }
-                        i += char.IsSurrogate(txt, i) ? 2 : 1;
-                    }
-                    return;
-                }
             }
 
             public void Wordwrap(int wrapWidth)
@@ -469,8 +409,8 @@ namespace RT.Util.Text
                     WordwrappedValue = ((string) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
                 else if (Value is ConsoleColoredString)
                     WordwrappedValue = ((ConsoleColoredString) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
-                else     // assume EggsNode
-                    WordwrappedValue = ConsoleColoredString.FromEggsNodeWordWrap((EggsNode) Value, wrapWidth).Cast<object>().ToArray();
+                else
+                    throw new InvalidOperationException("h287y2");
                 WordwrappedIndex = 0;
             }
         }
@@ -525,8 +465,7 @@ namespace RT.Util.Text
                     var cel = row[col] as trueCell;
                     if (cel != null && cel.ColSpan == 1 && cel.Value != null && (
                         (cel.Value is string && ((string) cel.Value).Length > 0) ||
-                        (cel.Value is ConsoleColoredString && ((ConsoleColoredString) cel.Value).Length > 0) ||
-                        (cel.Value is EggsNode && ((EggsNode) cel.Value).HasText)))
+                        (cel.Value is ConsoleColoredString && ((ConsoleColoredString) cel.Value).Length > 0)))
                     {
                         columnEmpty = false;
                         break;
