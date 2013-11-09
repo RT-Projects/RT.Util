@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using RT.Util.Collections;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -608,6 +609,80 @@ namespace RT.Util
         }
 
         internal abstract void textify(StringBuilder builder);
+
+        /// <summary>
+        ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output
+        ///     at a specified character width.</summary>
+        /// <param name="node">
+        ///     The root node of the EggsML parse tree.</param>
+        /// <param name="wrapWidth">
+        ///     The number of characters at which to word-wrap the output.</param>
+        /// <param name="hangingIndent">
+        ///     The number of spaces to add to each line except the first of each paragraph, thus creating a hanging
+        ///     indentation.</param>
+        /// <returns>
+        ///     The sequence of <see cref="ConsoleColoredString"/>s generated from the EggsML parse tree.</returns>
+        /// <remarks>
+        ///     <para>
+        ///         The following EggsML tags map to the following console colors:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <c>~</c> = black, or dark gray if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>/</c> = dark blue, or blue if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>$</c> = dark green, or green if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>&amp;</c> = dark cyan, or cyan if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>_</c> = dark red, or red if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>%</c> = dark magenta, or magenta if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>^</c> = dark yellow, or yellow if inside a <c>*</c> tag</description></item>
+        ///         <item><description>
+        ///             <c>=</c> = dark gray (independent of <c>*</c> tag)</description></item></list>
+        ///     <para>
+        ///         Text which is not inside any of the above color tags defaults to light gray, or white if inside a <c>*</c>
+        ///         tag.</para>
+        ///     <para>
+        ///         Additionally, the <c>+</c> tag can be used to suppress word-wrapping within a certain stretch of text. In
+        ///         other words, the contents of a <c>+</c> tag are treated as if they were a single word. Use this in preference
+        ///         to U+00A0 (no-break space) as it is more explicit and more future-compatible in case hyphenation is ever
+        ///         implemented here.</para></remarks>
+        public IEnumerable<ConsoleColoredString> ToConsoleColoredStringWordWrap(int wrapWidth, int hangingIndent = 0)
+        {
+            var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
+            EggsML.WordWrap(this, ConsoleColor.Gray, wrapWidth,
+                (color, text) => text.Length,
+                (color, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, color); },
+                (color, newParagraph, indent) =>
+                {
+                    var s = newParagraph ? 0 : indent + hangingIndent;
+                    results.Add(new ConsoleColoredString(new string(' ', s), color));
+                    return s;
+                },
+                (color, tag, parameter) =>
+                {
+                    bool curLight = color >= ConsoleColor.DarkGray;
+                    switch (tag)
+                    {
+                        case '~': color = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
+                        case '/': color = curLight ? ConsoleColor.Blue : ConsoleColor.DarkBlue; break;
+                        case '$': color = curLight ? ConsoleColor.Green : ConsoleColor.DarkGreen; break;
+                        case '&': color = curLight ? ConsoleColor.Cyan : ConsoleColor.DarkCyan; break;
+                        case '_': color = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
+                        case '%': color = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
+                        case '^': color = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
+                        case '=': color = ConsoleColor.DarkGray; break;
+                        case '*': color = curLight ? color : (ConsoleColor) ((int) color + 8); break;
+                    }
+                    return Tuple.Create(color, 0);
+                });
+            if (results.Last().Length == 0)
+                results.RemoveAt(results.Count - 1);
+            return results;
+        }
     }
 
     /// <summary>Represents a node in the <see cref="EggsML"/> parse tree that corresponds to an EggsML tag or the top-level node.</summary>

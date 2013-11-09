@@ -132,7 +132,7 @@ namespace RT.Util.CommandLine
     ///             <list type="bullet">
     ///                 <item><description>
     ///                     Monolingual, translation-agnostic (unlocalisable) applications use the <see
-    ///                     cref="DocumentationLiteralAttribute"/> to specify documentation directly.</description></item>
+    ///                     cref="DocumentationAttribute"/> to specify documentation directly.</description></item>
     ///                 <item><description>
     ///                     <para>
     ///                         Translatable applications must declare methods with the following signature:</para>
@@ -584,7 +584,7 @@ namespace RT.Util.CommandLine
                 //
                 //  ##  CONSTRUCT THE “USAGE” LINE
                 //
-                help.Add(new ConsoleColoredString(tr.Usage + " ", ConsoleColor.Green));
+                help.Add(new ConsoleColoredString(tr.Usage + " ", CmdLineColor.UsageLinePrefix));
                 help.Add(commandName);
 
                 List<FieldInfo> optionalOptions, mandatoryOptions, optionalPositional, mandatoryPositional;
@@ -624,7 +624,7 @@ namespace RT.Util.CommandLine
                 // Word-wrap the documentation for the command (if any)
                 var doc = getDocumentation(type, type, applicationTr);
                 helpString.Add(ConsoleColoredString.NewLine);
-                foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(doc, wrapWidth))
+                foreach (var line in doc.WordWrap(wrapWidth))
                 {
                     helpString.Add(line);
                     helpString.Add(ConsoleColoredString.NewLine);
@@ -634,7 +634,7 @@ namespace RT.Util.CommandLine
                 if (mandatoryOptions.Any() || mandatoryPositional.Any())
                 {
                     helpString.Add(ConsoleColoredString.NewLine);
-                    helpString.Add(new ConsoleColoredString(tr.ParametersHeader, ConsoleColor.White));
+                    helpString.Add(new ConsoleColoredString(tr.ParametersHeader, CmdLineColor.HelpHeading));
                     helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(ConsoleColoredString.NewLine);
                     requiredParamsTable.RemoveEmptyColumns();
@@ -645,7 +645,7 @@ namespace RT.Util.CommandLine
                 if (optionalOptions.Any() || optionalPositional.Any())
                 {
                     helpString.Add(ConsoleColoredString.NewLine);
-                    helpString.Add(new ConsoleColoredString(tr.OptionsHeader, ConsoleColor.White));
+                    helpString.Add(new ConsoleColoredString(tr.OptionsHeader, CmdLineColor.HelpHeading));
                     helpString.Add(ConsoleColoredString.NewLine);
                     helpString.Add(ConsoleColoredString.NewLine);
                     optionalParamsTable.RemoveEmptyColumns();
@@ -656,7 +656,7 @@ namespace RT.Util.CommandLine
                 if (anyCommandsWithSuboptions)
                 {
                     helpString.Add(ConsoleColoredString.NewLine);
-                    foreach (var line in (new ConsoleColoredString("* ", ConsoleColor.DarkYellow) + ConsoleColoredString.FromEggsNode(EggsML.Parse(tr.AdditionalOptions.Translation))).WordWrap(wrapWidth, 2))
+                    foreach (var line in (new ConsoleColoredString("* ", CmdLineColor.SubcommandsPresentAsterisk) + ConsoleColoredString.FromEggsNode(EggsML.Parse(tr.AdditionalOptions.Translation))).WordWrap(wrapWidth, 2))
                     {
                         helpString.Add(line);
                         helpString.Add(ConsoleColoredString.NewLine);
@@ -670,7 +670,7 @@ namespace RT.Util.CommandLine
         private static bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type, TranslationBase applicationTr)
         {
             var anyCommandsWithSuboptions = false;
-            var cmdName = "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan);
+            var cmdName = "<".Color(CmdLineColor.FieldBrackets) + field.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets);
 
             if (field.FieldType.IsEnum)
             {
@@ -679,7 +679,7 @@ namespace RT.Util.CommandLine
                 {
                     var topRow = row;
                     var doc = getDocumentation(field, type, applicationTr);
-                    if (doc.HasText)
+                    if (doc.Length > 0)
                     {
                         table.SetCell(2, row, doc, colSpan: 4);
                         row++;
@@ -691,8 +691,8 @@ namespace RT.Util.CommandLine
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(4, row, getDocumentation(el, type, applicationTr), colSpan: 2);
                         row++;
                     }
@@ -708,15 +708,15 @@ namespace RT.Util.CommandLine
                         var attr = el.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                         if (attr == null)   // skip the default value
                             continue;
-                        table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(ConsoleColor.Green)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(5, row, getDocumentation(el, type, applicationTr));
                         row++;
                     }
                     if (row == topRow + 1)
                         throw new InvalidOperationException("Enum type {2}.{3} has no values (apart from default value for field {0}.{1}).".Fmt(field.DeclaringType.FullName, field.Name, field.FieldType.DeclaringType.FullName, field.FieldType));
-                    table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
+                    table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true, rowSpan: row - topRow);
                     table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 4);
                     table.SetCell(2, topRow + 1, cmdName, noWrap: true, rowSpan: row - topRow - 1);
                 }
@@ -725,8 +725,8 @@ namespace RT.Util.CommandLine
                 {
                     foreach (var el in field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).Where(e => e.IsDefined<OptionAttribute>() && !e.IsDefined<UndocumentedAttribute>()))
                     {
-                        table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true);
-                        table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true);
+                        table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true);
+                        table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true);
                         table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 4);
                         row++;
                     }
@@ -744,10 +744,10 @@ namespace RT.Util.CommandLine
                     var cell2 = ConsoleColoredString.Empty;
                     var suboptions = ty.GetAllFields().Any(fld => !fld.IsDefined<UndocumentedAttribute>());
                     anyCommandsWithSuboptions |= suboptions;
-                    var asterisk = suboptions ? "*".Color(ConsoleColor.DarkYellow) : ConsoleColoredString.Empty;
+                    var asterisk = suboptions ? "*".Color(CmdLineColor.SubcommandsPresentAsterisk) : ConsoleColoredString.Empty;
                     var names = ty.GetCustomAttributes<CommandNameAttribute>().First().Names;
-                    table.SetCell(2, row, names.Where(n => n.Length <= 2).Select(n => n.Color(ConsoleColor.Green) + asterisk).JoinColoredString(", "), noWrap: true);
-                    table.SetCell(3, row, names.Where(n => n.Length > 2).Select(n => n.Color(ConsoleColor.Green) + asterisk).JoinColoredString(Environment.NewLine), noWrap: true);
+                    table.SetCell(2, row, names.Where(n => n.Length <= 2).Select(n => n.Color(CmdLineColor.Command) + asterisk).JoinColoredString(", "), noWrap: true);
+                    table.SetCell(3, row, names.Where(n => n.Length > 2).Select(n => n.Color(CmdLineColor.Command) + asterisk).JoinColoredString(Environment.NewLine), noWrap: true);
                     table.SetCell(4, row, getDocumentation(ty, ty, applicationTr), colSpan: 2);
                     row++;
                 }
@@ -763,8 +763,8 @@ namespace RT.Util.CommandLine
             // ### All other non-positional parameters
             else
             {
-                table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(", "), noWrap: true);
-                table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(ConsoleColor.Yellow)).JoinColoredString(Environment.NewLine), noWrap: true);
+                table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true);
+                table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true);
                 table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
                 row++;
             }
@@ -785,20 +785,20 @@ namespace RT.Util.CommandLine
                 ).Add(field);
         }
 
-        private static EggsNode getDocumentation(MemberInfo member, Type inType, TranslationBase applicationTr)
+        private static ConsoleColoredString getDocumentation(MemberInfo member, Type inType, TranslationBase applicationTr)
         {
-            if (member.IsDefined<DocumentationLiteralAttribute>())
-                return member.GetCustomAttributes<DocumentationLiteralAttribute>().Select(d => EggsML.Parse(d.Text)).First();
+            if (member.IsDefined<DocumentationAttribute>())
+                return member.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Text).First();
             if (applicationTr == null)
-                return new EggsText("");
+                return "";
 
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
             var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTr.GetType() }, null);
             if (meth == null || meth.ReturnType != typeof(string))
-                return new EggsText("");
+                return "";
             var str = (string) meth.Invoke(null, new object[] { applicationTr });
-            return str == null ? new EggsText("") : EggsML.Parse(str);
+            return str == null ? "" : CmdLine.Colorize(EggsML.Parse(str));
         }
 
         #region Post-build step check
@@ -1078,9 +1078,23 @@ namespace RT.Util.CommandLine
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
 
-            string toCheck = null;
-            if (member.IsDefined<DocumentationLiteralAttribute>())
-                toCheck = member.GetCustomAttributes<DocumentationLiteralAttribute>().First().Text;
+            DocumentationAttribute attr = null;
+            try
+            {
+                attr = member.GetCustomAttributes<DocumentationAttribute>().FirstOrDefault(); // instantiation of the attribute results in the parsing of the string
+            }
+            catch (Exception e)
+            {
+                if (member is Type)
+                    rep.Error(@"{0}: Type documentation could not be parsed as {1}: {2}".Fmt(((Type) member).FullName, attr.OriginalFormat, e.Message), "class " + member.Name);
+                else
+                    rep.Error(@"{0}.{1}: Field documentation could not be parsed as {2}: {3}".Fmt(member.DeclaringType.FullName, member.Name, attr.OriginalFormat, e.Message), "class " + member.DeclaringType.Name, member.Name);
+                return;
+            }
+
+            ConsoleColoredString toCheck = null;
+            if (attr != null)
+                toCheck = attr.Text;
             else if (applicationTrType != null)
             {
                 var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTrType }, null);
@@ -1121,23 +1135,139 @@ namespace RT.Util.CommandLine
                 }
                 return;
             }
-
-            string eggsError = null;
-            if (toCheck != null)
-            {
-                try { var result = EggsML.Parse(toCheck); }
-                catch (EggsMLParseException e) { eggsError = e.Message; }
-                if (eggsError != null)
-                {
-                    if (member is Type)
-                        rep.Error(@"{0}: Type documentation is not valid EggsML: {1}".Fmt(((Type) member).FullName, eggsError), "class " + member.Name);
-                    else
-                        rep.Error(@"{0}.{1}: Field documentation is not valid EggsML: {2}".Fmt(member.DeclaringType.FullName, member.Name, eggsError), "class " + member.DeclaringType.Name, member.Name);
-                }
-            }
         }
 
         #endregion
+    }
+
+    public static class CmdLine
+    {
+        public static ConsoleColoredString Colorize(RhoElement text)
+        {
+            var strings = new List<ConsoleColoredString>();
+            if (text.Name == null)
+                colorizeChildren(text, strings, ConsoleColor.Gray, false);
+            else
+                colorizeWalk(text, strings, ConsoleColor.Gray, false);
+            return new ConsoleColoredString(strings);
+        }
+
+        public static ConsoleColoredString Colorize(EggsNode text)
+        {
+            return text.ToConsoleColoredStringWordWrap(int.MaxValue).JoinColoredString(Environment.NewLine);
+        }
+
+        private static void colorizeChildren(RhoElement text, List<ConsoleColoredString> strings, ConsoleColor curColor, bool curNowrap)
+        {
+            foreach (var child in text.Children)
+            {
+                if (child is RhoText)
+                    strings.Add(nowrap((child as RhoText).Text, curNowrap).Color(curColor));
+                else
+                    colorizeWalk(child as RhoElement, strings, curColor, curNowrap);
+            }
+        }
+
+        private static void colorizeWalk(RhoElement text, List<ConsoleColoredString> strings, ConsoleColor curColor, bool curNowrap)
+        {
+            var name = text.Name.ToLower();
+            if (name == "field")
+            {
+                validateNoAttributes(text);
+                validateOnlyTextChild(text);
+                strings.Add("<".Color(CmdLineColor.FieldBrackets) + nowrap((text.Children[0] as RhoText).Text).Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets));
+            }
+            else if (name == "option")
+            {
+                validateNoAttributes(text);
+                validateOnlyTextChild(text);
+                strings.Add(nowrap((text.Children[0] as RhoText).Text).Color(CmdLineColor.Option));
+            }
+            else if (name == "command")
+            {
+                validateNoAttributes(text);
+                validateOnlyTextChild(text);
+                strings.Add(nowrap((text.Children[0] as RhoText).Text).Color(CmdLineColor.Command));
+            }
+            else if (name == "enum")
+            {
+                validateNoAttributes(text);
+                validateOnlyTextChild(text);
+                strings.Add(nowrap((text.Children[0] as RhoText).Text).Color(CmdLineColor.EnumValue));
+            }
+            else if (name == "nowrap")
+            {
+                validateNoAttributes(text);
+                colorizeChildren(text, strings, curColor, true);
+            }
+            else if (name == "n") // newline
+            {
+                validateNoAttributes(text);
+                validateNoChildren(text);
+                strings.Add("\n");
+            }
+            else if (name == "h") // highlight
+            {
+                validateNoAttributes(text);
+                colorizeChildren(text, strings, CmdLineColor.Highlight, curNowrap);
+            }
+            else
+            {
+                if (!EnumStrong.TryParse<ConsoleColor>(name, out curColor, true))
+                {
+                    if (name == "grey")
+                        curColor = ConsoleColor.Gray;
+                    else if (name == "darkgrey")
+                        curColor = ConsoleColor.DarkGray;
+                    else
+                        throw new ArgumentException("Unsupported element: {0}.".Fmt(text.Name));
+                }
+                validateNoAttributes(text);
+                colorizeChildren(text, strings, curColor, curNowrap);
+            }
+        }
+
+        private static string nowrap(string text, bool doNowrap = true)
+        {
+            if (doNowrap)
+                return text.Replace(' ', '\xA0'); // non-breaking space
+            else
+                return text;
+        }
+
+        private static void validateNoAttributes(RhoElement text)
+        {
+            if (text.Value != null || text.Attributes.Any())
+                throw new ArgumentException("Element {0} must not have any attributes.".Fmt(text.Name));
+        }
+
+        private static void validateNoChildren(RhoElement text)
+        {
+            if (text.Children.Any())
+                throw new ArgumentException("Element {0} must not have any child nodes.".Fmt(text.Name));
+        }
+
+        private static void validateOnlyTextChild(RhoElement text)
+        {
+            if (text.Children.Count != 1 || !(text.Children[0] is RhoText))
+                throw new ArgumentException("Element {0} must only contain text, and no other elements.".Fmt(text.Name));
+        }
+    }
+
+    internal static class CmdLineColor
+    {
+        public const ConsoleColor Option = ConsoleColor.Yellow;
+        public const ConsoleColor FieldBrackets = ConsoleColor.DarkCyan;
+        public const ConsoleColor Field = ConsoleColor.Cyan;
+        public const ConsoleColor Command = ConsoleColor.Green;
+        public const ConsoleColor EnumValue = ConsoleColor.Green;
+        public const ConsoleColor UsageLinePrefix = ConsoleColor.Green;
+        public const ConsoleColor OptionalityDelimiters = ConsoleColor.DarkGray; // e.g. [foo|bar] has [, ] and | in this color
+        public const ConsoleColor SubcommandsPresentAsterisk = ConsoleColor.DarkYellow;
+        public const ConsoleColor UnexpectedArgument = ConsoleColor.Magenta;
+        public const ConsoleColor Error = ConsoleColor.Red;
+        public const ConsoleColor HelpHeading = ConsoleColor.White;
+        public const ConsoleColor Highlight = ConsoleColor.White;
     }
 
     /// <summary>
@@ -1268,15 +1398,57 @@ namespace RT.Util.CommandLine
     ///     Use this attribute in a non-internationalized (single-language) application to link a command-line option or command
     ///     with the help text that describes (documents) it.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
-    public sealed class DocumentationLiteralAttribute : Attribute
+    public class DocumentationAttribute : Attribute
     {
-        /// <summary>Retrieves the documentation for the corresponding member.</summary>
-        public string Text { get; private set; }
-        /// <summary>
-        ///     Constructor.</summary>
-        /// <param name="text">
-        ///     Provides the documentation for the corresponding member.</param>
-        public DocumentationLiteralAttribute(string text) { Text = text; }
+        public ConsoleColoredString Text { get; protected set; }
+
+        public string OriginalText { get; protected set; }
+        public DocumentationFormat OriginalFormat { get; protected set; }
+
+        public DocumentationAttribute(string text, DocumentationFormat format = DocumentationFormat.Plaintext)
+        {
+            OriginalText = text;
+            OriginalFormat = format;
+            switch (format)
+            {
+                case DocumentationFormat.Plaintext:
+                    Text = text;
+                    break;
+                case DocumentationFormat.RhoML:
+                    Text = CmdLine.Colorize(RhoML.Parse(text));
+                    break;
+                case DocumentationFormat.EggsML:
+                    Text = CmdLine.Colorize(EggsML.Parse(text));
+                    break;
+                default:
+                    throw new ArgumentException("Unexpected enum value", "format");
+            }
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
+    public class DocumentationRhoMLAttribute : DocumentationAttribute
+    {
+        public DocumentationRhoMLAttribute(string text) : base(text, DocumentationFormat.RhoML) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
+    public class DocumentationEggsMLAttribute : DocumentationAttribute
+    {
+        public DocumentationEggsMLAttribute(string text) : base(text, DocumentationFormat.EggsML) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
+    public class DocumentationLiteralAttribute : DocumentationEggsMLAttribute
+    {
+        public DocumentationLiteralAttribute(string text) : base(text) { }
+    }
+
+    public enum DocumentationFormat
+    {
+        Plaintext,
+        RhoML,
+        EggsML,
     }
 
     /// <summary>
@@ -1351,7 +1523,7 @@ namespace RT.Util.CommandLine
                 tr = new Translation();
 
             var strings = new List<ConsoleColoredString>();
-            var message = tr.Error.Translation.Color(ConsoleColor.Red) + " " + GetColoredMessage(tr);
+            var message = tr.Error.Translation.Color(CmdLineColor.Error) + " " + GetColoredMessage(tr);
             foreach (var line in message.WordWrap(wrapWidth ?? ConsoleUtil.WrapToWidth(), tr.Error.Translation.Length + 1))
             {
                 strings.Add(line);
@@ -1492,7 +1664,7 @@ namespace RT.Util.CommandLine
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(unexpectedArgs, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public UnexpectedArgumentException(string[] unexpectedArgs, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.UnexpectedParameter.ToConsoleColoredString().Fmt(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault().Color(ConsoleColor.Magenta)), helpGenerator, inner)
+            : base(tr => tr.UnexpectedParameter.ToConsoleColoredString().Fmt(unexpectedArgs.Select(prm => prm.Length > 50 ? prm.Substring(0, 47) + "..." : prm).FirstOrDefault().Color(CmdLineColor.UnexpectedArgument)), helpGenerator, inner)
         {
             UnexpectedParameters = unexpectedArgs;
         }
@@ -1510,7 +1682,7 @@ namespace RT.Util.CommandLine
         public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator) : this(fieldName, helpGenerator, null) { }
         /// <summary>Constructor.</summary>
         public InvalidNumericParameterException(string fieldName, Func<Translation, int, ConsoleColoredString> helpGenerator, Exception inner)
-            : base(tr => tr.InvalidNumber.ToConsoleColoredString().Fmt("<".Color(ConsoleColor.DarkCyan) + fieldName.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan)), helpGenerator, inner)
+            : base(tr => tr.InvalidNumber.ToConsoleColoredString().Fmt("<".Color(CmdLineColor.FieldBrackets) + fieldName.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets)), helpGenerator, inner)
         {
             FieldName = fieldName;
         }
@@ -1541,7 +1713,7 @@ namespace RT.Util.CommandLine
 
             return (isOption ? tr.MissingOptionBefore : tr.MissingParameterBefore).ToConsoleColoredString().Fmt(
                 field.FormatParameterUsage(true),
-                "<".Color(ConsoleColor.DarkCyan) + beforeField.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+                "<".Color(CmdLineColor.FieldBrackets) + beforeField.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets));
         }
     }
 
@@ -1569,8 +1741,8 @@ namespace RT.Util.CommandLine
         {
             // Positionals
             if (field.IsDefined<IsPositionalAttribute>())
-                return (isMandatory ? "{0}" : "[{0}]").Color(ConsoleColor.DarkGray).Fmt(
-                    "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+                return (isMandatory ? "{0}" : "[{0}]").Color(CmdLineColor.OptionalityDelimiters).Fmt(
+                    "<".Color(CmdLineColor.FieldBrackets) + field.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets));
 
             // -t name [-t name [...]]    — arrays, multi-value enums with CommandNames
             if (field.FieldType.IsArray ||
@@ -1579,9 +1751,9 @@ namespace RT.Util.CommandLine
                     field.IsDefined<EnumOptionsAttribute>() &&
                     field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues))
             {
-                return (isMandatory ? "{0} {1} [{0} {1} [...]]" : "[{0} {1} [{0} {1} [...]]]").Color(ConsoleColor.DarkGray).Fmt(
-                    field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow),
-                    "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+                return (isMandatory ? "{0} {1} [{0} {1} [...]]" : "[{0} {1} [{0} {1} [...]]]").Color(CmdLineColor.OptionalityDelimiters).Fmt(
+                    field.GetOrderedOptionAttributeNames().First().Color(CmdLineColor.Option),
+                    "<".Color(CmdLineColor.FieldBrackets) + field.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets));
             }
 
             // Enums with Option names
@@ -1589,25 +1761,25 @@ namespace RT.Util.CommandLine
             {
                 var options = field.FieldType.GetFields(BindingFlags.Public | BindingFlags.Static)
                     .Where(fld => fld.IsDefined<OptionAttribute>() && !fld.IsDefined<UndocumentedAttribute>())
-                    .Select(fi => fi.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow))
+                    .Select(fi => fi.GetOrderedOptionAttributeNames().First().Color(CmdLineColor.Option))
                     .ToArray();
 
                 if (field.IsDefined<EnumOptionsAttribute>() && field.GetCustomAttributes<EnumOptionsAttribute>().First().Behavior == EnumBehavior.MultipleValues)
                     // [-t] [-u] [-v]    — multi-value enums with Option names
-                    return options.Select(opt => "[{0}]".Color(ConsoleColor.DarkGray).Fmt(opt)).JoinColoredString(" ");
+                    return options.Select(opt => "[{0}]".Color(CmdLineColor.OptionalityDelimiters).Fmt(opt)).JoinColoredString(" ");
 
                 // {-t|-u}      — single-value enums with Options
-                return (isMandatory ? (options.Length > 1 ? "{{{0}{1}" : "{0}") : "[{0}]").Color(ConsoleColor.DarkGray).Fmt(options.JoinColoredString("|".Color(ConsoleColor.DarkGray)), "}");
+                return (isMandatory ? (options.Length > 1 ? "{{{0}{1}" : "{0}") : "[{0}]").Color(CmdLineColor.OptionalityDelimiters).Fmt(options.JoinColoredString("|".Color(CmdLineColor.OptionalityDelimiters)), "}");
             }
 
             // -t       — bools
             if (field.FieldType == typeof(bool))
-                return "[{0}]".Color(ConsoleColor.DarkGray).Fmt(field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow));
+                return "[{0}]".Color(CmdLineColor.OptionalityDelimiters).Fmt(field.GetOrderedOptionAttributeNames().First().Color(CmdLineColor.Option));
 
             // -t name
-            return (isMandatory ? "{0} {1}" : "[{0} {1}]").Color(ConsoleColor.DarkGray).Fmt(
-                field.GetOrderedOptionAttributeNames().First().Color(ConsoleColor.Yellow),
-                "<".Color(ConsoleColor.DarkCyan) + field.Name.Color(ConsoleColor.Cyan) + ">".Color(ConsoleColor.DarkCyan));
+            return (isMandatory ? "{0} {1}" : "[{0} {1}]").Color(CmdLineColor.OptionalityDelimiters).Fmt(
+                field.GetOrderedOptionAttributeNames().First().Color(CmdLineColor.Option),
+                "<".Color(CmdLineColor.FieldBrackets) + field.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets));
         }
     }
 }

@@ -130,7 +130,7 @@ namespace RT.Util.Consoles
                 return;
             }
             bool any = false;
-            foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(message, width, hangingIndent))
+            foreach (var line in message.ToConsoleColoredStringWordWrap(width, hangingIndent))
             {
                 WriteLine(line);
                 any = true;

@@ -292,7 +292,7 @@ namespace RT.Util
                 bool first = true;
                 if (InterpretMessagesAsEggsML)
                 {
-                    foreach (var line in ConsoleColoredString.FromEggsNodeWordWrap(EggsML.Parse(message), wrapWidth - fmtInfo.Length))
+                    foreach (var line in EggsML.Parse(message).ToConsoleColoredStringWordWrap(wrapWidth - fmtInfo.Length))
                     {
                         Console.ForegroundColor = col;
                         consoleStream.Write(first ? fmtInfo : indent);
