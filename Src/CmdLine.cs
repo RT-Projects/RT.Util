@@ -1081,23 +1081,23 @@ namespace RT.Util.CommandLine
             if (!(member is Type) && inType.IsSubclassOf(member.DeclaringType))
                 inType = member.DeclaringType;
 
-            DocumentationAttribute attr = null;
-            try
-            {
-                attr = member.GetCustomAttributes<DocumentationAttribute>().FirstOrDefault(); // instantiation of the attribute results in the parsing of the string
-            }
-            catch (Exception e)
-            {
-                if (member is Type)
-                    rep.Error(@"{0}: Type documentation could not be parsed as {1}: {2}".Fmt(((Type) member).FullName, attr.OriginalFormat, e.Message), "class " + member.Name);
-                else
-                    rep.Error(@"{0}.{1}: Field documentation could not be parsed as {2}: {3}".Fmt(member.DeclaringType.FullName, member.Name, attr.OriginalFormat, e.Message), "class " + member.DeclaringType.Name, member.Name);
-                return;
-            }
-
+            var attr = member.GetCustomAttributes<DocumentationAttribute>().FirstOrDefault();
             ConsoleColoredString toCheck = null;
             if (attr != null)
-                toCheck = attr.Text;
+            {
+                try
+                {
+                    toCheck = attr.Text; // this property can throw the first time it's accessed
+                }
+                catch (Exception e)
+                {
+                    if (member is Type)
+                        rep.Error(@"{0}: Type documentation could not be parsed as {1}: {2}".Fmt(((Type) member).FullName, attr.OriginalFormat, e.Message), "class " + member.Name);
+                    else
+                        rep.Error(@"{0}.{1}: Field documentation could not be parsed as {2}: {3}".Fmt(member.DeclaringType.FullName, member.Name, attr.OriginalFormat, e.Message), "class " + member.DeclaringType.Name, member.Name);
+                    return;
+                }
+            }
             else if (applicationTrType != null)
             {
                 var meth = inType.GetMethod(member.Name + "Doc", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { applicationTrType }, null);
@@ -1403,55 +1403,44 @@ namespace RT.Util.CommandLine
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationAttribute : Attribute
     {
-        public ConsoleColoredString Text { get; protected set; }
+        public virtual ConsoleColoredString Text { get { return OriginalText; } }
+        public virtual string OriginalFormat { get { return "Plain text"; } }
+        public string OriginalText { get; private set; }
 
-        public string OriginalText { get; protected set; }
-        public DocumentationFormat OriginalFormat { get; protected set; }
-
-        public DocumentationAttribute(string text, DocumentationFormat format = DocumentationFormat.Plaintext)
+        public DocumentationAttribute(string text)
         {
             OriginalText = text;
-            OriginalFormat = format;
-            switch (format)
-            {
-                case DocumentationFormat.Plaintext:
-                    Text = text;
-                    break;
-                case DocumentationFormat.RhoML:
-                    Text = CmdLine.Colorize(RhoML.Parse(text));
-                    break;
-                case DocumentationFormat.EggsML:
-                    Text = CmdLine.Colorize(EggsML.Parse(text));
-                    break;
-                default:
-                    throw new ArgumentException("Unexpected enum value", "format");
-            }
         }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationRhoMLAttribute : DocumentationAttribute
     {
-        public DocumentationRhoMLAttribute(string text) : base(text, DocumentationFormat.RhoML) { }
+        public override string OriginalFormat { get { return "RhoML"; } }
+        public override ConsoleColoredString Text
+        {
+            get { return _parsed ?? (_parsed = CmdLine.Colorize(RhoML.Parse(OriginalText))); }
+        }
+        private ConsoleColoredString _parsed;
+        public DocumentationRhoMLAttribute(string text) : base(text) { }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationEggsMLAttribute : DocumentationAttribute
     {
-        public DocumentationEggsMLAttribute(string text) : base(text, DocumentationFormat.EggsML) { }
+        public override string OriginalFormat { get { return "EggsML"; } }
+        public override ConsoleColoredString Text
+        {
+            get { return _parsed ?? (_parsed = CmdLine.Colorize(EggsML.Parse(OriginalText))); }
+        }
+        private ConsoleColoredString _parsed;
+        public DocumentationEggsMLAttribute(string text) : base(text) { }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationLiteralAttribute : DocumentationEggsMLAttribute
     {
         public DocumentationLiteralAttribute(string text) : base(text) { }
-    }
-
-    public enum DocumentationFormat
-    {
-        Plaintext,
-        RhoML,
-        EggsML,
     }
 
     /// <summary>
