@@ -590,13 +590,16 @@ namespace RT.Util.CommandLine
                 List<FieldInfo> optionalOptions, mandatoryOptions, optionalPositional, mandatoryPositional;
                 getFieldsForHelp(type, out optionalOptions, out mandatoryOptions, out optionalPositional, out mandatoryPositional);
 
+                // Options must be listed before positionals because if a positional is a subcommand, all the options must be before it.
+                // optionalPositional must come after mandatoryPositional because that is the order they must be specified in.
+                // If any mandatoryPositional is a subcommand, then you can’t have any optionalPositionals anyway.
                 help.Add(
-                    mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }).Concat(
-                    optionalPositional.Select(fld => new { Mandatory = false, Field = fld }).Concat(
-                    mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld }).Concat(
-                    optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))))
-                    .Select(f => " " + f.Field.FormatParameterUsage(f.Mandatory))
-                    .JoinColoredString());
+                    mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld })
+                        .Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))
+                        .Concat(mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }))
+                        .Concat(optionalPositional.Select(fld => new { Mandatory = false, Field = fld }))
+                        .Select(f => " " + f.Field.FormatParameterUsage(f.Mandatory))
+                        .JoinColoredString());
 
                 //
                 //  ##  CONSTRUCT THE TABLES
