@@ -58,7 +58,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CmdLine.cs" />
     <Compile Include="Collections\AutoDictionary.cs" />
     <Compile Include="Collections\AutoList.cs" />
     <Compile Include="Collections\BinValues.cs" />
@@ -66,6 +65,7 @@
     <Compile Include="Collections\QueueViewable.cs" />
     <Compile Include="Collections\ReadOnlyCollections.cs" />
     <Compile Include="Collections\RecentlyUsedCache.cs" />
+    <Compile Include="CommandLine.cs" />
     <Compile Include="Consoles\ColoredConsoleOut.cs" />
     <Compile Include="Consoles\ConsoleColoredString.cs" />
     <Compile Include="Consoles\ConsoleUtil.cs" />

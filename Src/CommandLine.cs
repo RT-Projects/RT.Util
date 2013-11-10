@@ -13,8 +13,6 @@ namespace RT.Util.CommandLine
     /// <summary>
     ///     Implements a command-line parser that can turn the commands and options specified by the user on the command line into
     ///     a strongly-typed instance of a specific class. See remarks for more details.</summary>
-    /// <typeparam name="T">
-    ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
     /// <remarks>
     ///     <para>
     ///         The following conditions must be met by the class wishing to receive the options and parameters:</para>
@@ -38,7 +36,7 @@ namespace RT.Util.CommandLine
     ///                     parameter that can be invoked by one of several options, which are specified on the enum values in the
     ///                     enum type.</description></item>
     ///                 <item><description>
-    ///                     <see cref="IgnoreAttribute"/> — specifies that <see cref="CommandLineParser{T}"/> shall completely
+    ///                     <see cref="IgnoreAttribute"/> — specifies that <see cref="CommandLineParser"/> shall completely
     ///                     ignore the field.</description></item></list></description></item>
     ///         <item><description>
     ///             <para>
@@ -147,21 +145,23 @@ namespace RT.Util.CommandLine
     ///             <see cref="IsPositionalAttribute"/> and <see cref="IsMandatoryAttribute"/> can be used together. However, a
     ///             positional field can only be made mandatory if all the positional fields preceding it are also
     ///             mandatory.</description></item></list></remarks>
-    public static class CommandLineParser<T>
+    public static class CommandLineParser
     {
         /// <summary>
         ///     Parses the specified command-line arguments into an instance of the specified type. See the remarks section of the
-        ///     documentation for <see cref="CommandLineParser{T}"/> for features and limitations.</summary>
+        ///     documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
+        /// <typeparam name="T">
+        ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">
         ///     The command-line arguments to be parsed.</param>
         /// <param name="applicationTr">
         ///     Specifies the application’s translation object which contains the localised strings that document the command-line
         ///     options and commands. This object is passed in to the <c>FieldNameDoc</c> methods described in the documentation
-        ///     for <see cref="CommandLineParser{T}"/>. This should be <c>null</c> for monoligual applications.</param>
+        ///     for <see cref="CommandLineParser"/>. This should be <c>null</c> for monoligual applications.</param>
         /// <returns>
         ///     An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on
         ///     the command line.</returns>
-        public static T Parse(string[] args, TranslationBase applicationTr = null)
+        public static T Parse<T>(string[] args, TranslationBase applicationTr = null)
         {
             return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
         }
@@ -169,17 +169,19 @@ namespace RT.Util.CommandLine
         /// <summary>
         ///     Parses the specified command-line arguments into an instance of the specified type. In case of failure, prints
         ///     usage information to the console and returns <c>default(T)</c>. See the remarks section of the documentation for
-        ///     <see cref="CommandLineParser{T}"/> for features and limitations.</summary>
+        ///     <see cref="CommandLineParser"/> for features and limitations.</summary>
+        /// <typeparam name="T">
+        ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">
         ///     The command-line arguments to be parsed.</param>
         /// <param name="applicationTr">
         ///     Specifies the application’s translation object which contains the localised strings that document the command-line
         ///     options and commands. This object is passed in to the FieldNameDoc() methods described in the documentation for
-        ///     <see cref="CommandLineParser{T}"/>. This should be null for monoligual applications.</param>
+        ///     <see cref="CommandLineParser"/>. This should be null for monoligual applications.</param>
         /// <returns>
         ///     An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user on
         ///     the command line.</returns>
-        public static T ParseOrWriteUsageToConsole(string[] args, TranslationBase applicationTr = null)
+        public static T ParseOrWriteUsageToConsole<T>(string[] args, TranslationBase applicationTr = null)
         {
             try
             {
@@ -200,12 +202,14 @@ namespace RT.Util.CommandLine
 
         /// <summary>
         ///     Generates the help screen for this command line.</summary>
+        /// <typeparam name="T">
+        ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="applicationTr">
         ///     Specifies the application’s translation object which contains the localised strings that document the command-line
         ///     options and commands. This object is passed in to the <c>FieldNameDoc</c> methods described in the documentation
-        ///     for <see cref="CommandLineParser{T}"/>. This should be <c>null</c> for monoligual applications.</param>
+        ///     for <see cref="CommandLineParser"/>. This should be <c>null</c> for monoligual applications.</param>
         /// <param name="commandLineTr">
-        ///     The instance containing the translation of <see cref="CommandLineParser{T}"/>’s own text, or <c>null</c> for
+        ///     The instance containing the translation of <see cref="CommandLineParser"/>’s own text, or <c>null</c> for
         ///     English.</param>
         /// <param name="wrapWidth">
         ///     The character width at which the output should be word-wrapped. The default (<c>null</c>) uses <see
@@ -213,7 +217,7 @@ namespace RT.Util.CommandLine
         /// <param name="subType">
         ///     Optionally, a class that is used as a subcommand within the command-line syntax. Generates help for the
         ///     subcommand.</param>
-        public static ConsoleColoredString GenerateHelp(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
+        public static ConsoleColoredString GenerateHelp<T>(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
         {
             return getHelpGenerator(subType ?? typeof(T), applicationTr)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
         }
@@ -801,22 +805,24 @@ namespace RT.Util.CommandLine
             if (meth == null || meth.ReturnType != typeof(string))
                 return "";
             var str = (string) meth.Invoke(null, new object[] { applicationTr });
-            return str == null ? "" : CmdLine.Colorize(EggsML.Parse(str));
+            return str == null ? "" : CommandLineParser.Colorize(EggsML.Parse(str));
         }
 
         #region Post-build step check
 
         /// <summary>
         ///     Performs safety checks to ensure that the structure of your command-line syntax defining class is valid according
-        ///     to the criteria laid out in the documentation of <see cref="CommandLineParser{T}"/>. Run this method as a
+        ///     to the criteria laid out in the documentation of <see cref="CommandLineParser"/>. Run this method as a
         ///     post-build step to ensure reliability of execution. For an example of use, see <see
         ///     cref="Ut.RunPostBuildChecks"/>.</summary>
+        /// <typeparam name="T">
+        ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="rep">
         ///     Object to report post-build errors to.</param>
         /// <param name="applicationTrType">
         ///     The type of the translation object, derived from <see cref="TranslationBase"/>, which would be passed in for the
         ///     “applicationTr” parameter of <see cref="Parse"/> at normal run-time.</param>
-        public static void PostBuildStep(IPostBuildReporter rep, Type applicationTrType)
+        public static void PostBuildStep<T>(IPostBuildReporter rep, Type applicationTrType)
         {
             postBuildStep(rep, typeof(T), applicationTrType, false);
         }
@@ -1141,10 +1147,7 @@ namespace RT.Util.CommandLine
         }
 
         #endregion
-    }
 
-    public static class CmdLine
-    {
         public static ConsoleColoredString Colorize(RhoElement text)
         {
             var strings = new List<ConsoleColoredString>();
@@ -1275,7 +1278,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>
     ///     Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see
-    ///     cref="CommandLineParser{T}"/>. Use this class only in monolingual (unlocalisable) applications. Use <see
+    ///     cref="CommandLineParser"/>. Use this class only in monolingual (unlocalisable) applications. Use <see
     ///     cref="ICommandLineValidatable{TTranslation}"/> otherwise.</summary>
     public interface ICommandLineValidatable
     {
@@ -1287,7 +1290,7 @@ namespace RT.Util.CommandLine
 
     /// <summary>
     ///     Contains methods to validate a set of parameters passed by the user on the command-line and parsed by <see
-    ///     cref="CommandLineParser{T}"/>.</summary>
+    ///     cref="CommandLineParser"/>.</summary>
     /// <typeparam name="TTranslation">
     ///     A translation-string class containing the error messages that can occur during validation.</typeparam>
     public interface ICommandLineValidatable<in TTranslation> where TTranslation : TranslationBase
@@ -1419,7 +1422,7 @@ namespace RT.Util.CommandLine
         public override string OriginalFormat { get { return "RhoML"; } }
         public override ConsoleColoredString Text
         {
-            get { return _parsed ?? (_parsed = CmdLine.Colorize(RhoML.Parse(OriginalText))); }
+            get { return _parsed ?? (_parsed = CommandLineParser.Colorize(RhoML.Parse(OriginalText))); }
         }
         private ConsoleColoredString _parsed;
         public DocumentationRhoMLAttribute(string text) : base(text) { }
@@ -1431,7 +1434,7 @@ namespace RT.Util.CommandLine
         public override string OriginalFormat { get { return "EggsML"; } }
         public override ConsoleColoredString Text
         {
-            get { return _parsed ?? (_parsed = CmdLine.Colorize(EggsML.Parse(OriginalText))); }
+            get { return _parsed ?? (_parsed = CommandLineParser.Colorize(EggsML.Parse(OriginalText))); }
         }
         private ConsoleColoredString _parsed;
         public DocumentationEggsMLAttribute(string text) : base(text) { }
