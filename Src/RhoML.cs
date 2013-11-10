@@ -78,6 +78,35 @@ namespace RT.Util
         {
             return new RhoParserState(input).Parse();
         }
+
+        /// <summary>
+        ///     Escapes the specified string so that when parsed as RhoML, the result is a single text node containing the
+        ///     string passed in.</summary>
+        public static string Escape(string str)
+        {
+            // Special things: {{, {}, {`, {letter/digit - need to escape the first { in each case
+            var result = new StringBuilder(str.Length + str.Length / 8);
+            int i = 0;
+            int startIndex = 0;
+            while (i < str.Length)
+            {
+                var c = str[i];
+                if (c == '{' && i < str.Length - 1)
+                {
+                    i++;
+                    var cn = str[i];
+                    if (cn == '{' || cn == '}' || cn == '`' || char.IsLetterOrDigit(cn)) // then need to escape
+                    {
+                        result.Append(str.Substring(startIndex, i - startIndex)); // include the { that necessitated this
+                        result.Append('{');
+                        startIndex = i;
+                    }
+                }
+                i++;
+            }
+            result.Append(str.Substring(startIndex));
+            return result.ToString();
+        }
     }
 
     /// <summary>Encapsulates one of the two possible types of RhoML nodes.</summary>
