@@ -144,7 +144,7 @@ namespace RT.Util.CommandLine
         /// <summary>
         ///     Parses the specified command-line arguments into an instance of the specified type. See the remarks section of
         ///     the documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
-        /// <typeparam name="T">
+        /// <typeparam name="TArgs">
         ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">
         ///     The command-line arguments to be parsed.</param>
@@ -153,18 +153,18 @@ namespace RT.Util.CommandLine
         ///     command-line options and commands. This object is passed in to the <c>FieldNameDoc</c> methods described in
         ///     the documentation for <see cref="CommandLineParser"/>. This should be <c>null</c> for monoligual applications.</param>
         /// <returns>
-        ///     An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user
-        ///     on the command line.</returns>
-        public static T Parse<T>(string[] args, TranslationBase applicationTr = null)
+        ///     An instance of the class <typeparamref name="TArgs"/> containing the options and parameters specified by the
+        ///     user on the command line.</returns>
+        public static TArgs Parse<TArgs>(string[] args, TranslationBase applicationTr = null)
         {
-            return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
+            return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr);
         }
 
         /// <summary>
         ///     Parses the specified command-line arguments into an instance of the specified type. In case of failure, prints
-        ///     usage information to the console and returns <c>default(T)</c>. See the remarks section of the documentation
-        ///     for <see cref="CommandLineParser"/> for features and limitations.</summary>
-        /// <typeparam name="T">
+        ///     usage information to the console and returns <c>default(TArgs)</c>. See the remarks section of the
+        ///     documentation for <see cref="CommandLineParser"/> for features and limitations.</summary>
+        /// <typeparam name="TArgs">
         ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="args">
         ///     The command-line arguments to be parsed.</param>
@@ -173,18 +173,18 @@ namespace RT.Util.CommandLine
         ///     command-line options and commands. This object is passed in to the FieldNameDoc() methods described in the
         ///     documentation for <see cref="CommandLineParser"/>. This should be null for monoligual applications.</param>
         /// <returns>
-        ///     An instance of the class <typeparamref name="T"/> containing the options and parameters specified by the user
-        ///     on the command line.</returns>
-        public static T ParseOrWriteUsageToConsole<T>(string[] args, TranslationBase applicationTr = null)
+        ///     An instance of the class <typeparamref name="TArgs"/> containing the options and parameters specified by the
+        ///     user on the command line.</returns>
+        public static TArgs ParseOrWriteUsageToConsole<TArgs>(string[] args, TranslationBase applicationTr = null)
         {
             try
             {
-                return (T) parseCommandLine(args, typeof(T), 0, applicationTr);
+                return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr);
             }
             catch (CommandLineParseException e)
             {
                 e.WriteUsageInfoToConsole();
-                return default(T);
+                return default(TArgs);
             }
         }
 
@@ -196,7 +196,7 @@ namespace RT.Util.CommandLine
 
         /// <summary>
         ///     Generates the help screen for this command line.</summary>
-        /// <typeparam name="T">
+        /// <typeparam name="TArgs">
         ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="applicationTr">
         ///     Specifies the application’s translation object which contains the localised strings that document the
@@ -211,9 +211,9 @@ namespace RT.Util.CommandLine
         /// <param name="subType">
         ///     Optionally, a class that is used as a subcommand within the command-line syntax. Generates help for the
         ///     subcommand.</param>
-        public static ConsoleColoredString GenerateHelp<T>(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
+        public static ConsoleColoredString GenerateHelp<TArgs>(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
         {
-            return getHelpGenerator(subType ?? typeof(T), applicationTr)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
+            return getHelpGenerator(subType ?? typeof(TArgs), applicationTr)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
         }
 
         private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
@@ -809,16 +809,16 @@ namespace RT.Util.CommandLine
         ///     according to the criteria laid out in the documentation of <see cref="CommandLineParser"/>. Run this method as
         ///     a post-build step to ensure reliability of execution. For an example of use, see <see
         ///     cref="Ut.RunPostBuildChecks"/>.</summary>
-        /// <typeparam name="T">
+        /// <typeparam name="TArgs">
         ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="rep">
         ///     Object to report post-build errors to.</param>
         /// <param name="applicationTrType">
         ///     The type of the translation object, derived from <see cref="TranslationBase"/>, which would be passed in for
         ///     the “applicationTr” parameter of <see cref="Parse"/> at normal run-time.</param>
-        public static void PostBuildStep<T>(IPostBuildReporter rep, Type applicationTrType)
+        public static void PostBuildStep<TArgs>(IPostBuildReporter rep, Type applicationTrType)
         {
-            postBuildStep(rep, typeof(T), applicationTrType, false);
+            postBuildStep(rep, typeof(TArgs), applicationTrType, false);
         }
 
         private static void postBuildStep(IPostBuildReporter rep, Type commandLineType, Type applicationTrType, bool classDocRecommended)

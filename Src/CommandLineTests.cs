@@ -23,15 +23,15 @@ namespace RT.Util
         [Test]
         public static void Test()
         {
-            var c = CommandLineParser<commandLine>.Parse("--stuff blah abc def".Split(' '));
+            var c = CommandLineParser.Parse<commandLine>("--stuff blah abc def".Split(' '));
             Assert.AreEqual("blah", c.Stuff);
             Assert.IsTrue(c.Args.SequenceEqual(new[] { "abc", "def" }));
 
-            c = CommandLineParser<commandLine>.Parse("def --stuff thingy abc".Split(' '));
+            c = CommandLineParser.Parse<commandLine>("def --stuff thingy abc".Split(' '));
             Assert.AreEqual("thingy", c.Stuff);
             Assert.IsTrue(c.Args.SequenceEqual(new[] { "def", "abc" }));
 
-            c = CommandLineParser<commandLine>.Parse("--stuff stuff -- abc --stuff blah -- def".Split(' '));
+            c = CommandLineParser.Parse<commandLine>("--stuff stuff -- abc --stuff blah -- def".Split(' '));
             Assert.AreEqual("stuff", c.Stuff);
             Assert.IsTrue(c.Args.SequenceEqual(new[] { "abc", "--stuff", "blah", "--", "def" }));
         }
