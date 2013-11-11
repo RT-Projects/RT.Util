@@ -115,7 +115,7 @@ namespace RT.Util.Consoles
         /// <param name="hangingIndent">
         ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         /// <remarks>
-        ///     See <see cref="ConsoleColoredString.FromEggsNodeWordWrap"/> for the colour syntax.</remarks>
+        ///     See <see cref="EggsNode.ToConsoleColoredStringWordWrap"/> for the colour syntax.</remarks>
         public static void WriteParagraphs(EggsNode message, int hangingIndent = 0)
         {
             int width;

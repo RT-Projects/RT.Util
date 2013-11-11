@@ -1142,6 +1142,17 @@ namespace RT.Util.CommandLine
 
         #endregion
 
+        /// <summary>
+        ///     Converts the specified <see cref="RhoML"/> parse tree into a console colored string according to
+        ///     CommandLineParser-specific rules. This method is used to convert <see cref="DocumentationRhoMLAttribute"/>
+        ///     documentation into colored text. See Remarks.</summary>
+        /// <remarks>
+        ///     A number of named tags have a special meaning. Any tag named after a value of <see cref="ConsoleColor"/>
+        ///     results in that color. Both spellings of gray/grey are supported. The {h}...{} named tag stands for the
+        ///     highlight color (white). {nowrap}...{} can be placed around text that must not be broken into multiple lines
+        ///     by the word wrapper. The tags {field}, {option}, {command} and {enum} are used to refer to the corresponding
+        ///     command line syntax element, and is highlighted the same way the documentation generator would highlight
+        ///     references to these entities.</remarks>
         public static ConsoleColoredString Colorize(RhoElement text)
         {
             var strings = new List<ConsoleColoredString>();
@@ -1152,6 +1163,11 @@ namespace RT.Util.CommandLine
             return new ConsoleColoredString(strings);
         }
 
+        /// <summary>
+        ///     Converts the specified <see cref="EggsML"/> parse tree into a console colored string using the rules described
+        ///     in <see cref="EggsNode.ToConsoleColoredStringWordWrap"/>. This method is used to convert <see
+        ///     cref="DocumentationEggsMLAttribute"/> documentation into colored text, as well as any documentation using the
+        ///     legacy <see cref="DocumentationLiteralAttribute"/>.</summary>
         public static ConsoleColoredString Colorize(EggsNode text)
         {
             return text.ToConsoleColoredStringWordWrap(int.MaxValue).JoinColoredString(Environment.NewLine);
@@ -1395,49 +1411,84 @@ namespace RT.Util.CommandLine
     }
 
     /// <summary>
-    ///     Use this attribute in a non-internationalized (single-language) application to link a command-line option or
-    ///     command with the help text that describes (documents) it.</summary>
+    ///     Use this attribute to link a command-line option or command with the help text that describes (documents) it.
+    ///     Suitable for single-language applications only. See Remarks.</summary>
+    /// <remarks>
+    ///     This attribute specifies the documentation in plain text. All characters are printed exactly as specified. You may
+    ///     wish to use <see cref="DocumentationRhoMLAttribute"/> to specify documentation with special markup for
+    ///     command-line-related concepts, as well as <see cref="DocumentationEggsMLAttribute"/> for an alternative markup
+    ///     language without command-line specific concepts.</remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationAttribute : Attribute
     {
+        /// <summary>
+        ///     Gets the console-colored documentation string. Note that this property may throw if the text couldn't be
+        ///     parsed where applicable.</summary>
         public virtual ConsoleColoredString Text { get { return OriginalText; } }
+        /// <summary>Gets a string describing the documentation format to the programmer (not seen by the users).</summary>
         public virtual string OriginalFormat { get { return "Plain text"; } }
+        /// <summary>Gets the original documentation string exactly as specified in the attribute.</summary>
         public string OriginalText { get; private set; }
 
-        public DocumentationAttribute(string text)
+        /// <summary>Constructor.</summary>
+        public DocumentationAttribute(string documentation)
         {
-            OriginalText = text;
+            OriginalText = documentation;
         }
     }
 
+    /// <summary>
+    ///     Use this attribute to link a command-line option or command with the help text that describes (documents) it.
+    ///     Suitable for single-language applications only. The documentation is to be specified in <see cref="RhoML"/>, which
+    ///     is interpreted as described in <see cref="CommandLineParser.Colorize(RhoElement)"/>. See also <see
+    ///     cref="DocumentationAttribute"/>.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationRhoMLAttribute : DocumentationAttribute
     {
+        /// <summary>Gets a string describing the documentation format to the programmer (not seen by the users).</summary>
         public override string OriginalFormat { get { return "RhoML"; } }
+        /// <summary>
+        ///     Gets the console-colored documentation string. Note that this property may throw if the text couldn't be
+        ///     parsed where applicable.</summary>
         public override ConsoleColoredString Text
         {
             get { return _parsed ?? (_parsed = CommandLineParser.Colorize(RhoML.Parse(OriginalText))); }
         }
         private ConsoleColoredString _parsed;
-        public DocumentationRhoMLAttribute(string text) : base(text) { }
+        /// <summary>Constructor.</summary>
+        public DocumentationRhoMLAttribute(string documentation) : base(documentation) { }
     }
 
+    /// <summary>
+    ///     Use this attribute to link a command-line option or command with the help text that describes (documents) it.
+    ///     Suitable for single-language applications only. The documentation is to be specified in <see cref="EggsML"/>,
+    ///     which is interpreted as described in <see cref="CommandLineParser.Colorize(EggsNode)"/>. See also <see
+    ///     cref="DocumentationRhoMLAttribute"/> and <see cref="DocumentationAttribute"/>.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationEggsMLAttribute : DocumentationAttribute
     {
+        /// <summary>Gets a string describing the documentation format to the programmer (not seen by the users).</summary>
         public override string OriginalFormat { get { return "EggsML"; } }
+        /// <summary>
+        ///     Gets the console-colored documentation string. Note that this property may throw if the text couldn't be
+        ///     parsed where applicable.</summary>
         public override ConsoleColoredString Text
         {
             get { return _parsed ?? (_parsed = CommandLineParser.Colorize(EggsML.Parse(OriginalText))); }
         }
         private ConsoleColoredString _parsed;
-        public DocumentationEggsMLAttribute(string text) : base(text) { }
+        /// <summary>Constructor.</summary>
+        public DocumentationEggsMLAttribute(string documentation) : base(documentation) { }
     }
 
+    /// <summary>
+    ///     This is a legacy attribute. Do not use in new programs. This attribute is equivalent to <see
+    ///     cref="DocumentationEggsMLAttribute"/>.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]
     public class DocumentationLiteralAttribute : DocumentationEggsMLAttribute
     {
-        public DocumentationLiteralAttribute(string text) : base(text) { }
+        /// <summary>Constructor.</summary>
+        public DocumentationLiteralAttribute(string documentation) : base(documentation) { }
     }
 
     /// <summary>

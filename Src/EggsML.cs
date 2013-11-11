@@ -613,8 +613,6 @@ namespace RT.Util
         /// <summary>
         ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output
         ///     at a specified character width.</summary>
-        /// <param name="node">
-        ///     The root node of the EggsML parse tree.</param>
         /// <param name="wrapWidth">
         ///     The number of characters at which to word-wrap the output.</param>
         /// <param name="hangingIndent">

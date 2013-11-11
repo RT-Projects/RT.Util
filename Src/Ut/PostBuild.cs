@@ -28,7 +28,7 @@ namespace RT.Util
         ///        </description></item>
         ///    <item><description>
         ///        <para>Add post-build check methods to any type where they may be relevant. For example, for a command-line program that uses
-        ///            <see cref="RT.Util.CommandLine.CommandLineParser&lt;T&gt;"/>, you might use code similar to the following:</para>
+        ///            <see cref="RT.Util.CommandLine.CommandLineParser"/>, you might use code similar to the following:</para>
         ///        <code>
         ///            #if DEBUG
         ///                private static void PostBuildCheck(IPostBuildReporter rep)
