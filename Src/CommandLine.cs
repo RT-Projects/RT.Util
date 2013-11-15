@@ -1236,7 +1236,7 @@ namespace RT.Util.CommandLine
                     else if (name == "darkgrey")
                         curColor = ConsoleColor.DarkGray;
                     else
-                        throw new ArgumentException("Unsupported element: {0}.".Fmt(text.Name));
+                        throw new ArgumentException("Unsupported element: {0}.".Fmt(text.Name), "text");
                 }
                 validateNoAttributes(text);
                 colorizeChildren(text, strings, curColor, curNowrap);
@@ -1254,19 +1254,19 @@ namespace RT.Util.CommandLine
         private static void validateNoAttributes(RhoElement text)
         {
             if (text.Value != null || text.Attributes.Any())
-                throw new ArgumentException("Element {0} must not have any attributes.".Fmt(text.Name));
+                throw new ArgumentException("Element {0} must not have any attributes.".Fmt(text.Name), "text");
         }
 
         private static void validateNoChildren(RhoElement text)
         {
             if (text.Children.Any())
-                throw new ArgumentException("Element {0} must not have any child nodes.".Fmt(text.Name));
+                throw new ArgumentException("Element {0} must not have any child nodes.".Fmt(text.Name), "text");
         }
 
         private static void validateOnlyTextChild(RhoElement text)
         {
             if (text.Children.Count != 1 || !(text.Children[0] is RhoText))
-                throw new ArgumentException("Element {0} must only contain text, and no other elements.".Fmt(text.Name));
+                throw new ArgumentException("Element {0} must only contain text, and no other elements.".Fmt(text.Name), "text");
         }
     }
 
