@@ -30,6 +30,9 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>Converts hue, saturation and value into an RGB color object.</summary>
+        /// <param name="hue">The hue (0–360).</param>
+        /// <param name="saturation">The saturation (0–1).</param>
+        /// <param name="value">The value/luminance/brightness (0–1).</param>
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (hue < 0 || hue >= 360)

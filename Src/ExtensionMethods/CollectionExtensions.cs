@@ -348,6 +348,33 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Gets a value from a two-level dictionary by key. If the keys don’t exist in the dictionary, the default value
+        ///     is returned instead.</summary>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key to look up in the first level.</param>
+        /// <param name="key2">
+        ///     Key to look up in the second level.</param>
+        /// <param name="defaultVal">
+        ///     Value to return if key1 or key2 is not contained in the relevant dictionary.</param>
+        public static TValue Get<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> dict, TKey1 key1, TKey2 key2, TValue defaultVal)
+        {
+            if (dict == null)
+                throw new ArgumentNullException("dict");
+            if (key1 == null)
+                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
+
+            Dictionary<TKey2, TValue> innerDic;
+            TValue value;
+            if (!dict.TryGetValue(key1, out innerDic) || !innerDic.TryGetValue(key2, out value))
+                return defaultVal;
+            return value;
+        }
+
+        /// <summary>
         ///     Converts an <c>IEnumerable&lt;KeyValuePair&lt;TKey, TValue&gt;&gt;</c> into a <c>Dictionary&lt;TKey,
         ///     TValue&gt;</c>.</summary>
         /// <param name="source">
@@ -679,6 +706,20 @@ namespace RT.Util.ExtensionMethods
         {
             foreach (var value in values)
                 set.Add(value);
+        }
+
+        /// <summary>
+        ///     Removes several values from a <see cref="List&lt;T&gt;"/>.</summary>
+        /// <typeparam name="T">
+        ///     Type of the elements in the list.</typeparam>
+        /// <param name="list">
+        ///     The list to remove the items from.</param>
+        /// <param name="values">
+        ///     Values to remove.</param>
+        public static void RemoveRange<T>(this List<T> list, IEnumerable<T> values)
+        {
+            foreach (var value in values)
+                list.Remove(value);
         }
 
         /// <summary>Returns the sum of the values in the specified collection, truncated to a 32-bit integer.</summary>
