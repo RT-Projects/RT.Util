@@ -18,24 +18,25 @@ namespace RT.Util.Consoles
         private static ConsoleColoredString _empty = null;
 
         /// <summary>
-        ///     Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This field
-        ///     is read-only.</summary>
+        ///     Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This
+        ///     field is read-only.</summary>
         public static ConsoleColoredString NewLine { get { if (_newline == null) _newline = new ConsoleColoredString(Environment.NewLine, ConsoleColor.Gray); return _newline; } }
         private static ConsoleColoredString _newline = null;
 
         private string _text;
-        private ConsoleColor[] _colors;
+        private ConsoleColor?[] _foreground;
+        private ConsoleColor?[] _background;
 
         /// <summary>
-        ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a default
-        ///     color of <see cref="ConsoleColor.Gray"/>.</summary>
+        ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a
+        ///     default color of <see cref="ConsoleColor.Gray"/>.</summary>
         /// <param name="input">
         ///     The string to convert.</param>
         public static implicit operator ConsoleColoredString(string input)
         {
             if (input == null)
                 return null;
-            return new ConsoleColoredString(input, ConsoleColor.Gray);
+            return new ConsoleColoredString(input, (ConsoleColor?) null, (ConsoleColor?) null);
         }
 
         /// <summary>
@@ -54,38 +55,51 @@ namespace RT.Util.Consoles
         ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
         /// <param name="input">
         ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
-        /// <param name="color">
-        ///     The color to assign to the whole string.</param>
-        public ConsoleColoredString(string input, ConsoleColor color)
+        /// <param name="foreground">
+        ///     The foreground color to assign to the whole string.</param>
+        /// <param name="background">
+        ///     The background color to assign to the whole string.</param>
+        public ConsoleColoredString(string input, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
             _text = input;
-            _colors = new ConsoleColor[input.Length];
-            if (color != default(ConsoleColor))
-                for (int i = 0; i < _colors.Length; i++)
-                    _colors[i] = color;
+            var l = input.Length;
+            _foreground = new ConsoleColor?[l];
+            _background = new ConsoleColor?[l];
+            if (foreground != null)
+                for (int i = 0; i < l; i++)
+                    _foreground[i] = foreground;
+            if (background != null)
+                for (int i = 0; i < l; i++)
+                    _background[i] = background;
         }
 
         /// <summary>
         ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors for each
         ///     character.</summary>
         /// <param name="input">
-        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this string
-        ///     must match the number of elements in <paramref name="characterColors"/>.</param>
-        /// <param name="characterColors">
-        ///     The colors to assign to each character in the string. The length of this array must match the number of characters
-        ///     in <paramref name="input"/>.</param>
-        public ConsoleColoredString(string input, ConsoleColor[] characterColors)
+        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this
+        ///     string must match the number of elements in <paramref name="foregroundColors"/>.</param>
+        /// <param name="foregroundColors">
+        ///     The foreground colors to assign to each character in the string. The length of this array must match the
+        ///     number of characters in <paramref name="input"/>.</param>
+        /// <param name="backgroundColors">
+        ///     The background colors to assign to each character in the string. The length of this array must match the
+        ///     number of characters in <paramref name="input"/>. If null, black is used.</param>
+        public ConsoleColoredString(string input, ConsoleColor?[] foregroundColors, ConsoleColor?[] backgroundColors = null)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
-            if (characterColors == null)
-                throw new ArgumentNullException("characterColors");
-            if (input.Length != characterColors.Length)
-                throw new InvalidOperationException("The number of characters must match the number of colors.");
+            if (foregroundColors == null)
+                throw new ArgumentNullException("foregroundColors");
+            if (input.Length != foregroundColors.Length)
+                throw new InvalidOperationException("The number of characters must match the number of foreground colors.");
+            if (backgroundColors != null && input.Length != backgroundColors.Length)
+                throw new InvalidOperationException("The number of characters must match the number of background colors.");
             _text = input;
-            _colors = characterColors;
+            _foreground = foregroundColors;
+            _background = backgroundColors != null ? backgroundColors : new ConsoleColor?[input.Length];
         }
 
         /// <summary>
@@ -113,12 +127,14 @@ namespace RT.Util.Consoles
             foreach (var str in strings)
                 builder.Append(str._text);
             _text = builder.ToString();
-            _colors = new ConsoleColor[_text.Length];
+            _foreground = new ConsoleColor?[_text.Length];
+            _background = new ConsoleColor?[_text.Length];
             var index = 0;
             foreach (var str in strings)
             {
-                Array.Copy(str._colors, 0, _colors, index, str._colors.Length);
-                index += str._colors.Length;
+                Array.Copy(str._foreground, 0, _foreground, index, str.Length);
+                Array.Copy(str._background, 0, _background, index, str.Length);
+                index += str.Length;
             }
         }
 
@@ -160,11 +176,12 @@ namespace RT.Util.Consoles
             if (string2 == null || string2.Length == 0)
                 return string1;
 
-            var colors = new ConsoleColor[string1._colors.Length + string2.Length];
-            Array.Copy(string1._colors, colors, string1._colors.Length);
-            for (int i = string1.Length; i < string1.Length + string2.Length; i++)
-                colors[i] = ConsoleColor.Gray;
-            return new ConsoleColoredString(string1._text + string2, colors);
+            var totalLength = string1._foreground.Length + string2.Length;
+            var foreground = new ConsoleColor?[totalLength];
+            var background = new ConsoleColor?[totalLength];
+            Array.Copy(string1._foreground, foreground, string1.Length);
+            Array.Copy(string1._background, background, string1.Length);
+            return new ConsoleColoredString(string1._text + string2, foreground, background);
         }
 
         /// <summary>
@@ -183,11 +200,11 @@ namespace RT.Util.Consoles
             if (string1 == null || string1.Length == 0)
                 return string2;
 
-            var colors = new ConsoleColor[string1.Length + string2._colors.Length];
-            for (int i = 0; i < string1.Length; i++)
-                colors[i] = ConsoleColor.Gray;
-            Array.Copy(string2._colors, 0, colors, string1.Length, string2._colors.Length);
-            return new ConsoleColoredString(string1 + string2._text, colors);
+            var foreground = new ConsoleColor?[string1.Length + string2.Length];
+            var background = new ConsoleColor?[string1.Length + string2.Length];
+            Array.Copy(string2._foreground, 0, foreground, string1.Length, string2.Length);
+            Array.Copy(string2._background, 0, background, string1.Length, string2.Length);
+            return new ConsoleColoredString(string1 + string2._text, foreground, background);
         }
 
         /// <summary>
@@ -222,12 +239,12 @@ namespace RT.Util.Consoles
         public static ConsoleColoredString FromEggsNode(EggsNode node)
         {
             StringBuilder text = new StringBuilder();
-            List<ConsoleColor> colors = new List<ConsoleColor>();
+            List<ConsoleColor?> colors = new List<ConsoleColor?>();
             List<int> colorLengths = new List<int>();
 
-            eggWalk(node, text, colors, colorLengths, ConsoleColor.Gray);
+            eggWalk(node, text, colors, colorLengths, null);
 
-            var colArr = new ConsoleColor[colorLengths.Sum()];
+            var colArr = new ConsoleColor?[colorLengths.Sum()];
             var index = 0;
             for (int i = 0; i < colors.Count; i++)
             {
@@ -242,7 +259,7 @@ namespace RT.Util.Consoles
             return new ConsoleColoredString(text.ToString(), colArr);
         }
 
-        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor> colors, List<int> colorLengths, ConsoleColor curColor)
+        private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor?> colors, List<int> colorLengths, ConsoleColor? curColor)
         {
             var tag = node as EggsTag;
             if (tag != null)
@@ -305,15 +322,14 @@ namespace RT.Util.Consoles
         public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
 
         /// <summary>
-        ///     Returns a new string in which a specified string is inserted at a specified index position in this
-        ///     instance.</summary>
+        ///     Returns a new string in which a specified string is inserted at a specified index position in this instance.</summary>
         /// <param name="startIndex">
         ///     The zero-based index position of the insertion.</param>
         /// <param name="value">
         ///     The string to insert.</param>
         /// <returns>
-        ///     A new string that is equivalent to this instance, but with <paramref name="value"/> inserted at position <paramref
-        ///     name="startIndex"/>.</returns>
+        ///     A new string that is equivalent to this instance, but with <paramref name="value"/> inserted at position
+        ///     <paramref name="startIndex"/>.</returns>
         public ConsoleColoredString Insert(int startIndex, ConsoleColoredString value)
         {
             if (startIndex < 0 || startIndex > Length)
@@ -322,12 +338,12 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        ///     Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited
-        ///     by elements of a specified string array. Parameters specify the maximum number of substrings to return and whether
-        ///     to return empty array elements.</summary>
+        ///     Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are
+        ///     delimited by elements of a specified string array. Parameters specify the maximum number of substrings to
+        ///     return and whether to return empty array elements.</summary>
         /// <param name="separator">
-        ///     An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that
-        ///     contains no delimiters, or null.</param>
+        ///     An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array
+        ///     that contains no delimiters, or null.</param>
         /// <param name="count">
         ///     The maximum number of substrings to return, or null to return all.</param>
         /// <param name="options">
@@ -335,8 +351,8 @@ namespace RT.Util.Consoles
         ///     returned, or <see cref="System.StringSplitOptions.None"/> to include empty array elements in the array
         ///     returned.</param>
         /// <returns>
-        ///     A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are delimited
-        ///     by one or more strings in <paramref name="separator"/>.</returns>
+        ///     A collection whose elements contain the substrings in this <see cref="ConsoleColoredString"/> that are
+        ///     delimited by one or more strings in <paramref name="separator"/>.</returns>
         public IEnumerable<ConsoleColoredString> Split(string[] separator, int? count = null, StringSplitOptions options = StringSplitOptions.None)
         {
             if (separator == null)
@@ -379,7 +395,7 @@ namespace RT.Util.Consoles
         ///     <paramref name="startIndex"/> is less than zero or greater than the length of this instance.</exception>
         public ConsoleColoredString Substring(int startIndex)
         {
-            return new ConsoleColoredString(_text.Substring(startIndex), _colors.Subarray(startIndex));
+            return new ConsoleColoredString(_text.Substring(startIndex), _foreground.Subarray(startIndex), _background.Subarray(startIndex));
         }
 
         /// <summary>
@@ -394,7 +410,7 @@ namespace RT.Util.Consoles
         ///     name="startIndex"/> in this instance.</returns>
         public ConsoleColoredString Substring(int startIndex, int length)
         {
-            return new ConsoleColoredString(_text.Substring(startIndex, length), _colors.Subarray(startIndex, length));
+            return new ConsoleColoredString(_text.Substring(startIndex, length), _foreground.Subarray(startIndex, length), _background.Subarray(startIndex, length));
         }
 
         /// <summary>Outputs the current <see cref="ConsoleColoredString"/> to the console.</summary>
@@ -402,14 +418,18 @@ namespace RT.Util.Consoles
         {
             int index = 0;
             var console = stdErr ? Console.Error : Console.Out;
+            Console.ResetColor();
+            var defaultFc = Console.ForegroundColor;
+            var defaultBc = Console.BackgroundColor;
             while (index < _text.Length)
             {
-                ConsoleColor cc = _colors[index];
-                Console.ForegroundColor = cc;
+                ConsoleColor? fc = _foreground[index], bc = _background[index];
+                Console.ForegroundColor = fc ?? defaultFc;
+                Console.BackgroundColor = bc ?? defaultBc;
                 var origIndex = index;
                 do
                     index++;
-                while (index < _text.Length && _colors[index] == cc);
+                while (index < _text.Length && _foreground[index] == fc && _background[index] == bc);
                 console.Write(_text.Substring(origIndex, index - origIndex));
             }
             Console.ResetColor();
@@ -423,8 +443,8 @@ namespace RT.Util.Consoles
         /// <param name="args">
         ///     An object array that contains zero or more objects to format.</param>
         /// <returns>
-        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
-        ///     the corresponding objects in <paramref name="args"/>.</returns>
+        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation
+        ///     of the corresponding objects in <paramref name="args"/>.</returns>
         public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args)
         {
             if (format == null)
@@ -442,8 +462,8 @@ namespace RT.Util.Consoles
         /// <param name="args">
         ///     An object array that contains zero or more objects to format.</param>
         /// <returns>
-        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
-        ///     the corresponding objects in <paramref name="args"/>.</returns>
+        ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation
+        ///     of the corresponding objects in <paramref name="args"/>.</returns>
         public static ConsoleColoredString Format(ConsoleColoredString format, IFormatProvider provider, params object[] args)
         {
             if (format == null)
@@ -510,16 +530,17 @@ namespace RT.Util.Consoles
                 }
                 else if (ch == '{' && index < _text.Length - 1 && _text[index + 1] >= '0' && _text[index + 1] <= '9')
                 {
-                    var implicitColor = _colors[index];
+                    var implicitForeground = _foreground[index];
+                    var implicitBackground = _background[index];
                     if (index > oldIndex)
                         yield return substring(oldIndex, index - oldIndex);
                     var num = 0;
                     var leftAlign = false;
                     var align = 0;
-                    StringBuilder colorBuilder = null, formatBuilder = null;
+                    StringBuilder foregroundBuilder = null, backgroundBuilder = null, formatBuilder = null;
 
-                    // Syntax: {num[,alignment][/color][:format]}
-                    // States: 0 = before first digit of num; 1 = during num; 2 = before align; 3 = during align; 4 = during color; 5 = during format
+                    // Syntax: {num[,alignment][/[foreground]][+[background]][:format]}
+                    // States: 0 = before first digit of num; 1 = during num; 2 = before align; 3 = during align; 4 = during foreground; 5 = during background; 6 = during format
                     var state = 0;
 
                     while (true)
@@ -535,7 +556,7 @@ namespace RT.Util.Consoles
                                 break;
                             index++;
                         }
-                        if (state == 5 && ch == '{' && index + 1 < _text.Length && _text[index + 1] == '{')
+                        if (state == 6 && ch == '{' && index + 1 < _text.Length && _text[index + 1] == '{')
                             index++;
 
                         if ((state == 0 || state == 1) && ch >= '0' && ch <= '9')
@@ -557,17 +578,24 @@ namespace RT.Util.Consoles
                         }
                         else if ((state == 1 || state == 3) && ch == '/')
                         {
-                            colorBuilder = new StringBuilder();
+                            foregroundBuilder = new StringBuilder();
                             state = 4;
                         }
-                        else if ((state == 1 || state == 3 || state == 4) && ch == ':')
+                        else if ((state == 1 || state == 3 || state == 4) && ch == '+')
                         {
-                            formatBuilder = new StringBuilder();
+                            backgroundBuilder = new StringBuilder();
                             state = 5;
                         }
+                        else if ((state == 1 || state == 3 || state == 4 || state == 5) && ch == ':')
+                        {
+                            formatBuilder = new StringBuilder();
+                            state = 6;
+                        }
                         else if (state == 4)
-                            colorBuilder.Append(ch);
+                            foregroundBuilder.Append(ch);
                         else if (state == 5)
+                            backgroundBuilder.Append(ch);
+                        else if (state == 6)
                             formatBuilder.Append(ch);
                         else
                             throw new FormatException("The specified format string is invalid.");
@@ -582,21 +610,35 @@ namespace RT.Util.Consoles
                     {
                         if (args[num] != null)
                         {
-                            ConsoleColor color = 0;
-                            if (colorBuilder != null && !Enum.TryParse<ConsoleColor>(colorBuilder.ToString(), true, out color))
-                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(colorBuilder.ToString()));
+                            var foregroundStr = foregroundBuilder == null ? null : foregroundBuilder.ToString();
+                            var backgroundStr = backgroundBuilder == null ? null : backgroundBuilder.ToString();
+                            ConsoleColor foreground = 0, background = 0;
+                            if (foregroundStr != null && foregroundStr != "" && !Enum.TryParse<ConsoleColor>(foregroundStr, true, out foreground))
+                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(foregroundStr));
+                            if (backgroundStr != null && backgroundStr != "" && !Enum.TryParse<ConsoleColor>(backgroundStr, true, out background))
+                                throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
 
                             var objFormattable = args[num] as IFormattable;
                             var result = args[num] as ConsoleColoredString;
 
-                            // If the object is a ConsoleColoredString AND there is no color explicitly specified, just use it;
-                            // otherwise use IFormattable and/or the custom formatter and color the result of that.
-                            if (colorBuilder != null || result == null)
+                            // If the object is a ConsoleColoredString, use it (and color it if a color is explicitly specified)
+                            if (result != null)
+                            {
+                                if (foregroundStr != null)
+                                    result = result.Color(foregroundStr == "" ? (ConsoleColor?) null : foreground);
+                                if (backgroundStr != null)
+                                    result = result.ColorBackground(backgroundStr == "" ? (ConsoleColor?) null : background);
+                            }
+                            // ... otherwise use IFormattable and/or the custom formatter (and then color the result of that, if specified).
+                            else
+                            {
                                 result = new ConsoleColoredString(
                                     formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
                                     formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
                                     args[num].ToString(),
-                                    colorBuilder == null ? implicitColor : color);
+                                    foregroundStr == null ? implicitForeground : foregroundStr == "" ? (ConsoleColor?) null : foreground,
+                                    backgroundStr == null ? implicitBackground : backgroundStr == "" ? (ConsoleColor?) null : background);
+                            }
 
                             // Alignment
                             if (result.Length < align)
@@ -639,12 +681,21 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        ///     Returns an array describing the color of every character in the current string.</summary>
+        ///     Returns an array describing the foreground color of every character in the current string.</summary>
         /// <returns>
         ///     A copy of the internal color array. Modifying the returned array is safe.</returns>
-        public ConsoleColor[] GetColors()
+        public ConsoleColor?[] GetColors()
         {
-            return _colors.ToArray();
+            return _foreground.ToArray();
+        }
+
+        /// <summary>
+        ///     Returns an array describing the background color of every character in the current string.</summary>
+        /// <returns>
+        ///     A copy of the internal color array. Modifying the returned array is safe.</returns>
+        public ConsoleColor?[] GetBackgroundColors()
+        {
+            return _background.ToArray();
         }
 
         /// <summary>
@@ -652,37 +703,214 @@ namespace RT.Util.Consoles
         /// <param name="index">
         ///     A character position in the current colored string.</param>
         /// <returns>
-        ///     A tuple containing a Unicode character and a console color.</returns>
+        ///     A Unicode character with console colors.</returns>
         /// <exception cref="IndexOutOfRangeException">
-        ///     <paramref name="index"/> is greater than or equal to the length of this object or less than zero.</exception>
+        ///     <paramref name="index"/> is greater than or equal to the length of this string or less than zero.</exception>
         public ConsoleColoredChar this[int index]
         {
             get
             {
                 if (index < 0 || index >= _text.Length)
                     throw new IndexOutOfRangeException("The index must be non-negative and smaller than the length of the string.");
-                return new ConsoleColoredChar(_text[index], _colors[index]);
+                return new ConsoleColoredChar(_text[index], _foreground[index], _background[index]);
             }
+        }
+
+        /// <summary>
+        ///     Changes the foreground colors (but not the background colors) of every character in the current string to the
+        ///     specified console color.</summary>
+        /// <param name="foreground">
+        ///     The foreground color to set the string to, or <c>null</c> to use the console’s default foreground color.</param>
+        /// <returns>
+        ///     The current string but with the foreground colors changed.</returns>
+        public ConsoleColoredString Color(ConsoleColor? foreground)
+        {
+            var newForeground = new ConsoleColor?[_text.Length];
+            if (foreground != null)
+                for (int i = 0; i < _text.Length; i++)
+                    newForeground[i] = foreground;
+            return new ConsoleColoredString(_text, newForeground, _background);
+        }
+
+        /// <summary>
+        ///     Changes the colors of every character in the current string to the specified set of console colors.</summary>
+        /// <param name="foreground">
+        ///     The foreground color to set the string to, or <c>null</c> to use the console’s default foreground color.</param>
+        /// <param name="background">
+        ///     The background color to set the string to, or <c>null</c> to use the console’s default background color.</param>
+        /// <returns>
+        ///     The current string but with all the colors changed.</returns>
+        public ConsoleColoredString Color(ConsoleColor? foreground, ConsoleColor? background)
+        {
+            var newForeground = new ConsoleColor?[_text.Length];
+            var newBackground = new ConsoleColor?[_text.Length];
+            if (foreground != null)
+                for (int i = 0; i < _text.Length; i++)
+                    newForeground[i] = foreground;
+            if (background != null)
+                for (int i = 0; i < _text.Length; i++)
+                    newBackground[i] = background;
+            return new ConsoleColoredString(_text, newForeground, newBackground);
+        }
+
+        /// <summary>
+        ///     Changes the background colors (but not the foreground colors) of every character in the current string to the
+        ///     specified console color.</summary>
+        /// <param name="background">
+        ///     The background color to set the string to, or <c>null</c> to use the console’s default background color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorBackground(ConsoleColor? background)
+        {
+            var newBackground = new ConsoleColor?[_text.Length];
+            if (background != null)
+                for (int i = 0; i < _text.Length; i++)
+                    newBackground[i] = background;
+            return new ConsoleColoredString(_text, _foreground, newBackground);
+        }
+
+        /// <summary>
+        ///     Colors the specified range within the current string in a specified foreground color.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="length">
+        ///     The number of characters to color.</param>
+        /// <param name="foreground">
+        ///     The foreground color to assign to the range of characters, or <c>null</c> to use the console’s default
+        ///     foreground color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+            if (length < 0 || index + length > _text.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+            return Substring(0, index) + Substring(index, length).Color(foreground) + Substring(index + length);
+        }
+
+        /// <summary>
+        ///     Colors the specified range within the current string in the specified colors.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="length">
+        ///     The number of characters to color.</param>
+        /// <param name="foreground">
+        ///     The foreground color to assign to the range of characters, or <c>null</c> to use the console’s default
+        ///     foreground color.</param>
+        /// <param name="background">
+        ///     The background color to assign to the range of characters, or <c>null</c> to use the console’s default
+        ///     background color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground, ConsoleColor? background)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+            if (length < 0 || index + length > _text.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+            return Substring(0, index) + Substring(index, length).Color(foreground).ColorBackground(background) + Substring(index + length);
+        }
+
+        /// <summary>
+        ///     Colors a range of characters beginning at a specified index within the current string in a specified
+        ///     foreground color.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="foreground">
+        ///     The foreground color to assign to the characters starting from the character at <paramref name="index"/>, or
+        ///     <c>null</c> to use the console’s default foreground color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+
+            return Substring(0, index) + Substring(index).Color(foreground);
+        }
+
+        /// <summary>
+        ///     Colors a range of characters beginning at a specified index within the current string in the specified colors.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="foreground">
+        ///     The foreground color to assign to the characters starting from the character at <paramref name="index"/>, or
+        ///     <c>null</c> to use the console’s default foreground color.</param>
+        /// <param name="background">
+        ///     The background color to assign to the characters starting from the character at <paramref name="index"/>, or
+        ///     <c>null</c> to use the console’s default background color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground, ConsoleColor? background)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+
+            return Substring(0, index) + Substring(index).Color(foreground).ColorBackground(background);
+        }
+
+        /// <summary>
+        ///     Colors the specified range within the current string in a specified background color.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="length">
+        ///     The number of characters to color.</param>
+        /// <param name="background">
+        ///     The background color to assign to the range of characters, or <c>null</c> to use the console’s default
+        ///     background color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstringBackground(int index, int length, ConsoleColor? background)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+            if (length < 0 || index + length > _text.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+            return Substring(0, index) + Substring(index, length).ColorBackground(background) + Substring(index + length);
+        }
+
+        /// <summary>
+        ///     Colors a range of characters beginning at a specified index within the current string in a specified
+        ///     background color.</summary>
+        /// <param name="index">
+        ///     The index at which to start coloring.</param>
+        /// <param name="background">
+        ///     The background color to assign to the characters starting from the character at <paramref name="index"/>, or
+        ///     <c>null</c> to use the console’s default background color.</param>
+        /// <returns>
+        ///     A potentially colorful string.</returns>
+        public ConsoleColoredString ColorSubstringBackground(int index, ConsoleColor? background)
+        {
+            if (index < 0 || index > _text.Length)
+                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+
+            return Substring(0, index) + Substring(index).ColorBackground(background);
         }
     }
 
-    /// <summary>Contains a character and a console color.</summary>
+    /// <summary>Contains a character and a console foreground and background color.</summary>
     public sealed class ConsoleColoredChar
     {
         /// <summary>Gets the character.</summary>
         public char Character { get; private set; }
-        /// <summary>Gets the console color.</summary>
-        public ConsoleColor Color { get; private set; }
+        /// <summary>Gets the foreground color. <c>null</c> indicates to use the console’s default foreground color.</summary>
+        public ConsoleColor? Color { get; private set; }
+        /// <summary>Gets the background color. <c>null</c> indicates to use the console’s default background color.</summary>
+        public ConsoleColor? BackgroundColor { get; private set; }
         /// <summary>
         ///     Constructor.</summary>
         /// <param name="character">
         ///     The character.</param>
-        /// <param name="color">
-        ///     The console color.</param>
-        public ConsoleColoredChar(char character, ConsoleColor color)
+        /// <param name="foreground">
+        ///     The foreground color.</param>
+        /// <param name="background">
+        ///     The background color.</param>
+        public ConsoleColoredChar(char character, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             Character = character;
-            Color = color;
+            Color = foreground;
+            BackgroundColor = background;
         }
     }
 }

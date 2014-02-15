@@ -38,17 +38,19 @@ namespace RT.Util.Lingo
         public override string ToString() { return Translation; }
 
         /// <summary>
-        ///     Returns the translation in the specified console colour.</summary>
-        /// <param name="color">
-        ///     The colour in which to colour the translation.</param>
+        ///     Returns the translation in the specified console color.</summary>
+        /// <param name="foreground">
+        ///     The foreground color in which to color the translation, or <c>null</c> to use the console’s default foreground color.</param>
+        /// <param name="background">
+        ///     The background color in which to color the translation, or <c>null</c> to use the console’s default background color.</param>
         /// <returns>
         ///     A potentially colourful string.</returns>
-        public ConsoleColoredString Color(ConsoleColor color) { return new ConsoleColoredString(Translation, color); }
+        public ConsoleColoredString Color(ConsoleColor? foreground, ConsoleColor? background = null) { return new ConsoleColoredString(Translation, foreground, background); }
     }
 
     /// <summary>
-    ///     Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according to a
-    ///     language's <see cref="NumberSystem"/>.</summary>
+    ///     Represents a translatable string into which numbers are interpolated, requiring grammatical morphology according
+    ///     to a language's <see cref="NumberSystem"/>.</summary>
     public sealed class TrStringNum
     {
         /// <summary>Specifies which of the interpolated objects are integers.</summary>
@@ -83,8 +85,8 @@ namespace RT.Util.Lingo
         public TrStringNum(string[] translations, bool[] isNumber) { Translations = translations; IsNumber = isNumber; }
 
         /// <summary>
-        ///     Constructs a new translatable string with one interpolated integer and no other interpolated arguments, and the
-        ///     specified translations.</summary>
+        ///     Constructs a new translatable string with one interpolated integer and no other interpolated arguments, and
+        ///     the specified translations.</summary>
         public TrStringNum(params string[] translations) { Translations = translations; IsNumber = new[] { true }; }
 
         /// <summary>

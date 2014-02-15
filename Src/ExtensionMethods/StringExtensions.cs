@@ -682,7 +682,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("formatString");
             if (args == null)
                 throw new ArgumentNullException("args");
-            return formatString.Color(0).FmtEnumerableInternal(ConsoleColoredString.FormatBehavior.Stringify, provider, args).JoinString();
+            return formatString.Color(null).FmtEnumerableInternal(ConsoleColoredString.FormatBehavior.Stringify, provider, args).JoinString();
         }
 
         /// <summary>
@@ -702,7 +702,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("formatString");
             if (args == null)
                 throw new ArgumentNullException("args");
-            return formatString.Color(0).FmtEnumerableInternal(0, provider, args);
+            return formatString.Color(null).FmtEnumerableInternal(0, provider, args);
         }
 
         /// <summary>
@@ -983,61 +983,52 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Colours the specified string in the specified console color.</summary>
+        ///     Colors the specified string in the specified console color.</summary>
         /// <param name="str">
         ///     The string to color.</param>
-        /// <param name="color">
-        ///     The color to color the string in.</param>
+        /// <param name="foreground">
+        ///     The foreground color to color the string in.</param>
+        /// <param name="background">
+        ///     The background color to color the string in.</param>
         /// <returns>
         ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString Color(this string str, ConsoleColor color)
+        public static ConsoleColoredString Color(this string str, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
                 throw new ArgumentNullException("str");
-            return new ConsoleColoredString(str, color);
+            return new ConsoleColoredString(str, foreground, background);
         }
 
         /// <summary>
-        ///     Colours the specified character in the specified console color.</summary>
+        ///     Colors the specified character in the specified console color.</summary>
         /// <param name="ch">
         ///     The character to color.</param>
-        /// <param name="color">
-        ///     The color to color the character in.</param>
+        /// <param name="foreground">
+        ///     The foreground color to color the character in.</param>
+        /// <param name="background">
+        ///     The background color to color the character in.</param>
         /// <returns>
         ///     A potentially colorful character.</returns>
-        public static ConsoleColoredChar Color(this char ch, ConsoleColor color)
+        public static ConsoleColoredChar Color(this char ch, ConsoleColor? foreground, ConsoleColor? background = null)
         {
-            return new ConsoleColoredChar(ch, color);
+            return new ConsoleColoredChar(ch, foreground, background);
         }
 
         /// <summary>
-        ///     Colours the specified string in the specified console color.</summary>
-        /// <param name="str">
-        ///     The string to color.</param>
-        /// <param name="color">
-        ///     The color to color the string in.</param>
-        /// <returns>
-        ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString Color(this ConsoleColoredString str, ConsoleColor color)
-        {
-            if (str == null)
-                throw new ArgumentNullException("str");
-            return new ConsoleColoredString(str.ToString(), color);
-        }
-
-        /// <summary>
-        ///     Colours the specified range within the specified string in a specified color.</summary>
+        ///     Colors the specified range within the specified string in a specified color.</summary>
         /// <param name="str">
         ///     The string to partially colour.</param>
         /// <param name="index">
         ///     The index at which to start colouring.</param>
         /// <param name="length">
         ///     The number of characters to colour.</param>
-        /// <param name="color">
-        ///     The colour to assign to the range of characters.</param>
+        /// <param name="foreground">
+        ///     The foreground color to assign to the range of characters.</param>
+        /// <param name="background">
+        ///     The background color to assign to the range of characters.</param>
         /// <returns>
         ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString ColorSubstring(this string str, int index, int length, ConsoleColor color)
+        public static ConsoleColoredString ColorSubstring(this string str, int index, int length, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
                 throw new ArgumentNullException("str");
@@ -1046,89 +1037,49 @@ namespace RT.Util.ExtensionMethods
             if (length < 0 || index + length > str.Length)
                 throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
 
-            return str.Substring(0, index) + str.Substring(index, length).Color(color) + str.Substring(index + length);
+            return str.Substring(0, index) + str.Substring(index, length).Color(foreground, background) + str.Substring(index + length);
         }
 
         /// <summary>
-        ///     Colours the specified range within the specified string in a specified color.</summary>
+        ///     Colors a range of characters beginning at a specified index within the specified string in a specified color.</summary>
         /// <param name="str">
         ///     The string to partially colour.</param>
         /// <param name="index">
         ///     The index at which to start colouring.</param>
-        /// <param name="length">
-        ///     The number of characters to colour.</param>
-        /// <param name="color">
-        ///     The colour to assign to the range of characters.</param>
-        /// <returns>
-        ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString ColorSubstring(this ConsoleColoredString str, int index, int length, ConsoleColor color)
-        {
-            if (str == null)
-                throw new ArgumentNullException("str");
-            if (index < 0 || index > str.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
-            if (length < 0 || index + length > str.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
-
-            return str.Substring(0, index) + str.Substring(index, length).Color(color) + str.Substring(index + length);
-        }
-
-        /// <summary>
-        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
-        /// <param name="str">
-        ///     The string to partially colour.</param>
-        /// <param name="index">
-        ///     The index at which to start colouring.</param>
-        /// <param name="color">
+        /// <param name="foreground">
         ///     The colour to assign to the characters starting from the character at <paramref name="index"/>.</param>
+        /// <param name="background">
+        ///     The background color to assign to the range of characters.</param>
         /// <returns>
         ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString ColorSubstring(this string str, int index, ConsoleColor color)
+        public static ConsoleColoredString ColorSubstring(this string str, int index, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
                 throw new ArgumentNullException("str");
             if (index < 0 || index > str.Length)
                 throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
 
-            return str.Substring(0, index) + str.Substring(index).Color(color);
-        }
-
-        /// <summary>
-        ///     Colours a range of characters beginning at a specified index within the specified string in a specified color.</summary>
-        /// <param name="str">
-        ///     The string to partially colour.</param>
-        /// <param name="index">
-        ///     The index at which to start colouring.</param>
-        /// <param name="color">
-        ///     The colour to assign to the characters starting from the character at <paramref name="index"/>.</param>
-        /// <returns>
-        ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString ColorSubstring(this ConsoleColoredString str, int index, ConsoleColor color)
-        {
-            if (str == null)
-                throw new ArgumentNullException("str");
-            if (index < 0 || index > str.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
-
-            return str.Substring(0, index) + str.Substring(index).Color(color);
+            return str.Substring(0, index) + str.Substring(index).Color(foreground, background);
         }
 
         /// <summary>
         ///     Returns the specified object as a colored string.</summary>
         /// <param name="obj">
         ///     The object to convert.</param>
-        /// <param name="defaultColor">
-        ///     The color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
+        /// <param name="defaultForeground">
+        ///     The foreground color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
+        /// <param name="defaultBackground">
+        ///     The background color to color the string in if it is not already a <see cref="ConsoleColoredString"/>.</param>
         /// <returns>
         ///     A potentially colorful string.</returns>
-        public static ConsoleColoredString ToConsoleColoredString(this object obj, ConsoleColor defaultColor = ConsoleColor.Gray)
+        public static ConsoleColoredString ToConsoleColoredString(this object obj, ConsoleColor? defaultForeground = null, ConsoleColor? defaultBackground = null)
         {
             if (obj == null)
                 return ConsoleColoredString.Empty;
             ConsoleColoredChar cc;
             if ((cc = obj as ConsoleColoredChar) != null)
-                return cc.Character.ToString().Color(cc.Color);
-            return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultColor);
+                return cc.Character.ToString().Color(cc.Color, cc.BackgroundColor);
+            return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultForeground, defaultBackground);
         }
 
         /// <summary>Reconstructs a byte array from its hexadecimal representation (“hexdump”).</summary>

@@ -44,8 +44,8 @@ namespace RT.Util.Consoles
         private static ConsoleState _stdErrState;
 
         /// <summary>
-        ///     Determines the state of the standard output stream. The first call determines the state and caches it; subsequent
-        ///     calls return the cached value.</summary>
+        ///     Determines the state of the standard output stream. The first call determines the state and caches it;
+        ///     subsequent calls return the cached value.</summary>
         public static ConsoleState StdOutState()
         {
             if (!_consoleInfoInitialised)
@@ -54,8 +54,8 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        ///     Determines the state of the standard error stream. The first call determines the state and caches it; subsequent
-        ///     calls return the cached value.</summary>
+        ///     Determines the state of the standard error stream. The first call determines the state and caches it;
+        ///     subsequent calls return the cached value.</summary>
         public static ConsoleState StdErrState()
         {
             if (!_consoleInfoInitialised)
@@ -64,9 +64,9 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        ///     Returns the maximum line width that console applications should use to correctly word-wrap their output. If the
-        ///     output is redirected to a file, this will return an arbitrary but sensible value, otherwise the value reflects the
-        ///     width of the console buffer.</summary>
+        ///     Returns the maximum line width that console applications should use to correctly word-wrap their output. If
+        ///     the output is redirected to a file, this will return an arbitrary but sensible value, otherwise the value
+        ///     reflects the width of the console buffer.</summary>
         public static int WrapToWidth()
         {
             if (StdOutState() == ConsoleState.Redirected || StdErrState() == ConsoleState.Redirected)
