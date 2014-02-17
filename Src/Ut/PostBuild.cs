@@ -140,18 +140,23 @@ namespace RT.Util
                                     if (wrong != null)
                                     {
                                         rep.Error(
-                                            @"The method ""{0}.{1}"" constructs an {2} with a parameter name ""{3}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrongException, wrong),
-                                            meth.DeclaringType.IsValueType ? "struct " : "class " + genericsConvert(meth.DeclaringType.Name),
-                                            genericsConvert(meth.Name),
+                                            Regex.IsMatch(meth.DeclaringType.Name, @"<.*>d__\d")
+                                                ? @"The iterator method ""{0}.{1}"" constructs a {2}. Move this argument check outside the iterator.".Fmt(type.FullName, meth.Name, wrongException, wrong)
+                                                : @"The method ""{0}.{1}"" constructs an {2} with a parameter name ""{3}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrongException, wrong),
+                                            getDebugClassName(meth),
+                                            getDebugMethodName(meth),
                                             wrongException,
                                             wrong
                                         );
                                     }
 
                                     if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
-                                        rep.Error(@"The method ""{0}.{1}"" uses the single-argument constructor to ArgumentException. Please use the two-argument constructor and specify the parameter name. If there is no parameter involved, use InvalidOperationException.".Fmt(type.FullName, meth.Name),
-                                            meth.DeclaringType.IsValueType ? "struct " : "class " + genericsConvert(meth.DeclaringType.Name),
-                                            genericsConvert(meth.Name),
+                                        rep.Error(
+                                            Regex.IsMatch(meth.DeclaringType.Name, @"<.*>d__\d")
+                                                ? @"The iterator method ""{0}.{1}"" constructs an ArgumentException. Move this argument check outside the iterator.".Fmt(type.FullName, meth.Name)
+                                                : @"The method ""{0}.{1}"" uses the single-argument constructor to ArgumentException. Please use the two-argument constructor and specify the parameter name. If there is no parameter involved, use InvalidOperationException.".Fmt(type.FullName, meth.Name),
+                                            getDebugClassName(meth),
+                                            getDebugMethodName(meth),
                                             "ArgumentException");
                                 }
                         });
@@ -161,11 +166,27 @@ namespace RT.Util
             return rep.AnyErrors ? 1 : 0;
         }
 
+        private static string getDebugClassName(MethodInfo meth)
+        {
+            var m = Regex.Match(meth.DeclaringType.Name, @"<(.*)>d__\d");
+            if (m.Success)
+                return (meth.DeclaringType.DeclaringType.IsValueType ? "struct " : "class ") + meth.DeclaringType.DeclaringType.Name;
+            return (meth.DeclaringType.IsValueType ? "struct " : "class ") + genericsConvert(meth.DeclaringType.Name);
+        }
+
+        private static string getDebugMethodName(MethodInfo meth)
+        {
+            var m = Regex.Match(meth.DeclaringType.Name, @"<(.*)>d__\d");
+            if (m.Success)
+                return m.Groups[1].Value;
+            return genericsConvert(meth.Name);
+        }
+
         private static string genericsConvert(string memberName)
         {
             var p = memberName.IndexOf('`');
             if (p != -1)
-                memberName = memberName.Substring(0, p) + "<";
+                return memberName.Substring(0, p) + "<";
             return memberName;
         }
 
@@ -203,6 +224,7 @@ namespace RT.Util
                 }
                 try
                 {
+                    var tokenRegexes = tokens.Select(tok => tok == null ? null : new Regex(@"\b" + Regex.Escape(tok) + @"\b")).ToArray();
                     foreach (var f in new DirectoryInfo(_path).GetFiles("*.cs", SearchOption.AllDirectories))
                     {
                         var lines = File.ReadAllLines(f.FullName);
@@ -210,7 +232,8 @@ namespace RT.Util
                         for (int i = 0; i < lines.Length; i++)
                         {
                             Match match;
-                            while ((match = Regex.Match(lines[i], "\\b" + Regex.Escape(tokens[tokenIndex]) + "\\b")).Success)
+                            var charIndex = 0;
+                            while ((match = tokenRegexes[tokenIndex].Match(lines[i], charIndex)).Success)
                             {
                                 do { tokenIndex++; } while (tokenIndex < tokens.Length && tokens[tokenIndex] == null);
                                 if (tokenIndex == tokens.Length)
@@ -225,6 +248,7 @@ namespace RT.Util
                                     );
                                     return;
                                 }
+                                charIndex = match.Index + match.Length;
                             }
                         }
                     }
