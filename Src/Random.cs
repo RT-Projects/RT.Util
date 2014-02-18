@@ -108,7 +108,7 @@ namespace RT.Util
         /// <summary>Fills the specified buffer with cryptographically-strong random bytes.</summary>
         public static void NextBytes(byte[] buffer)
         {
-            _rnd.GetBytes(buffer);
+            _rnd.GetBytes(buffer); // "this method is thread safe"
         }
 
         /// <summary>
@@ -116,8 +116,53 @@ namespace RT.Util
         public static byte[] NextBytes(int count)
         {
             var bytes = new byte[count];
-            _rnd.GetBytes(bytes);
+            _rnd.GetBytes(bytes); // "this method is thread safe"
             return bytes;
+        }
+
+        /// <summary>Returns a random non-negative integer.</summary>
+        public static int Next()
+        {
+            return BitConverter.ToInt32(NextBytes(4), 0) & 0x7fffffff;
+        }
+
+        /// <summary>Returns a non-negative random number less than <paramref name="max"/>.</summary>
+        public static int Next(int max)
+        {
+            return Next() % max;
+        }
+
+        /// <summary>
+        ///     Returns a random integer between <paramref name="min"/> (inclusive) and <paramref name="max"/> (exclusive).</summary>
+        public static int Next(int min, int max)
+        {
+            return min + Next(max - min);
+        }
+
+        /// <summary>Returns a random non-negative 64-bit integer.</summary>
+        public static long NextLong()
+        {
+            return BitConverter.ToInt64(NextBytes(8), 0) & 0x7fffffffffffffff;
+        }
+
+        /// <summary>Returns a random double between 0.0 and 1.0.</summary>
+        public static double NextDouble()
+        {
+            return (double) Next() / (double) int.MaxValue;
+        }
+
+        /// <summary>
+        ///     Returns a random double between <paramref name="min"/> and <paramref name="max"/>. It is unclear whether
+        ///     <paramref name="min"/> or <paramref name="max"/> can ever be returned.</summary>
+        public static double NextDouble(double min, double max)
+        {
+            return NextDouble() * (max - min) + min; // it might be possible to do better than this by using Next() directly?
+        }
+
+        /// <summary>Returns a random boolean.</summary>
+        public static bool NextBoolean()
+        {
+            return Next(0, 2) != 0;
         }
 
         /// <summary>
