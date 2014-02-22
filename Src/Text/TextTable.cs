@@ -225,7 +225,7 @@ namespace RT.Util.Text
 
                 // Adjust the width of the columns according to the calculated proportions so that they fill the missing width.
                 // We do this in two steps. Step one: enlarge the column widths by the integer part of the calculated portion (round down).
-                // After this the width remaining will be smaller than the number of column, so each column is missing at most 1 character.
+                // After this the width remaining will be smaller than the number of columns, so each column is missing at most 1 character.
                 var widthRemaining = missingTotalWidth;
                 var fractionalParts = new double[cols];
                 for (int col = 0; col < cols; col++)
@@ -280,9 +280,9 @@ namespace RT.Util.Text
                     ConsoleColoredString previousLine = currentLine == null ? null : new ConsoleColoredString(currentLine.ToArray());
                     currentLine = new List<ConsoleColoredString>();
                     anyMoreContentInThisRow = false;
-                    for (int col = 0; col < rowList.Count; col++)
+                    for (int col = 0; col < cols; col++)
                     {
-                        var cel = rowList[col];
+                        var cel = col < rowList.Count ? rowList[col] : null;
 
                         // For cells with colspan, consider only the first cell they're spanning and skip the rest
                         if (cel is surrogateCell && ((surrogateCell) cel).RealCol != col)
@@ -292,7 +292,7 @@ namespace RT.Util.Text
                         var valueRow = cel is surrogateCell ? ((surrogateCell) cel).RealRow : row;
 
                         // Retrieve the data for the cell
-                        var realCell = (trueCell) _cells[valueRow][col];
+                        var realCell = (trueCell) (col < _cells[valueRow].Count ? _cells[valueRow][col] : null);
                         var colspan = realCell == null ? 1 : realCell.ColSpan;
                         var rowspan = realCell == null ? 1 : realCell.RowSpan;
 
