@@ -884,7 +884,7 @@ namespace RT.Util.Serialization
             Assert.AreEqual(2, settings.L.Count);
             Assert.AreEqual("a", settings.L[0].Other);
             Assert.AreEqual("b", settings.L[1].Other);
-            Assert.AreEqual("foo", settings.L[0].Something);
+            Assert.AreEqual("foo", settings.L[0].Something); // missing feature: this should really deserialize as "1", if we supported deserializing into pre-existing nested objects, but we only support the top-level
             Assert.AreEqual("foo", settings.L[1].Something);
 
             xml = XElement.Parse(@"
@@ -1877,5 +1877,58 @@ namespace RT.Util.Serialization
         {
             return ClassifyJson.Deserialize<T>(ClassifyJson.Serialize(testObject), new ClassifyOptions { EnforceEnums = enforce });
         }
+
+        private class missingCtorMain
+        {
+            public missingCtorVal FooVal = new missingCtorVal(47);
+            public missingCtorColl FooColl = new missingCtorColl(25);
+        }
+
+        private class missingCtorVal
+        {
+            public int Val { get; set; }
+            public missingCtorVal(int val) { Val = val; }
+        }
+
+        private class missingCtorColl : ICollection<missingCtorVal>
+        {
+            private List<missingCtorVal> _list = new List<missingCtorVal>();
+            public int Param { get; set; }
+            public missingCtorColl(int param) { Param = param; }
+
+            public void Add(missingCtorVal item) { _list.Add(item); }
+            public void Clear() { _list.Clear(); }
+            public bool Contains(missingCtorVal item) { return _list.Contains(item); }
+            public void CopyTo(missingCtorVal[] array, int arrayIndex) { _list.CopyTo(array, arrayIndex); }
+            public int Count { get { return _list.Count; } }
+            public bool IsReadOnly { get { return false; } }
+            public bool Remove(missingCtorVal item) { return _list.Remove(item); }
+            public IEnumerator<missingCtorVal> GetEnumerator() { return _list.GetEnumerator(); }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return _list.GetEnumerator(); }
+        }
+
+        [Test]
+        public void TestMissingConstructors()
+        {
+            // Constructorless class at the top-level
+            var xml = ClassifyXml.Serialize(new missingCtorVal(47));
+            var val = new missingCtorVal(0);
+            ClassifyXml.DeserializeIntoObject(xml, val);
+            Assert.AreEqual(47, val.Val);
+
+            // Constructorless class and collection at a nested level
+            xml = ClassifyXml.Serialize(new missingCtorMain());
+            var coll = ClassifyXml.Deserialize<missingCtorMain>(xml);
+            Assert.AreEqual(47, coll.FooVal.Val);
+            Assert.AreEqual(25, coll.FooColl.Param);
+
+            coll.FooVal = new missingCtorVal(48);
+            coll.FooColl = new missingCtorColl(26);
+            xml = ClassifyXml.Serialize(coll);
+            coll = ClassifyXml.Deserialize<missingCtorMain>(xml);
+            Assert.AreEqual(48, coll.FooVal.Val);
+            // Assert.AreEqual(26, coll.FooColl.Param);  missing feature: this requires us to support classifying the properties of custom collections
+        }
+
     }
 }
