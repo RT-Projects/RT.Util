@@ -653,7 +653,7 @@ namespace RT.Util.Serialization
                         {
                             // It’s a list, but not an array or a dictionary.
                             object outputList;
-                            if (!type.IsArray && already != null)
+                            if (already != null)
                             {
                                 outputList = already;
                                 typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Clear").Invoke(outputList, null);
