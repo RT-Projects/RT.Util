@@ -1953,7 +1953,7 @@ namespace RT.Util.Serialization
             xml = ClassifyXml.Serialize(coll);
             coll = ClassifyXml.Deserialize<missingCtorMain>(xml);
             Assert.AreEqual(48, coll.FooVal.Val);
-            // Assert.AreEqual(26, coll.FooColl.Param);  missing feature: this requires us to support classifying the properties of custom collections
+            // Assert.AreEqual(26, coll.FooColl.Param);  // missing feature: this requires us to support classifying the properties of custom collections
         }
 
     }
