@@ -775,6 +775,7 @@ namespace RT.Util.Serialization
             public setting S2 = new setting { Something = "FOO", Other = "BAR" };
             public setting S3 = null;
             public List<setting> L = new List<setting> { new setting { Other = "1", Something = "1" }, new setting { Other = "2" } };
+            public x X = new x { S0 = new setting { Other = "1", Something = "1" }, S1 = new setting { Other = "2" } }; // observe that it's just like the list L
             public bunch B = new bunch { C1 = new bunchDerivedClass { Derived = "TEST" } };
         }
 
@@ -782,6 +783,12 @@ namespace RT.Util.Serialization
         {
             public string Something = "foo";
             public string Other = "bar";
+        }
+
+        private sealed class x
+        {
+            public setting S0;
+            public setting S1;
         }
 
         private class bunch
@@ -867,6 +874,25 @@ namespace RT.Util.Serialization
             Assert.AreEqual("FOO", settings.S2.Something);
             Assert.AreEqual("BAR", settings.S2.Other);
 
+            // Nested initializer
+            xml = XElement.Parse(@"
+                <item>
+                    <X>
+                        <S0>
+                            <Other>a</Other>
+                        </S0>
+                        <S1>
+                            <Other>b</Other>
+                        </S1>
+                    </X>
+                </item>
+            ");
+            settings = ClassifyXml.Deserialize<settingsClass>(xml);
+            Assert.AreEqual("a", settings.X.S0.Other);
+            Assert.AreEqual("b", settings.X.S1.Other);
+            Assert.AreEqual("1", settings.X.S0.Something); // note: different to how it's done for lists; see next test.
+            Assert.AreEqual("foo", settings.X.S1.Something);
+
             // List
             xml = XElement.Parse(@"
                 <item>
@@ -884,7 +910,7 @@ namespace RT.Util.Serialization
             Assert.AreEqual(2, settings.L.Count);
             Assert.AreEqual("a", settings.L[0].Other);
             Assert.AreEqual("b", settings.L[1].Other);
-            Assert.AreEqual("foo", settings.L[0].Something); // missing feature: this should really deserialize as "1", if we supported deserializing into pre-existing nested objects, but we only support the top-level
+            Assert.AreEqual("foo", settings.L[0].Something); // note: different to how it's done for plain classes; see previous test
             Assert.AreEqual("foo", settings.L[1].Something);
 
             xml = XElement.Parse(@"
