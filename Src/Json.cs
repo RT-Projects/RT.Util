@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -406,7 +407,7 @@ namespace RT.Util.Json
 
     /// <summary>Encapsulates a JSON value (e.g. a boolean, a number, a string, a list, a dictionary, etc.)</summary>
     [Serializable]
-    public abstract class JsonValue : IEquatable<JsonValue>
+    public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
     {
         /// <summary>
         ///     Parses the specified string into a JSON value.</summary>
@@ -1429,6 +1430,18 @@ namespace RT.Util.Json
         public override bool ContainsKey(string key) { return Dict.ContainsKey(key); }
 
         bool ICollection<KeyValuePair<string, JsonValue>>.IsReadOnly { get { return false; } }
+
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            JsonValue value;
+            if (Dict.TryGetValue(binder.Name, out value))
+            {
+                result = value;
+                return true;
+            }
+            result = null;
+            return false;
+        }
     }
 
     /// <summary>Encapsulates a string as a JSON value.</summary>
