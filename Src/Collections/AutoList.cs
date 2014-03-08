@@ -54,7 +54,7 @@ namespace RT.Util.Collections
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index", "'index' cannot be negative.");
             while (index > Count)
-                Add(_initializer(Count));
+                Add(_initializer == null ? default(T) : _initializer(Count));
         }
         private void fill(int index, int count)
         {
