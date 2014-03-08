@@ -420,8 +420,7 @@ namespace RT.Util.Json
         ///         <item><description>
         ///             allows keys in dictionaries to be unquoted</description></item>
         ///         <item><description>
-        ///             allows strings to be delimited with single-quotes in addition to
-        ///             double-quotes</description></item></list></param>
+        ///             allows strings to be delimited with single-quotes in addition to double-quotes</description></item></list></param>
         /// <returns>
         ///     A <see cref="JsonValue"/> instance representing the value.</returns>
         public static JsonValue Parse(string jsonValue, bool allowJavaScript = false)
@@ -1431,6 +1430,12 @@ namespace RT.Util.Json
 
         bool ICollection<KeyValuePair<string, JsonValue>>.IsReadOnly { get { return false; } }
 
+        /// <summary>
+        ///     Implements functionality that allows the keys in this JSON dictionary to be accessed as dynamic members.</summary>
+        /// <example>
+        ///     <code>
+        ///         dynamic dict = JsonDict.Parse(@"{ ""List"": [1, 2, 3] }");
+        ///         Console.WriteLine(dict.List.Count);     // outputs 3</code></example>
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             JsonValue value;
@@ -2152,8 +2157,7 @@ namespace RT.Util.Json
     ///         <item><description>
     ///             This is a singleton class; use <see cref="Instance"/> to access it.</description></item>
     ///         <item><description>
-    ///             This class overloads the <c>==</c> operator such that comparing with <c>null</c> returns
-    ///             <c>true</c>.</description></item></list></remarks>
+    ///             This class overloads the <c>==</c> operator such that comparing with <c>null</c> returns <c>true</c>.</description></item></list></remarks>
     [Serializable]
     public sealed class JsonNoValue : JsonValue
     {
