@@ -151,6 +151,9 @@ namespace RT.Util.Consoles
         ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
         public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
         {
+            if (message == null)
+                throw new ArgumentNullException("message");
+
             int width;
             try
             {
@@ -168,13 +171,15 @@ namespace RT.Util.Consoles
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>
         public static void Write(ConsoleColoredString value, bool stdErr = false)
         {
-            value.writeToConsole(stdErr);
+            if (value != null)
+                value.writeToConsole(stdErr);
         }
 
         /// <summary>Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
         public static void WriteLine(ConsoleColoredString value, bool stdErr = false)
         {
-            value.writeToConsole(stdErr);
+            if (value != null)
+                value.writeToConsole(stdErr);
             (stdErr ? Console.Error : Console.Out).WriteLine();
         }
 
