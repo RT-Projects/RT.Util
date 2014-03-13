@@ -768,6 +768,23 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Executes the specified action with the specified argument.</summary>
+        /// <typeparam name="TSource">
+        ///     Type of the argument to the action.</typeparam>
+        /// <param name="source">
+        ///     The argument to the action.</param>
+        /// <param name="action">
+        ///     The action to execute.</param>
+        /// <returns>
+        ///     The result of the function.</returns>
+        public static void Apply<TSource>(this TSource source, Action<TSource> action)
+        {
+            if (action == null)
+                throw new ArgumentNullException("action");
+            action(source);
+        }
+
+        /// <summary>
         ///     Executes the specified action. If the action results in a file sharing violation exception, the action will be
         ///     repeatedly retried after a short delay (which increases after every failed attempt).</summary>
         /// <param name="action">
