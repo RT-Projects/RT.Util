@@ -82,12 +82,26 @@ namespace RT.Util
             if (serializer == null)
                 serializer = attr.Serializer;
 
-            bool success = false;
+            bool success = false, tryLoad = true;
             if (!File.Exists(filename))
             {
-                settings = new TSettings();
+                tryLoad = false;
+                foreach (var field in typeof(SettingsSerializer).GetFields(BindingFlags.Static | BindingFlags.Public))
+                {
+                    var fa = field.GetCustomAttributes<SerializerInfoAttribute>().First();
+                    if (fa == null || !fa.AutoConvertFrom)
+                        continue;
+                    filename = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename) + "." + fa.DefaultFileExtension);
+                    if (File.Exists(filename))
+                    {
+                        serializer = (SettingsSerializer) field.GetValue(null);
+                        tryLoad = true;
+                        break;
+                    }
+                }
             }
-            else
+
+            if (tryLoad)
             {
                 try
                 {
@@ -104,6 +118,8 @@ namespace RT.Util
                     catch { }
                 }
             }
+            else
+                settings = new TSettings();
 
             settings.AfterLoad();
             return success;
@@ -188,7 +204,7 @@ namespace RT.Util
 
         private static TSettings deserialize<TSettings>(string filename, SettingsSerializer serializer) where TSettings : SettingsBase, new()
         {
-            return Ut.WaitSharingVio(() =>
+            return Ut.WaitSharingVio(maximum: TimeSpan.FromSeconds(5), func: () =>
             {
                 switch (serializer)
                 {
@@ -209,7 +225,7 @@ namespace RT.Util
                     default:
                         throw new InternalErrorException("6843184");
                 }
-            }, TimeSpan.FromSeconds(5));
+            });
         }
 
         /// <summary>
@@ -533,13 +549,13 @@ namespace RT.Util
         [SerializerInfo(defaultFileExtension: "xml")]
         XmlClassify,
         /// <summary>Use the .NET binary serializer.</summary>
-        [SerializerInfo(defaultFileExtension: "bin")]
+        [SerializerInfo(defaultFileExtension: "bin", AutoConvertFrom = true)]
         DotNetBinary,
         /// <summary>Use the Classify serializer with the XML format.</summary>
-        [SerializerInfo(defaultFileExtension: "xml")]
+        [SerializerInfo(defaultFileExtension: "xml", AutoConvertFrom = true)]
         ClassifyXml,
         /// <summary>Use the Classify serializer with the JSON format.</summary>
-        [SerializerInfo(defaultFileExtension: "json")]
+        [SerializerInfo(defaultFileExtension: "json", AutoConvertFrom = true)]
         ClassifyJson,
     }
 
@@ -547,7 +563,15 @@ namespace RT.Util
     internal sealed class SerializerInfoAttribute : Attribute
     {
         public string DefaultFileExtension { get; private set; }
-        public SerializerInfoAttribute(string defaultFileExtension) { DefaultFileExtension = defaultFileExtension; }
+        public bool AutoConvertFrom { get; set; }
+
+        public SerializerInfoAttribute(string defaultFileExtension)
+        {
+            if (defaultFileExtension == null)
+                throw new ArgumentNullException("defaultFileExtension");
+            DefaultFileExtension = defaultFileExtension;
+            AutoConvertFrom = false;
+        }
     }
 
     /// <summary>Indicates that the user chose to cancel the current operation.</summary>
