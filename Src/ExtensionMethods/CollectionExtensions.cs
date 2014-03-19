@@ -722,38 +722,6 @@ namespace RT.Util.ExtensionMethods
                 list.Remove(value);
         }
 
-        /// <summary>Returns the sum of the values in the specified collection, truncated to a 32-bit integer.</summary>
-        public static int SumUnchecked(this IEnumerable<int> source)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            unchecked
-            {
-                var sum = 0;
-                foreach (var value in source)
-                    sum += value;
-                return sum;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the sum of the values in the specified collection projected by the specified selector function,
-        ///     truncated to a 32-bit integer.</summary>
-        public static int SumUnchecked<T>(this IEnumerable<T> source, Func<T, int> selector)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (selector == null)
-                throw new ArgumentNullException("selector");
-            unchecked
-            {
-                var sum = 0;
-                foreach (var value in source)
-                    sum += selector(value);
-                return sum;
-            }
-        }
-
         /// <summary>
         ///     Projects each element of a sequence into a new form.</summary>
         /// <typeparam name="TInput">
@@ -782,6 +750,15 @@ namespace RT.Util.ExtensionMethods
         {
             Array.Reverse(input);
             return input;
+        }
+
+        /// <summary>
+        ///     Pops the specified number of elements from the stack. There must be at least that many items on the stack,
+        ///     otherwise an exception is thrown.</summary>
+        public static void Pop<T>(this Stack<T> stack, int count)
+        {
+            for (int i = 0; i < count; i++)
+                stack.Pop();
         }
     }
 

@@ -82,21 +82,6 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Pairs up consecutive items of this enumerable an enumerates them as tuples.</summary>
-        public static IEnumerable<Tuple<T, T>> Pairs<T>(this IEnumerable<T> source)
-        {
-            using (var e = source.GetEnumerator())
-                while (true)
-                {
-                    if (!e.MoveNext())
-                        yield break;
-                    var prev = e.Current;
-                    if (!e.MoveNext())
-                        throw new InvalidOperationException("The number of elements in the input sequence is not divisible by 2.");
-                    yield return Tuple.Create(prev, e.Current);
-                }
-        }
-
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
@@ -425,35 +410,6 @@ namespace RT.Util.ExtensionMethods
                     if (predicate(e.Current))
                         return resultSelector(e.Current);
                 return @default;
-            }
-        }
-
-        /// <summary>
-        ///     Returns the only element of a sequence that satisfies a specified condition, the type's default value if no
-        ///     such element exists, and throws an exception if more than one such element exists.</summary>
-        /// <typeparam name="T">
-        ///     The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <param name="source">
-        ///     The <see cref="IEnumerable&lt;T&gt;"/> to return the one element of.</param>
-        /// <param name="predicate">
-        ///     A function to test each element for a condition.</param>
-        /// <returns>
-        ///     Returns the type's default value if no item matches the predicate, or the only item if there is exactly one.
-        ///     Otherwise, throws InvalidOperationException.</returns>
-        public static T AtMostOne<T>(this IEnumerable<T> source, Func<T, bool> predicate)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (predicate == null)
-                throw new ArgumentNullException("predicate");
-            using (var e = source.Where(predicate).GetEnumerator())
-            {
-                if (!e.MoveNext())
-                    return default(T);
-                var value = e.Current;
-                if (e.MoveNext())
-                    throw new InvalidOperationException("The sequence contained more than one matching element.");
-                return value;
             }
         }
 
@@ -909,16 +865,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Pops the specified number of elements from the stack. There must be at least that many items on the stack,
-        ///     otherwise an exception is thrown.</summary>
-        public static void Pop<T>(this Stack<T> stack, int count)
-        {
-            for (int i = 0; i < count; i++)
-                stack.Pop();
-        }
-
-        /// <summary>
-        ///     Returns a collection of integer containing the indexes at which the elements of the source collection match
+        ///     Returns a collection of integers containing the indexes at which the elements of the source collection match
         ///     the given predicate.</summary>
         /// <typeparam name="T">
         ///     The type of elements in the collection.</typeparam>
@@ -1342,6 +1289,38 @@ namespace RT.Util.ExtensionMethods
             if (count == 0)
                 throw new InvalidOperationException("The specified collection contained no elements.");
             return curMaxElement;
+        }
+
+        /// <summary>Returns the sum of the values in the specified collection, truncated to a 32-bit integer.</summary>
+        public static int SumUnchecked(this IEnumerable<int> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            unchecked
+            {
+                var sum = 0;
+                foreach (var value in source)
+                    sum += value;
+                return sum;
+            }
+        }
+
+        /// <summary>
+        ///     Returns the sum of the values in the specified collection projected by the specified selector function,
+        ///     truncated to a 32-bit integer.</summary>
+        public static int SumUnchecked<T>(this IEnumerable<T> source, Func<T, int> selector)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (selector == null)
+                throw new ArgumentNullException("selector");
+            unchecked
+            {
+                var sum = 0;
+                foreach (var value in source)
+                    sum += selector(value);
+                return sum;
+            }
         }
     }
 

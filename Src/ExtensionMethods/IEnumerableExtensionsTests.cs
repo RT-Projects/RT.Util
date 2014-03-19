@@ -199,20 +199,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         [Test]
-        public void TestAtMostOne()
-        {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AtMostOne<string>(null, str => str != null); });
-
-            var input = new[] { "one", "two", "three" };
-
-            Assert.AreEqual(null, input.AtMostOne(str => str.Length == 0));
-            Assert.AreEqual("three", input.AtMostOne(str => str.Length == 5));
-            Assert.Throws<InvalidOperationException>(() => input.AtMostOne(str => str.Length == 3));
-        }
-
-        [Test]
         public void TestIndexOfPredicate()
         {
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null); });
