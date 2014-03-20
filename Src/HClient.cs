@@ -49,8 +49,8 @@ namespace RT.Util
             Timeout = TimeSpan.FromSeconds(10);
             UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:6.0.2) Gecko/20100101 Firefox/6.0.2";
             Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            AcceptLanguage = "en-gb,en;q=0.5";
-            AcceptCharset = "ISO-8859-1,utf-8;q=0.7,*;q=0.7";
+            AcceptLanguage = "en-gb,en;q=0.9,*;q=0.8";
+            AcceptCharset = "utf-8;q=0.9,*;q=0.8";
         }
 
         /// <summary>
@@ -185,6 +185,7 @@ namespace RT.Util
         private HttpWebRequest makeRequest(string url)
         {
             var request = (HttpWebRequest) WebRequest.Create(RootUrl == null || url.ToLower().StartsWith("http://") || url.ToLower().StartsWith("https://") ? url : (RootUrl + url));
+            request.ServicePoint.Expect100Continue = false;
             request.CookieContainer = Cookies;
             request.AllowAutoRedirect = AllowAutoRedirect;
             request.Accept = Accept;
