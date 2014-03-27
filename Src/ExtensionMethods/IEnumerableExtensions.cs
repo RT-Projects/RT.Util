@@ -267,7 +267,7 @@ namespace RT.Util.ExtensionMethods
         private static IEnumerable<IEnumerable<T>> permutations<T>(IEnumerable<T> source)
         {
             var c = source.Count();
-            if (c == 1)
+            if (c < 2)
                 yield return source;
             else
                 for (int i = 0; i < c; i++)
