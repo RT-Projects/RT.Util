@@ -497,6 +497,20 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
 
+        [DllImport("Kernel32")]
+        public static extern bool SetConsoleCtrlHandler(ConsoleShutdownEventHandler handler, bool add);
+        public delegate bool ConsoleShutdownEventHandler(ConsoleShutdownType type);
+        public enum ConsoleShutdownType
+        {
+            CtrlC = 0,
+            CtrlBreak = 1,
+            Close = 2,
+
+            // According to blogs, Logoff and Shutdown no longer work in Windows 7 and later :(
+            Logoff = 5,         
+            Shutdown = 6
+        }
+
         #endregion
 
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
