@@ -598,7 +598,7 @@ namespace RT.Util
         ///     Specifies what the settings in this settings class are logically "attached" to.</param>
         /// <param name="serializer">
         ///     Specifies which serializer to use.</param>
-        public SettingsAttribute(string appName, SettingsKind kind, SettingsSerializer serializer = SettingsSerializer.XmlClassify)
+        public SettingsAttribute(string appName, SettingsKind kind, SettingsSerializer serializer = SettingsSerializer.ClassifyXml)
         {
             AppName = appName;
             Kind = kind;
