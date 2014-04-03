@@ -329,6 +329,8 @@ namespace RT.Util.Serialization
         // All enum types are also treated as if they were listed here.
         private static Type[] _simpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
 
+        private static Regex _backingFieldRegex = new Regex(@"^<(.*)>k__BackingField$", RegexOptions.Compiled);
+
         private sealed class classifier<TElement>
         {
             private ClassifyOptions _options;
@@ -736,13 +738,18 @@ namespace RT.Util.Serialization
                 }
             }
 
+            private struct deserializeFieldInfo
+            {
+                public FieldInfo FieldToAssignTo;
+                public TElement ElementToAssign;
+                public MemberInfo GetAttrsFrom;
+            }
+
             private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, object parentNode)
             {
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
 
-                var fieldsToAssignTo = new List<FieldInfo>();
-                var elementsToAssign = new List<TElement>();
-                var getAttrsFroms = new List<MemberInfo>();
+                var infos = new List<deserializeFieldInfo>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -750,7 +757,7 @@ namespace RT.Util.Serialization
                     MemberInfo getAttrsFrom = field;
 
                     // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                    var m = Regex.Match(rFieldName, @"^<(.*)>k__BackingField$");
+                    var m = _backingFieldRegex.Match(rFieldName);
                     if (m.Success)
                     {
                         rFieldName = m.Groups[1].Value;
@@ -802,33 +809,27 @@ namespace RT.Util.Serialization
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                         if (!_format.IsNull(value) || !getAttrsFrom.IsDefined<ClassifyNotNullAttribute>())
-                        {
-                            fieldsToAssignTo.Add(field);
-                            elementsToAssign.Add(value);
-                            getAttrsFroms.Add(getAttrsFrom);
-                        }
+                            infos.Add(new deserializeFieldInfo { FieldToAssignTo = field, ElementToAssign = value, GetAttrsFrom = getAttrsFrom });
                     }
                 }
 
-                Ut.Assert(fieldsToAssignTo.Count == elementsToAssign.Count);
-
-                var valuesToAssign = new Func<object>[fieldsToAssignTo.Count];
+                var valuesToAssign = new Func<object>[infos.Count];
                 var i = -1;
                 return prevResult =>
                 {
                     if (i >= 0)
                         valuesToAssign[i] = prevResult;
                     i++;
-                    if (i < fieldsToAssignTo.Count)
-                        return deserialize(fieldsToAssignTo[i].FieldType, elementsToAssign[i], fieldsToAssignTo[i].GetValue(intoObj), intoObj, getAttrsFroms[i].IsDefined<ClassifyEnforceEnumAttribute>());
+                    if (i < infos.Count)
+                        return deserialize(infos[i].FieldToAssignTo.FieldType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].GetAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>());
 
                     _doAtTheEnd.Add(() =>
                     {
-                        for (int j = 0; j < fieldsToAssignTo.Count; j++)
+                        for (int j = 0; j < infos.Count; j++)
                         {
                             var valueToAssign = valuesToAssign[j]();
-                            if (!fieldsToAssignTo[j].FieldType.IsEnum || !getAttrsFroms[j].IsDefined<ClassifyEnforceEnumAttribute>() || allowEnumValue(fieldsToAssignTo[j].FieldType, valueToAssign))
-                                fieldsToAssignTo[j].SetValue(intoObj, valueToAssign);
+                            if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].GetAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>() || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
+                                infos[j].FieldToAssignTo.SetValue(intoObj, valueToAssign);
                         }
                     });
                     return new Func<object>(() => intoObj);
@@ -1056,7 +1057,7 @@ namespace RT.Util.Serialization
                     MemberInfo getAttrsFrom = field;
 
                     // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                    var m = Regex.Match(field.Name, @"^<(.*)>k__BackingField$");
+                    var m = _backingFieldRegex.Match(field.Name);
                     if (m.Success)
                     {
                         rFieldName = m.Groups[1].Value;
