@@ -275,7 +275,7 @@ namespace RT.Util.Consoles
                     case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
                     case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
                     case '=': curColor = ConsoleColor.DarkGray; curLight = true; break;
-                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) curColor + 8); curLight = true; break;
+                    case '*': if (!curLight) curColor = (ConsoleColor) ((int) (curColor ?? ConsoleColor.Gray) + 8); curLight = true; break;
                 }
                 foreach (var child in tag.Children)
                     eggWalk(child, text, colors, colorLengths, curColor);
