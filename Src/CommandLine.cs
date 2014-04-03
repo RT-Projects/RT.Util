@@ -979,8 +979,8 @@ namespace RT.Util.CommandLine
 
                     // The class must have at least two subclasses with a [CommandName] attribute
                     var subclasses = field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType));
-                    if (subclasses.Count() < 2)
-                        rep.Error(@"{0}.{1}: The CommandGroup class type must have at least two non-abstract subclasses with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + field.FieldType.Name);
+                    if (subclasses.Count() < 1)
+                        rep.Error(@"{0}.{1}: The CommandGroup class type must have at least one non-abstract derived class with the [CommandName] attribute.".Fmt(commandLineType.FullName, field.Name), "class " + field.FieldType.Name);
 
                     var commandsTaken = new Dictionary<string, Type>();
 
