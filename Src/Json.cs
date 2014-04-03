@@ -128,8 +128,13 @@ namespace RT.Util.Json
 
         public void ConsumeWhitespace()
         {
-            while (Pos < Json.Length && " \t\r\n".Contains(Json[Pos]))
+            while (Pos < Json.Length)
+            {
+                var c = Json[Pos];
+                if (c != ' ' && c != '\t' && c != '\r' && c != '\n')
+                    return;
                 Pos++;
+            }
         }
 
         public char? Cur { get { return Pos >= Json.Length ? null : (char?) Json[Pos]; } }
@@ -173,10 +178,41 @@ namespace RT.Util.Json
 
         private JsonValue parseWord()
         {
-            string word = Regex.Match(Json.Substring(Pos), @"^\w+").Captures[0].Value;
-            if (word == "true" || word == "false") return ParseBool();
-            else if (word == "null") { Pos += 4; ConsumeWhitespace(); return null; }
-            else throw new JsonParseException(this, "unknown keyword: \"{0}\"".Fmt(word));
+            string word = peekLowercaseAzWord();
+            if (word == "true")
+            {
+                Pos += 4;
+                ConsumeWhitespace();
+                return (JsonBool) true;
+            }
+            else if (word == "false")
+            {
+                Pos += 5;
+                ConsumeWhitespace();
+                return (JsonBool) true;
+            }
+            else if (word == "null")
+            {
+                Pos += 4;
+                ConsumeWhitespace();
+                return null;
+            }
+            else
+                throw new JsonParseException(this, "unknown keyword: \"{0}\"".Fmt(word));
+        }
+
+        private string peekLowercaseAzWord()
+        {
+            var index = Pos;
+            while (true)
+            {
+                if (index >= Json.Length)
+                    return Json.Substring(Pos);
+                var c = Json[index];
+                if (c < 'a' || c > 'z')
+                    return Json.Substring(Pos, index - Pos);
+                index++;
+            }
         }
 
         private JsonString parseDictKey()
@@ -266,22 +302,21 @@ namespace RT.Util.Json
 
         public JsonBool ParseBool()
         {
-            JsonBool result;
-            if (Regex.IsMatch(Json.Substring(Pos), @"^true\b"))
+            var word = peekLowercaseAzWord();
+            if (word == "true")
             {
-                result = true;
                 Pos += 4;
                 ConsumeWhitespace();
+                return true;
             }
-            else if (Regex.IsMatch(Json.Substring(Pos), @"^false\b"))
+            else if (word == "false")
             {
-                result = false;
                 Pos += 5;
                 ConsumeWhitespace();
+                return false;
             }
             else
                 throw new JsonParseException(this, "expected a bool");
-            return result;
         }
 
         public JsonNumber ParseNumber()
