@@ -171,34 +171,37 @@ namespace RT.Util
 
         internal static void serialize(object settings, Type settingsType, string filename, SettingsSerializer serializer)
         {
+            var tempname = filename + ".~tmp";
             Ut.WaitSharingVio(() =>
             {
                 switch (serializer)
                 {
                     case SettingsSerializer.XmlClassify:
                         // SaveObjectToXmlFile automatically creates the folder if necessary
-                        XmlClassify.SaveObjectToXmlFile(settings, settingsType, filename);
+                        XmlClassify.SaveObjectToXmlFile(settings, settingsType, tempname);
                         break;
 
                     case SettingsSerializer.ClassifyXml:
                         // SerializeToFile automatically creates the folder if necessary
-                        ClassifyXml.SerializeToFile(settingsType, settings, filename, format: ClassifyXmlFormat.Create("Settings"));
+                        ClassifyXml.SerializeToFile(settingsType, settings, tempname, format: ClassifyXmlFormat.Create("Settings"));
                         break;
 
                     case SettingsSerializer.ClassifyJson:
                         // SerializeToFile automatically creates the folder if necessary
-                        ClassifyJson.SerializeToFile(settingsType, settings, filename);
+                        ClassifyJson.SerializeToFile(settingsType, settings, tempname);
                         break;
 
                     case SettingsSerializer.DotNetBinary:
-                        PathUtil.CreatePathToFile(filename);
+                        PathUtil.CreatePathToFile(tempname);
                         var bf = new BinaryFormatter();
-                        using (var fs = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
+                        using (var fs = File.Open(tempname, FileMode.Create, FileAccess.Write, FileShare.Read))
                             bf.Serialize(fs, settings);
                         break;
                     default:
                         throw new InternalErrorException("4968453");
                 }
+                File.Delete(filename);
+                File.Move(tempname, filename);
             }, TimeSpan.FromSeconds(5));
         }
 
