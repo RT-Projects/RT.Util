@@ -329,8 +329,6 @@ namespace RT.Util.Serialization
         // All enum types are also treated as if they were listed here.
         private static Type[] _simpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
 
-        private static Regex _backingFieldRegex = new Regex(@"^<(.*)>k__BackingField$", RegexOptions.Compiled);
-
         private sealed class classifier<TElement>
         {
             private ClassifyOptions _options;
@@ -742,7 +740,7 @@ namespace RT.Util.Serialization
             {
                 public FieldInfo FieldToAssignTo;
                 public TElement ElementToAssign;
-                public MemberInfo GetAttrsFrom;
+                public bool EnforceEnum;
             }
 
             private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, object parentNode)
@@ -757,10 +755,9 @@ namespace RT.Util.Serialization
                     MemberInfo getAttrsFrom = field;
 
                     // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                    var m = _backingFieldRegex.Match(rFieldName);
-                    if (m.Success)
+                    if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
                     {
-                        rFieldName = m.Groups[1].Value;
+                        rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
                         var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
                             getAttrsFrom = prop;
@@ -809,7 +806,7 @@ namespace RT.Util.Serialization
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                         if (!_format.IsNull(value) || !getAttrsFrom.IsDefined<ClassifyNotNullAttribute>())
-                            infos.Add(new deserializeFieldInfo { FieldToAssignTo = field, ElementToAssign = value, GetAttrsFrom = getAttrsFrom });
+                            infos.Add(new deserializeFieldInfo { FieldToAssignTo = field, ElementToAssign = value, EnforceEnum = getAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>() });
                     }
                 }
 
@@ -821,14 +818,14 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < infos.Count)
-                        return deserialize(infos[i].FieldToAssignTo.FieldType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].GetAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>());
+                        return deserialize(infos[i].FieldToAssignTo.FieldType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].EnforceEnum);
 
                     _doAtTheEnd.Add(() =>
                     {
                         for (int j = 0; j < infos.Count; j++)
                         {
                             var valueToAssign = valuesToAssign[j]();
-                            if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].GetAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>() || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
+                            if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].EnforceEnum || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
                                 infos[j].FieldToAssignTo.SetValue(intoObj, valueToAssign);
                         }
                     });
@@ -1057,10 +1054,9 @@ namespace RT.Util.Serialization
                     MemberInfo getAttrsFrom = field;
 
                     // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
-                    var m = _backingFieldRegex.Match(field.Name);
-                    if (m.Success)
+                    if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
                     {
-                        rFieldName = m.Groups[1].Value;
+                        rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
                         var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
                             getAttrsFrom = prop;
@@ -1212,7 +1208,10 @@ namespace RT.Util.Serialization
                                 continue;
                             MemberInfo m = f;
                             if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
-                                m = type.GetProperty(f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) ?? (MemberInfo) f;
+                            {
+                                var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
+                                m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
+                            }
                             postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), f, rep, alreadyChecked);
                             checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
                             checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
