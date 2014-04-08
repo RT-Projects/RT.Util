@@ -189,7 +189,7 @@ namespace RT.Util.Json
             {
                 Pos += 5;
                 ConsumeWhitespace();
-                return (JsonBool) true;
+                return (JsonBool) false;
             }
             else if (word == "null")
             {
