@@ -62,6 +62,73 @@ namespace RT.Util
         /// <summary>Same as <see cref="StdoutText"/> but for stderr.</summary>
         public event Action<string> StderrText;
 
+        private bool _captureEntireStdout = false;
+        private bool _captureEntireStderr = false;
+        private byte[] _entireStdout;
+        private byte[] _entireStderr;
+
+        /// <summary>
+        ///     Specifies whether the entire stdout output should be captured. This can consume large amounts of memory, and
+        ///     so defaults to <c>false</c>.</summary>
+        public bool CaptureEntireStdout
+        {
+            get { return _captureEntireStdout; }
+            set
+            {
+                if (State != CommandRunnerState.NotStarted) // this condition is a bit too restrictive for the current implementation, but allows for removing the temporary files in future
+                    throw new InvalidOperationException("This property cannot be changed once the runner has started.");
+                _captureEntireStdout = value;
+            }
+        }
+
+        /// <summary>
+        ///     Specifies whether the entire stderr output should be captured. This can consume large amounts of memory, and
+        ///     so defaults to <c>false</c>.</summary>
+        public bool CaptureEntireStderr
+        {
+            get { return _captureEntireStderr; }
+            set
+            {
+                if (State != CommandRunnerState.NotStarted)
+                    throw new InvalidOperationException("This property cannot be changed once the runner has started.");
+                _captureEntireStderr = value;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the entire stdout output produced by the program. This property can only be accessed once the command has
+        ///     ended (exited or aborted), and only if <see cref="CaptureEntireStdout"/> is <c>true</c>. You may modify the
+        ///     returned array, but subsequent invocations will then return the modified array. The relative interleaving of
+        ///     stdout and stderr is not preserved in this property.</summary>
+        public byte[] EntireStdout
+        {
+            get
+            {
+                if (!CaptureEntireStdout)
+                    throw new InvalidOperationException("This property can only be read if CaptureEntireStdout is true");
+                if (State != CommandRunnerState.Exited && State != CommandRunnerState.Aborted)
+                    throw new InvalidOperationException("This property can only be read once the command has exited or was aborted.");
+                return _entireStdout;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the entire stderr output produced by the program. This property can only be accessed once the command has
+        ///     ended (exited or aborted), and only if <see cref="CaptureEntireStderr"/> is <c>true</c>. You may modify the
+        ///     returned array, but subsequent invocations will then return the modified array. The relative interleaving of
+        ///     stdout and stderr is not preserved in this property.</summary>
+        public byte[] EntireStderr
+        {
+            get
+            {
+                if (!CaptureEntireStderr)
+                    throw new InvalidOperationException("This property can only be read if CaptureEntireStderr is true");
+                if (State != CommandRunnerState.Exited && State != CommandRunnerState.Aborted)
+                    throw new InvalidOperationException("This property can only be read once the command has exited or was aborted.");
+                return _entireStderr;
+            }
+        }
+
         /// <summary>
         ///     Exposes a waitable flag indicating whether the command has ended, either by exiting naturally or by being
         ///     aborted. See also Remarks on <see cref="CommandRunner"/>.</summary>
@@ -209,6 +276,11 @@ namespace RT.Util
             }
             checkOutputs();
 
+            if (_captureEntireStdout)
+                _entireStdout = File.ReadAllBytes(_tempStdout);
+            if (_captureEntireStderr)
+                _entireStderr = File.ReadAllBytes(_tempStderr);
+
             lock (_lock)
             {
                 _pauseTimerDue = null;
@@ -245,6 +317,9 @@ namespace RT.Util
 
         private void checkOutput(string filename, ref Stream stream, Decoder utf8, Action<byte[]> dataEvent, Action<string> textEvent)
         {
+            if (dataEvent == null && textEvent == null)
+                return;
+
             if (stream == null)
             {
                 try { stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite); }

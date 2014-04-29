@@ -157,7 +157,7 @@ namespace RT.Util.ExtensionMethods
         ///     filesystem. The escaping is fully reversible (via <see cref="FilenameCharactersUnescape"/>), but does not
         ///     treat characters at specific positions differently (e.g. the "." at the end of the name is not escaped, even
         ///     though it will disappear on a Win32 system).</summary>
-        public static string FilenameCharactersEscape(this string input)
+        public static string FilenameCharactersEscape(this string input, bool includeNonAscii = false)
         {
             if (input == null)
                 throw new ArgumentNullException("input");
@@ -165,7 +165,7 @@ namespace RT.Util.ExtensionMethods
             var result = new StringBuilder(input.Length + input.Length / 2);
             foreach (char c in input)
             {
-                if (_filenameDisallowedCharacters.Contains(c))
+                if (_filenameDisallowedCharacters.Contains(c) || (c >= 128 && includeNonAscii))
                 {
                     result.Append('{');
                     foreach (var bt in Encoding.UTF8.GetBytes(c.ToString()))
