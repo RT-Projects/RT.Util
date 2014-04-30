@@ -22,8 +22,8 @@ namespace RT.Util
     }
 
     /// <summary>
-    ///     Instructs Rummage to keep the original name of a specific type, all of its members, and all the members in all of its
-    ///     nested types.</summary>
+    ///     Instructs Rummage to keep the original name of a specific type, all of its members, and all the members in all of
+    ///     its nested types.</summary>
     [AttributeUsage(AttributeTargetSets.TypeDefinitions, Inherited = false, AllowMultiple = false)]
     public sealed class RummageNoRenameAnythingAttribute : Attribute
     {
@@ -71,19 +71,35 @@ namespace RT.Util
     }
 
     /// <summary>
-    ///     Use only on custom-attribute class declarations. Instructs Rummage to keep everything reflection-safe that uses the
-    ///     given custom attribute.</summary>
+    ///     Use only on custom-attribute class declarations. Instructs Rummage to keep everything reflection-safe that uses
+    ///     the given custom attribute.</summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class RummageKeepUsersReflectionSafeAttribute : Attribute
     {
     }
 
     /// <summary>
-    ///     Use on a method or constructor parameter of type "Type". Instructs Rummage that this method uses the Type passed in in
-    ///     a way that is fully compatible with all obfuscations, including removing members not directly referenced, renaming
-    ///     members, unnesting types and so on.</summary>
+    ///     Use on a method or constructor parameter of type "Type". Instructs Rummage that this method uses the Type passed
+    ///     in in a way that is fully compatible with all obfuscations, including removing members not directly referenced,
+    ///     renaming members, unnesting types and so on.</summary>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.GenericParameter, Inherited = false, AllowMultiple = false)]
     public sealed class RummageAssumeTypeSafeAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    ///     Instructs Rummage not to mark derived types as reflection-safe if it determines that this type needs to be kept
+    ///     reflection-safe.</summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageNoMarkDerivedTypesReflectionSafeAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    ///     Instructs Rummage not to mark this type as reflection-safe if it determines that the base type needs to be kept
+    ///     reflection-safe.</summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class RummageNoInferReflectionSafeFromBaseAttribute : Attribute
     {
     }
 
@@ -91,8 +107,8 @@ namespace RT.Util
     public static class Rummage
     {
         /// <summary>
-        ///     Returns the type passed in. Use around a <c>typeof(SomeType)</c> to override Rummage's reflection safety analysis
-        ///     and make Rummage believe that this particular use is entirely safe.</summary>
+        ///     Returns the type passed in. Use around a <c>typeof(SomeType)</c> to override Rummage's reflection safety
+        ///     analysis and make Rummage believe that this particular use is entirely safe.</summary>
         public static Type Safe([RummageAssumeTypeSafe] Type type) { return type; }
     }
 }
