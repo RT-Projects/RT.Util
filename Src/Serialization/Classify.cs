@@ -1226,6 +1226,7 @@ namespace RT.Util.Serialization
 
         private static void checkAttributeParity(MemberInfo m, IPostBuildReporter rep)
         {
+#pragma warning disable 618 // obsolete
             checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
             checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
             checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
@@ -1233,6 +1234,7 @@ namespace RT.Util.Serialization
             checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), m, rep);
             checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), m, rep);
             checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), m, rep);
+#pragma warning restore 618
         }
 
         private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, MemberInfo member, IPostBuildReporter rep)

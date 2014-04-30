@@ -6,6 +6,8 @@ using System.Xml.Linq;
 using NUnit.Framework;
 using RT.Util.ExtensionMethods;
 
+#pragma warning disable 618 // XmlClassify is obsolete
+
 namespace RT.Util.Xml
 {
     [TestFixture]
@@ -1229,3 +1231,5 @@ namespace RT.Util.Xml
         }
     }
 }
+
+#pragma warning restore 618

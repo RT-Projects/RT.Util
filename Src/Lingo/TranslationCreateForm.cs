@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Util.Dialogs;
+using RT.Util.Serialization;
 using RT.Util.Xml;
 
 namespace RT.Util.Lingo
@@ -56,7 +57,7 @@ namespace RT.Util.Lingo
                         Process.Start(Path.GetDirectoryName(xmlFile));
                     return null;
                 }
-                XmlClassify.SaveObjectToXmlFile(trans, xmlFile);
+                ClassifyXml.SerializeToFile(trans, xmlFile);
                 return trans;
             }
         }

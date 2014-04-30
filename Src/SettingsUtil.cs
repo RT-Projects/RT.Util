@@ -66,9 +66,11 @@ namespace RT.Util
 
             switch (attr.Serializer)
             {
+#pragma warning disable 618 // obsolete
                 case SettingsSerializer.XmlClassify:
                     XmlClassify.PostBuildStep<TSettings>(rep);
                     break;
+#pragma warning restore 618
                 case SettingsSerializer.DotNetBinary:
                     break;
                 case SettingsSerializer.ClassifyXml:
@@ -211,10 +213,12 @@ namespace RT.Util
             {
                 switch (serializer)
                 {
+#pragma warning disable 618 // obsolete
                     case SettingsSerializer.XmlClassify:
                         // SaveObjectToXmlFile automatically creates the folder if necessary
                         XmlClassify.SaveObjectToXmlFile(settings, settingsType, tempname);
                         break;
+#pragma warning restore 618
 
                     case SettingsSerializer.ClassifyXml:
                         // SerializeToFile automatically creates the folder if necessary
@@ -246,8 +250,10 @@ namespace RT.Util
             {
                 switch (serializer)
                 {
+#pragma warning disable 618 // obsolete
                     case SettingsSerializer.XmlClassify:
                         return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
+#pragma warning restore 618
 
                     case SettingsSerializer.ClassifyXml:
                         return ClassifyXml.DeserializeFile<TSettings>(filename);
@@ -358,11 +364,13 @@ namespace RT.Util
     public abstract class SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+#pragma warning disable 618     // XmlClassify is obsolete
         [XmlIgnore, ClassifyIgnore, NonSerialized]
         protected internal object _lock = new object();
         [XmlIgnore, ClassifyIgnore, NonSerialized]
         protected internal Thread _saveThread;
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
+#pragma warning restore 618
 
         /// <summary>
         ///     This method is called just before the settings class is written out to disk, allowing any required changes to
@@ -487,12 +495,14 @@ namespace RT.Util
     public abstract class SettingsThreadedBase : SettingsBase
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
+#pragma warning disable 618 // obsolete
         [XmlIgnore, ClassifyIgnore, NonSerialized]
         private SettingsBase _saveObj;
         [XmlIgnore, ClassifyIgnore, NonSerialized]
         private string _saveFilename;
         [XmlIgnore, ClassifyIgnore, NonSerialized]
         private SettingsSerializer? _saveSerializer;
+#pragma warning restore 618
 #pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
@@ -585,6 +595,7 @@ namespace RT.Util
     {
         /// <summary>Use the XmlClassify serializer (obsolete).</summary>
         [SerializerInfo(defaultFileExtension: "xml")]
+        [Obsolete("XmlClassify is obsolete. Use ClassifyXml instead.")]
         XmlClassify,
         /// <summary>Use the .NET binary serializer.</summary>
         [SerializerInfo(defaultFileExtension: "bin", AutoConvertFrom = true)]

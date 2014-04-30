@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
+#pragma warning disable 618 // do not warn about the fact that XmlClassify uses its own obsolete classes
+
 namespace RT.Util.Xml
 {
     /// <summary>
@@ -100,6 +102,7 @@ namespace RT.Util.Xml
     ///             In particular, this means that the comparer used by a SortedDictionary&lt;K, V&gt; is not persisted. A
     ///             comparer assigned by the class’s parameterless constructor is also not
     ///             used.</description></item></list></remarks>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public static class XmlClassify
     {
         /// <summary>
@@ -938,6 +941,7 @@ namespace RT.Util.Xml
     /// <summary>
     ///     Contains methods to process an object before <see cref="XmlClassify"/> turns it into XML or after it has restored it
     ///     from XML. To have effect, this interface must be implemented by the object being serialised.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public interface IXmlClassifyProcess
     {
         /// <summary>
@@ -954,6 +958,7 @@ namespace RT.Util.Xml
     /// <summary>
     ///     Contains methods to process an object and/or the associated XML before or after <see cref="XmlClassify"/>
     ///     (de)serializes it. To have effect, this interface must be implemented by the object being serialised.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public interface IXmlClassifyProcess2
     {
         /// <summary>
@@ -996,6 +1001,7 @@ namespace RT.Util.Xml
     ///     classifying. To have effect, this interface must be implemented by a class derived from <see
     ///     cref="XmlClassifyTypeOptions"/> and associated with a type via <see
     ///     cref="XmlClassifyOptions.AddTypeOptions"/>.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public interface IXmlClassifyProcessXml
     {
         /// <summary>
@@ -1017,6 +1023,7 @@ namespace RT.Util.Xml
     ///     The type that is actually used for instances in memory.</typeparam>
     /// <typeparam name="TSubstitute">
     ///     The substitute type to be used for purposes of classifying and declassifying.</typeparam>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public interface IXmlClassifySubstitute<TTrue, TSubstitute>
     {
         /// <summary>
@@ -1036,6 +1043,7 @@ namespace RT.Util.Xml
     }
 
     /// <summary>Specifies some options for use in XmlClassify.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public sealed class XmlClassifyOptions
     {
         /// <summary>
@@ -1086,6 +1094,7 @@ namespace RT.Util.Xml
     ///         XmlClassify.</para>
     ///     <para>
     ///         Instances of derived classes are passed into <see cref="XmlClassifyOptions.AddTypeOptions"/>.</para></remarks>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public abstract class XmlClassifyTypeOptions
     {
         internal Type _substituteType;
@@ -1131,12 +1140,14 @@ namespace RT.Util.Xml
     ///     retrieve the object. This retrieval is deferred until first use. Use <see cref="XmlDeferredObject&lt;T&gt;.Id"/> to
     ///     retrieve the ID used to reference the object. You can also capture the ID into the class or struct T by using the <see
     ///     cref="XmlIdAttribute"/> attribute within that class or struct.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlFollowIdAttribute : Attribute { }
 
     /// <summary>
     ///     If this attribute is used on a field or automatically-implemented property, it is ignored by <see
     ///     cref="XmlClassify"/>. Data stored in this field or automatically-implemented property is not persisted.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlIgnoreAttribute : Attribute { }
 
@@ -1150,6 +1161,7 @@ namespace RT.Util.Xml
     ///     Warning: Do not use this custom attribute on a field that has a non-default value set in the containing class’s
     ///     constructor. Doing so will cause a serialised “null” to revert to that constructor value upon
     ///     deserliasation.</remarks>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class XmlIgnoreIfDefaultAttribute : Attribute { }
 
@@ -1159,6 +1171,7 @@ namespace RT.Util.Xml
     ///     struct, it applies to all collection-type fields in the class or struct. Notice that using this together with <see
     ///     cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between null and an empty element to be lost. However,
     ///     a collection containing only null elements is persisted correctly.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     public sealed class XmlIgnoreIfEmptyAttribute : Attribute { }
 
@@ -1167,6 +1180,7 @@ namespace RT.Util.Xml
     ///     generate a tag if the field’s or property’s value is equal to the specified value. Notice that using this together
     ///     with <see cref="XmlIgnoreIfDefaultAttribute"/> will cause the distinction between the type’s default value and the
     ///     specified value to be lost.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlIgnoreIfAttribute : Attribute
     {
@@ -1186,6 +1200,7 @@ namespace RT.Util.Xml
     ///     automatically-implemented property is of an incompatible type, a run-time exception occurs. If there was no parent
     ///     node, the field or automatically-implemented property is set to null. When persisting objects, fields and
     ///     automatically-implemented properties with this attribute are skipped.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlParentAttribute : Attribute { }
 
@@ -1194,6 +1209,7 @@ namespace RT.Util.Xml
     ///     with this attribute receives the ID that was used to refer to the XML file that stores this object. See <see
     ///     cref="XmlFollowIdAttribute"/> for more information. The field or automatically-implemented property must be of type
     ///     string.</summary>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class XmlIdAttribute : Attribute { }
 
@@ -1201,6 +1217,7 @@ namespace RT.Util.Xml
     ///     Provides mechanisms to hold an object that has an ID and gets evaluated at first use.</summary>
     /// <typeparam name="T">
     ///     The type of the contained object.</typeparam>
+    [Obsolete("XmlClassify is obsolete. Use RT.Util.Serialization.ClassifyXml instead.")]
     public sealed class XmlDeferredObject<T>
     {
         /// <summary>
@@ -1275,3 +1292,5 @@ namespace RT.Util.Xml
         public string Id { get { return _id; } }
     }
 }
+
+#pragma warning restore 618

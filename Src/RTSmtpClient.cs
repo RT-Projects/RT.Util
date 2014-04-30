@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
+using RT.Util.Serialization;
 using RT.Util.Xml;
 
 namespace RT.Util
@@ -41,7 +42,7 @@ namespace RT.Util
     }
 
     /// <summary>Holds all settings required to connect to an SMTP server.</summary>
-    public abstract class RTSmtpSettings : IXmlClassifyProcess
+    public abstract class RTSmtpSettings : IClassifyObjectProcessor
     {
         /// <summary>Server host name or IP address.</summary>
         public string Host = "smtp.example.com";
@@ -71,12 +72,12 @@ namespace RT.Util
             Password = null;
         }
 
-        void IXmlClassifyProcess.BeforeXmlClassify()
+        void IClassifyObjectProcessor.BeforeSerialize()
         {
             encryptPassword();
         }
 
-        void IXmlClassifyProcess.AfterXmlDeclassify()
+        void IClassifyObjectProcessor.AfterDeserialize()
         {
             encryptPassword();
         }

@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
+using RT.Util.Serialization;
 using RT.Util.Xml;
 
 namespace RT.Util.Lingo
@@ -73,7 +74,7 @@ namespace RT.Util.Lingo
         public static TranslationBase LoadTranslation(Type translationType, string module, Language language)
         {
             string path = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", module + "." + language.GetIsoLanguageCode() + ".xml");
-            var trans = (TranslationBase) XmlClassify.LoadObjectFromXmlFile(translationType, path);
+            var trans = (TranslationBase) ClassifyXml.DeserializeFile(translationType, path);
             trans.Language = language;
             return trans;
         }
@@ -93,14 +94,14 @@ namespace RT.Util.Lingo
         /// <param name="translation">The translation to save.</param>
         public static void SaveTranslation(Type translationType, string moduleName, TranslationBase translation)
         {
-            XmlClassify.SaveObjectToXmlFile(translation, translationType, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
+            ClassifyXml.SerializeToFile(translationType, translation, Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "Translations", moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml"));
             if (AlsoSaveTranslationsTo != null && Directory.Exists(AlsoSaveTranslationsTo))
             {
                 try
                 {
                     var filename = Path.Combine(AlsoSaveTranslationsTo, moduleName + "." + translation.Language.GetIsoLanguageCode() + ".xml");
                     File.SetAttributes(filename, File.GetAttributes(filename) & ~FileAttributes.ReadOnly);
-                    XmlClassify.SaveObjectToXmlFile(translation, translationType, filename);
+                    ClassifyXml.SerializeToFile(translationType, translation, filename);
                 }
                 catch { }
             }

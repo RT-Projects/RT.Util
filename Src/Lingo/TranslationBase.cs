@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using RT.Util.Xml;
+using RT.Util.Serialization;
 
 namespace RT.Util.Lingo
 {
@@ -11,7 +12,7 @@ namespace RT.Util.Lingo
     public abstract class TranslationBase
     {
         /// <summary>Language of this translation.</summary>
-        [LingoIgnore, XmlIgnore]
+        [LingoIgnore, ClassifyIgnore]
         public Language Language;
 
         /// <summary>Constructor.</summary>
