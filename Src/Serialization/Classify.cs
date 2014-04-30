@@ -1192,6 +1192,7 @@ namespace RT.Util.Serialization
                 return; // these are safe
             else
             {
+                checkAttributeParity(type, rep);
                 if (!type.IsAbstract)
                 {
                     if (instance == null && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
@@ -1204,22 +1205,16 @@ namespace RT.Util.Serialization
                         var inst = instance ?? (type.ContainsGenericParameters ? null : Activator.CreateInstance(type, true));
                         foreach (var f in type.GetAllFields())
                         {
-                            if (f.IsDefined<ClassifyIgnoreAttribute>())
-                                continue;
                             MemberInfo m = f;
                             if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
                             {
                                 var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
                                 m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
                             }
-                            postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), f, rep, alreadyChecked);
-                            checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), m, rep);
-                            checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), m, rep);
+                            if (m.IsDefined<ClassifyIgnoreAttribute>())
+                                continue;
+                            postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), m, rep, alreadyChecked);
+                            checkAttributeParity(m, rep);
                         }
                     }
                 }
@@ -1229,12 +1224,28 @@ namespace RT.Util.Serialization
             }
         }
 
+        private static void checkAttributeParity(MemberInfo m, IPostBuildReporter rep)
+        {
+            checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
+            checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
+            checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
+            checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), m, rep);
+            checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), m, rep);
+            checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), m, rep);
+            checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), m, rep);
+        }
+
         private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, MemberInfo member, IPostBuildReporter rep)
         {
-            if (member.IsDefined(xmlClassifyAttribute, false) && !member.IsDefined(classifyAttribute, true))
-                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName), member.DeclaringType.Name, member.Name);
-            if (!member.IsDefined(xmlClassifyAttribute, true) && member.IsDefined(classifyAttribute, true))
-                rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, classifyAttribute.FullName, xmlClassifyAttribute.FullName), member.DeclaringType.Name, member.Name);
+            if (member.IsDefined(xmlClassifyAttribute, false) && !member.IsDefined(classifyAttribute, false))
+            {
+                if (member is FieldInfo)
+                    rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName), member.DeclaringType.Name, member.Name);
+                else if (member is Type)
+                    rep.Warning("The type {0} has the attribute {1} but not {2}.".Fmt(((Type) member).FullName, xmlClassifyAttribute.FullName, classifyAttribute.FullName), (((Type) member).IsValueType ? "struct " : "class ") + member.Name);
+                else
+                    rep.Warning("Unrecognized member type.");
+            }
         }
     }
 
