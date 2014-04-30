@@ -53,9 +53,29 @@ namespace RT.Util
         ///     Object to report post-build errors to.</param>
         public static void PostBuildStep<TSettings>(IPostBuildReporter rep) where TSettings : SettingsBase
         {
-            try { GetAttribute(typeof(TSettings)); }
-            catch (Exception e) { rep.Error(e.Message, "class", typeof(TSettings).Name); }
-            XmlClassify.PostBuildStep<TSettings>(rep);
+            SettingsAttribute attr;
+            try
+            {
+                attr = GetAttribute(typeof(TSettings));
+            }
+            catch (Exception e)
+            {
+                rep.Error(e.Message, "class", typeof(TSettings).Name);
+                return;
+            }
+
+            switch (attr.Serializer)
+            {
+                case SettingsSerializer.XmlClassify:
+                    XmlClassify.PostBuildStep<TSettings>(rep);
+                    break;
+                case SettingsSerializer.DotNetBinary:
+                    break;
+                case SettingsSerializer.ClassifyXml:
+                case SettingsSerializer.ClassifyJson:
+                    Classify.PostBuildStep<TSettings>(rep);
+                    break;
+            }
         }
 
         /// <summary>
@@ -156,14 +176,29 @@ namespace RT.Util
                     }
                     catch (Exception e)
                     {
-                        var choices = new List<string>() { "Try &again", "&Don't save settings" };
+                        var choices = new List<string>() {
+                            "Try &again", 
+                            "&Don't save settings",
+                        };
+                        int cancelIndex = -1;
                         if (onFailure == SettingsOnFailure.ShowRetryWithCancel)
+                        {
+                            cancelIndex = choices.Count;
                             choices.Add("&Cancel");
+                        }
+#if DEBUG
+                        int breakIndex = choices.Count;
+                        choices.Add("&Break debugger");
+#endif
                         int choice = DlgMessage.ShowWarning("Program settings could not be saved.\n({0})\n\nWould you like to try again?".Fmt(e.Message), choices.ToArray());
                         if (choice == 1)
                             return;
-                        if (choice == 2)
+                        if (choice == cancelIndex)
                             throw new SettingsCancelException();
+#if DEBUG
+                        if (choice == breakIndex)
+                            System.Diagnostics.Debugger.Break();
+#endif
                     }
                 };
             }
