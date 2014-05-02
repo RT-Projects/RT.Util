@@ -17,11 +17,6 @@ namespace RT.Util
             bool notimes = args.Contains("--no-times");
 
             Console.OutputEncoding = Encoding.UTF8;
-            new Serialization.ClassifyTests().TestReferencesWithSubstitution();
-            new Serialization.ClassifyTests().TestListSubstitution();
-            new Serialization.ClassifyTests().TestTupleReference();
-            new Serialization.ClassifyTests().TestCircularReference();
-            new Serialization.ClassifyTests().TestCircularReferenceArray();
             NUnitDirect.RunTestsOnAssembly(Assembly.GetEntryAssembly(), notimes);
 
             if (wait)
