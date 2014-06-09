@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -162,6 +163,7 @@ namespace RT.Util
         public const int MOUSEEVENTF_LEFTUP = 0x04;
         public const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         public const int MOUSEEVENTF_RIGHTUP = 0x10;
+        public const int MOUSEEVENTF_ABSOLUTE = 0x8000;
 
         // For the 'type' field in the INPUT struct
         public const int INPUT_MOUSE = 0;
@@ -497,6 +499,13 @@ namespace RT.Util
         [DllImport("user32.dll")]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetCursorPos(out Point lpPoint);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetCursorPos(int x, int y);
+
         [DllImport("Kernel32")]
         public static extern bool SetConsoleCtrlHandler(ConsoleShutdownEventHandler handler, bool add);
         public delegate bool ConsoleShutdownEventHandler(ConsoleShutdownType type);
@@ -507,7 +516,7 @@ namespace RT.Util
             Close = 2,
 
             // According to blogs, Logoff and Shutdown no longer work in Windows 7 and later :(
-            Logoff = 5,         
+            Logoff = 5,
             Shutdown = 6
         }
 
