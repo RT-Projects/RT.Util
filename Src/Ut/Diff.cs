@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -9,22 +8,30 @@ namespace RT.Util
     public static partial class Ut
     {
         /// <summary>
-        /// Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using the specified options.
-        /// </summary>
-        /// <typeparam name="T">The type of items to compare.</typeparam>
-        /// <param name="old">The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
-        /// <param name="new">The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
-        /// <param name="comparer">The equality comparer to use to compare items in the two sequences, or null to use the default comparer.</param>
-        /// <param name="predicate">If not null, determines which elements are "hard matches" (true) and which are "soft matches" (false).
-        /// A "hard match" element is one that can always be matched. A "soft match" element is only matched if it is 
-        /// completely surrounded by hard matches.</param>
-        /// <param name="postProcessor">If not null, provides a post-processing step for parts of the diff in between consecutive matches.
-        /// Without a post-processing step, these parts are returned as a sequence of deletes followed by a sequence of
-        /// inserts.</param>
-        /// <returns>An <c>IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt;</c> representing the differences between <paramref name="old"/> and
-        /// <paramref name="new"/>. Each element in the returned <c>IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt;</c> corresponds either to an
-        /// element present only in <paramref name="old"/> (the element is considered “deleted”), an element present only in 
-        /// <paramref name="new"/> (the element is considered “inserted”) or an element present in both.</returns>
+        ///     Computes a representation of the differences between <paramref name="old"/> and <paramref name="new"/> using
+        ///     the specified options.</summary>
+        /// <typeparam name="T">
+        ///     The type of items to compare.</typeparam>
+        /// <param name="old">
+        ///     The first sequence of elements. Elements only in this sequence are considered "deleted".</param>
+        /// <param name="new">
+        ///     The second sequence of elements. Elements only in this sequence are considered "inserted".</param>
+        /// <param name="comparer">
+        ///     The equality comparer to use to compare items in the two sequences, or null to use the default comparer.</param>
+        /// <param name="predicate">
+        ///     If not null, determines which elements are "hard matches" (true) and which are "soft matches" (false). A "hard
+        ///     match" element is one that can always be matched. A "soft match" element is only matched if it is adjacent to
+        ///     a hard match.</param>
+        /// <param name="postProcessor">
+        ///     If not null, provides a post-processing step for parts of the diff in between consecutive matches. Without a
+        ///     post-processing step, or when the post-processor returns null, these parts are returned as a sequence of
+        ///     deletes followed by a sequence of inserts.</param>
+        /// <returns>
+        ///     An <c>IEnumerable&lt;Tuple&lt;T, DiffOp&gt;&gt;</c> representing the differences between <paramref
+        ///     name="old"/> and <paramref name="new"/>. Each element in the returned <c>IEnumerable&lt;Tuple&lt;T,
+        ///     DiffOp&gt;&gt;</c> corresponds either to an element present only in <paramref name="old"/> (the element is
+        ///     considered “deleted”), an element present only in <paramref name="new"/> (the element is considered
+        ///     “inserted”) or an element present in both.</returns>
         public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new,
             IEqualityComparer<T> comparer = null, Func<T, bool> predicate = null,
             Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor = null)
@@ -66,7 +73,17 @@ namespace RT.Util
                 yield return Tuple.Create(old[i], DiffOp.None);
         }
 
-        private sealed class diffSeqLink { public int x; public int y; public diffSeqLink prev; }
+        private sealed class diffSeqLink
+        {
+            public int x;
+            public int y;
+            public diffSeqLink prev;
+            public override string ToString()
+            {
+                return "{0}, {1}{2}".Fmt(x, y, prev == null ? null : " >");
+            }
+        }
+
         private static IEnumerable<Tuple<T, DiffOp>> diffImpl<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
         {
             var newhash = new Dictionary<T, List<int>>(comparer);
@@ -141,9 +158,12 @@ namespace RT.Util
 
                 if (curold < mx || curnew < my)
                 {
-                    if (postProcessor != null)
+                    // postProcessor can be null, or it can return null
+                    var postProcessed = postProcessor.NullOr(p => p(olda.Skip(curold).Take(mx - curold), newa.Skip(curnew).Take(my - curnew)));
+
+                    if (postProcessed != null)
                     {
-                        foreach (var token in postProcessor(olda.Skip(curold).Take(mx - curold), newa.Skip(curnew).Take(my - curnew)))
+                        foreach (var token in postProcessed)
                             yield return token;
                         curold = mx;
                         curnew = my;
@@ -173,22 +193,16 @@ namespace RT.Util
         }
     }
 
-    /// <summary>Indicates insertions and deletions in the output of <see cref="Ut.Diff{T}"/>. </summary>
+    /// <summary>Indicates insertions and deletions in the output of <see cref="Ut.Diff{T}"/>.</summary>
     public enum DiffOp
     {
-        /// <summary>
-        /// Indicates that the relevant item has been deleted.
-        /// </summary>
+        /// <summary>Indicates that the relevant item has been deleted.</summary>
         Del = -1,
 
-        /// <summary>
-        /// Indicates that the relevant item has not changed.
-        /// </summary>
+        /// <summary>Indicates that the relevant item has not changed.</summary>
         None = 0,
 
-        /// <summary>
-        /// Indicates that the relevant item has been inserted.
-        /// </summary>
+        /// <summary>Indicates that the relevant item has been inserted.</summary>
         Ins = 1
     };
 }
