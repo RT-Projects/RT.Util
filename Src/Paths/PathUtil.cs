@@ -47,7 +47,7 @@ namespace RT.Util
 
         /// <summary>
         ///     Combines the full path containing the running executable with the specified string. Ensures that only a single
-        ///     <see cref="Path.DirectorySeparatorChar" /> separates the two.</summary>
+        ///     <see cref="Path.DirectorySeparatorChar"/> separates the two.</summary>
         public static string AppPathCombine(string path)
         {
             return Path.Combine(AppPath, path);
@@ -55,7 +55,7 @@ namespace RT.Util
 
         /// <summary>
         ///     Combines the full path containing the running executable with one or more strings. Ensures that only a single
-        ///     <see cref="Path.DirectorySeparatorChar" /> separates the executable path and every string.</summary>
+        ///     <see cref="Path.DirectorySeparatorChar"/> separates the executable path and every string.</summary>
         public static string AppPathCombine(params string[] morePaths)
         {
             return Path.Combine(new[] { AppPath }.Concat(morePaths).ToArray());
@@ -73,7 +73,7 @@ namespace RT.Util
         /// <param name="path">
         ///     Path to be normalised.</param>
         /// <returns>
-        ///     Normalised version of <paramref name="path" />, or null if the input was null.</returns>
+        ///     Normalised version of <paramref name="path"/>, or null if the input was null.</returns>
         public static string NormPath(string path)
         {
             if (path == null)
@@ -86,8 +86,7 @@ namespace RT.Util
                 return path + Path.DirectorySeparatorChar;
         }
 
-        /// <summary>
-        ///     Checks whether <paramref name="subpath" /> refers to a subdirectory inside <paramref name="parentPath" />.</summary>
+        /// <summary>Checks whether <paramref name="subpath"/> refers to a subdirectory inside <paramref name="parentPath"/>.</summary>
         public static bool IsSubpathOf(string subpath, string parentPath)
         {
             string parentPathNormalized = PathUtil.NormPath(parentPath);
@@ -100,8 +99,8 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Checks whether <paramref name="subpath" /> refers to a subdirectory inside <paramref name="parentPath" /> or
-        ///     the same directory.</summary>
+        ///     Checks whether <paramref name="subpath"/> refers to a subdirectory inside <paramref name="parentPath"/> or the
+        ///     same directory.</summary>
         public static bool IsSubpathOfOrSame(string subpath, string parentPath)
         {
             string parentPathNormalized = PathUtil.NormPath(parentPath);
@@ -117,18 +116,22 @@ namespace RT.Util
         ///     Expands all occurrences of "$(NAME)" in the specified string with the special folder path for the current
         ///     machine/user. See remarks for details.</summary>
         /// <remarks>
-        ///     <para>Expands all occurrences of "$(NAME)", where NAME is the name of one of the values of the <see
-        ///     cref="Environment.SpecialFolder" /> enum. There is no support for escaping such a replacement, and invalid
-        ///     names are ignored.</para>
-        ///     <para>The following additional names are also recognised:</para>
+        ///     <para>
+        ///         Expands all occurrences of "$(NAME)", where NAME is the name of one of the values of the <see
+        ///         cref="Environment.SpecialFolder"/> enum. There is no support for escaping such a replacement, and invalid
+        ///         names are ignored.</para>
+        ///     <para>
+        ///         The following additional names are also recognised:</para>
         ///     <list type="table">
-        ///     <item><term>$(Temp)</term><description>
-        ///         expands to the system's temporary folder path (Path.GetTempPath()).</description></item>
-        ///     <item><term>$(AppPath)</term><description>
-        ///         expands to the directory containing the entry assembly (Assembly.GetEntryAssembly()). Throws an <see
-        ///         cref="InvalidOperationException" /> if there is no entry assembly (e.g. in a secondary app
-        ///         domain).</description></item>
-        ///     </list></remarks>
+        ///         <item><term>
+        ///             $(Temp)</term>
+        ///         <description>
+        ///             expands to the system's temporary folder path (Path.GetTempPath()).</description></item>
+        ///         <item><term>
+        ///             $(AppPath)</term>
+        ///         <description>
+        ///             expands to the directory containing the entry assembly (Assembly.GetEntryAssembly()). Throws an <see
+        ///             cref="InvalidOperationException"/> if there is no entry assembly (e.g. in a secondary app domain).</description></item></list></remarks>
         public static string ExpandPath(string path)
         {
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
@@ -145,7 +148,7 @@ namespace RT.Util
 
         /// <summary>
         ///     Checks to see whether the specified path starts with any of the standard paths supported by <see
-        ///     cref="ExpandPath" />, and if so, replaces the prefix with a "$(NAME)" string and returns the resulting value.
+        ///     cref="ExpandPath"/>, and if so, replaces the prefix with a "$(NAME)" string and returns the resulting value.
         ///     The value passed in should be an absolute path for the substitution to work.</summary>
         public static string UnexpandPath(string path)
         {
@@ -280,10 +283,10 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Changes a relative <paramref name="toggledPath" /> to an absolute and vice versa, with respect to <paramref
-        ///     name="basePath" />. Neither path must be an empty string. Any trailing slashes are ignored and the result
-        ///     won't have one except for root "C:\"-style paths. Forward slashes, multiple repeated slashes, and any
-        ///     redundant "." or ".." elements are correctly interpreted and eliminated. See Remarks for some special cases.</summary>
+        ///     Changes a relative <paramref name="toggledPath"/> to an absolute and vice versa, with respect to <paramref
+        ///     name="basePath"/>. Neither path must be an empty string. Any trailing slashes are ignored and the result won't
+        ///     have one except for root "C:\"-style paths. Forward slashes, multiple repeated slashes, and any redundant "."
+        ///     or ".." elements are correctly interpreted and eliminated. See Remarks for some special cases.</summary>
         /// <remarks>
         ///     Relative paths that specify a drive letter "C:thing" are not supported and result in undefined behaviour. If
         ///     the toggled path is relative then all ".." levels that expand beyond the root directory are silently
@@ -385,9 +388,34 @@ namespace RT.Util
 
             return result;
         }
+
+        /// <summary>
+        ///     Returns the full path pointing to the same file/directory as <paramref name="path"/>. Converts relative paths
+        ///     to absolute paths where necessary, relative to the current working directory. This is the same as <see
+        ///     cref="Path.GetFullPath"/>, except that this function returns the actual on-disk capitalization for each
+        ///     segment, regardless of how they are capitalized in <paramref name="path"/>. If the path does not exist in
+        ///     full, corrects the capitalization of the segments that do exist. Always capitalizes the drive letter.</summary>
+        public static string GetFullPath(string path)
+        {
+            path = path.Replace('/', '\\');
+            var result = Path.GetFullPath(getFullPathHelper(new DirectoryInfo(path)));
+            if (path.EndsWith("\\") && !result.EndsWith("\\"))
+                result += "\\";
+            return result;
+        }
+
+        private static string getFullPathHelper(DirectoryInfo di)
+        {
+            if (di.Parent == null)
+                return di.FullName.ToUpper(); // drive letter
+            else if (File.Exists(di.FullName) || di.Exists)
+                return Path.Combine(getFullPathHelper(di.Parent), di.Parent.GetFileSystemInfos(di.Name)[0].Name);
+            else
+                return Path.Combine(getFullPathHelper(di.Parent), di.Name);
+        }
     }
 
-    /// <summary>Details a problem that occurred while using <see cref="PathUtil.ToggleRelative" />.</summary>
+    /// <summary>Details a problem that occurred while using <see cref="PathUtil.ToggleRelative"/>.</summary>
     public enum ToggleRelativeProblem
     {
         /// <summary>The base path is not an absolute path.</summary>
@@ -402,7 +430,7 @@ namespace RT.Util
         InvalidToggledPath
     }
 
-    /// <summary>Indicates an error that occurred while using <see cref="PathUtil.ToggleRelative" />.</summary>
+    /// <summary>Indicates an error that occurred while using <see cref="PathUtil.ToggleRelative"/>.</summary>
     public class ToggleRelativeException : ArgumentException
     {
         /// <summary>Details the problem that occurred.</summary>
