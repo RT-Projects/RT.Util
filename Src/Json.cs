@@ -91,6 +91,8 @@ namespace RT.Util.Json
         public int Line { get { return _state.OffsetConverter.GetLine(_state.Pos); } }
         /// <summary>Gets the column number at which the parse error occurred.</summary>
         public int Column { get { return _state.OffsetConverter.GetColumn(_state.Pos); } }
+        /// <summary>Gets the character index at which the parse error occurred.</summary>
+        public int Index { get { return _state.Pos; } }
         /// <summary>A snippet of the JSON string at which the parse error occurred.</summary>
         public string Snippet { get { return _state.Snippet; } }
     }
@@ -159,7 +161,7 @@ namespace RT.Util.Json
             var cn = Cur;
             switch (cn)
             {
-                case null: throw new JsonParseException(this, "unexpected end of input");
+                case null: throw new JsonParseException(this, "Unexpected end of input.");
                 case '{': return ParseDict();
                 case '[': return ParseList();
                 case '"': return ParseString();
@@ -172,7 +174,7 @@ namespace RT.Util.Json
                     else if (_allowJavaScript && cn == '\'')
                         return ParseString();
                     else
-                        throw new JsonParseException(this, "unexpected character");
+                        throw new JsonParseException(this, "Unexpected character.");
             }
         }
 
@@ -198,7 +200,7 @@ namespace RT.Util.Json
                 return null;
             }
             else
-                throw new JsonParseException(this, "unknown keyword: \"{0}\"".Fmt(word));
+                throw new JsonParseException(this, "Unknown keyword: \"{0}\"".Fmt(word));
         }
 
         private string peekLowercaseAzWord()
@@ -218,7 +220,7 @@ namespace RT.Util.Json
         private JsonString parseDictKey()
         {
             if (Cur == null)
-                throw new JsonParseException(this, "unexpected end of dictionary");
+                throw new JsonParseException(this, "Unexpected end of object literal.");
 
             if (_allowJavaScript)
             {
@@ -241,7 +243,7 @@ namespace RT.Util.Json
             var sb = new StringBuilder();
             bool isJavaScript = Cur == '\'';
             if (Cur != '"' && (!_allowJavaScript || Cur != '\''))
-                throw new JsonParseException(this, "expected a string");
+                throw new JsonParseException(this, "Expected a string literal.");
             Pos++;
             while (true)
             {
@@ -253,14 +255,14 @@ namespace RT.Util.Json
                 }
                 switch (Cur)
                 {
-                    case null: throw new JsonParseException(this, "unexpected end of string");
+                    case null: throw new JsonParseException(this, "Unexpected end of string literal.");
                     case '"': Pos++; goto while_break; // break out of the while... argh.
                     case '\\':
                         {
                             Pos++;
                             switch (Cur)
                             {
-                                case null: throw new JsonParseException(this, "unexpected end of string");
+                                case null: throw new JsonParseException(this, "Unexpected end of string literal.");
                                 case '"': sb.Append('"'); break;
                                 case '\\': sb.Append('\\'); break;
                                 case '/': sb.Append('/'); break;
@@ -272,10 +274,10 @@ namespace RT.Util.Json
                                 case 'u':
                                     var hex = Json.SubstringSafe(Pos + 1, 4);
                                     if (hex.Length != 4)
-                                        throw new JsonParseException(this, "unexpected end of a \\u escape sequence");
+                                        throw new JsonParseException(this, "Unexpected end of a \\u escape sequence.");
                                     int code;
                                     if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out code))
-                                        throw new JsonParseException(this, "expected a four-digit hex code");
+                                        throw new JsonParseException(this, "Expected a four-digit hexadecimal number.");
                                     sb.Append((char) code);
                                     Pos += 4;
                                     break;
@@ -285,7 +287,7 @@ namespace RT.Util.Json
                                         sb.Append('\'');
                                         break;
                                     }
-                                    throw new JsonParseException(this, "unknown escape sequence");
+                                    throw new JsonParseException(this, "Unknown escape sequence.");
                             }
                         }
                         break;
@@ -316,7 +318,7 @@ namespace RT.Util.Json
                 return false;
             }
             else
-                throw new JsonParseException(this, "expected a bool");
+                throw new JsonParseException(this, "Expected a boolean.");
         }
 
         public JsonNumber ParseNumber()
@@ -332,13 +334,13 @@ namespace RT.Util.Json
                 while (Cur >= '0' && Cur <= '9')
                     Pos++;
             else
-                throw new JsonParseException(this, "expected a single zero or a sequence of digits starting with a non-zero.");
+                throw new JsonParseException(this, "Expected a single zero or a sequence of digits starting with a non-zero.");
 
             if (Cur == '.') // a decimal point followed by at least one digit
             {
                 Pos++;
                 if (!(Cur >= '0' && Cur <= '9'))
-                    throw new JsonParseException(this, "expected at least one digit following the decimal point");
+                    throw new JsonParseException(this, "Expected at least one digit following the decimal point.");
                 while (Cur >= '0' && Cur <= '9')
                     Pos++;
             }
@@ -349,7 +351,7 @@ namespace RT.Util.Json
                 if (Cur == '+' || Cur == '-') // optional plus/minus
                     Pos++;
                 if (!(Cur >= '0' && Cur <= '9'))
-                    throw new JsonParseException(this, "expected at least one digit following the exponent letter");
+                    throw new JsonParseException(this, "Expected at least one digit following the exponent letter.");
                 while (Cur >= '0' && Cur <= '9')
                     Pos++;
             }
@@ -361,7 +363,7 @@ namespace RT.Util.Json
             {
                 double dbl;
                 if (!double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out dbl))
-                    throw new JsonParseException(this, "expected a number");
+                    throw new JsonParseException(this, "Expected a number.");
                 result = dbl;
             }
             else
@@ -374,27 +376,27 @@ namespace RT.Util.Json
         {
             var result = new JsonList();
             if (Cur != '[')
-                throw new JsonParseException(this, "expected a list");
+                throw new JsonParseException(this, "Expected a list.");
             Pos++;
             ConsumeWhitespace();
             while (true)
             {
                 if (Cur == null)
-                    throw new JsonParseException(this, "unexpected end of list");
+                    throw new JsonParseException(this, "Unexpected end of list.");
                 if (Cur == ']')
                     break;
                 result.Add(ParseValue());
                 if (Cur == null)
-                    throw new JsonParseException(this, "unexpected end of dict");
+                    throw new JsonParseException(this, "Unexpected end of list.");
                 if (Cur == ',')
                 {
                     Pos++;
                     ConsumeWhitespace();
                     if (Cur == ']')
-                        throw new JsonParseException(this, "a list can't end with a comma");
+                        throw new JsonParseException(this, "A list can't end with a comma.");
                 }
                 else if (Cur != ']')
-                    throw new JsonParseException(this, "expected a comma to separate list items");
+                    throw new JsonParseException(this, "Expected a comma between list items.");
             }
             Pos++;
             ConsumeWhitespace();
@@ -405,34 +407,34 @@ namespace RT.Util.Json
         {
             var result = new JsonDict();
             if (Cur != '{')
-                throw new JsonParseException(this, "expected a dict");
+                throw new JsonParseException(this, "Expected an object literal.");
             Pos++;
             ConsumeWhitespace();
             while (true)
             {
                 if (Cur == null)
-                    throw new JsonParseException(this, "unexpected end of dict");
+                    throw new JsonParseException(this, "Unexpected end of object literal.");
                 if (Cur == '}')
                     break;
                 var name = parseDictKey();
                 if (Cur != ':')
-                    throw new JsonParseException(this, "expected a colon to separate dict key/value");
+                    throw new JsonParseException(this, "Expected a colon between object keys and values.");
                 Pos++;
                 ConsumeWhitespace();
                 if (Cur == null)
-                    throw new JsonParseException(this, "unexpected end of dict");
+                    throw new JsonParseException(this, "Unexpected end of object literal.");
                 result.Add(name, ParseValue());
                 if (Cur == null)
-                    throw new JsonParseException(this, "unexpected end of dict");
+                    throw new JsonParseException(this, "Unexpected end of object literal.");
                 if (Cur == ',')
                 {
                     Pos++;
                     ConsumeWhitespace();
                     if (Cur == '}')
-                        throw new JsonParseException(this, "a dict can't end with a comma");
+                        throw new JsonParseException(this, "An object literal can't end with a comma.");
                 }
                 else if (Cur != '}')
-                    throw new JsonParseException(this, "expected a comma to separate dict entries");
+                    throw new JsonParseException(this, "Expected a comma between object properties.");
             }
             Pos++;
             ConsumeWhitespace();
@@ -463,7 +465,7 @@ namespace RT.Util.Json
             var ps = new JsonParserState(jsonValue, allowJavaScript);
             var result = ps.ParseValue();
             if (ps.Cur != null)
-                throw new JsonParseException(ps, "expected end of input");
+                throw new JsonParseException(ps, "Unexpected characters after end of input.");
             return result;
         }
 
