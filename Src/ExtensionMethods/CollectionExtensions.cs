@@ -148,6 +148,34 @@ namespace RT.Util.ExtensionMethods
                 return (dic[key] = dic[key] + amount);
         }
 
+        /// <summary>
+        ///     Removes the first occurrence of an element from a List&lt;V&gt; stored in the current IDictionary&lt;K,
+        ///     List&lt;V&gt;&gt;. If this leaves the list stored at the specified key empty, the key is removed from the
+        ///     IDictionary. If the key is not in the dictionary to begin with, nothing happens.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Key.</param>
+        public static void RemoveSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+            if (dic.ContainsKey(key))
+            {
+                dic[key].Remove(value);
+                if (dic[key].Count == 0)
+                    dic.Remove(key);
+            }
+        }
+
         /// <summary>Determines whether the current HashSet-in-a-Dictionary contains the specified key and value.</summary>
         public static bool Contains<TKey, TValue>(this IDictionary<TKey, HashSet<TValue>> source, TKey key, TValue value)
         {

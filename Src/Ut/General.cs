@@ -895,5 +895,53 @@ namespace RT.Util
             }
             return "";
         }
+
+        public static ushort BytesToUShort(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (ushort) (((ushort) buffer[index] << 8) | (ushort) buffer[index + 1]);
+            else
+                return (ushort) ((ushort) buffer[index] | ((ushort) buffer[index + 1] << 8));
+        }
+
+        public static short BytesToShort(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (short) (((short) buffer[index] << 8) | (short) buffer[index + 1]);
+            else
+                return (short) ((short) buffer[index] | ((short) buffer[index + 1] << 8));
+        }
+
+        public static uint BytesToUInt(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (uint) (((uint) buffer[index] << 24) | ((uint) buffer[index + 1] << 16) | ((uint) buffer[index + 2] << 8) | (uint) buffer[index + 3]);
+            else
+                return (uint) ((uint) buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24));
+        }
+
+        public static int BytesToInt(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (int) (((int) buffer[index] << 24) | ((int) buffer[index + 1] << 16) | ((int) buffer[index + 2] << 8) | (int) buffer[index + 3]);
+            else
+                return (int) ((int) buffer[index] | ((int) buffer[index + 1] << 8) | ((int) buffer[index + 2] << 16) | ((int) buffer[index + 3] << 24));
+        }
+
+        public static ulong BytesToULong(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (ulong) (((ulong) buffer[index] << 56) | ((ulong) buffer[index + 1] << 48) | ((ulong) buffer[index + 2] << 40) | ((ulong) buffer[index + 3] << 32) | ((ulong) buffer[index + 4] << 24) | ((ulong) buffer[index + 5] << 16) | ((ulong) buffer[index + 6] << 8) | (ulong) buffer[index + 7]);
+            else
+                return (ulong) ((ulong) buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56));
+        }
+
+        public static long BytesToLong(byte[] buffer, int index, bool bigEndian = false)
+        {
+            if (bigEndian)
+                return (long) (((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | (long) buffer[index + 7]);
+            else
+                return (long) ((long) buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56));
+        }
     }
 }
