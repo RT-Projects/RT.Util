@@ -515,6 +515,56 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable int.</summary>
         public static implicit operator JsonValue(int? value) { return value == null ? null : new JsonNumber(value.Value); }
 
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(string[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(bool[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(bool?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(double[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(double?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(decimal[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(decimal?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(long[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(long?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(int[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(int?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(JsonValue[] values) { return values == null ? null : new JsonList(values); }
+
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<string> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<bool> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<bool?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<double> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<double?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<decimal> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<decimal?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<long> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<long?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<int> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<int?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<JsonValue> values) { return values == null ? null : new JsonList(values); }
+
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
         public static explicit operator string(JsonValue value) { return value == null ? (string) null : value.GetString(); }
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
@@ -537,6 +587,52 @@ namespace RT.Util.Json
         public static explicit operator int(JsonValue value) { return value.GetInt(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.GetInt(); }
+
+        /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
+        public static explicit operator string[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (string) value).ToArray(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
+        public static explicit operator bool[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool) value).ToArray(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
+        public static explicit operator bool?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool?) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator double[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (double) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator double?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (double?) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator decimal[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator decimal?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal?) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator long[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (long) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator long?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (long?) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (int) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (int?) value).ToArray(); }
+
+        /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<string>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (string) value).ToList(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<bool>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool) value).ToList(); }
+        /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<bool?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool?) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<double>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (double) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<double?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (double?) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<decimal>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<decimal?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal?) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<long>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (long) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<long?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (long?) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<int>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (int) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<int?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (int?) value).ToList(); }
 
         /// <summary>
         ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers,
