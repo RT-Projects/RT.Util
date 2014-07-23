@@ -1404,9 +1404,11 @@ namespace RT.Util.Serialization
         public string BaseDir = null;
 
         /// <summary>
-        ///     This option is only relevant if deserializing an enum value or a collection or dictionary involving enum keys
-        ///     or values. If <c>true</c>, only enum values declared in the enum type are allowed. See <see
-        ///     cref="ClassifyEnforceEnumAttribute"/> for details.</summary>
+        ///     This option is only relevant if the value you are deserializing is an enum value or a collection or dictionary
+        ///     involving enum keys or values. If <c>true</c>, only enum values declared in the enum type are allowed (as if
+        ///     it were a field with <see cref="ClassifyEnforceEnumAttribute"/>). Enum values inside of objects are not
+        ///     affected by this option (but only by <see cref="ClassifyEnforceEnumAttribute"/>).</summary>
+        /// <seealso cref="ClassifyEnforceEnumAttribute"/>
         public bool EnforceEnums = false;
 
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
