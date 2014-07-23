@@ -1049,6 +1049,20 @@ namespace RT.Util.Json
         /// <summary>Lazy-converts the current JSON value to a JSON string that parses back to this value.</summary>
         public abstract IEnumerable<string> ToEnumerable();
 
+        private const string _fmt_tokenTemplate = @"
+            \{\{(?<placeholder>[^\{\}]*?)\}\}|
+            (?<comment>//[^\n]*|/\*.*?\*/)|
+            (?<stringliteral>'(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*"")|
+            (?<return>\breturn\b)|
+            (?<identifier>[\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Pc}\p{Lm}\$][\w\$]*)|
+            (?<regex>{0})|
+            (?<number>\d*(?:\d|\.\d+)(?:[Ee][\+\-]\d+)?)|
+            (?<operator>[=!]==|[\+\-\*/%<>&\^\|=!]=|<<=|>>=|>>>=|<<|>>>|>>|\+\+|--|&&|\|\||[<>=%\+\-\*/%&\^\|!~\?:\(\)\[\]\{\}\.,;])|
+            (?<else>.)
+        ";
+        private static readonly Regex _fmt_tokenWithoutRegex = new Regex(_fmt_tokenTemplate.Fmt("(?!)"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        private static readonly Regex _fmt_tokenWithRegex = new Regex(_fmt_tokenTemplate.Fmt(@"/(?:[^/\\]|\\.)*/"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+
         /// <summary>
         ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
         ///     comments. Values are referenced by names; placeholders for these values are written as {{name}}. Placeholders
@@ -1084,38 +1098,84 @@ namespace RT.Util.Json
             if (namevalues.Length % 2 != 0)
                 throw new ArgumentException("namevalues must have an even number of values.", "namevalues");
 
-            bool hadRaw = false;
-            var str = new StringBuilder();
-            foreach (Match m in Regex.Matches(js, @"
-                \{\{(?<placeholder>[^\{\}]*?)\}\}|
-                (?<required_whitespace>(?<=\p{L}|\p{Nd}|[_\$])\s+(?=\p{L}|\p{Nd}|[_\$])|(?<=\+)\s+(?=\+))|
-                (?<comment>//[^\n]*|/\*.*?\*/)|
-                '(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*""|((?<!(?:\p{L}|\p{Nd}|[_\)\]\}\$])\s*)|(?<=return\s*))/(?:[^/\\]|\\.)*/|
-                .", RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace))
+            var tokens = new StringBuilder();
+            var nextTokenCanBeRegex = true;
+            var lastWasPlus = false;
+            var lastWasMinus = false;
+            var lastWasNumberOrIdentifierOrKeyword = false;
+            var idx = 0;
+            while (idx < js.Length)
             {
+                var m = (nextTokenCanBeRegex ? _fmt_tokenWithRegex : _fmt_tokenWithoutRegex).Match(js, idx);
+
+                if (!m.Success) // This should never occur.
+                    throw new InvalidOperationException("The input string was not in a correct format. (iphcv)");
+
                 if (m.Groups["placeholder"].Success)
                 {
                     var name = m.Groups["placeholder"].Value;
                     var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].GetString() == name);
                     if (index == -1)
                         throw new InvalidOperationException("namevalues does not contain a value named \"{0}\".".Fmt(name));
-                    var raw = namevalues[2 * index + 1] as JsonRaw;
-                    var value = raw == null ? JsonValue.ToString(namevalues[2 * index + 1]) : raw.Raw;
-                    if (raw != null) hadRaw = true;
-                    if (value.Length > 0 && (
-                        ((char.IsLetter(str[str.Length - 1]) || char.IsDigit(str[str.Length - 1]) || "_$".Contains(str[str.Length - 1])) && (char.IsLetter(value[0]) || char.IsDigit(value[0]) || "_$".Contains(value[0]))) ||
-                        (str[str.Length - 1] == '-' && value[0] == '-')))
-                        str.Append(" ");
-                    str.Append(value);
-                }
-                else if (m.Groups["required_whitespace"].Success)
-                    str.Append(" ");
-                else if (m.Groups["comment"].Success || (m.Value.Length == 1 && char.IsWhiteSpace(m.Value, 0)))
+                    js = JsonValue.ToString(namevalues[2 * index + 1]) + js.Substring(m.Index + m.Length);
+                    idx = 0;
                     continue;
+                }
+
+                if (m.Groups["comment"].Success || (m.Groups["else"].Success && string.IsNullOrWhiteSpace(m.Groups["else"].Value)))
+                {
+                    // Do nothing. In particular, don’t change the values of nextTokenCanBeRegex, lastWasPlus, lastWasMinus or lastWasNumberOrIdentifierOrKeyword.
+                }
+                else if (m.Groups["stringliteral"].Success)
+                {
+                    tokens.Append(m.Groups["stringliteral"].Value);
+                    nextTokenCanBeRegex = lastWasNumberOrIdentifierOrKeyword = lastWasPlus = lastWasMinus = false;
+                }
+                else if (m.Groups["regex"].Success)
+                {
+                    tokens.Append(m.Groups["regex"].Value);
+                    nextTokenCanBeRegex = lastWasNumberOrIdentifierOrKeyword = lastWasPlus = lastWasMinus = false;
+                }
+                else if (m.Groups["return"].Success)
+                {
+                    tokens.Append("return");
+                    lastWasPlus = lastWasMinus = false;
+                    nextTokenCanBeRegex = lastWasNumberOrIdentifierOrKeyword = true;
+                }
+                else if (m.Groups["identifier"].Success)
+                {
+                    if (lastWasNumberOrIdentifierOrKeyword)
+                        tokens.Append(' ');
+                    tokens.Append(m.Groups["identifier"].Value);
+                    nextTokenCanBeRegex = lastWasPlus = lastWasMinus = false;
+                    lastWasNumberOrIdentifierOrKeyword = true;
+                }
+                else if (m.Groups["number"].Success)
+                {
+                    if (lastWasNumberOrIdentifierOrKeyword)
+                        tokens.Append(' ');
+                    tokens.Append(m.Groups["number"].Value);
+                    nextTokenCanBeRegex = lastWasPlus = lastWasMinus = false;
+                    lastWasNumberOrIdentifierOrKeyword = true;
+                }
+                else if (m.Groups["operator"].Success)
+                {
+                    var op = m.Groups["operator"].Value;
+                    if ((lastWasPlus && op.StartsWith("+")) || (lastWasMinus && op.StartsWith("-")))
+                        tokens.Append(' ');
+                    tokens.Append(op);
+                    nextTokenCanBeRegex = !op.EndsWith(")") && !op.EndsWith("]") && !op.EndsWith("}");
+                    lastWasPlus = op.EndsWith('+');
+                    lastWasMinus = op.EndsWith('-');
+                    lastWasNumberOrIdentifierOrKeyword = false;
+                }
                 else
-                    str.Append(m.Value);
+                    throw new InvalidOperationException("The input string was in an invalid format. (q0ifmefb)");
+
+                idx += m.Length;
             }
-            return hadRaw ? Fmt(str.ToString()) : str.ToString(); // the Raw value is expected to contain no placeholders.
+
+            return tokens.ToString();
         }
     }
 
