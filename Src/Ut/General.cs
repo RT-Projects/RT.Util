@@ -947,6 +947,17 @@ namespace RT.Util
             return "";
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 16-bit unsigned integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 16-bit unsigned integer.</returns>
         public static ushort BytesToUShort(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
@@ -955,14 +966,36 @@ namespace RT.Util
                 return (ushort) ((ushort) buffer[index] | ((ushort) buffer[index + 1] << 8));
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 16-bit signed integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 16-bit signed integer.</returns>
         public static short BytesToShort(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (short) (((short) buffer[index] << 8) | (short) buffer[index + 1]);
+                return (short) (((ushort) buffer[index] << 8) | (ushort) buffer[index + 1]);
             else
-                return (short) ((short) buffer[index] | ((short) buffer[index + 1] << 8));
+                return (short) ((ushort) buffer[index] | ((ushort) buffer[index + 1] << 8));
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 32-bit unsigned integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 32-bit unsigned integer.</returns>
         public static uint BytesToUInt(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
@@ -971,6 +1004,17 @@ namespace RT.Util
                 return (uint) ((uint) buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24));
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 32-bit signed integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 32-bit signed integer.</returns>
         public static int BytesToInt(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
@@ -979,6 +1023,17 @@ namespace RT.Util
                 return (int) ((int) buffer[index] | ((int) buffer[index + 1] << 8) | ((int) buffer[index + 2] << 16) | ((int) buffer[index + 3] << 24));
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 64-bit unsigned integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 64-bit unsigned integer.</returns>
         public static ulong BytesToULong(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
@@ -987,12 +1042,91 @@ namespace RT.Util
                 return (ulong) ((ulong) buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56));
         }
 
+        /// <summary>
+        ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
+        ///     a 64-bit signed integer.</summary>
+        /// <param name="buffer">
+        ///     Array to take values from.</param>
+        /// <param name="index">
+        ///     Index within the array at which to start taking values.</param>
+        /// <param name="bigEndian">
+        ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
+        /// <returns>
+        ///     The converted 64-bit signed integer.</returns>
         public static long BytesToLong(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
                 return (long) (((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | (long) buffer[index + 7]);
             else
                 return (long) ((long) buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56));
+        }
+
+        private static class enumAttributeCache<TAttribute>
+        {
+            public static Dictionary<Type, Dictionary<Enum, TAttribute[]>> Dictionary = new Dictionary<Type, Dictionary<Enum, TAttribute[]>>();
+        }
+
+        /// <summary>
+        ///     Returns the set of custom attributes of the specified <typeparamref name="TAttribute"/> type that are attached
+        ///     to the declaration of the enum value represented by <paramref name="enumValue"/>.</summary>
+        /// <typeparam name="TAttribute">
+        ///     The type of the custom attributes to retrieve.</typeparam>
+        /// <param name="enumValue">
+        ///     The enum value for which to retrieve the custom attributes.</param>
+        /// <returns>
+        ///     An array containing the custom attributes, or <c>null</c> if <paramref name="enumValue"/> does not correspond
+        ///     to a declared value.</returns>
+        /// <remarks>
+        ///     This method keeps an internal cache forever.</remarks>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
+        public static TAttribute[] GetCustomAttributes<TAttribute>(this Enum enumValue)
+        {
+            if (enumValue == null)
+                throw new ArgumentNullException("enumValue");
+            var enumType = enumValue.GetType();
+            var dic = enumAttributeCache<TAttribute>.Dictionary;
+            TAttribute[] arr;
+            if (!dic.ContainsKeys(enumType, enumValue))
+            {
+                arr = null;
+                foreach (var field in enumType.GetFields(BindingFlags.Static | BindingFlags.Public))
+                {
+                    var attrs = field.GetCustomAttributes<TAttribute>().ToArray();
+                    var enumVal = (Enum) field.GetValue(null);
+                    dic.AddSafe(enumType, enumVal, attrs);
+                    if (enumVal.Equals(enumValue))
+                        arr = attrs;
+                }
+                return arr;
+            }
+            return dic.TryGetValue(enumType, enumValue, out arr) ? arr : null;
+        }
+
+        /// <summary>
+        ///     Returns the single custom attribute of the specified <typeparamref name="TAttribute"/> type that is attached
+        ///     to the declaration of the enum value represented by <paramref name="enumValue"/>, or <c>null</c> if there is
+        ///     no such attribute.</summary>
+        /// <typeparam name="TAttribute">
+        ///     The type of the custom attribute to retrieve.</typeparam>
+        /// <param name="enumValue">
+        ///     The enum value for which to retrieve the custom attribute.</param>
+        /// <returns>
+        ///     The custom attribute, or <c>null</c> if the enum value does not have a custom attribute of the specified type
+        ///     attached to it. If <paramref name="enumValue"/> does not correspond to a declared enum value, or there is more
+        ///     than one custom attribute of the same type, an exception is thrown.</returns>
+        /// <remarks>
+        ///     This method uses <see cref="Ut.GetCustomAttributes{TAttribute}(Enum)"/>, which keeps an internal cache
+        ///     forever.</remarks>
+        /// <exception cref="ArgumentNullException">
+        ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
+        /// <exception cref="InvalidOperationException">
+        ///     There is more than one custom attribute of the specified type attached to the enum value declaration.</exception>
+        public static TAttribute GetCustomAttribute<TAttribute>(this Enum enumValue)
+        {
+            if (enumValue == null)
+                throw new ArgumentNullException("enumValue");
+            return GetCustomAttributes<TAttribute>(enumValue).SingleOrDefault();
         }
     }
 }
