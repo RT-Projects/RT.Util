@@ -1,21 +1,27 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using RT.Util.Collections;
+using System.Linq;
+using RT.Util;
+using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
 namespace RT.KitchenSink.Geometry
 {
     /// <summary>
-    /// Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], SizeF, VoronoiDiagramFlags)"/> method.
-    /// </summary>
+    ///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], SizeF,
+    ///     VoronoiDiagramFlags)"/> method.</summary>
     [Flags]
     public enum VoronoiDiagramFlags
     {
         /// <summary>Indicates that duplicate sites (points) should be removed from the input.</summary>
-        RemoveDuplicates = 1,
+        RemoveDuplicates = 1 << 0,
         /// <summary>Indicates that input sites (points) that lie outside the bounds of the viewport should be ignored.</summary>
-        RemoveOffboundsSites = 2
+        RemoveOffboundsSites = 1 << 1,
+        /// <summary>
+        ///     If specified, only polygons contained entirely within the bounds are included. Otherwise, the theoretically
+        ///     “infinite” polygons are included as polygons that are clipped to the bounding region.</summary>
+        IncludeEdgePolygons = 1 << 2
     }
 
     /// <summary>Represents a Voronoi diagram.</summary>
@@ -26,33 +32,31 @@ namespace RT.KitchenSink.Geometry
         /// <summary>Polygons corresponding to each of the input points.</summary>
         public Dictionary<PointD, PolygonD> Polygons;
 
-        /// <summary>Generates a Voronoi diagram from a set of input points.</summary>
-        /// <param name="sites">Input points (sites) to generate diagram from.</param>
-        /// <param name="size">Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
-        /// <param name="flags">Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
-        /// <returns>A list of line segments describing the Voronoi diagram.</returns>
+        /// <summary>
+        ///     Generates a Voronoi diagram from a set of input points.</summary>
+        /// <param name="sites">
+        ///     Input points (sites) to generate diagram from.</param>
+        /// <param name="size">
+        ///     Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
+        /// <param name="flags">
+        ///     Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
+        /// <returns>
+        ///     A list of line segments describing the Voronoi diagram.</returns>
         public static VoronoiDiagram GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags = 0)
         {
-            data d = new data(sites, size.Width, size.Height, flags);
-
-            var edgeList = new List<EdgeD>();
-            foreach (edge e in d.Edges)
-                edgeList.Add(new EdgeD(e.Start.Value, e.End.Value));
-
-            var dic = new Dictionary<PointD, PolygonD>();
-            foreach (KeyValuePair<PointD, polygon> kvp in d.Polygons)
+            return new data(sites, size.Width, size.Height, flags).Apply(data => new VoronoiDiagram
             {
-                PolygonD Poly = kvp.Value.ToPolygonD();
-                if (Poly != null)
-                    dic.Add(kvp.Key, Poly);
-            }
-
-            return new VoronoiDiagram { Edges = edgeList, Polygons = dic };
+                Edges = data.Edges.Select(edge => new EdgeD(edge.Start.Value, edge.End.Value)).ToList(),
+                Polygons = data.Polygons
+                    .Select(kvp => Ut.KeyValuePair(kvp.Key, kvp.Value.ToPolygonD(flags.HasFlag(VoronoiDiagramFlags.IncludeEdgePolygons), size.Width, size.Height)))
+                    .Where(kvp => kvp.Value != null)
+                    .ToDictionary()
+            });
         }
 
         /// <summary>
-        /// Internal class to generate Voronoi diagrams using Fortune�s algorithm. Contains internal data structures and methods.
-        /// </summary>
+        ///     Internal class to generate Voronoi diagrams using Fortune’s algorithm. Contains internal data structures and
+        ///     methods.</summary>
         private sealed class data
         {
             public List<arc> Arcs = new List<arc>();
@@ -181,27 +185,36 @@ namespace RT.KitchenSink.Geometry
                     if (Arcs[i].Edge != null)
                         Arcs[i].Edge.SetEndPoint(getIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * var));
 
-                // Clip all the edges with the bounding rectangle
-                foreach (edge s in Edges)
+                // Clip all the edges with the bounding rectangle and remove edges that are entirely outside
+                var newEdges = new List<edge>();
+                var boundingEdges = new[] { new EdgeD(0, 0, width, 0), new EdgeD(width, 0, width, height), new EdgeD(width, height, 0, height), new EdgeD(0, height, 0, 0) };
+                foreach (edge e in Edges)
                 {
-                    if (s.Start.Value.X < 0)
-                        s.Start = new PointD(0, s.End.Value.X / (s.End.Value.X - s.Start.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
-                    if (s.Start.Value.Y < 0)
-                        s.Start = new PointD(s.End.Value.Y / (s.End.Value.Y - s.Start.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, 0);
-                    if (s.End.Value.X < 0)
-                        s.End = new PointD(0, s.Start.Value.X / (s.Start.Value.X - s.End.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
-                    if (s.End.Value.Y < 0)
-                        s.End = new PointD(s.Start.Value.Y / (s.Start.Value.Y - s.End.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, 0);
+                    if ((e.Start.Value.X < 0 || e.Start.Value.X > width || e.Start.Value.Y < 0 || e.Start.Value.Y > width) &&
+                        (e.End.Value.X < 0 || e.End.Value.X > width || e.End.Value.Y < 0 || e.End.Value.Y > width) &&
+                        !boundingEdges.Any(be => be.IntersectsWith(new EdgeD(e.Start.Value, e.End.Value))))
+                        continue;
 
-                    if (s.Start.Value.X > width)
-                        s.Start = new PointD(width, (width - s.Start.Value.X) / (s.End.Value.X - s.Start.Value.X) * (s.End.Value.Y - s.Start.Value.Y) + s.Start.Value.Y);
-                    if (s.Start.Value.Y > height)
-                        s.Start = new PointD((height - s.Start.Value.Y) / (s.End.Value.Y - s.Start.Value.Y) * (s.End.Value.X - s.Start.Value.X) + s.Start.Value.X, height);
-                    if (s.End.Value.X > width)
-                        s.End = new PointD(width, (width - s.End.Value.X) / (s.Start.Value.X - s.End.Value.X) * (s.Start.Value.Y - s.End.Value.Y) + s.End.Value.Y);
-                    if (s.End.Value.Y > height)
-                        s.End = new PointD((height - s.End.Value.Y) / (s.Start.Value.Y - s.End.Value.Y) * (s.Start.Value.X - s.End.Value.X) + s.End.Value.X, height);
+                    if (e.Start.Value.X < 0)
+                        e.Start = new PointD(0, e.End.Value.X / (e.End.Value.X - e.Start.Value.X) * (e.Start.Value.Y - e.End.Value.Y) + e.End.Value.Y);
+                    if (e.Start.Value.Y < 0)
+                        e.Start = new PointD(e.End.Value.Y / (e.End.Value.Y - e.Start.Value.Y) * (e.Start.Value.X - e.End.Value.X) + e.End.Value.X, 0);
+                    if (e.End.Value.X < 0)
+                        e.End = new PointD(0, e.Start.Value.X / (e.Start.Value.X - e.End.Value.X) * (e.End.Value.Y - e.Start.Value.Y) + e.Start.Value.Y);
+                    if (e.End.Value.Y < 0)
+                        e.End = new PointD(e.Start.Value.Y / (e.Start.Value.Y - e.End.Value.Y) * (e.End.Value.X - e.Start.Value.X) + e.Start.Value.X, 0);
+
+                    if (e.Start.Value.X > width)
+                        e.Start = new PointD(width, (width - e.Start.Value.X) / (e.End.Value.X - e.Start.Value.X) * (e.End.Value.Y - e.Start.Value.Y) + e.Start.Value.Y);
+                    if (e.Start.Value.Y > height)
+                        e.Start = new PointD((height - e.Start.Value.Y) / (e.End.Value.Y - e.Start.Value.Y) * (e.End.Value.X - e.Start.Value.X) + e.Start.Value.X, height);
+                    if (e.End.Value.X > width)
+                        e.End = new PointD(width, (width - e.End.Value.X) / (e.Start.Value.X - e.End.Value.X) * (e.Start.Value.Y - e.End.Value.Y) + e.End.Value.Y);
+                    if (e.End.Value.Y > height)
+                        e.End = new PointD((height - e.End.Value.Y) / (e.Start.Value.Y - e.End.Value.Y) * (e.Start.Value.X - e.End.Value.X) + e.End.Value.X, height);
+                    newEdges.Add(e);
                 }
+                Edges = newEdges;
 
                 // Generate polygons from the edges
                 foreach (edge e in Edges)
@@ -328,9 +341,7 @@ namespace RT.KitchenSink.Geometry
             }
         }
 
-        /// <summary>
-        /// Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.
-        /// </summary>
+        /// <summary>Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
         private sealed class edge
         {
             public PointD? Start, End;
@@ -353,8 +364,7 @@ namespace RT.KitchenSink.Geometry
         }
 
         /// <summary>
-        /// Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.
-        /// </summary>
+        ///     Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
         private sealed class polygon
         {
             public bool Complete;
@@ -371,11 +381,103 @@ namespace RT.KitchenSink.Geometry
                 _unprocessedEdges = new List<edge>();
             }
 
-            public PolygonD ToPolygonD()
+            private int rectEdge(PointD p, double width, double height)
             {
-                if (!Complete)
+                return p.Y == 0 ? 0 : p.X == width ? 1 : p.Y == height ? 2 : p.X == 0 ? 3 : Ut.Throw<int>(new Exception("Point is not on the edge."));
+            }
+
+            public PolygonD ToPolygonD(bool autocomplete, double width, double height)
+            {
+                if (Complete)
+                    return new PolygonD(_processedPoints);
+
+                if (!autocomplete)
                     return null;
-                return new PolygonD(_processedPoints);
+
+                var firstPointEdge = rectEdge(_processedPoints[0], width, height);
+                var lastPoint = _processedPoints[_processedPoints.Count - 1];
+                var lastPointEdge = rectEdge(lastPoint, width, height);
+                var origNumVertices = _processedPoints.Count;
+                var origUnprocessed = _unprocessedEdges.ToList();
+
+                // Clockwise
+                while (true)
+                {
+                    if (lastPointEdge == firstPointEdge)
+                        break;
+
+                    var upe = _unprocessedEdges.Count == 0 ? null : _unprocessedEdges
+                        .SelectTwo(e => new { Edge = e, Start = true, Point = e.Start.Value }, e => new { Edge = e, Start = false, Point = e.End.Value })
+                        .FirstOrDefault(inf =>
+                            lastPointEdge == 0 ? (inf.Point.Y == 0 && inf.Point.X > lastPoint.X) :
+                            lastPointEdge == 1 ? (inf.Point.X == width && inf.Point.Y > lastPoint.Y) :
+                            lastPointEdge == 2 ? (inf.Point.Y == height && inf.Point.X < lastPoint.X) : (inf.Point.X == 0 && inf.Point.Y < lastPoint.Y));
+
+                    if (upe != null)
+                    {
+                        _unprocessedEdges.Remove(upe.Edge);
+                        _processedPoints.Add(upe.Start ? upe.Edge.Start.Value : upe.Edge.End.Value);
+                        AddEdge(upe.Edge);
+                        if (_unprocessedEdges.Count > 0)
+                            throw new Exception("Assertion failed: There should be no unprocessed edges left.");
+                        lastPointEdge = rectEdge(_processedPoints[_processedPoints.Count - 1], width, height);
+                    }
+                    else
+                    {
+                        lastPoint =
+                            lastPointEdge == 0 ? new PointD(width, 0) :
+                            lastPointEdge == 1 ? new PointD(width, height) :
+                            lastPointEdge == 2 ? new PointD(0, height) : new PointD(0, 0);
+                        _processedPoints.Add(lastPoint);
+                        lastPointEdge = (lastPointEdge + 1) % 4;
+                    }
+                }
+                if (_unprocessedEdges.Count == 0)
+                {
+                    var polygon = new PolygonD(_processedPoints);
+                    if (polygon.ContainsPoint(Site))
+                        return polygon;
+                }
+                _processedPoints.RemoveRange(origNumVertices, _processedPoints.Count - origNumVertices);
+                _unprocessedEdges = origUnprocessed;
+
+                // Counter-clockwise
+                lastPoint = _processedPoints[_processedPoints.Count - 1];
+                lastPointEdge = rectEdge(lastPoint, width, height);
+                while (true)
+                {
+                    if (lastPointEdge == firstPointEdge)
+                        break;
+
+                    var upe = _unprocessedEdges.Count == 0 ? null : _unprocessedEdges
+                        .SelectTwo(e => new { Edge = e, Start = true, Point = e.Start.Value }, e => new { Edge = e, Start = false, Point = e.End.Value })
+                        .FirstOrDefault(inf =>
+                            lastPointEdge == 0 ? (inf.Point.Y == 0 && inf.Point.X < lastPoint.X) :
+                            lastPointEdge == 1 ? (inf.Point.X == width && inf.Point.Y < lastPoint.Y) :
+                            lastPointEdge == 2 ? (inf.Point.Y == height && inf.Point.X > lastPoint.X) : (inf.Point.X == 0 && inf.Point.Y > lastPoint.Y));
+
+                    if (upe != null)
+                    {
+                        _unprocessedEdges.Remove(upe.Edge);
+                        _processedPoints.Add(upe.Start ? upe.Edge.Start.Value : upe.Edge.End.Value);
+                        AddEdge(upe.Edge);
+                        if (_unprocessedEdges.Count > 0)
+                            throw new Exception("Assertion failed: There should be no unprocessed edges left.");
+                        lastPointEdge = rectEdge(_processedPoints[_processedPoints.Count - 1], width, height);
+                    }
+                    else
+                    {
+                        lastPoint =
+                            lastPointEdge == 0 ? new PointD(0, 0) :
+                            lastPointEdge == 1 ? new PointD(width, 0) :
+                            lastPointEdge == 2 ? new PointD(width, height) : new PointD(0, height);
+                        _processedPoints.Add(lastPoint);
+                        lastPointEdge = (lastPointEdge + 3) % 4;
+                    }
+                }
+                //if (_unprocessedEdges.Count > 0)
+                //    throw new Exception("Assertion failed: There should be no unprocessed edges left.");
+                return new PolygonD(Enumerable.Reverse(_processedPoints));
             }
 
             public void AddEdge(edge edge)
@@ -456,8 +558,8 @@ namespace RT.KitchenSink.Geometry
         }
 
         /// <summary>
-        /// Internal class to describe an arc on the beachline (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
-        /// </summary>
+        ///     Internal class to describe an arc on the beachline (part of Fortune's algorithm to generate Voronoi diagrams)
+        ///     (used by RT.Util.VoronoiDiagram).</summary>
         private sealed class arc
         {
             // The site the arc is associated with. There may be more than one arc for the same site in the Arcs array.
@@ -478,8 +580,8 @@ namespace RT.KitchenSink.Geometry
         }
 
         /// <summary>
-        /// Internal class to describe a site event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
-        /// </summary>
+        ///     Internal class to describe a site event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
+        ///     RT.Util.VoronoiDiagram).</summary>
         private sealed class siteEvent : IComparable<siteEvent>
         {
             public PointD Position;
@@ -504,8 +606,8 @@ namespace RT.KitchenSink.Geometry
         }
 
         /// <summary>
-        /// Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by RT.Util.VoronoiDiagram).
-        /// </summary>
+        ///     Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
+        ///     RT.Util.VoronoiDiagram).</summary>
         private sealed class circleEvent : IComparable<circleEvent>
         {
             public PointD Center;
