@@ -214,6 +214,20 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
+        ///     cref="InternalErrorException"/> afterwards.</summary>
+        public static void AssertAll<T>(IEnumerable<T> collection, Func<T, bool> assertion, string message = null)
+        {
+            if (!collection.All(assertion))
+            {
+                var failure = collection.FirstOrDefault(x => !assertion(x)); // only so that it can be inspected in the debugger
+                if (System.Diagnostics.Debugger.IsAttached)
+                    System.Diagnostics.Debugger.Break();
+                throw new InternalErrorException(message ?? "Assertion failure");
+            }
+        }
+
+        /// <summary>
         ///     Throws the specified exception.</summary>
         /// <typeparam name="TResult">
         ///     The type to return.</typeparam>
