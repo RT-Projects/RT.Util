@@ -181,6 +181,15 @@ namespace RT.Util
         private string _workingDirectory = null;
 
         /// <summary>
+        ///     Overrides for the environment variables to be set for the command process. These overrides are in addition to
+        ///     the variables inherited from the current process.</summary>
+        public IDictionary<string, string> EnvironmentVariables
+        {
+            get { return _envVars; }
+        }
+        private Dictionary<string, string> _envVars = new Dictionary<string, string>();
+
+        /// <summary>
         ///     Credentials and parameters used to run the command as a different user. Null to run as the same user as the
         ///     current process. Once the command has been started, this property becomes read-only and indicates the value in
         ///     effect at the time of starting.</summary>
@@ -199,7 +208,8 @@ namespace RT.Util
 
         /// <summary>
         ///     Sets the <see cref="Command"/> property by concatenating the command and any arguments while escaping values
-        ///     with spaces. Each value must be a single command / executable / script / argument. See Remarks.</summary>
+        ///     with spaces. Each value must be a single command / executable / script / argument. Null values are allowed and
+        ///     are skipped as if they weren't present. See Remarks.</summary>
         /// <remarks>
         ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
         public void SetCommand(IEnumerable<string> args)
@@ -207,18 +217,21 @@ namespace RT.Util
             var sb = new StringBuilder();
             foreach (var arg in args)
             {
+                if (arg == null)
+                    continue;
                 if (sb.Length != 0)
                     sb.Append(' ');
-                sb.Append(arg.Contains(" ") ? "\"" + arg + "\"" : arg);
+                sb.Append(arg.Contains(" ") || arg.Contains("<") || arg.Contains(">") ? "\"" + arg + "\"" : arg);
             }
             Command = sb.ToString();
         }
 
         /// <summary>
         ///     Sets the <see cref="Command"/> property by concatenating the command and any arguments while escaping values
-        ///     with spaces. Each value must be a single command / executable / script / argument. See Remarks.</summary>
+        ///     with spaces. Each value must be a single command / executable / script / argument. Null values are allowed and
+        ///     are skipped as if they weren't present. See Remarks.</summary>
         /// <remarks>
-        ///     Example: <c>SetCommand(@"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt");</c></remarks>
+        ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
         public void SetCommand(params string[] args)
         {
             SetCommand((IEnumerable<string>) args);
@@ -238,6 +251,8 @@ namespace RT.Util
             _startInfo.FileName = @"cmd.exe";
             _startInfo.Arguments = "/C " + Command + @" >{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
             _startInfo.WorkingDirectory = WorkingDirectory;
+            foreach (var kvp in EnvironmentVariables)
+                _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
             _startInfo.RedirectStandardInput = false;
             _startInfo.RedirectStandardOutput = false;
             _startInfo.RedirectStandardError = false;
