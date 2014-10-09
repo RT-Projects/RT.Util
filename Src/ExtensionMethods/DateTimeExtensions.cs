@@ -92,7 +92,7 @@ namespace RT.Util.ExtensionMethods
                 else if (datetime.Kind == DateTimeKind.Local)
                 {
                     var offset = TimeZone.CurrentTimeZone.GetUtcOffset(datetime);
-                    result.Append(offset >= TimeSpan.Zero ? '+' : '-');
+                    result.Append(offset >= TimeSpan.Zero ? "+" : "");
                     result.AppendFormat("{0:00}", offset.Hours);
                     if (offset.Minutes != 0)
                     {
