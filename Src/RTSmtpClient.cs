@@ -10,7 +10,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Serialization;
-using RT.Util.Xml;
 
 namespace RT.Util
 {
@@ -19,10 +18,14 @@ namespace RT.Util
     {
         /// <summary>Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</summary>
         public List<string> Conversation { get; private set; }
-        /// <summary>Constructor.</summary>
-        /// <param name="message">Error message.</param>
-        /// <param name="conversation">Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</param>
-        /// <param name="inner">Inner exception.</param>
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="message">
+        ///     Error message.</param>
+        /// <param name="conversation">
+        ///     Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</param>
+        /// <param name="inner">
+        ///     Inner exception.</param>
         public RTSmtpException(string message, List<string> conversation, Exception inner = null)
             : base(message, inner)
         {
@@ -50,9 +53,12 @@ namespace RT.Util
         public int Port = 25;
         /// <summary>Encryption to use.</summary>
         public SmtpEncryption Encryption = SmtpEncryption.None;
-        /// <summary>SMTP username for login - for "me@example.com" this is typically "me" or "me@example.com", but can be anything.</summary>
+        /// <summary>
+        ///     SMTP username for login - for "me@example.com" this is typically "me" or "me@example.com", but can be
+        ///     anything.</summary>
         public string Username = "example_user";
-        /// <summary>Unencrypted password to be automatically encrypted by XmlClassify whenever the settings are loaded or saved.</summary>
+        /// <summary>
+        ///     Unencrypted password to be automatically encrypted by XmlClassify whenever the settings are loaded or saved.</summary>
         public string Password = "password";
         /// <summary>The encrypted password.</summary>
         public string PasswordEncrypted;
@@ -94,14 +100,22 @@ namespace RT.Util
         private List<string> _conversation;
         private LoggerBase _log;
 
-        /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
-        /// <param name="host">SMTP host name.</param>
-        /// <param name="port">SMTP host port.</param>
-        /// <param name="username">SMTP username.</param>
-        /// <param name="password">SMTP password.</param>
-        /// <param name="encryption">Encryption mode.</param>
-        /// <param name="log">The SMTP client logs various messages to this log at various verbosity levels.</param>
-        /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
+        /// <summary>
+        ///     Creates a connection to the SMTP server and authenticates the specified user.</summary>
+        /// <param name="host">
+        ///     SMTP host name.</param>
+        /// <param name="port">
+        ///     SMTP host port.</param>
+        /// <param name="username">
+        ///     SMTP username.</param>
+        /// <param name="password">
+        ///     SMTP password.</param>
+        /// <param name="encryption">
+        ///     Encryption mode.</param>
+        /// <param name="log">
+        ///     The SMTP client logs various messages to this log at various verbosity levels.</param>
+        /// <exception cref="RTSmtpException">
+        ///     SMTP protocol error, or authentication failed.</exception>
         public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null)
         {
             _log = log ?? new NullLogger();
@@ -135,10 +149,14 @@ namespace RT.Util
             _log.Debug(2, "Connected.");
         }
 
-        /// <summary>Creates a connection to the SMTP server and authenticates the specified user.</summary>
-        /// <param name="settings">An object containing the relevant SMTP settings.</param>
-        /// <param name="log">The SMTP client logs various messages to this log at various verbosity levels.</param>
-        /// <exception cref="RTSmtpException">SMTP protocol error, or authentication failed.</exception>
+        /// <summary>
+        ///     Creates a connection to the SMTP server and authenticates the specified user.</summary>
+        /// <param name="settings">
+        ///     An object containing the relevant SMTP settings.</param>
+        /// <param name="log">
+        ///     The SMTP client logs various messages to this log at various verbosity levels.</param>
+        /// <exception cref="RTSmtpException">
+        ///     SMTP protocol error, or authentication failed.</exception>
         public RTSmtpClient(RTSmtpSettings settings, LoggerBase log = null)
             : this(settings.Host, settings.Port, settings.Username, settings.PasswordDecrypted, settings.Encryption, log)
         {
@@ -170,12 +188,18 @@ namespace RT.Util
             return response;
         }
 
-        /// <summary>Sends an e-mail.</summary>
-        /// <param name="from">From address.</param>
-        /// <param name="to">Recipient address(es).</param>
-        /// <param name="subject">Subject line.</param>
-        /// <param name="bodyPlain">Plain-text version of the e-mail.</param>
-        /// <param name="bodyHtml">HTML version of the e-mail.</param>
+        /// <summary>
+        ///     Sends an e-mail.</summary>
+        /// <param name="from">
+        ///     From address.</param>
+        /// <param name="to">
+        ///     Recipient address(es).</param>
+        /// <param name="subject">
+        ///     Subject line.</param>
+        /// <param name="bodyPlain">
+        ///     Plain-text version of the e-mail.</param>
+        /// <param name="bodyHtml">
+        ///     HTML version of the e-mail.</param>
         public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string bodyPlain, string bodyHtml)
         {
             if (from == null)
@@ -316,12 +340,10 @@ namespace RT.Util
     }
 
     /// <summary>
-    /// Implements a simple interface for sending an email that shares a global repository of SMTP settings.
-    /// This repository is stored using <see cref="SettingsUtil"/> using the name "RT.Emailer". The repository
-    /// contains a list of SMTP accounts with a unique name. One of the accounts may be designated as the
-    /// default one if the application doesn't specify any. The "From" address is fixed per account, but the
-    /// name may be overridden by the application.
-    /// </summary>
+    ///     Implements a simple interface for sending an email that shares a global repository of SMTP settings. This
+    ///     repository is stored using <see cref="SettingsUtil"/> using the name "RT.Emailer". The repository contains a list
+    ///     of SMTP accounts with a unique name. One of the accounts may be designated as the default one if the application
+    ///     doesn't specify any. The "From" address is fixed per account, but the name may be overridden by the application.</summary>
     public static class Emailer
     {
 #pragma warning disable 649 // field never assigned to
@@ -355,17 +377,23 @@ namespace RT.Util
         public static LoggerBase Log = null;
 
         /// <summary>
-        /// Sends an email using one of the pre-configured RT.Emailer SMTP accounts. If none are configured on this computer,
-        /// an exception will be thrown, describing what the user needs to do - though this requires a pretty technical user.
-        /// </summary>
-        /// <param name="to">The recipients of the email.</param>
-        /// <param name="subject">Subject line.</param>
-        /// <param name="bodyPlain">Body of the message in plaintext format, or null to omit this MIME type.</param>
-        /// <param name="bodyHtml">Body of the message in HTML format, or null to omit this MIME type.</param>
-        /// <param name="account">The name of one of the RT.Emailer accounts to use (case-sensitive). If null or not defined, will fall back
-        /// to exe name, then the Default Account setting, and then any defined account, in this order.</param>
-        /// <param name="fromName">The text to use as the "from" name. If null, will use the executable name. This setting
-        /// has no effect if the specified RT.Emailer account specifies a FromName of its own.</param>
+        ///     Sends an email using one of the pre-configured RT.Emailer SMTP accounts. If none are configured on this
+        ///     computer, an exception will be thrown, describing what the user needs to do - though this requires a pretty
+        ///     technical user.</summary>
+        /// <param name="to">
+        ///     The recipients of the email.</param>
+        /// <param name="subject">
+        ///     Subject line.</param>
+        /// <param name="bodyPlain">
+        ///     Body of the message in plaintext format, or null to omit this MIME type.</param>
+        /// <param name="bodyHtml">
+        ///     Body of the message in HTML format, or null to omit this MIME type.</param>
+        /// <param name="account">
+        ///     The name of one of the RT.Emailer accounts to use (case-sensitive). If null or not defined, will fall back to
+        ///     exe name, then the Default Account setting, and then any defined account, in this order.</param>
+        /// <param name="fromName">
+        ///     The text to use as the "from" name. If null, will use the executable name. This setting has no effect if the
+        ///     specified RT.Emailer account specifies a FromName of its own.</param>
         public static void SendEmail(IEnumerable<MailAddress> to, string subject, string bodyPlain = null, string bodyHtml = null, string account = null, string fromName = null)
         {
             // Load the settings file
