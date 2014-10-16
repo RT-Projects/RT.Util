@@ -202,6 +202,31 @@ namespace RT.Util
         ///     HTML version of the e-mail.</param>
         public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, string subject, string bodyPlain, string bodyHtml)
         {
+            var headers = new List<string>();
+            headers.Add(EncodeHeader("From", from));
+            headers.Add(EncodeHeader("To", to.ToArray()));
+            headers.Add(EncodeHeader("Date", DateTime.UtcNow.ToString("r"))); // "r" appends "GMT" even when the timestamp is known not to be GMT...
+            headers.Add(EncodeHeader("Subject", subject));
+            SendEmail(from, to, headers, bodyPlain, bodyHtml);
+        }
+
+        /// <summary>
+        ///     Sends an email with fully custom headers.</summary>
+        /// <param name="from">
+        ///     The "envelope From" address presented to the MTA.</param>
+        /// <param name="to">
+        ///     The "envelope To" address presented to the MTA.</param>
+        /// <param name="headers">
+        ///     Zero or more headers. Headers must be in the correct format, including escaping, and excluding the linebreak
+        ///     that separates headers (but including any line breaks required within the header). This method does not
+        ///     validate the headers in any way, and does not include From, To, Date or any other headers unless explicitly
+        ///     passed in through this argument.</param>
+        /// <param name="bodyPlain">
+        ///     Plain-text version of the e-mail.</param>
+        /// <param name="bodyHtml">
+        ///     HTML version of the e-mail.</param>
+        public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, IEnumerable<string> headers, string bodyPlain, string bodyHtml)
+        {
             if (from == null)
                 throw new ArgumentNullException("from");
             if (to == null)
@@ -210,10 +235,10 @@ namespace RT.Util
                 return;
             if (bodyPlain == null && bodyHtml == null)
                 throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "bodyHtml");
-            if (subject == null)
-                subject = "";
             if (bodyPlain == null)
                 bodyPlain = "This e-mail is only available in HTML format.";
+            if (headers == null)
+                throw new ArgumentNullException("headers");
 
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
             _log.Info(1, "Sending email to " + toHeader);
@@ -223,62 +248,266 @@ namespace RT.Util
                 sendAndExpect(@"RCPT TO: <{0}>".Fmt(toAddr.Address), 250);
             sendAndExpect(@"DATA", 354);
 
-            Action<string> sendLine = str =>
+            // sends the input to the SMTP server, followed by a newline, while correctly escaping all lines starting with a "."
+            Action<string> sendLines = str =>
             {
                 if (str.StartsWith("."))
-                    str = "." + str;
-                _writer.WriteLine(str);
+                    _writer.Write('.');
+                _writer.Write(str.Replace("\r\n.", "\r\n.."));
+                _writer.Write("\r\n");
                 _log.Debug(9, ">> " + str);
             };
-            Action<string> sendAsQuotedPrintable = str =>
-            {
-                foreach (var line in toQuotedPrintable(str).Split(new[] { "\r\n" }, StringSplitOptions.None))
-                    sendLine(line);
-            };
 
-            sendLine(@"From: ""{0}"" <{1}>".Fmt(from.DisplayName, from.Address));
-            sendLine(@"To: {0}".Fmt(toHeader));
-            sendLine(@"Date: {0}".Fmt(DateTime.UtcNow.ToString("r"))); // "r" appends "GMT" even when the timestamp is known not to be GMT...
-            sendLine(@"Subject: =?utf-8?B?{0}?=".Fmt(Convert.ToBase64String(subject.ToUtf8())));
+            foreach (var header in headers)
+                sendLines(header);
 
             if (bodyHtml != null)
             {
                 string boundary1 = new string(Enumerable.Range(0, 64).Select(dummy => { var i = Rnd.Next(62); return (char) (i < 10 ? '0' + i : i < 36 ? 'a' + i - 10 : 'A' + i - 36); }).ToArray());
                 string boundary2 = new string(Enumerable.Range(0, 64).Select(dummy => { var i = Rnd.Next(62); return (char) (i < 10 ? '0' + i : i < 36 ? 'a' + i - 10 : 'A' + i - 36); }).ToArray());
                 string boundary3 = new string(Enumerable.Range(0, 64).Select(dummy => { var i = Rnd.Next(62); return (char) (i < 10 ? '0' + i : i < 36 ? 'a' + i - 10 : 'A' + i - 36); }).ToArray());
-                sendLine(@"Content-Type: multipart/mixed; boundary={0}".Fmt(boundary1));
-                sendLine("");
-                sendLine(@"--{0}".Fmt(boundary1));
-                sendLine(@"Content-Type: multipart/related; boundary=""{0}""".Fmt(boundary2));
-                sendLine("");
-                sendLine(@"--{0}".Fmt(boundary2));
-                sendLine(@"Content-Type: multipart/alternative; boundary=""{0}""".Fmt(boundary3));
-                sendLine("");
-                sendLine(@"--{0}".Fmt(boundary3));
-                sendLine(@"Content-Type: text/plain; charset=UTF-8");
-                sendLine(@"Content-Transfer-Encoding: quoted-printable");
-                sendLine("");
-                sendAsQuotedPrintable(bodyPlain);
-                sendLine(@"--{0}".Fmt(boundary3));
-                sendLine(@"Content-Type: text/html; charset=UTF-8");
-                sendLine(@"Content-Transfer-Encoding: quoted-printable");
-                sendLine("");
-                sendAsQuotedPrintable(bodyHtml);
-                sendLine(@"--{0}--".Fmt(boundary3));
-                sendLine("");
-                sendLine(@"--{0}--".Fmt(boundary2));
-                sendLine("");
-                sendLine(@"--{0}--".Fmt(boundary1));
+                sendLines(@"Content-Type: multipart/mixed; boundary={0}".Fmt(boundary1));
+                sendLines("");
+                sendLines(@"--{0}".Fmt(boundary1));
+                sendLines(@"Content-Type: multipart/related; boundary=""{0}""".Fmt(boundary2));
+                sendLines("");
+                sendLines(@"--{0}".Fmt(boundary2));
+                sendLines(@"Content-Type: multipart/alternative; boundary=""{0}""".Fmt(boundary3));
+                sendLines("");
+                sendLines(@"--{0}".Fmt(boundary3));
+                sendLines(@"Content-Type: text/plain; charset=UTF-8");
+                sendLines(@"Content-Transfer-Encoding: quoted-printable");
+                sendLines("");
+                sendLines(toQuotedPrintable(bodyPlain));
+                sendLines(@"--{0}".Fmt(boundary3));
+                sendLines(@"Content-Type: text/html; charset=UTF-8");
+                sendLines(@"Content-Transfer-Encoding: quoted-printable");
+                sendLines("");
+                sendLines(toQuotedPrintable(bodyHtml));
+                sendLines(@"--{0}--".Fmt(boundary3));
+                sendLines("");
+                sendLines(@"--{0}--".Fmt(boundary2));
+                sendLines("");
+                sendLines(@"--{0}--".Fmt(boundary1));
             }
             else
             {
-                sendLine(@"Content-Type: text/plain; charset=UTF-8");
-                sendLine(@"Content-Transfer-Encoding: quoted-printable");
-                sendLine("");
-                sendAsQuotedPrintable(bodyPlain);
+                sendLines(@"Content-Type: text/plain; charset=UTF-8");
+                sendLines(@"Content-Transfer-Encoding: quoted-printable");
+                sendLines("");
+                sendLines(toQuotedPrintable(bodyPlain));
             }
             sendAndExpect(".", 250);
             _log.Debug(1, "Sent successfully.");
+        }
+
+        /// <summary>
+        ///     Encodes an email header for use with <see cref="SendEmail(MailAddress, IEnumerable&lt;MailAddress&gt;,
+        ///     IEnumerable&lt;string&gt;, string, string)"/>, escaping, quoting and line-wrapping as required by the relevant
+        ///     RFCs.</summary>
+        public static string EncodeHeader(string name, string value)
+        {
+            // RFC 5322 defines how the headers should be encoded. There are two line length limits, both of which are ignored by this
+            // implementation. The 78 character limit is a "should" limit that appears to be widely broken already without ill effects. The
+            // 998 limit is worked around by forbidding header values this long and saving the trouble of correctly breaking the lines.
+            if (!validHeaderName(name))
+                throw new ArgumentException("This email header name is not valid as per RFC 5322", "name");
+
+            var chunks = new List<chunk>();
+            addChunk(chunks, name + ": ");
+            addChunk(chunks, value);
+            return chunksToString(chunks);
+        }
+
+        /// <summary>
+        ///     Encodes an email header for use with <see cref="SendEmail(MailAddress, IEnumerable&lt;MailAddress&gt;,
+        ///     IEnumerable&lt;string&gt;, string, string)"/>, escaping, quoting and line-wrapping as required by the relevant
+        ///     RFCs.</summary>
+        public static string EncodeHeader(string name, params MailAddress[] addresses)
+        {
+            // In addition to the comment in the EncodeHeader(string, string) method, this method employs a simple strategy regarding the
+            // 998 character line length limit: every email address starts on a new line. This is simple to implement, always valid, and the only
+            // thing this renders impossible is /very/ long address displaynames.
+
+            if (!validHeaderName(name))
+                throw new ArgumentException("This email header name is not valid as per RFC 5322", "name");
+            if (addresses.Length == 0)
+                throw new ArgumentException("At least one address is required", "addresses");
+
+            var chunks = new List<chunk>();
+            addChunk(chunks, name + ": ");
+            foreach (var address in addresses)
+            {
+                if (address.DisplayName != "")
+                {
+                    addChunk(chunks, "\"");
+                    addChunk(chunks, address.DisplayName);
+                    addChunk(chunks, "\" <");
+                }
+                addChunk(chunks, address.Address);
+                if (address.DisplayName != "")
+                    addChunk(chunks, ">");
+                addChunk(chunks, ", ");
+            }
+            chunks.RemoveAt(chunks.Count - 1); // remove the last ", " chunk
+            return chunksToString(chunks);
+        }
+
+        private sealed class chunk
+        {
+            public string Text;
+            public byte[] Base64;
+        }
+
+        private static void addChunk(List<chunk> chunks, string value)
+        {
+            if (requiresBase64(value))
+                chunks.Add(new chunk { Base64 = value.ToUtf8() });
+            else
+                chunks.Add(new chunk { Text = value });
+        }
+
+        private static string chunksToString(List<chunk> chunks)
+        {
+            var result = new StringBuilder();
+            int lineLength = 0;
+
+            foreach (var chunk in chunks)
+            {
+                // RFC 2047: An 'encoded-word' may not be more than 75 characters long. Each line of a header field that contains one or more 'encoded-word's is limited to 76 characters.
+                if (chunk.Text != null)
+                {
+                    result.Append(chunk.Text);
+                    lineLength += chunk.Text.Length;
+                    while (lineLength > 76)
+                        wrap(result, ref lineLength, 76);
+                }
+                else // chunk.Base64 != null
+                {
+                    // base-64 chunks must be surrounded by "=?utf-8?B?" and followed by "?=". It can be split anywhere except across a UTF-8 sequence.
+                    // The minimum space occupied by an encoded-word is 16 characters (because the base64 has to be padded, so min. 4 chars)
+                    // This min. length (16 chars) is also guaranteed to be achievable because even the longest unicode sequences can be encoded in four base64 characters.
+                    int pos = 0;
+                    while (pos < chunk.Base64.Length)
+                    {
+                        // The first time round is special, because it's the only time when we might wrap _before_ adding a chunk
+                        if (pos == 0 && lineLength > 76 - 16)
+                            wrap(result, ref lineLength, 76);
+                        // Figure out how many bytes we can add. Every 3 bytes take 4 characters.
+                        int bytes = Math.Min(chunk.Base64.Length - pos, (76 - lineLength - 12) / 4 * 3);
+                        Ut.Assert(bytes > 0);
+                        // Now move backwards until we hit a utf8 boundary
+                        while (pos + bytes < chunk.Base64.Length && chunk.Base64[pos + bytes] >= 0x80 && chunk.Base64[pos + bytes] < 0xC0)
+                            bytes--;
+                        Ut.Assert(bytes > 0);
+                        // Add them!
+                        lineLength -= result.Length; // coupled with the next change, this increments lineLength by how many chars we're about to append.
+                        result.Append("=?UTF-8?B?");
+                        result.Append(Convert.ToBase64String(chunk.Base64, pos, bytes));
+                        result.Append("?=");
+                        lineLength += result.Length;
+                        pos += bytes;
+                        // If we have any bytes left, we must wrap, because that's the only reason we would ever not append everything
+                        if (pos < chunk.Base64.Length)
+                        {
+                            result.Append("\r\n ");
+                            lineLength = 1;
+                        }
+                    }
+                }
+            }
+
+            return result.ToString();
+        }
+
+        private static void wrap(StringBuilder text, ref int lineLength, int maxLineLength)
+        {
+            Ut.Assert(text.Length > 0);
+            // This method MAY be called with a lineLength less than the max line length.
+            // It MUST add a line wrap, ideally before the max line length, but if not possible then after the max length, possibly even at the very end of the text.
+
+            // If the line already fits within max line length, just insert a newline at the very end and be done
+            if (lineLength <= maxLineLength)
+            {
+                lineLength = 1;
+                text.Append("\r\n ");
+                return;
+            }
+            // First search back from the max line length position for a wrappable location
+            int pos = text.Length - lineLength + maxLineLength; // "pos < text.Length" is guaranteed by the test above
+            while (true)
+            {
+                if (pos < (text.Length - lineLength) || text[pos] == '\n') // exit if we've reached the start of the current line
+                {
+                    pos = -1;
+                    break;
+                }
+                if (text[pos] == ' ')
+                    break;
+                pos--;
+            }
+            // If that worked, make sure it isn't all spaces until the start of the line
+            if (pos >= 0)
+            {
+                int pos2 = pos;
+                while (true)
+                {
+                    pos2--;
+                    if (pos2 < (text.Length - lineLength) || text[pos2] == '\n')
+                    {
+                        pos = -1; // found nothing but spaces until the start of the line
+                        break;
+                    }
+                    if (text[pos2] != ' ')
+                        break; // found a non-space, so OK to wrap at "pos"
+                }
+            }
+            // If that failed, seek forward
+            if (pos < 0)
+            {
+                pos = text.Length - lineLength + maxLineLength + 1;
+                while (true)
+                {
+                    if (pos >= text.Length)
+                        break;
+                    if (text[pos] == ' ')
+                        break;
+                    pos++;
+                }
+            }
+            // Insert \r\n at "pos", which either points at the space that becomes the (mandatory) indent for the next line, or is at the very end of the line
+            if (pos >= text.Length)
+            {
+                lineLength = 1;
+                text.Append("\r\n ");
+            }
+            else
+            {
+                lineLength = text.Length - pos;
+                text.Insert(pos, "\r\n");
+            }
+        }
+
+        private static bool validHeaderName(string input)
+        {
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                if (c <= 32 || c >= 127 || c == ':')
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool requiresBase64(string input)
+        {
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                if (c <= 31 || c >= 127)
+                    return true;
+            }
+            return false;
         }
 
         private static string toQuotedPrintable(string input)
