@@ -35,7 +35,7 @@ namespace RT.Util
         ///                {
         ///                    // Replace “CommandLine” with the name of your command-line type, and “Translation”
         ///                    // with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
-        ///                    CommandLineParser&lt;CommandLine&gt;.PostBuildStep(rep, typeof(Translation));
+        ///                    CommandLineParser.PostBuildStep&lt;CommandLine&gt;(rep, typeof(Translation));
         ///                }
         ///            #endif
         ///        </code>

@@ -116,10 +116,10 @@ namespace RT.Util
         ///     The SMTP client logs various messages to this log at various verbosity levels.</param>
         /// <exception cref="RTSmtpException">
         ///     SMTP protocol error, or authentication failed.</exception>
-        public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null)
+        public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null, int timeout = 10000)
         {
             _log = log ?? new NullLogger();
-            _log.Debug(1, "Connecting to {0}:{1}...".Fmt(host, port));
+            _log.Debug(2, "Connecting to {0}:{1}...".Fmt(host, port));
             _tcp = new TcpClient(host, port);
             _tcpStream = _tcp.GetStream();
             if (encryption == SmtpEncryption.Ssl || encryption == SmtpEncryption.SslIgnoreCert)
@@ -129,8 +129,10 @@ namespace RT.Util
                 else
                     _sslStream = new SslStream(_tcpStream, false, (_, __, ___, ____) => true);
                 _sslStream.AuthenticateAsClient(host);
-                _log.Debug(2, "SSL: authenticated as client");
+                _log.Debug(3, "SSL: authenticated as client");
             }
+            (_sslStream ?? _tcpStream).ReadTimeout = timeout;
+            (_sslStream ?? _tcpStream).WriteTimeout = timeout;
             _writer = new StreamWriter(_sslStream ?? _tcpStream, new UTF8Encoding(false)) { NewLine = "\r\n", AutoFlush = true };
             _reader = new StreamReader(_sslStream ?? _tcpStream, Encoding.UTF8);
             _conversation = new List<string>();
@@ -146,7 +148,7 @@ namespace RT.Util
             if (resultDec != "Password:")
                 throw new RTSmtpException("Expected 'Password:', got: '{0}'".Fmt(resultDec), _conversation);
             sendAndExpect(Convert.ToBase64String(password.ToUtf8()), 235);
-            _log.Debug(2, "Connected.");
+            _log.Debug(3, "Connected.");
         }
 
         /// <summary>
@@ -241,7 +243,7 @@ namespace RT.Util
                 throw new ArgumentNullException("headers");
 
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
-            _log.Info(1, "Sending email to " + toHeader);
+            _log.Debug(2, "Sending email to " + toHeader);
 
             sendAndExpect(@"MAIL FROM: <{0}>".Fmt(from.Address), 250);
             foreach (var toAddr in to)
