@@ -114,8 +114,12 @@ namespace RT.Util
         ///     Encryption mode.</param>
         /// <param name="log">
         ///     The SMTP client logs various messages to this log at various verbosity levels.</param>
+        /// <param name="timeout">
+        ///     Network stream read/write timeout, in milliseconds.</param>
         /// <exception cref="RTSmtpException">
         ///     SMTP protocol error, or authentication failed.</exception>
+        /// <exception cref="IOException">
+        ///     Network error or timeout.</exception>
         public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null, int timeout = 10000)
         {
             _log = log ?? new NullLogger();
