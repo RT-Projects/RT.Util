@@ -763,6 +763,10 @@ namespace RT.Util.Serialization
                             getAttrsFrom = prop;
                     }
 
+                    // Skip events
+                    if (type.GetEvent(rFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static) != null)
+                        continue;
+
                     var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
 
                     // [ClassifyIgnore]
@@ -1159,17 +1163,24 @@ namespace RT.Util.Serialization
                 rep.Error("The type {0} does not have a parameterless constructor.".Fmt(type.FullName), "class", type.Name);
                 return;
             }
-            postBuildStep(type, instance, null, rep, new HashSet<Type>());
+            postBuildStep(type, instance, null, rep, new HashSet<Type>(), Enumerable.Empty<string>());
         }
 
-        private static void postBuildStep(Type type, object instance, MemberInfo member, IPostBuildReporter rep, HashSet<Type> alreadyChecked)
+        private static void postBuildStep(Type type, object instance, MemberInfo member, IPostBuildReporter rep, HashSet<Type> alreadyChecked, IEnumerable<string> chain)
         {
+            ClassifyTypeOptions opts;
+            if (DefaultOptions._typeOptions.TryGetValue(type, out opts) && opts._substituteType != null)
+            {
+                postBuildStep(opts._substituteType, opts._toSubstitute(instance), member, rep, alreadyChecked, chain.Concat("Type substitution: " + opts._substituteType.FullName));
+                return;
+            }
+
             if (!alreadyChecked.Add(type))
                 return;
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                postBuildStep(type.GetGenericArguments()[0], instance, member, rep, alreadyChecked);
+                postBuildStep(type.GetGenericArguments()[0], instance, member, rep, alreadyChecked, chain);
                 return;
             }
 
@@ -1177,51 +1188,57 @@ namespace RT.Util.Serialization
             if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out genericTypeArguments))
             {
                 foreach (var typeArg in genericTypeArguments)
-                    postBuildStep(typeArg, null, member, rep, alreadyChecked);
+                    postBuildStep(typeArg, null, member, rep, alreadyChecked, chain.Concat("Dictionary type argument " + typeArg.FullName));
                 return;
             }
 
             if (type == typeof(Pointer) || type == typeof(IntPtr) || type.IsPointer || type.IsByRef)
             {
                 if (member == null)
-                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName));
+                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized".Fmt(type.FullName, chain.JoinString(", ")));
                 else
-                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized.".Fmt(type.FullName, member.DeclaringType.FullName, member.Name), member.DeclaringType.Name, member.Name);
+                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized. Chain: {3}".Fmt(type.FullName, member.DeclaringType.FullName, member.Name, chain.JoinString(", ")), member.DeclaringType.Name, member.Name);
+                return;
             }
-            else if (_simpleTypes.Contains(type))
+
+            if (_simpleTypes.Contains(type))
                 return; // these are safe
-            else
+
+            checkAttributeParity(type, rep);
+            if (!type.IsAbstract)
             {
-                checkAttributeParity(type, rep);
-                if (!type.IsAbstract)
+                if (instance == null && !type.IsValueType && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
+                    rep.Error(
+                        "The {3} {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}. (Chain: {4})"
+                            .Fmt(member.NullOr(m => m.DeclaringType.FullName), member.NullOr(m => m.Name), type.FullName, member is FieldInfo ? "field" : "property",
+                                chain.JoinString(", ")),
+                        member.NullOr(m => m.DeclaringType.Name), member.NullOr(m => m.Name));
+                else
                 {
-                    if (instance == null && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
-                        rep.Error(
-                            "The {3} {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}."
-                                .Fmt(member.NullOr(m => m.DeclaringType.FullName), member.NullOr(m => m.Name), type.FullName, member is FieldInfo ? "field" : "property"),
-                            member.NullOr(m => m.DeclaringType.Name), member.NullOr(m => m.Name));
-                    else
+                    var inst = instance ?? (type.ContainsGenericParameters ? null : Activator.CreateInstance(type, true));
+                    foreach (var f in type.GetAllFields())
                     {
-                        var inst = instance ?? (type.ContainsGenericParameters ? null : Activator.CreateInstance(type, true));
-                        foreach (var f in type.GetAllFields())
+                        MemberInfo m = f;
+                        if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
                         {
-                            MemberInfo m = f;
-                            if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
-                            {
-                                var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
-                                m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
-                            }
-                            if (m.IsDefined<ClassifyIgnoreAttribute>())
-                                continue;
-                            postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), m, rep, alreadyChecked);
-                            checkAttributeParity(m, rep);
+                            var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
+                            m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
                         }
+                        // Skip events
+                        else if (type.GetEvent(f.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance) != null)
+                            continue;
+
+                        if (m.IsDefined<ClassifyIgnoreAttribute>())
+                            continue;
+                        postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), m, rep, alreadyChecked, chain.Concat(m.DeclaringType.FullName + "." + m.Name));
+                        checkAttributeParity(m, rep);
                     }
                 }
+            }
+            if (type != typeof(object))
                 foreach (var derivedType in type.Assembly.GetTypes())
                     if (type.IsAssignableFrom(derivedType))
-                        postBuildStep(derivedType, null, member, rep, alreadyChecked);
-            }
+                        postBuildStep(derivedType, null, member, rep, alreadyChecked, chain.Concat("Derived type: " + derivedType.FullName));
         }
 
         private static void checkAttributeParity(MemberInfo m, IPostBuildReporter rep)
