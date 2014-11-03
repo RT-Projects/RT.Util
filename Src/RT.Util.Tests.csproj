@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Collections\ListSortedTests.cs" />
     <Compile Include="CommandLineTests.cs" />
+    <Compile Include="ExtensionMethods\NumericExtensionsTests.cs" />
     <Compile Include="RTSmtpClientTests.cs" />
     <Compile Include="CustomComparerTests.cs" />
     <Compile Include="EggsMLTests.cs" />

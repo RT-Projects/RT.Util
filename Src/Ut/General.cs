@@ -1142,5 +1142,12 @@ namespace RT.Util
                 throw new ArgumentNullException("enumValue");
             return GetCustomAttributes<TAttribute>(enumValue).SingleOrDefault();
         }
+
+        /// <summary>
+        ///     Returns true if this value is equal to the default value for this type.</summary>
+        public static bool IsDefault<T>(this T val) where T : struct
+        {
+            return val.Equals(default(T));
+        }
     }
 }
