@@ -14,7 +14,7 @@ namespace RT.Util.Lingo
         /// <summary>Contains the original text this string was last translated from, or for the original language, null.</summary>
         public string Old = null;
 
-        /// <summary>Default constructor (required for XmlClassify).</summary>
+        /// <summary>Default constructor (required for Classify).</summary>
         public TrString() { }
         /// <summary>Constructs a new translatable string given the specified translation.</summary>
         public TrString(string translation) { Translation = translation; }
@@ -62,7 +62,7 @@ namespace RT.Util.Lingo
         /// <summary>Contains the original text this string was last translated from. Null for the original language.</summary>
         public string[] Old = null;
 
-        /// <summary>Default constructor (required for XmlClassify).</summary>
+        /// <summary>Default constructor (required for Classify).</summary>
         public TrStringNum() { Translations = new string[0]; IsNumber = new[] { true }; }
 
         /// <summary>

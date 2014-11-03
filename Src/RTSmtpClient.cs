@@ -58,7 +58,7 @@ namespace RT.Util
         ///     anything.</summary>
         public string Username = "example_user";
         /// <summary>
-        ///     Unencrypted password to be automatically encrypted by XmlClassify whenever the settings are loaded or saved.</summary>
+        ///     Unencrypted password to be automatically encrypted by Classify whenever the settings are loaded or saved.</summary>
         public string Password = "password";
         /// <summary>The encrypted password.</summary>
         public string PasswordEncrypted;
