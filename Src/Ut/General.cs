@@ -1143,11 +1143,38 @@ namespace RT.Util
             return GetCustomAttributes<TAttribute>(enumValue).SingleOrDefault();
         }
 
-        /// <summary>
-        ///     Returns true if this value is equal to the default value for this type.</summary>
+        /// <summary>Returns true if this value is equal to the default value for this type.</summary>
         public static bool IsDefault<T>(this T val) where T : struct
         {
             return val.Equals(default(T));
+        }
+
+        /// <summary>
+        ///     Computes a hash value from an array of elements.</summary>
+        /// <param name="input">
+        ///     The array of elements to hash.</param>
+        /// <returns>
+        ///     The computed hash value.</returns>
+        public static int ArrayHash(params object[] input)
+        {
+            if (input == null)
+                return 0;
+
+            const int b = 378551;
+            int a = 63689;
+            int hash = input.Length + 1;
+
+            unchecked
+            {
+                foreach (object t in input)
+                {
+                    if (t != null)
+                        hash = hash * a + t.GetHashCode();
+                    a = a * b;
+                }
+            }
+
+            return hash;
         }
     }
 }
