@@ -1032,7 +1032,28 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public abstract string ToStringIndented();
+        public string ToStringIndented()
+        {
+            var sb = new StringBuilder();
+            AppendIndented(this, sb);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Converts the JSON value to a JSON string that parses back to this value and places the string into the
+        ///     specified StringBuilder. Supports null values.</summary>
+        public static void AppendIndented(JsonValue value, StringBuilder sb, int indentation = 0)
+        {
+            if (value == null)
+                sb.Append("null");
+            else
+                value.AppendIndented(sb, indentation);
+        }
+
+        /// <summary>
+        ///     Converts the current JSON value to a JSON void that parses back to this value and places the string into the
+        ///     specified StringBuilder.</summary>
+        public abstract void AppendIndented(StringBuilder sb, int indentation = 0);
 
         /// <summary>Lazy-converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static IEnumerable<string> ToEnumerable(JsonValue value)
@@ -1305,11 +1326,14 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
-        public override string ToStringIndented()
+        public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
             if (List.Count == 0)
-                return "[]";
-            var sb = new StringBuilder();
+            {
+                sb.Append("[]");
+                return;
+            }
+
             sb.Append("[");
             bool first = true;
             foreach (var value in List)
@@ -1317,13 +1341,15 @@ namespace RT.Util.Json
                 if (!first)
                     sb.Append(",");
                 sb.AppendLine();
-                sb.Append("    ");
-                sb.Append(JsonValue.ToStringIndented(value).Indent(4, false));
+                for (int i = 0; i <= indentation; i++)
+                    sb.Append("  ");
+                JsonValue.AppendIndented(value, sb, indentation + 1);
                 first = false;
             }
             sb.AppendLine();
+            for (int i = 0; i < indentation; i++)
+                sb.Append("  ");
             sb.Append("]");
-            return sb.ToString();
         }
 
         /// <summary>Removes all items from the current list.</summary>
@@ -1539,11 +1565,14 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
-        public override string ToStringIndented()
+        public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
             if (Dict.Count == 0)
-                return "{}";
-            var sb = new StringBuilder();
+            {
+                sb.Append("{}");
+                return;
+            }
+
             sb.Append("{");
             bool first = true;
             foreach (var kvp in Dict)
@@ -1551,15 +1580,17 @@ namespace RT.Util.Json
                 if (!first)
                     sb.Append(",");
                 sb.AppendLine();
-                sb.Append("    ");
+                for (int i = 0; i <= indentation; i++)
+                    sb.Append("  ");
                 sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
                 sb.Append(": ");
-                sb.Append(JsonValue.ToStringIndented(kvp.Value).Indent(4, false));
+                JsonValue.AppendIndented(kvp.Value, sb, indentation + 1);
                 first = false;
             }
             sb.AppendLine();
+            for (int i = 0; i < indentation; i++)
+                sb.Append("  ");
             sb.Append("}");
-            return sb.ToString();
         }
 
         /// <summary>Removes all items from the current dictionary.</summary>
@@ -1901,9 +1932,9 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToStringIndented()
+        public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
-            return _value.JsEscape(JsQuotes.Double);
+            sb.AppendJsEscaped(_value, JsQuotes.Double);
         }
 
         /// <summary>
@@ -2003,9 +2034,9 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToStringIndented()
+        public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
-            return _value ? "true" : "false";
+            sb.Append(_value ? "true" : "false");
         }
 
         /// <summary>
@@ -2337,9 +2368,9 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToStringIndented()
+        public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
-            return double.IsNaN(_double) ? _long.ToString() : ExactConvert.ToString(_double);
+            sb.Append(double.IsNaN(_double) ? _long.ToString() : ExactConvert.ToString(_double));
         }
     }
 
@@ -2402,7 +2433,7 @@ namespace RT.Util.Json
         public override IEnumerable<string> ToEnumerable() { return JsonValue.ToEnumerable(null); }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToStringIndented() { return JsonValue.ToStringIndented(null); }
+        public override void AppendIndented(StringBuilder sb, int indentation = 0) { JsonValue.AppendIndented(null, sb, indentation); }
 
         /// <summary>Returns the singleton instance of this type.</summary>
         public static JsonNoValue Instance { get { return _instance; } }
@@ -2579,7 +2610,7 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToStringIndented() { return Raw; }
+        public override void AppendIndented(StringBuilder sb, int indentation = 0) { sb.Append(Raw); }
     }
 
     /// <summary>Provides extension methods for the JSON types.</summary>

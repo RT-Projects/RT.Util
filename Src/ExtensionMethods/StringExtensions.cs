@@ -370,7 +370,25 @@ namespace RT.Util.ExtensionMethods
         {
             if (input == null)
                 throw new ArgumentNullException("input");
+
             var sb = new StringBuilder();
+            sb.AppendJsEscaped(input);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Appends a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped
+        ///     into the specified StringBuilder.</summary>
+        /// <param name="input">
+        ///     String to escape.</param>
+        /// <param name="quotes">
+        ///     Specifies what type of quotes to put around the result, if any.</param>
+        public static void AppendJsEscaped(this StringBuilder sb, string input, JsQuotes quotes = JsQuotes.Double)
+        {
+            if (sb == null)
+                throw new ArgumentNullException("sb");
+            if (input == null)
+                throw new ArgumentNullException("input");
 
             if (quotes != JsQuotes.None)
                 sb.Append(quotes == JsQuotes.Double ? '"' : '\'');
@@ -399,7 +417,6 @@ namespace RT.Util.ExtensionMethods
             }
             if (quotes != JsQuotes.None)
                 sb.Append(quotes == JsQuotes.Double ? '"' : '\'');
-            return sb.ToString();
         }
 
         /// <summary>
