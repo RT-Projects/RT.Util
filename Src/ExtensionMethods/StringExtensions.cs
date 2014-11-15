@@ -379,6 +379,8 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Appends a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped
         ///     into the specified StringBuilder.</summary>
+        /// <param name="sb">
+        ///     The StringBuilder to add the result to.</param>
         /// <param name="input">
         ///     String to escape.</param>
         /// <param name="quotes">
