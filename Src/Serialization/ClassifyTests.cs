@@ -617,6 +617,29 @@ namespace RT.Util.Serialization
             public Guid? GuidNullableNotNull;
         }
 
+        private class classWithGuidSubAttribute
+        {
+            [ClassifySubstitute(typeof(guidSubstituteConverter))]
+            public Guid Guid;
+            [ClassifySubstitute(typeof(guidSubstituteConverter))]
+            public Guid? GuidNullableNull;
+            [ClassifySubstitute(typeof(guidSubstituteConverter))]
+            public Guid? GuidNullableNotNull;
+        }
+
+        private class guidSubstituteConverter : IClassifySubstitute<Guid, string>
+        {
+            public string ToSubstitute(Guid instance)
+            {
+                return instance.ToString();
+            }
+
+            public Guid FromSubstitute(string instance)
+            {
+                return Guid.Parse(instance);
+            }
+        }
+
         private class substituteGuid
         {
             public string Value;
@@ -664,6 +687,29 @@ namespace RT.Util.Serialization
         {
             public string ToSubstitute(Guid guid) { return guid.ToString(); }
             public Guid FromSubstitute(string str) { return Guid.Parse(str); }
+        }
+
+        [Test]
+        public void TestTypeSubstitutionAttribute()
+        {
+            var inst = new classWithGuidSubAttribute();
+            var guid = _testGuid;
+            inst.Guid = guid;
+            inst.GuidNullableNotNull = guid;
+            inst.GuidNullableNull = null;
+
+            var xml = ClassifyXml.Serialize(inst);
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
+                <item>
+                  <Guid refid=""0"">"+guid.ToString()+ @"</Guid>
+                  <GuidNullableNotNull>"+guid.ToString()+ @"</GuidNullableNotNull>
+                  <GuidNullableNull null=""1"" />
+                </item>")));
+
+            var parsed = ClassifyXml.Deserialize<classWithGuidSubAttribute>(xml);
+            Assert.AreEqual(parsed.Guid.ToString(), guid.ToString());
+            Assert.AreEqual(parsed.GuidNullableNotNull.GetValueOrDefault().ToString(), guid.ToString());
+            Assert.IsNull(parsed.GuidNullableNull);
         }
 
         [Test]
