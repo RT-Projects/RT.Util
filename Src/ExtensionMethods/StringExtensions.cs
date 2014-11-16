@@ -372,7 +372,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException("input");
 
             var sb = new StringBuilder();
-            sb.AppendJsEscaped(input);
+            sb.AppendJsEscaped(input, quotes);
             return sb.ToString();
         }
 
