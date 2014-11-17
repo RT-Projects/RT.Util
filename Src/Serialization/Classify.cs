@@ -135,7 +135,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static T DeserializeFile<TElement, T>(string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null, object parent = null)
         {
-            return (T)DeserializeFile<TElement>(typeof(T), filename, format, options, parent);
+            return (T) DeserializeFile<TElement>(typeof(T), filename, format, options, parent);
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T)new classifier<TElement>(format, options).Deserialize(typeof(T), elem, null);
+            return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem, null);
         }
 
         /// <summary>
@@ -626,7 +626,7 @@ namespace RT.Util.Serialization
                         else if (type.IsArray)
                         {
                             var input = _format.GetList(elem, null).ToArray();
-                            var outputArray = (already != null && ((Array)already).GetLength(0) == input.Length) ? already : type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
+                            var outputArray = (already != null && ((Array) already).GetLength(0) == input.Length) ? already : type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
                             var setMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
                             var i = -1;
                             var setters = new Func<object>[input.Length];
@@ -741,6 +741,8 @@ namespace RT.Util.Serialization
                 public FieldInfo FieldToAssignTo;
                 public TElement ElementToAssign;
                 public bool EnforceEnum;
+                public Type DeserializeAsType;
+                public Func<object, object> SubstituteConverter;
             }
 
             private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, object parentNode)
@@ -777,35 +779,6 @@ namespace RT.Util.Serialization
                     else if (getAttrsFrom.IsDefined<ClassifyParentAttribute>())
                         field.SetValue(intoObj, parentNode);
 
-                    //[ClassifySubstitute]
-                    else if (getAttrsFrom.IsDefined<ClassifySubstituteAttribute>())
-                    {
-                        var substituteAttr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().First();
-                        var converterType = substituteAttr.Converter;
-                        var inter = converterType.GetInterfaces().SingleOrDefault(x =>
-                            x.IsGenericType &&
-                            x.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>));
-
-                        if (inter == null)
-                            throw new InvalidOperationException("Provided type in [ClassifySubstitute] attribute must implement interface IClassifySubstitute<,>.");
-
-                        var genericArguments = inter.GetGenericArguments();
-                        var fromType = genericArguments[0];
-                        var substituteType = genericArguments[1];
-
-                        object converter = Activator.CreateInstance(converterType);
-                        MethodInfo convMethod = converterType.GetMethod("FromSubstitute");
-
-                        // I don't know about this? Is there a better way to do this? I am confused about some things here.
-                        var valueElement = _format.GetField(elem, rFieldName, fieldDeclaringType);
-                        var result = CustomCallStack.Run(deserialize(substituteType, valueElement, null, null, false));
-                        var value = result();
-
-                        var converted = convMethod.Invoke(converter, new[] { value });
-
-                        field.SetValue(intoObj, converted);
-                    }
-
                     // [ClassifyFollowId]
                     else if (getAttrsFrom.IsDefined<ClassifyFollowIdAttribute>())
                     {
@@ -834,12 +807,31 @@ namespace RT.Util.Serialization
                         }
                     }
 
-                    // Fields with no special attributes
+                    // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                         if (!_format.IsNull(value) || !getAttrsFrom.IsDefined<ClassifyNotNullAttribute>())
-                            infos.Add(new deserializeFieldInfo { FieldToAssignTo = field, ElementToAssign = value, EnforceEnum = getAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>() });
+                        {
+                            var inf = new deserializeFieldInfo
+                            {
+                                FieldToAssignTo = field,
+                                DeserializeAsType = field.FieldType,
+                                ElementToAssign = value,
+                                EnforceEnum = getAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>()
+                            };
+
+                            // [ClassifySubstitute]
+                            var substituteAttr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().FirstOrDefault();
+                            if (substituteAttr != null)
+                            {
+                                var substInf = substituteAttr.GetInfo(field.FieldType);
+                                inf.DeserializeAsType = substInf.SubstituteType;
+                                inf.SubstituteConverter = substInf.FromSubstitute;
+                            }
+
+                            infos.Add(inf);
+                        }
                     }
                 }
 
@@ -851,13 +843,15 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < infos.Count)
-                        return deserialize(infos[i].FieldToAssignTo.FieldType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].EnforceEnum);
+                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].EnforceEnum);
 
                     _doAtTheEnd.Add(() =>
                     {
                         for (int j = 0; j < infos.Count; j++)
                         {
                             var valueToAssign = valuesToAssign[j]();
+                            if (infos[j].SubstituteConverter != null)
+                                valueToAssign = infos[j].SubstituteConverter(valueToAssign);
                             if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].EnforceEnum || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
                                 infos[j].FieldToAssignTo.SetValue(intoObj, valueToAssign);
                         }
@@ -873,7 +867,7 @@ namespace RT.Util.Serialization
 
                 if (Enum.GetUnderlyingType(enumType) == typeof(ulong))
                 {
-                    var ulongValue = (ulong)enumValue;
+                    var ulongValue = (ulong) enumValue;
                     foreach (ulong allowedValue in Enum.GetValues(enumType))
                         ulongValue &= ~allowedValue;
                     return ulongValue == 0;
@@ -962,7 +956,7 @@ namespace RT.Util.Serialization
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                 {
-                    elem = () => _format.FormatSelfValue((TElement)saveObject);
+                    elem = () => _format.FormatSelfValue((TElement) saveObject);
                     typeStr = null;
                 }
                 else if (_simpleTypes.Contains(saveType) || saveType.IsEnum)
@@ -1013,7 +1007,7 @@ namespace RT.Util.Serialization
                         if (keyProperty == null || valueProperty == null)
                             throw new InvalidOperationException("Cannot find Key or Value property in KeyValuePair type.");
 
-                        var kvps = ((IEnumerable)saveObject).Cast<object>().Select(kvp => new
+                        var kvps = ((IEnumerable) saveObject).Cast<object>().Select(kvp => new
                         {
                             Key = keyProperty.GetValue(kvp, null),
                             GetValue = Serialize(valueProperty.GetValue(kvp, null), valueType)
@@ -1024,7 +1018,7 @@ namespace RT.Util.Serialization
                     {
                         // It’s an array or collection
                         var valueType = declaredType.IsArray ? declaredType.GetElementType() : typeParameters[0];
-                        var items = ((IEnumerable)saveObject).Cast<object>().Select(val => Serialize(val, valueType)).ToArray();
+                        var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Serialize(val, valueType)).ToArray();
                         elem = () => _format.FormatList(false, items.Select(item => item()));
                     }
                     else
@@ -1118,7 +1112,7 @@ namespace RT.Util.Serialization
 
                     // Arrays, lists and dictionaries all implement ICollection
                     bool ignoreIfEmpty = ignoreIfEmptyOnType || getAttrsFrom.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
-                    if (ignoreIfEmpty && saveValue is ICollection && ((ICollection)saveValue).Count == 0)
+                    if (ignoreIfEmpty && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                         continue;
 
                     if (!namesAlreadySeen.Add(rFieldName))
@@ -1132,7 +1126,7 @@ namespace RT.Util.Serialization
                         if (!field.FieldType.IsGenericType || field.FieldType.GetGenericTypeDefinition() != typeof(ClassifyDeferredObject<>))
                             throw new InvalidOperationException("A field that uses the [ClassifyFollowId] attribute must have the type ClassifyDeferredObject<T> for some T.");
 
-                        var deferredSaveValue = (IClassifyDeferredObject)saveValue;
+                        var deferredSaveValue = (IClassifyDeferredObject) saveValue;
                         var innerType = field.FieldType.GetGenericArguments()[0];
 
                         if (deferredSaveValue.Evaluated)
@@ -1147,21 +1141,9 @@ namespace RT.Util.Serialization
                     }
                     else if (getAttrsFrom.IsDefined<ClassifySubstituteAttribute>())
                     {
-                        var substituteAttr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().First();
-                        var converterType = substituteAttr.Converter;
-                        var inter = converterType.GetInterfaces().SingleOrDefault(x =>
-                            x.IsGenericType &&
-                            x.GetGenericTypeDefinition() == typeof (IClassifySubstitute<,>));
-
-                        if (inter == null)
-                            throw new InvalidOperationException("Provided type in [ClassifySubstitute] attribute must implement interface IClassifySubstitute<,>.");
-
-                        var toType = inter.GetGenericArguments()[1];
-
-                        object converter = Activator.CreateInstance(converterType);
-                        MethodInfo convMethod = converterType.GetMethod("ToSubstitute");
-                        var converted = convMethod.Invoke(converter, new[] {saveValue});
-                        elem = Serialize(converted, toType);
+                        var attr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().First();
+                        var attrInf = attr.GetInfo(field.FieldType);
+                        elem = Serialize(attrInf.ToSubstitute(saveValue), attrInf.SubstituteType);
                     }
                     else
                     {
@@ -1269,7 +1251,7 @@ namespace RT.Util.Serialization
                         if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
                         {
                             var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
-                            m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo)f;
+                            m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
                         }
                         // Skip events
                         else if (type.GetEvent(f.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance) != null)
@@ -1308,7 +1290,7 @@ namespace RT.Util.Serialization
                 if (member is FieldInfo)
                     rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName), member.DeclaringType.Name, member.Name);
                 else if (member is Type)
-                    rep.Warning("The type {0} has the attribute {1} but not {2}.".Fmt(((Type)member).FullName, xmlClassifyAttribute.FullName, classifyAttribute.FullName), (((Type)member).IsValueType ? "struct " : "class ") + member.Name);
+                    rep.Warning("The type {0} has the attribute {1} but not {2}.".Fmt(((Type) member).FullName, xmlClassifyAttribute.FullName, classifyAttribute.FullName), (((Type) member).IsValueType ? "struct " : "class ") + member.Name);
                 else
                     rep.Warning("Unrecognized member type.");
             }
@@ -1575,11 +1557,40 @@ namespace RT.Util.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifySubstituteAttribute : Attribute
     {
-        public Type Converter { get; private set; }
-
-        public ClassifySubstituteAttribute(Type converter)
+        public Type ConverterType { get; private set; }
+        public ClassifySubstituteAttribute(Type converterType)
         {
-            Converter = converter;
+            ConverterType = converterType;
+        }
+
+        public Info GetInfo(Type fieldType)
+        {
+            var converter = Activator.CreateInstance(ConverterType);
+            var inter = ConverterType.FindInterfaces((itf, _) => itf.IsGenericType && itf.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>) && itf.GetGenericArguments()[0] == fieldType, null);
+            if (inter.Length != 1)
+                throw new InvalidOperationException("Provided type in [ClassifySubstitute] attribute must implement interface IClassifySubstitute<,>, the first generic type argument must be the field type, and there must be only one such interface.");
+
+            // Can’t use Delegate.CreateDelegate() because the method could return a value type or void, which is not directly compatible with Func<object, object>
+            var fromSubstituteMethod = inter[0].GetMethod("FromSubstitute");
+            var toSubstituteMethod = inter[0].GetMethod("ToSubstitute");
+            return new Info(
+                substituteType: inter[0].GetGenericArguments()[1],
+                fromSubstitute: new Func<object, object>(obj => fromSubstituteMethod.Invoke(converter, new[] { obj })),
+                toSubstitute: new Func<object, object>(obj => toSubstituteMethod.Invoke(converter, new[] { obj })));
+        }
+
+        public sealed class Info
+        {
+            public Type SubstituteType { get; private set; }
+            public Func<object, object> FromSubstitute { get; private set; }
+            public Func<object, object> ToSubstitute { get; private set; }
+
+            public Info(Type substituteType, Func<object, object> fromSubstitute, Func<object, object> toSubstitute)
+            {
+                SubstituteType = substituteType;
+                FromSubstitute = fromSubstitute;
+                ToSubstitute = toSubstitute;
+            }
         }
     }
 
@@ -1701,7 +1712,7 @@ namespace RT.Util.Serialization
         public ClassifyDeferredObject(string id, Func<T> generator) { _id = id; _generator = generator; }
 
         internal ClassifyDeferredObject(string id, Func<object> generator)
-            : this(id, () => (T)generator()) { }
+            : this(id, () => (T) generator()) { }
 
         /// <summary>
         ///     Initialises a deferred object using an actual object. Evaluation is not deferred.</summary>
@@ -1724,7 +1735,7 @@ namespace RT.Util.Serialization
         public ClassifyDeferredObject(string id, MethodInfo generatorMethod, object generatorObject, object[] generatorParams)
         {
             _id = id;
-            _generator = () => (T)generatorMethod.Invoke(generatorObject, generatorParams);
+            _generator = () => (T) generatorMethod.Invoke(generatorObject, generatorParams);
         }
 
         private Func<T> _generator;

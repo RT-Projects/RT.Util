@@ -627,7 +627,9 @@ namespace RT.Util.Serialization
             public Guid? GuidNullableNotNull;
         }
 
-        private class guidSubstituteConverter : IClassifySubstitute<Guid, string>
+        // Test that Classify can handle converters that convert multiple types.
+        // Note one interface is implemented implicitly, one explicitly. Classify must use the correct method for each type.
+        private class guidSubstituteConverter : IClassifySubstitute<Guid, string>, IClassifySubstitute<Guid?, string>
         {
             public string ToSubstitute(Guid instance)
             {
@@ -637,6 +639,16 @@ namespace RT.Util.Serialization
             public Guid FromSubstitute(string instance)
             {
                 return Guid.Parse(instance);
+            }
+
+            string IClassifySubstitute<Guid?, string>.ToSubstitute(Guid? instance)
+            {
+                return instance.NullOr(i => i.ToString());
+            }
+
+            Guid? IClassifySubstitute<Guid?, string>.FromSubstitute(string instance)
+            {
+                return instance.NullOr(i => Guid.Parse(i));
             }
         }
 
@@ -701,9 +713,9 @@ namespace RT.Util.Serialization
             var xml = ClassifyXml.Serialize(inst);
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
-                  <Guid refid=""0"">"+guid.ToString()+ @"</Guid>
-                  <GuidNullableNotNull>"+guid.ToString()+ @"</GuidNullableNotNull>
+                  <Guid>" + guid.ToString() + @"</Guid>
                   <GuidNullableNull null=""1"" />
+                  <GuidNullableNotNull>" + guid.ToString() + @"</GuidNullableNotNull>
                 </item>")));
 
             var parsed = ClassifyXml.Deserialize<classWithGuidSubAttribute>(xml);
