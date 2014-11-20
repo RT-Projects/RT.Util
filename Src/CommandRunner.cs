@@ -5,6 +5,7 @@ using System.IO;
 using System.Security;
 using System.Text;
 using System.Threading;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -491,6 +492,42 @@ namespace RT.Util
             if (CommandResumed != null)
                 CommandResumed();
         }
+
+        /// <summary>
+        ///     Executes the specified command using a fluid syntax. Use method chaining to configure any options, then invoke
+        ///     <see cref="FluidCommandRunner.Go"/> (or one of its variants) to execute the command. See Remarks.</summary>
+        /// <param name="args">
+        ///     The command and its arguments, if any. Each value is automatically escaped as needed. See <see
+        ///     cref="SetCommand(string[])"/> for further information. See <see cref="RunRaw"/> for an alternative way to
+        ///     specify the command.</param>
+        /// <remarks>
+        ///     <para>
+        ///         The default options are as follows: 0 is the only exit code indicating success; print the command output
+        ///         to the console as-is.</para>
+        ///     <para>
+        ///         Example: <c>CommandRunner.Run(@"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some
+        ///         Path\file.txt").SuccessExitCodes(0, 1).OutputNothing().Go();</c></para></remarks>
+        public static FluidCommandRunner Run(params string[] args)
+        {
+            return new FluidCommandRunner(args);
+        }
+
+        /// <summary>
+        ///     Executes the specified command using a fluid syntax. Use method chaining to configure any options, then invoke
+        ///     <see cref="FluidCommandRunner.Go"/> (or one of its variants) to execute the command. See Remarks.</summary>
+        /// <param name="command">
+        ///     The command and its arguments. All arguments must be escaped as appropriate.</param>
+        /// <remarks>
+        ///     <para>
+        ///         The default options are as follows: 0 is the only exit code indicating success; print the command output
+        ///         to the console as-is.</para>
+        ///     <para>
+        ///         Example: <c>CommandRunner.RunRaw(@"C:\Program Files\Foo\Foo.exe -f ""C:\Some
+        ///         Path\file.txt""").SuccessExitCodes(0, 1).Go();</c></para></remarks>
+        public static FluidCommandRunner RunRaw(string command)
+        {
+            return new FluidCommandRunner(command);
+        }
     }
 
     /// <summary>Represents one of the possible states a <see cref="CommandRunner"/> can have.</summary>
@@ -566,6 +603,171 @@ namespace RT.Util
             Password.MakeReadOnly();
             LoadProfile = loadProfile;
             Domain = domain;
+        }
+    }
+
+    /// <summary>Implements method chaining for <see cref="CommandRunner.Run"/>.</summary>
+    public class FluidCommandRunner
+    {
+        private CommandRunner _runner = new CommandRunner();
+        private HashSet<int> _successExitCodes;
+        private HashSet<int> _failExitCodes;
+        private bool _printCommandOutput = true;
+        private bool _printAugmented = false;
+        private bool _printInvokeCount = false;
+        private static int _invokeCount = 0;
+
+        internal FluidCommandRunner(string[] args)
+        {
+            _runner.SetCommand(args);
+        }
+
+        internal FluidCommandRunner(string command)
+        {
+            _runner.Command = command;
+        }
+
+        /// <summary>Specifies which exit codes represent a successful invocation. All other codes are interpreted as failure.</summary>
+        public FluidCommandRunner SuccessExitCodes(params int[] exitCodes)
+        {
+            if (_failExitCodes != null)
+                throw new InvalidOperationException("Cannot use both SuccessExitCodes and FailExitCodes for the same command invocation.");
+            if (_successExitCodes == null)
+                _successExitCodes = new HashSet<int>();
+            _successExitCodes.AddRange(exitCodes);
+            return this;
+        }
+
+        /// <summary>
+        ///     Specifies which exit codes represent a failed invocation. All other codes are interpreted as success. Mutually
+        ///     exclusive with <see cref="SuccessExitCodes"/>.</summary>
+        public FluidCommandRunner FailExitCodes(params int[] exitCodes)
+        {
+            if (_successExitCodes != null)
+                throw new InvalidOperationException("Cannot use both SuccessExitCodes and FailExitCodes for the same command invocation.");
+            if (_failExitCodes == null)
+                _failExitCodes = new HashSet<int>();
+            _failExitCodes.AddRange(exitCodes);
+            return this;
+        }
+
+        private bool isSuccess(int code)
+        {
+            if (_failExitCodes != null)
+                return !_failExitCodes.Contains(code);
+            if (_successExitCodes != null)
+                return _successExitCodes.Contains(code);
+            return code == 0;
+        }
+
+        /// <summary>
+        ///     Configures the runner to suppress all output. This invocation will print nothing to the console. If
+        ///     unspecified, the command's stdout output is relayed to the console as-is, while stderr is relayed in red.</summary>
+        public FluidCommandRunner OutputNothing()
+        {
+            _printCommandOutput = false;
+            return this;
+        }
+
+        /// <summary>
+        ///     Configures the runner to relay the command's output to the console, prefixing every line with a timestamp. The
+        ///     entire command is printed before running it. When the command completes, its success/failure status is
+        ///     printed, along with its run time and exit code.</summary>
+        /// <param name="invokeCount">
+        ///     If true, the prefix also includes a value that increments for every invocation, starting at 1.</param>
+        public FluidCommandRunner OutputAugmented(bool invokeCount = false)
+        {
+            _printCommandOutput = true;
+            _printAugmented = true;
+            _printInvokeCount = invokeCount;
+            return this;
+        }
+
+        /// <summary>
+        ///     Invokes the command, blocking until the command finishes. If the command fails, throws a <see
+        ///     cref="CommandRunnerFailedException"/>. See also <see cref="GoGetExitCode"/>.</summary>
+        [DebuggerHidden]
+        public void Go()
+        {
+            int result = GoGetExitCode();
+            if (!isSuccess(result))
+                throw new CommandRunnerFailedException(result);
+        }
+
+        /// <summary>
+        ///     Invokes the command, blocking until the command finishes. On success, returns the raw output of the command.
+        ///     If the command fails, throws a <see cref="CommandRunnerFailedException"/>. See Remarks.</summary>
+        /// <remarks>
+        ///     Output options such as <see cref="OutputAugmented"/> do not affect the data returned; they influence only how
+        ///     the output is relayed to the console. This method ignores all stderr output.</remarks>
+        [DebuggerHidden]
+        public byte[] GoGetOutput()
+        {
+            _runner.CaptureEntireStdout = true;
+            int result = GoGetExitCode();
+            if (!isSuccess(result))
+                throw new CommandRunnerFailedException(result);
+            return _runner.EntireStdout;
+        }
+
+        /// <summary>
+        ///     Invokes the command, blocking until the command finishes. On success, returns the raw output of the command,
+        ///     interpreted as text in UTF-8. If the command fails, throws a <see cref="CommandRunnerFailedException"/>. See
+        ///     Remarks.</summary>
+        /// <remarks>
+        ///     Output options such as <see cref="OutputAugmented"/> do not affect the data returned; they influence only how
+        ///     the output is relayed to the console. This method ignores all stderr output.</remarks>
+        [DebuggerHidden]
+        public string GoGetOutputText()
+        {
+            return GoGetOutput().FromUtf8();
+        }
+
+        /// <summary>
+        ///     Invokes the command, blocking until the command finishes. Returns the command's exit code. Does not throw if
+        ///     the command failed.</summary>
+        public int GoGetExitCode()
+        {
+            var invokeCount = Interlocked.Increment(ref _invokeCount) + 1;
+            var startTime = DateTime.UtcNow;
+            if (_printCommandOutput && _printAugmented)
+            {
+                var prefix = (_printInvokeCount ? "    Cmd {0} at {1:HH:mm}> " : "    {1:HH:mm}> ").Color(ConsoleColor.White);
+                ConsoleUtil.WriteLine("Running command: ".Color(ConsoleColor.Yellow) + _runner.Command.Color(ConsoleColor.Cyan));
+                ConsoleUtil.Write(ConsoleColoredString.Format(prefix, invokeCount, DateTime.UtcNow));
+                _runner.StdoutText += txt => { ConsoleUtil.Write(ConsoleColoredString.Format(txt.Color(ConsoleColor.Gray).Replace("\n", "\n" + prefix), invokeCount, DateTime.UtcNow)); };
+                _runner.StderrText += txt => { ConsoleUtil.Write(ConsoleColoredString.Format(txt.Color(ConsoleColor.Red).Replace("\n", "\n" + prefix), invokeCount, DateTime.UtcNow)); };
+            }
+            else if (_printCommandOutput)
+            {
+                _runner.StdoutText += txt => { Console.Write(txt); };
+                _runner.StderrText += txt => { ConsoleUtil.Write(txt.Color(ConsoleColor.Red)); };
+            }
+            _runner.Start();
+            _runner.EndedWaitHandle.WaitOne();
+            if (_printCommandOutput && _printAugmented)
+            {
+                Console.WriteLine();
+                var ranFor = "Ran for {0:#,0} seconds".Fmt((DateTime.UtcNow - startTime).TotalSeconds);
+                if (isSuccess(_runner.ExitCode))
+                    ConsoleUtil.WriteLine("Command succeeded. {0}\r\n\r\n".Fmt(ranFor).Color(ConsoleColor.Green));
+                else
+                    ConsoleUtil.WriteLine("Command failed with error code {0}. {1}\r\n\r\n".Fmt(_runner.ExitCode, ranFor).Color(ConsoleColor.Red));
+            }
+            return _runner.ExitCode;
+        }
+    }
+
+    /// <summary>Indicates that a command returned an exit code indicating a failure.</summary>
+    public class CommandRunnerFailedException : Exception
+    {
+        /// <summary>The exit code returned.</summary>
+        public int ExitCode { get; private set; }
+        /// <summary>Constructor.</summary>
+        public CommandRunnerFailedException(int exitCode)
+            : base("Command failed with exit code {0}".Fmt(exitCode))
+        {
+            ExitCode = exitCode;
         }
     }
 }
