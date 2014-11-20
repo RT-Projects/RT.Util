@@ -887,6 +887,99 @@ namespace RT.Util.Consoles
 
             return Substring(0, index) + Substring(index).ColorBackground(background);
         }
+
+        /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of <paramref name="oldChar"/> is
+        ///     replaced with <paramref name="newChar"/> while each character’s color remains unchanged.</summary>
+        /// <param name="oldChar">
+        ///     The character to search for.</param>
+        /// <param name="newChar">
+        ///     The character to replace every occurrence of <paramref name="oldChar"/> with.</param>
+        /// <returns>
+        ///     The new string after replacements.</returns>
+        public ConsoleColoredString Replace(char oldChar, char newChar)
+        {
+            if (_text.Length == 0)
+                return this;
+            return new ConsoleColoredString(_text.Replace(oldChar, newChar), _foreground, _background);
+        }
+
+        /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of the text in <paramref
+        ///     name="oldValue"/> is replaced with a new colored string.</summary>
+        /// <param name="oldValue">
+        ///     The substring to search for.</param>
+        /// <param name="newValue">
+        ///     The new colored string to replace every occurrence with.</param>
+        /// <param name="comparison">
+        ///     A string comparison to use.</param>
+        /// <returns>
+        ///     The new string after replacements.</returns>
+        public ConsoleColoredString Replace(string oldValue, ConsoleColoredString newValue, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (oldValue == null)
+                throw new ArgumentNullException("oldValue");
+            if (newValue == null)
+                throw new ArgumentNullException("newValue");
+
+            var index = 0;
+            var newText = new List<ConsoleColoredString>();
+
+            while (true)
+            {
+                var pos = _text.IndexOf(oldValue, index, comparison);
+                if (pos == -1)
+                {
+                    if (index < _text.Length)
+                        newText.Add(Substring(index));
+                    return new ConsoleColoredString(newText);
+                }
+
+                if (pos > index)
+                    newText.Add(Substring(index, pos - index));
+                newText.Add(newValue);
+                index = pos + oldValue.Length;
+            }
+        }
+
+        /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of the text in <paramref
+        ///     name="oldValue"/> is replaced with the text in <paramref name="newValue"/> colored by the color of the first
+        ///     character in each match.</summary>
+        /// <param name="oldValue">
+        ///     The substring to search for.</param>
+        /// <param name="newValue">
+        ///     The new string to replace every occurrence with.</param>
+        /// <param name="comparison">
+        ///     A string comparison to use.</param>
+        /// <returns>
+        ///     The new string after replacements.</returns>
+        public ConsoleColoredString ReplaceText(string oldValue, string newValue, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (oldValue == null)
+                throw new ArgumentNullException("oldValue");
+            if (newValue == null)
+                throw new ArgumentNullException("newValue");
+
+            var index = 0;
+            var newText = new List<ConsoleColoredString>();
+
+            while (true)
+            {
+                var pos = _text.IndexOf(oldValue, index, comparison);
+                if (pos == -1)
+                {
+                    if (index < _text.Length)
+                        newText.Add(Substring(index));
+                    return new ConsoleColoredString(newText);
+                }
+
+                if (pos > index)
+                    newText.Add(Substring(index, pos - index));
+                newText.Add(newValue.Color(_foreground[pos], _background[pos]));
+                index = pos + oldValue.Length;
+            }
+        }
     }
 
     /// <summary>Contains a character and a console foreground and background color.</summary>
