@@ -27,8 +27,10 @@ namespace RT.Util
         public string Accept { get; set; }
         /// <summary>Specifies the value of the <c>AcceptLanguage</c> header for outgoing requests.</summary>
         public string AcceptLanguage { get; set; }
-        /// <summary>Specifies the value of the <c>AcceptCharset</c> header for outgoing requests.</summary>
-        public string AcceptCharset { get; set; }
+        /// <summary>
+        ///     Specifies which compression methods are supported. This affects the Accept-Encoding header and automatically
+        ///     decompresses the response if necessary.</summary>
+        public DecompressionMethods AcceptEncoding { get; set; }
         /// <summary>Specifies the value of the <c>Referer</c> header for outgoing requests.</summary>
         public string Referer { get; set; }
         /// <summary>Specifies the value of the timeout to send requests or receive responses.</summary>
@@ -41,16 +43,16 @@ namespace RT.Util
         ///     Otherwise the URL is prepended with this.</summary>
         public string RootUrl = DefaultRootUrl;
 
-        /// <summary>Constructor.</summary>
+        /// <summary>Constructor. Initializes the request to look like it came from a recent version of Firefox.</summary>
         public HClient()
         {
             AllowAutoRedirect = false;
             Referer = null;
             Timeout = TimeSpan.FromSeconds(10);
-            UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:6.0.2) Gecko/20100101 Firefox/6.0.2";
+            UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) Gecko/20100101 Firefox/33.0";
             Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            AcceptLanguage = "en-gb,en;q=0.9,*;q=0.8";
-            AcceptCharset = "utf-8;q=0.9,*;q=0.8";
+            AcceptLanguage = "en-US,en;q=0.5";
+            AcceptEncoding = DecompressionMethods.GZip | DecompressionMethods.Deflate;
         }
 
         /// <summary>
@@ -190,8 +192,9 @@ namespace RT.Util
             request.AllowAutoRedirect = AllowAutoRedirect;
             request.Accept = Accept;
             request.Headers[HttpRequestHeader.AcceptLanguage] = AcceptLanguage;
-            request.Headers[HttpRequestHeader.AcceptCharset] = AcceptCharset;
+            request.AutomaticDecompression = AcceptEncoding;
             request.Referer = Referer;
+            request.KeepAlive = true;
             request.Timeout = (int) Timeout.TotalMilliseconds;
             request.UserAgent = UserAgent;
             return request;
@@ -200,10 +203,16 @@ namespace RT.Util
         private HResponse performRequest(HttpWebRequest request)
         {
             Log.Debug(1, "Requested ({0}) URL \"{1}\"".Fmt(request.Method, request.RequestUri.OriginalString));
+            for (int i = 0; i < request.Headers.Count; i++)
+                Log.Debug(3, "  " + request.Headers.Keys[i] + ": " + request.Headers[i]);
+            if (request.CookieContainer != null && request.CookieContainer.Count > 0)
+                Log.Debug(3, "  Cookie: " + request.CookieContainer.GetCookieHeader(request.RequestUri));
+
             HResponse result;
+            HttpWebResponse resp;
             try
             {
-                var resp = (HttpWebResponse) request.GetResponse();
+                resp = (HttpWebResponse) request.GetResponse();
                 if (resp == null)
                     throw new WebException("Received a null response.");
                 result = new HResponse(resp);
@@ -213,9 +222,11 @@ namespace RT.Util
                 if (e.Response == null)
                     throw new WebException("Caught WebException containing no response.", e);
                 else
-                    result = new HResponse((HttpWebResponse) e.Response);
+                    result = new HResponse(resp = (HttpWebResponse) e.Response);
             }
             Log.Debug(2, "Response: " + result.StatusCode + " - " + result.DataString.SubstringSafe(0, 50));
+            for (int i = 0; i < resp.Headers.Count; i++)
+                Log.Debug(3, "  " + resp.Headers.Keys[i] + ": " + resp.Headers[i]);
             return result;
         }
     }
@@ -235,20 +246,20 @@ namespace RT.Util
         /// <summary>
         ///     The name of the file to upload.</summary>
         /// <remarks>
-        ///     If this is non-<c>null</c>, <see cref="FileContentType"/> and <see cref="FileContent"/> must be non-<c>null</c>
-        ///     too, and <see cref="Value"/> must be <c>null</c>.</remarks>
+        ///     If this is non-<c>null</c>, <see cref="FileContentType"/> and <see cref="FileContent"/> must be
+        ///     non-<c>null</c> too, and <see cref="Value"/> must be <c>null</c>.</remarks>
         public string FileName { get; private set; }
         /// <summary>
         ///     The name of the file to upload.</summary>
         /// <remarks>
-        ///     If this is non-<c>null</c>, <see cref="FileName"/> and <see cref="FileContent"/> must be non-<c>null</c> too, and
-        ///     <see cref="Value"/> must be <c>null</c>.</remarks>
+        ///     If this is non-<c>null</c>, <see cref="FileName"/> and <see cref="FileContent"/> must be non-<c>null</c> too,
+        ///     and <see cref="Value"/> must be <c>null</c>.</remarks>
         public string FileContentType { get; private set; }
         /// <summary>
         ///     The name of the file to upload.</summary>
         /// <remarks>
-        ///     If this is non-<c>null</c>, <see cref="FileName"/> and <see cref="FileContentType"/> must be non-<c>null</c> too,
-        ///     and <see cref="Value"/> must be <c>null</c>.</remarks>
+        ///     If this is non-<c>null</c>, <see cref="FileName"/> and <see cref="FileContentType"/> must be non-<c>null</c>
+        ///     too, and <see cref="Value"/> must be <c>null</c>.</remarks>
         public byte[] FileContent { get; private set; }
 
         /// <summary>
@@ -317,9 +328,8 @@ namespace RT.Util
         ///                     <see cref="Value"/> is non-<c>null</c>, while <see cref="FileName"/>, <see
         ///                     cref="FileContentType"/> and <see cref="FileContent"/> are <c>null</c>, or</description></item>
         ///                 <item><description>
-        ///                     <see cref="Value"/> is <c>null</c>, while <see cref="FileName"/>, <see cref="FileContentType"/>
-        ///                     and <see cref="FileContent"/> are
-        ///                     non-<c>null</c>.</description></item></list></description></item></list></remarks>
+        ///                     <see cref="Value"/> is <c>null</c>, while <see cref="FileName"/>, <see
+        ///                     cref="FileContentType"/> and <see cref="FileContent"/> are non-<c>null</c>.</description></item></list></description></item></list></remarks>
         public bool Valid { get { return ValidForUrlEncoded || (Name != null && Value == null && FileName != null && FileContentType != null && FileContent != null); } }
     }
 
@@ -332,8 +342,8 @@ namespace RT.Util
         private byte[] _data;
 
         /// <summary>
-        ///     Constructs a new instance of <see cref="HResponse"/> by reading all data from the response stream of the specified
-        ///     <see cref="HttpWebResponse"/> object and closing it.</summary>
+        ///     Constructs a new instance of <see cref="HResponse"/> by reading all data from the response stream of the
+        ///     specified <see cref="HttpWebResponse"/> object and closing it.</summary>
         /// <param name="response">
         ///     Object to copy data from.</param>
         public HResponse(HttpWebResponse response)
