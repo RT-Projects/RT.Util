@@ -128,7 +128,7 @@ namespace RT.Util.Lingo
             {
                 if (FieldName == null || NoTranslate)
                 {
-                    sb.AppendLine("        // The following control was not added because {0}: {1}".Fmt(NoTranslate ? "its tag is \"notranslate\"" : "it has no name", Translation));
+                    sb.AppendLine("        // The following control was not added because {0}: {1}".Fmt(NoTranslate ? "its tag is \"notranslate\"" : "it has no name", Translation.CLiteralEscape()));
                     return;
                 }
 

@@ -55,6 +55,13 @@ namespace RT.Util.Lingo
                 translateWpf(translation, access, access.Text, newText => { access.Text = newText; }, generateFields);
             }
 
+            if (control is TextBlock)
+            {
+                var block = (TextBlock) control;
+                if (block.Inlines.Count == 1 && block.Inlines.FirstInline is System.Windows.Documents.Run) // there could be multiple runs, in which case just don't translate at all
+                    translateWpf(translation, block, block.Text, newText => { block.Text = newText; }, generateFields);
+            }
+
             if (control is ContentControl)
             {
                 var cc = (ContentControl) control;
