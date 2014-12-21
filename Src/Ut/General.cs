@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -203,6 +204,7 @@ namespace RT.Util
         /// <summary>
         ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
         ///     cref="InternalErrorException"/> afterwards.</summary>
+        [DebuggerHidden]
         public static void Assert(bool assertion, string message = null)
         {
             if (!assertion)
@@ -216,6 +218,7 @@ namespace RT.Util
         /// <summary>
         ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
         ///     cref="InternalErrorException"/> afterwards.</summary>
+        [DebuggerHidden]
         public static void AssertAll<T>(IEnumerable<T> collection, Func<T, bool> assertion, string message = null)
         {
             if (!collection.All(assertion))
