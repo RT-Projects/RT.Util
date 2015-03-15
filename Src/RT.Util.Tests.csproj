@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ListSortedTests.cs" />
+    <Compile Include="CommandRunnerTests.cs" />
     <Compile Include="CommandLineTests.cs" />
     <Compile Include="ExtensionMethods\NumericExtensionsTests.cs" />
     <Compile Include="RTSmtpClientTests.cs" />

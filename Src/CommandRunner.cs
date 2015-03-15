@@ -163,7 +163,7 @@ namespace RT.Util
         ///     The command to be executed, as a single string. Any command supported by cmd.exe is permitted. See also <see
         ///     cref="SetCommand(string[])"/>, which simplifies running commands with spaces and/or arguments. Once the
         ///     command has been started, this property becomes read-only and indicates the value in effect at the time of
-        ///     starting.</summary>
+        ///     starting. See Remarks.</summary>
         public string Command
         {
             get { return _command; }
@@ -215,16 +215,7 @@ namespace RT.Util
         ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
         public void SetCommand(IEnumerable<string> args)
         {
-            var sb = new StringBuilder();
-            foreach (var arg in args)
-            {
-                if (arg == null)
-                    continue;
-                if (sb.Length != 0)
-                    sb.Append(' ');
-                sb.Append(arg.Contains(" ") || arg.Contains("<") || arg.Contains(">") ? "\"" + arg + "\"" : arg);
-            }
-            Command = sb.ToString();
+            Command = ArgsToCommandLine(args);
         }
 
         /// <summary>
@@ -235,7 +226,7 @@ namespace RT.Util
         ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
         public void SetCommand(params string[] args)
         {
-            SetCommand((IEnumerable<string>) args);
+            Command = ArgsToCommandLine(args);
         }
 
         /// <summary>Starts the command with all the settings as configured.</summary>
@@ -250,7 +241,7 @@ namespace RT.Util
 
             _startInfo = new ProcessStartInfo();
             _startInfo.FileName = @"cmd.exe";
-            _startInfo.Arguments = "/C " + Command + @" >{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
+            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command) + @">{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
             _startInfo.WorkingDirectory = WorkingDirectory;
             foreach (var kvp in EnvironmentVariables)
                 _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
@@ -271,6 +262,95 @@ namespace RT.Util
 
             _thread = new Thread(thread);
             _thread.Start();
+        }
+
+        /// <summary>Starts the command with all the settings as configured. Does not return until the command exits.</summary>
+        public void StartAndWait()
+        {
+            Start();
+            EndedWaitHandle.WaitOne();
+        }
+
+        /// <summary>
+        ///     Given a number of argument strings, constructs a single command line string with all the arguments escaped
+        ///     correctly so that a process using standard Windows API for parsing the command line will receive exactly the
+        ///     strings passed in here. See Remarks.</summary>
+        /// <remarks>
+        ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
+        ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
+        ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
+        public static string ArgsToCommandLine(IEnumerable<string> args)
+        {
+            var sb = new StringBuilder();
+            foreach (var arg in args)
+            {
+                if (arg == null)
+                    continue;
+                if (sb.Length != 0)
+                    sb.Append(' ');
+                // For details, see http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
+                if (arg.Length != 0 && arg.IndexOfAny(_cmdChars) < 0)
+                    sb.Append(arg);
+                else
+                {
+                    sb.Append('"');
+                    for (int c = 0; c < arg.Length; c++)
+                    {
+                        int backslashes = 0;
+                        while (c < arg.Length && arg[c] == '\\')
+                        {
+                            c++;
+                            backslashes++;
+                        }
+                        if (c == arg.Length)
+                        {
+                            sb.Append('\\', backslashes * 2);
+                            break;
+                        }
+                        else if (arg[c] == '"')
+                        {
+                            sb.Append('\\', backslashes * 2 + 1);
+                            sb.Append('"');
+                        }
+                        else
+                        {
+                            sb.Append('\\', backslashes);
+                            sb.Append(arg[c]);
+                        }
+                    }
+                    sb.Append('"');
+                }
+            }
+            return sb.ToString();
+        }
+        private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
+
+        /// <summary>
+        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine"/> for more
+        ///     information.</summary>
+        public static string EscapeCmdExeMetachars(string command)
+        {
+            var result = new StringBuilder();
+            foreach (var ch in command)
+            {
+                switch (ch)
+                {
+                    case '(':
+                    case ')':
+                    case '%':
+                    case '!':
+                    case '^':
+                    case '"':
+                    case '<':
+                    case '>':
+                    case '&':
+                    case '|':
+                        result.Append('^');
+                        break;
+                }
+                result.Append(ch);
+            }
+            return result.ToString();
         }
 
         private void thread()
