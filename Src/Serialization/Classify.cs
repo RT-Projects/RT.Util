@@ -706,11 +706,10 @@ namespace RT.Util.Serialization
                             }
                             else
                             {
-                                var candidate = Type.GetType(typeName) ??
+                                realType = Type.GetType(typeName) ??
                                     type.Assembly.GetTypes().FirstOrDefault(t => !t.IsGenericType && !t.IsNested && ((t.Namespace == type.Namespace && t.Name == typeName) || t.FullName == typeName));
-                                if (candidate == null)
+                                if (realType == null)
                                     throw new Exception("The type {0} needed for deserialization cannot be found.".Fmt(typeName));
-                                realType = candidate;
                             }
                         }
 
