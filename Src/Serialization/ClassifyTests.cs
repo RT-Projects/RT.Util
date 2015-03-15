@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -2014,5 +2015,52 @@ namespace RT.Util.Serialization
             // Assert.AreEqual(26, coll.FooColl.Param);  // missing feature: this requires us to support classifying the properties of custom collections
         }
 
+        [Test]
+        public void TestMissingTypeSubstitution()
+        {
+            var xml = XElement.Parse(@"<item>
+  <Items>
+    <item type=""MisTypeMisDerived"" />
+  </Items>
+</item>");
+            try
+            {
+                ClassifyXml.Deserialize<MisTypeOuter>(xml);
+            }
+            catch (Exception e)
+            {
+                Assert.IsFalse(e.Message.Contains("abstract class"));
+                Assert.IsTrue(e.Message.Contains("MisTypeMisDerived"));
+            }
+
+            var opts = new ClassifyOptions()
+                .AddTypeOptions(typeof(ObservableCollection<MisTypeBase>), new misTypeSubstOpts());
+            misTypeSubstOpts.HasBeenCalled = false;
+            var result = ClassifyXml.Deserialize<MisTypeOuter>(xml);
+            Assert.IsTrue(misTypeSubstOpts.HasBeenCalled);
+            Assert.IsTrue(result.Items.Count == 1);
+            Assert.IsTrue(result.Items[0].GetType() == typeof(MisTypeDerived));
+        }
+        class misTypeSubstOpts : ClassifyTypeOptions, IClassifyXmlObjectProcessor
+        {
+            void IClassifyObjectProcessor<XElement>.AfterSerialize(XElement element) { }
+            void IClassifyObjectProcessor<XElement>.AfterDeserialize(XElement element) { }
+            void IClassifyObjectProcessor<XElement>.BeforeSerialize() { }
+            void IClassifyObjectProcessor<XElement>.BeforeDeserialize(XElement element)
+            {
+                HasBeenCalled = true;
+                foreach (var el in element.Elements("item"))
+                    if (el.Attribute("type").Value == "MisTypeMisDerived")
+                        el.Attribute("type").Value = "MisTypeDerived";
+            }
+            public static bool HasBeenCalled = false;
+        }
     }
+
+    class MisTypeOuter
+    {
+        public ObservableCollection<MisTypeBase> Items = new ObservableCollection<MisTypeBase>();
+    }
+    abstract class MisTypeBase { }
+    class MisTypeDerived : MisTypeBase { }
 }
