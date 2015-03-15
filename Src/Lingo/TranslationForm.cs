@@ -672,7 +672,7 @@ namespace RT.Util.Lingo
 
             protected static readonly int margin = 3;
 
-            public List<TranslationGroupListItem> ListItems = new List<TranslationGroupListItem>();
+            public HashSet<TranslationGroupListItem> ListItems = new HashSet<TranslationGroupListItem>();
 
             protected Button _btnAccept;
             private Label _lblOldOriginalLbl;
