@@ -1417,8 +1417,9 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Implement this interface in a subclass of <see cref="ClassifyTypeOptions"/> to specify how to substitute a type
-    ///     for another type during Classify.</summary>
+    ///     Implement this interface to specify how to substitute a type for another type during Classify. The type
+    ///     implementing this interface can be used in a class derived from <see cref="ClassifyTypeOptions"/> or in <see
+    ///     cref="ClassifySubstituteAttribute"/>.</summary>
     /// <typeparam name="TTrue">
     ///     The type that is actually used for instances in memory.</typeparam>
     /// <typeparam name="TSubstitute">
@@ -1492,7 +1493,8 @@ namespace RT.Util.Serialization
     /// <remarks>
     ///     <para>
     ///         Derive from this type and implement <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> to enable type
-    ///         substitution during Classify.</para>
+    ///         substitution during Classify. (This type substitution can be overridden by the presence of a <see
+    ///         cref="ClassifySubstituteAttribute"/> on a field or automatically-implemented property.)</para>
     ///     <para>
     ///         Derive from this type and implement <see cref="IClassifyTypeProcessor"/> or <see
     ///         cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the object or its serialized form before/after
@@ -1554,16 +1556,27 @@ namespace RT.Util.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyIgnoreAttribute : Attribute { }
 
+    /// <summary>
+    ///     Indicates that the value stored in this field or automatically-implemented property should be converted to another
+    ///     type when serializing and back when deserializing. This takes precedence over any type substitution configured in
+    ///     a <see cref="ClassifyTypeOptions"/> derived class.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifySubstituteAttribute : Attribute
     {
+        /// <summary>Gets the type used to perform the type substitution.</summary>
         public Type ConverterType { get; private set; }
+
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="converterType">
+        ///     Specifies a type that implements <see cref="IClassifySubstitute{TTrue,TSubstitute}"/>, where <c>TTrue</c> must
+        ///     be the exact type of the field or automatically-implemented property bearing this attribute.</param>
         public ClassifySubstituteAttribute(Type converterType)
         {
             ConverterType = converterType;
         }
 
-        public Info GetInfo(Type fieldType)
+        internal Info GetInfo(Type fieldType)
         {
             var converter = Activator.CreateInstance(ConverterType);
             var inter = ConverterType.FindInterfaces((itf, _) => itf.IsGenericType && itf.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>) && itf.GetGenericArguments()[0] == fieldType, null);
@@ -1579,7 +1592,7 @@ namespace RT.Util.Serialization
                 toSubstitute: new Func<object, object>(obj => toSubstituteMethod.Invoke(converter, new[] { obj })));
         }
 
-        public sealed class Info
+        internal sealed class Info
         {
             public Type SubstituteType { get; private set; }
             public Func<object, object> FromSubstitute { get; private set; }
