@@ -61,14 +61,17 @@ namespace RT.Util
         ///     The URL of the request. If the URL does not begin with <c>http://</c> or <c>https://</c>, it is automatically
         ///     prepended with <see cref="RootUrl"/>.</param>
         /// <param name="args">
-        ///     Query parameters to add to the end of the URL in the usual <c>?k1=v1&amp;k2=v2&amp;...</c> format.</param>
+        ///     Query parameters to add to the end of the URL in the usual <c>?k1=v1&amp;k2=v2&amp;...</c> format. Null values
+        ///     are allowed and ignored.</param>
         /// <returns>
         ///     The response received from the server.</returns>
         public HResponse Get(string url, params HArg[] args)
         {
-            if (!args.All(a => a.ValidForUrlEncoded))
+            if (args == null)
+                args = new HArg[0];
+            if (!args.Where(a => a != null).All(a => a.ValidForUrlEncoded))
                 throw new ArgumentException();
-            var request = makeRequest(url + (args.Any() ? (url.Contains('?') ? "&" : "?") : "") + args.Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&"));
+            var request = makeRequest(url + (args.Any() ? (url.Contains('?') ? "&" : "?") : "") + args.Where(a => a != null).Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&"));
             request.Method = "GET";
             return performRequest(request);
         }
@@ -103,7 +106,7 @@ namespace RT.Util
         ///     The URL of the request. If the URL does not begin with <c>http://</c> or <c>https://</c>, it is automatically
         ///     prepended with <see cref="RootUrl"/>.</param>
         /// <param name="args">
-        ///     The arguments to pass with the POST request.</param>
+        ///     The arguments to pass with the POST request. Null values are allowed and ignored.</param>
         /// <returns>
         ///     The response received from the server.</returns>
         /// <remarks>
@@ -111,7 +114,9 @@ namespace RT.Util
         ///     whether the provided arguments contain any file uploads or not.</remarks>
         public HResponse Post(string url, params HArg[] args)
         {
-            return args.All(a => a.ValidForUrlEncoded) ? PostUrlencoded(url, args) : PostFormdata(url, args);
+            if (args == null)
+                args = new HArg[0];
+            return args.Where(a => a != null).All(a => a.ValidForUrlEncoded) ? PostUrlencoded(url, args) : PostFormdata(url, args);
         }
 
         /// <summary>
@@ -121,7 +126,7 @@ namespace RT.Util
         ///     The URL of the request. If the URL does not begin with <c>http://</c> or <c>https://</c>, it is automatically
         ///     prepended with <see cref="RootUrl"/>.</param>
         /// <param name="args">
-        ///     The arguments to pass with the POST request.</param>
+        ///     The arguments to pass with the POST request. Null values are allowed and ignored.</param>
         /// <returns>
         ///     The response received from the server.</returns>
         /// <remarks>
@@ -129,10 +134,12 @@ namespace RT.Util
         /// <seealso cref="Post(string,HArg[])"/>
         public HResponse PostUrlencoded(string url, params HArg[] args)
         {
-            var invalid = args.FirstOrDefault(a => !a.ValidForUrlEncoded);
+            if (args == null)
+                args = new HArg[0];
+            var invalid = args.Where(a => a != null).FirstOrDefault(a => !a.ValidForUrlEncoded);
             if (invalid != null)
                 throw new ArgumentException("args", "The argument with name '{0}' is not valid for URL-encoded POST requests.".Fmt(invalid.Name));
-            return Post(url, args.Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&").ToUtf8(),
+            return Post(url, args.Where(a => a != null).Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&").ToUtf8(),
                 "application/x-www-form-urlencoded");
         }
 
@@ -143,7 +150,7 @@ namespace RT.Util
         ///     The URL of the request. If the URL does not begin with <c>http://</c> or <c>https://</c>, it is automatically
         ///     prepended with <see cref="RootUrl"/>.</param>
         /// <param name="args">
-        ///     The arguments to pass with the POST request.</param>
+        ///     The arguments to pass with the POST request. Null values are allowed and ignored.</param>
         /// <returns>
         ///     The response received from the server.</returns>
         /// <remarks>
@@ -151,16 +158,18 @@ namespace RT.Util
         /// <seealso cref="Post(string,HArg[])"/>
         public HResponse PostFormdata(string url, params HArg[] args)
         {
-            var invalid = args.FirstOrDefault(a => !a.Valid);
+            if (args == null)
+                args = new HArg[0];
+            var invalid = args.Where(a => a != null).FirstOrDefault(a => !a.Valid);
             if (invalid != null)
                 throw new ArgumentException("args", "The argument with name '{0}' is not valid.".Fmt(invalid.Name));
 
             string boundary = Rnd.NextBytes(20).ToHex();
 
-            var ms = new MemoryStream(300 + args.Sum(a => 30 + a.Name.Length + (a.FileContent == null ? a.Value.Length : a.FileContent.Length)));
+            var ms = new MemoryStream(300 + args.Where(a => a != null).Sum(a => 30 + a.Name.Length + (a.FileContent == null ? a.Value.Length : a.FileContent.Length)));
             var sw = new StreamWriter(ms);
             sw.AutoFlush = true;
-            foreach (var arg in args)
+            foreach (var arg in args.Where(a => a != null))
             {
                 if (arg.FileContent == null)
                 {
