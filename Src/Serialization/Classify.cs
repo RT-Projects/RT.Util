@@ -1486,7 +1486,7 @@ namespace RT.Util.Serialization
             bool implementsUselessInterface = options is IClassifyObjectProcessor
                 || options.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IClassifyObjectProcessor<>));
             if (implementsUselessInterface && !implementsUsefulInterface)
-                throw new ArgumentException("This ClassifyTypeOptions type implements at least one interface meant for the objects to be serialized, and none of the interfaces meant for the ClassifyTypeOptions descendants. These type options would have zero effect, so this is likely a programming error.");
+                throw new InvalidOperationException("This ClassifyTypeOptions type implements at least one interface meant for the objects to be serialized, and none of the interfaces meant for the ClassifyTypeOptions descendants. These type options would have zero effect, so this is likely a programming error.");
             options.initializeFor(type);
             _typeOptions.Add(type, options);
             return this;
