@@ -575,15 +575,16 @@ namespace RT.Util.CommandLine
 
                 int leftMargin = 3;
 
-                var help = new List<ConsoleColoredString>();
+                var helpString = new List<ConsoleColoredString>();
                 var commandNameAttr = type.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
                 string commandName = commandNameAttr == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandNameAttr.Names.OrderByDescending(c => c.Length).First();
 
                 //
                 //  ##  CONSTRUCT THE “USAGE” LINE
                 //
-                help.Add(new ConsoleColoredString(tr.Usage + " ", CmdLineColor.UsageLinePrefix));
-                help.Add(commandName);
+                var usage = new List<ConsoleColoredString>();
+                usage.Add(new ConsoleColoredString(tr.Usage + " ", CmdLineColor.UsageLinePrefix));
+                usage.Add(commandName);
 
                 List<FieldInfo> optionalOptions, mandatoryOptions, optionalPositional, mandatoryPositional;
                 getFieldsForHelp(type, out optionalOptions, out mandatoryOptions, out optionalPositional, out mandatoryPositional);
@@ -591,13 +592,21 @@ namespace RT.Util.CommandLine
                 // Options must be listed before positionals because if a positional is a subcommand, all the options must be before it.
                 // optionalPositional must come after mandatoryPositional because that is the order they must be specified in.
                 // If any mandatoryPositional is a subcommand, then you can’t have any optionalPositionals anyway.
-                help.Add(
+                usage.Add(
                     mandatoryOptions.Select(fld => new { Mandatory = true, Field = fld })
                         .Concat(optionalOptions.Select(fld => new { Mandatory = false, Field = fld }))
                         .Concat(mandatoryPositional.Select(fld => new { Mandatory = true, Field = fld }))
                         .Concat(optionalPositional.Select(fld => new { Mandatory = false, Field = fld }))
                         .Select(f => " " + f.Field.FormatParameterUsage(f.Mandatory))
                         .JoinColoredString());
+
+                // Word-wrap the usage line
+                foreach (var line in new ConsoleColoredString(usage.ToArray()).WordWrap(wrapWidth, tr.Usage.Translation.Length + 1))
+                {
+                    helpString.Add(line);
+                    helpString.Add(ConsoleColoredString.NewLine);
+                }
+                helpString.Add(ConsoleColoredString.NewLine);
 
                 //
                 //  ##  CONSTRUCT THE TABLES
@@ -614,17 +623,8 @@ namespace RT.Util.CommandLine
                 foreach (var f in optionalPositional.Select(fld => new { Positional = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Positional = false, Field = fld })))
                     anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type, applicationTr);
 
-                // Word-wrap the usage line
-                var helpString = new List<ConsoleColoredString>();
-                foreach (var line in new ConsoleColoredString(help.ToArray()).WordWrap(wrapWidth, tr.Usage.Translation.Length + 1))
-                {
-                    helpString.Add(line);
-                    helpString.Add(ConsoleColoredString.NewLine);
-                }
-
                 // Word-wrap the documentation for the command (if any)
                 var doc = getDocumentation(type, type, applicationTr);
-                helpString.Add(ConsoleColoredString.NewLine);
                 foreach (var line in doc.WordWrap(wrapWidth))
                 {
                     helpString.Add(line);
