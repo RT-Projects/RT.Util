@@ -903,7 +903,8 @@ namespace RT.Util
                     int leftMs = (int) (maximum.Value - (DateTime.UtcNow - started)).TotalMilliseconds;
                     if (sleep > leftMs)
                     {
-                        Thread.Sleep(leftMs);
+                        if (leftMs > 0)
+                            Thread.Sleep(leftMs);
                         return func(); // or throw the sharing vio exception
                     }
                 }

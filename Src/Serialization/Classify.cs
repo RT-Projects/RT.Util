@@ -282,7 +282,7 @@ namespace RT.Util.Serialization
             string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             var element = new classifier<TElement>(format, options, defaultBaseDir).Serialize(saveObject, saveType)();
             PathUtil.CreatePathToFile(filename);
-            using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
                 format.WriteToStream(element, f);
         }
 
