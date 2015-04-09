@@ -152,12 +152,15 @@ namespace RT.Util.CommandLine
         ///     Specifies the application’s translation object which contains the localised strings that document the
         ///     command-line options and commands. This object is passed in to the <c>FieldNameDoc</c> methods described in
         ///     the documentation for <see cref="CommandLineParser"/>. This should be <c>null</c> for monoligual applications.</param>
+        /// <param name="helpProcessor">
+        ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
+        ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
         /// <returns>
         ///     An instance of the class <typeparamref name="TArgs"/> containing the options and parameters specified by the
         ///     user on the command line.</returns>
-        public static TArgs Parse<TArgs>(string[] args, TranslationBase applicationTr = null)
+        public static TArgs Parse<TArgs>(string[] args, TranslationBase applicationTr = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
         {
-            return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr);
+            return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr, helpProcessor);
         }
 
         /// <summary>
@@ -172,14 +175,17 @@ namespace RT.Util.CommandLine
         ///     Specifies the application’s translation object which contains the localised strings that document the
         ///     command-line options and commands. This object is passed in to the FieldNameDoc() methods described in the
         ///     documentation for <see cref="CommandLineParser"/>. This should be null for monoligual applications.</param>
+        /// <param name="helpProcessor">
+        ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
+        ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
         /// <returns>
         ///     An instance of the class <typeparamref name="TArgs"/> containing the options and parameters specified by the
         ///     user on the command line.</returns>
-        public static TArgs ParseOrWriteUsageToConsole<TArgs>(string[] args, TranslationBase applicationTr = null)
+        public static TArgs ParseOrWriteUsageToConsole<TArgs>(string[] args, TranslationBase applicationTr = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
         {
             try
             {
-                return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr);
+                return (TArgs) parseCommandLine(args, typeof(TArgs), 0, applicationTr, helpProcessor);
             }
             catch (CommandLineParseException e)
             {
@@ -211,16 +217,19 @@ namespace RT.Util.CommandLine
         /// <param name="subType">
         ///     Optionally, a class that is used as a subcommand within the command-line syntax. Generates help for the
         ///     subcommand.</param>
-        public static ConsoleColoredString GenerateHelp<TArgs>(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null)
+        /// <param name="helpProcessor">
+        ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
+        ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
+        public static ConsoleColoredString GenerateHelp<TArgs>(TranslationBase applicationTr = null, Translation commandLineTr = null, int? wrapWidth = null, Type subType = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
         {
-            return getHelpGenerator(subType ?? typeof(TArgs), applicationTr)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
+            return getHelpGenerator(subType ?? typeof(TArgs), applicationTr, helpProcessor)(commandLineTr, wrapWidth ?? ConsoleUtil.WrapToWidth());
         }
 
-        private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr)
+        private static object parseCommandLine(string[] args, Type type, int i, TranslationBase applicationTr, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor)
         {
             if (i < args.Length)
                 if (args[i] == "-?" || args[i] == "/?" || args[i] == "--?" || args[i] == "/h" || args[i] == "--help" || args[i] == "-help" || args[i] == "help")
-                    throw new CommandLineHelpRequestedException(getHelpGenerator(type, applicationTr));
+                    throw new CommandLineHelpRequestedException(getHelpGenerator(type, applicationTr, helpProcessor));
 
             var ret = Activator.CreateInstance(type, true);
             var options = new Dictionary<string, Action>();
@@ -270,12 +279,12 @@ namespace RT.Util.CommandLine
                                         return;
                                     }
                                 }
-                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
+                                throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr, helpProcessor));
                             },
                             ProcessEndOfParameters = () =>
                             {
                                 if (mandatory)
-                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
+                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr, helpProcessor));
                             }
                         });
                     }
@@ -302,7 +311,7 @@ namespace RT.Util.CommandLine
                                     var enumField = field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public)
                                         .FirstOrDefault(ef => ef.GetCustomAttributes<CommandNameAttribute>().Any(cna => cna.Names.Contains(commandName)));
                                     if (enumField == null)
-                                        throw new UnrecognizedCommandOrOptionException(commandName, getHelpGenerator(type, applicationTr));
+                                        throw new UnrecognizedCommandOrOptionException(commandName, getHelpGenerator(type, applicationTr, helpProcessor));
                                     return enumField.GetRawConstantValue();
                                 })
                             }).AsEnumerable();
@@ -326,7 +335,7 @@ namespace RT.Util.CommandLine
                                     if (inf.NeedCommandName)
                                     {
                                         if (i >= args.Length)
-                                            throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
+                                            throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr, helpProcessor));
                                         commandName = args[i];
                                         i++;
                                     }
@@ -348,7 +357,7 @@ namespace RT.Util.CommandLine
                                         else
                                         {
                                             // Since only a single value is allowed, throw an error if another value is specified later
-                                            throw new IncompatibleCommandOrOptionException(prevOptionOrCommand, commandName ?? o, getHelpGenerator(type, applicationTr));
+                                            throw new IncompatibleCommandOrOptionException(prevOptionOrCommand, commandName ?? o, getHelpGenerator(type, applicationTr, helpProcessor));
                                         }
                                     }
                                     else
@@ -381,7 +390,7 @@ namespace RT.Util.CommandLine
                             ProcessParameter = () =>
                             {
                                 if (!convertStringAndSetField(args[i], ret, field))
-                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr));
+                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr, helpProcessor));
 
                                 positionals.RemoveAt(0);
                                 missingMandatories.Remove(field);
@@ -390,7 +399,7 @@ namespace RT.Util.CommandLine
                             ProcessEndOfParameters = () =>
                             {
                                 if (mandatory)
-                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
+                                    throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr, helpProcessor));
                             }
                         });
                     }
@@ -403,10 +412,10 @@ namespace RT.Util.CommandLine
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr, helpProcessor));
 
                                 if (!convertStringAndSetField(args[i], ret, field))
-                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr));
+                                    throw new InvalidNumericParameterException(field.Name, getHelpGenerator(type, applicationTr, helpProcessor));
 
                                 i++;
                                 missingMandatories.Remove(field);
@@ -448,7 +457,7 @@ namespace RT.Util.CommandLine
                             {
                                 i++;
                                 if (i >= args.Length)
-                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr));
+                                    throw new IncompleteOptionException(o, getHelpGenerator(type, applicationTr, helpProcessor));
                                 prev = (prev == null || prev.Length == 0)
                                     ? new string[] { args[i] }
                                     : prev.Concat(args[i]).ToArray();
@@ -472,16 +481,16 @@ namespace RT.Util.CommandLine
                             foreach (var subclass in field.FieldType.Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(field.FieldType)))
                                 if (subclass.GetCustomAttributes<CommandNameAttribute>().First().Names.Any(c => c.Equals(args[i], StringComparison.OrdinalIgnoreCase)))
                                 {
-                                    field.SetValue(ret, parseCommandLine(args, subclass, i + 1, applicationTr));
+                                    field.SetValue(ret, parseCommandLine(args, subclass, i + 1, applicationTr, helpProcessor));
                                     i = args.Length;
                                     return;
                                 }
-                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
+                            throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr, helpProcessor));
                         },
                         ProcessEndOfParameters = () =>
                         {
                             if (mandatory)
-                                throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr));
+                                throw new MissingParameterException(field, null, false, getHelpGenerator(type, applicationTr, helpProcessor));
                         }
                     });
                 }
@@ -504,12 +513,12 @@ namespace RT.Util.CommandLine
                     if (options.ContainsKey(args[i]))
                         options[args[i]]();
                     else
-                        throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr));
+                        throw new UnrecognizedCommandOrOptionException(args[i], getHelpGenerator(type, applicationTr, helpProcessor));
                 }
                 else
                 {
                     if (positionals.Count == 0)
-                        throw new UnexpectedArgumentException(args.Subarray(i), getHelpGenerator(type, applicationTr));
+                        throw new UnexpectedArgumentException(args.Subarray(i), getHelpGenerator(type, applicationTr, helpProcessor));
                     positionals[0].ProcessParameter();
                 }
             }
@@ -518,7 +527,7 @@ namespace RT.Util.CommandLine
                 positionals[0].ProcessEndOfParameters();
 
             if (missingMandatories.Count > 0)
-                throw new MissingParameterException(missingMandatories[0], swallowingField, !missingMandatories[0].IsDefined<IsPositionalAttribute>(), getHelpGenerator(type, applicationTr));
+                throw new MissingParameterException(missingMandatories[0], swallowingField, !missingMandatories[0].IsDefined<IsPositionalAttribute>(), getHelpGenerator(type, applicationTr, helpProcessor));
 
             Type[] typeParam;
             ConsoleColoredString error = null;
@@ -531,11 +540,11 @@ namespace RT.Util.CommandLine
                         tp.FullName,
                         applicationTr.GetType().FullName,
                         typeof(ICommandLineValidatable<>).MakeGenericType(applicationTr.GetType()).FullName
-                    ), getHelpGenerator(type, applicationTr));
+                    ), getHelpGenerator(type, applicationTr, helpProcessor));
 
                 var meth = tp.GetMethod("Validate");
                 if (meth == null || !meth.GetParameters().Select(p => p.ParameterType).SequenceEqual(new Type[] { typeParam[0] }))
-                    throw new CommandLineValidationException(@"Couldn’t find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type, applicationTr));
+                    throw new CommandLineValidationException(@"Couldn’t find the Validate method in the {0} type.".Fmt(tp.FullName), getHelpGenerator(type, applicationTr, helpProcessor));
 
                 error = (ConsoleColoredString) meth.Invoke(ret, new object[] { applicationTr });
             }
@@ -543,7 +552,7 @@ namespace RT.Util.CommandLine
                 error = ((ICommandLineValidatable) ret).Validate();
 
             if (error != null)
-                throw new CommandLineValidationException(error, getHelpGenerator(type, applicationTr));
+                throw new CommandLineValidationException(error, getHelpGenerator(type, applicationTr, helpProcessor));
 
             return ret;
         }
@@ -566,8 +575,9 @@ namespace RT.Util.CommandLine
             return true;
         }
 
-        private static Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type, TranslationBase applicationTr)
+        private static Func<Translation, int, ConsoleColoredString> getHelpGenerator(Type type, TranslationBase applicationTr, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor)
         {
+            helpProcessor = helpProcessor ?? (s => s);
             return (tr, wrapWidth) =>
             {
                 if (tr == null)
@@ -616,15 +626,15 @@ namespace RT.Util.CommandLine
                 var requiredParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int requiredRow = 0;
                 foreach (var f in mandatoryPositional.Select(fld => new { Positional = true, Field = fld }).Concat(mandatoryOptions.Select(fld => new { Positional = false, Field = fld })))
-                    anyCommandsWithSuboptions |= createParameterHelpRow(ref requiredRow, requiredParamsTable, f.Field, f.Positional, type, applicationTr);
+                    anyCommandsWithSuboptions |= createParameterHelpRow(ref requiredRow, requiredParamsTable, f.Field, f.Positional, type, applicationTr, helpProcessor);
 
                 var optionalParamsTable = new TextTable { MaxWidth = wrapWidth - leftMargin, ColumnSpacing = 3, RowSpacing = 1, LeftMargin = leftMargin };
                 int optionalRow = 0;
                 foreach (var f in optionalPositional.Select(fld => new { Positional = true, Field = fld }).Concat(optionalOptions.Select(fld => new { Positional = false, Field = fld })))
-                    anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type, applicationTr);
+                    anyCommandsWithSuboptions |= createParameterHelpRow(ref optionalRow, optionalParamsTable, f.Field, f.Positional, type, applicationTr, helpProcessor);
 
                 // Word-wrap the documentation for the command (if any)
-                var doc = getDocumentation(type, type, applicationTr);
+                var doc = getDocumentation(type, type, applicationTr, helpProcessor);
                 foreach (var line in doc.WordWrap(wrapWidth))
                 {
                     helpString.Add(line);
@@ -668,7 +678,7 @@ namespace RT.Util.CommandLine
             };
         }
 
-        private static bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type, TranslationBase applicationTr)
+        private static bool createParameterHelpRow(ref int row, TextTable table, FieldInfo field, bool positional, Type type, TranslationBase applicationTr, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor)
         {
             var anyCommandsWithSuboptions = false;
             var cmdName = "<".Color(CmdLineColor.FieldBrackets) + field.Name.Color(CmdLineColor.Field) + ">".Color(CmdLineColor.FieldBrackets);
@@ -679,7 +689,7 @@ namespace RT.Util.CommandLine
                 if (positional)
                 {
                     var topRow = row;
-                    var doc = getDocumentation(field, type, applicationTr);
+                    var doc = getDocumentation(field, type, applicationTr, helpProcessor);
                     if (doc.Length > 0)
                     {
                         table.SetCell(2, row, doc, colSpan: 4);
@@ -694,7 +704,7 @@ namespace RT.Util.CommandLine
                             continue;
                         table.SetCell(2, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(", "), noWrap: true);
                         table.SetCell(3, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(Environment.NewLine), noWrap: true);
-                        table.SetCell(4, row, getDocumentation(el, type, applicationTr), colSpan: 2);
+                        table.SetCell(4, row, getDocumentation(el, type, applicationTr, helpProcessor), colSpan: 2);
                         row++;
                     }
                     table.SetCell(0, topRow, cmdName, noWrap: true, colSpan: 2, rowSpan: row - topRow);
@@ -711,14 +721,14 @@ namespace RT.Util.CommandLine
                             continue;
                         table.SetCell(3, row, attr.Names.Where(n => n.Length <= 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(", "), noWrap: true);
                         table.SetCell(4, row, attr.Names.Where(n => n.Length > 2).Select(s => s.Color(CmdLineColor.EnumValue)).JoinColoredString(Environment.NewLine), noWrap: true);
-                        table.SetCell(5, row, getDocumentation(el, type, applicationTr));
+                        table.SetCell(5, row, getDocumentation(el, type, applicationTr, helpProcessor));
                         row++;
                     }
                     if (row == topRow + 1)
                         throw new InvalidOperationException("Enum type {2}.{3} has no values (apart from default value for field {0}.{1}).".Fmt(field.DeclaringType.FullName, field.Name, field.FieldType.DeclaringType.FullName, field.FieldType));
                     table.SetCell(0, topRow, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true, rowSpan: row - topRow);
                     table.SetCell(1, topRow, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true, rowSpan: row - topRow);
-                    table.SetCell(2, topRow, getDocumentation(field, type, applicationTr), colSpan: 4);
+                    table.SetCell(2, topRow, getDocumentation(field, type, applicationTr, helpProcessor), colSpan: 4);
                     table.SetCell(2, topRow + 1, cmdName, noWrap: true, rowSpan: row - topRow - 1);
                 }
                 // ### ENUM fields, “-x” scheme
@@ -728,7 +738,7 @@ namespace RT.Util.CommandLine
                     {
                         table.SetCell(0, row, el.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true);
                         table.SetCell(1, row, el.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true);
-                        table.SetCell(2, row, getDocumentation(el, type, applicationTr), colSpan: 4);
+                        table.SetCell(2, row, getDocumentation(el, type, applicationTr, helpProcessor), colSpan: 4);
                         row++;
                     }
                 }
@@ -749,7 +759,7 @@ namespace RT.Util.CommandLine
                     var names = ty.GetCustomAttributes<CommandNameAttribute>().First().Names;
                     table.SetCell(2, row, names.Where(n => n.Length <= 2).Select(n => n.Color(CmdLineColor.Command) + asterisk).JoinColoredString(", "), noWrap: true);
                     table.SetCell(3, row, names.Where(n => n.Length > 2).Select(n => n.Color(CmdLineColor.Command) + asterisk).JoinColoredString(Environment.NewLine), noWrap: true);
-                    table.SetCell(4, row, getDocumentation(ty, ty, applicationTr), colSpan: 2);
+                    table.SetCell(4, row, getDocumentation(ty, ty, applicationTr, helpProcessor), colSpan: 2);
                     row++;
                 }
                 table.SetCell(0, origRow, cmdName, colSpan: 2, rowSpan: row - origRow, noWrap: true);
@@ -758,7 +768,7 @@ namespace RT.Util.CommandLine
             else if (positional)
             {
                 table.SetCell(0, row, cmdName, noWrap: true, colSpan: 2);
-                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr, helpProcessor), colSpan: 4);
                 row++;
             }
             // ### All other non-positional parameters
@@ -766,7 +776,7 @@ namespace RT.Util.CommandLine
             {
                 table.SetCell(0, row, field.GetOrderedOptionAttributeNames().Where(o => !o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(", "), noWrap: true);
                 table.SetCell(1, row, field.GetOrderedOptionAttributeNames().Where(o => o.StartsWith("--")).OrderBy(cmd => cmd.Length).Select(cmd => cmd.Color(CmdLineColor.Option)).JoinColoredString(Environment.NewLine), noWrap: true);
-                table.SetCell(2, row, getDocumentation(field, type, applicationTr), colSpan: 4);
+                table.SetCell(2, row, getDocumentation(field, type, applicationTr, helpProcessor), colSpan: 4);
                 row++;
             }
             return anyCommandsWithSuboptions;
@@ -786,10 +796,10 @@ namespace RT.Util.CommandLine
                 ).Add(field);
         }
 
-        private static ConsoleColoredString getDocumentation(MemberInfo member, Type inType, TranslationBase applicationTr)
+        private static ConsoleColoredString getDocumentation(MemberInfo member, Type inType, TranslationBase applicationTr, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor)
         {
             if (member.IsDefined<DocumentationAttribute>())
-                return member.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Text).First();
+                return helpProcessor(member.GetCustomAttributes<DocumentationAttribute>().Select(d => d.Text ?? "").First());
             if (applicationTr == null)
                 return "";
 
@@ -799,7 +809,7 @@ namespace RT.Util.CommandLine
             if (meth == null || meth.ReturnType != typeof(string))
                 return "";
             var str = (string) meth.Invoke(null, new object[] { applicationTr });
-            return str == null ? "" : CommandLineParser.Colorize(EggsML.Parse(str));
+            return str == null ? "" : helpProcessor(CommandLineParser.Colorize(EggsML.Parse(str)));
         }
 
         #region Post-build step check
