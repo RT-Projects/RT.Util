@@ -1575,7 +1575,7 @@ namespace RT.Util.Json
 
             sb.Append("{");
             bool first = true;
-            foreach (var kvp in Dict)
+            foreach (var kvp in Dict.OrderBy(kvp => kvp.Key))
             {
                 if (!first)
                     sb.Append(",");
