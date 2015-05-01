@@ -44,7 +44,7 @@ namespace RT.KitchenSink.Fonts
         /// <summary>Returns a list of all installed font families that contain a glyph for all of the specified Unicode characters.</summary>
         public static IEnumerable<string> GetFontFamiliesContaining(params int[] charactersToCheck)
         {
-            ICollection<System.Windows.Media.FontFamily> fontFamilies = System.Windows.Media.Fonts.GetFontFamilies(@"C:\Windows\Fonts\");
+            ICollection<System.Windows.Media.FontFamily> fontFamilies = System.Windows.Media.Fonts.GetFontFamilies(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Fonts));
             foreach (var family in fontFamilies)
             {
                 var typefaces = family.GetTypefaces();
