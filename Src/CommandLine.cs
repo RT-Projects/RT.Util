@@ -690,7 +690,7 @@ namespace RT.Util.CommandLine
                 {
                     var topRow = row;
                     var doc = getDocumentation(field, type, applicationTr, helpProcessor);
-                    if (doc.Length > 0)
+                    if (doc.Length > 0 || field.FieldType.GetFields(BindingFlags.Static | BindingFlags.Public).All(el => el.IsDefined<UndocumentedAttribute>() || !el.GetCustomAttributes<CommandNameAttribute>().Any()))
                     {
                         table.SetCell(2, row, doc, colSpan: 4);
                         row++;
