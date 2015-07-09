@@ -9,18 +9,22 @@ namespace RT.Util.Consoles
     /// <summary>
     ///     Encapsulates a string in which each character can have an associated <see cref="ConsoleColor"/>.</summary>
     /// <remarks>
-    ///     Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see
-    ///     cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</remarks>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see
+    ///             cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</description></item>
+    ///         <item><description>
+    ///             Each character has two optional <see cref="ConsoleColor"/> values associated with it, one indicating the
+    ///             foreground color and one the background color. Those characters whose color is <c>null</c> are printed in
+    ///             the default color of the console (which the user can customize in the console window UI).</description></item></list></remarks>
     public sealed class ConsoleColoredString
     {
         /// <summary>Represents an empty colored string. This field is read-only.</summary>
-        public static ConsoleColoredString Empty { get { if (_empty == null) _empty = new ConsoleColoredString(); return _empty; } }
+        public static ConsoleColoredString Empty { get { return _empty ?? (_empty = new ConsoleColoredString()); } }
         private static ConsoleColoredString _empty = null;
 
-        /// <summary>
-        ///     Represents the environment's newline, colored in the default color (<see cref="ConsoleColor.Gray"/>). This
-        ///     field is read-only.</summary>
-        public static ConsoleColoredString NewLine { get { if (_newline == null) _newline = new ConsoleColoredString(Environment.NewLine, ConsoleColor.Gray); return _newline; } }
+        /// <summary>Represents the environment's newline, colored in the default color. This field is read-only.</summary>
+        public static ConsoleColoredString NewLine { get { return _newline ?? (_newline = new ConsoleColoredString(Environment.NewLine, (ConsoleColor?) null)); } }
         private static ConsoleColoredString _newline = null;
 
         private string _text;
@@ -28,8 +32,7 @@ namespace RT.Util.Consoles
         private ConsoleColor?[] _background;
 
         /// <summary>
-        ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/> by assuming a
-        ///     default color of <see cref="ConsoleColor.Gray"/>.</summary>
+        ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/>.</summary>
         /// <param name="input">
         ///     The string to convert.</param>
         public static implicit operator ConsoleColoredString(string input)
@@ -52,9 +55,9 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
-        ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified color.</summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors.</summary>
         /// <param name="input">
-        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to.</param>
+        ///     The string containing the text to initialize this <see cref="ConsoleColoredString"/> to.</param>
         /// <param name="foreground">
         ///     The foreground color to assign to the whole string.</param>
         /// <param name="background">
@@ -79,14 +82,14 @@ namespace RT.Util.Consoles
         ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors for each
         ///     character.</summary>
         /// <param name="input">
-        ///     The string containing the text to initialise this <see cref="ConsoleColoredString"/> to. The length of this
+        ///     The string containing the text to initialize this <see cref="ConsoleColoredString"/> to. The length of this
         ///     string must match the number of elements in <paramref name="foregroundColors"/>.</param>
         /// <param name="foregroundColors">
         ///     The foreground colors to assign to each character in the string. The length of this array must match the
         ///     number of characters in <paramref name="input"/>.</param>
         /// <param name="backgroundColors">
         ///     The background colors to assign to each character in the string. The length of this array must match the
-        ///     number of characters in <paramref name="input"/>. If null, black is used.</param>
+        ///     number of characters in <paramref name="input"/>. If <c>null</c>, the default color is used.</param>
         public ConsoleColoredString(string input, ConsoleColor?[] foregroundColors, ConsoleColor?[] backgroundColors = null)
         {
             if (input == null)
@@ -138,7 +141,7 @@ namespace RT.Util.Consoles
             }
         }
 
-        /// <summary>Returns the number of characters in this <see cref="ConsoleColoredString"/></summary>
+        /// <summary>Returns the number of characters in this <see cref="ConsoleColoredString"/>.</summary>
         public int Length { get { return _text.Length; } }
         /// <summary>Returns the raw text of this <see cref="ConsoleColoredString"/> by discarding all the color information.</summary>
         public override string ToString() { return _text; }
@@ -167,8 +170,8 @@ namespace RT.Util.Consoles
         /// <param name="string2">
         ///     Second input string to concatenate.</param>
         /// <remarks>
-        ///     The color of each character in the first input string is preserved. The second input string is given the color
-        ///     <see cref="ConsoleColor.Gray"/>.</remarks>
+        ///     The color of each character in the first input string is preserved. The second input string is given the
+        ///     console default color.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredString string1, string string2)
         {
             if (string1 == null || string1.Length == 0)
@@ -191,8 +194,8 @@ namespace RT.Util.Consoles
         /// <param name="string2">
         ///     Second input string to concatenate.</param>
         /// <remarks>
-        ///     The color of each character in the second input string is preserved. The first input string is given the color
-        ///     <see cref="ConsoleColor.Gray"/>.</remarks>
+        ///     The color of each character in the second input string is preserved. The first input string is given the
+        ///     console default color.</remarks>
         public static ConsoleColoredString operator +(string string1, ConsoleColoredString string2)
         {
             if (string2 == null || string2.Length == 0)
@@ -759,7 +762,7 @@ namespace RT.Util.Consoles
         /// <param name="background">
         ///     The background color to set the string to, or <c>null</c> to use the console’s default background color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with the background colors changed.</returns>
         public ConsoleColoredString ColorBackground(ConsoleColor? background)
         {
             var newBackground = new ConsoleColor?[_text.Length];
@@ -779,7 +782,7 @@ namespace RT.Util.Consoles
         ///     The foreground color to assign to the range of characters, or <c>null</c> to use the console’s default
         ///     foreground color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the foreground colors changed.</returns>
         public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground)
         {
             if (index < 0 || index > _text.Length)
@@ -802,7 +805,7 @@ namespace RT.Util.Consoles
         ///     The background color to assign to the range of characters, or <c>null</c> to use the console’s default
         ///     background color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the colors changed.</returns>
         public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
@@ -821,7 +824,7 @@ namespace RT.Util.Consoles
         ///     The foreground color to assign to the characters starting from the character at <paramref name="index"/>, or
         ///     <c>null</c> to use the console’s default foreground color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the foreground colors changed.</returns>
         public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground)
         {
             if (index < 0 || index > _text.Length)
@@ -841,7 +844,7 @@ namespace RT.Util.Consoles
         ///     The background color to assign to the characters starting from the character at <paramref name="index"/>, or
         ///     <c>null</c> to use the console’s default background color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the colors changed.</returns>
         public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
@@ -860,7 +863,7 @@ namespace RT.Util.Consoles
         ///     The background color to assign to the range of characters, or <c>null</c> to use the console’s default
         ///     background color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the background colors changed.</returns>
         public ConsoleColoredString ColorSubstringBackground(int index, int length, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
@@ -879,7 +882,7 @@ namespace RT.Util.Consoles
         ///     The background color to assign to the characters starting from the character at <paramref name="index"/>, or
         ///     <c>null</c> to use the console’s default background color.</param>
         /// <returns>
-        ///     A potentially colorful string.</returns>
+        ///     The current string but with some of the background colors changed.</returns>
         public ConsoleColoredString ColorSubstringBackground(int index, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
@@ -958,6 +961,8 @@ namespace RT.Util.Consoles
         {
             if (oldValue == null)
                 throw new ArgumentNullException("oldValue");
+            if (oldValue.Length == 0)
+                throw new ArgumentException("oldValue cannot be the empty string.", "oldValue");
             if (newValue == null)
                 throw new ArgumentNullException("newValue");
 
