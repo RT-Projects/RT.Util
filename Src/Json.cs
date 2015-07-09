@@ -1868,7 +1868,7 @@ namespace RT.Util.Json
             return
                 False.Contains(_value, TrueFalseComparer) ? false :
                 True.Contains(_value, TrueFalseComparer) ? true :
-                (bool?) null;
+                safe ? (bool?) null : Ut.Throw<bool?>(new InvalidOperationException("String must represent a boolean, but \"{0}\" is not a valid boolean.".Fmt(_value)));
         }
 
         /// <summary>
@@ -1885,7 +1885,7 @@ namespace RT.Util.Json
         public static readonly List<string> True = new List<string> { "true", "y", "yes", "on", "enable", "enabled", "1" };
         /// <summary>
         ///     Controls which string equality comparer is used when comparing strings against elements in <see cref="True"/>
-        ///     and <see cref="False"/> during conversion to bool by <see cref="JsonValue.GetBool"/>.</summary>
+        ///     and <see cref="False"/> during conversion to <c>bool</c> by <see cref="JsonValue.GetBool"/>.</summary>
         /// <remarks>
         ///     The default is <see cref="StringComparer.OrdinalIgnoreCase"/>.</remarks>
         public static readonly IEqualityComparer<string> TrueFalseComparer = StringComparer.OrdinalIgnoreCase;
