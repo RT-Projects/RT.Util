@@ -1334,6 +1334,14 @@ namespace RT.Util.Json
                 return;
             }
 
+            if (List.Count == 1)
+            {
+                sb.Append("[ ");
+                JsonValue.AppendIndented(List[0], sb, indentation + 1);
+                sb.Append(" ]");
+                return;
+            }
+
             sb.Append("[");
             bool first = true;
             foreach (var value in List)
@@ -1570,6 +1578,19 @@ namespace RT.Util.Json
             if (Dict.Count == 0)
             {
                 sb.Append("{}");
+                return;
+            }
+
+            if (Dict.Count == 1)
+            {
+                sb.Append("{ ");
+                foreach (var kvp in Dict)
+                {
+                    sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
+                    sb.Append(": ");
+                    JsonValue.AppendIndented(kvp.Value, sb, indentation + 1);
+                }
+                sb.Append(" }");
                 return;
             }
 
