@@ -238,6 +238,7 @@ namespace RT.Util
         ///     The exception to throw.</param>
         /// <returns>
         ///     This method never returns a value. It always throws.</returns>
+        [DebuggerHidden]
         public static TResult Throw<TResult>(Exception exception)
         {
             throw exception;
