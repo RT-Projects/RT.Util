@@ -1337,7 +1337,7 @@ namespace RT.Util.Json
             if (List.Count == 1)
             {
                 sb.Append("[ ");
-                JsonValue.AppendIndented(List[0], sb, indentation + 1);
+                JsonValue.AppendIndented(List[0], sb, indentation);
                 sb.Append(" ]");
                 return;
             }
@@ -1588,7 +1588,7 @@ namespace RT.Util.Json
                 {
                     sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
                     sb.Append(": ");
-                    JsonValue.AppendIndented(kvp.Value, sb, indentation + 1);
+                    JsonValue.AppendIndented(kvp.Value, sb, indentation);
                 }
                 sb.Append(" }");
                 return;
