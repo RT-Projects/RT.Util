@@ -457,5 +457,10 @@ namespace RT.Util.Serialization
         {
             return new XElement(_rootTagName, new XAttribute("id", id));
         }
+
+        void IClassifyFormat<XElement>.ThrowMissingReferable(int refID)
+        {
+            throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but no matching element with the corresponding attribute refid=""{0}"" was encountered during deserialization. If such an attribute is present somewhere in the XML, the relevant element was not deserialized as an object (most likely because a field corresponding to a parent element was removed from its class declaration).".Fmt(refID));
+        }
     }
 }

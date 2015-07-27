@@ -440,5 +440,10 @@ namespace RT.Util.Serialization
             element[isFullType ? ":fulltype" : ":type"] = type;
             return element;
         }
+
+        void IClassifyFormat<JsonValue>.ThrowMissingReferable(int refID)
+        {
+            throw new InvalidOperationException(@"An object reference ("":ref"": {0}) was encountered, but no matching object ("":refid"": {0}) was encountered during deserialization. If such an object is present somewhere in the JSON, the relevant object was not deserialized (most likely because a field corresponding to a parent object was removed from its class declaration).".Fmt(refID));
+        }
     }
 }

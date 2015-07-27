@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
@@ -508,7 +509,7 @@ namespace RT.Util.Serialization
                     {
                         declassifyRememberedObject inf;
                         if (!_rememberD.TryGetValue(refID, out inf))
-                            throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but there is no matching element with the corresponding refid=""{0}"".".Fmt(refID));
+                            _format.ThrowMissingReferable(refID);
                         if (type == originalType)
                             return inf.WithoutDesubstitution();
                         if (inf.WithDesubstitution == null)
@@ -653,7 +654,7 @@ namespace RT.Util.Serialization
                         {
                             // It’s a list, but not an array or a dictionary.
                             object outputList;
-                            if (already != null)
+                            if (already != null && already.GetType() == type)
                             {
                                 outputList = already;
                                 typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Clear").Invoke(outputList, null);
@@ -715,7 +716,16 @@ namespace RT.Util.Serialization
 
                         try
                         {
-                            ret = already == null || already.GetType() != realType ? Activator.CreateInstance(realType, true) : already;
+                            if (already != null && already.GetType() == realType)
+                                ret = already;
+                            // Anonymous types
+                            else if (realType.Name.StartsWith("<>f__AnonymousType") && realType.IsGenericType && realType.IsDefined<CompilerGeneratedAttribute>())
+                            {
+                                var constructor = realType.GetConstructors().First();
+                                ret = constructor.Invoke(constructor.GetParameters().Select(p => p.ParameterType.GetDefaultValue()).ToArray());
+                            }
+                            else
+                                ret = Activator.CreateInstance(realType, true);
                         }
                         catch (Exception e)
                         {
@@ -756,13 +766,18 @@ namespace RT.Util.Serialization
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
-                    // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
                     if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
                     {
+                        // Compiler-generated fields for auto-implemented properties 
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
                         var prop = type.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
                             getAttrsFrom = prop;
+                    }
+                    else if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">i__Field"))
+                    {
+                        // Fields in anonymous types
+                        rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
                     // Skip events
@@ -1080,13 +1095,18 @@ namespace RT.Util.Serialization
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
-                    // Special case: compiler-generated fields for auto-implemented properties have a name that can’t be used as a tag name. Use the property name instead, which is probably what the user expects anyway
                     if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
                     {
+                        // Compiler-generated fields for auto-implemented properties 
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
                         var prop = saveType.GetAllProperties().FirstOrDefault(p => p.Name == rFieldName);
                         if (prop != null)
                             getAttrsFrom = prop;
+                    }
+                    else if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">i__Field"))
+                    {
+                        // Fields in anonymous types
+                        rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
                     // [ClassifyIgnore], [ClassifyParent]
