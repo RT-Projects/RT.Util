@@ -254,7 +254,7 @@ namespace RT.Util.Serialization
 
         JsonValue IClassifyFormat<JsonValue>.GetSelfValue(JsonValue element)
         {
-            return element;
+            return element[":value"];
         }
 
         IEnumerable<JsonValue> IClassifyFormat<JsonValue>.GetList(JsonValue element, int? tupleSize)
@@ -266,13 +266,17 @@ namespace RT.Util.Serialization
 
         void IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element, out JsonValue key, out JsonValue value)
         {
+            if (element is JsonDict && element.ContainsKey(":value"))
+                element = element[":value"];
             key = element[0];
             value = element[1];
         }
 
         IEnumerable<KeyValuePair<object, JsonValue>> IClassifyFormat<JsonValue>.GetDictionary(JsonValue element)
         {
-            return element.GetDict().Select(kvp => new KeyValuePair<object, JsonValue>(kvp.Key, kvp.Value));
+            return element.GetDict()
+                .Where(kvp => !kvp.Key.StartsWith(":") || kvp.Key.StartsWith("::"))
+                .Select(kvp => new KeyValuePair<object, JsonValue>(kvp.Key.StartsWith(":") ? kvp.Key.Substring(1) : kvp.Key, kvp.Value));
         }
 
         bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName, string declaringType)
@@ -379,7 +383,7 @@ namespace RT.Util.Serialization
 
         JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(JsonValue value)
         {
-            return value;
+            return new JsonDict { { ":value", value } };
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatList(bool isTuple, IEnumerable<JsonValue> values)
@@ -394,7 +398,7 @@ namespace RT.Util.Serialization
 
         JsonValue IClassifyFormat<JsonValue>.FormatDictionary(IEnumerable<KeyValuePair<object, JsonValue>> values)
         {
-            return values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key), kvp => kvp.Value);
+            return values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key).Apply(key => key.StartsWith(":") ? ":" + key : key), kvp => kvp.Value);
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<ObjectFieldInfo<JsonValue>> fields)

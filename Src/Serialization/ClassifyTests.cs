@@ -7,6 +7,7 @@ using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
 using RT.Util.ExtensionMethods;
+using RT.Util.Json;
 
 namespace RT.Util.Serialization
 {
@@ -2054,6 +2055,64 @@ namespace RT.Util.Serialization
                         el.Attribute("type").Value = "MisTypeDerived";
             }
             public static bool HasBeenCalled = false;
+        }
+
+        [Test]
+        public void TestColonKey()
+        {
+            var dic = new Dictionary<string, string> { { ":value", "bang" } };
+            var json = ClassifyJson.Serialize(dic);
+            var result = ClassifyJson.Deserialize<Dictionary<string, string>>(json);
+
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(":value", result.Keys.First());
+            Assert.AreEqual("bang", result.Values.First());
+        }
+
+        [Test]
+        public void TestRefJsonValue()
+        {
+            var innerdic = (JsonDict) ClassifyJson.Serialize(new Dictionary<string, string> { { "d", "e" } });
+            var dic = new Dictionary<string, JsonDict> { { "a", innerdic }, { "b", innerdic } };
+            var json = ClassifyJson.Serialize(dic);
+            var result = ClassifyJson.Deserialize<Dictionary<string, JsonDict>>(json);
+
+            Assert.AreEqual(1, innerdic.Count);
+            Assert.AreEqual(1, dic["a"].Count);
+            Assert.AreEqual(1, dic["b"].Count);
+            Assert.AreEqual(1, result["a"].Count);
+            Assert.AreEqual(1, result["b"].Count);
+        }
+
+        [Test]
+        public void TestRefDictionary()
+        {
+            var innerdic = new Dictionary<string, string> { { "d", "e" } };
+            var dic = new Dictionary<string, Dictionary<string, string>> { { "a", innerdic }, { "b", innerdic } };
+            var json = ClassifyJson.Serialize(dic);
+            var result = ClassifyJson.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+
+            Assert.AreEqual(result.Count, dic.Count);
+            foreach (var kvp in dic)
+            {
+                Assert.IsTrue(result.ContainsKey(kvp.Key));
+                Assert.AreEqual(kvp.Value.Count, result[kvp.Key].Count);
+                foreach (var kvp2 in dic[kvp.Key])
+                {
+                    Assert.IsTrue(result[kvp.Key].ContainsKey(kvp2.Key));
+                    Assert.AreEqual(kvp2.Value, result[kvp.Key][kvp2.Key]);
+                }
+            }
+            foreach (var kvp in result)
+            {
+                Assert.IsTrue(dic.ContainsKey(kvp.Key));
+                Assert.AreEqual(kvp.Value.Count, dic[kvp.Key].Count);
+                foreach (var kvp2 in result[kvp.Key])
+                {
+                    Assert.IsTrue(dic[kvp.Key].ContainsKey(kvp2.Key));
+                    Assert.AreEqual(kvp2.Value, dic[kvp.Key][kvp2.Key]);
+                }
+            }
         }
     }
 
