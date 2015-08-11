@@ -1134,6 +1134,7 @@ namespace RT.Util.CommandLine
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(((Type) member).FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
+                        ((Type) member).Namespace,
                         "CommandName",
                         "class " + member.Name);
                 }
@@ -1143,7 +1144,8 @@ namespace RT.Util.CommandLine
                         (applicationTrType == null ? "U" : @"To provide localised documentation, declare a method ""static string {1}Doc({2})"" on {3}. Otherwise, u") +
                         @"se the [DocumentationLiteral] attribute to specify unlocalisable documentation. " +
                         @"Use [Undocumented] to completely hide an option or command from the help screen.").Fmt(member.DeclaringType.FullName, member.Name, applicationTrType != null ? applicationTrType.FullName : null, inType.FullName),
-                        (member.DeclaringType.IsEnum ? "enum " : "class ") + member.DeclaringType.Name,
+                        member.DeclaringType.Namespace,
+                        (member.DeclaringType.IsEnum ? "enum " : member.DeclaringType.IsValueType ? "struct " : "class ") + member.DeclaringType.Name,
                         member.Name);
                 }
                 return;
