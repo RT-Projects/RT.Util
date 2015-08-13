@@ -454,7 +454,7 @@ namespace RT.Util.Serialization
 
             /// <summary>
             ///     Deserializes an object from its serialized form.</summary>
-            /// <param name="type">
+            /// <param name="declaredType">
             ///     The type to deserialize to.</param>
             /// <param name="elem">
             ///     The serialized form.</param>
@@ -465,19 +465,18 @@ namespace RT.Util.Serialization
             ///     The value for a [ClassifyParent] field.</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if [ClassifyEnforceEnums] semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserialize(Type type, TElement elem, object already, object parentNode, bool enforceEnums)
+            private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, object parentNode, bool enforceEnums)
             {
-                if (type.IsPointer || type.IsByRef)
+                if (declaredType.IsPointer || declaredType.IsByRef)
                     throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
 
-                var originalType = type;
-                var genericDefinition = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
+                var substType = declaredType;
 
                 ClassifyTypeOptions typeOptions = null;
-                if (_options._typeOptions.TryGetValue(type, out typeOptions))
+                if (_options._typeOptions.TryGetValue(declaredType, out typeOptions))
                 {
                     if (typeOptions._substituteType != null)
-                        type = typeOptions._substituteType;
+                        substType = typeOptions._substituteType;
                     typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeDeserialize(elem); });
                 }
 
@@ -488,7 +487,7 @@ namespace RT.Util.Serialization
                     Func<object> withDesubstitution = null;
 
                     // Apply de-substitution (if any)
-                    if (originalType != type)
+                    if (declaredType != substType)
                         withDesubstitution = cachify(() => typeOptions._fromSubstitute(withoutDesubstitution()), elem, typeOptions);
 
                     // Remember the result if something else refers to it
@@ -499,7 +498,7 @@ namespace RT.Util.Serialization
                             WithoutDesubstitution = withoutDesubstitution
                         };
 
-                    return originalType != type ? withDesubstitution : withoutDesubstitution;
+                    return declaredType != substType ? withDesubstitution : withoutDesubstitution;
                 });
 
                 if (_format.IsReference(elem))
@@ -510,7 +509,7 @@ namespace RT.Util.Serialization
                         declassifyRememberedObject inf;
                         if (!_rememberD.TryGetValue(refID, out inf))
                             _format.ThrowMissingReferable(refID);
-                        if (type == originalType)
+                        if (declaredType == substType)
                             return inf.WithoutDesubstitution();
                         if (inf.WithDesubstitution == null)
                             inf.WithDesubstitution = cachify(() => typeOptions._fromSubstitute(inf.WithoutDesubstitution()), elem, typeOptions);
@@ -518,21 +517,36 @@ namespace RT.Util.Serialization
                     });
                 }
 
+                var serializedType = substType;
+                bool isFullType;
+                var typeName = _format.GetType(elem, out isFullType);
+                if (typeName != null)
+                {
+                    serializedType = isFullType
+                        ? Type.GetType(typeName)
+                        : Type.GetType(typeName) ?? Type.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName)
+                            ?? declaredType.Assembly.GetType(typeName) ?? declaredType.Assembly.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName)
+                            ?? substType.Assembly.GetType(typeName) ?? substType.Assembly.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName);
+                    if (serializedType == null)
+                        throw new Exception("The type {0} needed for deserialization cannot be found.".Fmt(typeName));
+                }
+                var genericDefinition = serializedType.IsGenericType ? serializedType.GetGenericTypeDefinition() : null;
+
                 if (_format.IsNull(elem))
                     return _ => cleanUp(() => null);
-                else if (typeof(TElement).IsAssignableFrom(type))
+                else if (typeof(TElement).IsAssignableFrom(serializedType))
                     return _ => cleanUp(() => _format.GetSelfValue(elem));
-                else if (_simpleTypes.Contains(type) || ExactConvert.IsSupportedType(type))
-                    return _ => cleanUp(() => ExactConvert.To(type, _format.GetSimpleValue(elem)));
-                else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                else if (_simpleTypes.Contains(serializedType) || ExactConvert.IsSupportedType(serializedType))
+                    return _ => cleanUp(() => ExactConvert.To(serializedType, _format.GetSimpleValue(elem)));
+                else if (serializedType.IsGenericType && serializedType.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    return deserialize(type.GetGenericArguments()[0], elem, already, parentNode, enforceEnums);
+                    return deserialize(serializedType.GetGenericArguments()[0], elem, already, parentNode, enforceEnums);
                 }
-                else if (genericDefinition != null && _tupleTypes.Contains(type.GetGenericTypeDefinition()))
+                else if (genericDefinition != null && _tupleTypes.Contains(serializedType.GetGenericTypeDefinition()))
                 {
                     // It’s a Tuple or KeyValuePair
-                    var genericArguments = type.GetGenericArguments();
+                    var genericArguments = serializedType.GetGenericArguments();
                     var tupleParams = new Func<object>[genericArguments.Length];
                     TElement[] values;
                     if (genericDefinition == typeof(KeyValuePair<,>))
@@ -553,7 +567,7 @@ namespace RT.Util.Serialization
                         while (i < values.Length && values[i] == null);
                         if (i < genericArguments.Length && i < values.Length)
                             return deserialize(genericArguments[i], values[i], null, parentNode, enforceEnums);
-                        var constructor = type.GetConstructor(genericArguments);
+                        var constructor = serializedType.GetConstructor(genericArguments);
                         if (constructor == null)
                             throw new InvalidOperationException("Could not find expected Tuple constructor.");
                         return cleanUp(() => constructor.Invoke(tupleParams.Select(act => act()).ToArray()));
@@ -564,16 +578,16 @@ namespace RT.Util.Serialization
                     // Check if it’s an array, collection or dictionary
                     Type[] typeParameters;
                     Type keyType = null, valueType = null;
-                    if (type.IsArray)
-                        valueType = type.GetElementType();
-                    else if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    if (serializedType.IsArray)
+                        valueType = serializedType.GetElementType();
+                    else if (serializedType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // Dictionaries which are stored specially (key is a simple type).
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
                         keyType = typeParameters[0];
                         valueType = typeParameters[1];
                     }
-                    else if (type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                    else if (serializedType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                         valueType = typeParameters[0];
 
                     if (valueType != null)
@@ -590,7 +604,7 @@ namespace RT.Util.Serialization
                                 typeof(ICollection<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)).GetMethod("Clear").Invoke(outputDict, null);
                             }
                             else
-                                outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type);
+                                outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType);
 
                             outputDict.IfType((IClassifyObjectProcessor<TElement> dict) => { dict.BeforeDeserialize(elem); });
 
@@ -624,11 +638,11 @@ namespace RT.Util.Serialization
                                 return cleanUp(() => outputDict);
                             };
                         }
-                        else if (type.IsArray)
+                        else if (serializedType.IsArray)
                         {
                             var input = _format.GetList(elem, null).ToArray();
-                            var outputArray = (already != null && ((Array) already).GetLength(0) == input.Length) ? already : type.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
-                            var setMethod = type.GetMethod("Set", new Type[] { typeof(int), valueType });
+                            var outputArray = (already != null && ((Array) already).GetLength(0) == input.Length) ? already : serializedType.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
+                            var setMethod = serializedType.GetMethod("Set", new Type[] { typeof(int), valueType });
                             var i = -1;
                             var setters = new Func<object>[input.Length];
                             return prevResult =>
@@ -654,13 +668,13 @@ namespace RT.Util.Serialization
                         {
                             // It’s a list, but not an array or a dictionary.
                             object outputList;
-                            if (already != null && already.GetType() == type)
+                            if (already != null && already.GetType() == serializedType)
                             {
                                 outputList = already;
                                 typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Clear").Invoke(outputList, null);
                             }
                             else
-                                outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : type);
+                                outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType);
 
                             outputList.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
 
@@ -694,42 +708,22 @@ namespace RT.Util.Serialization
 
                         object ret;
 
-                        Type realType = type;
-                        bool isFullType;
-                        var typeName = _format.GetType(elem, out isFullType);
-                        if (typeName != null)
-                        {
-                            if (isFullType)
-                            {
-                                var t = Type.GetType(typeName);
-                                if (t != null)
-                                    realType = t;
-                            }
-                            else
-                            {
-                                realType = Type.GetType(typeName) ??
-                                    type.Assembly.GetTypes().FirstOrDefault(t => !t.IsGenericType && !t.IsNested && ((t.Namespace == type.Namespace && t.Name == typeName) || t.FullName == typeName));
-                                if (realType == null)
-                                    throw new Exception("The type {0} needed for deserialization cannot be found.".Fmt(typeName));
-                            }
-                        }
-
                         try
                         {
-                            if (already != null && already.GetType() == realType)
+                            if (already != null && already.GetType() == serializedType)
                                 ret = already;
                             // Anonymous types
-                            else if (realType.Name.StartsWith("<>f__AnonymousType") && realType.IsGenericType && realType.IsDefined<CompilerGeneratedAttribute>())
+                            else if (serializedType.Name.StartsWith("<>f__AnonymousType") && serializedType.IsGenericType && serializedType.IsDefined<CompilerGeneratedAttribute>())
                             {
-                                var constructor = realType.GetConstructors().First();
+                                var constructor = serializedType.GetConstructors().First();
                                 ret = constructor.Invoke(constructor.GetParameters().Select(p => p.ParameterType.GetDefaultValue()).ToArray());
                             }
                             else
-                                ret = Activator.CreateInstance(realType, true);
+                                ret = Activator.CreateInstance(serializedType, true);
                         }
                         catch (Exception e)
                         {
-                            throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(realType.FullName, e.Message), e);
+                            throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(serializedType.FullName, e.Message), e);
                         }
 
                         var first = true;
@@ -738,7 +732,7 @@ namespace RT.Util.Serialization
                             if (first)
                             {
                                 first = false;
-                                return deserializeIntoObject(elem, ret, realType, parentNode);
+                                return deserializeIntoObject(elem, ret, serializedType, parentNode);
                             }
                             return cleanUp(prevResult);
                         };
@@ -919,7 +913,7 @@ namespace RT.Util.Serialization
                         if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
                         {
                             if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
-                                typeStr = saveType.Namespace.Equals(declaredType.Namespace) ? saveType.Name : saveType.FullName;
+                                typeStr = saveType.Namespace.Equals(declaredType.Namespace) && !saveType.IsArray ? saveType.Name : saveType.FullName;
                             else
                             {
                                 typeStr = saveType.AssemblyQualifiedName;
@@ -1009,7 +1003,7 @@ namespace RT.Util.Serialization
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
-                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    else if (saveType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // It’s a dictionary with a simple-type key.
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -1029,10 +1023,10 @@ namespace RT.Util.Serialization
                         }).ToArray();
                         elem = () => _format.FormatDictionary(kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
                     }
-                    else if (declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || declaredType.IsArray)
+                    else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
                     {
                         // It’s an array or collection
-                        var valueType = declaredType.IsArray ? declaredType.GetElementType() : typeParameters[0];
+                        var valueType = saveType.IsArray ? saveType.GetElementType() : typeParameters[0];
                         var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Serialize(val, valueType)).ToArray();
                         elem = () => _format.FormatList(false, items.Select(item => item()));
                     }
