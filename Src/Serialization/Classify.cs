@@ -558,13 +558,15 @@ namespace RT.Util.Serialization
                     else
                         values = _format.GetList(elem, genericArguments.Length).ToArray();
 
+                    if (genericArguments.Length > values.Length)
+                        throw new InvalidOperationException("While trying to deserialize a tuple with {0} elements, Classify encountered a serialized form with only {1} elements.".Fmt(genericArguments.Length, values.Length));
+
                     int i = -1;
                     return prevResult =>
                     {
                         if (i >= 0)
                             tupleParams[i] = prevResult;
-                        do { i++; }
-                        while (i < values.Length && values[i] == null);
+                        i++;
                         if (i < genericArguments.Length && i < values.Length)
                             return deserialize(genericArguments[i], values[i], null, parentNode, enforceEnums);
                         var constructor = serializedType.GetConstructor(genericArguments);
