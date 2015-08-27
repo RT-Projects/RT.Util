@@ -745,6 +745,8 @@ namespace RT.Util.Consoles
         ///     The current string but with all the colors changed.</returns>
         public ConsoleColoredString Color(ConsoleColor? foreground, ConsoleColor? background)
         {
+            if (foreground == null && background == null)
+                return this;
             var newForeground = new ConsoleColor?[_text.Length];
             var newBackground = new ConsoleColor?[_text.Length];
             if (foreground != null)
@@ -769,6 +771,22 @@ namespace RT.Util.Consoles
             if (background != null)
                 for (int i = 0; i < _text.Length; i++)
                     newBackground[i] = background;
+            return new ConsoleColoredString(_text, _foreground, newBackground);
+        }
+
+        /// <summary>
+        ///     Changes the background colors of every character in the current string to the specified console color only
+        ///     where there isn’t already a background color defined..</summary>
+        /// <param name="background">
+        ///     The background color to set the uncolored characters to, or <c>null</c> to use the console’s default
+        ///     background color.</param>
+        /// <returns>
+        ///     The current string but with the background colors changed.</returns>
+        public ConsoleColoredString ColorBackgroundWhereNull(ConsoleColor background)
+        {
+            var newBackground = new ConsoleColor?[_text.Length];
+            for (int i = 0; i < _text.Length; i++)
+                newBackground[i] = _background[i] ?? background;
             return new ConsoleColoredString(_text, _foreground, newBackground);
         }
 
@@ -983,6 +1001,28 @@ namespace RT.Util.Consoles
                     newText.Add(Substring(index, pos - index));
                 newText.Add(newValue.Color(_foreground[pos], _background[pos]));
                 index = pos + oldValue.Length;
+            }
+        }
+
+        /// <summary>
+        ///     Returns a string in which the coloration of this ConsoleColoredString is represented as user-readable text.</summary>
+        public string ToDebugString
+        {
+            get
+            {
+                var sb = new StringBuilder();
+                ConsoleColor? fg = null, bg = null;
+                for (int i = 0; i < _text.Length; i++)
+                {
+                    if (_foreground[i] != fg || _background[i] != bg)
+                    {
+                        fg = _foreground[i];
+                        bg = _background[i];
+                        sb.Append("<{0}/{1}>".Fmt(fg, bg));
+                    }
+                    sb.Append(_text[i]);
+                }
+                return sb.ToString();
             }
         }
     }

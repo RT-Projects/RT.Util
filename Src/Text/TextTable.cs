@@ -51,9 +51,9 @@ namespace RT.Util.Text
         /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
         /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
         /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
-        public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
+        public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
         }
 
         /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
@@ -65,12 +65,12 @@ namespace RT.Util.Text
         /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
         /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
         /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null)
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
-            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment);
+            setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
         }
 
-        private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment)
+        private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment, ConsoleColor? background = null)
         {
             if (col < 0)
                 throw new ArgumentOutOfRangeException("col", col, @"""col"" cannot be negative.");
@@ -92,7 +92,7 @@ namespace RT.Util.Text
                         {
                             var sur = (surrogateCell) _cells[row][col];
                             var real = (trueCell) _cells[sur.RealRow][sur.RealCol];
-                            throw new InvalidOperationException(@"The cell at row {0}, column {1} is already occupied because the cell at row {2}, column {3} has rowspan {4} and colspan {5}.".Fmt(row, col, sur.RealRow, sur.RealCol, real.RowSpan, real.ColSpan));
+                            throw new InvalidOperationException(@"The cell at column {0}, row {1} is already occupied because the cell at column {2}, row {3} has colspan {4} and rowspan {5}.".Fmt(col, row, sur.RealCol, sur.RealRow, real.ColSpan, real.RowSpan));
                         }
             }
 
@@ -114,7 +114,8 @@ namespace RT.Util.Text
                 RowSpan = rowSpan,
                 Value = content,
                 NoWrap = noWrap,
-                Alignment = alignment
+                Alignment = alignment,
+                Background = background
             };
 
             // For cells with span, insert the appropriate surrogate cells.
@@ -264,12 +265,12 @@ namespace RT.Util.Text
             bool verticalRules = VerticalRules && ColumnSpacing > 0;
             bool horizontalRules = HorizontalRules && RowSpacing > 0;
 
-            // If we do render vertical rules, where (at which string offset) within the column spacing should it be
-            var vertRuleOffset = 1 + (ColumnSpacing - 1) / 2;
+            // If we do render vertical rules, where should it be (at which string offset, counted backwards from the end of the column spacing)
+            var vertRuleOffset = (ColumnSpacing + 1) / 2;
 
             // Finally, render the entire output
             List<ConsoleColoredString> currentLine = null;
-            for (int row = 0; row < _cells.Count; row++)
+            for (int row = 0; row < rows; row++)
             {
                 var rowList = _cells[row];
                 var extraRows = RowSpacing + 1;
@@ -292,38 +293,54 @@ namespace RT.Util.Text
                         var valueRow = cel is surrogateCell ? ((surrogateCell) cel).RealRow : row;
 
                         // Retrieve the data for the cell
-                        var realCell = (trueCell) (col < _cells[valueRow].Count ? _cells[valueRow][col] : null);
+                        var realCell = col < _cells[valueRow].Count ? (trueCell) _cells[valueRow][col] : null;
                         var colspan = realCell == null ? 1 : realCell.ColSpan;
                         var rowspan = realCell == null ? 1 : realCell.RowSpan;
+                        var rowBackground = row >= _rowBackgrounds.Count ? null : _rowBackgrounds[row];
 
                         // Does this cell end in this row?
-                        var isLastRow = valueRow + rowspan == row + 1;
-
-                        // If we are going to render a horizontal rule, where does it start and end?
-                        var horizRuleStart = col > 0 ? strIndexByCol[col] - vertRuleOffset + 1 : 0;
-                        var horizRuleEnd = (col + colspan < cols) ? strIndexByCol[col + colspan] - vertRuleOffset + (verticalRules ? 0 : 1) : realWidth;
+                        var isLastRow = valueRow + rowspan - 1 == row;
 
                         // If we are inside the cell, render one line of the contents of the cell
                         if (realCell != null && realCell.WordwrappedValue.Length > realCell.WordwrappedIndex)
                         {
                             var align = realCell.Alignment ?? DefaultAlignment;
-                            int spaces = strIndexByCol[col] - currentLine.Sum(c => c.Length);
+                            var curLineLength = currentLine.Sum(c => c.Length);
+                            var cellBackground = realCell.Background ?? rowBackground;
+                            if (strIndexByCol[col] > curLineLength)
+                                currentLine.Add(new string(' ', strIndexByCol[col] - curLineLength).Color(null, cellBackground));
                             object textRaw = realCell.WordwrappedValue[realCell.WordwrappedIndex];
                             ConsoleColoredString text = textRaw is ConsoleColoredString ? (ConsoleColoredString) textRaw : (string) textRaw;  // implicit conversion to ConsoleColoredString
                             if (align == Alignment.Center)
-                                spaces += (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2;
+                                currentLine.Add(new string(' ', (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2).Color(null, cellBackground));
                             else if (align == Alignment.Right)
-                                spaces += strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length;
-                            currentLine.Add(new string(' ', spaces));
-                            currentLine.Add(text);
+                                currentLine.Add(new string(' ', strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length).Color(null, cellBackground));
+                            if (cellBackground == null)
+                                currentLine.Add(text);
+                            else
+                            {
+                                currentLine.Add(text.ColorBackgroundWhereNull(cellBackground.Value));
+                                if (align == Alignment.Center)
+                                    currentLine.Add(new string(' ', (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length + 1) / 2).Color(null, cellBackground));
+                                else if (align == Alignment.Left)
+                                    currentLine.Add(new string(' ', strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length).Color(null, cellBackground));
+                            }
                             realCell.WordwrappedIndex++;
                         }
 
                         // If we are at the end of a row, render horizontal rules
-                        if (horizontalRules && isLastRow && extraRows == 1)
+                        var horizRuleStart = col > 0 ? strIndexByCol[col] - vertRuleOffset + 1 : 0;
+                        var horizRuleEnd = (col + colspan < cols) ? strIndexByCol[col + colspan] - vertRuleOffset + (verticalRules ? 0 : 1) : realWidth;
+                        var renderingHorizontalRules = horizontalRules && isLastRow && extraRows == 1;
+                        if (renderingHorizontalRules)
                         {
                             currentLine.Add(new string(' ', horizRuleStart - currentLine.Sum(c => c.Length)));
                             currentLine.Add(new string((row == HeaderRows - 1) ? '=' : '-', horizRuleEnd - horizRuleStart));
+                        }
+                        else
+                        {
+                            var subtract = (col + colspan == cols ? ColumnSpacing : vertRuleOffset) + currentLine.Sum(c => c.Length);
+                            currentLine.Add(new string(' ', strIndexByCol[col + colspan] - subtract).Color(null, (realCell == null ? null : realCell.Background) ?? rowBackground));
                         }
 
                         // If we are at the beginning of a row, render the horizontal rules for the row above by modifying the previous line.
@@ -334,10 +351,7 @@ namespace RT.Util.Text
 
                         // Render vertical rules
                         if (verticalRules && (col + colspan < cols))
-                        {
-                            currentLine.Add(new string(' ', strIndexByCol[col + colspan] - vertRuleOffset - currentLine.Sum(c => c.Length)));
-                            currentLine.Add("|");
-                        }
+                            currentLine.Add((new string(' ', strIndexByCol[col + colspan] - vertRuleOffset - currentLine.Sum(c => c.Length)) + "|").Color(null, renderingHorizontalRules ? null : rowBackground));
 
                         // Does this cell still contain any more content that needs to be output before this row can be finished?
                         anyMoreContentInThisRow = anyMoreContentInThisRow || (realCell != null && isLastRow && realCell.WordwrappedValue.Length > realCell.WordwrappedIndex);
@@ -380,6 +394,7 @@ namespace RT.Util.Text
             public int WordwrappedIndex, ColSpan, RowSpan;
             public bool NoWrap;
             public Alignment? Alignment; // if null, use TextTable.DefaultAlignment
+            public ConsoleColor? Background;
             public override string ToString() { return Value.ToString(); }
 
             private int? _cachedLongestWord = null;
@@ -415,6 +430,16 @@ namespace RT.Util.Text
             }
         }
         private List<List<cell>> _cells = new List<List<cell>>();
+
+        private List<ConsoleColor?> _rowBackgrounds = new List<ConsoleColor?>();
+        public void SetRowBackground(int row, ConsoleColor? backgroundColor)
+        {
+            if (row < 0)
+                throw new ArgumentOutOfRangeException("row", row, @"""row"" cannot be negative.");
+            while (row >= _rowBackgrounds.Count)
+                _rowBackgrounds.Add(null);
+            _rowBackgrounds[row] = backgroundColor;
+        }
 
         private void ensureCell(int col, int row)
         {
