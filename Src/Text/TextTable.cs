@@ -7,9 +7,7 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Text
 {
-    /// <summary>
-    /// Produces a table in a fixed-width character environment.
-    /// </summary>
+    /// <summary>Produces a table in a fixed-width character environment.</summary>
     public sealed class TextTable
     {
         /// <summary>Provides values to change the horizontal alignment of text within cells.</summary>
@@ -27,44 +25,78 @@ namespace RT.Util.Text
         public int ColumnSpacing { get; set; }
         /// <summary>Gets or sets the number of characters to space each row apart from the next.</summary>
         public int RowSpacing { get; set; }
-        /// <summary>Gets or sets the maximum width of the table, including all column spacing. If <see cref="UseFullWidth"/> is false, the table may be narrower. If this is null, the table width depends on which method is used to generate it.</summary>
+        /// <summary>
+        ///     Gets or sets the maximum width of the table, including all column spacing. If <see cref="UseFullWidth"/> is
+        ///     false, the table may be narrower. If this is null, the table width depends on which method is used to generate
+        ///     it.</summary>
         public int? MaxWidth { get; set; }
-        /// <summary>Gets or sets a value indicating whether horizontal rules are rendered between rows. The horizontal rules are rendered only if <see cref="RowSpacing"/> is greater than zero.</summary>
+        /// <summary>
+        ///     Gets or sets a value indicating whether horizontal rules are rendered between rows. The horizontal rules are
+        ///     rendered only if <see cref="RowSpacing"/> is greater than zero.</summary>
         public bool HorizontalRules { get; set; }
-        /// <summary>Gets or sets a value indicating whether vertical rules are rendered between columns. The vertical rules are rendered only if <see cref="ColumnSpacing"/> is greater than zero.</summary>
+        /// <summary>
+        ///     Gets or sets a value indicating whether vertical rules are rendered between columns. The vertical rules are
+        ///     rendered only if <see cref="ColumnSpacing"/> is greater than zero.</summary>
         public bool VerticalRules { get; set; }
-        /// <summary>Gets or sets a value indicating the number of rows from the top that are considered table headers. The only effect of this is that the horizontal rule (if any) after the header rows is rendered using '=' characters instead of '-'.</summary>
+        /// <summary>
+        ///     Gets or sets a value indicating the number of rows from the top that are considered table headers. The only
+        ///     effect of this is that the horizontal rule (if any) after the header rows is rendered using '=' characters
+        ///     instead of '-'.</summary>
         public int HeaderRows { get; set; }
-        /// <summary>If true, the table will be expanded to fill the <see cref="MaxWidth"/>. If false, the table will fill the whole width only if any cells need to be word-wrapped.</summary>
+        /// <summary>
+        ///     If true, the table will be expanded to fill the <see cref="MaxWidth"/>. If false, the table will fill the
+        ///     whole width only if any cells need to be word-wrapped.</summary>
         public bool UseFullWidth { get; set; }
-        /// <summary>Specifies the default alignment to use for cells where the alignment is not explicitly set. Default is <see cref="Alignment.Left"/>.</summary>
+        /// <summary>
+        ///     Specifies the default alignment to use for cells where the alignment is not explicitly set. Default is <see
+        ///     cref="Alignment.Left"/>.</summary>
         public Alignment DefaultAlignment { get; set; }
-        /// <summary>Gets or sets a value indicating the number of spaces to add left of the table. This does not count towards the <see cref="MaxWidth"/>.</summary>
+        /// <summary>
+        ///     Gets or sets a value indicating the number of spaces to add left of the table. This does not count towards the
+        ///     <see cref="MaxWidth"/>.</summary>
         public int LeftMargin { get; set; }
 
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span.</param>
-        /// <param name="rowSpan">The number of rows to span.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        /// <summary>
+        ///     Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">
+        ///     Column where to place the content.</param>
+        /// <param name="row">
+        ///     Row where to place the content.</param>
+        /// <param name="content">
+        ///     The content to place.</param>
+        /// <param name="colSpan">
+        ///     The number of columns to span.</param>
+        /// <param name="rowSpan">
+        ///     The number of rows to span.</param>
+        /// <param name="noWrap">
+        ///     If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in
+        ///     <paramref name="content"/>. The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells
+        ///     into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">
+        ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
         public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
         }
 
-        /// <summary>Places the specified content into the cell at the specified co-ordinates.</summary>
-        /// <param name="col">Column where to place the content.</param>
-        /// <param name="row">Row where to place the content.</param>
-        /// <param name="content">The content to place.</param>
-        /// <param name="colSpan">The number of columns to span.</param>
-        /// <param name="rowSpan">The number of rows to span.</param>
-        /// <param name="noWrap">If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in <paramref name="content"/>. 
-        /// The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
-        /// <param name="alignment">How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        /// <summary>
+        ///     Places the specified content into the cell at the specified co-ordinates.</summary>
+        /// <param name="col">
+        ///     Column where to place the content.</param>
+        /// <param name="row">
+        ///     Row where to place the content.</param>
+        /// <param name="content">
+        ///     The content to place.</param>
+        /// <param name="colSpan">
+        ///     The number of columns to span.</param>
+        /// <param name="rowSpan">
+        ///     The number of rows to span.</param>
+        /// <param name="noWrap">
+        ///     If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in
+        ///     <paramref name="content"/>. The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells
+        ///     into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">
+        ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
         public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
@@ -127,8 +159,10 @@ namespace RT.Util.Text
                 }
         }
 
-        /// <summary>Generates the table.</summary>
-        /// <returns>The complete rendered table as a single string.</returns>
+        /// <summary>
+        ///     Generates the table.</summary>
+        /// <returns>
+        ///     The complete rendered table as a single string.</returns>
         public override string ToString()
         {
             var result = new StringBuilder();
@@ -136,8 +170,10 @@ namespace RT.Util.Text
             return result.ToString();
         }
 
-        /// <summary>Generates the table.</summary>
-        /// <returns>The complete rendered table as a single <see cref="ConsoleColoredString"/>.</returns>
+        /// <summary>
+        ///     Generates the table.</summary>
+        /// <returns>
+        ///     The complete rendered table as a single <see cref="ConsoleColoredString"/>.</returns>
         public ConsoleColoredString ToColoredString()
         {
             var result = new List<ConsoleColoredString>();
@@ -532,8 +568,10 @@ namespace RT.Util.Text
             }
         }
 
-        /// <summary>Adds a new row to the end of the table, using default cell settings for each cell.</summary>
-        /// <param name="values">Values to add, one for each column.</param>
+        /// <summary>
+        ///     Adds a new row to the end of the table, using default cell settings for each cell.</summary>
+        /// <param name="values">
+        ///     Values to add, one for each column.</param>
         public void AddRow(params string[] values)
         {
             var row = _cells.Count;
@@ -541,8 +579,10 @@ namespace RT.Util.Text
                 SetCell(col, row, values[col]);
         }
 
-        /// <summary>Adds a new row to the end of the table, using default cell settings for each cell.</summary>
-        /// <param name="values">Values to add, one for each column.</param>
+        /// <summary>
+        ///     Adds a new row to the end of the table, using default cell settings for each cell.</summary>
+        /// <param name="values">
+        ///     Values to add, one for each column.</param>
         public void AddRow(params ConsoleColoredString[] values)
         {
             var row = _cells.Count;
