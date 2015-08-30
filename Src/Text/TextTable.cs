@@ -74,6 +74,8 @@ namespace RT.Util.Text
         ///     into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
         /// <param name="alignment">
         ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        /// <param name="background">
+        ///     Specifies a background color for the whole cell.</param>
         public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
@@ -97,6 +99,9 @@ namespace RT.Util.Text
         ///     into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
         /// <param name="alignment">
         ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        /// <param name="background">
+        ///     Specifies a background color for the whole cell, including its empty space. Characters with background colors
+        ///     in the input string take precedence for those characters only.</param>
         public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
@@ -267,7 +272,7 @@ namespace RT.Util.Text
                 var fractionalParts = new double[cols];
                 for (int col = 0; col < cols; col++)
                 {
-                    var widthToAdd = (float) (widthProportionByCol[col] * missingTotalWidth) / widthProportionTotal;
+                    var widthToAdd = (double) (widthProportionByCol[col] * missingTotalWidth) / widthProportionTotal;
                     var integerPart = (int) widthToAdd;
                     columnWidths[col] += integerPart;
                     fractionalParts[col] = widthToAdd - integerPart;
@@ -465,9 +470,19 @@ namespace RT.Util.Text
                 WordwrappedIndex = 0;
             }
         }
-        private List<List<cell>> _cells = new List<List<cell>>();
 
+        private List<List<cell>> _cells = new List<List<cell>>();
         private List<ConsoleColor?> _rowBackgrounds = new List<ConsoleColor?>();
+
+        /// <summary>
+        ///     Sets a background color for an entire row within the table, including the vertical rules if <see
+        ///     cref="VerticalRules"/> is <c>true</c>. Background colors for individual cells take precedence within the
+        ///     bounds of that cell. Background colors in the input string take precendence for those characters.</summary>
+        /// <param name="row">
+        ///     The index of the row. If during rendering the table turns out to have fewer rows, the background color is
+        ///     ignored.</param>
+        /// <param name="backgroundColor">
+        ///     The background color to set the row to, or <c>null</c> to reset the color.</param>
         public void SetRowBackground(int row, ConsoleColor? backgroundColor)
         {
             if (row < 0)
