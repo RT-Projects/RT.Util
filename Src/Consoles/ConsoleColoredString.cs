@@ -12,7 +12,8 @@ namespace RT.Util.Consoles
     ///     <list type="bullet">
     ///         <item><description>
     ///             Use <see cref="ConsoleUtil.Write(ConsoleColoredString,bool)"/> and <see
-    ///             cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool)"/> to output the string to the console.</description></item>
+    ///             cref="ConsoleUtil.WriteLine(ConsoleColoredString,bool,RT.Util.Text.HorizontalTextAlignment)"/> to output
+    ///             the string to the console.</description></item>
     ///         <item><description>
     ///             Each character has two optional <see cref="ConsoleColor"/> values associated with it, one indicating the
     ///             foreground color and one the background color. Those characters whose color is <c>null</c> are printed in
@@ -417,10 +418,9 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>Outputs the current <see cref="ConsoleColoredString"/> to the console.</summary>
-        internal void writeToConsole(bool stdErr = false)
+        internal void writeTo(System.IO.TextWriter writer)
         {
             int index = 0;
-            var console = stdErr ? Console.Error : Console.Out;
             Console.ResetColor();
             var defaultFc = Console.ForegroundColor;
             var defaultBc = Console.BackgroundColor;
@@ -433,7 +433,7 @@ namespace RT.Util.Consoles
                 do
                     index++;
                 while (index < _text.Length && _foreground[index] == fc && _background[index] == bc);
-                console.Write(_text.Substring(origIndex, index - origIndex));
+                writer.Write(_text.Substring(origIndex, index - origIndex));
             }
             Console.ResetColor();
         }

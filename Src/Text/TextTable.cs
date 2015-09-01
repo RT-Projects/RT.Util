@@ -10,17 +10,6 @@ namespace RT.Util.Text
     /// <summary>Produces a table in a fixed-width character environment.</summary>
     public sealed class TextTable
     {
-        /// <summary>Provides values to change the horizontal alignment of text within cells.</summary>
-        public enum Alignment
-        {
-            /// <summary>Specifies alignment to the left edge of each cell.</summary>
-            Left,
-            /// <summary>Specifies horizontally centered alignment.</summary>
-            Center,
-            /// <summary>Specifies alignment to the right edge of each cell.</summary>
-            Right
-        };
-
         /// <summary>Gets or sets the number of characters to space each column apart from the next.</summary>
         public int ColumnSpacing { get; set; }
         /// <summary>Gets or sets the number of characters to space each row apart from the next.</summary>
@@ -49,8 +38,8 @@ namespace RT.Util.Text
         public bool UseFullWidth { get; set; }
         /// <summary>
         ///     Specifies the default alignment to use for cells where the alignment is not explicitly set. Default is <see
-        ///     cref="Alignment.Left"/>.</summary>
-        public Alignment DefaultAlignment { get; set; }
+        ///     cref="HorizontalTextAlignment.Left"/>.</summary>
+        public HorizontalTextAlignment DefaultAlignment { get; set; }
         /// <summary>
         ///     Gets or sets a value indicating the number of spaces to add left of the table. This does not count towards the
         ///     <see cref="MaxWidth"/>.</summary>
@@ -76,7 +65,7 @@ namespace RT.Util.Text
         ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
         /// <param name="background">
         ///     Specifies a background color for the whole cell.</param>
-        public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
+        public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
         }
@@ -102,12 +91,12 @@ namespace RT.Util.Text
         /// <param name="background">
         ///     Specifies a background color for the whole cell, including its empty space. Characters with background colors
         ///     in the input string take precedence for those characters only.</param>
-        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, Alignment? alignment = null, ConsoleColor? background = null)
+        public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null)
         {
             setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
         }
 
-        private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, Alignment? alignment, ConsoleColor? background = null)
+        private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, HorizontalTextAlignment? alignment, ConsoleColor? background = null)
         {
             if (col < 0)
                 throw new ArgumentOutOfRangeException("col", col, @"""col"" cannot be negative.");
@@ -352,18 +341,18 @@ namespace RT.Util.Text
                                 currentLine.Add(new string(' ', strIndexByCol[col] - curLineLength).Color(null, cellBackground));
                             object textRaw = realCell.WordwrappedValue[realCell.WordwrappedIndex];
                             ConsoleColoredString text = textRaw is ConsoleColoredString ? (ConsoleColoredString) textRaw : (string) textRaw;  // implicit conversion to ConsoleColoredString
-                            if (align == Alignment.Center)
+                            if (align == HorizontalTextAlignment.Center)
                                 currentLine.Add(new string(' ', (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2).Color(null, cellBackground));
-                            else if (align == Alignment.Right)
+                            else if (align == HorizontalTextAlignment.Right)
                                 currentLine.Add(new string(' ', strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length).Color(null, cellBackground));
                             if (cellBackground == null)
                                 currentLine.Add(text);
                             else
                             {
                                 currentLine.Add(text.ColorBackgroundWhereNull(cellBackground.Value));
-                                if (align == Alignment.Center)
+                                if (align == HorizontalTextAlignment.Center)
                                     currentLine.Add(new string(' ', (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length + 1) / 2).Color(null, cellBackground));
-                                else if (align == Alignment.Left)
+                                else if (align == HorizontalTextAlignment.Left)
                                     currentLine.Add(new string(' ', strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length).Color(null, cellBackground));
                             }
                             realCell.WordwrappedIndex++;
@@ -434,7 +423,7 @@ namespace RT.Util.Text
             public object[] WordwrappedValue;    // either string[] or ConsoleColoredString[]
             public int WordwrappedIndex, ColSpan, RowSpan;
             public bool NoWrap;
-            public Alignment? Alignment; // if null, use TextTable.DefaultAlignment
+            public HorizontalTextAlignment? Alignment; // if null, use TextTable.DefaultAlignment
             public ConsoleColor? Background;
             public override string ToString() { return Value.ToString(); }
 

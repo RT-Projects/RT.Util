@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
+using RT.Util.Text;
 
 namespace RT.Util.Consoles
 {
@@ -172,15 +171,31 @@ namespace RT.Util.Consoles
         public static void Write(ConsoleColoredString value, bool stdErr = false)
         {
             if (value != null)
-                value.writeToConsole(stdErr);
+                value.writeTo(stdErr ? Console.Error : Console.Out);
         }
 
-        /// <summary>Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
-        public static void WriteLine(ConsoleColoredString value, bool stdErr = false)
+        /// <summary>
+        ///     Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
+        /// <param name="value">
+        ///     The string to print to the console.</param>
+        /// <param name="stdErr">
+        ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+        /// <param name="align">
+        ///     Horizontal alignment of the string within the remaining space of the current line. If the string does not fit,
+        ///     it will be printed as if left-aligned.</param>
+        public static void WriteLine(ConsoleColoredString value, bool stdErr = false, HorizontalTextAlignment align = HorizontalTextAlignment.Left)
         {
+            var output = stdErr ? Console.Error : Console.Out;
             if (value != null)
-                value.writeToConsole(stdErr);
-            (stdErr ? Console.Error : Console.Out).WriteLine();
+            {
+                var width = WrapToWidth() - Console.CursorLeft;
+                if (align == HorizontalTextAlignment.Center && width > value.Length)
+                    output.Write(new string(' ', (width - value.Length) / 2));
+                else if (align == HorizontalTextAlignment.Right && width > value.Length)
+                    output.Write(new string(' ', width - value.Length));
+                value.writeTo(output);
+            }
+            output.WriteLine();
         }
 
         /// <summary>

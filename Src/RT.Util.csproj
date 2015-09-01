@@ -200,6 +200,7 @@
     <Compile Include="Streams\HashingStream.cs" />
     <Compile Include="Streams\NewlineNormalizerStream.cs" />
     <Compile Include="Streams\TimeoutableStream.cs" />
+    <Compile Include="Text\Alignment.cs" />
     <Compile Include="Text\OffsetToLineCol.cs" />
     <Compile Include="Threading\Periodic.cs" />
     <Compile Include="Threading\RateLimitedAction.cs" />
