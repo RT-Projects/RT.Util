@@ -629,8 +629,12 @@ namespace RT.Util.Consoles
                             {
                                 if (foregroundStr != null)
                                     result = result.Color(foregroundStr == "" ? (ConsoleColor?) null : foreground);
+                                else if (implicitForeground != null)
+                                    result = result.ColorWhereNull(implicitForeground.Value);
                                 if (backgroundStr != null)
                                     result = result.ColorBackground(backgroundStr == "" ? (ConsoleColor?) null : background);
+                                else if (implicitBackground != null)
+                                    result = result.ColorBackgroundWhereNull(implicitBackground.Value);
                             }
                             // ... otherwise use IFormattable and/or the custom formatter (and then color the result of that, if specified).
                             else
@@ -745,8 +749,6 @@ namespace RT.Util.Consoles
         ///     The current string but with all the colors changed.</returns>
         public ConsoleColoredString Color(ConsoleColor? foreground, ConsoleColor? background)
         {
-            if (foreground == null && background == null)
-                return this;
             var newForeground = new ConsoleColor?[_text.Length];
             var newBackground = new ConsoleColor?[_text.Length];
             if (foreground != null)
@@ -755,6 +757,35 @@ namespace RT.Util.Consoles
             if (background != null)
                 for (int i = 0; i < _text.Length; i++)
                     newBackground[i] = background;
+            return new ConsoleColoredString(_text, newForeground, newBackground);
+        }
+
+        /// <summary>
+        ///     Changes the colors of every character in the current string to the specified console color only where there
+        ///     isn’t already a color defined.</summary>
+        /// <param name="foreground">
+        ///     The foreground color to set the uncolored characters to, or <c>null</c> to use the console’s default
+        ///     foreground color.</param>
+        /// <param name="background">
+        ///     The background color to set the uncolored characters to, or <c>null</c> to use the console’s default
+        ///     background color.</param>
+        /// <returns>
+        ///     The current string but with the colors changed.</returns>
+        public ConsoleColoredString ColorWhereNull(ConsoleColor foreground, ConsoleColor? background = null)
+        {
+            var newForeground = new ConsoleColor?[_text.Length];
+            var newBackground = _background;
+
+            for (int i = 0; i < _text.Length; i++)
+                newForeground[i] = _foreground[i] ?? foreground;
+
+            if (background != null)
+            {
+                newBackground = new ConsoleColor?[_text.Length];
+                for (int i = 0; i < _text.Length; i++)
+                    newBackground[i] = _background[i] ?? background;
+            }
+
             return new ConsoleColoredString(_text, newForeground, newBackground);
         }
 
@@ -776,7 +807,7 @@ namespace RT.Util.Consoles
 
         /// <summary>
         ///     Changes the background colors of every character in the current string to the specified console color only
-        ///     where there isn’t already a background color defined..</summary>
+        ///     where there isn’t already a background color defined.</summary>
         /// <param name="background">
         ///     The background color to set the uncolored characters to, or <c>null</c> to use the console’s default
         ///     background color.</param>
