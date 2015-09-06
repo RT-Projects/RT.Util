@@ -241,7 +241,7 @@ namespace RT.Util
 
             _startInfo = new ProcessStartInfo();
             _startInfo.FileName = @"cmd.exe";
-            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command) + @">{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
+            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command) + @" 1>{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
             _startInfo.WorkingDirectory = WorkingDirectory;
             foreach (var kvp in EnvironmentVariables)
                 _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
