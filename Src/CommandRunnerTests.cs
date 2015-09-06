@@ -79,9 +79,8 @@ namespace RT.Util
             // Test that we do in fact get them back as-is.
             var naivelyJoinedArgs = args.JoinString(" ");
             var echo = CommandRunner.RunRaw(@"echo " + naivelyJoinedArgs).GoGetOutputText();
-            if (echo.EndsWith("\r\n")) echo = echo.Substring(0, echo.Length - 2);
             if (naivelyJoinedArgs.Trim() != "") // else it says "echo is on"
-                Assert.AreEqual(naivelyJoinedArgs, echo);
+                Assert.AreEqual(naivelyJoinedArgs + " \r\n", echo);
         }
 
         private static string[] NativeSplit(string commandline)
