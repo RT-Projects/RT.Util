@@ -80,7 +80,7 @@ namespace RT.Util
             var naivelyJoinedArgs = args.JoinString(" ");
             var echo = CommandRunner.RunRaw(@"echo " + naivelyJoinedArgs).GoGetOutputText();
             if (naivelyJoinedArgs.Trim() != "") // else it says "echo is on"
-                Assert.AreEqual(naivelyJoinedArgs + " \r\n", echo);
+                Assert.AreEqual(naivelyJoinedArgs + "\r\n", echo);
         }
 
         private static string[] NativeSplit(string commandline)

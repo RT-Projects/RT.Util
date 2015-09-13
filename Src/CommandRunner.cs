@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -27,10 +28,7 @@ namespace RT.Util
     {
         private Process _process;
         private ProcessStartInfo _startInfo;
-        private string _tempStdout, _tempStderr;
-        private Stream _streamStdout, _streamStderr;
-        private Decoder _utf8Stdout, _utf8Stderr;
-        private Thread _thread;
+        private reader _stdoutReader, _stderrReader;
         private ManualResetEventSlim _started = new ManualResetEventSlim();
         private ManualResetEventSlim _ended = new ManualResetEventSlim();
         private Timer _pauseTimer;
@@ -236,18 +234,15 @@ namespace RT.Util
                 throw new InvalidOperationException("This command has already been started, and cannot be started again.");
             State = CommandRunnerState.Started;
 
-            _tempStdout = Path.GetTempFileName();
-            _tempStderr = Path.GetTempFileName();
-
             _startInfo = new ProcessStartInfo();
             _startInfo.FileName = @"cmd.exe";
-            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command) + @" 1>{0} 2>{1}".Fmt(_tempStdout, _tempStderr);
+            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command);
             _startInfo.WorkingDirectory = WorkingDirectory;
             foreach (var kvp in EnvironmentVariables)
                 _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
             _startInfo.RedirectStandardInput = false;
-            _startInfo.RedirectStandardOutput = false;
-            _startInfo.RedirectStandardError = false;
+            _startInfo.RedirectStandardOutput = true;
+            _startInfo.RedirectStandardError = true;
             _startInfo.CreateNoWindow = true;
             _startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _startInfo.UseShellExecute = false;
@@ -260,8 +255,49 @@ namespace RT.Util
                 _startInfo.Password = RunAsUser.Password;
             }
 
-            _thread = new Thread(thread);
-            _thread.Start();
+            _process = new Process();
+            _process.EnableRaisingEvents = true;
+            _process.StartInfo = _startInfo;
+            _process.Exited += processExited;
+            _process.Start();
+            _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);
+            _stderrReader = new reader(StderrData, StderrText, CaptureEntireStderr);
+            Thread.Sleep(50);
+            _started.Set(); // the main purpose of _started is to make Pause reliable when executed immediately after Start.
+
+            _stdoutReader.ReadBegin(_process.StandardOutput.BaseStream);
+            _stderrReader.ReadBegin(_process.StandardError.BaseStream);
+        }
+
+        private void processExited(object sender, EventArgs e)
+        {
+            Ut.Assert(_process.HasExited);
+            while (!_stdoutReader.Ended || !_stderrReader.Ended)
+                Thread.Sleep(20);
+            Ut.Assert(_stdoutReader.Ended);
+            Ut.Assert(_stderrReader.Ended);
+            if (_captureEntireStdout)
+                _entireStdout = _stdoutReader.GetEntireOutput();
+            if (_captureEntireStderr)
+                _entireStderr = _stderrReader.GetEntireOutput();
+
+            lock (_lock)
+            {
+                _pauseTimerDue = null;
+                if (_pauseTimer != null)
+                    _pauseTimer.Dispose();
+            }
+            _exitCode = _process.ExitCode;
+            if (State != CommandRunnerState.Aborted)
+                State = CommandRunnerState.Exited;
+
+            _startInfo = null;
+            _process.Exited -= processExited;
+            _process = null;
+
+            if (CommandEnded != null)
+                CommandEnded();
+            _ended.Set();
         }
 
         /// <summary>Starts the command with all the settings as configured. Does not return until the command exits.</summary>
@@ -353,91 +389,96 @@ namespace RT.Util
             return result.ToString();
         }
 
-        private void thread()
+        private class reader
         {
-            // There's no indication that Process members are thread-safe, so use it on this thread exclusively.
-            _process = new Process();
-            _process.EnableRaisingEvents = true;
-            _process.StartInfo = _startInfo;
-            _process.Start();
-            _utf8Stdout = Encoding.UTF8.GetDecoder();
-            _utf8Stderr = Encoding.UTF8.GetDecoder();
-            Thread.Sleep(50);
-            _started.Set(); // the main purpose of _started is to make Pause reliable when executed immediately after Start.
+            public bool Ended { get; private set; }
 
-            while (!_process.HasExited)
+            private List<chunk> _chunks = new List<chunk>();
+            private Decoder _decoder = Encoding.UTF8.GetDecoder();
+            private Action<byte[]> _dataEvent;
+            private Action<string> _textEvent;
+            private bool _captureEntire;
+
+            private class chunk
             {
-                checkOutputs();
-                Thread.Sleep(50);
-            }
-            checkOutputs();
-
-            if (_captureEntireStdout)
-                _entireStdout = File.ReadAllBytes(_tempStdout);
-            if (_captureEntireStderr)
-                _entireStderr = File.ReadAllBytes(_tempStderr);
-
-            lock (_lock)
-            {
-                _pauseTimerDue = null;
-                if (_pauseTimer != null)
-                    _pauseTimer.Dispose();
-            }
-            _exitCode = _process.ExitCode;
-            if (State != CommandRunnerState.Aborted)
-                State = CommandRunnerState.Exited;
-
-            if (_streamStdout != null)
-                _streamStdout.Dispose();
-            if (_streamStderr != null)
-                _streamStderr.Dispose();
-            Ut.OnExceptionRetryThenIgnore(() => { File.Delete(_tempStdout); }, delayMs: 1000);
-            Ut.OnExceptionRetryThenIgnore(() => { File.Delete(_tempStderr); }, delayMs: 1000);
-            _startInfo = null;
-            _tempStdout = _tempStderr = null;
-            _streamStdout = _streamStderr = null;
-            _utf8Stdout = _utf8Stderr = null;
-            _process = null;
-            _thread = null;
-
-            if (CommandEnded != null)
-                CommandEnded();
-            _ended.Set();
-        }
-
-        private void checkOutputs()
-        {
-            checkOutput(_tempStdout, ref _streamStdout, _utf8Stdout, StdoutData, StdoutText);
-            checkOutput(_tempStderr, ref _streamStderr, _utf8Stderr, StderrData, StderrText);
-        }
-
-        private void checkOutput(string filename, ref Stream stream, Decoder utf8, Action<byte[]> dataEvent, Action<string> textEvent)
-        {
-            if (dataEvent == null && textEvent == null)
-                return;
-
-            if (stream == null)
-            {
-                try { stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite); }
-                catch { }
+                public byte[] Data = new byte[32768];
+                public int Length = 0;
             }
 
-            if (stream != null)
+            public reader(Action<byte[]> dataEvent, Action<string> textEvent, bool captureEntire)
             {
-                var newBytes = stream.ReadAllBytes();
-                if (newBytes.Length > 0)
+                _dataEvent = dataEvent;
+                _textEvent = textEvent;
+                _captureEntire = captureEntire;
+            }
+
+            public void ReadBegin(Stream stream)
+            {
+                if (_chunks.Count == 0)
+                    _chunks.Add(new chunk());
+                var chunk = _chunks[_chunks.Count - 1];
+                if (chunk.Data.Length - chunk.Length < 1000)
                 {
-                    if (dataEvent != null)
-                        dataEvent(newBytes);
-                    if (textEvent != null)
+                    if (_captureEntire)
                     {
-                        var count = utf8.GetCharCount(newBytes, 0, newBytes.Length);
-                        char[] buffer = new char[count];
-                        int charsObtained = utf8.GetChars(newBytes, 0, newBytes.Length, buffer, 0);
-                        if (charsObtained > 0)
-                            textEvent(new string(buffer));
+                        chunk = new chunk();
+                        _chunks.Add(chunk);
+                    }
+                    else
+                        chunk.Length = 0;
+                }
+                stream.BeginRead(chunk.Data, chunk.Length, chunk.Data.Length - chunk.Length, result => { readComplete(result, stream); }, null);
+            }
+
+            private void readComplete(IAsyncResult result, Stream stream)
+            {
+                int bytesRead = stream.EndRead(result);
+                var chunk = _chunks[_chunks.Count - 1];
+                chunk.Length += bytesRead;
+                if (_dataEvent != null)
+                {
+                    var newBytes = new byte[bytesRead];
+                    Array.Copy(chunk.Data, chunk.Length - bytesRead, newBytes, 0, bytesRead);
+                    _dataEvent(newBytes);
+                }
+                if (_textEvent != null)
+                {
+                    var newChars = new char[bytesRead + 1]; // can have at most one char buffered up in the decoder, plus bytesRead new chars
+                    int bytesUsed, charsUsed;
+                    bool completed;
+                    _decoder.Convert(chunk.Data, chunk.Length - bytesRead, bytesRead, newChars, 0, newChars.Length, false, out bytesUsed, out charsUsed, out completed);
+                    Ut.Assert(completed); // it could still be halfway through a character; what this means is that newChars was large enough to accommodate everything
+                    _textEvent(new string(newChars, 0, charsUsed));
+                }
+                if (bytesRead > 0) // continue reading
+                    ReadBegin(stream);
+                else
+                {
+                    Ended = true;
+                    if (_textEvent != null)
+                    {
+                        var newChars = new char[1];
+                        int bytesUsed, charsUsed;
+                        bool completed;
+                        _decoder.Convert(new byte[0], 0, 0, newChars, 0, newChars.Length, true, out bytesUsed, out charsUsed, out completed);
+                        Ut.Assert(completed);
+                        if (charsUsed > 0)
+                            _textEvent(new string(newChars, 0, charsUsed));
                     }
                 }
+            }
+
+            public byte[] GetEntireOutput()
+            {
+                Ut.Assert(_captureEntire);
+                var result = new byte[_chunks.Sum(ch => ch.Length)];
+                int offset = 0;
+                foreach (var chunk in _chunks)
+                {
+                    Buffer.BlockCopy(chunk.Data, 0, result, offset, chunk.Length);
+                    offset += chunk.Length;
+                }
+                return result;
             }
         }
 
