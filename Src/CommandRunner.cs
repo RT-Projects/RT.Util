@@ -575,6 +575,7 @@ namespace RT.Util
         {
             if (State == CommandRunnerState.NotStarted || State == CommandRunnerState.Aborted)
                 throw new InvalidOperationException("Cannot pause a command that has not been started yet or has been aborted.");
+            _pauseTimerDue = DateTime.UtcNow;
             resume();
         }
 
