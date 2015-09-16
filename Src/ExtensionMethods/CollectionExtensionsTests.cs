@@ -64,16 +64,26 @@ namespace RT.Util.ExtensionMethods
 
             // **
             // **  void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value)
+            // **  void RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
             // **
             {
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, string>>) null, null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, string>>) null, null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, string>>) null, "", null, null); });
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, string>>) null, "", "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(null, null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(null, "", null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(null, null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(null, "", "", null); });
                 Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, "", null); });
                 Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, "", null); });
                 Assert.DoesNotThrow(() => { CollectionExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", "", null); });
+
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(null, null, ""); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(null, "", ""); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null); });
+                Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, ""); });
+                Assert.DoesNotThrow(() => { CollectionExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", ""); });
 
                 var dic = new Dictionary<string, Dictionary<string, GenericParameter>>();
 
@@ -91,6 +101,16 @@ namespace RT.Util.ExtensionMethods
                 Assert.AreEqual(1, dic.Count);
                 Assert.AreEqual(1, x2.Count);
                 Assert.AreEqual("someValue", x3.SomeString);
+
+                var result = dic.RemoveSafe("nonExistentKey", "someOtherKey");
+                Assert.IsFalse(result);
+                Assert.AreEqual(1, dic.Count);
+                result = dic.RemoveSafe("someKey", "nonExistentKey");
+                Assert.IsFalse(result);
+                Assert.AreEqual(1, dic.Count);
+                result = dic.RemoveSafe("someKey", "someOtherKey");
+                Assert.IsTrue(result);
+                Assert.AreEqual(0, dic.Count);
             }
 
             // **

@@ -92,6 +92,38 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Removes an element from a two-level Dictionary&lt;,&gt;. If this leaves the inner dictionary empty, the key is
+        ///     removed from the outer Dictionary.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the outer Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the inner Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the inner Dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the inner Dictionary is located in the outer Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the value is located in the inner Dictionary.</param><returns>A value indicating whether a value was removed or not.</returns>
+        public static bool RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
+        {
+            if (dic == null)
+                throw new ArgumentNullException("dic");
+            if (key1 == null)
+                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
+            Dictionary<K2, V> inner;
+            if (!dic.TryGetValue(key1, out inner) || !inner.ContainsKey(key2))
+                return false;
+            inner.Remove(key2);
+            if (inner.Count == 0)
+                dic.Remove(key1);
+            return true;
+        }
+
+        /// <summary>
         ///     Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;. If the specified key does not
         ///     exist in the current Dictionary, a new List is created.</summary>
         /// <typeparam name="K1">
