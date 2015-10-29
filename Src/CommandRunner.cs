@@ -227,8 +227,11 @@ namespace RT.Util
             Command = ArgsToCommandLine(args);
         }
 
-        /// <summary>Starts the command with all the settings as configured.</summary>
-        public void Start()
+        /// <summary>
+        ///     Starts the command with all the settings as configured.</summary>
+        /// <param name="stdin">
+        ///     Provides a byte stream to be passed to the process’s standard input.</param>
+        public void Start(byte[] stdin = null)
         {
             if (State != CommandRunnerState.NotStarted)
                 throw new InvalidOperationException("This command has already been started, and cannot be started again.");
@@ -240,7 +243,7 @@ namespace RT.Util
             _startInfo.WorkingDirectory = WorkingDirectory;
             foreach (var kvp in EnvironmentVariables)
                 _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
-            _startInfo.RedirectStandardInput = false;
+            _startInfo.RedirectStandardInput = stdin != null;
             _startInfo.RedirectStandardOutput = true;
             _startInfo.RedirectStandardError = true;
             _startInfo.CreateNoWindow = true;
@@ -262,6 +265,11 @@ namespace RT.Util
             _process.Start();
             _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);
             _stderrReader = new reader(StderrData, StderrText, CaptureEntireStderr);
+            if (stdin != null)
+            {
+                _process.StandardInput.BaseStream.Write(stdin);
+                _process.StandardInput.BaseStream.Close();
+            }
             Thread.Sleep(50);
             _started.Set(); // the main purpose of _started is to make Pause reliable when executed immediately after Start.
 
