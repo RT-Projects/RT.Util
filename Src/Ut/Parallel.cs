@@ -8,16 +8,21 @@ namespace RT.Util
 {
     partial class Ut
     {
-        /// <summary>Runs all of the specified actions in parallel, each in a thread of its own.</summary>
-        /// <param name="actions">Actions to run.</param>
+        /// <summary>
+        ///     Runs all of the specified actions in parallel, each in a thread of its own.</summary>
+        /// <param name="actions">
+        ///     Actions to run.</param>
         public static void Parallel(params Action[] actions)
         {
             Parallel(int.MaxValue, actions);
         }
 
-        /// <summary>Runs the specified actions partly in parallel by using no more than the specified maximum number of threads.</summary>
-        /// <param name="maxSimultaneous">Maximum number of concurrent threads allowed.</param>
-        /// <param name="actions">Actions to run.</param>
+        /// <summary>
+        ///     Runs the specified actions partly in parallel by using no more than the specified maximum number of threads.</summary>
+        /// <param name="maxSimultaneous">
+        ///     Maximum number of concurrent threads allowed.</param>
+        /// <param name="actions">
+        ///     Actions to run.</param>
         public static void Parallel(int maxSimultaneous, params Action[] actions)
         {
             if (maxSimultaneous < 1)
@@ -88,42 +93,65 @@ namespace RT.Util
             }
         }
 
-        /// <summary>Runs the specified action in parallel for each item in the input collection.</summary>
-        /// <typeparam name="T">Type of the items in the collection.</typeparam>
-        /// <param name="items">Input collection of items to pass to the action.</param>
-        /// <param name="action">Action to run for each element.</param>
+        /// <summary>
+        ///     Runs the specified action in parallel for each item in the input collection.</summary>
+        /// <typeparam name="T">
+        ///     Type of the items in the collection.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the action.</param>
+        /// <param name="action">
+        ///     Action to run for each element.</param>
         public static void ParallelForEach<T>(this IEnumerable<T> items, Action<T> action)
         {
             ParallelForEach<T>(items, int.MaxValue, action);
         }
 
-        /// <summary>Runs the specified action in parallel for each item in the input collection, using no more than the specified maximum number of threads.</summary>
-        /// <typeparam name="T">Type of the items in the collection.</typeparam>
-        /// <param name="items">Input collection of items to pass to the action.</param>
-        /// <param name="maxSimultaneous">Maximum number of concurrent threads allowed.</param>
-        /// <param name="action">Action to run for each element.</param>
+        /// <summary>
+        ///     Runs the specified action in parallel for each item in the input collection, using no more than the specified
+        ///     maximum number of threads.</summary>
+        /// <typeparam name="T">
+        ///     Type of the items in the collection.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the action.</param>
+        /// <param name="maxSimultaneous">
+        ///     Maximum number of concurrent threads allowed.</param>
+        /// <param name="action">
+        ///     Action to run for each element.</param>
         public static void ParallelForEach<T>(this IEnumerable<T> items, int maxSimultaneous, Action<T> action)
         {
             var actions = items.Select(item => new Action(() => action(item))).ToArray();
             Parallel(maxSimultaneous, actions);
         }
 
-        /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the concatenation of all the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
-        /// <typeparam name="TResult">The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="items">Input collection of items to pass to the function.</param>
-        /// <param name="selector">Function that returns a collection for each input item.</param>
+        /// <summary>
+        ///     Runs the specified function in parallel for each item in the input collection and returns a collection
+        ///     containing the concatenation of all the results of the function calls.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="items"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the function.</param>
+        /// <param name="selector">
+        ///     Function that returns a collection for each input item.</param>
         public static IEnumerable<TResult> ParallelSelectMany<TSource, TResult>(this IEnumerable<TSource> items, Func<TSource, IEnumerable<TResult>> selector)
         {
             return ParallelSelectMany(items, int.MaxValue, selector);
         }
 
-        /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the concatenation of all the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
-        /// <typeparam name="TResult">The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="items">Input collection of items to pass to the function.</param>
-        /// <param name="maxSimultaneous">Maximum number of concurrent threads allowed.</param>
-        /// <param name="selector">Function that returns a collection for each input item.</param>
+        /// <summary>
+        ///     Runs the specified function in parallel for each item in the input collection and returns a collection
+        ///     containing the concatenation of all the results of the function calls.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="items"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     The type of the elements of the sequence returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the function.</param>
+        /// <param name="maxSimultaneous">
+        ///     Maximum number of concurrent threads allowed.</param>
+        /// <param name="selector">
+        ///     Function that returns a collection for each input item.</param>
         public static IEnumerable<TResult> ParallelSelectMany<TSource, TResult>(this IEnumerable<TSource> items, int maxSimultaneous, Func<TSource, IEnumerable<TResult>> selector)
         {
             var list = new List<IEnumerable<TResult>>();
@@ -136,22 +164,35 @@ namespace RT.Util
             return list.SelectMany(item => item);
         }
 
-        /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
-        /// <typeparam name="TResult">The type of the elements returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="items">Input collection of items to pass to the function.</param>
-        /// <param name="selector">Function that returns a result object for each input item.</param>
+        /// <summary>
+        ///     Runs the specified function in parallel for each item in the input collection and returns a collection
+        ///     containing the results of the function calls.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="items"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     The type of the elements returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the function.</param>
+        /// <param name="selector">
+        ///     Function that returns a result object for each input item.</param>
         public static IEnumerable<TResult> ParallelSelect<TSource, TResult>(this IEnumerable<TSource> items, Func<TSource, TResult> selector)
         {
             return ParallelSelect(items, int.MaxValue, selector);
         }
 
-        /// <summary>Runs the specified function in parallel for each item in the input collection and returns a collection containing the results of the function calls.</summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="items"/>.</typeparam>
-        /// <typeparam name="TResult">The type of the elements returned by <paramref name="selector"/>.</typeparam>
-        /// <param name="items">Input collection of items to pass to the function.</param>
-        /// <param name="maxSimultaneous">Maximum number of concurrent threads allowed.</param>
-        /// <param name="selector">Function that returns a result object for each input item.</param>
+        /// <summary>
+        ///     Runs the specified function in parallel for each item in the input collection and returns a collection
+        ///     containing the results of the function calls.</summary>
+        /// <typeparam name="TSource">
+        ///     The type of the elements of <paramref name="items"/>.</typeparam>
+        /// <typeparam name="TResult">
+        ///     The type of the elements returned by <paramref name="selector"/>.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the function.</param>
+        /// <param name="maxSimultaneous">
+        ///     Maximum number of concurrent threads allowed.</param>
+        /// <param name="selector">
+        ///     Function that returns a result object for each input item.</param>
         public static IEnumerable<TResult> ParallelSelect<TSource, TResult>(this IEnumerable<TSource> items, int maxSimultaneous, Func<TSource, TResult> selector)
         {
             var list = new List<TResult>();
