@@ -197,6 +197,12 @@ namespace RT.Util.Dialogs
             return new DlgMessage() { Message = message, Caption = caption, Type = type, Buttons = buttons }.Show();
         }
 
+        /// <summary>Shows a message of the specified message type, using an appropriate sound and image.</summary>
+        public static int Show(string message, string caption, DlgType type, DlgMessageFormat format, params string[] buttons)
+        {
+            return new DlgMessage() { Message = message, Caption = caption, Type = type, Buttons = buttons, Format = format }.Show();
+        }
+
         /// <summary>Shows an informational message using the image, caption and sound appropriate for this message type.</summary>
         public static int ShowInfo(string message, params string[] buttons)
         {
