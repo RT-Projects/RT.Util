@@ -587,6 +587,8 @@ namespace RT.Util
                     continue;
 
                 // If the item is a tag, and it is the same tag character as the current one, we need to escape it by tripling it
+                if (sb.Length > 0 && childStr.Length > 0 && childStr[0] == sb[sb.Length - 1])
+                    sb.Append('`');
                 if (tag != null && children[i] is EggsTag && ((EggsTag) children[i]).Tag == tag && !EggsML.alwaysOpens(tag))
                     sb.Append(new string(tag.Value, 2));
                 sb.Append(childStr);
@@ -718,6 +720,12 @@ namespace RT.Util
         /// <param name="nodes">
         ///     The sub-nodes contained in the root node.</param>
         public EggsTag(IEnumerable<EggsNode> nodes) : base(0) { Tag = null; _children = nodes.ToList(); }
+
+        /// <summary>
+        ///     Constructs a new EggsML parse-tree node that represents an EggsML tag containing the specified sub-nodes.</summary>
+        /// <param name="nodes">
+        ///     The sub-nodes contained in the root node.</param>
+        public EggsTag(char? tag, IEnumerable<EggsNode> nodes) : base(0) { Tag = tag; _children = nodes.ToList(); }
 
         /// <summary>
         ///     Reconstructs the original EggsML that is represented by this node.</summary>
