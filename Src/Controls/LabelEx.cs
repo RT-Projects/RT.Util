@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
@@ -463,7 +464,14 @@ namespace RT.Util.Controls
         {
             if (!_cachedPreferredSizes.ContainsKey(constrainingSize.Width))
                 using (var g = CreateGraphics())
-                    _cachedPreferredSizes[constrainingSize.Width] = doPaintOrMeasure(g, _parsed, Font, ForeColor, constrainingSize.Width == 0 ? int.MaxValue : constrainingSize.Width);
+                {
+                    var width = constrainingSize.Width == 0 ? int.MaxValue : constrainingSize.Width;
+                    if (MaximumSize.Width > 0 && width > MaximumSize.Width)
+                        width = MaximumSize.Width;
+                    if (MinimumSize.Width > 0 && width < MinimumSize.Width)
+                        width = MinimumSize.Width;
+                    _cachedPreferredSizes[constrainingSize.Width] = doPaintOrMeasure(g, _parsed, Font, ForeColor, width);
+                }
             return _cachedPreferredSizes[constrainingSize.Width];
         }
 
