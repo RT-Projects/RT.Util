@@ -714,6 +714,12 @@ namespace RT.Util
         public EggsTag(char? tag, int index) : base(index) { Tag = tag; _children = new List<EggsNode>(); }
 
         /// <summary>
+        ///     Constructs a new top-level EggsML parse-tree node containing the specified sub-nodes.</summary>
+        /// <param name="nodes">
+        ///     The sub-nodes contained in the root node.</param>
+        public EggsTag(IEnumerable<EggsNode> nodes) : base(0) { Tag = null; _children = nodes.ToList(); }
+
+        /// <summary>
         ///     Reconstructs the original EggsML that is represented by this node.</summary>
         /// <remarks>
         ///     This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of the
