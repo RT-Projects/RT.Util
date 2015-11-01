@@ -29,6 +29,21 @@ namespace RT.Util.Dialogs
     }
 
     /// <summary>
+    /// Specifies whether the text in a <see cref="DlgMessage"/> box should be rendered using EggsML or plain text.
+    /// </summary>
+    public enum DlgMessageFormat
+    {
+        /// <summary>
+        /// Indicates plain text without formatting.
+        /// </summary>
+        PlainText,
+        /// <summary>
+        /// Indicates EggsML mark-up.
+        /// </summary>
+        EggsML,
+    }
+
+    /// <summary>
     /// This class is used by the <see cref="DlgMessage"/> class. This is the form used
     /// for displaying the message box.
     /// </summary>
@@ -160,6 +175,10 @@ namespace RT.Util.Dialogs
         /// </summary>
         public string Message;
         /// <summary>
+        /// Specifies whether the text in this message box should be rendered using EggsML or plain text.
+        /// </summary>
+        public DlgMessageFormat Format = DlgMessageFormat.PlainText;
+        /// <summary>
         /// Specifies a caption to be displayed in the dialog's window title bar. Defaults to null,
         /// which means choose a title based on the <see cref="Type"/> field.
         /// </summary>
@@ -288,10 +307,6 @@ namespace RT.Util.Dialogs
         {
             using (var form = new DlgMessageForm())
             {
-                form.Font = SystemFonts.MessageBoxFont;
-                if (Font != null)
-                    form.Message.Font = Font;
-
                 if (Image != null)
                 {
                     form.img.Image = Image;
@@ -299,7 +314,13 @@ namespace RT.Util.Dialogs
                 }
 
                 form.Text = Caption;
-                form.Message.Text = Message;
+
+                form.Font = SystemFonts.MessageBoxFont;
+                if (Font != null)
+                    form.Message.Font = Font;
+
+                form.Message.MaximumSize = new Size(Math.Max(600, Screen.PrimaryScreen.WorkingArea.Width / 2), Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
+                form.Message.Text = Format == DlgMessageFormat.PlainText ? EggsML.Escape(Message) : Message;
 
                 // --- Buttons - captions, visibility, accept/cancel
 
@@ -347,9 +368,7 @@ namespace RT.Util.Dialogs
 
                 // --- Show
 
-                form.Message.MaximumSize = new Size(Math.Min(600, Screen.PrimaryScreen.WorkingArea.Width * 3 / 4), Screen.PrimaryScreen.WorkingArea.Height * 3 / 4);
                 form.ShowInTaskbar = ShowInTaskbar;
-
                 var result = form.ShowDialog();
 
                 // --- Return button index

@@ -31,13 +31,13 @@ namespace RT.Util.Dialogs
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DlgMessageForm));
             this.layoutMain = new System.Windows.Forms.TableLayoutPanel();
             this.layoutButtons = new System.Windows.Forms.TableLayoutPanel();
-            this.Btn2 = new System.Windows.Forms.Button();
-            this.Btn3 = new System.Windows.Forms.Button();
             this.Btn0 = new System.Windows.Forms.Button();
             this.Btn1 = new System.Windows.Forms.Button();
+            this.Btn2 = new System.Windows.Forms.Button();
+            this.Btn3 = new System.Windows.Forms.Button();
             this.layoutMessage = new System.Windows.Forms.TableLayoutPanel();
-            this.Message = new System.Windows.Forms.Label();
             this.img = new System.Windows.Forms.PictureBox();
+            this.Message = new RT.Util.Controls.LabelEx();
             this.pnlLine = new System.Windows.Forms.Panel();
             this.info = new System.Windows.Forms.PictureBox();
             this.question = new System.Windows.Forms.PictureBox();
@@ -46,11 +46,11 @@ namespace RT.Util.Dialogs
             this.layoutMain.SuspendLayout();
             this.layoutButtons.SuspendLayout();
             this.layoutMessage.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize) (this.img)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize) (this.info)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize) (this.question)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize) (this.warning)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize) (this.error)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.img)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.info)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.question)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.warning)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.error)).BeginInit();
             this.SuspendLayout();
             // 
             // layoutMain
@@ -94,38 +94,6 @@ namespace RT.Util.Dialogs
             this.layoutButtons.Size = new System.Drawing.Size(464, 68);
             this.layoutButtons.TabIndex = 19;
             // 
-            // Btn2
-            // 
-            this.Btn2.AutoSize = true;
-            this.Btn2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.Btn2.DialogResult = System.Windows.Forms.DialogResult.Yes;
-            this.Btn2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Btn2.Location = new System.Drawing.Point(289, 5);
-            this.Btn2.Margin = new System.Windows.Forms.Padding(5);
-            this.Btn2.MinimumSize = new System.Drawing.Size(80, 25);
-            this.Btn2.Name = "Btn2";
-            this.Btn2.Size = new System.Drawing.Size(80, 58);
-            this.Btn2.TabIndex = 2;
-            this.Btn2.Text = "s";
-            this.Btn2.UseVisualStyleBackColor = true;
-            this.Btn2.Visible = false;
-            // 
-            // Btn3
-            // 
-            this.Btn3.AutoSize = true;
-            this.Btn3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.Btn3.DialogResult = System.Windows.Forms.DialogResult.No;
-            this.Btn3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Btn3.Location = new System.Drawing.Point(379, 5);
-            this.Btn3.Margin = new System.Windows.Forms.Padding(5);
-            this.Btn3.MinimumSize = new System.Drawing.Size(80, 25);
-            this.Btn3.Name = "Btn3";
-            this.Btn3.Size = new System.Drawing.Size(80, 58);
-            this.Btn3.TabIndex = 3;
-            this.Btn3.Text = "button3";
-            this.Btn3.UseVisualStyleBackColor = true;
-            this.Btn3.Visible = false;
-            // 
             // Btn0
             // 
             this.Btn0.AutoSize = true;
@@ -158,11 +126,43 @@ namespace RT.Util.Dialogs
             this.Btn1.UseVisualStyleBackColor = true;
             this.Btn1.Visible = false;
             // 
+            // Btn2
+            // 
+            this.Btn2.AutoSize = true;
+            this.Btn2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.Btn2.DialogResult = System.Windows.Forms.DialogResult.Yes;
+            this.Btn2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Btn2.Location = new System.Drawing.Point(289, 5);
+            this.Btn2.Margin = new System.Windows.Forms.Padding(5);
+            this.Btn2.MinimumSize = new System.Drawing.Size(80, 25);
+            this.Btn2.Name = "Btn2";
+            this.Btn2.Size = new System.Drawing.Size(80, 58);
+            this.Btn2.TabIndex = 2;
+            this.Btn2.Text = "s";
+            this.Btn2.UseVisualStyleBackColor = true;
+            this.Btn2.Visible = false;
+            // 
+            // Btn3
+            // 
+            this.Btn3.AutoSize = true;
+            this.Btn3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.Btn3.DialogResult = System.Windows.Forms.DialogResult.No;
+            this.Btn3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Btn3.Location = new System.Drawing.Point(379, 5);
+            this.Btn3.Margin = new System.Windows.Forms.Padding(5);
+            this.Btn3.MinimumSize = new System.Drawing.Size(80, 25);
+            this.Btn3.Name = "Btn3";
+            this.Btn3.Size = new System.Drawing.Size(80, 58);
+            this.Btn3.TabIndex = 3;
+            this.Btn3.Text = "button3";
+            this.Btn3.UseVisualStyleBackColor = true;
+            this.Btn3.Visible = false;
+            // 
             // layoutMessage
             // 
-            this.layoutMessage.Anchor = ((System.Windows.Forms.AnchorStyles) ((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.layoutMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.layoutMessage.AutoSize = true;
             this.layoutMessage.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.layoutMessage.BackColor = System.Drawing.Color.White;
@@ -179,18 +179,6 @@ namespace RT.Util.Dialogs
             this.layoutMessage.Size = new System.Drawing.Size(687, 66);
             this.layoutMessage.TabIndex = 14;
             // 
-            // Message
-            // 
-            this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.Message.AutoSize = true;
-            this.Message.Location = new System.Drawing.Point(71, 25);
-            this.Message.Margin = new System.Windows.Forms.Padding(5);
-            this.Message.MinimumSize = new System.Drawing.Size(175, 0);
-            this.Message.Name = "Message";
-            this.Message.Size = new System.Drawing.Size(175, 16);
-            this.Message.TabIndex = 16;
-            this.Message.Text = "Save changes to this file?";
-            // 
             // img
             // 
             this.img.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -203,6 +191,18 @@ namespace RT.Util.Dialogs
             this.img.TabIndex = 17;
             this.img.TabStop = false;
             this.img.Visible = false;
+            // 
+            // MessageEx
+            // 
+            this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.Message.Location = new System.Drawing.Point(190, 25);
+            this.Message.Margin = new System.Windows.Forms.Padding(5);
+            this.Message.MinimumSize = new System.Drawing.Size(175, 0);
+            this.Message.Name = "MessageEx";
+            this.Message.Size = new System.Drawing.Size(175, 16);
+            this.Message.TabIndex = 16;
+            this.Message.Text = "Save changes to this file?";
+            this.Message.WordWrap = true;
             // 
             // pnlLine
             // 
@@ -220,7 +220,7 @@ namespace RT.Util.Dialogs
             // 
             this.info.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.info.BackColor = System.Drawing.Color.Transparent;
-            this.info.Image = ((System.Drawing.Image) (resources.GetObject("info.Image")));
+            this.info.Image = ((System.Drawing.Image)(resources.GetObject("info.Image")));
             this.info.Location = new System.Drawing.Point(245, 0);
             this.info.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.info.Name = "info";
@@ -234,7 +234,7 @@ namespace RT.Util.Dialogs
             // 
             this.question.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.question.BackColor = System.Drawing.Color.Transparent;
-            this.question.Image = ((System.Drawing.Image) (resources.GetObject("question.Image")));
+            this.question.Image = ((System.Drawing.Image)(resources.GetObject("question.Image")));
             this.question.Location = new System.Drawing.Point(319, 0);
             this.question.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.question.Name = "question";
@@ -248,7 +248,7 @@ namespace RT.Util.Dialogs
             // 
             this.warning.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.warning.BackColor = System.Drawing.Color.Transparent;
-            this.warning.Image = ((System.Drawing.Image) (resources.GetObject("warning.Image")));
+            this.warning.Image = ((System.Drawing.Image)(resources.GetObject("warning.Image")));
             this.warning.Location = new System.Drawing.Point(394, 0);
             this.warning.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.warning.Name = "warning";
@@ -262,7 +262,7 @@ namespace RT.Util.Dialogs
             // 
             this.error.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.error.BackColor = System.Drawing.Color.Transparent;
-            this.error.Image = ((System.Drawing.Image) (resources.GetObject("error.Image")));
+            this.error.Image = ((System.Drawing.Image)(resources.GetObject("error.Image")));
             this.error.Location = new System.Drawing.Point(469, 0);
             this.error.Margin = new System.Windows.Forms.Padding(9, 0, 9, 0);
             this.error.Name = "error";
@@ -284,7 +284,7 @@ namespace RT.Util.Dialogs
             this.Controls.Add(this.question);
             this.Controls.Add(this.info);
             this.Controls.Add(this.layoutMain);
-            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte) (204)));
+            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
@@ -299,11 +299,11 @@ namespace RT.Util.Dialogs
             this.layoutButtons.PerformLayout();
             this.layoutMessage.ResumeLayout(false);
             this.layoutMessage.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize) (this.img)).EndInit();
-            ((System.ComponentModel.ISupportInitialize) (this.info)).EndInit();
-            ((System.ComponentModel.ISupportInitialize) (this.question)).EndInit();
-            ((System.ComponentModel.ISupportInitialize) (this.warning)).EndInit();
-            ((System.ComponentModel.ISupportInitialize) (this.error)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.img)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.info)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.question)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.warning)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.error)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -318,7 +318,7 @@ namespace RT.Util.Dialogs
         public System.Windows.Forms.Button Btn0;
         public System.Windows.Forms.Button Btn1;
         private System.Windows.Forms.TableLayoutPanel layoutMessage;
-        public System.Windows.Forms.Label Message;
+        public RT.Util.Controls.LabelEx Message;
         public System.Windows.Forms.PictureBox img;
         public System.Windows.Forms.PictureBox info;
         public System.Windows.Forms.PictureBox question;
