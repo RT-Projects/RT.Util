@@ -188,7 +188,10 @@ namespace RT.Util.Consoles
             var output = stdErr ? Console.Error : Console.Out;
             if (value != null)
             {
-                var width = WrapToWidth() - Console.CursorLeft;
+                var cursorLeft = 0;
+                try { cursorLeft = Console.CursorLeft; }
+                catch { }
+                var width = WrapToWidth() - cursorLeft;
                 if (align == HorizontalTextAlignment.Center && width > value.Length)
                     output.Write(new string(' ', (width - value.Length) / 2));
                 else if (align == HorizontalTextAlignment.Right && width > value.Length)
