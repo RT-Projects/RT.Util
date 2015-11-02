@@ -19,8 +19,8 @@ namespace RT.KitchenSink.Geometry
         /// <summary>Indicates that input sites (points) that lie outside the bounds of the viewport should be ignored.</summary>
         RemoveOffboundsSites = 1 << 1,
         /// <summary>
-        ///     If specified, only polygons contained entirely within the bounds are included. Otherwise, the theoretically
-        ///     “infinite” polygons are included as polygons that are clipped to the bounding region.</summary>
+        ///     If not specified, only polygons contained entirely within the bounds are included. Otherwise, the
+        ///     theoretically “infinite” polygons are included as polygons that are clipped to the bounding region.</summary>
         IncludeEdgePolygons = 1 << 2
     }
 
