@@ -723,6 +723,8 @@ namespace RT.Util
 
         /// <summary>
         ///     Constructs a new EggsML parse-tree node that represents an EggsML tag containing the specified sub-nodes.</summary>
+        /// <param name="tag">
+        ///     The character used to open the tag (e.g. '[').</param>
         /// <param name="nodes">
         ///     The sub-nodes contained in the root node.</param>
         public EggsTag(char? tag, IEnumerable<EggsNode> nodes) : base(0) { Tag = tag; _children = nodes.ToList(); }
