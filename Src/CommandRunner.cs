@@ -258,13 +258,14 @@ namespace RT.Util
                 _startInfo.Password = RunAsUser.Password;
             }
 
+            _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);
+            _stderrReader = new reader(StderrData, StderrText, CaptureEntireStderr);
+
             _process = new Process();
             _process.EnableRaisingEvents = true;
             _process.StartInfo = _startInfo;
             _process.Exited += processExited;
             _process.Start();
-            _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);
-            _stderrReader = new reader(StderrData, StderrText, CaptureEntireStderr);
             if (stdin != null)
             {
                 _process.StandardInput.BaseStream.Write(stdin);
