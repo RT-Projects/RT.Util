@@ -202,13 +202,13 @@ namespace RT.Util
         /// <summary>Determines whether a debug message would be visible at specified verbosity.</summary>
         public bool IsDebugOn(uint verbosity = 1) { return IsLogOn(verbosity, LogType.Debug); }
 
-        /// <summary>Logs an exception with a stack trace.</summary>
+        /// <summary>Logs an exception with a stack trace and verbosity 1.</summary>
         public void Exception(Exception exception, LogType type = LogType.Error) { Exception(exception, 1, type); }
 
         /// <summary>
         ///     Logs an exception with a stack trace at the specified verbosity and message type. Any InnerExceptions are also
         ///     logged as appropriate.</summary>
-        public void Exception(Exception exception, uint verbosity, LogType type)
+        public virtual void Exception(Exception exception, uint verbosity, LogType type)
         {
             if (!IsLogOn(verbosity, type))
                 return;
