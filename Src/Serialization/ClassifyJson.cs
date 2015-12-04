@@ -319,12 +319,7 @@ namespace RT.Util.Serialization
         {
             return element is JsonDict && element.ContainsKey(":refid");
         }
-
-        bool IClassifyFormat<JsonValue>.IsFollowID(JsonValue element)
-        {
-            return element is JsonDict && element.ContainsKey(":id");
-        }
-
+        
         int IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element)
         {
             return
@@ -332,14 +327,7 @@ namespace RT.Util.Serialization
                 element.ContainsKey(":refid") ? element[":refid"].GetInt() :
                 Ut.Throw<int>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
         }
-
-        string IClassifyFormat<JsonValue>.GetFollowID(JsonValue element)
-        {
-            return element.ContainsKey(":id")
-                ? element[":id"].GetString()
-                : Ut.Throw<string>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetFollowID() should not be called unless IsFollowID() returned true."));
-        }
-
+        
         JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
         {
             return JsonNoValue.Instance;
@@ -377,7 +365,7 @@ namespace RT.Util.Serialization
             if (value is string)
                 return (string) value;
 
-            // This takes care of enum types
+            // This takes care of enum types and DateTime
             return ExactConvert.ToString(value);
         }
 
@@ -416,12 +404,7 @@ namespace RT.Util.Serialization
                         : gr.First().Value
                 )));
         }
-
-        JsonValue IClassifyFormat<JsonValue>.FormatFollowID(string id)
-        {
-            return new JsonDict { { ":id", id } };
-        }
-
+        
         JsonValue IClassifyFormat<JsonValue>.FormatReference(int refId)
         {
             return new JsonDict { { ":ref", refId } };

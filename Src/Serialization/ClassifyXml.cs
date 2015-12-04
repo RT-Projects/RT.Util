@@ -331,11 +331,6 @@ namespace RT.Util.Serialization
             return element.Attribute("refid") != null;
         }
 
-        bool IClassifyFormat<XElement>.IsFollowID(XElement element)
-        {
-            return element.Attribute("id") != null;
-        }
-
         int IClassifyFormat<XElement>.GetReferenceID(XElement element)
         {
             return ExactConvert.ToInt(
@@ -343,12 +338,6 @@ namespace RT.Util.Serialization
                 element.Attribute("ref").NullOr(a => a.Value) ??
                 Ut.Throw<string>(new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."))
             );
-        }
-
-        string IClassifyFormat<XElement>.GetFollowID(XElement element)
-        {
-            return element.Attribute("id").NullOr(a => a.Value) ??
-                Ut.Throw<string>(new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetFollowID() should not be called unless IsFollowID() returned true."));
         }
 
         XElement IClassifyFormat<XElement>.FormatNullValue()
@@ -451,11 +440,6 @@ namespace RT.Util.Serialization
         {
             element.Add(new XAttribute(isFullType ? "fulltype" : "type", type));
             return element;
-        }
-
-        XElement IClassifyFormat<XElement>.FormatFollowID(string id)
-        {
-            return new XElement(_rootTagName, new XAttribute("id", id));
         }
 
         void IClassifyFormat<XElement>.ThrowMissingReferable(int refID)

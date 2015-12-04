@@ -786,38 +786,6 @@ namespace RT.Util.Serialization
                     if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
                         continue;
 
-                    // [ClassifyParent]
-                    else if (getAttrsFrom.IsDefined<ClassifyParentAttribute>())
-                        field.SetValue(intoObj, parentNode);
-
-                    // [ClassifyFollowId]
-                    else if (getAttrsFrom.IsDefined<ClassifyFollowIdAttribute>())
-                    {
-                        if (!field.FieldType.IsGenericType || field.FieldType.GetGenericTypeDefinition() != typeof(ClassifyDeferredObject<>))
-                            throw new Exception("The field {0}.{1} uses ClassifyFollowIdAttribute, but does not have the type ClassifyDeferredObject<T> for some T.".Fmt(type.FullName, field.Name));
-
-                        Type innerType = field.FieldType.GetGenericArguments()[0];
-                        if (_format.HasField(elem, rFieldName, fieldDeclaringType))
-                        {
-                            var subElem = _format.GetField(elem, rFieldName, fieldDeclaringType);
-                            if (_format.IsFollowID(subElem))
-                            {
-                                var followId = _format.GetReferenceID(subElem);
-                                if (_baseDir == null)
-                                    throw new InvalidOperationException(@"An object that uses [ClassifyFollowId] can only be reconstructed if a base directory is specified (see “BaseDir” in the ClassifyOptions class).");
-                                string newFile = Path.Combine(_baseDir, innerType.Name, followId + ".xml");
-                                field.SetValue(intoObj,
-                                    typeof(ClassifyDeferredObject<>).MakeGenericType(innerType)
-                                        .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(string) /* id */, typeof(Func<object>) /* generator */ }, null)
-                                        .Invoke(Ut.NewArray<object>(
-                                            followId /* id */,
-                                            new Func<object>(() => DeserializeFile(innerType, newFile, _format, _options, intoObj)) /* generator */
-                                        ))
-                                );
-                            }
-                        }
-                    }
-
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
@@ -1106,7 +1074,7 @@ namespace RT.Util.Serialization
                     }
 
                     // [ClassifyIgnore], [ClassifyParent]
-                    if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>() || getAttrsFrom.IsDefined<ClassifyParentAttribute>())
+                    if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
                         continue;
 
                     object saveValue = field.GetValue(saveObject);
@@ -1136,26 +1104,8 @@ namespace RT.Util.Serialization
 
                     Func<TElement> elem;
 
-                    // [ClassifyFollowId]
-                    if (getAttrsFrom.IsDefined<ClassifyFollowIdAttribute>())
-                    {
-                        if (!field.FieldType.IsGenericType || field.FieldType.GetGenericTypeDefinition() != typeof(ClassifyDeferredObject<>))
-                            throw new InvalidOperationException("A field that uses the [ClassifyFollowId] attribute must have the type ClassifyDeferredObject<T> for some T.");
-
-                        var deferredSaveValue = (IClassifyDeferredObject) saveValue;
-                        var innerType = field.FieldType.GetGenericArguments()[0];
-
-                        if (deferredSaveValue.Evaluated)
-                        {
-                            if (_baseDir == null)
-                                throw new InvalidOperationException(@"An object that uses [ClassifyFollowId] can only be stored if a base directory is specified (see “BaseDir” in the ClassifyOptions class).");
-                            var prop = field.FieldType.GetProperty("Value");
-                            SerializeToFile(innerType, deferredSaveValue.Value, Path.Combine(_baseDir, innerType.Name, deferredSaveValue.Id + ".xml"), _format, _options);
-                        }
-
-                        elem = () => _format.FormatFollowID(deferredSaveValue.Id);
-                    }
-                    else if (getAttrsFrom.IsDefined<ClassifySubstituteAttribute>())
+                    // [ClassifySubstitute]
+                    if (getAttrsFrom.IsDefined<ClassifySubstituteAttribute>())
                     {
                         var attr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().First();
                         var attrInf = attr.GetInfo(field.FieldType);
@@ -1293,9 +1243,6 @@ namespace RT.Util.Serialization
             checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
             checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
             checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), m, rep);
-            checkAttributeParity(typeof(XmlIdAttribute), typeof(ClassifyIdAttribute), m, rep);
-            checkAttributeParity(typeof(XmlFollowIdAttribute), typeof(ClassifyFollowIdAttribute), m, rep);
-            checkAttributeParity(typeof(XmlParentAttribute), typeof(ClassifyParentAttribute), m, rep);
 #pragma warning restore 618
         }
 
@@ -1563,16 +1510,6 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> stores an ID
-    ///     that points to another, separate file which in turn contains the actual object. This is only allowed on fields or
-    ///     automatically-implemented properties of type <see cref="ClassifyDeferredObject&lt;T&gt;"/> for some type T. Use
-    ///     <see cref="ClassifyDeferredObject&lt;T&gt;.Value"/> to retrieve the object. This retrieval is deferred until first
-    ///     use. Use <see cref="ClassifyDeferredObject&lt;T&gt;.Id"/> to retrieve the ID used to reference the object. You can
-    ///     also capture the ID into the type T by using the <see cref="ClassifyIdAttribute"/> attribute within that type.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyFollowIdAttribute : Attribute { }
-
-    /// <summary>
     ///     If this attribute is used on a field or automatically-implemented property, it is ignored by <see
     ///     cref="Classify"/>. Data stored in this field or automatically-implemented property is not persisted.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
@@ -1691,124 +1628,4 @@ namespace RT.Util.Serialization
     ///     bitwise combinations of the declared values are allowed.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyEnforceEnumAttribute : Attribute { }
-
-    /// <summary>
-    ///     When reconstructing an interconnected graph of objects using <see cref="Classify"/>, a field or
-    ///     automatically-implemented property with this attribute receives a reference to an object which refers to this
-    ///     object. This can be used when serializing tree structures to receive a node’s parent. See also remarks.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item><description>
-    ///             If the field or automatically-implemented property is of an incompatible type, a run-time exception
-    ///             occurs.</description></item>
-    ///         <item><description>
-    ///             If there was no parent node, the field or automatically-implemented property is set to null.</description></item>
-    ///         <item><description>
-    ///             When persisting objects, fields and automatically-implemented properties with this attribute are skipped.</description></item></list></remarks>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyParentAttribute : Attribute { }
-
-    /// <summary>
-    ///     When reconstructing persisted objects using <see cref="Classify"/>, a field or automatically-implemented property
-    ///     with this attribute receives the ID that was used to refer to the file that stores this object. See <see
-    ///     cref="ClassifyFollowIdAttribute"/> for more information. The field or automatically-implemented property must be
-    ///     of type string.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyIdAttribute : Attribute { }
-
-    /// <summary>
-    ///     Provides access to <see cref="ClassifyDeferredObject{T}"/> properties that do not depend on its type parameter.</summary>
-    internal interface IClassifyDeferredObject
-    {
-        /// <summary>Determines whether the object has been computed.</summary>
-        bool Evaluated { get; }
-
-        /// <summary>Returns the ID used to refer to the object.</summary>
-        string Id { get; }
-
-        /// <summary>
-        ///     Gets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. Causes the object to be
-        ///     evaluated when called.</summary>
-        object Value { get; }
-    }
-
-    /// <summary>
-    ///     Provides mechanisms to hold an object that has an ID and gets evaluated at first use.</summary>
-    /// <typeparam name="T">
-    ///     The type of the contained object.</typeparam>
-    public sealed class ClassifyDeferredObject<T> : IClassifyDeferredObject
-    {
-        /// <summary>
-        ///     Initialises a deferred object using a delegate or lambda expression.</summary>
-        /// <param name="id">
-        ///     Id that refers to the object to be generated.</param>
-        /// <param name="generator">
-        ///     Function to generate the object.</param>
-        public ClassifyDeferredObject(string id, Func<T> generator) { _id = id; _generator = generator; }
-
-        internal ClassifyDeferredObject(string id, Func<object> generator)
-            : this(id, () => (T) generator()) { }
-
-        /// <summary>
-        ///     Initialises a deferred object using an actual object. Evaluation is not deferred.</summary>
-        /// <param name="id">
-        ///     Id that refers to the object.</param>
-        /// <param name="value">
-        ///     The object to store.</param>
-        public ClassifyDeferredObject(string id, T value) { _id = id; _cached = value; _haveCache = true; }
-
-        /// <summary>
-        ///     Initialises a deferred object using a method reference and an array of parameters.</summary>
-        /// <param name="id">
-        ///     ID that refers to the object to be generated.</param>
-        /// <param name="generatorMethod">
-        ///     Reference to a method that generates the object.</param>
-        /// <param name="generatorObject">
-        ///     Object on which the method should be invoked. Use null for static methods.</param>
-        /// <param name="generatorParams">
-        ///     Set of parameters for the method invocation.</param>
-        public ClassifyDeferredObject(string id, MethodInfo generatorMethod, object generatorObject, object[] generatorParams)
-        {
-            _id = id;
-            _generator = () => (T) generatorMethod.Invoke(generatorObject, generatorParams);
-        }
-
-        private Func<T> _generator;
-        private T _cached;
-        private bool _haveCache = false;
-        private string _id;
-
-        /// <summary>
-        ///     Gets or sets the object stored in this <see cref="ClassifyDeferredObject&lt;T&gt;"/>. The property getter
-        ///     causes the object to be evaluated when called. The setter overrides the object with a pre-computed object
-        ///     whose evaluation is not deferred.</summary>
-        public T Value
-        {
-            get
-            {
-                if (!_haveCache)
-                {
-                    _cached = _generator();
-                    // Update any field in the class that has a [ClassifyId] attribute and is of type string.
-                    foreach (var field in _cached.GetType().GetAllFields().Where(fld => fld.FieldType == typeof(string) && fld.IsDefined<ClassifyIdAttribute>()))
-                        field.SetValue(_cached, _id);
-                    _haveCache = true;
-                }
-                return _cached;
-            }
-            set
-            {
-                _cached = value;
-                _haveCache = true;
-            }
-        }
-
-        object IClassifyDeferredObject.Value { get { return Value; } }
-
-        /// <summary>Determines whether the object has been computed.</summary>
-        public bool Evaluated { get { return _haveCache; } }
-
-        /// <summary>Returns the ID used to refer to the object.</summary>
-        public string Id { get { return _id; } }
-    }
 }

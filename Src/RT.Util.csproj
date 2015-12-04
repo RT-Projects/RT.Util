@@ -190,6 +190,7 @@
     <Compile Include="RTSmtpClient.cs" />
     <Compile Include="RummageAttributes.cs" />
     <Compile Include="Serialization\Classify.cs" />
+    <Compile Include="Serialization\ClassifyBinary.cs" />
     <Compile Include="Serialization\ClassifyJson.cs" />
     <Compile Include="Serialization\ClassifyXml.cs" />
     <Compile Include="Serialization\IClassifyFormat.cs" />
