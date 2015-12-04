@@ -345,6 +345,19 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Determines the length of the UTF-16 encoding of the specified string.</summary>
+        /// <param name="input">
+        ///     String to determined UTF-16 length of.</param>
+        /// <returns>
+        ///     The length of the string in bytes when encoded as UTF-16.</returns>
+        public static int Utf16Length(this string input)
+        {
+            if (input == null)
+                throw new ArgumentNullException("input");
+            return Encoding.Unicode.GetByteCount(input);
+        }
+
+        /// <summary>
         ///     Returns a JavaScript- or JSON-compatible representation of the string with the appropriate characters escaped.
         ///     Returns "null" if the input is null.</summary>
         /// <param name="input">
