@@ -6,7 +6,6 @@ using System.Linq;
 using System.Windows.Forms;
 using RT.Util.Dialogs;
 using RT.Util.Serialization;
-using RT.Util.Xml;
 
 namespace RT.Util.Lingo
 {

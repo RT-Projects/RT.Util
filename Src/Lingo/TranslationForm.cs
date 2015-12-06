@@ -5,12 +5,10 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
-using RT.Util.Collections;
 using RT.Util.Controls;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
-using RT.Util.Xml;
 
 namespace RT.Util.Lingo
 {

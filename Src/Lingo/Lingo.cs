@@ -12,7 +12,6 @@ using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
 using RT.Util.Serialization;
-using RT.Util.Xml;
 
 namespace RT.Util.Lingo
 {

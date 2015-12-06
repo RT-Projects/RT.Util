@@ -140,7 +140,7 @@ namespace RT.Util.Serialization
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            Classify.SerializeToFile<XElement, T>(saveObject, filename, format ?? DefaultFormat, options);
+            Classify.SerializeToFile(saveObject, filename, format ?? DefaultFormat, options);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace RT.Util.Serialization
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            Classify.SerializeToFile<XElement>(saveType, saveObject, filename, format ?? DefaultFormat, options);
+            Classify.SerializeToFile(saveType, saveObject, filename, format ?? DefaultFormat, options);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace RT.Util.Serialization
         ///     The serialized form generated from the object.</returns>
         public static XElement Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            return Classify.Serialize<XElement, T>(saveObject, format ?? DefaultFormat, options);
+            return Classify.Serialize(saveObject, format ?? DefaultFormat, options);
         }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace RT.Util.Serialization
         ///     The serialized form generated from the object.</returns>
         public static XElement Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            return Classify.Serialize<XElement>(saveType, saveObject, format ?? DefaultFormat, options);
+            return Classify.Serialize(saveType, saveObject, format ?? DefaultFormat, options);
         }
     }
 
