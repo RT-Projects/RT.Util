@@ -175,7 +175,7 @@ namespace RT.Util.ExtensionMethods
             get
             {
                 if (_cachedIsoRegexBasic == null)
-                    _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture);
+                    _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
                 return _cachedIsoRegexBasic;
             }
         }
@@ -186,7 +186,7 @@ namespace RT.Util.ExtensionMethods
             get
             {
                 if (_cachedIsoRegexExtended == null)
-                    _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?)?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture);
+                    _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?)?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
                 return _cachedIsoRegexExtended;
             }
         }

@@ -324,6 +324,18 @@ namespace RT.Util.Serialization
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
             private IClassifyFormat<TElement> _format;
+            private Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
+
+            private object[] getCustomAttributes(MemberInfo member)
+            {
+                object[] attrs;
+                if (!_attributesCache.TryGetValue(member, out attrs))
+                {
+                    attrs = member.GetCustomAttributes(true);
+                    _attributesCache[member] = attrs;
+                }
+                return attrs;
+            }
 
             public classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
             {
@@ -746,7 +758,7 @@ namespace RT.Util.Serialization
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
-                    if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
+                    if (rFieldName[0] == '<' && rFieldName.EndsWith(">k__BackingField"))
                     {
                         // Compiler-generated fields for auto-implemented properties 
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
@@ -754,11 +766,13 @@ namespace RT.Util.Serialization
                         if (prop != null)
                             getAttrsFrom = prop;
                     }
-                    else if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">i__Field"))
+                    else if (rFieldName[0] == '<' && rFieldName.EndsWith(">i__Field"))
                     {
                         // Fields in anonymous types
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
+
+                    var attrs = getCustomAttributes(getAttrsFrom);
 
                     // Skip events
                     if (type.GetEvent(rFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static) != null)
@@ -767,25 +781,25 @@ namespace RT.Util.Serialization
                     var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
 
                     // [ClassifyIgnore]
-                    if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
+                    if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
                         continue;
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
-                        if (!_format.IsNull(value) || !getAttrsFrom.IsDefined<ClassifyNotNullAttribute>())
+                        if (!_format.IsNull(value) || !attrs.OfType<ClassifyNotNullAttribute>().Any())
                         {
                             var inf = new deserializeFieldInfo
                             {
                                 FieldToAssignTo = field,
                                 DeserializeAsType = field.FieldType,
                                 ElementToAssign = value,
-                                EnforceEnum = getAttrsFrom.IsDefined<ClassifyEnforceEnumAttribute>()
+                                EnforceEnum = attrs.OfType<ClassifyEnforceEnumAttribute>().Any()
                             };
 
                             // [ClassifySubstitute]
-                            var substituteAttr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().FirstOrDefault();
+                            var substituteAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
                             if (substituteAttr != null)
                             {
                                 var substInf = substituteAttr.GetInfo(field.FieldType);
@@ -1043,7 +1057,7 @@ namespace RT.Util.Serialization
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
-                    if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">k__BackingField"))
+                    if (rFieldName[0] == '<' && rFieldName.EndsWith(">k__BackingField"))
                     {
                         // Compiler-generated fields for auto-implemented properties 
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>k__BackingField".Length);
@@ -1051,17 +1065,19 @@ namespace RT.Util.Serialization
                         if (prop != null)
                             getAttrsFrom = prop;
                     }
-                    else if (rFieldName.StartsWith("<") && rFieldName.EndsWith(">i__Field"))
+                    else if (rFieldName[0] == '<' && rFieldName.EndsWith(">i__Field"))
                     {
                         // Fields in anonymous types
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
-                    if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
+                    var attrs = getCustomAttributes(getAttrsFrom);
+
+                    if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
                         continue;
 
                     object saveValue = field.GetValue(saveObject);
-                    bool ignoreIfDefault = ignoreIfDefaultOnType || getAttrsFrom.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
+                    bool ignoreIfDefault = ignoreIfDefaultOnType || attrs.OfType<ClassifyIgnoreIfDefaultAttribute>().Any();
 
                     if (ignoreIfDefault)
                     {
@@ -1073,12 +1089,12 @@ namespace RT.Util.Serialization
                             continue;
                     }
 
-                    var ignoreIf = getAttrsFrom.GetCustomAttributes<ClassifyIgnoreIfAttribute>(true).FirstOrDefault();
+                    var ignoreIf = attrs.OfType<ClassifyIgnoreIfAttribute>().FirstOrDefault();
                     if (ignoreIf != null && saveValue != null && saveValue.Equals(ignoreIf.Value))
                         continue;
 
                     // Arrays, lists and dictionaries all implement ICollection
-                    bool ignoreIfEmpty = ignoreIfEmptyOnType || getAttrsFrom.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
+                    bool ignoreIfEmpty = ignoreIfEmptyOnType || attrs.OfType<ClassifyIgnoreIfEmptyAttribute>().Any();
                     if (ignoreIfEmpty && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                         continue;
 
@@ -1088,10 +1104,10 @@ namespace RT.Util.Serialization
                     Func<TElement> elem;
 
                     // [ClassifySubstitute]
-                    if (getAttrsFrom.IsDefined<ClassifySubstituteAttribute>())
+                    var substAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
+                    if (substAttr != null)
                     {
-                        var attr = getAttrsFrom.GetCustomAttributes<ClassifySubstituteAttribute>().First();
-                        var attrInf = attr.GetInfo(field.FieldType);
+                        var attrInf = substAttr.GetInfo(field.FieldType);
                         elem = Serialize(attrInf.ToSubstitute(saveValue), attrInf.SubstituteType);
                     }
                     else
@@ -1196,7 +1212,7 @@ namespace RT.Util.Serialization
                     foreach (var f in type.GetAllFields())
                     {
                         MemberInfo m = f;
-                        if (f.Name.StartsWith("<") && f.Name.EndsWith(">k__BackingField"))
+                        if (f.Name[0] == '<' && f.Name.EndsWith(">k__BackingField"))
                         {
                             var pName = f.Name.Substring(1, f.Name.Length - "<>k__BackingField".Length);
                             m = type.GetAllProperties().FirstOrDefault(p => p.Name == pName) ?? (MemberInfo) f;
