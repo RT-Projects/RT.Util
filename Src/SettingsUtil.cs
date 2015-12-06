@@ -12,7 +12,6 @@ using System.Xml;
 using RT.Util.Dialogs;
 using RT.Util.ExtensionMethods;
 using RT.Util.Serialization;
-using RT.Util.Xml;
 
 namespace RT.Util
 {
@@ -66,15 +65,11 @@ namespace RT.Util
 
             switch (attr.Serializer)
             {
-#pragma warning disable 618 // obsolete
-                case SettingsSerializer.XmlClassify:
-                    XmlClassify.PostBuildStep<TSettings>(rep);
-                    break;
-#pragma warning restore 618
                 case SettingsSerializer.DotNetBinary:
                     break;
                 case SettingsSerializer.ClassifyXml:
                 case SettingsSerializer.ClassifyJson:
+                case SettingsSerializer.ClassifyBinary:
                     Classify.PostBuildStep<TSettings>(rep);
                     break;
             }
@@ -179,7 +174,7 @@ namespace RT.Util
                     catch (Exception e)
                     {
                         var choices = new List<string>() {
-                            "Try &again", 
+                            "Try &again",
                             "&Don't save settings",
                         };
                         int cancelIndex = -1;
@@ -213,13 +208,6 @@ namespace RT.Util
             {
                 switch (serializer)
                 {
-#pragma warning disable 618 // obsolete
-                    case SettingsSerializer.XmlClassify:
-                        // SaveObjectToXmlFile automatically creates the folder if necessary
-                        XmlClassify.SaveObjectToXmlFile(settings, settingsType, tempname);
-                        break;
-#pragma warning restore 618
-
                     case SettingsSerializer.ClassifyXml:
                         // SerializeToFile automatically creates the folder if necessary
                         ClassifyXml.SerializeToFile(settingsType, settings, tempname, format: ClassifyXmlFormat.Create("Settings"));
@@ -228,6 +216,11 @@ namespace RT.Util
                     case SettingsSerializer.ClassifyJson:
                         // SerializeToFile automatically creates the folder if necessary
                         ClassifyJson.SerializeToFile(settingsType, settings, tempname);
+                        break;
+
+                    case SettingsSerializer.ClassifyBinary:
+                        // SerializeToFile automatically creates the folder if necessary
+                        ClassifyBinary.SerializeToFile(settingsType, settings, tempname);
                         break;
 
                     case SettingsSerializer.DotNetBinary:
@@ -250,16 +243,14 @@ namespace RT.Util
             {
                 switch (serializer)
                 {
-#pragma warning disable 618 // obsolete
-                    case SettingsSerializer.XmlClassify:
-                        return XmlClassify.LoadObjectFromXmlFile<TSettings>(filename);
-#pragma warning restore 618
-
                     case SettingsSerializer.ClassifyXml:
                         return ClassifyXml.DeserializeFile<TSettings>(filename);
 
                     case SettingsSerializer.ClassifyJson:
                         return ClassifyJson.DeserializeFile<TSettings>(filename);
+
+                    case SettingsSerializer.ClassifyBinary:
+                        return ClassifyBinary.DeserializeFile<TSettings>(filename);
 
                     case SettingsSerializer.DotNetBinary:
                         var bf = new BinaryFormatter();
@@ -343,7 +334,7 @@ namespace RT.Util
     ///         static class Program
     ///         {
     ///             public static MySettings Settings;
-    /// 
+    ///         
     ///             static void Main(string[] args)
     ///             {
     ///                 SettingsUtil.LoadSettings(out Settings);
@@ -351,7 +342,7 @@ namespace RT.Util
     ///                 Settings.Save();
     ///             }
     ///         }
-    /// 
+    ///         
     ///         [Settings("MyApplicationName", SettingsKind.UserSpecific)]
     ///         class MySettings : SettingsBase
     ///         {
@@ -363,14 +354,12 @@ namespace RT.Util
     [Serializable]
     public abstract class SettingsBase
     {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-#pragma warning disable 618     // XmlClassify is obsolete
-        [XmlIgnore, ClassifyIgnore, NonSerialized]
+        /// <summary>Lock object used to protect concurrent access.</summary>
+        [ClassifyIgnore, NonSerialized]
         protected internal object _lock = new object();
-        [XmlIgnore, ClassifyIgnore, NonSerialized]
+        /// <summary>The thread on which the background saving is performed.</summary>
+        [ClassifyIgnore, NonSerialized]
         protected internal Thread _saveThread;
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
-#pragma warning restore 618
 
         /// <summary>
         ///     This method is called just before the settings class is written out to disk, allowing any required changes to
@@ -494,16 +483,12 @@ namespace RT.Util
     /// <summary>Like <see cref="SettingsBase"/>, but implements an additional save method.</summary>
     public abstract class SettingsThreadedBase : SettingsBase
     {
-#pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-#pragma warning disable 618 // obsolete
-        [XmlIgnore, ClassifyIgnore, NonSerialized]
+        [ClassifyIgnore, NonSerialized]
         private SettingsBase _saveObj;
-        [XmlIgnore, ClassifyIgnore, NonSerialized]
+        [ClassifyIgnore, NonSerialized]
         private string _saveFilename;
-        [XmlIgnore, ClassifyIgnore, NonSerialized]
+        [ClassifyIgnore, NonSerialized]
         private SettingsSerializer? _saveSerializer;
-#pragma warning restore 618
-#pragma warning restore 1591    // Missing XML comment for publicly visible type or member
 
         /// <summary>
         ///     Must return a deep clone of this class. This will be used to create a snapshot of the settings at the time
@@ -593,19 +578,18 @@ namespace RT.Util
     /// <summary>Determines which serializer the settings are read/written by.</summary>
     public enum SettingsSerializer
     {
-        /// <summary>Use the XmlClassify serializer (obsolete).</summary>
-        [SerializerInfo(defaultFileExtension: "xml")]
-        [Obsolete("XmlClassify is obsolete. Use ClassifyXml instead.")]
-        XmlClassify,
-        /// <summary>Use the .NET binary serializer.</summary>
-        [SerializerInfo(defaultFileExtension: "bin", AutoConvertFrom = true)]
-        DotNetBinary,
         /// <summary>Use the Classify serializer with the XML format.</summary>
         [SerializerInfo(defaultFileExtension: "xml", AutoConvertFrom = true)]
         ClassifyXml,
+        /// <summary>Use the Classify serializer with the binary format.</summary>
+        [SerializerInfo(defaultFileExtension: "dat", AutoConvertFrom = true)]
+        ClassifyBinary,
         /// <summary>Use the Classify serializer with the JSON format.</summary>
         [SerializerInfo(defaultFileExtension: "json", AutoConvertFrom = true)]
         ClassifyJson,
+        /// <summary>Use the .NET binary serializer.</summary>
+        [SerializerInfo(defaultFileExtension: "bin", AutoConvertFrom = true)]
+        DotNetBinary,
     }
 
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]

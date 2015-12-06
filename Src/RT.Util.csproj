@@ -232,7 +232,6 @@
     <Compile Include="Ut\TicToc.cs" />
     <Compile Include="Waiter.cs" />
     <Compile Include="WinAPI.cs" />
-    <Compile Include="XmlClassify.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Forms\DlgMessage.resx">

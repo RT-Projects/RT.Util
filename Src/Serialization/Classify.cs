@@ -5,9 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
-using RT.Util.Xml;
 
 /*
  * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.
@@ -261,7 +259,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         public static void SerializeToFile<TElement, T>(T saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            SerializeToFile<TElement>(typeof(T), saveObject, filename, format, options);
+            SerializeToFile(typeof(T), saveObject, filename, format, options);
         }
 
         /// <summary>
@@ -1199,7 +1197,6 @@ namespace RT.Util.Serialization
             if (_simpleTypes.Contains(type))
                 return; // these are safe
 
-            checkAttributeParity(type, rep);
             if (!type.IsAbstract)
             {
                 if (instance == null && !type.IsValueType && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
@@ -1226,7 +1223,6 @@ namespace RT.Util.Serialization
                         if (m.IsDefined<ClassifyIgnoreAttribute>())
                             continue;
                         postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), m, rep, alreadyChecked, chain.Concat(m.DeclaringType.FullName + "." + m.Name));
-                        checkAttributeParity(m, rep);
                     }
                 }
             }
@@ -1234,29 +1230,6 @@ namespace RT.Util.Serialization
                 foreach (var derivedType in type.Assembly.GetTypes())
                     if (type.IsAssignableFrom(derivedType))
                         postBuildStep(derivedType, null, member, rep, alreadyChecked, chain.Concat("Derived type: " + derivedType.FullName));
-        }
-
-        private static void checkAttributeParity(MemberInfo m, IPostBuildReporter rep)
-        {
-#pragma warning disable 618 // obsolete
-            checkAttributeParity(typeof(XmlIgnoreAttribute), typeof(ClassifyIgnoreAttribute), m, rep);
-            checkAttributeParity(typeof(XmlIgnoreIfAttribute), typeof(ClassifyIgnoreIfAttribute), m, rep);
-            checkAttributeParity(typeof(XmlIgnoreIfDefaultAttribute), typeof(ClassifyIgnoreIfDefaultAttribute), m, rep);
-            checkAttributeParity(typeof(XmlIgnoreIfEmptyAttribute), typeof(ClassifyIgnoreIfEmptyAttribute), m, rep);
-#pragma warning restore 618
-        }
-
-        private static void checkAttributeParity(Type xmlClassifyAttribute, Type classifyAttribute, MemberInfo member, IPostBuildReporter rep)
-        {
-            if (member.IsDefined(xmlClassifyAttribute, false) && !member.IsDefined(classifyAttribute, false))
-            {
-                if (member is FieldInfo)
-                    rep.Warning("The field {0}.{1} has the attribute {2} but not {3}.".Fmt(member.DeclaringType.FullName, member.Name, xmlClassifyAttribute.FullName, classifyAttribute.FullName), member.DeclaringType.Name, member.Name);
-                else if (member is Type)
-                    rep.Warning("The type {0} has the attribute {1} but not {2}.".Fmt(((Type) member).FullName, xmlClassifyAttribute.FullName, classifyAttribute.FullName), (((Type) member).IsValueType ? "struct " : "class ") + member.Name);
-                else
-                    rep.Warning("Unrecognized member type.");
-            }
         }
     }
 
