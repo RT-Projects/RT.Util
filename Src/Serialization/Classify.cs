@@ -32,29 +32,30 @@ namespace RT.Util.Serialization
     ///     <list type="bullet">
     ///         <item><description>
     ///             Classify fully supports all the built-in types which are keywords in C# except <c>object</c> and
-    ///             <c>dynamic</c>. It also supports <c>DateTime</c> and all enum types.</description></item>
+    ///             <c>dynamic</c>. It also supports <c>DateTime</c>, all enum types, <c>Tuple&lt;...&gt;</c> and
+    ///             <c>KeyValuePair&lt;TKey, TValue&gt;</c>.</description></item>
     ///         <item><description>
     ///             Classify fully supports classes and structs that contain only fields of the above types as well as fields
     ///             whose type is itself such a class or struct.</description></item>
     ///         <item><description>
     ///             Classify has special handling for classes that implement <c>IDictionary&lt;TKey, TValue&gt;</c>, where
-    ///             <c>TValue</c> must be a type also supported by Classify. <c>TKey</c> must be <c>string</c>, an integer
-    ///             type or an enum type. If the field is of a concrete type, that type is maintained, but its extra fields
-    ///             are not persisted. If the field is of the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself,
-    ///             the type <c>Dictionary&lt;TKey, TValue&gt;</c> is used to reconstruct the object.</description></item>
+    ///             <c>TKey</c> and <c>TValue</c> must be type also supported by Classify. If a field containing a dictionary
+    ///             is of a concrete type, that type is maintained, but its extra fields are not persisted. If the field is of
+    ///             the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself, the type <c>Dictionary&lt;TKey,
+    ///             TValue&gt;</c> is used to reconstruct the object.</description></item>
     ///         <item><description>
     ///             Classify has special handling for classes that implement <c>ICollection&lt;T&gt;</c>, where <c>T</c> must
     ///             be a type also supported by Classify. If the field is of a concrete type, that type is maintained, but its
     ///             extra fields are not persisted. If the field is of the interface type <c>ICollection&lt;T&gt;</c> or
-    ///             <c>IList&lt;T&gt;</c> itself, the type <c>List&lt;T&gt;</c> is used to reconstruct the object. If the type
-    ///             also implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes precedence.</description></item>
+    ///             <c>IList&lt;T&gt;</c>, the type <c>List&lt;T&gt;</c> is used to reconstruct the object. If the type also
+    ///             implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes precedence.</description></item>
     ///         <item><description>
-    ///             Classify also supports <see cref="KeyValuePair{TKey,TValue}"/> and all the different
-    ///             <c>System.Tuple&lt;...&gt;</c> types.</description></item>
+    ///             Classify supports fields of declared type <c>object</c> just as long as the value stored in it is of a
+    ///             supported type.</description></item>
     ///         <item><description>
-    ///             Classify handles the element type specially. For example, if you are classifying to XML, classifying an
-    ///             <see cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you are classifying to JSON,
-    ///             the same goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
+    ///             Classify handles values of the type of the serialized form specially. For example, if you are serializing
+    ///             to XML, serializing an <see cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you
+    ///             are classifying to JSON, the same goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
     ///         <item><description>
     ///             For classes that don’t implement any of the above-mentioned collection interfaces, Classify supports
     ///             polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
@@ -62,9 +63,8 @@ namespace RT.Util.Serialization
     ///             Classify supports auto-implemented properties. It uses the name of the property rather than the hidden
     ///             auto-generated field, although the field’s value is persisted. All other properties are ignored.</description></item>
     ///         <item><description>
-    ///             Classify ignores the order of input elements (except when handling collections and dictionaries). For
-    ///             example, XML tags or JSON dictionary keys are mapped to fields by their names; their order is considered
-    ///             immaterial.</description></item>
+    ///             Classify ignores the order of fields in a class. For example, XML tags or JSON dictionary keys are mapped
+    ///             to fields by their names; their order is considered immaterial.</description></item>
     ///         <item><description>
     ///             Classify silently discards unrecognized XML tags/JSON dictionary keys instead of throwing errors. This is
     ///             by design because it enables the programmer to remove a field from a class without invalidating objects
@@ -76,12 +76,10 @@ namespace RT.Util.Serialization
     ///             previously persisted.</description></item>
     ///         <item><description>
     ///             The following custom attributes can be used to alter Classify’s behavior. See the custom attribute class’s
-    ///             documentation for more information: <see cref="ClassifyFollowIdAttribute"/>, <see
-    ///             cref="ClassifyIdAttribute"/>, <see cref="ClassifyIgnoreAttribute"/>, <see
+    ///             documentation for more information: <see cref="ClassifyIgnoreAttribute"/>, <see
     ///             cref="ClassifyIgnoreIfAttribute"/>, <see cref="ClassifyIgnoreIfDefaultAttribute"/>, <see
-    ///             cref="ClassifyIgnoreIfEmptyAttribute"/>, <see cref="ClassifyParentAttribute"/>. Any attribute that can be
-    ///             used on a field, can equally well be used on an auto-implemented property, but not on any other
-    ///             properties.</description></item>
+    ///             cref="ClassifyIgnoreIfEmptyAttribute"/>. Any attribute that can be used on a field, can equally well be
+    ///             used on an auto-implemented property, but not on any other properties.</description></item>
     ///         <item><description>
     ///             Classify maintains object identity and correctly handles cycles in the object graph. Only <c>string</c>s
     ///             are exempt from this.</description></item>
@@ -127,14 +125,11 @@ namespace RT.Util.Serialization
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T DeserializeFile<TElement, T>(string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null, object parent = null)
+        public static T DeserializeFile<TElement, T>(string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T) DeserializeFile<TElement>(typeof(T), filename, format, options, parent);
+            return (T) DeserializeFile(typeof(T), filename, format, options);
         }
 
         /// <summary>
@@ -149,18 +144,14 @@ namespace RT.Util.Serialization
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
         /// <param name="options">
         ///     Options.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object DeserializeFile<TElement>(Type type, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null, object parent = null)
+        public static object DeserializeFile<TElement>(Type type, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            return new classifier<TElement>(format, options, defaultBaseDir).Deserialize(type, elem, parent);
+            return new classifier<TElement>(format, options).Deserialize(type, elem);
         }
 
         /// <summary>
@@ -179,7 +170,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem, null);
+            return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem);
         }
 
         /// <summary>
@@ -198,7 +189,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Deserialize(type, elem, null);
+            return new classifier<TElement>(format, options).Deserialize(type, elem);
         }
 
         /// <summary>
@@ -278,8 +269,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            string defaultBaseDir = filename.Contains(Path.DirectorySeparatorChar) ? filename.Remove(filename.LastIndexOf(Path.DirectorySeparatorChar)) : ".";
-            var element = new classifier<TElement>(format, options, defaultBaseDir).Serialize(saveObject, saveType)();
+            var element = new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
             PathUtil.CreatePathToFile(filename);
             using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
                 format.WriteToStream(element, f);
@@ -333,17 +323,15 @@ namespace RT.Util.Serialization
             private ClassifyOptions _options;
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
-            private string _baseDir;
             private IClassifyFormat<TElement> _format;
 
-            public classifier(IClassifyFormat<TElement> format, ClassifyOptions options, string defaultBaseDir = null)
+            public classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
             {
                 if (format == null)
                     throw new ArgumentNullException("format");
 
                 _options = options ?? DefaultOptions ?? new ClassifyOptions(); // in case someone set default options to null
                 _format = format;
-                _baseDir = _options.BaseDir ?? defaultBaseDir;
             }
 
             private sealed class declassifyRememberedObject
@@ -392,10 +380,10 @@ namespace RT.Util.Serialization
                 return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
             }
 
-            public object Deserialize(Type type, TElement elem, object parentNode)
+            public object Deserialize(Type type, TElement elem)
             {
                 _doAtTheEnd = new List<Action>();
-                var resultFunc = CustomCallStack.Run(deserialize(type, elem, null, parentNode, _options.EnforceEnums));
+                var resultFunc = CustomCallStack.Run(deserialize(type, elem, null, _options.EnforceEnums));
                 foreach (var action in _doAtTheEnd)
                     action();
                 var result = resultFunc();
@@ -439,7 +427,7 @@ namespace RT.Util.Serialization
                 if (_format.IsReferable(elem))
                     _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
-                var result = CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type, parentNode));
+                var result = CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type));
                 foreach (var action in _doAtTheEnd)
                     action();
                 result();
@@ -459,11 +447,9 @@ namespace RT.Util.Serialization
             /// <param name="already">
             ///     An object that we may potentially re-use (e.g. the object already stored in the field when deserializing a
             ///     field inside an outer object).</param>
-            /// <param name="parentNode">
-            ///     The value for a [ClassifyParent] field.</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if [ClassifyEnforceEnums] semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, object parentNode, bool enforceEnums)
+            private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, bool enforceEnums)
             {
                 if (declaredType.IsPointer || declaredType.IsByRef)
                     throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
@@ -539,7 +525,7 @@ namespace RT.Util.Serialization
                 else if (serializedType.IsGenericType && serializedType.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    return deserialize(serializedType.GetGenericArguments()[0], elem, already, parentNode, enforceEnums);
+                    return deserialize(serializedType.GetGenericArguments()[0], elem, already, enforceEnums);
                 }
                 else if (genericDefinition != null && _tupleTypes.Contains(serializedType.GetGenericTypeDefinition()))
                 {
@@ -566,7 +552,7 @@ namespace RT.Util.Serialization
                             tupleParams[i] = prevResult;
                         i++;
                         if (i < genericArguments.Length && i < values.Length)
-                            return deserialize(genericArguments[i], values[i], null, parentNode, enforceEnums);
+                            return deserialize(genericArguments[i], values[i], null, enforceEnums);
                         var constructor = serializedType.GetConstructor(genericArguments);
                         if (constructor == null)
                             throw new InvalidOperationException("Could not find expected Tuple constructor.");
@@ -621,7 +607,7 @@ namespace RT.Util.Serialization
                                 if (e.MoveNext())
                                 {
                                     keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
-                                    return deserialize(valueType, e.Current.Value, null, parentNode, enforceEnums);
+                                    return deserialize(valueType, e.Current.Value, null, enforceEnums);
                                 }
 
                                 Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
@@ -651,7 +637,7 @@ namespace RT.Util.Serialization
                                     setters[i] = prevResult;
                                 i++;
                                 if (i < input.Length)
-                                    return deserialize(valueType, input[i], null, parentNode, enforceEnums);
+                                    return deserialize(valueType, input[i], null, enforceEnums);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     for (int j = 0; j < setters.Length; j++)
@@ -688,7 +674,7 @@ namespace RT.Util.Serialization
                                     adders.Add(prevResult);
                                 first = false;
                                 if (e.MoveNext())
-                                    return deserialize(valueType, e.Current, null, parentNode, enforceEnums);
+                                    return deserialize(valueType, e.Current, null, enforceEnums);
                                 _doAtTheEnd.Add(() =>
                                 {
                                     foreach (var adder in adders)
@@ -732,7 +718,7 @@ namespace RT.Util.Serialization
                             if (first)
                             {
                                 first = false;
-                                return deserializeIntoObject(elem, ret, serializedType, parentNode);
+                                return deserializeIntoObject(elem, ret, serializedType);
                             }
                             return cleanUp(prevResult);
                         };
@@ -749,7 +735,7 @@ namespace RT.Util.Serialization
                 public Func<object, object> SubstituteConverter;
             }
 
-            private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, object parentNode)
+            private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type)
             {
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
 
@@ -820,7 +806,7 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < infos.Count)
-                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), intoObj, infos[i].EnforceEnum);
+                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), infos[i].EnforceEnum);
 
                     _doAtTheEnd.Add(() =>
                     {
@@ -1071,7 +1057,6 @@ namespace RT.Util.Serialization
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
-                    // [ClassifyIgnore], [ClassifyParent]
                     if (getAttrsFrom.IsDefined<ClassifyIgnoreAttribute>())
                         continue;
 
@@ -1381,11 +1366,6 @@ namespace RT.Util.Serialization
     /// <summary>Specifies some options for use by <see cref="Classify"/>.</summary>
     public sealed class ClassifyOptions
     {
-        /// <summary>
-        ///     The base directory from which to construct the paths for additional files whenever a field has an <see
-        ///     cref="ClassifyFollowIdAttribute"/> attribute. Inferred automatically from filename if null.</summary>
-        public string BaseDir = null;
-
         /// <summary>
         ///     This option is only relevant if the value you are deserializing is an enum value or a collection or dictionary
         ///     involving enum keys or values. If <c>true</c>, only enum values declared in the enum type are allowed (as if

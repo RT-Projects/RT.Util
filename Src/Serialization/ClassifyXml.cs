@@ -27,14 +27,11 @@ namespace RT.Util.Serialization
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null, object parent = null)
+        public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            return Classify.DeserializeFile<XElement, T>(filename, format ?? DefaultFormat, options, parent);
+            return Classify.DeserializeFile<XElement, T>(filename, format ?? DefaultFormat, options);
         }
 
         /// <summary>
@@ -47,14 +44,11 @@ namespace RT.Util.Serialization
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
         ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null, object parent = null)
+        public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
         {
-            return Classify.DeserializeFile<XElement>(type, filename, format ?? DefaultFormat, options, parent);
+            return Classify.DeserializeFile<XElement>(type, filename, format ?? DefaultFormat, options);
         }
 
         /// <summary>

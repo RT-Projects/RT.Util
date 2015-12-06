@@ -325,7 +325,7 @@ namespace RT.Util
     /// <remarks>
     ///     <para>
     ///         Derive a class from this one and add the fields you wish to persist. Mark those you don't want stored with the
-    ///         <see cref="XmlIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>.</para>
+    ///         <see cref="ClassifyIgnoreAttribute"/>. You must mark the derived class with <see cref="SettingsAttribute"/>.</para>
     ///     <para>
     ///         Once the above is done, the settings can be saved by calling <see cref="Save"/>/<see cref="SaveQuiet"/>,
     ///         depending on intent. To load, call <see cref="SettingsUtil.LoadSettings&lt;T&gt;"/>, making sure that the

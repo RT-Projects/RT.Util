@@ -21,14 +21,11 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, object parent = null)
+        public static T DeserializeFile<T>(string filename, ClassifyOptions options = null)
         {
-            return Classify.DeserializeFile<node, T>(filename, DefaultFormat, options, parent);
+            return Classify.DeserializeFile<node, T>(filename, DefaultFormat, options);
         }
 
         /// <summary>
@@ -39,14 +36,11 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
-        /// <param name="parent">
-        ///     If the class to be declassified has a field with the <see cref="ClassifyParentAttribute"/>, that field will
-        ///     receive this object.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
-        public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, object parent = null)
+        public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null)
         {
-            return Classify.DeserializeFile(type, filename, DefaultFormat, options, parent);
+            return Classify.DeserializeFile(type, filename, DefaultFormat, options);
         }
 
         /// <summary>
