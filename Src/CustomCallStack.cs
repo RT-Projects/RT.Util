@@ -6,13 +6,13 @@ using System.Text;
 namespace RT.Util
 {
     /// <summary>
-    ///     Provides static functionality to execute work on an unlimited call stack, which is not limited to 1 MB as the standard
-    ///     call stack is.</summary>
+    ///     Provides static functionality to execute work on an unlimited call stack, which is not limited to 1 MB as the
+    ///     standard call stack is.</summary>
     public static class CustomCallStack
     {
         /// <summary>
-        ///     Runs the specified work on a custom call stack, which is not limited to 1 MB as the standard call stack is. See
-        ///     remarks for details.</summary>
+        ///     Runs the specified work on a custom call stack, which is not limited to 1 MB as the standard call stack is.
+        ///     See remarks for details.</summary>
         /// <typeparam name="T">
         ///     Type of result to compute.</typeparam>
         /// <param name="node">
@@ -26,32 +26,31 @@ namespace RT.Util
         ///         <item><description>
         ///             always knows at what state in the computation it is each time it is called;</description></item>
         ///         <item><description>
-        ///             returns a <see cref="WorkStep{T}.Call"/> each time it requires some other value to be computed, and then
-        ///             expects that resulting value to come in through the parameter next time it is called;</description></item>
+        ///             returns a <see cref="WorkStep{T}.Call"/> each time it requires some other value to be computed, and
+        ///             then expects that resulting value to come in through the parameter next time it is called;</description></item>
         ///         <item><description>
         ///             returns a <see cref="WorkStep{T}.Return"/> when it is done. At this point the delegate is not called
         ///             again.</description></item>
         ///         <item><description>
-        ///             The delegate may return <c>null</c> to indicate the same as a <see cref="WorkStep{T}.Return"/> containing
-        ///             a <c>default(T)</c> value.</description></item></list>
+        ///             The delegate may return <c>null</c> to indicate the same as a <see cref="WorkStep{T}.Return"/>
+        ///             containing a <c>default(T)</c> value.</description></item></list>
         ///     <para>
         ///         CustomCallStack works as follows:</para>
         ///     <list type="bullet">
         ///         <item><description>
-        ///             The first time the specified delegate is called, its parameter receives
-        ///             <c>default(T)</c>.</description></item>
+        ///             The first time the specified delegate is called, its parameter receives <c>default(T)</c>.</description></item>
         ///         <item><description>
         ///             If the value returned by the delegate is a <see cref="WorkStep{T}.Return"/>, the work is done and the
         ///             result is returned.</description></item>
         ///         <item><description>
-        ///             If the value returned is a <see cref="WorkStep{T}.Call"/>, this is treated similarly to a method call. The
-        ///             old delegate is pushed on a stack and the new delegate is executed according to the same rules until it
-        ///             returns a <see cref="WorkStep{T}.Return"/>. Once it does so, the original delegate is popped from the
-        ///             stack and then called with the result passed into its parameter.</description></item></list>
+        ///             If the value returned is a <see cref="WorkStep{T}.Call"/>, this is treated similarly to a method call.
+        ///             The old delegate is pushed on a stack and the new delegate is executed according to the same rules
+        ///             until it returns a <see cref="WorkStep{T}.Return"/>. Once it does so, the original delegate is popped
+        ///             from the stack and then called with the result passed into its parameter.</description></item></list>
         ///     <para>
-        ///         There are deliberately no safeguards in this algorithm; it will allow you to grow the stack indefinitely and
-        ///         not generate an equivalent to the <see cref="StackOverflowException"/>. This means that if your delegates
-        ///         always return a <see cref="WorkStep{T}.Call"/>, they will consume memory rampantly and never
+        ///         There are deliberately no safeguards in this algorithm; it will allow you to grow the stack indefinitely
+        ///         and not generate an equivalent to the <see cref="StackOverflowException"/>. This means that if your
+        ///         delegates always return a <see cref="WorkStep{T}.Call"/>, they will consume memory rampantly and never
         ///         finish.</para></remarks>
         public static T Run<T>(WorkNode<T> node)
         {
@@ -85,8 +84,8 @@ namespace RT.Util
     ///     Type of result to compute.</typeparam>
     /// <remarks>
     ///     This type is closed: Every value is either <c>null</c> or an instance of <see cref="WorkStep{T}.Return"/> or <see
-    ///     cref="WorkStep{T}.Call"/>. The value <c>null</c> is treated as being equivalent to a <see cref="WorkStep{T}.Return"/>
-    ///     containing a <c>default(T)</c>.</remarks>
+    ///     cref="WorkStep{T}.Call"/>. The value <c>null</c> is treated as being equivalent to a <see
+    ///     cref="WorkStep{T}.Return"/> containing a <c>default(T)</c>.</remarks>
     public abstract class WorkStep<T>
     {
         /// <summary>Implicitly converts from a result value to a <see cref="Return"/>.</summary>
