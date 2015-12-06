@@ -1099,7 +1099,7 @@ namespace RT.Util
         ///     This method keeps an internal cache forever.</remarks>
         /// <exception cref="ArgumentNullException">
         ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
-        public static TAttribute[] GetCustomAttributes<TAttribute>(this Enum enumValue)
+        public static TAttribute[] GetCustomAttributes<TAttribute>(this Enum enumValue) where TAttribute : Attribute
         {
             if (enumValue == null)
                 throw new ArgumentNullException("enumValue");
@@ -1141,7 +1141,7 @@ namespace RT.Util
         ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
         /// <exception cref="InvalidOperationException">
         ///     There is more than one custom attribute of the specified type attached to the enum value declaration.</exception>
-        public static TAttribute GetCustomAttribute<TAttribute>(this Enum enumValue)
+        public static TAttribute GetCustomAttribute<TAttribute>(this Enum enumValue) where TAttribute : Attribute
         {
             if (enumValue == null)
                 throw new ArgumentNullException("enumValue");
