@@ -708,7 +708,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>Formats a string in a way compatible with <see cref="string.Format(string, object[])"/>.</summary>
-        public static string Fmt(this string formatString, IFormatProvider provider, object[] args)
+        public static string Fmt(this string formatString, IFormatProvider provider, params object[] args)
         {
             if (formatString == null)
                 throw new ArgumentNullException("formatString");
