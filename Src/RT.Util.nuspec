@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>RT.Util</id>
+    <version>$version$</version>
+    <title>RT.Util</title>
+    <authors>rstarkov Timwi caesay</authors>
+    <owners>rstarkov</owners>
+    <projectUrl>https://github.com/RT-Projects/RT.Util/</projectUrl>
+    <iconUrl>https://avatars0.githubusercontent.com/u/14182444?v=3&s=200</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Wad of stuff</description>
+    <copyright>Copyright 2016 RT Projects</copyright>
+    <tags>C# Util Serialization</tags>
+  </metadata>
+</package>
