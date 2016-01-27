@@ -21,38 +21,72 @@ namespace RT.Util
         /// <summary>Specifies a logger that logs all outgoing requests and responses.</summary>
         public LoggerBase Log = DefaultLog;
 
-        /// <summary>Specifies whether the receipt of a redirect should automatically generate a new request for the new URL.</summary>
+        /// <summary>
+        ///     Exposes a collection of request headers. See Remarks.</summary>
+        /// <remarks>
+        ///     HttpWebRequest labels certain headers "restricted" and requires them to be modified by modifying request
+        ///     properties, rather than setting values via the Headers collection. This class unrestricts some of those
+        ///     headers, specifically: Accept, Host, Referer, TransferEncoding, UserAgent. Some of the restricted headers are
+        ///     only supported partially, indirectly or via properties, specifically: Connection, ContentType, ContentLength,
+        ///     Expect. The remaining restricted headers cannot currently be modified at all, specifically: Date,
+        ///     IfModifiedSince, ProxyConnection, Range</remarks>
+        public WebHeaderCollection ReqHeaders { get; set; }
+
+        /// <summary>
+        ///     A shorthand for getting and setting ReqHeaders[HttpRequestHeader.Accept]. Defaults to what a recent version of
+        ///     US Firefox might send.</summary>
+        public string ReqAccept { get { return ReqHeaders[HttpRequestHeader.Accept]; } set { ReqHeaders[HttpRequestHeader.Accept] = value; } }
+        /// <summary>
+        ///     A shorthand for getting and setting ReqHeaders[HttpRequestHeader.AcceptLanguage]. Defaults to what a recent
+        ///     version of US Firefox might send.</summary>
+        public string ReqAcceptLanguage { get { return ReqHeaders[HttpRequestHeader.AcceptLanguage]; } set { ReqHeaders[HttpRequestHeader.AcceptLanguage] = value; } }
+        /// <summary>
+        ///     A shorthand for getting and setting ReqHeaders[HttpRequestHeader.UserAgent] Defaults to what a recent version
+        ///     of US Firefox might send..</summary>
+        public string ReqUserAgent { get { return ReqHeaders[HttpRequestHeader.UserAgent]; } set { ReqHeaders[HttpRequestHeader.UserAgent] = value; } }
+        /// <summary>A shorthand for getting and setting ReqHeaders[HttpRequestHeader.Referer]. Defaults to null</summary>
+        public string ReqReferer { get { return ReqHeaders[HttpRequestHeader.Referer]; } set { ReqHeaders[HttpRequestHeader.Referer] = value; } }
+
+        /// <summary>
+        ///     Specifies how long to wait for the server to respond to the request before throwing an exception. Defaults to
+        ///     10 seconds.</summary>
+        public TimeSpan Timeout { get; set; }
+        /// <summary>
+        ///     Specifies whether the receipt of a redirect should automatically generate a new request for the new URL.
+        ///     Defaults to false.</summary>
         public bool AllowAutoRedirect { get; set; }
-        /// <summary>Specifies the value of the <c>Accept</c> header for outgoing requests.</summary>
-        public string Accept { get; set; }
-        /// <summary>Specifies the value of the <c>AcceptLanguage</c> header for outgoing requests.</summary>
-        public string AcceptLanguage { get; set; }
         /// <summary>
         ///     Specifies which compression methods are supported. This affects the Accept-Encoding header and automatically
-        ///     decompresses the response if necessary.</summary>
-        public DecompressionMethods AcceptEncoding { get; set; }
-        /// <summary>Specifies the value of the <c>Referer</c> header for outgoing requests.</summary>
-        public string Referer { get; set; }
-        /// <summary>Specifies the value of the timeout to send requests or receive responses.</summary>
-        public TimeSpan Timeout { get; set; }
-        /// <summary>Specifies the value of the <c>UserAgent</c> header for outgoing requests.</summary>
-        public string UserAgent { get; set; }
+        ///     decompresses the response if necessary. Defaults to gzip+deflate, as used by modern browsers.</summary>
+        public DecompressionMethods AutomaticDecompression { get; set; }
+        /// <summary>Specifies whether to use keep-alive for follow-up requests. Defaults to true.</summary>
+        public bool KeepAlive { get; set; }
+        /// <summary>
+        ///     Specifies whether to use Expect: 100 (continue) for post requests, thus querying the server for whether it
+        ///     wants to accept the post request, before sending the request body. Defaults to false. If true, the entire
+        ///     interaction is handled transparently.</summary>
+        public bool Expect100Continue { get; set; }
+
 
         /// <summary>
         ///     Specifies the root URL. If the request URL begins with <c>http://</c> or <c>https://</c>, this is ignored.
-        ///     Otherwise the URL is prepended with this.</summary>
+        ///     Otherwise the URL is prepended with this value.</summary>
         public string RootUrl = DefaultRootUrl;
 
         /// <summary>Constructor. Initializes the request to look like it came from a recent version of Firefox.</summary>
         public HClient()
         {
-            AllowAutoRedirect = false;
-            Referer = null;
             Timeout = TimeSpan.FromSeconds(10);
-            UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) Gecko/20100101 Firefox/33.0";
-            Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            AcceptLanguage = "en-US,en;q=0.5";
-            AcceptEncoding = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            AllowAutoRedirect = false;
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            KeepAlive = true;
+            Expect100Continue = false;
+
+            ReqHeaders = new WebHeaderCollection();
+            ReqReferer = null;
+            ReqUserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0";
+            ReqAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            ReqAcceptLanguage = "en-US,en;q=0.5";
         }
 
         /// <summary>
@@ -71,7 +105,7 @@ namespace RT.Util
                 args = new HArg[0];
             if (!args.Where(a => a != null).All(a => a.ValidForUrlEncoded))
                 throw new ArgumentException();
-            var request = makeRequest(url + (args.Any() ? (url.Contains('?') ? "&" : "?") : "") + args.Where(a => a != null).Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&"));
+            var request = makeRequest(url + (args.Where(a => a != null).Any() ? (url.Contains('?') ? "&" : "?") : "") + args.Where(a => a != null).Select(a => a.Name.UrlEscape() + "=" + a.Value.UrlEscape()).JoinString("&"));
             request.Method = "GET";
             return performRequest(request);
         }
@@ -198,14 +232,21 @@ namespace RT.Util
             var request = (HttpWebRequest) WebRequest.Create(RootUrl == null || url.ToLower().StartsWith("http://") || url.ToLower().StartsWith("https://") ? url : (RootUrl + url));
             request.ServicePoint.Expect100Continue = false;
             request.CookieContainer = Cookies;
+            // See Remarks for ReqHeaders
+            request.Accept = ReqHeaders[HttpRequestHeader.Accept];
+            if (ReqHeaders[HttpRequestHeader.Host] != null)
+                request.Host = ReqHeaders[HttpRequestHeader.Host];
+            request.Referer = ReqHeaders[HttpRequestHeader.Referer];
+            request.TransferEncoding = ReqHeaders[HttpRequestHeader.TransferEncoding];
+            request.UserAgent = ReqHeaders[HttpRequestHeader.UserAgent];
+            foreach (string header in ReqHeaders.Keys)
+                if (header != "Accept" && header != "Host" && header != "Referer" && header != "Transfer-Encoding" && header != "User-Agent")
+                    request.Headers[header] = ReqHeaders[header];
+            // Some of these also set request headers
             request.AllowAutoRedirect = AllowAutoRedirect;
-            request.Accept = Accept;
-            request.Headers[HttpRequestHeader.AcceptLanguage] = AcceptLanguage;
-            request.AutomaticDecompression = AcceptEncoding;
-            request.Referer = Referer;
-            request.KeepAlive = true;
+            request.AutomaticDecompression = AutomaticDecompression;
+            request.KeepAlive = KeepAlive;
             request.Timeout = (int) Timeout.TotalMilliseconds;
-            request.UserAgent = UserAgent;
             return request;
         }
 
@@ -213,7 +254,7 @@ namespace RT.Util
         {
             Log.Debug(1, "Requested ({0}) URL \"{1}\"".Fmt(request.Method, request.RequestUri.OriginalString));
             for (int i = 0; i < request.Headers.Count; i++)
-                Log.Debug(3, "  " + request.Headers.Keys[i] + ": " + request.Headers[i]);
+                Log.Debug(3, "  " + request.Headers.AllKeys[i] + ": " + request.Headers[i]);
             if (request.CookieContainer != null && request.CookieContainer.Count > 0)
                 Log.Debug(3, "  Cookie: " + request.CookieContainer.GetCookieHeader(request.RequestUri));
 
@@ -235,7 +276,7 @@ namespace RT.Util
             }
             Log.Debug(2, "Response: " + result.StatusCode + " - " + result.DataString.SubstringSafe(0, 50));
             for (int i = 0; i < resp.Headers.Count; i++)
-                Log.Debug(3, "  " + resp.Headers.Keys[i] + ": " + resp.Headers[i]);
+                Log.Debug(3, "  " + resp.Headers.AllKeys[i] + ": " + resp.Headers[i]);
             return result;
         }
     }
@@ -391,10 +432,16 @@ namespace RT.Util
         {
             get
             {
-                return _response.Headers.Keys.Cast<string>().Contains("Location")
+                return _response.Headers.AllKeys.Contains("Location")
                     ? _response.Headers["Location"]
                     : _response.ResponseUri.AbsoluteUri;
             }
+        }
+
+        /// <summary>Gets a collection containing response headers.</summary>
+        public WebHeaderCollection Headers
+        {
+            get { return _response.Headers; }
         }
 
         /// <summary>
