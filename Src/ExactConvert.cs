@@ -1023,7 +1023,7 @@ namespace RT.Util
         {
             TypeCode code = GetTypeCode(value);
 
-            if (code == TypeCode.String) // fast track if it's already the right type
+            if (code == TypeCode.String || value == null) // fast track if it's already the right type
             {
                 result = (string) value;
                 return true;
