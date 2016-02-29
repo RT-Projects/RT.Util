@@ -1153,7 +1153,6 @@ namespace RT.Util
             // From unsupported to string
             string result;
             string failValue = default(string);
-            Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try(new AnUnsupportedStruct(), out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try(new AnUnsupportedClass(), out result)); Assert.AreEqual(failValue, result);
 
@@ -1393,8 +1392,7 @@ namespace RT.Util
             catch (ExactConvertException) { }
 
             Assert.AreEqual("123", ExactConvert.ToString(123));
-            try { ExactConvert.ToString(null); Assert.Fail(); }
-            catch (ExactConvertException) { }
+            Assert.DoesNotThrow(() => { ExactConvert.ToString(null); });
         }
 
         #endregion
