@@ -221,8 +221,8 @@ namespace RT.Util
                     ms.Write(arg.FileContent);
                     sw.WriteLine();
                 }
-                sw.WriteLine("--" + boundary + "--");
             }
+            sw.WriteLine("--" + boundary + "--");
 
             return Post(url, ms.ToArray(), "multipart/form-data; boundary=" + boundary);
         }
