@@ -375,7 +375,7 @@ namespace RT.Util.CommandLine
 
         private static Type[] getDirectSubcommands(Type type)
         {
-            var types = type.Assembly.GetTypes().Where(t => t.IsSubclassOf(type) && t.IsDefined<CommandNameAttribute>()).ToList();
+            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(asm => asm.GetTypes()).Where(t => !t.IsGenericTypeDefinition && t.IsSubclassOf(type) && t.IsDefined<CommandNameAttribute>()).ToList();
             types.RemoveAll(t => types.Any(t.IsSubclassOf));
             return types.ToArray();
         }

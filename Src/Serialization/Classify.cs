@@ -518,11 +518,11 @@ namespace RT.Util.Serialization
                 var typeName = _format.GetType(elem, out isFullType);
                 if (typeName != null)
                 {
-                    serializedType = isFullType
-                        ? Type.GetType(typeName)
-                        : Type.GetType(typeName) ?? Type.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName)
-                            ?? declaredType.Assembly.GetType(typeName) ?? declaredType.Assembly.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName)
-                            ?? substType.Assembly.GetType(typeName) ?? substType.Assembly.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName);
+                    serializedType = isFullType ? Type.GetType(typeName) :
+                        AppDomain.CurrentDomain.GetAssemblies()
+                            .Select(asm => asm.GetType(typeName) ?? asm.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName))
+                            .Where(t => t != null)
+                            .FirstOrDefault();
                     if (serializedType == null)
                         throw new Exception("The type {0} needed for deserialization cannot be found.".Fmt(typeName));
                 }
