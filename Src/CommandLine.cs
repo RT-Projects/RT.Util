@@ -216,9 +216,11 @@ namespace RT.Util.CommandLine
         /// <param name="args">
         ///     The command-line arguments to be parsed.</param>
         /// <param name="applicationTr">
-        ///     Specifies the application’s translation object which contains the localised strings that document the
+        ///     Specifies the application’s translation object which contains the localized strings that document the
         ///     command-line options and commands. This object is passed in to the FieldNameDoc() methods described in the
         ///     documentation for <see cref="CommandLineParser"/>. This should be null for monoligual applications.</param>
+        /// <param name="cmdLineTr">
+        ///     Specifies a translation object that contains the localized strings for CommandLineParser’s own text.</param>
         /// <param name="helpProcessor">
         ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
         ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
@@ -389,8 +391,6 @@ namespace RT.Util.CommandLine
             var positionals = elements.Where(e => e.IsPositional).ToQueue();
             var actionsToPerform = new List<Action<object>>();
 
-            FieldInfo swallowingField = null;
-            bool swallowedBySubcommand = false;
             bool suppressOptions = false;
             object ret = null;
 
@@ -1847,6 +1847,9 @@ namespace RT.Util.CommandLine
         /// <param name="tr">
         ///     Contains translations for the messages used by the command-line parser. Set this to <c>null</c> only if your
         ///     application is definitely monolingual (unlocalisable).</param>
+        /// <param name="helpProcessor">
+        ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
+        ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
         public virtual void WriteUsageInfoToConsole(TranslationBase applicationTr = null, Translation tr = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
         {
             if (tr == null)
@@ -1861,6 +1864,12 @@ namespace RT.Util.CommandLine
             }
         }
 
+        /// <summary>
+        ///     Determines whether <see cref="WriteUsageInfoToConsole"/> should call <see cref="GenerateErrorText"/> and
+        ///     output it to the console. Default is <c>true</c>.</summary>
+        /// <remarks>
+        ///     Only set this to <c>false</c> if the user explicitly asked to see the help screen. Otherwise its appearance
+        ///     without explanation is confusing.</remarks>
         protected internal virtual bool WriteErrorText { get { return true; } }
     }
 
@@ -1874,6 +1883,7 @@ namespace RT.Util.CommandLine
         {
         }
 
+        /// <summary>Overrides the base to indicate that no error message should be output along with the help screen.</summary>
         protected internal override bool WriteErrorText { get { return false; } }
     }
 
