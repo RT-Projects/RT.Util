@@ -2122,21 +2122,21 @@ namespace RT.Util.Serialization
             Assert.IsTrue(json.ContainsKey(":value"));
             Assert.IsTrue(json[":value"].GetBool());
             var obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOfType(typeof(bool), obj);
+            Assert.IsInstanceOf(typeof(bool), obj);
             Assert.IsTrue((bool) obj);
 
             json = ClassifyJson.Serialize<object>(47);
             Assert.IsTrue(json.ContainsKey(":value"));
             Assert.AreEqual(47, json[":value"].GetInt());
             obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOfType(typeof(int), obj);
+            Assert.IsInstanceOf(typeof(int), obj);
             Assert.AreEqual(47, (int) obj);
 
             json = ClassifyJson.Serialize<object>(new int[] { 1, 2, 3 });
             Assert.IsTrue(json.ContainsKey(":value"));
             Assert.IsTrue(json[":value"].GetList().Select(v => v.GetInt()).SequenceEqual(new[] { 1, 2, 3 }));
             obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOfType(typeof(int[]), obj);
+            Assert.IsInstanceOf(typeof(int[]), obj);
             var arr = (int[]) obj;
             Assert.AreEqual(3, arr.Length);
             Assert.AreEqual(1, arr[0]);
