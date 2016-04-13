@@ -300,7 +300,7 @@ namespace RT.Util.ExtensionMethods
             if (input == null)
                 throw new ArgumentNullException("input");
             var result = Encoding.UTF8.GetString(input);
-            if (removeBom && result.StartsWith("\ufeff"))
+            if (removeBom && result[0] == '\ufeff')
                 return result.Substring(1);
             return result;
         }
