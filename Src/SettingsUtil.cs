@@ -366,14 +366,14 @@ namespace RT.Util
         ///     be made to the fields. The base implementation does nothing. Note that this may be called on a different
         ///     thread than the one invoking a Save* operation (but the same as the thread performing the save immediately
         ///     after this method returns).</summary>
-        protected virtual void BeforeSave()
+        protected internal virtual void BeforeSave()
         {
         }
 
         /// <summary>
         ///     This method is called just before the settings class is restored from disk, allowing any required changes to
         ///     be made to the fields. The base implementation does nothing.</summary>
-        protected virtual void AfterLoad()
+        protected internal virtual void AfterLoad()
         {
         }
 
