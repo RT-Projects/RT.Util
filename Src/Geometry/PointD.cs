@@ -134,7 +134,7 @@ namespace RT.Util.Geometry
         ///     A string representation of the current <see cref="PointD"/>.</returns>
         public override string ToString()
         {
-            return "X=" + X + ", Y=" + Y;
+            return "X=" + X.ToString("R") + ", Y=" + Y.ToString("R");
         }
 
         /// <summary>Returns the length of the vector represented by this <see cref="PointD"/>.</summary>

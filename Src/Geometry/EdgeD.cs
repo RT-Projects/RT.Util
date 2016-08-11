@@ -122,7 +122,7 @@ namespace RT.Util.Geometry
         public override bool Equals(object obj)
         {
             if (obj is EdgeD)
-                return Equals((EdgeD)obj);
+                return Equals((EdgeD) obj);
             return base.Equals(obj);
         }
 
@@ -161,7 +161,35 @@ namespace RT.Util.Geometry
             // Now substitute Ndir.X = dir.Y, and Ndir.Y = -dir.X
             // [...]
 
-            return (dir.X*(point.X - Start.X) + dir.Y*(point.Y - Start.Y)) / (dir.X*dir.X + dir.Y*dir.Y);
+            return (dir.X * (point.X - Start.X) + dir.Y * (point.Y - Start.Y)) / (dir.X * dir.X + dir.Y * dir.Y);
+        }
+
+        /// <summary>
+        ///     Returns true if the specified point lies exactly on this edge. Accurate results are not guaranteed on edges
+        ///     which are not axis-aligned.</summary>
+        public bool ContainsPoint(PointD point)
+        {
+            if (Start == point || End == point)
+                return true;
+            if (Start.X == End.X)
+                return (point.X == Start.X) && (point.Y >= Math.Min(Start.Y, End.Y)) && (point.Y <= Math.Max(Start.Y, End.Y));
+            return (point.Y == Start.Y + point.X * (End.Y - Start.Y) / (End.X - Start.X)) && (point.X >= Math.Min(Start.X, End.X)) && (point.X <= Math.Max(Start.X, End.X));
+        }
+
+        /// <summary>
+        ///     Returns the Z component of the cross product of this edge, treated as a vector from <see cref="Start"/> to
+        ///     <see cref="End"/>, with a vector from <see cref="Start"/> to the specified point.</summary>
+        public double CrossZ(PointD point)
+        {
+            return (End - Start).CrossZ(point - Start);
+        }
+
+        /// <summary>
+        ///     Returns the Z component of the cross product of this edge, treated as a vector, with the specified edge, also
+        ///     treated as a vector.</summary>
+        public double CrossZ(EdgeD edge)
+        {
+            return (End - Start).CrossZ(edge.End - edge.Start);
         }
     }
 }

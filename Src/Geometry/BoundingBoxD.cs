@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace RT.Util.Geometry
 {
@@ -74,6 +75,14 @@ namespace RT.Util.Geometry
             return box;
         }
 
+        /// <summary>Returns a new BoundingBox bounding all the points specified.</summary>
+        public static BoundingBoxD FromPoint(IEnumerable<PointD> sites)
+        {
+            var result = new BoundingBoxD();
+            result.AddPoint(sites);
+            return result;
+        }
+
         /// <summary>Returns a new BoundingBox bounding the specified edge.</summary>
         public static BoundingBoxD FromEdge(ref EdgeD edge)
         {
@@ -107,17 +116,30 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified point.</summary>
-        public void AddPoint(PointD point)
+        public void AddPoint(double x, double y)
         {
             if (double.IsNaN(Xmin))
-                this = FromPoint(ref point);
+                this = FromPoint(x, y);
             else
             {
-                Xmin = Math.Min(Xmin, point.X);
-                Xmax = Math.Max(Xmax, point.X);
-                Ymin = Math.Min(Ymin, point.Y);
-                Ymax = Math.Max(Ymax, point.Y);
+                Xmin = Math.Min(Xmin, x);
+                Xmax = Math.Max(Xmax, x);
+                Ymin = Math.Min(Ymin, y);
+                Ymax = Math.Max(Ymax, y);
             }
+        }
+
+        /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified point.</summary>
+        public void AddPoint(PointD point)
+        {
+            AddPoint(point.X, point.Y);
+        }
+
+        /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified points.</summary>
+        public void AddPoint(IEnumerable<PointD> points)
+        {
+            foreach (var pt in points)
+                AddPoint(pt);
         }
 
         /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified circle.</summary>
@@ -132,6 +154,15 @@ namespace RT.Util.Geometry
                 Ymin = Math.Min(Ymin, center.Y - radius);
                 Ymax = Math.Max(Ymax, center.Y + radius);
             }
+        }
+
+        /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified bounding box.</summary>
+        public void AddBoundingBox(BoundingBoxD box)
+        {
+            AddPoint(box.Xmin, box.Ymin);
+            AddPoint(box.Xmax, box.Ymin);
+            AddPoint(box.Xmax, box.Ymax);
+            AddPoint(box.Xmin, box.Ymax);
         }
 
         /// <summary>Returns true if this bounding box intersects with the specified ray.</summary>
@@ -150,6 +181,39 @@ namespace RT.Util.Geometry
         public bool ContainsPoint(ref PointD point)
         {
             return point.X >= Xmin && point.X <= Xmax && point.Y >= Ymin && point.Y <= Ymax;
+        }
+
+        /// <summary>Returns an array of the four edges of this bounding box.</summary>
+        public EdgeD[] ToEdges()
+        {
+            return new[] { YminEdge(), XmaxEdge(), YmaxEdge(), XminEdge() };
+        }
+
+        /// <summary>Returns the horizontal edge of this bounding box with the smallest Y coordinate.</summary>
+        public EdgeD YminEdge() { return new EdgeD(Xmin, Ymin, Xmax, Ymin); }
+        /// <summary>Returns the vertical edge of this bounding box with the largest X coordinate.</summary>
+        public EdgeD XmaxEdge() { return new EdgeD(Xmax, Ymin, Xmax, Ymax); }
+        /// <summary>Returns the horizontal edge of this bounding box with the largest Y coordinate.</summary>
+        public EdgeD YmaxEdge() { return new EdgeD(Xmax, Ymax, Xmin, Ymax); }
+        /// <summary>Returns the vertical edge of this bounding box with the smallest X coordinate.</summary>
+        public EdgeD XminEdge() { return new EdgeD(Xmin, Ymax, Xmin, Ymin); }
+
+        /// <summary>Returns an array of the four vertices of this bounding box.</summary>
+        public PointD[] ToVertices()
+        {
+            return new[] { new PointD(Xmin, Ymin), new PointD(Xmax, Ymin), new PointD(Xmax, Ymax), new PointD(Xmin, Ymax) };
+        }
+
+        /// <summary>Converts this bounding box to a polygon.</summary>
+        public PolygonD ToPolygonD()
+        {
+            return new PolygonD(ToVertices());
+        }
+
+        /// <summary>Returns the area of this bounding box.</summary>
+        public double Area()
+        {
+            return Width * Height;
         }
     }
 }

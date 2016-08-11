@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RT.Util.Geometry
 {
@@ -44,6 +46,16 @@ namespace RT.Util.Geometry
                 line1Lambda = (l2dx * (line1.Start.Y - line2.Start.Y) - l2dy * (line1.Start.X - line2.Start.X)) / denom;
                 line2Lambda = (l1dx * (line1.Start.Y - line2.Start.Y) - l1dy * (line1.Start.X - line2.Start.X)) / denom;
             }
+        }
+
+        /// <summary>
+        ///     Finds the point of intersection of two lines. If the lines don't intersect, the resulting point coordinates
+        ///     are NaN.</summary>
+        public static PointD LineWithLine(EdgeD line1, EdgeD line2)
+        {
+            double line1Lambda, line2Lambda;
+            LineWithLine(ref line1, ref line2, out line1Lambda, out line2Lambda);
+            return line1.Start + line1Lambda * (line1.End - line1.Start);
         }
 
         /// <summary>
@@ -349,6 +361,45 @@ namespace RT.Util.Geometry
         {
             return !((box2.Xmin > box1.Xmax && box2.Xmax > box1.Xmax) || (box2.Xmin < box1.Xmin && box2.Xmax < box1.Xmin)
                   || (box2.Ymin > box1.Ymax && box2.Ymax > box1.Ymax) || (box2.Ymin < box1.Ymin && box2.Ymax < box1.Ymin));
+        }
+
+        #endregion
+
+        #region PolygonWithPolygon
+
+        /// <summary>Returns a polygon formed by intersecting an arbitrary polygon with a convex polygon.</summary>
+        public static PolygonD PolygonWithConvexPolygon(PolygonD mainPoly, PolygonD clipPoly)
+        {
+            if (mainPoly.Vertices.Count <= 2 || clipPoly.Vertices.Count <= 2)
+                throw new InvalidOperationException("One of the polygons has 2 vertices or fewer.");
+            var result = new List<PointD>();
+            var resultVertices = mainPoly.Vertices.ToList();
+            foreach (var clipEdge in clipPoly.ToEdges())
+            {
+                var newVertices = new List<PointD>();
+                var vertexStart = resultVertices[resultVertices.Count - 1];
+                foreach (var vertexEnd in resultVertices)
+                {
+                    if (clipEdge.CrossZ(vertexStart) > 0)
+                    {
+                        if (clipEdge.CrossZ(vertexEnd) > 0)
+                            newVertices.Add(vertexEnd);
+                        else
+                            newVertices.Add(Intersect.LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)));
+                    }
+                    else
+                    {
+                        if (clipEdge.CrossZ(vertexEnd) > 0)
+                        {
+                            newVertices.Add(Intersect.LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)));
+                            newVertices.Add(vertexEnd);
+                        }
+                    }
+                    vertexStart = vertexEnd;
+                }
+                resultVertices = newVertices;
+            }
+            return new PolygonD(resultVertices);
         }
 
         #endregion
