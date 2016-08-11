@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util.Geometry
 {
-    /// <summary>
-    /// Represents a bounding box, in terms of the minimal and maximal X and Y coordinates.
-    /// </summary>
+    /// <summary>Represents a bounding box, in terms of the minimal and maximal X and Y coordinates.</summary>
     public struct BoundingBoxD
     {
         /// <summary>The smallest X coordinate.</summary>
@@ -19,14 +14,16 @@ namespace RT.Util.Geometry
         /// <summary>The largest Y coordinate.</summary>
         public double Ymax;
 
-        /// <summary>Gets the difference between the larger and the smaller X limits of the box, i.e. the width of the bounding box.</summary>
+        /// <summary>
+        ///     Gets the difference between the larger and the smaller X limits of the box, i.e. the width of the bounding
+        ///     box.</summary>
         public double Width { get { return Xmax - Xmin; } }
-        /// <summary>Gets the difference between the larger and the smaller Y limits of the box, i.e. the height of the bounding box.</summary>
+        /// <summary>
+        ///     Gets the difference between the larger and the smaller Y limits of the box, i.e. the height of the bounding
+        ///     box.</summary>
         public double Height { get { return Ymax - Ymin; } }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding a single point.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding a single point.</summary>
         public static BoundingBoxD FromPoint(double x, double y)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -35,9 +32,7 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding a single point.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding a single point.</summary>
         public static BoundingBoxD FromPoint(ref PointD pt)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -46,9 +41,7 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the two points specified.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
         public static BoundingBoxD FromPoint(double x1, double y1, double x2, double y2)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -59,9 +52,7 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the two points specified.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
         public static BoundingBoxD FromPoint(ref PointD pt1, ref PointD pt2)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -72,9 +63,7 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the two points specified.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
         public static BoundingBoxD FromPoint(PointD pt1, PointD pt2)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -85,25 +74,19 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the specified edge.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the specified edge.</summary>
         public static BoundingBoxD FromEdge(ref EdgeD edge)
         {
             return FromPoint(ref edge.Start, ref edge.End);
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the specified edge.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the specified edge.</summary>
         public static BoundingBoxD FromEdge(EdgeD edge)
         {
             return FromPoint(ref edge.Start, ref edge.End);
         }
 
-        /// <summary>
-        /// Returns a new BoundingBox bounding the specified circle.
-        /// </summary>
+        /// <summary>Returns a new BoundingBox bounding the specified circle.</summary>
         public static BoundingBoxD FromCircle(ref PointD center, double radius)
         {
             BoundingBoxD box = new BoundingBoxD();
@@ -114,9 +97,7 @@ namespace RT.Util.Geometry
             return box;
         }
 
-        /// <summary>
-        /// An empty bounding box - which doesn't have any bounds yet.
-        /// </summary>
+        /// <summary>An empty bounding box - which doesn't have any bounds yet.</summary>
         public static readonly BoundingBoxD Empty;
 
         static BoundingBoxD()
@@ -125,9 +106,7 @@ namespace RT.Util.Geometry
             Empty.Xmin = Empty.Xmax = Empty.Ymin = Empty.Ymax = double.NaN;
         }
 
-        /// <summary>
-        /// Updates the bounding box by extending the bounds, if necessary, to include the specified point.
-        /// </summary>
+        /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified point.</summary>
         public void AddPoint(PointD point)
         {
             if (double.IsNaN(Xmin))
@@ -141,9 +120,7 @@ namespace RT.Util.Geometry
             }
         }
 
-        /// <summary>
-        /// Updates the bounding box by extending the bounds, if necessary, to include the specified circle.
-        /// </summary>
+        /// <summary>Updates the bounding box by extending the bounds, if necessary, to include the specified circle.</summary>
         public void AddCircle(ref PointD center, double radius)
         {
             if (double.IsNaN(Xmin))
@@ -157,25 +134,19 @@ namespace RT.Util.Geometry
             }
         }
 
-        /// <summary>
-        /// Returns true if this bounding box intersects with the specified ray.
-        /// </summary>
+        /// <summary>Returns true if this bounding box intersects with the specified ray.</summary>
         public bool IntersectsWithRay(EdgeD ray)
         {
             return Intersect.RayWithBoundingBox(ref ray, ref this);
         }
 
-        /// <summary>
-        /// Returns true if this bounding box intersects with the specified bounding box.
-        /// </summary>
+        /// <summary>Returns true if this bounding box intersects with the specified bounding box.</summary>
         public bool IntersectsWithBoundingBox(BoundingBoxD box)
         {
             return Intersect.BoundingBoxWithBoundingBox(ref this, ref box);
         }
 
-        /// <summary>
-        /// Returns true iff this bounding box contains the specified point.
-        /// </summary>
+        /// <summary>Returns true iff this bounding box contains the specified point.</summary>
         public bool ContainsPoint(ref PointD point)
         {
             return point.X >= Xmin && point.X <= Xmax && point.Y >= Ymin && point.Y <= Ymax;

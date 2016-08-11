@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RT.Util.Geometry
 {
@@ -26,9 +24,12 @@ namespace RT.Util.Geometry
             Y = Math.Sin(angle);
         }
 
-        /// <summary>Compares two <see cref="PointD"/> objects for equality.</summary>
-        /// <param name="obj">Object to compare against.</param>
-        /// <returns>True if considered equal.</returns>
+        /// <summary>
+        ///     Compares two <see cref="PointD"/> objects for equality.</summary>
+        /// <param name="obj">
+        ///     Object to compare against.</param>
+        /// <returns>
+        ///     True if considered equal.</returns>
         public override bool Equals(object obj)
         {
             if (obj is PointD)
@@ -36,36 +37,46 @@ namespace RT.Util.Geometry
             return base.Equals(obj);
         }
 
-        /// <summary>Compares two <see cref="PointD"/> objects for equality.</summary>
-        /// <param name="other">Object to compare against.</param>
-        /// <returns>True if considered equal.</returns>
+        /// <summary>
+        ///     Compares two <see cref="PointD"/> objects for equality.</summary>
+        /// <param name="other">
+        ///     Object to compare against.</param>
+        /// <returns>
+        ///     True if considered equal.</returns>
         public bool Equals(PointD other)
         {
             return other.X == X && other.Y == Y;
         }
 
-        /// <summary>Compares two <see cref="PointD"/> objects for equality.</summary>
-        /// <param name="one">First object to compare.</param>
-        /// <param name="other">Object to compare against.</param>
-        /// <returns>True if considered equal.</returns>
+        /// <summary>
+        ///     Compares two <see cref="PointD"/> objects for equality.</summary>
+        /// <param name="one">
+        ///     First object to compare.</param>
+        /// <param name="other">
+        ///     Object to compare against.</param>
+        /// <returns>
+        ///     True if considered equal.</returns>
         public static bool operator ==(PointD one, PointD other)
         {
             return one.Equals(other);
         }
 
-        /// <summary>Compares two <see cref="PointD"/> objects for inequality.</summary>
-        /// <param name="one">First object to compare.</param>
-        /// <param name="other">Object to compare against.</param>
-        /// <returns>True if considered different.</returns>
+        /// <summary>
+        ///     Compares two <see cref="PointD"/> objects for inequality.</summary>
+        /// <param name="one">
+        ///     First object to compare.</param>
+        /// <param name="other">
+        ///     Object to compare against.</param>
+        /// <returns>
+        ///     True if considered different.</returns>
         public static bool operator !=(PointD one, PointD other)
         {
             return !one.Equals(other);
         }
 
         /// <summary>
-        /// Performs unary vector negation (i.e. the resulting point is of the same length but
-        /// pointing in the opposite direction).
-        /// </summary>
+        ///     Performs unary vector negation (i.e. the resulting point is of the same length but pointing in the opposite
+        ///     direction).</summary>
         public static PointD operator -(PointD vector)
         {
             return new PointD(-vector.X, -vector.Y);
@@ -107,16 +118,20 @@ namespace RT.Util.Geometry
             return X.GetHashCode() ^ Y.GetHashCode();
         }
 
-        /// <summary>Converts the current <see cref="PointD"/> object to a <see cref="System.Drawing.PointF"/>.
-        /// Note that doing so loses precision.</summary>
-        /// <returns>Lower-precision <see cref="System.Drawing.PointF"/>.</returns>
+        /// <summary>
+        ///     Converts the current <see cref="PointD"/> object to a <see cref="System.Drawing.PointF"/>. Note that doing so
+        ///     loses precision.</summary>
+        /// <returns>
+        ///     Lower-precision <see cref="System.Drawing.PointF"/>.</returns>
         public System.Drawing.PointF ToPointF()
         {
             return new System.Drawing.PointF((float) X, (float) Y);
         }
 
-        /// <summary>Provides a string representation of the current <see cref="PointD"/>.</summary>
-        /// <returns>A string representation of the current <see cref="PointD"/>.</returns>
+        /// <summary>
+        ///     Provides a string representation of the current <see cref="PointD"/>.</summary>
+        /// <returns>
+        ///     A string representation of the current <see cref="PointD"/>.</returns>
         public override string ToString()
         {
             return "X=" + X + ", Y=" + Y;
@@ -148,10 +163,9 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Returns the Z-component of the cross product of this vector with the other one.
-        /// The Z-component is equal to the product of: the lengths of the two vectors and the sin of the angle between them.
-        /// Note that the X and Y components of a cross product of 2-vectors are always zero.
-        /// </summary>
+        ///     Returns the Z-component of the cross product of this vector with the other one. The Z-component is equal to
+        ///     the product of: the lengths of the two vectors and the sin of the angle between them. Note that the X and Y
+        ///     components of a cross product of 2-vectors are always zero.</summary>
         public double CrossZ(PointD other)
         {
             return X * other.Y - Y * other.X;
@@ -164,11 +178,13 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Decomposes this vector into components relative to another vector.
-        /// </summary>
-        /// <param name="vector">Reference vector.</param>
-        /// <param name="lenAlong">Length of this vector along the reference vector.</param>
-        /// <param name="lenNormal">Length of this vector normal to the reference vector.</param>
+        ///     Decomposes this vector into components relative to another vector.</summary>
+        /// <param name="vector">
+        ///     Reference vector.</param>
+        /// <param name="lenAlong">
+        ///     Length of this vector along the reference vector.</param>
+        /// <param name="lenNormal">
+        ///     Length of this vector normal to the reference vector.</param>
         public void DecomposeAlong(PointD vector, out double lenAlong, out double lenNormal)
         {
             lenAlong = LengthProjectedOnto(vector);
@@ -176,11 +192,13 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Performs the inverse of <see cref="DecomposeAlong"/>, modifying the current vector in place.
-        /// </summary>
-        /// <param name="vector">Reference vector.</param>
-        /// <param name="lenAlong">Length of this vector along the reference vector.</param>
-        /// <param name="lenNormal">Length of this vector normal to the reference vector.</param>
+        ///     Performs the inverse of <see cref="DecomposeAlong"/>, modifying the current vector in place.</summary>
+        /// <param name="vector">
+        ///     Reference vector.</param>
+        /// <param name="lenAlong">
+        ///     Length of this vector along the reference vector.</param>
+        /// <param name="lenNormal">
+        ///     Length of this vector normal to the reference vector.</param>
         public void RecomposeAlong(PointD vector, double lenAlong, double lenNormal)
         {
             PointD unitVector = vector.Unit();
@@ -189,17 +207,13 @@ namespace RT.Util.Geometry
             Y = lenAlong * unitVector.Y + lenNormal * unitVectorNormal.Y;
         }
 
-        /// <summary>
-        /// Returns the length of this vector's projection onto the specified vector.
-        /// </summary>
+        /// <summary>Returns the length of this vector's projection onto the specified vector.</summary>
         public double LengthProjectedOnto(PointD vector)
         {
             return Dot(vector) / vector.Abs();
         }
 
-        /// <summary>
-        /// Returns the length of this vector's projection onto a unit vector at the specified angle.
-        /// </summary>
+        /// <summary>Returns the length of this vector's projection onto a unit vector at the specified angle.</summary>
         public double LengthProjectedOnto(double angle)
         {
             // Simplifying the following, where vector is a unit vector with theta = angle
@@ -209,18 +223,15 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Returns a vector representing the projection (i.e. length and direction) of
-        /// this vector onto the specified vector.
-        /// </summary>
+        ///     Returns a vector representing the projection (i.e. length and direction) of this vector onto the specified
+        ///     vector.</summary>
         public PointD ProjectedOnto(PointD vector)
         {
             PointD unitVector = vector.Unit();
             return Dot(unitVector) * unitVector;
         }
 
-        /// <summary>
-        /// Returns a vector of the same length as this vector, but rotated by the specified angle.
-        /// </summary>
+        /// <summary>Returns a vector of the same length as this vector, but rotated by the specified angle.</summary>
         public PointD Rotated(double angle)
         {
             var sina = Math.Sin(angle);

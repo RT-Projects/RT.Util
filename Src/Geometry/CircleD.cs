@@ -1,5 +1,4 @@
 using System;
-using RT.Util.Collections;
 
 namespace RT.Util.Geometry
 {
@@ -11,40 +10,51 @@ namespace RT.Util.Geometry
         /// <summary>Radius of the circle.</summary>
         public double Radius;
 
-        /// <summary>Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
-        /// <param name="x">Center X co-ordinate.</param>
-        /// <param name="y">Center Y co-ordinate.</param>
-        /// <param name="rad">Radius.</param>
+        /// <summary>
+        ///     Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
+        /// <param name="x">
+        ///     Center X co-ordinate.</param>
+        /// <param name="y">
+        ///     Center Y co-ordinate.</param>
+        /// <param name="rad">
+        ///     Radius.</param>
         public CircleD(double x, double y, double rad)
         {
             Center = new PointD(x, y);
             Radius = rad;
         }
 
-        /// <summary>Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
-        /// <param name="center">Center co-ordinates.</param>
-        /// <param name="rad">Radius.</param>
+        /// <summary>
+        ///     Initialises a new <see cref="CircleD"/> with the specified center co-ordinates and radius.</summary>
+        /// <param name="center">
+        ///     Center co-ordinates.</param>
+        /// <param name="rad">
+        ///     Radius.</param>
         public CircleD(PointD center, double rad)
         {
             Center = center;
             Radius = rad;
         }
 
-        /// <summary>Provides a string representation of the current <see cref="CircleD"/>.</summary>
-        /// <returns>A string representation of the current <see cref="CircleD"/>.</returns>
+        /// <summary>
+        ///     Provides a string representation of the current <see cref="CircleD"/>.</summary>
+        /// <returns>
+        ///     A string representation of the current <see cref="CircleD"/>.</returns>
         public override string ToString()
         {
             return Center.ToString() + " / " + Radius;
         }
 
         /// <summary>
-        /// Given this circle and another circle, tries to find a third and fourth circle with
-        /// a given target radius such that the new circles are both tangent to the first two.
-        /// </summary>
-        /// <param name="other">The other circle.</param>
-        /// <param name="targetRadius">Target radius for output circles.</param>
-        /// <returns>The two output circles if they exist. If the input circles are further
-        /// apart than twice the target radius, the desires circles do not exist and null is returned.</returns>
+        ///     Given this circle and another circle, tries to find a third and fourth circle with a given target radius such
+        ///     that the new circles are both tangent to the first two.</summary>
+        /// <param name="other">
+        ///     The other circle.</param>
+        /// <param name="targetRadius">
+        ///     Target radius for output circles.</param>
+        /// <returns>
+        ///     The two output circles if they exist. If the input circles are further apart than twice the target radius, the
+        ///     desires circles do not exist and null is returned.</returns>
         public Tuple<CircleD, CircleD> FindTangentCircles(CircleD other, double targetRadius)
         {
             double a = ((Center.X - other.Center.X) * (Center.X - other.Center.X)) /

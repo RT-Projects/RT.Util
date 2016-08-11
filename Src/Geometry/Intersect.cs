@@ -3,35 +3,26 @@
 namespace RT.Util.Geometry
 {
     /// <summary>
-    /// A utility class to find / test for intersections between geometric shapes.
-    /// 
-    /// <para>
-    /// In this static class, function names always have the two basic shapes
-    /// ordered using the following order:
-    /// </para>
-    /// 
-    /// <list type="number">
-    ///   <item>Line (infinite)</item>
-    ///   <item>Ray (starts at a point, extends to infinity)</item>
-    ///   <item>Segment (starts and ends on finite points)</item>
-    ///   <item>Circle</item>
-    ///   <item>BoundingBox (axis-aligned, ordered coords of each edge are known)</item>
-    /// </list>
-    ///
-    /// <para>
-    /// Hence it's always LineWithCircle, never CircleWithLine.
-    /// </para>
-    /// </summary>
+    ///     <para>
+    ///         A utility class to find / test for intersections between geometric shapes.</para>
+    ///     <para>
+    ///         In this static class, function names always have the two basic shapes ordered using the following order:</para>
+    ///     <list type="number">
+    ///         <item>Line (infinite)</item>
+    ///         <item>Ray (starts at a point, extends to infinity)</item>
+    ///         <item>Segment (starts and ends on finite points)</item>
+    ///         <item>Circle</item>
+    ///         <item>BoundingBox (axis-aligned, ordered coords of each edge are known)</item></list>
+    ///     <para>
+    ///         Hence it's always LineWithCircle, never CircleWithLine.</para></summary>
     public static class Intersect
     {
         #region LineWithLine
 
         /// <summary>
-        /// Finds the point of intersection of two lines. The result is in terms of
-        /// lambda along each of the lines. Point of intersection is defined as
-        /// "line.Start + lambda * line", for each line. If the lines don't intersect,
-        /// the lambdas are set to NaN.
-        /// </summary>
+        ///     Finds the point of intersection of two lines. The result is in terms of lambda along each of the lines. Point
+        ///     of intersection is defined as "line.Start + lambda * line", for each line. If the lines don't intersect, the
+        ///     lambdas are set to NaN.</summary>
         public static void LineWithLine(ref EdgeD line1, ref EdgeD line2, out double line1Lambda, out double line2Lambda)
         {
             // line1 direction vector
@@ -56,10 +47,10 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// <para>Finds the point of intersection between two lines, specified by
-        /// two points each.</para>
-        /// <para>If the lines coincide or are parallel, returns (NaN,NaN).</para>
-        /// </summary>
+        ///     <para>
+        ///         Finds the point of intersection between two lines, specified by two points each.</para>
+        ///     <para>
+        ///         If the lines coincide or are parallel, returns (NaN,NaN).</para></summary>
         public static PointD intersect(PointD f1, PointD t1, PointD f2, PointD t2)
         {
             var det = (f1.X - t1.X) * (f2.Y - t2.Y) - (f1.Y - t1.Y) * (f2.X - t2.X);
@@ -79,10 +70,8 @@ namespace RT.Util.Geometry
         #region LineWithCircle
 
         /// <summary>
-        /// Finds the points of intersection between a line and a circle. The results
-        /// are two lambdas along the line, one for each point, or NaN if there is no
-        /// intersection.
-        /// </summary>
+        ///     Finds the points of intersection between a line and a circle. The results are two lambdas along the line, one
+        ///     for each point, or NaN if there is no intersection.</summary>
         public static void LineWithCircle(ref EdgeD line, ref CircleD circle,
                                           out double lambda1, out double lambda2)
         {
@@ -118,10 +107,8 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Finds the points of intersection between a line and a circle. The results
-        /// are two lambdas along the line, one for each point, or NaN if there is no
-        /// intersection.
-        /// </summary>
+        ///     Finds the points of intersection between a line and a circle. The results are two lambdas along the line, one
+        ///     for each point, or NaN if there is no intersection.</summary>
         public static void LineWithCircle(EdgeD line, CircleD circle,
                                           out double lambda1, out double lambda2)
         {
@@ -133,10 +120,8 @@ namespace RT.Util.Geometry
         #region RayWithSegment
 
         /// <summary>
-        /// Calculates the intersection of a ray with a segment. Returns the result as the
-        /// lambdas of the intersection point along the ray and the segment. If there is no
-        /// intersection returns double.NaN in both lambdas.
-        /// </summary>
+        ///     Calculates the intersection of a ray with a segment. Returns the result as the lambdas of the intersection
+        ///     point along the ray and the segment. If there is no intersection returns double.NaN in both lambdas.</summary>
         public static void RayWithSegment(ref EdgeD ray, ref EdgeD segment, out double rayL, out double segmentL)
         {
             Intersect.LineWithLine(ref ray, ref segment, out rayL, out segmentL);
@@ -150,11 +135,9 @@ namespace RT.Util.Geometry
         #region RayWithCircle
 
         /// <summary>
-        /// Finds the points of intersection between a ray and a circle. The
-        /// resulting lambdas along the ray are sorted in ascending order, so
-        /// the "first" intersection is always in lambda1 (if any). Lambda may
-        /// be NaN if there is no intersection (or no "second" intersection).
-        /// </summary>
+        ///     Finds the points of intersection between a ray and a circle. The resulting lambdas along the ray are sorted in
+        ///     ascending order, so the "first" intersection is always in lambda1 (if any). Lambda may be NaN if there is no
+        ///     intersection (or no "second" intersection).</summary>
         public static void RayWithCircle(ref EdgeD ray, ref CircleD circle,
                                          out double lambda1, out double lambda2)
         {
@@ -177,11 +160,9 @@ namespace RT.Util.Geometry
         #region RayWithArc
 
         /// <summary>
-        /// Finds the points of intersection between a ray and an arc. The
-        /// resulting lambdas along the ray are sorted in ascending order, so
-        /// the "first" intersection is always in lambda1 (if any). Lambda may
-        /// be NaN if there is no intersection (or no "second" intersection).
-        /// </summary>
+        ///     Finds the points of intersection between a ray and an arc. The resulting lambdas along the ray are sorted in
+        ///     ascending order, so the "first" intersection is always in lambda1 (if any). Lambda may be NaN if there is no
+        ///     intersection (or no "second" intersection).</summary>
         public static void RayWithArc(ref EdgeD ray, ref ArcD arc,
                                          out double lambda1, out double lambda2)
         {
@@ -211,10 +192,9 @@ namespace RT.Util.Geometry
         #region RayWithRectangle
 
         /// <summary>
-        /// Finds intersections between a ray and a rectangle. Returns the lambdas of intersections, if any,
-        /// or NaN otherwise. Guarantees that lambda1 &lt; lambda2, and if only one of them is NaN then
-        /// it's lambda2. Lambda is such that ray.Start + lambda * (ray.End - ray.Start) gives the point of intersection.
-        /// </summary>
+        ///     Finds intersections between a ray and a rectangle. Returns the lambdas of intersections, if any, or NaN
+        ///     otherwise. Guarantees that lambda1 &lt; lambda2, and if only one of them is NaN then it's lambda2. Lambda is
+        ///     such that ray.Start + lambda * (ray.End - ray.Start) gives the point of intersection.</summary>
         public static void RayWithRectangle(ref EdgeD ray, ref RectangleD rect, out double lambda1, out double lambda2)
         {
             double lambda, dummy;
@@ -263,9 +243,7 @@ namespace RT.Util.Geometry
         #region RayWithBoundingBox
 
         /// <summary>
-        /// Checks for intersections between a ray and a bounding box. Returns true if
-        /// there is at least one intersection.
-        /// </summary>
+        ///     Checks for intersections between a ray and a bounding box. Returns true if there is at least one intersection.</summary>
         public static bool RayWithBoundingBox(ref EdgeD ray, ref BoundingBoxD box)
         {
             double dx = ray.End.X - ray.Start.X;
@@ -321,13 +299,10 @@ namespace RT.Util.Geometry
         #region SegmentWithSegment
 
         /// <summary>
-        /// If the two specified line segments touch anywhere, returns true. Otherwise
-        /// returns false.
+        ///     If the two specified line segments touch anywhere, returns true. Otherwise returns false. See Remarks.</summary>
         /// <remarks>
-        /// Support for zero-length segments is partial - if one of the segments is of
-        /// length 0 the result is correct, but if both are the result is always true.
-        /// </remarks>
-        /// </summary>
+        ///     Support for zero-length segments is partial - if one of the segments is of length 0 the result is correct, but
+        ///     if both are the result is always true.</remarks>
         public static bool SegmentWithSegment(
             double f1x, double f1y, double t1x, double t1y,
             double f2x, double f2y, double t2x, double t2y)
@@ -356,11 +331,9 @@ namespace RT.Util.Geometry
         #region BoundingBoxWithBoundingBox
 
         /// <summary>
-        /// Checks for intersections between the two bounding boxes specified by the coordinates.
-        /// Returns true if there is at least one intersection. Coordinates ending with "1" belong
-        /// to the first box, "2" to the second one. Coordinates starting with "f" MUST be less than
-        /// or equal to ones starting with "t".
-        /// </summary>
+        ///     Checks for intersections between the two bounding boxes specified by the coordinates. Returns true if there is
+        ///     at least one intersection. Coordinates ending with "1" belong to the first box, "2" to the second one.
+        ///     Coordinates starting with "f" MUST be less than or equal to ones starting with "t".</summary>
         public static bool BoundingBoxWithBoundingBox(
             double fx1, double fy1, double tx1, double ty1,
             double fx2, double fy2, double tx2, double ty2)
@@ -370,9 +343,8 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        /// Checks for intersections between the two bounding boxes specified by the coordinates.
-        /// Returns true if there is at least one intersection.
-        /// </summary>
+        ///     Checks for intersections between the two bounding boxes specified by the coordinates. Returns true if there is
+        ///     at least one intersection.</summary>
         public static bool BoundingBoxWithBoundingBox(ref BoundingBoxD box1, ref BoundingBoxD box2)
         {
             return !((box2.Xmin > box1.Xmax && box2.Xmax > box1.Xmax) || (box2.Xmin < box1.Xmin && box2.Xmax < box1.Xmin)

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace RT.Util.Geometry
+﻿namespace RT.Util.Geometry
 {
     /// <summary>Encapsulates a double-precision circular arc.</summary>
     public struct ArcD
