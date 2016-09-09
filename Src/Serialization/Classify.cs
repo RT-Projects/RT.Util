@@ -701,7 +701,11 @@ namespace RT.Util.Serialization
                                             recurse3 = (indices, rnk, obj) =>
                                             {
                                                 if (rnk == rank)
-                                                    outputArray.SetValue(((Func<object>) obj)(), indices);
+                                                {
+                                                    var valueToAdd = ((Func<object>) obj)();
+                                                    if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
+                                                        outputArray.SetValue(valueToAdd, indices);
+                                                }
                                                 else
                                                 {
                                                     for (int i = 0; i < lengths[rnk]; i++)
@@ -1067,19 +1071,38 @@ namespace RT.Util.Serialization
                             if (saveArray.GetLowerBound(i) != 0)
                                 throw new NotSupportedException(@"Arrays with lower bounds other than zero are not supported by Classify.");
 
-                        var lengths = Enumerable.Range(0, saveArray.Rank).Select(rnk => saveArray.GetLength(rnk)).ToArray();
-                        Func<int[], int, Func<TElement>> recurse = null;
+                        var lengths = new int[saveArray.Rank];
+                        for (int rnk = 0; rnk < saveArray.Rank; rnk++)
+                            lengths[rnk] = saveArray.GetLength(rnk);
+
+                        // STEP 1: Serialize all the inner objects and organize them as jagged arrays.
+                        // We have to do this before the next step so that object references work correctly.
+                        Func<int[], int, object> recurse = null;
+                        var ixs = new int[saveArray.Rank];
                         recurse = (indices, rnk) =>
                         {
                             if (rnk == rank)
                                 return Serialize(saveArray.GetValue(indices), valueType);
-                            return () => _format.FormatList(false, Enumerable.Range(0, lengths[rnk]).Select(i =>
+                            var arr = new object[lengths[rnk]];
+                            for (int i = 0; i < lengths[rnk]; i++)
                             {
                                 indices[rnk] = i;
-                                return recurse(indices, rnk + 1)();
-                            }));
+                                arr[i] = recurse(indices, rnk + 1);
+                            }
+                            return arr;
                         };
-                        elem = recurse(new int[saveArray.Rank], 0);
+                        var arrays = recurse(ixs, 0);
+
+                        // STEP 2: Call _format.FormatList() on everything.
+                        Func<object, TElement> recurse2 = null;
+                        recurse2 = obj =>
+                        {
+                            var arr = obj as object[];
+                            if (arr != null)
+                                return _format.FormatList(false, arr.Select(recurse2));
+                            return ((Func<TElement>) obj)();
+                        };
+                        elem = () => recurse2(arrays);
                     }
                     else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
                     {
