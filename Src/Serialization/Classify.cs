@@ -638,28 +638,93 @@ namespace RT.Util.Serialization
                         }
                         else if (serializedType.IsArray)
                         {
-                            var input = _format.GetList(elem, null).ToArray();
-                            var outputArray = (already != null && ((Array) already).GetLength(0) == input.Length) ? already : serializedType.GetConstructor(new Type[] { typeof(int) }).Invoke(new object[] { input.Length });
-                            var setMethod = serializedType.GetMethod("Set", new Type[] { typeof(int), valueType });
-                            var i = -1;
-                            var setters = new Func<object>[input.Length];
+                            // It’s an array, possibly a multi-dimensional one.
+                            var rank = serializedType.GetArrayRank();
+                            var lengths = new int[rank];
+                            var doAtEndList = new List<Action>();
+
+                            // STEP 1 (done here): Generate an object[] of object[]s of object[]s containing the still-serialized elements (TElement).
+                            // At the same time, populate ‘lengths’ and throw if it is inconsistent
+                            Func<bool, int, TElement, object> recurse = null;
+                            recurse = (isFirst, rnk, el) =>
+                            {
+                                if (rnk == rank)
+                                    return el;
+                                else
+                                {
+                                    var thisList = _format.GetList(el, null).ToArray();
+                                    if (isFirst)
+                                        lengths[rnk] = thisList.Length;
+                                    else if (lengths[rnk] != thisList.Length)
+                                        throw new InvalidOperationException(@"The serialized form contains a multi-dimensional array in which the sizes of each dimension are inconsistent.");
+                                    var newList = new object[thisList.Length];
+                                    for (int i = 0; i < thisList.Length; i++)
+                                        newList[i] = recurse(i == 0, rnk + 1, thisList[i]);
+                                    return newList;
+                                }
+                            };
+
+                            // This call initializes the values in ‘lengths’
+                            var arrays = (object[]) recurse(true, 0, elem);
+
+                            // This call requires ‘lengths’ to be initialized
+                            var outputArray = Array.CreateInstance(serializedType.GetElementType(), lengths);
+
+                            // STEP 2 (done using CustomCallStack): Deserialize the innermost TElement objects using deserialize(),
+                            // which gives a Func<object>, and store those Func<object>s in the same place, overwriting the TElements
+                            int[] ixs = null;
                             return prevResult =>
                             {
-                                if (i >= 0)
-                                    setters[i] = prevResult;
-                                i++;
-                                if (i < input.Length)
-                                    return deserialize(valueType, input[i], null, enforceEnums);
-                                _doAtTheEnd.Add(() =>
+                                if (ixs != null)
                                 {
-                                    for (int j = 0; j < setters.Length; j++)
+                                    // Put the deserialization result in the right location in the right array
+                                    object el1 = arrays;
+                                    for (int ix = 0; ix < rank - 1; ix++)
+                                        el1 = ((object[]) el1)[ixs[ix]];
+                                    ((object[]) el1)[ixs[rank - 1]] = prevResult;
+
+                                    // Move on to next coordinates
+                                    var r = rank - 1;
+                                    while (r >= 0 && ixs[r] == lengths[r] - 1)
                                     {
-                                        var valueToSet = setters[j]();
-                                        if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToSet))
-                                            setMethod.Invoke(outputArray, new object[] { j, valueToSet });
+                                        ixs[r] = 0;
+                                        r--;
                                     }
-                                });
-                                return cleanUp(() => outputArray);
+
+                                    if (r < 0)
+                                    {
+                                        // We’ve called deserialize on everything.
+                                        // STEP 3 (done at the end): put all the deserialized elements into the array.
+                                        _doAtTheEnd.Add(() =>
+                                        {
+                                            Action<int[], int, object> recurse3 = null;
+                                            recurse3 = (indices, rnk, obj) =>
+                                            {
+                                                if (rnk == rank)
+                                                    outputArray.SetValue(((Func<object>) obj)(), indices);
+                                                else
+                                                {
+                                                    for (int i = 0; i < lengths[rnk]; i++)
+                                                    {
+                                                        indices[rnk] = i;
+                                                        recurse3(indices, rnk + 1, ((object[]) obj)[i]);
+                                                    }
+                                                }
+                                            };
+                                            recurse3(ixs, 0, arrays);
+                                        });
+                                        return cleanUp(() => outputArray);
+                                    }
+                                    ixs[r]++;
+                                }
+                                else
+                                    ixs = new int[rank];
+
+                                // Deserialize the next element
+                                object el2 = arrays;
+                                for (int ix = 0; ix < rank; ix++)
+                                    el2 = ((object[]) el2)[ixs[ix]];
+                                return deserialize(valueType, (TElement) el2, null, enforceEnums);
                             };
                         }
                         else
@@ -943,6 +1008,7 @@ namespace RT.Util.Serialization
                 else
                 {
                     Type[] typeParameters;
+                    Array saveArray;
 
                     // Tuples and KeyValuePairs
                     var genericDefinition = saveType.IsGenericType ? saveType.GetGenericTypeDefinition() : null;
@@ -990,6 +1056,30 @@ namespace RT.Util.Serialization
                             GetValue = Serialize(valueProperty.GetValue(kvp, null), valueType)
                         }).ToArray();
                         elem = () => _format.FormatDictionary(kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
+                    }
+                    else if ((saveArray = saveObject as Array) != null && (saveArray.Rank > 1 || saveArray.GetLowerBound(0) != 0))
+                    {
+                        var rank = saveArray.Rank;
+                        var valueType = saveType.GetElementType();
+
+                        // It’s a multi-dimensional array
+                        for (int i = 0; i < saveArray.Rank; i++)
+                            if (saveArray.GetLowerBound(i) != 0)
+                                throw new NotSupportedException(@"Arrays with lower bounds other than zero are not supported by Classify.");
+
+                        var lengths = Enumerable.Range(0, saveArray.Rank).Select(rnk => saveArray.GetLength(rnk)).ToArray();
+                        Func<int[], int, Func<TElement>> recurse = null;
+                        recurse = (indices, rnk) =>
+                        {
+                            if (rnk == rank)
+                                return Serialize(saveArray.GetValue(indices), valueType);
+                            return () => _format.FormatList(false, Enumerable.Range(0, lengths[rnk]).Select(i =>
+                            {
+                                indices[rnk] = i;
+                                return recurse(indices, rnk + 1)();
+                            }));
+                        };
+                        elem = recurse(new int[saveArray.Rank], 0);
                     }
                     else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
                     {
