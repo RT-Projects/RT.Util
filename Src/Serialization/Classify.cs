@@ -670,6 +670,10 @@ namespace RT.Util.Serialization
                             // This call requires ‘lengths’ to be initialized
                             var outputArray = Array.CreateInstance(serializedType.GetElementType(), lengths);
 
+                            // If any of the lengths are 0, the array contains no elements that need deserialization.
+                            if (lengths.Any(l => l == 0))
+                                return prevResult => cleanUp(() => outputArray);
+
                             // STEP 2 (done using CustomCallStack): Deserialize the innermost TElement objects using deserialize(),
                             // which gives a Func<object>, and store those Func<object>s in the same place, overwriting the TElements
                             int[] ixs = null;

@@ -2143,6 +2143,40 @@ namespace RT.Util.Serialization
             Assert.AreEqual(2, arr[1]);
             Assert.AreEqual(3, arr[2]);
         }
+
+        class zeroLengthArrays
+        {
+            public string[] Strings = new string[0];
+            public int[] Ints = new int[0];
+            [ClassifyNotNull]
+            public string[] StringsNotNull = new string[0];
+            [ClassifyNotNull]
+            public int[] IntsNotNull = new int[0];
+            public string[] StringsNull = null;
+            public int[] IntsNull = null;
+        }
+
+        [Test]
+        public void TestZeroLengthArray()
+        {
+            var obj = roundTrip(new zeroLengthArrays(), false);
+            Assert.IsNotNull(obj.Strings);
+            Assert.IsTrue(obj.Strings.SequenceEqual(new string[0]));
+            Assert.IsNotNull(obj.Ints);
+            Assert.IsTrue(obj.Ints.SequenceEqual(new int[0]));
+            Assert.IsNotNull(obj.StringsNotNull);
+            Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
+            Assert.IsNotNull(obj.IntsNotNull);
+            Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
+            Assert.IsNull(obj.StringsNull);
+            Assert.IsNull(obj.IntsNull);
+
+            obj = roundTrip(new zeroLengthArrays { StringsNotNull = null, IntsNotNull = null }, false);
+            Assert.IsNotNull(obj.StringsNotNull);
+            Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
+            Assert.IsNotNull(obj.IntsNotNull);
+            Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
+        }
     }
 
     class MisTypeOuter
