@@ -40,7 +40,7 @@ namespace RT.Util
             Assert.IsFalse(new JsonList().Equals(null));
             Assert.IsFalse(new JsonDict().Equals(null));
 
-            // Comparison with an object ouside the hierarchy
+            // Comparison with an object outside the hierarchy
             Assert.IsFalse(new JsonBool(true).Equals(new JsonString("abc")));
             Assert.IsFalse(new JsonString("thingy").Equals(StringComparer.Ordinal));
             Assert.IsFalse(JsonNumber.Create(47).Equals(new StringBuilder()));
