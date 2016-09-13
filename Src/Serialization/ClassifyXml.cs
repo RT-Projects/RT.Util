@@ -315,6 +315,15 @@ namespace RT.Util.Serialization
             });
         }
 
+        byte[] IClassifyFormat<XElement>.GetRawData(XElement element)
+        {
+            if (element.HasElements)
+                // Support a list of integers as this was how Classify encoded byte arrays before GetRawData was introduced
+                return element.Elements().Select(el => ExactConvert.ToByte(el.Value)).ToArray();
+
+            return Convert.FromBase64String(element.Value);
+        }
+
         bool IClassifyFormat<XElement>.IsReference(XElement element)
         {
             return element.Attribute("ref") != null;
@@ -411,6 +420,11 @@ namespace RT.Util.Serialization
                     kvp.Value.Add(new XAttribute("declaringType", kvp.DeclaringType));
                 return kvp.Value;
             }));
+        }
+
+        XElement IClassifyFormat<XElement>.FormatRawData(byte[] value)
+        {
+            return new XElement(_rootTagName, Convert.ToBase64String(value));
         }
 
         XElement IClassifyFormat<XElement>.FormatReference(int refId)

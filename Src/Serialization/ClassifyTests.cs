@@ -52,6 +52,27 @@ namespace RT.Util.Serialization
             return xml;
         }
 
+        public void RoundTrip<T>(T value, Action<T> assertions = null, bool? enforceEnums = null)
+        {
+            foreach (var enforce in enforceEnums == null ? new[] { false, true } : new[] { enforceEnums.Value })
+            {
+                var opt = new ClassifyOptions { EnforceEnums = enforce };
+
+                var json = ClassifyJson.Serialize(value, opt);
+                var obj = ClassifyJson.Deserialize<T>(json, opt);
+                assertions?.Invoke(obj);
+
+                var xml = ClassifyXml.Serialize(value, opt);
+                VerifyXml(xml);
+                obj = ClassifyXml.Deserialize<T>(xml, opt);
+                assertions?.Invoke(obj);
+
+                var binary = ClassifyBinary.Serialize(value, opt);
+                obj = ClassifyBinary.Deserialize<T>(binary, opt);
+                assertions?.Invoke(obj);
+            }
+        }
+
         private sealed class blankClass
         {
         }
@@ -168,8 +189,7 @@ namespace RT.Util.Serialization
         [Test]
         public void TestBlankClass()
         {
-            XElement xel = VerifyXml(ClassifyXml.Serialize(new blankClass()));
-            ClassifyXml.Deserialize<blankClass>(xel);
+            RoundTrip(new blankClass());
         }
 
         [Test]
@@ -197,35 +217,32 @@ namespace RT.Util.Serialization
                 boxedInt = int.MinValue,
                 boxedLong = long.MinValue,
             };
-            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
-            var clsAc = ClassifyXml.Deserialize<basicClass>(xel);
+            RoundTrip(clsEx, clsAc =>
+            {
+                clsEx.AssertEqual(clsAc);
 
-            clsEx.AssertEqual(clsAc);
-
-            // Double check manually - in this test only.
-            Assert.AreEqual(clsEx.AnInt, clsAc.AnInt);
-            Assert.AreEqual(clsEx.AUShort, clsAc.AUShort);
-            Assert.AreEqual(clsEx.AString, clsAc.AString);
-            Assert.AreEqual(clsEx.ABool, clsAc.ABool);
-            Assert.AreEqual(clsEx.AULong, clsAc.AULong);
-            Assert.AreEqual(clsEx.ADecimal, clsAc.ADecimal);
-            Assert.IsTrue(clsEx.nullable1 == null);
-            Assert.IsTrue(clsAc.nullable1 == null);
-            Assert.IsFalse(clsEx.nullable2 == null);
-            Assert.IsFalse(clsAc.nullable2 == null);
-            Assert.AreEqual(clsEx.nullable2.Value, clsAc.nullable2.Value);
-            Assert.AreEqual((int) clsEx.boxedInt, (int) clsAc.boxedInt);
-            Assert.AreEqual((long) clsEx.boxedLong, (long) clsAc.boxedLong);
+                // Double check manually - in this test only.
+                Assert.AreEqual(clsEx.AnInt, clsAc.AnInt);
+                Assert.AreEqual(clsEx.AUShort, clsAc.AUShort);
+                Assert.AreEqual(clsEx.AString, clsAc.AString);
+                Assert.AreEqual(clsEx.ABool, clsAc.ABool);
+                Assert.AreEqual(clsEx.AULong, clsAc.AULong);
+                Assert.AreEqual(clsEx.ADecimal, clsAc.ADecimal);
+                Assert.IsTrue(clsEx.nullable1 == null);
+                Assert.IsTrue(clsAc.nullable1 == null);
+                Assert.IsFalse(clsEx.nullable2 == null);
+                Assert.IsFalse(clsAc.nullable2 == null);
+                Assert.AreEqual(clsEx.nullable2.Value, clsAc.nullable2.Value);
+                Assert.AreEqual((int) clsEx.boxedInt, (int) clsAc.boxedInt);
+                Assert.AreEqual((long) clsEx.boxedLong, (long) clsAc.boxedLong);
+            });
         }
 
         [Test]
         public void TestStringNull()
         {
             var clsEx = new basicClass() { AString = null };
-            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
-            var clsAc = ClassifyXml.Deserialize<basicClass>(xel);
-
-            clsEx.AssertEqual(clsAc);
+            RoundTrip(clsEx, clsAc => { clsEx.AssertEqual(clsAc); });
         }
 
         [Test]
@@ -238,11 +255,12 @@ namespace RT.Util.Serialization
             clsEx.ListDicts.Add(new Dictionary<string, string>());
             clsEx.ListDicts.Add(null);
             clsEx.ListDicts.Add(new Dictionary<string, string>() { { "abc", "def" }, { "key", "value" }, { "null", null } });
-            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
-            var clsAc = ClassifyXml.Deserialize<classWithList>(xel);
 
-            assertList(clsEx.List, clsAc.List);
-            assertListDict(clsEx.ListDicts, clsAc.ListDicts);
+            RoundTrip(clsEx, clsAc =>
+            {
+                assertList(clsEx.List, clsAc.List);
+                assertListDict(clsEx.ListDicts, clsAc.ListDicts);
+            });
         }
 
         [Test]
@@ -258,11 +276,11 @@ namespace RT.Util.Serialization
                 { "single", new List<string>() { "def" } },
                 { "multple", new List<string>() { "one", null, "three" } }
             };
-            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
-            var clsAc = ClassifyXml.Deserialize<classWithDict>(xel);
-
-            assertDict(clsEx.Dict, clsAc.Dict);
-            assertDictList(clsEx.DictLists, clsAc.DictLists);
+            RoundTrip(clsEx, clsAc =>
+            {
+                assertDict(clsEx.Dict, clsAc.Dict);
+                assertDictList(clsEx.DictLists, clsAc.DictLists);
+            });
         }
 
         [Test]
@@ -271,13 +289,13 @@ namespace RT.Util.Serialization
             var clsEx = new classWithDict();
             clsEx.DictClasses.Add("test1", new basicClass());
             clsEx.DictClasses.Add("test2", new basicClass() { AnInt = 63827, key = 429745 });
-            var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
-            var clsAc = ClassifyXml.Deserialize<classWithDict>(xel);
-
-            Assert.AreEqual(clsEx.DictClasses["test1"].AnInt, clsAc.DictClasses["test1"].AnInt);
-            Assert.AreEqual(clsEx.DictClasses["test1"].key, clsAc.DictClasses["test1"].key);
-            Assert.AreEqual(clsEx.DictClasses["test2"].AnInt, clsAc.DictClasses["test2"].AnInt);
-            Assert.AreEqual(clsEx.DictClasses["test2"].key, clsAc.DictClasses["test2"].key);
+            RoundTrip(clsEx, clsAc =>
+            {
+                Assert.AreEqual(clsEx.DictClasses["test1"].AnInt, clsAc.DictClasses["test1"].AnInt);
+                Assert.AreEqual(clsEx.DictClasses["test1"].key, clsAc.DictClasses["test1"].key);
+                Assert.AreEqual(clsEx.DictClasses["test2"].AnInt, clsAc.DictClasses["test2"].AnInt);
+                Assert.AreEqual(clsEx.DictClasses["test2"].key, clsAc.DictClasses["test2"].key);
+            });
         }
 
         [Test]
@@ -292,6 +310,8 @@ namespace RT.Util.Serialization
                             new XElement("sub1.1")),
                         new XElement("sub2", new XAttribute("attr2", "val2")))
             };
+
+            // Use ClassifyXml only (instead of RoundTrip)
             var xel = VerifyXml(ClassifyXml.Serialize(clsEx));
             var clsAc = ClassifyXml.Deserialize<xmlClass>(xel);
 
@@ -318,23 +338,23 @@ namespace RT.Util.Serialization
                     }
                 }
             };
-            var xel = VerifyXml(ClassifyXml.Serialize(nestedEx));
-            var nestedAc = ClassifyXml.Deserialize<nestedClass>(xel);
+            RoundTrip(nestedEx, nestedAc =>
+            {
+                // Full comparison
+                nestedEx.AssertEqual(nestedAc);
 
-            // Full comparison
-            nestedEx.AssertEqual(nestedAc);
+                // Sanity checks
+                Assert.IsNull(nestedEx.Nested.Nested);
+                Assert.AreEqual(-123, nestedEx.Nested.Basic.AnInt);
+                Assert.IsFalse(nestedEx.Nested.Basic.ABool);
 
-            // Sanity checks
-            Assert.AreEqual(null, nestedEx.Nested.Nested);
-            Assert.AreEqual(-123, nestedEx.Nested.Basic.AnInt);
-            Assert.AreEqual(false, nestedEx.Nested.Basic.ABool);
-
-            // Spot checks
-            Assert.AreEqual(nestedEx.Basic.AnInt, nestedAc.Basic.AnInt);
-            Assert.AreEqual(nestedEx.Basic.AString, nestedAc.Basic.AString);
-            Assert.AreEqual(nestedEx.Nested.Basic.AString, nestedAc.Nested.Basic.AString);
-            Assert.AreEqual(nestedEx.Nested.Basic.ADouble, nestedAc.Nested.Basic.ADouble);
-            Assert.AreEqual(nestedEx.Nested.Nested, nestedAc.Nested.Nested);
+                // Spot checks
+                Assert.AreEqual(nestedEx.Basic.AnInt, nestedAc.Basic.AnInt);
+                Assert.AreEqual(nestedEx.Basic.AString, nestedAc.Basic.AString);
+                Assert.AreEqual(nestedEx.Nested.Basic.AString, nestedAc.Nested.Basic.AString);
+                Assert.AreEqual(nestedEx.Nested.Basic.ADouble, nestedAc.Nested.Basic.ADouble);
+                Assert.AreEqual(nestedEx.Nested.Nested, nestedAc.Nested.Nested);
+            });
         }
 
         private void assertDict<K, V>(Dictionary<K, V> expected, Dictionary<K, V> actual)
@@ -1699,6 +1719,15 @@ namespace RT.Util.Serialization
                 Assert.AreEqual("42", deserialized.DerivedHidden);
                 Assert.AreEqual("normal", deserialized.NormalField);
             }
+            {
+                // Binary
+                var serialized = ClassifyBinary.Serialize(derived);
+                var deserialized = ClassifyBinary.Deserialize<hiddenFieldDerivedClass>(serialized);
+
+                Assert.AreEqual("47", deserialized.BaseHidden);
+                Assert.AreEqual("42", deserialized.DerivedHidden);
+                Assert.AreEqual("normal", deserialized.NormalField);
+            }
         }
 
         private class nonNullableTester
@@ -1718,6 +1747,11 @@ namespace RT.Util.Serialization
 
             var xml = ClassifyXml.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
             obj = ClassifyXml.Deserialize<nonNullableTester>(xml);
+            Assert.IsNull(obj.NullableString);
+            Assert.IsNotNull(obj.NonNullableString);
+
+            var binary = ClassifyBinary.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
+            obj = ClassifyBinary.Deserialize<nonNullableTester>(binary);
             Assert.IsNull(obj.NullableString);
             Assert.IsNotNull(obj.NonNullableString);
         }
@@ -1773,64 +1807,68 @@ namespace RT.Util.Serialization
             nonFlagsEnum[] allowedNonFlagsValues = new[] { 0, 1, 2 }.Select(i => (nonFlagsEnum) i).ToArray();
             flagsEnum[] allowedFlagsValues = new[] { 0, 1, 2, 3 }.Select(i => (flagsEnum) i).ToArray();
 
-            foreach (var enforce in new[] { false, true })
+            for (int i = 0; i < 6; i++)
             {
-                for (int i = 0; i < 6; i++)
+                var iFlags = (flagsEnum) i;
+                var iNonFlags = (nonFlagsEnum) i;
+
+                RoundTrip(iFlags, iFlags2 => { Assert.AreEqual(iFlags, iFlags2); }, false);
+                RoundTrip(iNonFlags, iNonFlags2 => { Assert.AreEqual(iNonFlags, iNonFlags2); }, false);
+
+                RoundTrip(iFlags, iFlags2 => { Assert.AreEqual(allowedFlagsValues.Contains(iFlags) ? iFlags : 0, iFlags2); }, true);
+                RoundTrip(iNonFlags, iNonFlags2 => { Assert.AreEqual(allowedNonFlagsValues.Contains(iNonFlags) ? iNonFlags : 0, iNonFlags2); }, true);
+
+                RoundTrip(new enforceEnumsTester
                 {
-                    var iFlags = (flagsEnum) i;
-                    var iNonFlags = (nonFlagsEnum) i;
-
-                    Assert.AreEqual(
-                        allowedFlagsValues.Contains(iFlags) || !enforce ? iFlags : 0,
-                        roundTrip(iFlags, enforce));
-                    Assert.AreEqual(
-                        allowedNonFlagsValues.Contains(iNonFlags) || !enforce ? iNonFlags : 0,
-                        roundTrip(iNonFlags, enforce));
-
-                    var test1 = roundTrip(new enforceEnumsTester
-                    {
-                        FlagsEnforce = iFlags,
-                        FlagsNonEnforce = iFlags,
-                        NonFlagsEnforce = iNonFlags,
-                        NonFlagsNonEnforce = iNonFlags
-                    }, enforce);
+                    FlagsEnforce = iFlags,
+                    FlagsNonEnforce = iFlags,
+                    NonFlagsEnforce = iNonFlags,
+                    NonFlagsNonEnforce = iNonFlags
+                }, test1 =>
+                {
                     Assert.AreEqual(allowedFlagsValues.Contains(iFlags) ? iFlags : 0, test1.FlagsEnforce);
                     Assert.AreEqual(iFlags, test1.FlagsNonEnforce);
                     Assert.AreEqual(allowedNonFlagsValues.Contains(iNonFlags) ? iNonFlags : 0, test1.NonFlagsEnforce);
                     Assert.AreEqual(iNonFlags, test1.NonFlagsNonEnforce);
-                }
+                });
+            }
 
-                var test2 = roundTrip(new enforceEnumsArraysTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
-                }, enforce);
+            RoundTrip(new enforceEnumsArraysTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
+            }, test2 =>
+            {
                 Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
                 Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
                 Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+            });
 
-                var test3 = roundTrip(new enforceEnumsListsTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
-                }, enforce);
+            RoundTrip(new enforceEnumsListsTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
+            }, test3 =>
+            {
                 Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
                 Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
                 Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+            });
 
-                var test4 = roundTrip(new enforceEnumsDictionariesTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
-                }, enforce);
+            RoundTrip(new enforceEnumsDictionariesTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
+            }, test4 =>
+            {
                 Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
                 Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
@@ -1840,7 +1878,7 @@ namespace RT.Util.Serialization
                 Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
                 Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
                 Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
-            }
+            });
         }
 
         private class aipEnforceEnumsTester
@@ -1889,64 +1927,62 @@ namespace RT.Util.Serialization
             nonFlagsEnum[] allowedNonFlagsValues = new[] { 0, 1, 2 }.Select(i => (nonFlagsEnum) i).ToArray();
             flagsEnum[] allowedFlagsValues = new[] { 0, 1, 2, 3 }.Select(i => (flagsEnum) i).ToArray();
 
-            foreach (var enforce in new[] { false, true })
+            for (int i = 0; i < 6; i++)
             {
-                for (int i = 0; i < 6; i++)
+                var iFlags = (flagsEnum) i;
+                var iNonFlags = (nonFlagsEnum) i;
+
+                RoundTrip(new aipEnforceEnumsTester
                 {
-                    var iFlags = (flagsEnum) i;
-                    var iNonFlags = (nonFlagsEnum) i;
-
-                    Assert.AreEqual(
-                        allowedFlagsValues.Contains(iFlags) || !enforce ? iFlags : 0,
-                        roundTrip(iFlags, enforce));
-                    Assert.AreEqual(
-                        allowedNonFlagsValues.Contains(iNonFlags) || !enforce ? iNonFlags : 0,
-                        roundTrip(iNonFlags, enforce));
-
-                    var test1 = roundTrip(new aipEnforceEnumsTester
-                    {
-                        FlagsEnforce = iFlags,
-                        FlagsNonEnforce = iFlags,
-                        NonFlagsEnforce = iNonFlags,
-                        NonFlagsNonEnforce = iNonFlags
-                    }, enforce);
+                    FlagsEnforce = iFlags,
+                    FlagsNonEnforce = iFlags,
+                    NonFlagsEnforce = iNonFlags,
+                    NonFlagsNonEnforce = iNonFlags
+                }, test1 =>
+                {
                     Assert.AreEqual(allowedFlagsValues.Contains(iFlags) ? iFlags : 0, test1.FlagsEnforce);
                     Assert.AreEqual(iFlags, test1.FlagsNonEnforce);
                     Assert.AreEqual(allowedNonFlagsValues.Contains(iNonFlags) ? iNonFlags : 0, test1.NonFlagsEnforce);
                     Assert.AreEqual(iNonFlags, test1.NonFlagsNonEnforce);
-                }
+                });
+            }
 
-                var test2 = roundTrip(new aipEnforceEnumsArraysTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
-                }, enforce);
+            RoundTrip(new aipEnforceEnumsArraysTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToArray(),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray(),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
+            }, test2 =>
+            {
                 Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
                 Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
                 Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+            });
 
-                var test3 = roundTrip(new aipEnforceEnumsListsTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
-                }, enforce);
+            RoundTrip(new aipEnforceEnumsListsTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToList(),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList(),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
+            }, test3 =>
+            {
                 Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
                 Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
                 Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+            });
 
-                var test4 = roundTrip(new aipEnforceEnumsDictionariesTester
-                {
-                    FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
-                    NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
-                }, enforce);
+            RoundTrip(new aipEnforceEnumsDictionariesTester
+            {
+                FlagsEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                FlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (flagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                NonFlagsEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString()),
+                NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
+            }, test4 =>
+            {
                 Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
                 Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
                 Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
@@ -1956,12 +1992,7 @@ namespace RT.Util.Serialization
                 Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
                 Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
                 Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
-            }
-        }
-
-        private T roundTrip<T>(T testObject, bool enforce)
-        {
-            return ClassifyJson.Deserialize<T>(ClassifyJson.Serialize(testObject), new ClassifyOptions { EnforceEnums = enforce });
+            });
         }
 
         private class missingCtorMain
@@ -2159,23 +2190,54 @@ namespace RT.Util.Serialization
         [Test]
         public void TestZeroLengthArray()
         {
-            var obj = roundTrip(new zeroLengthArrays(), false);
-            Assert.IsNotNull(obj.Strings);
-            Assert.IsTrue(obj.Strings.SequenceEqual(new string[0]));
-            Assert.IsNotNull(obj.Ints);
-            Assert.IsTrue(obj.Ints.SequenceEqual(new int[0]));
-            Assert.IsNotNull(obj.StringsNotNull);
-            Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
-            Assert.IsNotNull(obj.IntsNotNull);
-            Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
-            Assert.IsNull(obj.StringsNull);
-            Assert.IsNull(obj.IntsNull);
+            RoundTrip(new zeroLengthArrays(), obj =>
+            {
+                Assert.IsNotNull(obj.Strings);
+                Assert.IsTrue(obj.Strings.SequenceEqual(new string[0]));
+                Assert.IsNotNull(obj.Ints);
+                Assert.IsTrue(obj.Ints.SequenceEqual(new int[0]));
+                Assert.IsNotNull(obj.StringsNotNull);
+                Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
+                Assert.IsNotNull(obj.IntsNotNull);
+                Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
+                Assert.IsNull(obj.StringsNull);
+                Assert.IsNull(obj.IntsNull);
+            });
+            RoundTrip(new zeroLengthArrays { StringsNotNull = null, IntsNotNull = null }, obj =>
+            {
+                Assert.IsNotNull(obj.StringsNotNull);
+                Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
+                Assert.IsNotNull(obj.IntsNotNull);
+                Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
+            });
+        }
 
-            obj = roundTrip(new zeroLengthArrays { StringsNotNull = null, IntsNotNull = null }, false);
-            Assert.IsNotNull(obj.StringsNotNull);
-            Assert.IsTrue(obj.StringsNotNull.SequenceEqual(new string[0]));
-            Assert.IsNotNull(obj.IntsNotNull);
-            Assert.IsTrue(obj.IntsNotNull.SequenceEqual(new int[0]));
+        [Test]
+        public void TestByteArray()
+        {
+            // Test legacy format (list of integers)
+            var byteArray = "あの日見た花の名前を僕達はまだ知らない".ToUtf8();
+            var intArray = byteArray.Select(b => (int) b).ToArray();
+
+            var json = ClassifyJson.Serialize(intArray);
+            var result = ClassifyJson.Deserialize<byte[]>(json);
+            Assert.IsTrue(byteArray.SequenceEqual(result));
+
+            var xml = ClassifyXml.Serialize(intArray);
+            result = ClassifyXml.Deserialize<byte[]>(xml);
+            Assert.IsTrue(byteArray.SequenceEqual(result));
+
+            var binary = ClassifyBinary.Serialize(intArray);
+            result = ClassifyBinary.Deserialize<byte[]>(binary);
+            Assert.IsTrue(byteArray.SequenceEqual(result));
+
+            // Test reference equality
+            var tup = Tuple.Create(byteArray, byteArray);
+            RoundTrip(tup, tup2 =>
+            {
+                Assert.IsTrue(ReferenceEquals(tup2.Item1, tup2.Item2));
+                Assert.IsTrue(tup2.Item1.SequenceEqual(byteArray));
+            });
         }
     }
 

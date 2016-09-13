@@ -198,12 +198,12 @@ namespace RT.Util.Serialization
             Double = 0x0d,
             DateTime = 0x0e,
             Decimal = 0x0f,
-            // 0x10: unused
 
             // Complex types (part 1)
+            RawDataWithRefId = 0x10,    // see 0x13
             KeyValuePair = 0x11,
             String = 0x12,
-            StringUtf16 = 0x13,
+            RawData = 0x13,                      // also used for strings in UTF-16 format
 
             // Dictionaries (the types are the type of the key)
             DictionaryInt64 = 0x14,                                 // key stored as Int64Optim
@@ -236,7 +236,8 @@ namespace RT.Util.Serialization
             DataType.DictionaryString,
             DataType.DictionaryOther,
             DataType.DictionaryTwoStrings,
-            DataType.List
+            DataType.List,
+            DataType.RawData
         };
 
         // These must correspond index-by-index with those in _reffables
@@ -245,7 +246,8 @@ namespace RT.Util.Serialization
             DataType.DictionaryStringWithRefId,
             DataType.DictionaryOtherWithRefId,
             DataType.DictionaryTwoStringsWithRefId,
-            DataType.ListWithRefId
+            DataType.ListWithRefId,
+            DataType.RawDataWithRefId
         };
 
         private abstract class node
@@ -316,7 +318,7 @@ namespace RT.Util.Serialization
                     case DataType.DateTime: stream.Write(BitConverter.GetBytes(((DateTime) Value).ToBinary())); break;
                     case DataType.Decimal: stream.WriteDecimalOptim((decimal) Value); break;
                     case DataType.String: WriteBuffer(stream, ((string) Value).ToUtf8(), true); break;
-                    case DataType.StringUtf16: WriteBuffer(stream, ((string) Value).ToUtf16(), false); break;
+                    case DataType.RawData: WriteBuffer(stream, (byte[]) Value, false); break;
                     case DataType.Null: break;
                     case DataType.False: break;
                     case DataType.True: break;
@@ -437,7 +439,7 @@ namespace RT.Util.Serialization
                                     stream.WriteDecimalOptim(ExactConvert.ToDecimal(kvp.Key));
                                     break;
 
-                                case DataType.StringUtf16:
+                                case DataType.RawData:
                                     WriteBuffer(stream, ExactConvert.ToString(kvp.Key).ToUtf16(), false);
                                     break;
 
@@ -517,7 +519,7 @@ namespace RT.Util.Serialization
                     case DataType.DateTime: node = new valueNode { Value = DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0)) }; break;
                     case DataType.Decimal: node = new valueNode { Value = stream.ReadDecimalOptim() }; break;
                     case DataType.String: node = new valueNode { Value = readBuffer(stream, true).FromUtf8() }; break;
-                    case DataType.StringUtf16: node = new valueNode { Value = readBuffer(stream, false).FromUtf16() }; break;
+                    case DataType.RawData: node = new valueNode { Value = readBuffer(stream, false) }; break;
                     case DataType.Null: node = new valueNode { Value = null }; break;
                     case DataType.False: node = new valueNode { Value = false }; break;
                     case DataType.True: node = new valueNode { Value = true }; break;
@@ -582,7 +584,7 @@ namespace RT.Util.Serialization
                                             key = stream.ReadDecimalOptim();
                                             break;
 
-                                        case DataType.StringUtf16:
+                                        case DataType.RawData:
                                             key = readBuffer(stream, false).FromUtf16();
                                             break;
 
@@ -641,8 +643,10 @@ namespace RT.Util.Serialization
                     case DataType.DateTime:
                     case DataType.Decimal:
                     case DataType.String:
-                    case DataType.StringUtf16:
                         return ((valueNode) element).Value;
+
+                    case DataType.RawData:
+                        return ((byte[]) ((valueNode) element).Value).FromUtf16();
 
                     case DataType.List:
                     case DataType.KeyValuePair:
@@ -692,6 +696,17 @@ namespace RT.Util.Serialization
                 if (dict == null)
                     return Enumerable.Empty<KeyValuePair<object, node>>();
                 return dict.Dictionary;
+            }
+
+            byte[] IClassifyFormat<node>.GetRawData(node element)
+            {
+                if (element.DataType == DataType.List)
+                    // Support a list of integers as this was how Classify encoded byte arrays before GetRawData was introduced
+                    return ((listNode) element).List.Select(nd => ExactConvert.ToByte(((valueNode) nd).Value)).ToArray();
+
+                if (element.DataType == DataType.RawData)
+                    return (byte[]) ((valueNode) element).Value;
+                return null;
             }
 
             bool IClassifyFormat<node>.HasField(node element, string fieldName, string declaringType)
@@ -794,7 +809,10 @@ namespace RT.Util.Serialization
                 }
 
                 var str = ExactConvert.ToString(value);
-                return new valueNode { Value = str, DataType = str.Utf8Length() < str.Utf16Length() ? DataType.String : DataType.StringUtf16 };
+                var strAsUtf16 = str.ToUtf16();
+                return str.Utf8Length() < strAsUtf16.Length
+                    ? new valueNode { Value = str, DataType = DataType.String }
+                    : new valueNode { Value = strAsUtf16, DataType = DataType.RawData };
             }
 
             node IClassifyFormat<node>.FormatSelfValue(node value)
@@ -827,8 +845,8 @@ namespace RT.Util.Serialization
                 if (firstKey is Enum)
                     underlyingType = keyType.GetEnumUnderlyingType();
 
-                var dt = DataType.DictionaryString;
-                DataType kt = 0;
+                DataType dt;
+                DataType kt;
 
                 if (keyType == typeof(ulong) || underlyingType == typeof(ulong))
                 {
@@ -836,7 +854,10 @@ namespace RT.Util.Serialization
                     kt = DataType.UInt64;
                 }
                 else if (ExactConvert.IsTrueIntegerType(keyType) || ExactConvert.IsTrueIntegerType(underlyingType))
+                {
                     dt = DataType.DictionaryInt64;
+                    kt = 0;
+                }
                 else if (keyType == typeof(string))
                 {
                     var utf8len = dic.Keys.Take(32).Sum(k => ((string) k).Utf8Length());
@@ -844,7 +865,12 @@ namespace RT.Util.Serialization
                     if (utf8len > utf16len)
                     {
                         dt = DataType.DictionaryOther;
-                        kt = DataType.StringUtf16;
+                        kt = DataType.RawData;
+                    }
+                    else
+                    {
+                        dt = DataType.DictionaryString;
+                        kt = 0;
                     }
                 }
                 else if (keyType == typeof(float))
@@ -867,6 +893,11 @@ namespace RT.Util.Serialization
                     dt = DataType.DictionaryOther;
                     kt = DataType.DateTime;
                 }
+                else
+                {
+                    dt = DataType.DictionaryString;
+                    kt = 0;
+                }
 
                 return new dictNode { Dictionary = dic, DataType = dt, KeyType = kt };
             }
@@ -879,6 +910,11 @@ namespace RT.Util.Serialization
                     DataType = dic.Keys.Any(k => k is FieldNameWithType) ? DataType.DictionaryTwoStrings : DataType.DictionaryString,
                     Dictionary = dic
                 };
+            }
+
+            node IClassifyFormat<node>.FormatRawData(byte[] value)
+            {
+                return new valueNode { DataType = DataType.RawData, Value = value };
             }
 
             node IClassifyFormat<node>.FormatReference(int refId)

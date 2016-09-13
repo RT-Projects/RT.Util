@@ -90,6 +90,16 @@ namespace RT.Util.Serialization
         IEnumerable<KeyValuePair<object, TElement>> GetDictionary(TElement element);
 
         /// <summary>
+        ///     Decodes a piece of raw data.</summary>
+        /// <param name="element">
+        ///     The element to decode.</param>
+        /// <returns>
+        ///     The raw data decoded.</returns>
+        /// <remarks>
+        ///     This should decode values passed into <see cref="FormatRawData"/>.</remarks>
+        byte[] GetRawData(TElement element);
+
+        /// <summary>
         ///     Determines whether the element is an object and contains a sub-element for the specified field.</summary>
         /// <param name="element">
         ///     The element that may represent an object.</param>
@@ -245,6 +255,16 @@ namespace RT.Util.Serialization
         ///     The returned element should be recognized by <see cref="HasField"/> and <see cref="GetField"/>, irrespective
         ///     of the order in which the fields are provided in <paramref name="fields"/>.</remarks>
         TElement FormatObject(IEnumerable<ObjectFieldInfo<TElement>> fields);
+
+        /// <summary>
+        ///     Generates an element that represents raw data (<c>byte[]</c>).</summary>
+        /// <param name="value">
+        ///     The raw data to store.</param>
+        /// <returns>
+        ///     The serialized raw data.</returns>
+        /// <remarks>
+        ///     The returned element should be recognized by <see cref="GetRawData"/>.</remarks>
+        TElement FormatRawData(byte[] value);
 
         /// <summary>
         ///     Generates an element that represents a reference to another object within the same serialized object graph.</summary>

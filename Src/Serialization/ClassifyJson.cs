@@ -293,6 +293,19 @@ namespace RT.Util.Serialization
             return consider;
         }
 
+        byte[] IClassifyFormat<JsonValue>.GetRawData(JsonValue element)
+        {
+            if (element is JsonDict && element.ContainsKey(":value"))
+                element = element[":value"];
+
+            if (element is JsonList)
+                // Support a list of integers as this was how Classify encoded byte arrays before GetRawData was introduced
+                return element.GetList().Select(el => (byte) (el.GetIntLenientSafe() ?? 0)).ToArray();
+
+            var str = element.GetStringSafe();
+            return str == null ? null : Convert.FromBase64String(str);
+        }
+
         string IClassifyFormat<JsonValue>.GetType(JsonValue element, out bool isFullType)
         {
             if (element is JsonDict)
@@ -313,7 +326,7 @@ namespace RT.Util.Serialization
         {
             return element is JsonDict && element.ContainsKey(":refid");
         }
-        
+
         int IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element)
         {
             return
@@ -321,7 +334,7 @@ namespace RT.Util.Serialization
                 element.ContainsKey(":refid") ? element[":refid"].GetInt() :
                 Ut.Throw<int>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
         }
-        
+
         JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
         {
             return JsonNoValue.Instance;
@@ -337,21 +350,21 @@ namespace RT.Util.Serialization
             if (value is float)
                 return (float) value;
             if (value is byte)
-                return (byte) value;
+                return (long) (byte) value;
             if (value is sbyte)
                 return (sbyte) value;
             if (value is short)
                 return (short) value;
             if (value is ushort)
-                return (ushort) value;
+                return (ulong) (ushort) value;
             if (value is int)
                 return (int) value;
             if (value is uint)
-                return (uint) value;
+                return (ulong) (uint) value;
             if (value is long)
                 return (long) value;
             if (value is ulong)
-                return (double) (ulong) value;
+                return (ulong) value;
             if (value is decimal)
                 return (decimal) value;
             if (value is bool)
@@ -398,7 +411,12 @@ namespace RT.Util.Serialization
                         : gr.First().Value
                 )));
         }
-        
+
+        JsonValue IClassifyFormat<JsonValue>.FormatRawData(byte[] value)
+        {
+            return new JsonString(Convert.ToBase64String(value));
+        }
+
         JsonValue IClassifyFormat<JsonValue>.FormatReference(int refId)
         {
             return new JsonDict { { ":ref", refId } };

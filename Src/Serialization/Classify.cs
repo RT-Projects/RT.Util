@@ -534,6 +534,8 @@ namespace RT.Util.Serialization
                     return _ => cleanUp(() => _format.GetSelfValue(elem));
                 else if (_simpleTypes.Contains(serializedType) || ExactConvert.IsSupportedType(serializedType))
                     return _ => cleanUp(() => ExactConvert.To(serializedType, _format.GetSimpleValue(elem)));
+                else if (serializedType == typeof(byte[]))
+                    return prevResult => cleanUp(() => _format.GetRawData(elem));
                 else if (serializedType.IsGenericType && serializedType.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
@@ -1013,6 +1015,8 @@ namespace RT.Util.Serialization
                     elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
                     elem = () => _format.FormatSimpleValue(ExactConvert.ToString(saveObject));
+                else if (saveObject is byte[])
+                    elem = () => _format.FormatRawData((byte[]) saveObject);
                 else
                 {
                     Type[] typeParameters;
