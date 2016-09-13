@@ -359,15 +359,18 @@ namespace RT.Util.Json
             JsonNumber result;
             string number = Json.Substring(fromPos, Pos - fromPos);
             long lng;
-            if (!long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out lng))
-            {
-                double dbl;
-                if (!double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out dbl))
-                    throw new JsonParseException(this, "Expected a number.");
-                result = dbl;
-            }
-            else
+            ulong ulng;
+            double dbl;
+
+            if (long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out lng))
                 result = lng;
+            else if (ulong.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulng))
+                result = ulng;
+            else if (double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out dbl))
+                result = dbl;
+            else
+                throw new JsonParseException(this, "Expected a number.");
+
             ConsumeWhitespace();
             return result;
         }
@@ -499,21 +502,25 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable boolean.</summary>
         public static implicit operator JsonValue(bool? value) { return value == null ? null : new JsonBool(value.Value); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified double.</summary>
-        public static implicit operator JsonValue(double value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(double value) => JsonNumber.Create(value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable double.</summary>
-        public static implicit operator JsonValue(double? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(double? value) => value == null ? null : JsonNumber.Create(value.Value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified decimal.</summary>
-        public static implicit operator JsonValue(decimal value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(decimal value) => JsonNumber.Create(value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable decimal.</summary>
-        public static implicit operator JsonValue(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(decimal? value) => value == null ? null : JsonNumber.Create(value.Value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified long.</summary>
-        public static implicit operator JsonValue(long value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(long value) => JsonNumber.Create(value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable long.</summary>
-        public static implicit operator JsonValue(long? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(long? value) => value == null ? null : JsonNumber.Create(value.Value);
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified ulong.</summary>
+        public static implicit operator JsonValue(ulong value) => JsonNumber.Create(value);
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable ulong.</summary>
+        public static implicit operator JsonValue(ulong? value) => value == null ? null : JsonNumber.Create(value.Value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified int.</summary>
-        public static implicit operator JsonValue(int value) { return new JsonNumber(value); }
+        public static implicit operator JsonValue(int value) => JsonNumber.Create(value);
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified nullable int.</summary>
-        public static implicit operator JsonValue(int? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonValue(int? value) => value == null ? null : JsonNumber.Create(value.Value);
 
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
         public static implicit operator JsonValue(string[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
@@ -533,6 +540,10 @@ namespace RT.Util.Json
         public static implicit operator JsonValue(long[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
         public static implicit operator JsonValue(long?[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(ulong[] values) => values == null ? null : new JsonList(values.Select(value => (JsonValue) value));
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
+        public static implicit operator JsonValue(ulong?[] values) => values == null ? null : new JsonList(values.Select(value => (JsonValue) value));
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
         public static implicit operator JsonValue(int[] values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified array.</summary>
@@ -559,6 +570,10 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
         public static implicit operator JsonValue(List<long?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<ulong> values) => values == null ? null : new JsonList(values.Select(value => (JsonValue) value));
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
+        public static implicit operator JsonValue(List<ulong?> values) => values == null ? null : new JsonList(values.Select(value => (JsonValue) value));
+        /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
         public static implicit operator JsonValue(List<int> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
         /// <summary>Constructs a <see cref="JsonValue"/> from the specified list.</summary>
         public static implicit operator JsonValue(List<int?> values) { return values == null ? null : new JsonList(values.Select(value => (JsonValue) value)); }
@@ -570,46 +585,54 @@ namespace RT.Util.Json
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
         public static explicit operator bool(JsonValue value) { return value.GetBool(); }
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool?(JsonValue value) { return value == null ? (bool?) null : value.GetBool(); }
+        public static explicit operator bool? (JsonValue value) { return value == null ? (bool?) null : value.GetBool(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator double(JsonValue value) { return value.GetDouble(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double?(JsonValue value) { return value == null ? (double?) null : value.GetDouble(); }
+        public static explicit operator double? (JsonValue value) { return value == null ? (double?) null : value.GetDouble(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator decimal(JsonValue value) { return value.GetDecimal(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal?(JsonValue value) { return value == null ? (decimal?) null : value.GetDecimal(); }
+        public static explicit operator decimal? (JsonValue value) { return value == null ? (decimal?) null : value.GetDecimal(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long(JsonValue value) { return value.GetLong(); }
+        public static explicit operator long(JsonValue value) { return value.GetLong(NumericConversionOptions.AllowTruncation); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long?(JsonValue value) { return value == null ? (long?) null : value.GetLong(); }
+        public static explicit operator long? (JsonValue value) { return value == null ? (long?) null : value.GetLong(NumericConversionOptions.AllowTruncation); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int(JsonValue value) { return value.GetInt(); }
+        public static explicit operator ulong(JsonValue value) => value.GetULong(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int?(JsonValue value) { return value == null ? (int?) null : value.GetInt(); }
+        public static explicit operator ulong? (JsonValue value) => value == null ? (ulong?) null : value.GetULong(NumericConversionOptions.AllowTruncation);
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int(JsonValue value) { return value.GetInt(NumericConversionOptions.AllowTruncation); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int? (JsonValue value) { return value == null ? (int?) null : value.GetInt(NumericConversionOptions.AllowTruncation); }
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
-        public static explicit operator string[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (string) value).ToArray(); }
+        public static explicit operator string[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (string) value).ToArray(); }
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool) value).ToArray(); }
+        public static explicit operator bool[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool) value).ToArray(); }
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool?) value).ToArray(); }
+        public static explicit operator bool?[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (bool?) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (double) value).ToArray(); }
+        public static explicit operator double[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (double) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (double?) value).ToArray(); }
+        public static explicit operator double?[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (double?) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal) value).ToArray(); }
+        public static explicit operator decimal[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal?) value).ToArray(); }
+        public static explicit operator decimal?[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (decimal?) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (long) value).ToArray(); }
+        public static explicit operator long[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (long) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (long?) value).ToArray(); }
+        public static explicit operator long?[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (long?) value).ToArray(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (int) value).ToArray(); }
+        public static explicit operator ulong[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int?[](JsonValue values) { return values == null ? null : values.GetList().Select(value => (int?) value).ToArray(); }
+        public static explicit operator ulong?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong?) value).ToArray();
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (int) value).ToArray(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator int?[] (JsonValue values) { return values == null ? null : values.GetList().Select(value => (int?) value).ToArray(); }
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
         public static explicit operator List<string>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (string) value).ToList(); }
@@ -629,6 +652,10 @@ namespace RT.Util.Json
         public static explicit operator List<long>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (long) value).ToList(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator List<long?>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (long?) value).ToList(); }
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<ulong>(JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong) value).ToList();
+        /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
+        public static explicit operator List<ulong?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator List<int>(JsonValue values) { return values == null ? null : values.GetList().Select(value => (int) value).ToList(); }
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
@@ -774,6 +801,28 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
         protected virtual long? getLong(NumericConversionOptions options, bool safe) { return safe ? null : Ut.Throw<long?>(new InvalidOperationException("Only numeric values can be converted to long.")); }
+
+        /// <summary>Converts the current value to a <c>ulong</c>. Throws if the conversion is not valid.</summary>
+        public ulong GetULong(NumericConversionOptions options = NumericConversionOptions.Strict) => getULong(options, false).Value;
+        /// <summary>
+        ///     Converts the current value to a <c>ulong</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Throws if the conversion is not valid.</summary>
+        public ulong GetULongLenient() => getULong(NumericConversionOptions.Lenient, false).Value;
+        /// <summary>Converts the current value to a <c>ulong</c>. Returns null if the conversion is not valid.</summary>
+        public ulong? GetULongSafe(NumericConversionOptions options = NumericConversionOptions.Strict) => getULong(options, true);
+        /// <summary>
+        ///     Converts the current value to a <c>ulong</c> by using the <see cref="NumericConversionOptions.Lenient"/>
+        ///     option. Returns null if the conversion is not valid.</summary>
+        public ulong? GetULongLenientSafe() => getULong(NumericConversionOptions.Lenient, true);
+
+        /// <summary>
+        ///     Converts the current value to <c>ulong</c>.</summary>
+        /// <param name="options">
+        ///     Specifies options for the conversion.</param>
+        /// <param name="safe">
+        ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+        ///     throws.</param>
+        protected virtual ulong? getULong(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<ulong?>(new InvalidOperationException("Only numeric values can be converted to ulong."));
 
         /// <summary>Converts the current value to an <c>int</c>. Throws if the conversion is not valid.</summary>
         public int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict) { return getInt(options, false).Value; }
@@ -2018,7 +2067,7 @@ namespace RT.Util.Json
         /// <summary>Converts the specified <see cref="JsonBool"/> value to an ordinary boolean.</summary>
         public static explicit operator bool(JsonBool value) { return value._value; }
         /// <summary>Converts the specified <see cref="JsonBool"/> value to a nullable boolean.</summary>
-        public static implicit operator bool?(JsonBool value) { return value == null ? (bool?) null : value._value; }
+        public static implicit operator bool? (JsonBool value) { return value == null ? (bool?) null : value._value; }
         /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool"/> value.</summary>
         public static implicit operator JsonBool(bool value) { return new JsonBool(value); }
         /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool"/> value or null.</summary>
@@ -2139,29 +2188,379 @@ namespace RT.Util.Json
     ///     Remarks.</summary>
     /// <remarks>
     ///     JSON does not define any specific limits for numeric values. This implementation supports integers in the signed
-    ///     64-bit range, as well as IEEE 64-bit doubles (except NaNs and infinities). Conversions to/from <c>decimal</c> are
-    ///     exact for integers, but can be approximate for non-integers, depending on the exact value.</remarks>
+    ///     and unsigned 64-bit range, as well as IEEE 64-bit doubles (except NaNs and infinities). Conversions to/from
+    ///     <c>decimal</c> are exact for integers, but can be approximate for non-integers, depending on the exact value.</remarks>
     [Serializable]
-    public sealed class JsonNumber : JsonValue, IEquatable<JsonNumber>
+    public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
-        private long _long;
-        private double _double = double.NaN;
+        private sealed class JSLong : JsonNumber
+        {
+            public long Value;
+            public JSLong(long value) { Value = value; }
+
+            /// <summary>
+            ///     Converts the current value to <c>double</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override double? getDouble(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>decimal</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override decimal? getDecimal(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>int</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override int? getInt(NumericConversionOptions options, bool safe)
+            {
+                if (Value >= int.MinValue && Value <= int.MaxValue)
+                    return (int) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>long</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override long? getLong(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>ulong</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override ulong? getULong(NumericConversionOptions options, bool safe)
+            {
+                if (Value >= 0)
+                    return (ulong) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("A negative value cannot be converted to ulong.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>string</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override string getString(StringConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
+                    return base.getString(options, safe);
+                return Value.ToString();
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>bool</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override bool? getBool(BoolConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
+                    return base.getBool(options, safe);
+                return Value != 0;
+            }
+
+            public override void AppendIndented(StringBuilder sb, int indentation = 0)
+            {
+                sb.Append(Value.ToString());
+            }
+
+            public override int GetHashCode() => Value.GetHashCode();
+
+            public override bool Equals(JsonNumber other)
+            {
+                long val;
+                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
+            }
+
+            public override object RawValue => Value;
+        }
+
+        private sealed class JSULong : JsonNumber
+        {
+            public ulong Value;
+            public JSULong(ulong value) { Value = value; }
+
+            /// <summary>
+            ///     Converts the current value to <c>double</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override double? getDouble(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>decimal</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override decimal? getDecimal(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>int</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override int? getInt(NumericConversionOptions options, bool safe)
+            {
+                if (Value <= int.MaxValue)
+                    return (int) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>long</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override long? getLong(NumericConversionOptions options, bool safe)
+            {
+                if (Value <= long.MaxValue)
+                    return (long) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>ulong</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override ulong? getULong(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>string</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override string getString(StringConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
+                    return base.getString(options, safe);
+                return Value.ToString();
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>bool</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override bool? getBool(BoolConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
+                    return base.getBool(options, safe);
+                return Value != 0;
+            }
+
+            public override void AppendIndented(StringBuilder sb, int indentation = 0)
+            {
+                sb.Append(Value.ToString());
+            }
+
+            public override int GetHashCode() => Value.GetHashCode();
+
+            public override bool Equals(JsonNumber other)
+            {
+                ulong val;
+                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
+            }
+
+            public override object RawValue => Value;
+        }
+
+        private sealed class JSDouble : JsonNumber
+        {
+            public double Value;
+            public JSDouble(double value) { Value = value; }
+
+            /// <summary>
+            ///     Converts the current value to <c>double</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override double? getDouble(NumericConversionOptions options, bool safe) => Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>decimal</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override decimal? getDecimal(NumericConversionOptions options, bool safe) => (decimal) Value;
+
+            /// <summary>
+            ///     Converts the current value to <c>int</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override int? getInt(NumericConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
+                    return safe ? null : Ut.Throw<int?>(new InvalidCastException("Only integer values can be converted to int."));
+                if (Value >= int.MinValue && Value <= int.MaxValue)
+                    return (int) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>long</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override long? getLong(NumericConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
+                    return safe ? null : Ut.Throw<long?>(new InvalidCastException("Only integer values can be converted to int."));
+                if (Value >= long.MinValue && Value <= long.MaxValue)
+                    return (long) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>ulong</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override ulong? getULong(NumericConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
+                    return safe ? null : Ut.Throw<ulong?>(new InvalidCastException("Only integer values can be converted to int."));
+                if (Value >= ulong.MinValue && Value <= ulong.MaxValue)
+                    return (ulong) Value;
+                if (safe)
+                    return null;
+                throw new InvalidCastException("Cannot cast to ulong because the value exceeds the representable range.");
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>string</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override string getString(StringConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
+                    return base.getString(options, safe);
+                return Value.ToString();
+            }
+
+            /// <summary>
+            ///     Converts the current value to <c>bool</c>.</summary>
+            /// <param name="options">
+            ///     Specifies options for the conversion.</param>
+            /// <param name="safe">
+            ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
+            ///     throws.</param>
+            protected override bool? getBool(BoolConversionOptions options, bool safe)
+            {
+                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
+                    return base.getBool(options, safe);
+                return Value != 0;
+            }
+
+            public override void AppendIndented(StringBuilder sb, int indentation = 0)
+            {
+                sb.Append(ExactConvert.ToString(Value));
+            }
+
+            public override int GetHashCode() => Value.GetHashCode();
+
+            public override bool Equals(JsonNumber other)
+            {
+                double val;
+                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
+            }
+
+            public override object RawValue => Value;
+        }
+
+        /// <summary>Creates a new instance of <see cref="JsonNumber"/>.</summary>
+        private JsonNumber() { }
 
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified double-precision floating-point number.</summary>
-        public JsonNumber(double value) { _double = value; if (double.IsNaN(value) || double.IsInfinity(value)) throw new ArgumentException("JSON disallows NaNs and infinities."); }
+        public static JsonNumber Create(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                throw new ArgumentException("JSON disallows NaNs and infinities.", nameof(value));
+            return new JSDouble(value);
+        }
+
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
-        public JsonNumber(long value) { _long = value; }
+        public static JsonNumber Create(long value) => new JSLong(value);
+        /// <summary>Constructs a <see cref="JsonNumber"/> from the specified unsigned 64-bit integer.</summary>
+        public static JsonNumber Create(ulong value) => new JSULong(value);
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
-        public JsonNumber(int value) { _long = value; }
+        public static JsonNumber Create(int value) => new JSLong(value);
+
         /// <summary>
         ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
         ///     Remarks on <see cref="JsonNumber"/>.</summary>
-        public JsonNumber(decimal value)
+        public static JsonNumber Create(decimal value)
         {
-            if (value == decimal.Truncate(value) && value >= long.MinValue && value <= long.MaxValue)
-                _long = (long) value;
-            else
-                _double = (double) value;
+            if (value == decimal.Truncate(value))
+            {
+                if (value >= long.MinValue && value <= long.MaxValue)
+                    return new JSLong((long) value);
+                else if (value >= ulong.MinValue && value <= ulong.MaxValue)
+                    return new JSULong((ulong) value);
+            }
+            return new JSDouble((double) value);
         }
 
         /// <summary>
@@ -2202,157 +2601,33 @@ namespace RT.Util.Json
             }
         }
 
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a double.</summary>
-        public static explicit operator double(JsonNumber value) { return double.IsNaN(value._double) ? (double) value._long : value._double; }
-        /// <summary>Converts the specified <see cref="JsonNumber"/> to a nullable double.</summary>
-        public static implicit operator double?(JsonNumber value) { return value == null ? (double?) null : double.IsNaN(value._double) ? (double) value._long : value._double; }
-
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a decimal. This operator is slightly lossy; see Remarks on
-        ///     <see cref="JsonNumber"/>.</summary>
-        public static explicit operator decimal(JsonNumber value) { return double.IsNaN(value._double) ? (decimal) value._long : (decimal) value._double; }
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable decimal. This operator is slightly lossy; see
-        ///     Remarks on <see cref="JsonNumber"/>.</summary>
-        public static explicit operator decimal?(JsonNumber value) { return value == null ? (decimal?) null : (decimal) value; }
-
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 64-bit integer. See <see
-        ///     cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long(JsonNumber value)
-        {
-            if (value == null)
-                throw new InvalidCastException("null cannot be cast to long.");
-            return value.GetLong(); // use default strict mode
-        }
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 64-bit integer. See <see
-        ///     cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long?(JsonNumber value) { return value == null ? (long?) null : (long) value; }
-
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a 32-bit integer. See <see
-        ///     cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int(JsonNumber value)
-        {
-            if (value == null)
-                throw new InvalidCastException("null cannot be cast to int.");
-            return value.GetInt();  // use default strict mode
-        }
-        /// <summary>
-        ///     Converts the specified <see cref="JsonNumber"/> to a nullable 32-bit integer. See <see
-        ///     cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int?(JsonNumber value) { return value == null ? (int?) null : (int) value; }
-
         /// <summary>Converts the specified double to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(double value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(double value) => new JSDouble(value);
         /// <summary>Converts the specified nullable double to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(double? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonNumber(double? value) => value == null ? null : new JSDouble(value.Value);
+        /// <summary>Converts the specified unsigned 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        public static implicit operator JsonNumber(ulong value) => new JSULong(value);
+        /// <summary>Converts the specified nullable unsigned 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
+        public static implicit operator JsonNumber(ulong? value) => value == null ? null : new JSULong(value.Value);
         /// <summary>Converts the specified 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(long value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(long value) => new JSLong(value);
         /// <summary>Converts the specified nullable 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(long? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonNumber(long? value) => value == null ? null : new JSLong(value.Value);
         /// <summary>Converts the specified 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(int value) { return new JsonNumber(value); }
+        public static implicit operator JsonNumber(int value) => new JSLong(value);
         /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
-        public static implicit operator JsonNumber(int? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static implicit operator JsonNumber(int? value) => value == null ? null : new JSLong(value.Value);
         /// <summary>
         ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see
         ///     Remarks on <see cref="JsonNumber"/>.</summary>
-        public static explicit operator JsonNumber(decimal value) { return new JsonNumber(value); }
+        public static explicit operator JsonNumber(decimal value) => Create(value);
         /// <summary>
         ///     Converts the specified nullable decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy;
         ///     see Remarks on <see cref="JsonNumber"/>.</summary>
-        public static explicit operator JsonNumber(decimal? value) { return value == null ? null : new JsonNumber(value.Value); }
+        public static explicit operator JsonNumber(decimal? value) => value == null ? null : Create(value.Value);
 
-        /// <summary>
-        ///     Converts the current value to <c>double</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override double? getDouble(NumericConversionOptions options, bool safe) { return (double) this; }
-
-        /// <summary>
-        ///     Converts the current value to <c>decimal</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override decimal? getDecimal(NumericConversionOptions options, bool safe) { return (decimal) this; }
-
-        /// <summary>
-        ///     Converts the current value to <c>int</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override int? getInt(NumericConversionOptions options, bool safe)
-        {
-            if (double.IsNaN(_double))
-            {
-                if (_long < int.MinValue || _long > int.MaxValue)
-                    return safe ? null : Ut.Throw<int?>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
-                return (int) _long;
-            }
-
-            if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && _double != Math.Truncate(_double))
-                return safe ? null : Ut.Throw<int?>(new InvalidCastException("Only integer values can be converted to int."));
-
-            if (_double < int.MinValue || _double > int.MaxValue)
-                return safe ? null : Ut.Throw<int?>(new InvalidCastException("Cannot cast to int because the value exceeds the representable range."));
-
-            return (int) _double;
-        }
-
-        /// <summary>
-        ///     Converts the current value to <c>long</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override long? getLong(NumericConversionOptions options, bool safe)
-        {
-            if (double.IsNaN(_double))
-                return _long;
-
-            if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && _double != Math.Truncate(_double))
-                return safe ? null : Ut.Throw<long?>(new InvalidCastException("Only integer values can be converted to long."));
-
-            if (_double < long.MinValue || _double > long.MaxValue)
-                return safe ? null : Ut.Throw<long?>(new InvalidCastException("Cannot cast to long because the value exceeds the representable range."));
-
-            return (long) _double;
-        }
-
-        /// <summary>
-        ///     Converts the current value to <c>string</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override string getString(StringConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
-                return base.getString(options, safe);
-            return double.IsNaN(_double) ? _long.ToString() : _double.ToString();
-        }
-
-        /// <summary>
-        ///     Converts the current value to <c>bool</c>.</summary>
-        /// <param name="options">
-        ///     Specifies options for the conversion.</param>
-        /// <param name="safe">
-        ///     Controls the behavior in case of conversion failure. If true, returns null; if false, throws.</param>
-        protected override bool? getBool(BoolConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
-                return base.getBool(options, safe);
-            return double.IsNaN(_double) ? (_long != 0) : (_double != 0);
-        }
-
-        /// <summary>Returns the value of this number as either a <c>double</c> or a <c>long</c>.</summary>
-        public object RawValue { get { return double.IsNaN(_double) ? (object) _long : (object) _double; } }
+        /// <summary>Returns the value of this number as either a <c>double</c>, a <c>long</c> or a <c>ulong</c>.</summary>
+        public abstract object RawValue { get; }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public override bool Equals(object other)
@@ -2367,31 +2642,12 @@ namespace RT.Util.Json
         }
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-        public bool Equals(JsonNumber other)
-        {
-            if (other == null) return false;
-            if (double.IsNaN(this._double) && double.IsNaN(other._double))
-                return this._long == other._long;
-            else
-                return (double) this == (double) other;
-        }
-
-        /// <summary>Returns a hash code representing this object.</summary>
-        public override int GetHashCode()
-        {
-            return double.IsNaN(_double) ? _long.GetHashCode() : _double.GetHashCode();
-        }
+        public abstract bool Equals(JsonNumber other);
 
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
             yield return ToStringIndented();
-        }
-
-        /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override void AppendIndented(StringBuilder sb, int indentation = 0)
-        {
-            sb.Append(double.IsNaN(_double) ? _long.ToString() : ExactConvert.ToString(_double));
         }
     }
 

@@ -14,9 +14,9 @@ namespace RT.Util
         public void TestJsonInstantiate()
         {
             Assert.DoesNotThrow(() => new JsonBool(true));
-            Assert.DoesNotThrow(() => new JsonNumber(25));
-            Assert.DoesNotThrow(() => new JsonNumber(25L));
-            Assert.DoesNotThrow(() => new JsonNumber(25.1));
+            Assert.DoesNotThrow(() => JsonNumber.Create(25));
+            Assert.DoesNotThrow(() => JsonNumber.Create(25L));
+            Assert.DoesNotThrow(() => JsonNumber.Create(25.1));
             Assert.DoesNotThrow(() => new JsonString("abc"));
             Assert.DoesNotThrow(() => new JsonList());
             Assert.DoesNotThrow(() => new JsonDict());
@@ -25,9 +25,9 @@ namespace RT.Util
             Assert.Throws<ArgumentNullException>(() => new JsonList(null));
             Assert.Throws<ArgumentNullException>(() => new JsonDict(null));
 
-            Assert.Throws<ArgumentException>(() => new JsonNumber(double.NaN));
-            Assert.Throws<ArgumentException>(() => new JsonNumber(double.PositiveInfinity));
-            Assert.Throws<ArgumentException>(() => new JsonNumber(double.NegativeInfinity));
+            Assert.Throws<ArgumentException>(() => JsonNumber.Create(double.NaN));
+            Assert.Throws<ArgumentException>(() => JsonNumber.Create(double.PositiveInfinity));
+            Assert.Throws<ArgumentException>(() => JsonNumber.Create(double.NegativeInfinity));
         }
 
         [Test]
@@ -36,14 +36,14 @@ namespace RT.Util
             // Comparison with null
             Assert.IsFalse(new JsonBool(true).Equals(null));
             Assert.IsFalse(new JsonString("thingy").Equals(null));
-            Assert.IsFalse(new JsonNumber(47).Equals(null));
+            Assert.IsFalse(JsonNumber.Create(47).Equals(null));
             Assert.IsFalse(new JsonList().Equals(null));
             Assert.IsFalse(new JsonDict().Equals(null));
 
             // Comparison with an object ouside the hierarchy
             Assert.IsFalse(new JsonBool(true).Equals(new JsonString("abc")));
             Assert.IsFalse(new JsonString("thingy").Equals(StringComparer.Ordinal));
-            Assert.IsFalse(new JsonNumber(47).Equals(new StringBuilder()));
+            Assert.IsFalse(JsonNumber.Create(47).Equals(new StringBuilder()));
             Assert.IsFalse(new JsonList().Equals(new JsonDict()));
             Assert.IsFalse(new JsonDict().Equals(new object()));
 
@@ -60,13 +60,13 @@ namespace RT.Util
             Assert.IsTrue(new JsonString("thingy") != "stuff");
 
             // Normal comparisons: number
-            Assert.IsTrue(new JsonNumber(47.0).Equals(new JsonNumber(47)));
-            Assert.IsTrue(new JsonNumber(47.0).Equals(new JsonNumber(47L)));
-            Assert.IsTrue(new JsonNumber(47).Equals(new JsonNumber(47L)));
-            Assert.IsFalse(new JsonNumber(47.47).Equals(new JsonNumber(47)));
-            Assert.IsTrue((double) new JsonNumber(47) == 47.0);
-            Assert.IsTrue((int) new JsonNumber(47.0) == 47);
-            Assert.Throws<InvalidCastException>(() => { var dummy = (int) new JsonNumber(47.4); });
+            Assert.IsTrue(JsonNumber.Create(47.0).Equals(JsonNumber.Create(47)));
+            Assert.IsTrue(JsonNumber.Create(47.0).Equals(JsonNumber.Create(47L)));
+            Assert.IsTrue(JsonNumber.Create(47).Equals(JsonNumber.Create(47L)));
+            Assert.IsFalse(JsonNumber.Create(47.47).Equals(JsonNumber.Create(47)));
+            Assert.AreEqual((double) JsonNumber.Create(47), 47.0);
+            Assert.AreEqual((int) JsonNumber.Create(47.0), 47);
+            Assert.AreEqual((int) JsonNumber.Create(47.4), 47);
 
             // Normal comparisons: list
             Assert.IsTrue(new JsonList().Equals(new JsonList()));
@@ -87,8 +87,8 @@ namespace RT.Util
             assertValueNotEqual(new JsonBool(true), new JsonBool(false));
             assertValueEqual(new JsonString("abc"), new JsonString("abc"));
             assertValueNotEqual(new JsonString("thingy"), new JsonString("stuff"));
-            assertValueEqual(new JsonNumber(47.0), new JsonNumber(47L));
-            assertValueNotEqual(new JsonNumber(47.47), new JsonNumber(47));
+            assertValueEqual(JsonNumber.Create(47.0), JsonNumber.Create(47L));
+            assertValueNotEqual(JsonNumber.Create(47.47), JsonNumber.Create(47));
             assertValueEqual(new JsonList { 47, null, "blah", new JsonList { -3 }, 5, -0.12 }, new JsonList { 47, null, "blah", new JsonList { -3 }, 5, -0.12 });
             assertValueNotEqual(new JsonList { 47, null, "blah", new JsonList { -3 }, 5.0, -0.12 }, new JsonList { 47, null, "blah", new JsonList { -3.1 }, 5.0, -0.12 });
             assertValueEqual(new JsonDict { { "", 47 }, { "hey", new JsonDict { { "inner", "self" } } }, { "blah", null } }, new JsonDict { { "", 47 }, { "hey", new JsonDict { { "inner", "self" } } }, { "blah", null } });
@@ -97,7 +97,7 @@ namespace RT.Util
             // JsonValue comparisons with nulls and objects outside the hierarchy
             assertJsonValueNotEqualComparison(new JsonBool(true));
             assertJsonValueNotEqualComparison(new JsonString("abc"));
-            assertJsonValueNotEqualComparison(new JsonNumber(47.5));
+            assertJsonValueNotEqualComparison(JsonNumber.Create(47.5));
             assertJsonValueNotEqualComparison(new JsonList());
             assertJsonValueNotEqualComparison(new JsonDict());
         }
@@ -117,7 +117,7 @@ namespace RT.Util
             Assert.IsFalse(value.Equals(null));
             if (!(value is JsonBool)) Assert.IsFalse(value.Equals(new JsonBool(true)));
             if (!(value is JsonString)) Assert.IsFalse(value.Equals(new JsonString("abc")));
-            if (!(value is JsonNumber)) Assert.IsFalse(value.Equals(new JsonNumber(47)));
+            if (!(value is JsonNumber)) Assert.IsFalse(value.Equals(JsonNumber.Create(47)));
             if (!(value is JsonList)) Assert.IsFalse(value.Equals(new JsonList()));
             if (!(value is JsonDict)) Assert.IsFalse(value.Equals(new JsonDict()));
         }
