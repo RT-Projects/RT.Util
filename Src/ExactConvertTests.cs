@@ -144,11 +144,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -215,11 +215,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -286,11 +286,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1U, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -357,11 +357,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1UL, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1UL, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1UL, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -432,11 +432,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -503,11 +503,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -574,11 +574,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
@@ -645,11 +645,11 @@ namespace RT.Util
             Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
             Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
             // From fractional
-            Assert.IsFalse(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(1L, result);
             Assert.IsFalse(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(1L, result);
             Assert.IsFalse(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(failValue, result);
-            Assert.IsFalse(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(1L, result);
             Assert.IsFalse(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(failValue, result);
             // From unsupported
             Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);

@@ -333,6 +333,26 @@ namespace RT.Util
                 }
             }
 
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= byte.MinValue && dbl <= byte.MaxValue)
+                {
+                    result = (byte) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= byte.MinValue && decml <= byte.MaxValue)
+                {
+                    result = (byte) decml;
+                    return true;
+                }
+            }
+
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
@@ -373,6 +393,26 @@ namespace RT.Util
                 if (val <= (ulong) ushort.MaxValue)
                 {
                     result = (ushort) val;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= ushort.MinValue && dbl <= ushort.MaxValue)
+                {
+                    result = (ushort) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= ushort.MinValue && decml <= ushort.MaxValue)
+                {
+                    result = (ushort) decml;
                     return true;
                 }
             }
@@ -421,6 +461,26 @@ namespace RT.Util
                 }
             }
 
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= uint.MinValue && dbl <= uint.MaxValue)
+                {
+                    result = (uint) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= uint.MinValue && decml <= uint.MaxValue)
+                {
+                    result = (uint) decml;
+                    return true;
+                }
+            }
+
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
@@ -465,6 +525,26 @@ namespace RT.Util
                 }
             }
 
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= ulong.MinValue && dbl <= ulong.MaxValue)
+                {
+                    result = (ulong) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= ulong.MinValue && decml <= ulong.MaxValue)
+                {
+                    result = (ulong) decml;
+                    return true;
+                }
+            }
+
             result = default(ulong);
             return false;
         }
@@ -499,6 +579,26 @@ namespace RT.Util
                 if (val <= (ulong) sbyte.MaxValue)
                 {
                     result = (sbyte) val;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= sbyte.MinValue && dbl <= sbyte.MaxValue)
+                {
+                    result = (sbyte) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= sbyte.MinValue && decml <= sbyte.MaxValue)
+                {
+                    result = (sbyte) decml;
                     return true;
                 }
             }
@@ -547,6 +647,26 @@ namespace RT.Util
                 }
             }
 
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= short.MinValue && dbl <= short.MaxValue)
+                {
+                    result = (short) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= short.MinValue && decml <= short.MaxValue)
+                {
+                    result = (short) decml;
+                    return true;
+                }
+            }
+
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
@@ -591,6 +711,26 @@ namespace RT.Util
                 }
             }
 
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= int.MinValue && dbl <= int.MaxValue)
+                {
+                    result = (int) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= int.MinValue && decml <= int.MaxValue)
+                {
+                    result = (int) decml;
+                    return true;
+                }
+            }
+
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
@@ -631,6 +771,26 @@ namespace RT.Util
                 if (val <= (ulong) long.MaxValue)
                 {
                     result = (long) val;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl && dbl >= long.MinValue && dbl <= long.MaxValue)
+                {
+                    result = (long) dbl;
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml && decml >= long.MinValue && decml <= long.MaxValue)
+                {
+                    result = (long) decml;
                     return true;
                 }
             }
