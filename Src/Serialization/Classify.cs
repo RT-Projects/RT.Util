@@ -1604,18 +1604,20 @@ namespace RT.Util.Serialization
                     throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType().FullName, type.FullName));
                 var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
                 var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
-                dynamic toSubst = Ut.CreateDelegate(this, toSubstMethod);
-                dynamic fromSubst = Ut.CreateDelegate(this, fromSubstMethod);
                 _toSubstitute = obj =>
                 {
-                    var result = (object) toSubst(obj);
+                    object result;
+                    try { result = toSubstMethod.Invoke(this, new[] { obj }); }
+                    catch (TargetInvocationException te) { throw te.InnerException; }
                     if (result != null && result.GetType() != _substituteType) // forbidden just in case because I see no use cases for returning a subtype
                         throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType.FullName, result.GetType().FullName));
                     return result;
                 };
                 _fromSubstitute = obj =>
                 {
-                    var result = (object) fromSubst(obj);
+                    object result;
+                    try { result = fromSubstMethod.Invoke(this, new[] { obj }); }
+                    catch (TargetInvocationException te) { throw te.InnerException; }
                     if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype
                         throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type.FullName, result.GetType().FullName));
                     return result;
