@@ -1588,8 +1588,8 @@ namespace RT.Util.Serialization
     public abstract class ClassifyTypeOptions
     {
         internal Type _substituteType;
-        internal Func<dynamic, object> _toSubstitute;
-        internal Func<dynamic, object> _fromSubstitute;
+        internal Func<object, object> _toSubstitute;
+        internal Func<object, object> _fromSubstitute;
 
         internal void initializeFor(Type type)
         {
