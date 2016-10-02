@@ -37,16 +37,16 @@ namespace RT.Util.Lingo
                 yield return ungrouped;
         }
 
-        private static void getGroups(string fieldName, Type type, object original, object translation,
+        private static void getGroups(FieldInfo field, Type type, object original, object translation,
             NumberSystem originalNumSys, NumberSystem translationNumSys, Dictionary<object, TranslationGroup> dic,
             ref TranslationGroup ungrouped, IEnumerable<object> classGroups, string path)
         {
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
-                if (fieldName == null)
-                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(type.FullName), "type");
+                if (field == null)
+                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", "type");
                 else
-                    throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(type.FullName, fieldName), "type");
+                    throw new ArgumentException($@"Field ""{field.DeclaringType.FullName}.{field.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", "type");
             }
 
             var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
@@ -94,7 +94,7 @@ namespace RT.Util.Lingo
                     }
                 }
                 else if (!f.IsDefined<LingoIgnoreAttribute>(true))
-                    getGroups(f.Name, f.FieldType, f.GetValue(original), f.GetValue(translation), originalNumSys, translationNumSys, dic, ref ungrouped, thisClassGroups, path + f.Name + " / ");
+                    getGroups(f, f.FieldType, f.GetValue(original), f.GetValue(translation), originalNumSys, translationNumSys, dic, ref ungrouped, thisClassGroups, path + f.Name + " / ");
             }
         }
 
@@ -242,7 +242,8 @@ namespace RT.Util.Lingo
         /// <summary>For XAML. Do not call.</summary>
         public TrStringNumInfo()
             : this(new TrStringNum(new[] { "1 move", "{0} moves" }), new TrStringNum(new[] { "1 шаг", "{0} шага", "{0} шагов" }, new[] { true }),
-            Language.EnglishUK.GetNumberSystem(), Language.Russian.GetNumberSystem()) { }
+            Language.EnglishUK.GetNumberSystem(), Language.Russian.GetNumberSystem())
+        { }
 
         public TrStringNumInfo(TrStringNum orig, TrStringNum trans, NumberSystem origNumberSystem, NumberSystem transNumberSystem)
         {

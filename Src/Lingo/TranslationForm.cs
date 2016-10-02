@@ -491,15 +491,15 @@ namespace RT.Util.Lingo
             AnyChanges = false;
         }
 
-        private void createPanelsForType(string chkName, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups, string path)
+        private void createPanelsForType(FieldInfo chkField, Type type, object original, object translation, Dictionary<object, List<TranslationPanel>> dicPanels, List<TranslationPanel> lstUngroupedPanels, List<TranslationPanel> lstAllPanels, IEnumerable<object> classGroups, string path)
         {
             // TODO: this should be rewritten using TranslationDialogHelper.GetGroups
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
-                if (chkName == null)
-                    throw new ArgumentException(@"Type ""{0}"" must be marked with the [LingoStringClass] attribute.".Fmt(type.FullName), "type");
+                if (chkField == null)
+                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", "type");
                 else
-                    throw new ArgumentException(@"Field ""{0}.{1}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.".Fmt(type.FullName, chkName), "type");
+                    throw new ArgumentException($@"Field ""{chkField.DeclaringType.FullName}.{chkField.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", "type");
             }
 
             var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
@@ -521,7 +521,7 @@ namespace RT.Util.Lingo
                             dicPanels.AddSafe(group, pnl);
                 }
                 else if (!f.IsDefined<LingoIgnoreAttribute>(true))
-                    createPanelsForType(f.Name, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups, path + f.Name + " / ");
+                    createPanelsForType(f, f.FieldType, f.GetValue(original), f.GetValue(translation), dicPanels, lstUngroupedPanels, lstAllPanels, thisClassGroups, path + f.Name + " / ");
             }
         }
 
