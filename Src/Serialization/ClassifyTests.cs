@@ -2239,6 +2239,54 @@ namespace RT.Util.Serialization
                 Assert.IsTrue(tup2.Item1.SequenceEqual(byteArray));
             });
         }
+
+        class TestSubstExc { public string Str = "unchanged"; }
+        class TestSubstExcWrapper { public TestSubstExc Inner = new TestSubstExc(); }
+
+        class TestSubstExcSubstitution : ClassifyTypeOptions, IClassifySubstitute<TestSubstExc, string>
+        {
+            private bool _throwCDFE;
+            public TestSubstExcSubstitution(bool throwCDFE) { _throwCDFE = throwCDFE; }
+
+            TestSubstExc IClassifySubstitute<TestSubstExc, string>.FromSubstitute(string instance)
+            {
+                if (instance == null || !instance.StartsWith("!"))
+                    throw _throwCDFE ? (Exception) new ClassifyDesubstitutionFailedException() : new InvalidOperationException();
+                return new TestSubstExc { Str = instance.Substring(1) };
+            }
+
+            string IClassifySubstitute<TestSubstExc, string>.ToSubstitute(TestSubstExc instance) => "!" + instance.Str;
+        }
+
+        [Test]
+        public void TestSubstitutionException()
+        {
+            const string xml1 = "<item><item>!foo</item><item>!bar</item><item>invalid</item><item>!good</item></item>";
+            const string xml2 = "<item><Inner>invalid</Inner></item>";
+
+            var opt1 = new ClassifyOptions().AddTypeOptions(typeof(TestSubstExc), new TestSubstExcSubstitution(true));
+            TestSubstExc[] arr1 = null;
+            Assert.DoesNotThrow(() => { arr1 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt1); });
+            Assert.IsNotNull(arr1);
+            Assert.AreEqual(4, arr1.Length);
+            Assert.IsNotNull(arr1[0]);
+            Assert.IsNotNull(arr1[1]);
+            Assert.IsNull(arr1[2]);
+            Assert.IsNotNull(arr1[3]);
+            Assert.AreEqual("foo", arr1[0].Str);
+            Assert.AreEqual("bar", arr1[1].Str);
+            Assert.AreEqual("good", arr1[3].Str);
+
+            TestSubstExcWrapper res1 = null;
+            Assert.DoesNotThrow(() => { res1 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt1); });
+            Assert.IsNotNull(res1);
+            Assert.IsNotNull(res1.Inner);
+            Assert.AreEqual("unchanged", res1.Inner.Str);
+
+            var opt2 = new ClassifyOptions().AddTypeOptions(typeof(TestSubstExc), new TestSubstExcSubstitution(false));
+            Assert.Throws<InvalidOperationException>(() => { var arr2 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt2); });
+            Assert.Throws<InvalidOperationException>(() => { var res2 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt2); });
+        }
     }
 
     class MisTypeOuter

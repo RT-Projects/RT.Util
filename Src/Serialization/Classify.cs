@@ -484,7 +484,11 @@ namespace RT.Util.Serialization
 
                     // Apply de-substitution (if any)
                     if (declaredType != substType)
-                        withDesubstitution = cachify(() => typeOptions._fromSubstitute(withoutDesubstitution()), elem, typeOptions);
+                        withDesubstitution = cachify(() =>
+                        {
+                            try { return typeOptions._fromSubstitute(withoutDesubstitution()); }
+                            catch (ClassifyDesubstitutionFailedException) { return already; }
+                        }, elem, typeOptions);
 
                     // Remember the result if something else refers to it
                     if (_format.IsReferable(elem))
@@ -508,7 +512,11 @@ namespace RT.Util.Serialization
                         if (declaredType == substType)
                             return inf.WithoutDesubstitution();
                         if (inf.WithDesubstitution == null)
-                            inf.WithDesubstitution = cachify(() => typeOptions._fromSubstitute(inf.WithoutDesubstitution()), elem, typeOptions);
+                            inf.WithDesubstitution = cachify(() =>
+                            {
+                                try { return typeOptions._fromSubstitute(inf.WithoutDesubstitution()); }
+                                catch (ClassifyDesubstitutionFailedException) { return already; }
+                            }, elem, typeOptions);
                         return inf.WithDesubstitution();
                     });
                 }
@@ -1497,7 +1505,22 @@ namespace RT.Util.Serialization
         ///     An instance of the substituted type, provided by Classify.</param>
         /// <returns>
         ///     The converted object to put into the real type.</returns>
+        /// <exception cref="ClassifyDesubstitutionFailedException">
+        ///     Implementors may throw this exception to communicate to Classify that the value is invalid and should be
+        ///     disregarded, rather than causing the entire deserialization to fail.</exception>
         TTrue FromSubstitute(TSubstitute instance);
+    }
+
+    /// <summary>
+    ///     When thrown by an implementation of <see cref="IClassifySubstitute{TTrue,
+    ///     TSubstitute}.FromSubstitute(TSubstitute)"/>, communicates to Classify that the value is invalid and should be
+    ///     disregarded. Any other exception would be passed on by Classify and would thus cause the entire deserialization to
+    ///     fail.</summary>
+    [Serializable]
+    public class ClassifyDesubstitutionFailedException : Exception
+    {
+        /// <summary>Constructor.</summary>
+        public ClassifyDesubstitutionFailedException() { }
     }
 
     /// <summary>Specifies some options for use by <see cref="Classify"/>.</summary>
@@ -1565,8 +1588,8 @@ namespace RT.Util.Serialization
     public abstract class ClassifyTypeOptions
     {
         internal Type _substituteType;
-        internal Func<object, object> _toSubstitute;
-        internal Func<object, object> _fromSubstitute;
+        internal Func<dynamic, object> _toSubstitute;
+        internal Func<dynamic, object> _fromSubstitute;
 
         internal void initializeFor(Type type)
         {
@@ -1581,16 +1604,18 @@ namespace RT.Util.Serialization
                     throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType().FullName, type.FullName));
                 var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
                 var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
+                dynamic toSubst = Ut.CreateDelegate(this, toSubstMethod);
+                dynamic fromSubst = Ut.CreateDelegate(this, fromSubstMethod);
                 _toSubstitute = obj =>
                 {
-                    var result = toSubstMethod.Invoke(this, new[] { obj });
+                    var result = (object) toSubst(obj);
                     if (result != null && result.GetType() != _substituteType) // forbidden just in case because I see no use cases for returning a subtype
                         throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType.FullName, result.GetType().FullName));
                     return result;
                 };
                 _fromSubstitute = obj =>
                 {
-                    var result = fromSubstMethod.Invoke(this, new[] { obj });
+                    var result = (object) fromSubst(obj);
                     if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype
                         throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type.FullName, result.GetType().FullName));
                     return result;
