@@ -2591,6 +2591,9 @@ namespace RT.Util.Json
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
         public abstract bool Equals(JsonNumber other);
 
+        /// <summary>Overrides <see cref="object.GetHashCode"/>.</summary>
+        public abstract override int GetHashCode();
+
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
         public override IEnumerable<string> ToEnumerable()
         {
