@@ -50,6 +50,10 @@ namespace RT.Util.Serialization
     ///             cref="IList{T}"/>, the type <see cref="List{T}"/> is used to reconstruct the object. If the type also
     ///             implements <see cref="IDictionary{TKey, TValue}"/>, the special handling for that takes precedence.</description></item>
     ///         <item><description>
+    ///             Classify also specially handles <see cref="Stack{T}"/> and <see cref="Queue{T}"/> because they do not
+    ///             implement <see cref="ICollection{T}"/>. Types derived from these are not supported (but are serialized as
+    ///             if they weren’t a derived type).</description></item>
+    ///         <item><description>
     ///             Classify supports fields of declared type <c>object</c> just as long as the value stored in it is of a
     ///             supported type.</description></item>
     ///         <item><description>
@@ -586,6 +590,9 @@ namespace RT.Util.Serialization
                     // Check if it’s an array, collection or dictionary
                     Type[] typeParameters;
                     Type keyType = null, valueType = null;
+                    bool isQueue = false;
+                    bool isStack = false;
+
                     if (serializedType.IsArray)
                         valueType = serializedType.GetElementType();
                     else if (serializedType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
@@ -595,7 +602,10 @@ namespace RT.Util.Serialization
                         keyType = typeParameters[0];
                         valueType = typeParameters[1];
                     }
-                    else if (serializedType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
+                    else if (
+                        (serializedType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters)) ||
+                        (serializedType.TryGetGenericParameters(typeof(Queue<>), out typeParameters) && (isQueue = true)) ||
+                        (serializedType.TryGetGenericParameters(typeof(Stack<>), out typeParameters) && (isStack = true)))
                         valueType = typeParameters[0];
 
                     if (valueType != null)
@@ -759,7 +769,10 @@ namespace RT.Util.Serialization
 
                             outputList.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
 
-                            var addMethod = typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
+                            var addMethod =
+                                isStack ? typeof(Stack<>).MakeGenericType(valueType).GetMethod("Push", new Type[] { valueType }) :
+                                isQueue ? typeof(Queue<>).MakeGenericType(valueType).GetMethod("Enqueue", new Type[] { valueType }) :
+                                typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
                             var e = _format.GetList(elem, null).GetEnumerator();
                             var first = true;
                             var adders = new List<Func<object>>();
@@ -1029,6 +1042,7 @@ namespace RT.Util.Serialization
                 {
                     Type[] typeParameters;
                     Array saveArray;
+                    bool isStack = false;
 
                     // Tuples and KeyValuePairs
                     var genericDefinition = saveType.IsGenericType ? saveType.GetGenericTypeDefinition() : null;
@@ -1120,12 +1134,17 @@ namespace RT.Util.Serialization
                         };
                         elem = () => recurse2(arrays);
                     }
-                    else if (saveType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
+                    else if (
+                        (saveType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters)) ||
+                        (saveType.TryGetGenericParameters(typeof(Queue<>), out typeParameters)) ||
+                        (saveType.TryGetGenericParameters(typeof(Stack<>), out typeParameters) && (isStack = true)) ||
+                        saveType.IsArray)
                     {
-                        // It’s an array or collection
+                        // It’s an array or collection. (Stack<T> and Queue<T> do not implement ICollection<T>.)
+                        // Stack<T> reverses its own order, so we need to un-reverse it
                         var valueType = saveType.IsArray ? saveType.GetElementType() : typeParameters[0];
                         var items = ((IEnumerable) saveObject).Cast<object>().Select(val => Serialize(val, valueType)).ToArray();
-                        elem = () => _format.FormatList(false, items.Select(item => item()));
+                        elem = () => _format.FormatList(false, (isStack ? items.Reverse().Select(item => item()) : items.Select(item => item())));
                     }
                     else
                     {
