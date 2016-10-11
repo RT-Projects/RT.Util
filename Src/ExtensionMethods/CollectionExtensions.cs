@@ -806,6 +806,23 @@ namespace RT.Util.ExtensionMethods
             return new ListSelectIterator<TInput, TResult>(source, selector);
         }
 
+        /// <summary>
+        ///     Inverts the order of the elements in a sequence.</summary>
+        /// <typeparam name="TInput">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">
+        ///     A list of values to reverse.</param>
+        /// <returns>
+        ///     A list whose elements correspond to those of the input sequence in reverse order.</returns>
+        /// <remarks>
+        ///     This method replaces <see cref="Enumerable.Reverse{TSource}(IEnumerable{TSource})"/> for the case where the
+        ///     input is an <see cref="IList{T}"/> with an implementation that makes a subsequent <c>ToArray()</c> or
+        ///     <c>ToList()</c> run 15% faster.</remarks>
+        public static ListSelectIterator<TInput, TInput> Reverse<TInput>(this IList<TInput> source)
+        {
+            return new ListSelectIterator<TInput, TInput>(source, x => x, true);
+        }
+
         /// <summary>Reverses an array in-place and returns the same array.</summary>
         public static T[] ReverseInplace<T>(this T[] input)
         {
@@ -833,6 +850,7 @@ namespace RT.Util.ExtensionMethods
     {
         private IList<TInput> _source;
         private Func<TInput, TResult> _selector;
+        private bool _reversed;
 
         /// <summary>
         ///     Constructor.</summary>
@@ -840,13 +858,23 @@ namespace RT.Util.ExtensionMethods
         ///     A list of values to invoke the transform function on.</param>
         /// <param name="selector">
         ///     A transform function to apply to each element.</param>
-        public ListSelectIterator(IList<TInput> source, Func<TInput, TResult> selector) { _source = source; _selector = selector; }
+        /// <param name="reversed">
+        ///     Specifies whether or not to reverse the order of elements.</param>
+        public ListSelectIterator(IList<TInput> source, Func<TInput, TResult> selector, bool reversed = false)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            _source = source;
+            _selector = selector;
+            _reversed = reversed;
+        }
 
         /// <summary>Returns an enumerator to iterate over the collection.</summary>
         public IEnumerator<TResult> GetEnumerator()
         {
-            for (int i = 0; i < _source.Count; i++)
-                yield return _selector(_source[i]);
+            var len = _source.Count;
+            for (int i = 0; i < len; i++)
+                yield return _selector(_source[_reversed ? len - 1 - i : i]);
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -859,7 +887,7 @@ namespace RT.Util.ExtensionMethods
             var len = _source.Count;
             var arr = new TResult[len];
             for (int i = 0; i < len; i++)
-                arr[i] = _selector(_source[i]);
+                arr[i] = _selector(_source[_reversed ? len - 1 - i : i]);
             return arr;
         }
 
@@ -872,7 +900,7 @@ namespace RT.Util.ExtensionMethods
             var len = _source.Count;
             var list = new List<TResult>(len);
             for (int i = 0; i < len; i++)
-                list.Add(_selector(_source[i]));
+                list.Add(_selector(_source[_reversed ? len - 1 - i : i]));
             return list;
         }
 
@@ -892,7 +920,24 @@ namespace RT.Util.ExtensionMethods
         ///     <c>ToArray()</c> or <c>ToList()</c> run 15% faster.</remarks>
         public ListSelectIterator<TInput, TNewResult> Select<TNewResult>(Func<TResult, TNewResult> selector)
         {
-            return new ListSelectIterator<TInput, TNewResult>(_source, input => selector(_selector(input)));
+            return new ListSelectIterator<TInput, TNewResult>(_source, input => selector(_selector(input)), _reversed);
+        }
+
+        /// <summary>
+        ///     Inverts the order of the elements in a sequence.</summary>
+        /// <typeparam name="TInput">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">
+        ///     A list of values to reverse.</param>
+        /// <returns>
+        ///     A list whose elements correspond to those of the input sequence in reverse order.</returns>
+        /// <remarks>
+        ///     This method replaces <see cref="Enumerable.Reverse{TSource}(IEnumerable{TSource})"/> for the case where the
+        ///     input is an <see cref="IList{T}"/> with an implementation that makes a subsequent <c>ToArray()</c> or
+        ///     <c>ToList()</c> run 15% faster.</remarks>
+        public ListSelectIterator<TInput, TResult> Reverse()
+        {
+            return new ListSelectIterator<TInput, TResult>(_source, _selector, !_reversed);
         }
     }
 }
