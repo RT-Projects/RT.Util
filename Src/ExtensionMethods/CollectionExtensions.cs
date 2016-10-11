@@ -105,7 +105,9 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key1">
         ///     Key at which the inner Dictionary is located in the outer Dictionary.</param>
         /// <param name="key2">
-        ///     Key at which the value is located in the inner Dictionary.</param><returns>A value indicating whether a value was removed or not.</returns>
+        ///     Key at which the value is located in the inner Dictionary.</param>
+        /// <returns>
+        ///     A value indicating whether a value was removed or not.</returns>
         public static bool RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
         {
             if (dic == null)
@@ -796,10 +798,9 @@ namespace RT.Util.ExtensionMethods
         ///     A collection whose elements are the result of invoking the transform function on each element of <paramref
         ///     name="source"/>.</returns>
         /// <remarks>
-        ///     This method replaces <c>IEnumerable{T}.Select{TSource,
-        ///     TResult}(IEnumerable{TSource},Func{TSource,int,TResult})</c> for the case where the input is an
-        ///     <c>IList&lt;T&gt;</c> with an implementation that makes a subsequent <c>ToArray()</c> or <c>ToList()</c> run
-        ///     15% faster.</remarks>
+        ///     This method replaces <see cref="Enumerable.Select{TSource, TResult}(IEnumerable{TSource}, Func{TSource,
+        ///     TResult})"/> for the case where the input is an <see cref="IList{T}"/> with an implementation that makes a
+        ///     subsequent <c>ToArray()</c> or <c>ToList()</c> run 15% faster.</remarks>
         public static ListSelectIterator<TInput, TResult> Select<TInput, TResult>(this IList<TInput> source, Func<TInput, TResult> selector)
         {
             return new ListSelectIterator<TInput, TResult>(source, selector);
@@ -847,7 +848,7 @@ namespace RT.Util.ExtensionMethods
             for (int i = 0; i < _source.Count; i++)
                 yield return _selector(_source[i]);
         }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         ///     Creates an array from a projected list.</summary>

@@ -32,30 +32,30 @@ namespace RT.Util.Serialization
     ///     <list type="bullet">
     ///         <item><description>
     ///             Classify fully supports all the built-in types which are keywords in C# except <c>object</c> and
-    ///             <c>dynamic</c>. It also supports <c>DateTime</c>, all enum types, <c>Tuple&lt;...&gt;</c> and
-    ///             <c>KeyValuePair&lt;TKey, TValue&gt;</c>.</description></item>
+    ///             <c>dynamic</c>. It also supports <c>DateTime</c>, all enum types, <c>Tuple&lt;...&gt;</c> and <see
+    ///             cref="KeyValuePair{TKey, TValue}"/>.</description></item>
     ///         <item><description>
     ///             Classify fully supports classes and structs that contain only fields of the above types as well as fields
     ///             whose type is itself such a class or struct.</description></item>
     ///         <item><description>
-    ///             Classify has special handling for classes that implement <c>IDictionary&lt;TKey, TValue&gt;</c>, where
+    ///             Classify has special handling for classes that implement <see cref="IDictionary{TKey, TValue}"/>, where
     ///             <c>TKey</c> and <c>TValue</c> must be type also supported by Classify. If a field containing a dictionary
     ///             is of a concrete type, that type is maintained, but its extra fields are not persisted. If the field is of
-    ///             the interface type <c>IDictionary&lt;TKey, TValue&gt;</c> itself, the type <c>Dictionary&lt;TKey,
-    ///             TValue&gt;</c> is used to reconstruct the object.</description></item>
+    ///             the interface type <see cref="IDictionary{TKey, TValue}"/> itself, the type <see cref="Dictionary{TKey,
+    ///             TValue}"/> is used to reconstruct the object.</description></item>
     ///         <item><description>
-    ///             Classify has special handling for classes that implement <c>ICollection&lt;T&gt;</c>, where <c>T</c> must
+    ///             Classify has special handling for classes that implement <see cref="ICollection{T}"/>, where <c>T</c> must
     ///             be a type also supported by Classify. If the field is of a concrete type, that type is maintained, but its
-    ///             extra fields are not persisted. If the field is of the interface type <c>ICollection&lt;T&gt;</c> or
-    ///             <c>IList&lt;T&gt;</c>, the type <c>List&lt;T&gt;</c> is used to reconstruct the object. If the type also
-    ///             implements <c>IDictionary&lt;TKey, TValue&gt;</c>, the special handling for that takes precedence.</description></item>
+    ///             extra fields are not persisted. If the field is of the interface type <see cref="ICollection{T}"/> or <see
+    ///             cref="IList{T}"/>, the type <see cref="List{T}"/> is used to reconstruct the object. If the type also
+    ///             implements <see cref="IDictionary{TKey, TValue}"/>, the special handling for that takes precedence.</description></item>
     ///         <item><description>
     ///             Classify supports fields of declared type <c>object</c> just as long as the value stored in it is of a
     ///             supported type.</description></item>
     ///         <item><description>
     ///             Classify handles values of the type of the serialized form specially. For example, if you are serializing
     ///             to XML, serializing an <see cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you
-    ///             are classifying to JSON, the same goes for <see cref="RT.Util.Json.JsonValue"/> objects, etc.</description></item>
+    ///             are classifying to JSON, the same goes for <see cref="Json.JsonValue"/> objects, etc.</description></item>
     ///         <item><description>
     ///             For classes that don’t implement any of the above-mentioned collection interfaces, Classify supports
     ///             polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
@@ -94,17 +94,17 @@ namespace RT.Util.Serialization
     ///         Limitations:</para>
     ///     <list type="bullet">
     ///         <item><description>
-    ///             Classify requires that every type involved have a parameterless constructor, although it need not be
-    ///             public. This parameterless constructor is executed with all its side-effects before each object is
-    ///             reconstructed. An exception is made when a field in an object already has a non-null instance assigned to
-    ///             it by the constructor; in such cases, the object is reused.</description></item>
+    ///             Classify requires that every type involved have a parameterless constructor, although it can be private.
+    ///             This parameterless constructor is executed with all its side-effects before each object is reconstructed.
+    ///             An exception is made when a field in an object already has a non-null instance assigned to it by the
+    ///             constructor; in such cases, the object is reused.</description></item>
     ///         <item><description>
-    ///             If a field is of type <c>ICollection&lt;T&gt;</c>, <c>IList&lt;T&gt;</c>, <c>IDictionary&lt;TKey,
-    ///             TValue&gt;</c>, or any class that implements either of these, polymorphism is not supported, and nor is
-    ///             any information stored in those classes. In particular, this means that the comparer used by a
-    ///             <c>SortedDictionary&lt;TKey, TValue&gt;</c> is not persisted. However, if the containing class’s
-    ///             constructor assigned a <c>SortedDictionary&lt;TKey, TValue&gt;</c> with a comparer, that instance, and
-    ///             hence its comparer, is reused.</description></item></list></remarks>
+    ///             If a field is of type <see cref="ICollection{T}"/>, <see cref="IList{T}"/>, <see cref="IDictionary{TKey,
+    ///             TValue}"/>, or any class that implements either of these, polymorphism is not supported, and nor is any
+    ///             information stored in those classes. In particular, this means that the comparer used by a <see
+    ///             cref="SortedDictionary{TKey, TValue}"/> is not persisted. However, if the containing class’s constructor
+    ///             assigned a <see cref="SortedDictionary{TKey, TValue}"/> with a comparer, that instance, and hence its
+    ///             comparer, is reused.</description></item></list></remarks>
     public static class Classify
     {
         /// <summary>
@@ -747,7 +747,7 @@ namespace RT.Util.Serialization
                         }
                         else
                         {
-                            // It’s a list, but not an array or a dictionary.
+                            // It’s a collection, but not an array or a simple-keyed dictionary.
                             object outputList;
                             if (already != null && already.GetType() == serializedType)
                             {

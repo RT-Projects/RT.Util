@@ -620,9 +620,10 @@ namespace RT.Util.ExtensionMethods
         private static T minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow, T defaultValue) where TValue : IComparable<TValue>
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (valueSelector == null)
-                throw new ArgumentNullException("valueSelector");
+                throw new ArgumentNullException(nameof(valueSelector));
+
             using (var enumerator = source.GetEnumerator())
             {
                 if (!enumerator.MoveNext())
