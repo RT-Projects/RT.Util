@@ -588,14 +588,14 @@ namespace RT.Util.Serialization
                     Type keyType = null, valueType = null;
                     if (serializedType.IsArray)
                         valueType = serializedType.GetElementType();
-                    else if (serializedType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    else if (serializedType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // Dictionaries which are stored specially (key is a simple type).
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
                         keyType = typeParameters[0];
                         valueType = typeParameters[1];
                     }
-                    else if (serializedType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                    else if (serializedType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
                         valueType = typeParameters[0];
 
                     if (valueType != null)
@@ -961,7 +961,7 @@ namespace RT.Util.Serialization
                     {
                         // ... but only add this attribute if it is not a collection, because then Classify doesn’t care about the type when restoring the object anyway
                         Type[] typeParameters;
-                        if (!declaredType.IsArray && !declaredType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters))
+                        if (!declaredType.IsArray && !declaredType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
                         {
                             if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
                                 typeStr = saveType.Namespace.Equals(declaredType.Namespace) && !saveType.IsArray ? saveType.Name : saveType.FullName;
@@ -1057,7 +1057,7 @@ namespace RT.Util.Serialization
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
-                    else if (saveType.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    else if (saveType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // It’s a dictionary with a simple-type key.
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -1120,7 +1120,7 @@ namespace RT.Util.Serialization
                         };
                         elem = () => recurse2(arrays);
                     }
-                    else if (saveType.TryGetInterfaceGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
+                    else if (saveType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters) || saveType.IsArray)
                     {
                         // It’s an array or collection
                         var valueType = saveType.IsArray ? saveType.GetElementType() : typeParameters[0];
@@ -1308,7 +1308,7 @@ namespace RT.Util.Serialization
             }
 
             Type[] genericTypeArguments;
-            if (type.TryGetInterfaceGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetInterfaceGenericParameters(typeof(ICollection<>), out genericTypeArguments))
+            if (type.TryGetGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetGenericParameters(typeof(ICollection<>), out genericTypeArguments))
             {
                 foreach (var typeArg in genericTypeArguments)
                     postBuildStep(typeArg, null, member, rep, alreadyChecked, chain.Concat("Dictionary type argument " + typeArg.FullName));

@@ -452,7 +452,7 @@ namespace RT.Util.CommandLine
 
             Type[] typeParam;
             ConsoleColoredString error = null;
-            if (cmd.Type.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam))
+            if (cmd.Type.TryGetGenericParameters(typeof(ICommandLineValidatable<>), out typeParam))
             {
                 var tp = typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]);
                 if (typeParam[0] != applicationTr.GetType())
@@ -622,7 +622,7 @@ namespace RT.Util.CommandLine
             if (applicationTrType != null)
             {
                 Type[] typeParam;
-                if (cmdType.TryGetInterfaceGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != applicationTrType)
+                if (cmdType.TryGetGenericParameters(typeof(ICommandLineValidatable<>), out typeParam) && typeParam[0] != applicationTrType)
                     rep.Error(@"The type {0} implements {1}, but the ApplicationTr type is {2}. If ApplicationTr is right, the interface implemented should be {3}.".Fmt(
                         cmdType.FullName,
                         typeof(ICommandLineValidatable<>).MakeGenericType(typeParam[0]).FullName,

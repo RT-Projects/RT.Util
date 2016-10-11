@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Reflection;
 
 namespace RT.Util.ExtensionMethods
@@ -10,32 +9,47 @@ namespace RT.Util.ExtensionMethods
     public static class ReflectionExtensions
     {
         /// <summary>
-        ///     Determines whether the current type is or implements the specified generic interface, and determines that
-        ///     interface's generic type parameters.</summary>
+        ///     Determines whether the current type is, derives from, or implements the specified generic type, and determines
+        ///     that type’s generic type parameters.</summary>
         /// <param name="type">
         ///     The current type.</param>
-        /// <param name="interface">
-        ///     A generic type definition for an interface, e.g. typeof(ICollection&lt;&gt;) or typeof(IDictionary&lt;,&gt;).</param>
+        /// <param name="typeToFind">
+        ///     A generic type definition for a base type of interface, e.g. <c>typeof(ICollection&lt;&gt;)</c> or
+        ///     <c>typeof(IDictionary&lt;,&gt;)</c>.</param>
         /// <param name="typeParameters">
-        ///     Will receive an array containing the generic type parameters of the interface.</param>
+        ///     Receives an array containing the generic type parameters of the generic type.</param>
         /// <returns>
-        ///     True if the current type is or implements the specified generic interface.</returns>
-        public static bool TryGetInterfaceGenericParameters(this Type type, Type @interface, out Type[] typeParameters)
+        ///     <c>true</c> if the current type is, derives from or implements the specified generic type.</returns>
+        public static bool TryGetGenericParameters(this Type type, Type typeToFind, out Type[] typeParameters)
         {
             typeParameters = null;
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == @interface)
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeToFind)
             {
                 typeParameters = type.GetGenericArguments();
                 return true;
             }
 
-            var implements = type.FindInterfaces((ty, obj) => ty.IsGenericType && ty.GetGenericTypeDefinition() == @interface, null).FirstOrDefault();
-            if (implements == null)
-                return false;
+            if (typeToFind.IsInterface)
+            {
+                var implements = type.FindInterfaces((ty, obj) => ty.IsGenericType && ty.GetGenericTypeDefinition() == typeToFind, null).FirstOrDefault();
+                if (implements == null)
+                    return false;
 
-            typeParameters = implements.GetGenericArguments();
-            return true;
+                typeParameters = implements.GetGenericArguments();
+                return true;
+            }
+
+            foreach (var baseType in type.SelectChain(t => t.BaseType))
+            {
+                if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeToFind)
+                {
+                    typeParameters = baseType.GetGenericArguments();
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
