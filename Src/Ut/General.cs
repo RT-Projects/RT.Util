@@ -1181,5 +1181,25 @@ namespace RT.Util
 
             return hash;
         }
+
+        /// <summary>
+        ///     Generates a sequence of floating-point numbers within a specified range.</summary>
+        /// <param name="start">
+        ///     The first value to produce.</param>
+        /// <param name="end">
+        ///     The last value to produce.</param>
+        /// <param name="step">
+        ///     The difference between the values to generate, except that the difference between the last and second-last may
+        ///     be smaller if the interval between <paramref name="start"/> and <paramref name="end"/> isn’t exactly divisible
+        ///     by <paramref name="step"/>.</param>
+        public static IEnumerable<double> Range(double start, double end, double step)
+        {
+            // Instead of repeatedly incrementing a double in a for loop, which
+            // causes rounding errors to accumulate, calculate each value directly.
+            var steps = (int) ((end - start) / step);
+            for (int i = 0; i < steps; i++)
+                yield return start + i * step;
+            yield return end;
+        }
     }
 }
