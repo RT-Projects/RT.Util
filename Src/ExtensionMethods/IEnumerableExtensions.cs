@@ -61,9 +61,27 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            return consecutivePairsIterator(source, closed);
+            return selectConsecutivePairsIterator(source, closed, Tuple.Create);
         }
-        private static IEnumerable<Tuple<T, T>> consecutivePairsIterator<T>(IEnumerable<T> source, bool closed)
+
+        /// <summary>
+        ///     Enumerates all consecutive pairs of the elements.</summary>
+        /// <param name="source">
+        ///     The input enumerable.</param>
+        /// <param name="closed">
+        ///     If true, an additional pair containing the last and first element is included. For example, if the source
+        ///     collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref
+        ///     name="closed"/> is <c>false</c>, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is
+        ///     <c>true</c>.</param>
+        public static IEnumerable<TResult> SelectConsecutivePairs<T, TResult>(this IEnumerable<T> source, bool closed, Func<T, T, TResult> selector)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+            if (selector == null)
+                throw new ArgumentNullException(nameof(selector));
+            return selectConsecutivePairsIterator(source, closed, selector);
+        }
+        private static IEnumerable<TResult> selectConsecutivePairsIterator<T, TResult>(IEnumerable<T> source, bool closed, Func<T, T, TResult> selector)
         {
             using (var enumer = source.GetEnumerator())
             {
@@ -74,11 +92,11 @@ namespace RT.Util.ExtensionMethods
                 T last = enumer.Current;
                 while (enumer.MoveNext())
                 {
-                    yield return new Tuple<T, T>(last, enumer.Current);
+                    yield return selector(last, enumer.Current);
                     last = enumer.Current;
                 }
                 if (closed)
-                    yield return new Tuple<T, T>(last, first);
+                    yield return selector(last, first);
             }
         }
 
@@ -589,7 +607,7 @@ namespace RT.Util.ExtensionMethods
         ///     The input collection is empty.</exception>
         public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, true, true, default(T));
+            return minMaxElement(source, valueSelector, default(T), true, true).Value;
         }
 
         /// <summary>
@@ -597,7 +615,7 @@ namespace RT.Util.ExtensionMethods
         ///     a default value if the collection is empty.</summary>
         public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, true, false, defaultValue);
+            return minMaxElement(source, valueSelector, defaultValue, true, false).Value;
         }
 
         /// <summary>
@@ -606,7 +624,7 @@ namespace RT.Util.ExtensionMethods
         ///     The input collection is empty.</exception>
         public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, false, true, default(T));
+            return minMaxElement(source, valueSelector, default(T), false, true).Value;
         }
 
         /// <summary>
@@ -614,10 +632,44 @@ namespace RT.Util.ExtensionMethods
         ///     default value if the collection is empty.</summary>
         public static T MaxElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, false, false, defaultValue);
+            return minMaxElement(source, valueSelector, defaultValue, false, false).Value;
         }
 
-        private static T minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow, T defaultValue) where TValue : IComparable<TValue>
+        /// <summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest value.</summary>
+        /// <exception cref="InvalidOperationException">
+        ///     The input collection is empty.</exception>
+        public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector,default(T), true, true).Key.Value;
+        }
+
+        /// <summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest value, or
+        ///     <c>null</c> if the collection is empty.</summary>
+        public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, default(T), true, false).Key;
+        }
+
+        /// <summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the largest value.</summary>
+        /// <exception cref="InvalidOperationException">
+        ///     The input collection is empty.</exception>
+        public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, default(T), false, true).Key.Value;
+        }
+
+        /// <summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the largest value, or a
+        ///     default value if the collection is empty.</summary>
+        public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            return minMaxElement(source, valueSelector, default(T), false, false).Key;
+        }
+
+        private static KeyValuePair<int?, T> minMaxElement<T, TValue, TResult>(IEnumerable<T> source, Func<T, TValue> valueSelector, TResult defaultValue, bool min, bool doThrow) where TValue : IComparable<TValue>
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -630,20 +682,24 @@ namespace RT.Util.ExtensionMethods
                 {
                     if (doThrow)
                         throw new InvalidOperationException("source contains no elements.");
-                    return defaultValue;
+                    return Ut.KeyValuePair((int?) null, default(T));
                 }
                 T minMaxElem = enumerator.Current;
                 TValue minMaxValue = valueSelector(minMaxElem);
+                int minMaxIndex = 0;
+                int curIndex = 0;
                 while (enumerator.MoveNext())
                 {
+                    curIndex++;
                     TValue value = valueSelector(enumerator.Current);
                     if (min ? (value.CompareTo(minMaxValue) < 0) : (value.CompareTo(minMaxValue) > 0))
                     {
                         minMaxValue = value;
                         minMaxElem = enumerator.Current;
+                        minMaxIndex = curIndex;
                     }
                 }
-                return minMaxElem;
+                return Ut.KeyValuePair((int?) minMaxIndex, minMaxElem);
             }
         }
 
