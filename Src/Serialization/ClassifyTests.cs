@@ -618,7 +618,7 @@ namespace RT.Util.Serialization
         {
             public string Value;
 
-            public class Options : ClassifyTypeOptions, IClassifySubstitute<Version, substituteVersion>
+            public class Substitutor : IClassifySubstitute<Version, substituteVersion>
             {
                 public substituteVersion ToSubstitute(Version version)
                 {
@@ -639,7 +639,7 @@ namespace RT.Util.Serialization
             public Guid? GuidNullableNotNull;
         }
 
-        private class classWithGuidSubAttribute
+        private class classWithGuidSubstAttribute
         {
             [ClassifySubstitute(typeof(guidSubstituteConverter))]
             public Guid Guid;
@@ -678,7 +678,7 @@ namespace RT.Util.Serialization
         {
             public string Value;
 
-            public class Options : ClassifyTypeOptions, IClassifySubstitute<Guid, substituteGuid>
+            public class Substitutor : IClassifySubstitute<Guid, substituteGuid>
             {
                 public substituteGuid ToSubstitute(Guid guid)
                 {
@@ -696,7 +696,7 @@ namespace RT.Util.Serialization
         {
             public string Value;
 
-            public class Options : ClassifyTypeOptions, IClassifySubstitute<stringWrapper, string>
+            public class Substitutor : IClassifySubstitute<stringWrapper, string>
             {
                 public stringWrapper FromSubstitute(string str)
                 {
@@ -712,12 +712,12 @@ namespace RT.Util.Serialization
 
 #pragma warning restore 0649 // Field is never assigned to, and will always have its default value null
 
-        private class optionsVersionToString : ClassifyTypeOptions, IClassifySubstitute<Version, string>
+        private class substVersionToString : IClassifySubstitute<Version, string>
         {
             public string ToSubstitute(Version version) { return version.NullOr(v => v.ToString()); }
             public Version FromSubstitute(string str) { return str.NullOr(s => Version.Parse(s)); }
         }
-        private class optionsGuidToString : ClassifyTypeOptions, IClassifySubstitute<Guid, string>
+        private class substGuidToString : IClassifySubstitute<Guid, string>
         {
             public string ToSubstitute(Guid guid) { return guid.ToString(); }
             public Guid FromSubstitute(string str) { return Guid.Parse(str); }
@@ -726,7 +726,7 @@ namespace RT.Util.Serialization
         [Test]
         public void TestTypeSubstitutionAttribute()
         {
-            var inst = new classWithGuidSubAttribute();
+            var inst = new classWithGuidSubstAttribute();
             var guid = _testGuid;
             inst.Guid = guid;
             inst.GuidNullableNotNull = guid;
@@ -740,7 +740,7 @@ namespace RT.Util.Serialization
                   <GuidNullableNotNull>" + guid.ToString() + @"</GuidNullableNotNull>
                 </item>")));
 
-            var parsed = ClassifyXml.Deserialize<classWithGuidSubAttribute>(xml);
+            var parsed = ClassifyXml.Deserialize<classWithGuidSubstAttribute>(xml);
             Assert.AreEqual(parsed.Guid.ToString(), guid.ToString());
             Assert.AreEqual(parsed.GuidNullableNotNull.GetValueOrDefault().ToString(), guid.ToString());
             Assert.IsNull(parsed.GuidNullableNull);
@@ -751,7 +751,7 @@ namespace RT.Util.Serialization
         {
             var inst = new classWithVersion { Version = new Version(5, 3, 1) };
             inst.Version2 = inst.Version;
-            var opts = new ClassifyOptions().AddTypeOptions(typeof(Version), new substituteVersion.Options());
+            var opts = new ClassifyOptions().AddTypeSubstitution(new substituteVersion.Substitutor());
             var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
@@ -764,7 +764,7 @@ namespace RT.Util.Serialization
 
             assertSubstVersion(inst, opts, xml);
 
-            opts = new ClassifyOptions().AddTypeOptions(typeof(Version), new optionsVersionToString());
+            opts = new ClassifyOptions().AddTypeSubstitution(new substVersionToString());
             xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
@@ -799,7 +799,7 @@ namespace RT.Util.Serialization
                 GuidNullableNotNull = _testGuid,
                 GuidNullableNull = null
             };
-            var opts = new ClassifyOptions().AddTypeOptions(typeof(Guid), new substituteGuid.Options());
+            var opts = new ClassifyOptions().AddTypeSubstitution(new substituteGuid.Substitutor());
             var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
@@ -813,7 +813,7 @@ namespace RT.Util.Serialization
                 </item>")));
             assertSubstGuid(opts, xml);
 
-            opts = new ClassifyOptions().AddTypeOptions(typeof(Guid), new optionsGuidToString());
+            opts = new ClassifyOptions().AddTypeSubstitution(new substGuidToString());
             xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
@@ -836,7 +836,7 @@ namespace RT.Util.Serialization
         public void TestTypeSubstitutionStruct()
         {
             var inst = new stringWrapper { Value = "val" };
-            var opts = new ClassifyOptions().AddTypeOptions(typeof(stringWrapper), new stringWrapper.Options());
+            var opts = new ClassifyOptions().AddTypeSubstitution(new stringWrapper.Substitutor());
             var xml = VerifyXml(ClassifyXml.Serialize(inst, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item>val</item>")));
             var inst2 = ClassifyXml.Deserialize<stringWrapper>(xml, opts);
@@ -1192,7 +1192,7 @@ namespace RT.Util.Serialization
             public string SetThisToXyz;
         }
 
-        private sealed class serializeThisOptions : ClassifyTypeOptions, IClassifyTypeProcessor<XElement>
+        private sealed class serializeThisTypeProcessor : IClassifyTypeProcessor<XElement>
         {
             public void BeforeSerialize(object obj)
             {
@@ -1216,7 +1216,7 @@ namespace RT.Util.Serialization
         [Test]
         public void TestXmlPrePostprocess()
         {
-            var opt = new ClassifyOptions().AddTypeOptions(typeof(SerializeThis), new serializeThisOptions());
+            var opt = new ClassifyOptions().AddTypeProcessor(typeof(SerializeThis), new serializeThisTypeProcessor());
 
             var instance = new SerializeThis { KeepThis = "Keep", SetThisToXyz = "abc" };
             var xml = VerifyXml(ClassifyXml.Serialize(instance, opt));
@@ -1483,7 +1483,7 @@ namespace RT.Util.Serialization
             public List<int> AList;
         }
 
-        sealed class listSubstOpts : ClassifyTypeOptions, IClassifySubstitute<List<int>, string>
+        sealed class listSubstitutor : IClassifySubstitute<List<int>, string>
         {
             public string ToSubstitute(List<int> instance)
             {
@@ -1500,7 +1500,7 @@ namespace RT.Util.Serialization
         public void TestListSubstitution()
         {
             var tester = new listSubstitutionTester { AList = new List<int> { 7, 5, 3, 1 } };
-            var opts = new ClassifyOptions().AddTypeOptions(typeof(List<int>), new listSubstOpts());
+            var opts = new ClassifyOptions().AddTypeSubstitution(new listSubstitutor());
 
             var xml = VerifyXml(ClassifyXml.Serialize(tester, opts));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"<item><AList>7|5|3|1</AList></item>")));
@@ -1523,7 +1523,7 @@ namespace RT.Util.Serialization
         sealed class refSubstClass1 : refSubstClass<refSubstClass1> { public int Marker1 = 1; }
         sealed class refSubstClass2 : refSubstClass<refSubstClass2> { public int Marker2 = 2; }
 
-        sealed class refSubstOpts : ClassifyTypeOptions, IClassifySubstitute<refSubstClass1, refSubstClass2>
+        sealed class refSubstitutor : IClassifySubstitute<refSubstClass1, refSubstClass2>
         {
             public refSubstClass2 ToSubstitute(refSubstClass1 instance)
             {
@@ -1581,7 +1581,7 @@ namespace RT.Util.Serialization
             a.Ref2 = c;
             c.Ref2 = a;
 
-            var opts = new ClassifyOptions().AddTypeOptions(typeof(refSubstClass1), new refSubstOpts());
+            var opts = new ClassifyOptions().AddTypeSubstitution(new refSubstitutor());
 
             var aXml = VerifyXml(ClassifyXml.Serialize(a, opts));
             var aNew = ClassifyXml.Deserialize<refSubstClass1>(aXml, opts);
@@ -2065,15 +2065,14 @@ namespace RT.Util.Serialization
                 Assert.IsTrue(e.Message.Contains("MisTypeMisDerived"));
             }
 
-            var opts = new ClassifyOptions()
-                .AddTypeOptions(typeof(ObservableCollection<MisTypeBase>), new misTypeSubstOpts());
-            misTypeSubstOpts.HasBeenCalled = false;
+            var opts = new ClassifyOptions().AddTypeProcessor(typeof(ObservableCollection<MisTypeBase>), new misTypeXmlTypeProcessor());
+            misTypeXmlTypeProcessor.HasBeenCalled = false;
             var result = ClassifyXml.Deserialize<MisTypeOuter>(xml, opts);
-            Assert.IsTrue(misTypeSubstOpts.HasBeenCalled);
+            Assert.IsTrue(misTypeXmlTypeProcessor.HasBeenCalled);
             Assert.IsTrue(result.Items.Count == 1);
             Assert.IsTrue(result.Items[0].GetType() == typeof(MisTypeDerived));
         }
-        class misTypeSubstOpts : ClassifyTypeOptions, IClassifyXmlTypeProcessor
+        class misTypeXmlTypeProcessor : IClassifyXmlTypeProcessor
         {
             void IClassifyTypeProcessor<XElement>.AfterSerialize(object obj, XElement element) { }
             void IClassifyTypeProcessor<XElement>.AfterDeserialize(object obj, XElement element) { }
@@ -2243,7 +2242,7 @@ namespace RT.Util.Serialization
         class TestSubstExc { public string Str = "unchanged"; }
         class TestSubstExcWrapper { public TestSubstExc Inner = new TestSubstExc(); }
 
-        class TestSubstExcSubstitution : ClassifyTypeOptions, IClassifySubstitute<TestSubstExc, string>
+        class TestSubstExcSubstitution : IClassifySubstitute<TestSubstExc, string>
         {
             private bool _throwCDFE;
             public TestSubstExcSubstitution(bool throwCDFE) { _throwCDFE = throwCDFE; }
@@ -2264,7 +2263,7 @@ namespace RT.Util.Serialization
             const string xml1 = "<item><item>!foo</item><item>!bar</item><item>invalid</item><item>!good</item></item>";
             const string xml2 = "<item><Inner>invalid</Inner></item>";
 
-            var opt1 = new ClassifyOptions().AddTypeOptions(typeof(TestSubstExc), new TestSubstExcSubstitution(true));
+            var opt1 = new ClassifyOptions().AddTypeSubstitution(new TestSubstExcSubstitution(true));
             TestSubstExc[] arr1 = null;
             Assert.DoesNotThrow(() => { arr1 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt1); });
             Assert.IsNotNull(arr1);
@@ -2283,7 +2282,7 @@ namespace RT.Util.Serialization
             Assert.IsNotNull(res1.Inner);
             Assert.AreEqual("unchanged", res1.Inner.Str);
 
-            var opt2 = new ClassifyOptions().AddTypeOptions(typeof(TestSubstExc), new TestSubstExcSubstitution(false));
+            var opt2 = new ClassifyOptions().AddTypeSubstitution(new TestSubstExcSubstitution(false));
             Assert.Throws<InvalidOperationException>(() => { var arr2 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt2); });
             Assert.Throws<InvalidOperationException>(() => { var res2 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt2); });
         }

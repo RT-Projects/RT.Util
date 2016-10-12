@@ -447,8 +447,7 @@ namespace RT.Util.Serialization
                         retrievedObj = res();
                         retrievedObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
                         retrievedObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
-                        typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.AfterDeserialize(retrievedObj); });
-                        typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(retrievedObj, elem); });
+                        typeOptions?.AfterDeserialize(retrievedObj, elem);
                     }
                     return retrievedObj;
                 };
@@ -459,9 +458,9 @@ namespace RT.Util.Serialization
                 ClassifyTypeOptions typeOptions = null;
                 if (_options._typeOptions.TryGetValue(type, out typeOptions))
                 {
-                    if (typeOptions._substituteType != null)
+                    if (typeOptions.Substitutor != null)
                         throw new InvalidOperationException("Cannot use type substitution when populating a provided object.");
-                    typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeDeserialize(elem); });
+                    typeOptions?.BeforeDeserialize(elem);
                 }
 
                 _doAtTheEnd = new List<Action>();
@@ -483,8 +482,7 @@ namespace RT.Util.Serialization
 
                 intoObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
-                typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.AfterDeserialize(intoObj); });
-                typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterDeserialize(intoObj, elem); });
+                typeOptions?.AfterDeserialize(intoObj, elem);
             }
 
             /// <summary>
@@ -504,13 +502,17 @@ namespace RT.Util.Serialization
                     throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
 
                 var substType = declaredType;
+                var hasTypeSubstitution = false;
 
                 ClassifyTypeOptions typeOptions = null;
                 if (_options._typeOptions.TryGetValue(declaredType, out typeOptions))
                 {
-                    if (typeOptions._substituteType != null)
-                        substType = typeOptions._substituteType;
-                    typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeDeserialize(elem); });
+                    if (typeOptions.Substitutor != null)
+                    {
+                        substType = typeOptions.Substitutor.SubstituteType;
+                        hasTypeSubstitution = true;
+                    }
+                    typeOptions?.BeforeDeserialize(elem);
                 }
 
                 // Every object created by declassify goes through this function
@@ -520,10 +522,10 @@ namespace RT.Util.Serialization
                     Func<object> withDesubstitution = null;
 
                     // Apply de-substitution (if any)
-                    if (declaredType != substType)
+                    if (hasTypeSubstitution)
                         withDesubstitution = cachify(() =>
                         {
-                            try { return typeOptions._fromSubstitute(withoutDesubstitution()); }
+                            try { return typeOptions.Substitutor.FromSubstitute(withoutDesubstitution()); }
                             catch (ClassifyDesubstitutionFailedException) { return already; }
                         }, elem, typeOptions);
 
@@ -551,7 +553,7 @@ namespace RT.Util.Serialization
                         if (inf.WithDesubstitution == null)
                             inf.WithDesubstitution = cachify(() =>
                             {
-                                try { return typeOptions._fromSubstitute(inf.WithoutDesubstitution()); }
+                                try { return typeOptions.Substitutor.FromSubstitute(inf.WithoutDesubstitution()); }
                                 catch (ClassifyDesubstitutionFailedException) { return already; }
                             }, elem, typeOptions);
                         return inf.WithDesubstitution();
@@ -1002,9 +1004,9 @@ namespace RT.Util.Serialization
                             var substituteAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
                             if (substituteAttr != null)
                             {
-                                var substInf = substituteAttr.GetInfo(field.FieldType);
-                                inf.DeserializeAsType = substInf.SubstituteType;
-                                inf.SubstituteConverter = substInf.FromSubstitute;
+                                var substitutor = substituteAttr.GetSubstitutor(field.FieldType);
+                                inf.DeserializeAsType = substitutor.SubstituteType;
+                                inf.SubstituteConverter = substitutor.FromSubstitute;
                             }
 
                             infos.Add(inf);
@@ -1095,16 +1097,18 @@ namespace RT.Util.Serialization
                 ClassifyTypeOptions typeOptions;
                 var originalObject = saveObject;
                 var originalType = saveType;
+                var hasTypeSubstitution = false;
 
-                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions._substituteType != null)
+                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions.Substitutor != null)
                 {
-                    saveObject = typeOptions._toSubstitute(saveObject);
-                    saveType = typeOptions._substituteType;
+                    saveObject = typeOptions.Substitutor.ToSubstitute(saveObject);
+                    saveType = typeOptions.Substitutor.SubstituteType;
+                    hasTypeSubstitution = true;
                 }
 
                 // Preserve reference identity of reference types except string
                 if ((!(originalObject is ValueType) && !(originalObject is string) && _rememberC.Contains(originalObject)) ||
-                    (saveType != originalType && !(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject)))
+                    (hasTypeSubstitution && !(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject)))
                 {
                     int refId;
                     if (!_requireRefId.TryGetValue(originalObject, out refId) && !_requireRefId.TryGetValue(saveObject, out refId))
@@ -1120,7 +1124,7 @@ namespace RT.Util.Serialization
                 // Remember this object so that we can detect cycles and maintain reference equality
                 if (originalObject != null && !(originalObject is ValueType) && !(originalObject is string))
                     _rememberC.Add(originalObject);
-                if (saveType != originalType && saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
+                if (hasTypeSubstitution && saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
                     _rememberC.Add(saveObject);
 
                 if (saveObject == null)
@@ -1128,8 +1132,7 @@ namespace RT.Util.Serialization
 
                 saveObject.IfType((IClassifyObjectProcessor obj) => { obj.BeforeSerialize(); });
                 saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeSerialize(); });
-                typeOptions.IfType((IClassifyTypeProcessor opt) => { opt.BeforeSerialize(saveObject); });
-                typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.BeforeSerialize(saveObject); });
+                typeOptions?.BeforeSerialize<TElement>(saveObject);
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
                 {
@@ -1279,7 +1282,7 @@ namespace RT.Util.Serialization
                             if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId);
                             saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterSerialize(retrievedElem); });
-                            typeOptions.IfType((IClassifyTypeProcessor<TElement> opt) => { opt.AfterSerialize(saveObject, retrievedElem); });
+                            typeOptions?.AfterSerialize(saveObject, retrievedElem);
                         }
                         return retrievedElem;
                     };
@@ -1290,8 +1293,8 @@ namespace RT.Util.Serialization
 
             private IEnumerable<ObjectFieldInfo<Func<TElement>>> serializeObject(object saveObject, Type saveType)
             {
-                bool ignoreIfDefaultOnType = saveType.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
-                bool ignoreIfEmptyOnType = saveType.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
+                bool typeHasIgnoreIfDefault = saveType.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
+                bool typeHasIgnoreIfEmpty = saveType.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
 
                 var results = new List<Tuple<string, Type, Func<TElement>>>();
                 var namesAlreadySeen = new HashSet<string>();
@@ -1329,9 +1332,8 @@ namespace RT.Util.Serialization
                         continue;
 
                     object saveValue = field.GetValue(saveObject);
-                    bool ignoreIfDefault = ignoreIfDefaultOnType || attrs.OfType<ClassifyIgnoreIfDefaultAttribute>().Any();
 
-                    if (ignoreIfDefault)
+                    if (typeHasIgnoreIfDefault || attrs.OfType<ClassifyIgnoreIfDefaultAttribute>().Any())
                     {
                         if (saveValue == null)
                             continue;
@@ -1346,8 +1348,7 @@ namespace RT.Util.Serialization
                         continue;
 
                     // Arrays, lists and dictionaries all implement ICollection
-                    bool ignoreIfEmpty = ignoreIfEmptyOnType || attrs.OfType<ClassifyIgnoreIfEmptyAttribute>().Any();
-                    if (ignoreIfEmpty && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
+                    if ((typeHasIgnoreIfEmpty || attrs.OfType<ClassifyIgnoreIfEmptyAttribute>().Any()) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                         continue;
 
                     if (!namesAlreadySeen.Add(rFieldName))
@@ -1359,8 +1360,8 @@ namespace RT.Util.Serialization
                     var substAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
                     if (substAttr != null)
                     {
-                        var attrInf = substAttr.GetInfo(field.FieldType);
-                        elem = Serialize(attrInf.ToSubstitute(saveValue), attrInf.SubstituteType);
+                        var substitutor = substAttr.GetSubstitutor(field.FieldType);
+                        elem = Serialize(substitutor.ToSubstitute(saveValue), substitutor.SubstituteType);
                     }
                     else
                     {
@@ -1415,9 +1416,9 @@ namespace RT.Util.Serialization
         private static void postBuildStep(Type type, object instance, MemberInfo member, IPostBuildReporter rep, HashSet<Type> alreadyChecked, IEnumerable<string> chain)
         {
             ClassifyTypeOptions opts;
-            if (DefaultOptions._typeOptions.TryGetValue(type, out opts) && opts._substituteType != null)
+            if (DefaultOptions._typeOptions.TryGetValue(type, out opts) && opts.Substitutor != null)
             {
-                postBuildStep(opts._substituteType, opts._toSubstitute(instance), member, rep, alreadyChecked, chain.Concat("Type substitution: " + opts._substituteType.FullName));
+                postBuildStep(opts.Substitutor.SubstituteType, opts.Substitutor.ToSubstitute(instance), member, rep, alreadyChecked, chain.Concat("Type substitution: " + opts.Substitutor.SubstituteType.FullName));
                 return;
             }
 
@@ -1491,6 +1492,10 @@ namespace RT.Util.Serialization
     ///     (de)serializes it. To have effect, this interface must be implemented by the object being serialized.</summary>
     /// <typeparam name="TElement">
     ///     Type of the serialized form.</typeparam>
+    /// <remarks>
+    ///     This interface requires that the object type being serialized or deserialized implements it. If this is not
+    ///     possible, use <see cref="IClassifyTypeProcessor{TElement}"/> instead.</remarks>
+    /// <seealso cref="IClassifyObjectProcessor"/>
     public interface IClassifyObjectProcessor<TElement>
     {
         /// <summary>
@@ -1527,6 +1532,10 @@ namespace RT.Util.Serialization
     /// <summary>
     ///     Contains methods to process an object before or after <see cref="Classify"/> (de)serializes it, irrespective of
     ///     the serialization format used. To have effect, this interface must be implemented by the object being serialized.</summary>
+    /// <remarks>
+    ///     This interface requires that the object type being serialized or deserialized implements it. If this is not
+    ///     possible, use <see cref="IClassifyTypeProcessor"/> instead.</remarks>
+    /// <seealso cref="IClassifyObjectProcessor{TElement}"/>
     public interface IClassifyObjectProcessor
     {
         /// <summary>
@@ -1541,11 +1550,16 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Contains methods to process an object and/or the associated serialized form before or after <see cref="Classify"/>
-    ///     (de)serializes it. To have effect, this interface must be implemented by a class derived from <see
-    ///     cref="ClassifyTypeOptions"/> and associated with a type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
+    ///     Contains methods to process all objects of a specific type and/or their serialized forms before or after <see
+    ///     cref="Classify"/> serializes/deserializes them to/from a specific Classify format. To use this, create a type that
+    ///     implements this interface and then pass an instance of that type to <see
+    ///     cref="ClassifyOptions.AddTypeProcessor{TElement}"/>.</summary>
     /// <typeparam name="TElement">
-    ///     Type of the serialized form.</typeparam>
+    ///     Type of the serialized form. For example, for <see cref="ClassifyJson"/>, this is <see cref="Json.JsonValue"/>.</typeparam>
+    /// <remarks>
+    ///     This interface has no effect when implemented by the object being serialized or deserialized. For that, use <see
+    ///     cref="IClassifyObjectProcessor{TElement}"/>.</remarks>
+    /// <seealso cref="IClassifyTypeProcessor"/>
     public interface IClassifyTypeProcessor<TElement>
     {
         /// <summary>
@@ -1585,9 +1599,14 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Contains methods to process an object before or after <see cref="Classify"/> (de)serializes it. To have effect,
-    ///     this interface must be implemented by a class derived from <see cref="ClassifyTypeOptions"/> and associated with a
-    ///     type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
+    ///     Contains methods to process all objects of a specific type and/or their serialized forms before or after <see
+    ///     cref="Classify"/> serializes/deserializes them, regardless of the Classify format. To use this, create a type that
+    ///     implements this interface and then pass an instance of that type to <see
+    ///     cref="ClassifyOptions.AddTypeProcessor"/>.</summary>
+    /// <remarks>
+    ///     This interface has no effect when implemented by the object being serialized or deserialized. For that, use <see
+    ///     cref="IClassifyObjectProcessor"/>.</remarks>
+    /// <seealso cref="IClassifyTypeProcessor{TElement}"/>
     public interface IClassifyTypeProcessor
     {
         /// <summary>
@@ -1606,9 +1625,10 @@ namespace RT.Util.Serialization
     }
 
     /// <summary>
-    ///     Implement this interface to specify how to substitute a type for another type during Classify. The type
-    ///     implementing this interface can be used in a class derived from <see cref="ClassifyTypeOptions"/> or in <see
-    ///     cref="ClassifySubstituteAttribute"/>.</summary>
+    ///     Defines how to substitute a type for another type during Classify serialization/deserialization. Pass an instance
+    ///     of a type implementing this interface to <see cref="ClassifyOptions.AddTypeSubstitution{TTrue, TSubstitute}"/> to
+    ///     use the substitution throughout a serialization or deserialization, or use it in a <see
+    ///     cref="ClassifySubstituteAttribute"/> to limit it to a specific field or automatically-implemented property.</summary>
     /// <typeparam name="TTrue">
     ///     The type that is actually used for instances in memory.</typeparam>
     /// <typeparam name="TSubstitute">
@@ -1646,7 +1666,7 @@ namespace RT.Util.Serialization
         public ClassifyDesubstitutionFailedException() { }
     }
 
-    /// <summary>Specifies some options for use by <see cref="Classify"/>.</summary>
+    /// <summary>Provides the ability to specify some options for use by <see cref="Classify"/>.</summary>
     public sealed class ClassifyOptions
     {
         /// <summary>
@@ -1660,92 +1680,122 @@ namespace RT.Util.Serialization
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
 
         /// <summary>
-        ///     Adds options that are relevant to classifying/declassifying a specific type.</summary>
-        /// <param name="type">
-        ///     The type to which these options apply.</param>
-        /// <param name="options">
-        ///     Options that apply to the <paramref name="type"/>. To enable type substitution, pass an instance of a class
-        ///     that implements <see cref="IClassifySubstitute{TTrue,TSubstitute}"/>. To use pre-/post-processing of the
-        ///     object or its serialized form, pass an instance of a class that implements <see
-        ///     cref="IClassifyTypeProcessor"/> or <see cref="IClassifyTypeProcessor{TElement}"/>.</param>
+        ///     Adds a type substitution, instructing <see cref="Classify"/> to use a different type when serializing or
+        ///     deserializing a specific type.</summary>
+        /// <typeparam name="TTrue">
+        ///     The true type to be replaced by a substitute type.</typeparam>
+        /// <typeparam name="TSubstitute">
+        ///     The substitute type to use during serialization/deserialization instead of <typeparamref name="TTrue"/>.</typeparam>
+        /// <param name="substitutor">
+        ///     An implementation of <see cref="IClassifySubstitute{TTrue, TSubstitute}"/> that defines the substitution.</param>
         /// <returns>
-        ///     Itself.</returns>
-        public ClassifyOptions AddTypeOptions(Type type, ClassifyTypeOptions options)
+        ///     The same options object, allowing chaining.</returns>
+        public ClassifyOptions AddTypeSubstitution<TTrue, TSubstitute>(IClassifySubstitute<TTrue, TSubstitute> substitutor)
         {
-            if (type == null)
-                throw new ArgumentNullException("type");
-            if (options == null)
-                throw new ArgumentNullException("options");
-            if (_typeOptions.ContainsKey(type))
-                throw new ArgumentException("Classify options for type {0} have already been defined.".Fmt(type), "type");
-            if (_typeOptions.Values.Contains(options))
-                throw new ArgumentException("Must use a different ClassifyTypeOptions instance for every type.", "options");
-            bool implementsUsefulInterface = options is IClassifyTypeProcessor
-                || options.GetType().GetInterfaces().Any(i => i.IsGenericType && (i.GetGenericTypeDefinition() == typeof(IClassifyTypeProcessor<>) || i.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>)));
-            bool implementsUselessInterface = options is IClassifyObjectProcessor
-                || options.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IClassifyObjectProcessor<>));
-            if (implementsUselessInterface && !implementsUsefulInterface)
-                throw new InvalidOperationException("This ClassifyTypeOptions type implements at least one interface meant for the objects to be serialized, and none of the interfaces meant for the ClassifyTypeOptions descendants. These type options would have zero effect, so this is likely a programming error.");
-            options.initializeFor(type);
-            _typeOptions.Add(type, options);
+            if (substitutor == null)
+                throw new ArgumentNullException(nameof(substitutor));
+            ClassifyTypeOptions opt;
+            if (_typeOptions.TryGetValue(typeof(TTrue), out opt) && opt.Substitutor != null)
+                throw new ArgumentException($"A substitution for type {typeof(TTrue).FullName} has already been defined.", nameof(substitutor));
+            (opt ?? (_typeOptions[typeof(TTrue)] = new ClassifyTypeOptions())).Substitutor = new ClassifySubstitutor(typeof(TSubstitute), obj => substitutor.FromSubstitute((TSubstitute) obj), obj => substitutor.ToSubstitute((TTrue) obj));
+            return this;
+        }
+
+        /// <summary>
+        ///     Adds an instruction to <see cref="Classify"/> to run every object of type <paramref name="type"/> through the
+        ///     specified <see cref="IClassifyTypeProcessor{TElement}"/> implementation before and after serializing or
+        ///     deserializing to/from a Classify format that uses <typeparamref name="TElement"/> as its serialized form.</summary>
+        /// <typeparam name="TElement">
+        ///     The type of the serialized form. For example, for <see cref="ClassifyJson"/>, this is <see
+        ///     cref="Json.JsonValue"/>.</typeparam>
+        /// <param name="type">
+        ///     The type of objects to run through the type processor.</param>
+        /// <param name="processor">
+        ///     An implementation of <see cref="IClassifyTypeProcessor{TElement}"/> that defines the operations to perform
+        ///     before/after serialization/deserialization.</param>
+        /// <returns>
+        ///     The same options object, allowing chaining.</returns>
+        public ClassifyOptions AddTypeProcessor<TElement>(Type type, IClassifyTypeProcessor<TElement> processor)
+        {
+            if (processor == null)
+                throw new ArgumentNullException(nameof(processor));
+            (_typeOptions.Get(type, null) ?? (_typeOptions[type] = new ClassifyTypeOptions())).AddElementTypeProcessor(processor);
+            return this;
+        }
+
+        /// <summary>
+        ///     Adds an instruction to <see cref="Classify"/> to run every object of type <paramref name="type"/> through the
+        ///     specified <see cref="IClassifyTypeProcessor"/> implementation before and after serializing or deserializing.</summary>
+        /// <param name="type">
+        ///     The type of objects to run through the type processor.</param>
+        /// <param name="processor">
+        ///     An implementation of <see cref="IClassifyTypeProcessor"/> that defines the operations to perform before/after
+        ///     serialization/deserialization.</param>
+        /// <returns>
+        ///     The same options object, allowing chaining.</returns>
+        public ClassifyOptions AddTypeProcessor(Type type, IClassifyTypeProcessor processor)
+        {
+            if (processor == null)
+                throw new ArgumentNullException(nameof(processor));
+            (_typeOptions.Get(type, null) ?? (_typeOptions[type] = new ClassifyTypeOptions())).AddTypeProcessor(processor);
             return this;
         }
     }
 
-    /// <summary>
-    ///     Provides an abstract base type to derive from to specify type-specific options for use in Classify. See remarks
-    ///     for more information.</summary>
-    /// <remarks>
-    ///     <para>
-    ///         Derive from this type and implement <see cref="IClassifySubstitute{TTrue,TSubstitute}"/> to enable type
-    ///         substitution during Classify. (This type substitution can be overridden by the presence of a <see
-    ///         cref="ClassifySubstituteAttribute"/> on a field or automatically-implemented property.)</para>
-    ///     <para>
-    ///         Derive from this type and implement <see cref="IClassifyTypeProcessor"/> or <see
-    ///         cref="IClassifyTypeProcessor{TElement}"/> to pre-/post-process the object or its serialized form before/after
-    ///         Classify. (You can also implement <see cref="IClassifyObjectProcessor"/> or <see
-    ///         cref="IClassifyObjectProcessor{TElement}"/> on the serialized type itself.)</para>
-    ///     <para>
-    ///         Intended use is to declare a class derived from <see cref="ClassifyTypeOptions"/> and pass an instance of it
-    ///         into <see cref="ClassifyOptions.AddTypeOptions"/>.</para></remarks>
-    public abstract class ClassifyTypeOptions
+    internal sealed class ClassifySubstitutor
     {
-        internal Type _substituteType;
-        internal Func<object, object> _toSubstitute;
-        internal Func<object, object> _fromSubstitute;
-
-        internal void initializeFor(Type type)
+        public Type SubstituteType { get; private set; }
+        public Func<object, object> FromSubstitute { get; private set; }
+        public Func<object, object> ToSubstitute { get; private set; }
+        public ClassifySubstitutor(Type substituteType, Func<object, object> fromSubstitute, Func<object, object> toSubstitute)
         {
-            var substInterfaces = GetType().GetInterfaces()
-                .Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>) && t.GetGenericArguments()[0] == type).ToArray();
-            if (substInterfaces.Length > 1)
-                throw new ArgumentException("The type {0} implements more than one IClassifySubstitute<{1}, *> interface. Expected at most one.".Fmt(GetType().FullName, type.FullName), "type");
-            else if (substInterfaces.Length == 1)
-            {
-                _substituteType = substInterfaces[0].GetGenericArguments()[1];
-                if (type == _substituteType)
-                    throw new InvalidOperationException("The type {0} implements a substitution from type {1} to itself.".Fmt(GetType().FullName, type.FullName));
-                var toSubstMethod = substInterfaces[0].GetMethod("ToSubstitute");
-                var fromSubstMethod = substInterfaces[0].GetMethod("FromSubstitute");
-                _toSubstitute = obj =>
-                {
-                    object result;
-                    try { result = toSubstMethod.Invoke(this, new[] { obj }); }
-                    catch (TargetInvocationException te) { throw te.InnerException; }
-                    if (result != null && result.GetType() != _substituteType) // forbidden just in case because I see no use cases for returning a subtype
-                        throw new InvalidOperationException("The method {0} is expected to return an instance of the substitute type, {1}. It returned a subtype, {2}.".Fmt(toSubstMethod, _substituteType.FullName, result.GetType().FullName));
-                    return result;
-                };
-                _fromSubstitute = obj =>
-                {
-                    object result;
-                    try { result = fromSubstMethod.Invoke(this, new[] { obj }); }
-                    catch (TargetInvocationException te) { throw te.InnerException; }
-                    if (result != null && result.GetType() != type) // forbidden just in case because I see no use cases for returning a subtype
-                        throw new InvalidOperationException("The method {0} is expected to return an instance of the true type, {1}. It returned a subtype, {2}.".Fmt(fromSubstMethod, type.FullName, result.GetType().FullName));
-                    return result;
-                };
-            }
+            SubstituteType = substituteType;
+            FromSubstitute = fromSubstitute;
+            ToSubstitute = toSubstitute;
+        }
+    }
+
+    internal sealed class ClassifyTypeOptions
+    {
+        public ClassifySubstitutor Substitutor;
+        public List<IClassifyTypeProcessor> TypeProcessors;
+        public List<object> TypeElementProcessors;
+
+        public void AddTypeProcessor(IClassifyTypeProcessor processor) => (TypeProcessors ?? (TypeProcessors = new List<IClassifyTypeProcessor>())).Add(processor);
+        public void AddElementTypeProcessor(object processor) => (TypeElementProcessors ?? (TypeElementProcessors = new List<object>())).Add(processor);
+
+        public void BeforeSerialize<TElement>(object obj)
+        {
+            if (TypeProcessors != null)
+                foreach (var proc in TypeProcessors)
+                    proc.BeforeSerialize(obj);
+            if (TypeElementProcessors != null)
+                foreach (var proc in TypeElementProcessors.OfType<IClassifyTypeProcessor<TElement>>())
+                    proc.BeforeSerialize(obj);
+        }
+
+        public void AfterSerialize<TElement>(object obj, TElement elem)
+        {
+            if (TypeElementProcessors != null)
+                foreach (var proc in TypeElementProcessors.OfType<IClassifyTypeProcessor<TElement>>())
+                    proc.AfterSerialize(obj, elem);
+        }
+
+        public void BeforeDeserialize<TElement>(TElement elem)
+        {
+            if (TypeElementProcessors != null)
+                foreach (var proc in TypeElementProcessors.OfType<IClassifyTypeProcessor<TElement>>())
+                    proc.BeforeDeserialize(elem);
+        }
+
+        public void AfterDeserialize<TElement>(object obj, TElement elem)
+        {
+            if (TypeProcessors != null)
+                foreach (var proc in TypeProcessors)
+                    proc.AfterDeserialize(obj);
+            if (TypeElementProcessors != null)
+                foreach (var proc in TypeElementProcessors.OfType<IClassifyTypeProcessor<TElement>>())
+                    proc.AfterDeserialize(obj, elem);
         }
     }
 
@@ -1758,7 +1808,7 @@ namespace RT.Util.Serialization
     /// <summary>
     ///     Indicates that the value stored in this field or automatically-implemented property should be converted to another
     ///     type when serializing and back when deserializing. This takes precedence over any type substitution configured in
-    ///     a <see cref="ClassifyTypeOptions"/> derived class.</summary>
+    ///     a <see cref="ClassifyOptions"/> object.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifySubstituteAttribute : Attribute
     {
@@ -1775,34 +1825,20 @@ namespace RT.Util.Serialization
             ConverterType = converterType;
         }
 
-        internal Info GetInfo(Type fieldType)
+        internal ClassifySubstitutor GetSubstitutor(Type fieldType)
         {
             var converter = Activator.CreateInstance(ConverterType);
             var inter = ConverterType.FindInterfaces((itf, _) => itf.IsGenericType && itf.GetGenericTypeDefinition() == typeof(IClassifySubstitute<,>) && itf.GetGenericArguments()[0] == fieldType, null);
             if (inter.Length != 1)
-                throw new InvalidOperationException("Provided type in [ClassifySubstitute] attribute must implement interface IClassifySubstitute<,>, the first generic type argument must be the field type, and there must be only one such interface.");
+                throw new InvalidOperationException($"Provided type in [ClassifySubstitute] attribute must implement interface IClassifySubstitute<,>, the first generic type argument must be {fieldType.FullName}, and there must be only one such interface.");
 
             // Can’t use Delegate.CreateDelegate() because the method could return a value type or void, which is not directly compatible with Func<object, object>
             var fromSubstituteMethod = inter[0].GetMethod("FromSubstitute");
             var toSubstituteMethod = inter[0].GetMethod("ToSubstitute");
-            return new Info(
+            return new ClassifySubstitutor(
                 substituteType: inter[0].GetGenericArguments()[1],
                 fromSubstitute: new Func<object, object>(obj => fromSubstituteMethod.Invoke(converter, new[] { obj })),
                 toSubstitute: new Func<object, object>(obj => toSubstituteMethod.Invoke(converter, new[] { obj })));
-        }
-
-        internal sealed class Info
-        {
-            public Type SubstituteType { get; private set; }
-            public Func<object, object> FromSubstitute { get; private set; }
-            public Func<object, object> ToSubstitute { get; private set; }
-
-            public Info(Type substituteType, Func<object, object> fromSubstitute, Func<object, object> toSubstitute)
-            {
-                SubstituteType = substituteType;
-                FromSubstitute = fromSubstitute;
-                ToSubstitute = toSubstitute;
-            }
         }
     }
 
