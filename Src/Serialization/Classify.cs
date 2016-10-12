@@ -108,7 +108,9 @@ namespace RT.Util.Serialization
     ///             information stored in those classes. In particular, this means that the comparer used by a <see
     ///             cref="SortedDictionary{TKey, TValue}"/> is not persisted. However, if the containing class’s constructor
     ///             assigned a <see cref="SortedDictionary{TKey, TValue}"/> with a comparer, that instance, and hence its
-    ///             comparer, is reused.</description></item></list></remarks>
+    ///             comparer, is reused.</description></item>
+    ///         <item><description>
+    ///             Classify is not at all optimized for speed or memory efficiency.</description></item></list></remarks>
     public static class Classify
     {
         /// <summary>
@@ -330,6 +332,30 @@ namespace RT.Util.Serialization
             private IClassifyFormat<TElement> _format;
             private Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
 
+            private enum CollectionCategory
+            {
+                /// <summary>Array types such as <c>T[]</c>, <c>T[,]</c> etc.</summary>
+                Array,
+
+                /// <summary><see cref="Stack{T}"/>.</summary>
+                Stack,
+
+                /// <summary><see cref="Queue{T}"/>.</summary>
+                Queue,
+
+                /// <summary>
+                ///     <see cref="Dictionary{TKey, TValue}"/>, where <c>TKey</c> is something that <see cref="ExactConvert"/>
+                ///     can convert to and from <c>string</c>. This is the only <see cref="CollectionCategory"/> that is
+                ///     serialized by <see cref="IClassifyFormat{TElement}.FormatDictionary"/> instead of <see
+                ///     cref="IClassifyFormat{TElement}.FormatList"/>.</summary>
+                SimpleKeyedDictionary,
+
+                /// <summary>
+                ///     All other implementations of <see cref="ICollection{T}"/>, including any <see cref="Dictionary{TKey,
+                ///     TValue}"/> not already covered by <see cref="SimpleKeyedDictionary"/>.</summary>
+                Other
+            }
+
             private object[] getCustomAttributes(MemberInfo member)
             {
                 object[] attrs;
@@ -443,7 +469,14 @@ namespace RT.Util.Serialization
                 if (_format.IsReferable(elem))
                     _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
-                var result = CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type));
+                Type keyType, valueType;
+                var cat = tryGetCollectionInfo(type, out keyType, out valueType);
+                var result =
+                    cat == null ? CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type)) :
+                    cat == CollectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums)) :
+                    cat == CollectionCategory.SimpleKeyedDictionary ? CustomCallStack.Run(deserializeIntoDictionary(keyType, valueType, elem, intoObj, _options.EnforceEnums)) :
+                    CustomCallStack.Run(deserializeIntoCollection(valueType, cat.Value, elem, intoObj, _options.EnforceEnums));
+
                 foreach (var action in _doAtTheEnd)
                     action();
                 result();
@@ -464,7 +497,7 @@ namespace RT.Util.Serialization
             ///     An object that we may potentially re-use (e.g. the object already stored in the field when deserializing a
             ///     field inside an outer object).</param>
             /// <param name="enforceEnums">
-            ///     <c>true</c> if [ClassifyEnforceEnums] semantics are in effect for this object.</param>
+            ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
             private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, bool enforceEnums)
             {
                 if (declaredType.IsPointer || declaredType.IsByRef)
@@ -588,250 +621,321 @@ namespace RT.Util.Serialization
                 else
                 {
                     // Check if it’s an array, collection or dictionary
-                    Type[] typeParameters;
-                    Type keyType = null, valueType = null;
-                    bool isQueue = false;
-                    bool isStack = false;
-
-                    if (serializedType.IsArray)
-                        valueType = serializedType.GetElementType();
-                    else if (serializedType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    Type keyType, valueType;
+                    var cat = tryGetCollectionInfo(serializedType, out keyType, out valueType);
+                    WorkNode<Func<object>> workNode;
+                    switch (cat)
                     {
-                        // Dictionaries which are stored specially (key is a simple type).
-                        // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
-                        keyType = typeParameters[0];
-                        valueType = typeParameters[1];
+                        case CollectionCategory.SimpleKeyedDictionary:
+                            workNode = deserializeIntoDictionary(keyType, valueType, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType), enforceEnums);
+                            break;
+
+                        case CollectionCategory.Array:
+                            workNode = deserializeIntoArray(serializedType, valueType, elem, null, enforceEnums);
+                            break;
+
+                        case CollectionCategory.Stack:
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Stack, elem, already ?? Activator.CreateInstance(typeof(Stack<>).MakeGenericType(valueType)), enforceEnums);
+                            break;
+
+                        case CollectionCategory.Queue:
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Queue, elem, already ?? Activator.CreateInstance(typeof(Queue<>).MakeGenericType(valueType)), enforceEnums);
+                            break;
+
+                        case CollectionCategory.Other:
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Other, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType), enforceEnums);
+                            break;
+
+                        case null:
+                            // It’s NOT a collection or dictionary
+                            object ret;
+
+                            try
+                            {
+                                if (already != null && already.GetType() == serializedType)
+                                    ret = already;
+                                // Anonymous types
+                                else if (serializedType.Name.StartsWith("<>f__AnonymousType") && serializedType.IsGenericType && serializedType.IsDefined<CompilerGeneratedAttribute>())
+                                {
+                                    var constructor = serializedType.GetConstructors().First();
+                                    ret = constructor.Invoke(constructor.GetParameters().Select(p => p.ParameterType.GetDefaultValue()).ToArray());
+                                }
+                                else
+                                    ret = Activator.CreateInstance(serializedType, true);
+                            }
+                            catch (Exception e)
+                            {
+                                throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(serializedType.FullName, e.Message), e);
+                            }
+
+                            workNode = deserializeIntoObject(elem, ret, serializedType);
+                            break;
+
+                        default:
+                            throw new InternalErrorException(@"An internal bug in Classify was encountered. (56049)");
                     }
-                    else if (
-                        (serializedType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters)) ||
-                        (serializedType.TryGetGenericParameters(typeof(Queue<>), out typeParameters) && (isQueue = true)) ||
-                        (serializedType.TryGetGenericParameters(typeof(Stack<>), out typeParameters) && (isStack = true)))
-                        valueType = typeParameters[0];
 
-                    if (valueType != null)
+                    var first = true;
+                    return prevResult =>
                     {
-                        // It’s a collection or dictionary.
-
-                        if (keyType != null)
+                        if (first)
                         {
-                            // It’s a dictionary with simple-type keys.
-                            object outputDict;
-                            if (already != null)
-                            {
-                                outputDict = already;
-                                typeof(ICollection<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)).GetMethod("Clear").Invoke(outputDict, null);
-                            }
-                            else
-                                outputDict = Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType);
-
-                            outputDict.IfType((IClassifyObjectProcessor<TElement> dict) => { dict.BeforeDeserialize(elem); });
-
-                            var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
-                            var e = _format.GetDictionary(elem).GetEnumerator();
-
-                            var keysToAdd = new List<object>();
-                            var valuesToAdd = new List<Func<object>>();
-                            return prevResult =>
-                            {
-                                if (keysToAdd.Count > 0)
-                                    valuesToAdd.Add(prevResult);
-
-                                if (e.MoveNext())
-                                {
-                                    keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
-                                    return deserialize(valueType, e.Current.Value, null, enforceEnums);
-                                }
-
-                                Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
-                                _doAtTheEnd.Add(() =>
-                                {
-                                    for (int i = 0; i < keysToAdd.Count; i++)
-                                    {
-                                        var keyToAdd = keysToAdd[i];
-                                        var valueToAdd = valuesToAdd[i]();
-                                        if (!enforceEnums || ((!keyType.IsEnum || allowEnumValue(keyType, keyToAdd)) && (!valueType.IsEnum || allowEnumValue(valueType, valueToAdd))))
-                                            addMethod.Invoke(outputDict, new object[] { keyToAdd, valueToAdd });
-                                    }
-                                });
-                                return cleanUp(() => outputDict);
-                            };
+                            first = false;
+                            return workNode;
                         }
-                        else if (serializedType.IsArray)
+                        return cleanUp(prevResult);
+                    };
+                }
+            }
+
+            /// <summary>
+            ///     Deserializes a simple-keyed dictionary from its serialized form.</summary>
+            /// <param name="keyType">
+            ///     The type of the keys in the dictionary.</param>
+            /// <param name="valueType">
+            ///     The type of the values in the dictionary.</param>
+            /// <param name="elem">
+            ///     The serialized form.</param>
+            /// <param name="already">
+            ///     A dictionary instance to populate. This must not be <c>null</c>.</param>
+            /// <param name="enforceEnums">
+            ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
+            private WorkNode<Func<object>> deserializeIntoDictionary(Type keyType, Type valueType, TElement elem, object already, bool enforceEnums)
+            {
+                already.IfType((IClassifyObjectProcessor<TElement> dict) => { dict.BeforeDeserialize(elem); });
+
+                typeof(ICollection<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
+                var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
+                var e = _format.GetDictionary(elem).GetEnumerator();
+
+                var keysToAdd = new List<object>();
+                var valuesToAdd = new List<Func<object>>();
+                return prevResult =>
+                {
+                    if (keysToAdd.Count > 0)
+                        valuesToAdd.Add(prevResult);
+
+                    if (e.MoveNext())
+                    {
+                        keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
+                        return deserialize(valueType, e.Current.Value, null, enforceEnums);
+                    }
+
+                    Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
+                    _doAtTheEnd.Add(() =>
+                    {
+                        for (int i = 0; i < keysToAdd.Count; i++)
                         {
-                            // It’s an array, possibly a multi-dimensional one.
-                            var rank = serializedType.GetArrayRank();
-                            var lengths = new int[rank];
-                            var doAtEndList = new List<Action>();
-
-                            // STEP 1 (done here): Generate an object[] of object[]s of object[]s containing the still-serialized elements (TElement).
-                            // At the same time, populate ‘lengths’ and throw if it is inconsistent
-                            Func<bool, int, TElement, object> recurse = null;
-                            recurse = (isFirst, rnk, el) =>
-                            {
-                                if (rnk == rank)
-                                    return el;
-                                else
-                                {
-                                    var thisList = _format.GetList(el, null).ToArray();
-                                    if (isFirst)
-                                        lengths[rnk] = thisList.Length;
-                                    else if (lengths[rnk] != thisList.Length)
-                                        throw new InvalidOperationException(@"The serialized form contains a multi-dimensional array in which the sizes of each dimension are inconsistent.");
-                                    var newList = new object[thisList.Length];
-                                    for (int i = 0; i < thisList.Length; i++)
-                                        newList[i] = recurse(i == 0, rnk + 1, thisList[i]);
-                                    return newList;
-                                }
-                            };
-
-                            // This call initializes the values in ‘lengths’
-                            var arrays = (object[]) recurse(true, 0, elem);
-
-                            // This call requires ‘lengths’ to be initialized
-                            var outputArray = Array.CreateInstance(serializedType.GetElementType(), lengths);
-
-                            // If any of the lengths are 0, the array contains no elements that need deserialization.
-                            if (lengths.Any(l => l == 0))
-                                return prevResult => cleanUp(() => outputArray);
-
-                            // STEP 2 (done using CustomCallStack): Deserialize the innermost TElement objects using deserialize(),
-                            // which gives a Func<object>, and store those Func<object>s in the same place, overwriting the TElements
-                            int[] ixs = null;
-                            return prevResult =>
-                            {
-                                if (ixs != null)
-                                {
-                                    // Put the deserialization result in the right location in the right array
-                                    object el1 = arrays;
-                                    for (int ix = 0; ix < rank - 1; ix++)
-                                        el1 = ((object[]) el1)[ixs[ix]];
-                                    ((object[]) el1)[ixs[rank - 1]] = prevResult;
-
-                                    // Move on to next coordinates
-                                    var r = rank - 1;
-                                    while (r >= 0 && ixs[r] == lengths[r] - 1)
-                                    {
-                                        ixs[r] = 0;
-                                        r--;
-                                    }
-
-                                    if (r < 0)
-                                    {
-                                        // We’ve called deserialize on everything.
-                                        // STEP 3 (done at the end): put all the deserialized elements into the array.
-                                        _doAtTheEnd.Add(() =>
-                                        {
-                                            Action<int[], int, object> recurse3 = null;
-                                            recurse3 = (indices, rnk, obj) =>
-                                            {
-                                                if (rnk == rank)
-                                                {
-                                                    var valueToAdd = ((Func<object>) obj)();
-                                                    if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
-                                                        outputArray.SetValue(valueToAdd, indices);
-                                                }
-                                                else
-                                                {
-                                                    for (int i = 0; i < lengths[rnk]; i++)
-                                                    {
-                                                        indices[rnk] = i;
-                                                        recurse3(indices, rnk + 1, ((object[]) obj)[i]);
-                                                    }
-                                                }
-                                            };
-                                            recurse3(ixs, 0, arrays);
-                                        });
-                                        return cleanUp(() => outputArray);
-                                    }
-                                    ixs[r]++;
-                                }
-                                else
-                                    ixs = new int[rank];
-
-                                // Deserialize the next element
-                                object el2 = arrays;
-                                for (int ix = 0; ix < rank; ix++)
-                                    el2 = ((object[]) el2)[ixs[ix]];
-                                return deserialize(valueType, (TElement) el2, null, enforceEnums);
-                            };
+                            var keyToAdd = keysToAdd[i];
+                            var valueToAdd = valuesToAdd[i]();
+                            if (!enforceEnums || ((!keyType.IsEnum || allowEnumValue(keyType, keyToAdd)) && (!valueType.IsEnum || allowEnumValue(valueType, valueToAdd))))
+                                addMethod.Invoke(already, new object[] { keyToAdd, valueToAdd });
                         }
-                        else
+                    });
+                    return new Func<object>(() => already);
+                };
+            }
+
+            /// <summary>
+            ///     Deserializes a (single- or multi-dimensional) array from its serialized form.</summary>
+            /// <param name="type">
+            ///     The array type.</param>
+            /// <param name="valueType">
+            ///     The type of the values in the array.</param>
+            /// <param name="elem">
+            ///     The serialized form.</param>
+            /// <param name="already">
+            ///     An array to populate. This may be <c>null</c>, in which case a new array is instantiated.</param>
+            /// <param name="enforceEnums">
+            ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
+            private WorkNode<Func<object>> deserializeIntoArray(Type type, Type valueType, TElement elem, Array already, bool enforceEnums)
+            {
+                // The array may be a multi-dimensional one.
+                var rank = type.GetArrayRank();
+                var lengths = already == null ? new int[rank] : Ut.NewArray(rank, already.GetLength);
+
+                // STEP 1 (done here): Generate an object[] of object[]s of object[]s containing the still-serialized elements (TElement).
+                // At the same time, if ‘lengths’ isn’t already populated from ‘already’, populated it from the serialized form.
+                Func<bool, int, TElement, object> recurse = null;
+                recurse = (first, rnk, el) =>
+                {
+                    var thisList = _format.GetList(el, null).ToArray();
+                    if (first && already == null)
+                        lengths[rnk] = thisList.Length;
+                    else if (lengths[rnk] != thisList.Length)
+                        throw new InvalidOperationException(already == null
+                            ? @"The serialized form contains a multi-dimensional array in which the sizes of each dimension are inconsistent."
+                            : @"The array size of the serialized form does not match the size of the provided array object.");
+                    var newList = new object[thisList.Length];
+                    rnk++;
+                    for (int i = 0; i < thisList.Length; i++)
+                        newList[i] = rnk == rank ? thisList[i] : recurse(i == 0, rnk, thisList[i]);
+                    return newList;
+                };
+
+                // If ‘lengths’ isn’t already populated from ‘already’, this call populates it from the serialized form
+                var arrays = (object[]) recurse(true, 0, elem);
+
+                // This requires ‘lengths’ to be populated
+                already = already ?? Array.CreateInstance(type.GetElementType(), lengths);
+
+                // If any of the lengths are 0, the array contains no elements that need deserialization.
+                if (lengths.Contains(0))
+                    return prevResult => new Func<object>(() => already);
+
+                // STEP 2 (done using CustomCallStack): Deserialize the innermost TElement objects using deserialize(),
+                // which gives a Func<object>, and store those Func<object>s in the same place, overwriting the TElements
+                int[] ixs = null;
+                return prevResult =>
+                {
+                    if (ixs != null)
+                    {
+                        // Put the deserialization result in the right location in the right array
+                        object el1 = arrays;
+                        for (int ix = 0; ix < rank - 1; ix++)
+                            el1 = ((object[]) el1)[ixs[ix]];
+                        ((object[]) el1)[ixs[rank - 1]] = prevResult;
+
+                        // Move on to next coordinates
+                        var r = rank - 1;
+                        while (r >= 0 && ixs[r] == lengths[r] - 1)
                         {
-                            // It’s a collection, but not an array or a simple-keyed dictionary.
-                            object outputList;
-                            if (already != null && already.GetType() == serializedType)
-                            {
-                                outputList = already;
-                                typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Clear").Invoke(outputList, null);
-                            }
-                            else
-                                outputList = Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType);
+                            ixs[r] = 0;
+                            r--;
+                        }
 
-                            outputList.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
-
-                            var addMethod =
-                                isStack ? typeof(Stack<>).MakeGenericType(valueType).GetMethod("Push", new Type[] { valueType }) :
-                                isQueue ? typeof(Queue<>).MakeGenericType(valueType).GetMethod("Enqueue", new Type[] { valueType }) :
-                                typeof(ICollection<>).MakeGenericType(valueType).GetMethod("Add", new Type[] { valueType });
-                            var e = _format.GetList(elem, null).GetEnumerator();
-                            var first = true;
-                            var adders = new List<Func<object>>();
-                            return prevResult =>
+                        if (r < 0)
+                        {
+                            // We’ve called deserialize on everything.
+                            // STEP 3 (done at the end): put all the deserialized elements into the array.
+                            _doAtTheEnd.Add(() =>
                             {
-                                if (!first)
-                                    adders.Add(prevResult);
-                                first = false;
-                                if (e.MoveNext())
-                                    return deserialize(valueType, e.Current, null, enforceEnums);
-                                _doAtTheEnd.Add(() =>
+                                Action<int[], int, object> recurse3 = null;
+                                recurse3 = (indices, rnk, obj) =>
                                 {
-                                    foreach (var adder in adders)
+                                    if (rnk == rank)
                                     {
-                                        var valueToAdd = adder();
+                                        var valueToAdd = ((Func<object>) obj)();
                                         if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
-                                            addMethod.Invoke(outputList, new object[] { valueToAdd });
+                                            already.SetValue(valueToAdd, indices);
                                     }
-                                });
-                                return cleanUp(() => outputList);
-                            };
+                                    else
+                                    {
+                                        for (int i = 0; i < lengths[rnk]; i++)
+                                        {
+                                            indices[rnk] = i;
+                                            recurse3(indices, rnk + 1, ((object[]) obj)[i]);
+                                        }
+                                    }
+                                };
+                                recurse3(ixs, 0, arrays);
+                            });
+                            return new Func<object>(() => already);
                         }
+                        ixs[r]++;
                     }
                     else
+                        ixs = new int[rank];
+
+                    // Deserialize the next element
+                    object el2 = arrays;
+                    for (int ix = 0; ix < rank; ix++)
+                        el2 = ((object[]) el2)[ixs[ix]];
+                    return deserialize(valueType, (TElement) el2, null, enforceEnums);
+                };
+            }
+
+            /// <summary>
+            ///     Deserializes a collection from its serialized form. This includes dictionaries not already covered by <see
+            ///     cref="deserializeIntoDictionary"/>, but not arrays, which are covered by <see
+            ///     cref="deserializeIntoArray"/>.</summary>
+            /// <param name="valueType">
+            ///     The type of the values in the array.</param>
+            /// <param name="cat">
+            ///     The category of collection.</param>
+            /// <param name="elem">
+            ///     The serialized form.</param>
+            /// <param name="already">
+            ///     A collection instance to populate. This must not be <c>null</c>.</param>
+            /// <param name="enforceEnums">
+            ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
+            private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, CollectionCategory cat, TElement elem, object already, bool enforceEnums)
+            {
+                already.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
+
+                var baseType = (cat == CollectionCategory.Stack ? typeof(Stack<>) : cat == CollectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>));
+                baseType.MakeGenericType(valueType).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
+                var addMethod = baseType.MakeGenericType(valueType).GetMethod(cat == CollectionCategory.Stack ? "Push" : cat == CollectionCategory.Queue ? "Enqueue" : "Add", new Type[] { valueType });
+                var e = _format.GetList(elem, null).GetEnumerator();
+                var first = true;
+                var adders = new List<Func<object>>();
+                return prevResult =>
+                {
+                    if (!first)
+                        adders.Add(prevResult);
+                    first = false;
+                    if (e.MoveNext())
+                        return deserialize(valueType, e.Current, null, enforceEnums);
+                    _doAtTheEnd.Add(() =>
                     {
-                        // It’s NOT a collection or dictionary
-
-                        object ret;
-
-                        try
+                        foreach (var adder in adders)
                         {
-                            if (already != null && already.GetType() == serializedType)
-                                ret = already;
-                            // Anonymous types
-                            else if (serializedType.Name.StartsWith("<>f__AnonymousType") && serializedType.IsGenericType && serializedType.IsDefined<CompilerGeneratedAttribute>())
-                            {
-                                var constructor = serializedType.GetConstructors().First();
-                                ret = constructor.Invoke(constructor.GetParameters().Select(p => p.ParameterType.GetDefaultValue()).ToArray());
-                            }
-                            else
-                                ret = Activator.CreateInstance(serializedType, true);
+                            var valueToAdd = adder();
+                            if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
+                                addMethod.Invoke(already, new object[] { valueToAdd });
                         }
-                        catch (Exception e)
-                        {
-                            throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(serializedType.FullName, e.Message), e);
-                        }
+                    });
+                    return new Func<object>(() => already);
+                };
+            }
 
-                        var first = true;
-                        return prevResult =>
-                        {
-                            if (first)
-                            {
-                                first = false;
-                                return deserializeIntoObject(elem, ret, serializedType);
-                            }
-                            return cleanUp(prevResult);
-                        };
-                    }
+            /// <summary>
+            ///     Determines whether <paramref name="type"/> is a supported collection type, and if so, which category of
+            ///     collections it belongs to.</summary>
+            /// <param name="type">
+            ///     The type to examine.</param>
+            /// <param name="keyType">
+            ///     Receives the type of the keys if <paramref name="type"/> turns out to be a dictionary.</param>
+            /// <param name="valueType">
+            ///     Receives the type of the values if <paramref name="type"/> turns out to be a collection.</param>
+            /// <returns>
+            ///     <c>null</c> if the type is not a supported collection type, otherwise the category of collection.</returns>
+            private static CollectionCategory? tryGetCollectionInfo(Type type, out Type keyType, out Type valueType)
+            {
+                Type[] typeParams;
+                keyType = null;
+                valueType = null;
+
+                if (type.IsArray)
+                {
+                    valueType = type.GetElementType();
+                    return CollectionCategory.Array;
                 }
+                else if (type.TryGetGenericParameters(typeof(IDictionary<,>), out typeParams) && (typeParams[0].IsEnum || _simpleTypes.Contains(typeParams[0])))
+                {
+                    // Dictionaries which are stored specially (key is a simple type).
+                    // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
+                    keyType = typeParams[0];
+                    valueType = typeParams[1];
+                    return CollectionCategory.SimpleKeyedDictionary;
+                }
+                else if (type.TryGetGenericParameters(typeof(ICollection<>), out typeParams))
+                {
+                    valueType = typeParams[0];
+                    return CollectionCategory.Other;
+                }
+                else if (type.TryGetGenericParameters(typeof(Queue<>), out typeParams))
+                {
+                    valueType = typeParams[0];
+                    return CollectionCategory.Queue;
+                }
+                else if (type.TryGetGenericParameters(typeof(Stack<>), out typeParams))
+                {
+                    valueType = typeParams[0];
+                    return CollectionCategory.Stack;
+                }
+
+                return null;
             }
 
             private struct deserializeFieldInfo
