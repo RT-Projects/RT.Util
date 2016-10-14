@@ -73,6 +73,8 @@ namespace RT.Util.ExtensionMethods
         ///     collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref
         ///     name="closed"/> is <c>false</c>, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is
         ///     <c>true</c>.</param>
+        /// <param name="selector">
+        ///     The selector function to run each consecutive pair through.</param>
         public static IEnumerable<TResult> SelectConsecutivePairs<T, TResult>(this IEnumerable<T> source, bool closed, Func<T, T, TResult> selector)
         {
             if (source == null)
@@ -636,7 +638,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest value.</summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the
+        ///     smallest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
         public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
@@ -645,15 +648,16 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest value, or
-        ///     <c>null</c> if the collection is empty.</summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the
+        ///     smallest value, or <c>null</c> if the collection is empty.</summary>
         public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
             return minMaxElement(source, valueSelector, default(T), true, false).Key;
         }
 
         /// <summary>
-        ///     Returns the index of the first element from the input sequence for which the value selector returns the largest value.</summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the
+        ///     largest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
         public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
@@ -662,8 +666,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the index of the first element from the input sequence for which the value selector returns the largest value, or a
-        ///     default value if the collection is empty.</summary>
+        ///     Returns the index of the first element from the input sequence for which the value selector returns the
+        ///     largest value, or a default value if the collection is empty.</summary>
         public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
             return minMaxElement(source, valueSelector, default(T), false, false).Key;

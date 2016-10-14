@@ -12,9 +12,9 @@ namespace RT.Util.Serialization
     public static class ClassifyXml
     {
         /// <summary>
-        ///     Format used when null is passed to methods that take a format. Make sure not to modify this instance if any thread
-        ///     in the application might be in the middle of using <see cref="ClassifyXml"/>; ideally the options shoud be set
-        ///     once during startup and never changed after that.</summary>
+        ///     Format used when null is passed to methods that take a format. Make sure not to modify this instance if any
+        ///     thread in the application might be in the middle of using <see cref="ClassifyXml"/>; ideally the options shoud
+        ///     be set once during startup and never changed after that.</summary>
         public static IClassifyFormat<XElement> DefaultFormat = ClassifyXmlFormat.Default;
 
         /// <summary>
@@ -104,8 +104,8 @@ namespace RT.Util.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
-        ///     The type of object is inferred from the object passed in.</summary>
+        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired
+        ///     type. The type of object is inferred from the object passed in.</summary>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="intoObject">
@@ -198,16 +198,16 @@ namespace RT.Util.Serialization
 
     /// <summary>
     ///     Contains methods to process an object and/or the associated serialized form before or after <see cref="Classify"/>
-    ///     (de)serializes it. To have effect, this interface must be implemented by a class derived from <see
-    ///     cref="ClassifyTypeOptions"/> and associated with a type via <see cref="ClassifyOptions.AddTypeOptions"/>.</summary>
+    ///     (de)serializes it. To have effect, this interface must be implemented by a class and passed into <see
+    ///     cref="ClassifyOptions.AddTypeProcessor{TElement}"/>.</summary>
     public interface IClassifyXmlTypeProcessor : IClassifyTypeProcessor<XElement>
     {
     }
 
     /// <summary>
-    ///     Provides a format to serialize/deserialize objects as XML using <see cref="Classify"/> and any serialization options
-    ///     which are format-specific. This class can only be instantiated through the factory method <see cref="Create"/>. See
-    ///     also <see cref="Default"/>.</summary>
+    ///     Provides a format to serialize/deserialize objects as XML using <see cref="Classify"/> and any serialization
+    ///     options which are format-specific. This class can only be instantiated through the factory method <see
+    ///     cref="Create"/>. See also <see cref="Default"/>.</summary>
     public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
     {
         /// <summary>Gets the XML Classify format with all options at their defaults.</summary>
