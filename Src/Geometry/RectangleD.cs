@@ -156,5 +156,19 @@ namespace RT.Util.Geometry
         ///     The <see cref="RectangleD"/> structure that is converted from the specified <c>System.Drawing.Rectangle</c>
         ///     structure.</returns>
         public static implicit operator RectangleD(Rectangle self) { return new RectangleD(self.X, self.Y, self.Width, self.Height); }
+
+        /// <summary>
+        ///     Returns a new <see cref="RectangleD"/> in which the <see cref="Width"/> and/or <see cref="Height"/> are never
+        ///     negative, by flipping the rectangle as necessary.</summary>
+        /// <returns>
+        ///     A normalized <see cref="RectangleD"/>.</returns>
+        public RectangleD Normalize()
+        {
+            return new RectangleD(
+                Width < 0 ? X + Width : X,
+                Height < 0 ? Y + Height : Y,
+                Width < 0 ? -Width : Width,
+                Height < 0 ? -Height : Height);
+        }
     }
 }
