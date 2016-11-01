@@ -345,9 +345,10 @@ namespace RT.Util.Serialization
             if (value == null)
                 return null;
 
-            if (value is double)
+            // JSON can’t represent NaN and infinities, so use ExactConvert.ToString() for those.
+            if (value is double && !double.IsNaN((double) value) && !double.IsInfinity((double) value))
                 return (double) value;
-            if (value is float)
+            if (value is float && !float.IsNaN((float) value) && !float.IsInfinity((float) value))
                 return (float) value;
             if (value is byte)
                 return (long) (byte) value;
@@ -372,7 +373,7 @@ namespace RT.Util.Serialization
             if (value is string)
                 return (string) value;
 
-            // This takes care of enum types and DateTime
+            // This takes care of enum types, DateTime and doubles/floats that are NaN or infinities
             return ExactConvert.ToString(value);
         }
 
