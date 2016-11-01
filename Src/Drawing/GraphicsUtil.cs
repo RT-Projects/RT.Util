@@ -224,6 +224,9 @@ namespace RT.Util.Drawing
         /// <param name="transparencyFromChannel">
         ///     Which color channel from the transparency image to use for the final transparency: 0=alpha; 1=red; 2=green;
         ///     3=blue.</param>
+        /// <param name="invertTransparency">
+        ///     <c>true</c> to invert the channel identified by <paramref name="transparencyFromChannel"/> before using it as
+        ///     transparency information.</param>
         /// <returns>
         ///     The new bitmap generated.</returns>
         public static unsafe Bitmap MakeSemitransparentImage(int width, int height, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer, int transparencyFromChannel = 0, bool invertTransparency = false)
