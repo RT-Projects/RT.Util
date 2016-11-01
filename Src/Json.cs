@@ -2146,6 +2146,7 @@ namespace RT.Util.Json
     [Serializable]
     public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     {
+        [Serializable]
         private sealed class JSLong : JsonNumber
         {
             public long Value;
@@ -2254,6 +2255,7 @@ namespace RT.Util.Json
             public override object RawValue => Value;
         }
 
+        [Serializable]
         private sealed class JSULong : JsonNumber
         {
             public ulong Value;
@@ -2362,6 +2364,7 @@ namespace RT.Util.Json
             public override object RawValue => Value;
         }
 
+        [Serializable]
         private sealed class JSDouble : JsonNumber
         {
             public double Value;
