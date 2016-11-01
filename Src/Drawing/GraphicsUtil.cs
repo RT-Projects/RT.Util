@@ -29,10 +29,14 @@ namespace RT.Util.Drawing
             return Color.FromArgb(r, g, b);
         }
 
-        /// <summary>Converts hue, saturation and value into an RGB color object.</summary>
-        /// <param name="hue">The hue (0–360).</param>
-        /// <param name="saturation">The saturation (0–1).</param>
-        /// <param name="value">The value/luminance/brightness (0–1).</param>
+        /// <summary>
+        ///     Converts hue, saturation and value into an RGB color object.</summary>
+        /// <param name="hue">
+        ///     The hue (0–360).</param>
+        /// <param name="saturation">
+        ///     The saturation (0–1).</param>
+        /// <param name="value">
+        ///     The value/luminance/brightness (0–1).</param>
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (hue < 0 || hue >= 360)
@@ -155,8 +159,8 @@ namespace RT.Util.Drawing
         /// <param name="transparencyLayer">
         ///     The bitmap containing the transparency channel. Must be the same size as the source bitmap.</param>
         /// <param name="channel">
-        ///     Which channel from <paramref name="transparencyLayer"/> to use: 0 for blue, 1 for green, 2 for red, and 3 for the
-        ///     alpha channel.</param>
+        ///     Which channel from <paramref name="transparencyLayer"/> to use: 0 for blue, 1 for green, 2 for red, and 3 for
+        ///     the alpha channel.</param>
         /// <param name="invert">
         ///     If true, the selected channel is inverted.</param>
         /// <returns>
@@ -217,10 +221,19 @@ namespace RT.Util.Drawing
         ///     Code to draw the color layers.</param>
         /// <param name="drawTransparencyLayer">
         ///     Code to draw the transparency (alpha) layer.</param>
+        /// <param name="transparencyFromChannel">
+        ///     Which color channel from the transparency image to use for the final transparency: 0=alpha; 1=red; 2=green;
+        ///     3=blue.</param>
         /// <returns>
         ///     The new bitmap generated.</returns>
-        public static unsafe Bitmap MakeSemitransparentImage(int width, int height, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer)
+        public static unsafe Bitmap MakeSemitransparentImage(int width, int height, Action<Graphics> initGraphics, Action<Graphics> drawOpaqueLayer, Action<Graphics> drawTransparencyLayer, int transparencyFromChannel = 0, bool invertTransparency = false)
         {
+            if (drawOpaqueLayer == null)
+                throw new ArgumentNullException(nameof(drawOpaqueLayer));
+            if (drawTransparencyLayer == null)
+                throw new ArgumentNullException(nameof(drawTransparencyLayer));
+            if (transparencyFromChannel < 0 || transparencyFromChannel > 3)
+                throw new ArgumentOutOfRangeException(nameof(transparencyFromChannel), "transparencyFromChannel must be 0 (alpha), 1 (red), 2 (green), or 3 (blue).");
             var opaque = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(opaque))
             {
@@ -243,7 +256,7 @@ namespace RT.Util.Drawing
                 byte* read = (byte*) tBits.Scan0 + y * tBits.Stride;
                 byte* write = (byte*) oBits.Scan0 + y * oBits.Stride;
                 for (int x = 0; x < width; x++)
-                    write[4 * x + 3] = Math.Min(write[4 * x + 3], read[4 * x]);
+                    write[4 * x + 3] = (byte) Math.Min(write[4 * x + 3], invertTransparency ? 255 - read[4 * x + 3 - transparencyFromChannel] : read[4 * x + 3 - transparencyFromChannel]);
             }
             opaque.UnlockBits(oBits);
             trans.UnlockBits(tBits);
@@ -347,8 +360,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the specified
-        ///     font.</summary>
+        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the
+        ///     specified font.</summary>
         /// <param name="graphics">
         ///     Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
         /// <param name="maximumSize">
@@ -367,8 +380,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the specified
-        ///     font.</summary>
+        ///     Determines the largest font size at which the specified text fits into the specified maximum size in the
+        ///     specified font.</summary>
         /// <param name="graphics">
         ///     Specifies the <see cref="Graphics"/> object to use when measuring the font size.</param>
         /// <param name="fontFamily">
@@ -383,8 +396,8 @@ namespace RT.Util.Drawing
         ///     Maximum width the text may have, or null if only the maximum height should apply. If <paramref
         ///     name="allowWordWrapping"/> is true, this cannot be null.</param>
         /// <param name="maxHeight">
-        ///     Maximum width the text may have, or null if only the maximum width should apply. If <paramref name="maxWidth"/> is
-        ///     null, this cannot be null.</param>
+        ///     Maximum width the text may have, or null if only the maximum width should apply. If <paramref
+        ///     name="maxWidth"/> is null, this cannot be null.</param>
         public static float GetMaximumFontSize(this Graphics graphics, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false, float? maxWidth = null, float? maxHeight = null)
         {
             if (graphics == null)
