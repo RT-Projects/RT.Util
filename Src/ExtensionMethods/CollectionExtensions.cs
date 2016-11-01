@@ -474,6 +474,8 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
             if (length < 0 || startIndex + length > array.Length)
                 throw new ArgumentOutOfRangeException("length", "length cannot be negative or extend beyond the end of the array.");
+            if (startIndex == 0 && length == array.Length)
+                return array;
             T[] result = new T[length];
             Array.Copy(array, startIndex, result, 0, length);
             return result;
