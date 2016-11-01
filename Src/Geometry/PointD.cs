@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 
 namespace RT.Util.Geometry
 {
@@ -119,13 +120,20 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        ///     Converts the current <see cref="PointD"/> object to a <see cref="System.Drawing.PointF"/>. Note that doing so
+        ///     Converts the current <see cref="PointD"/> object to a <see cref="PointF"/>. Note that doing so
         ///     loses precision.</summary>
         /// <returns>
-        ///     Lower-precision <see cref="System.Drawing.PointF"/>.</returns>
-        public System.Drawing.PointF ToPointF()
+        ///     Lower-precision <see cref="PointF"/>.</returns>
+        public PointF ToPointF()
         {
-            return new System.Drawing.PointF((float) X, (float) Y);
+            return new PointF((float) X, (float) Y);
+        }
+
+        /// <summary>Converts the provided <see cref="PointF"/> to a <see cref="PointD"/>.</summary>
+        public PointD(PointF pointF)
+        {
+            X = pointF.X;
+            Y = pointF.Y;
         }
 
         /// <summary>
