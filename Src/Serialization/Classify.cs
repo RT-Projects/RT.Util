@@ -955,6 +955,8 @@ namespace RT.Util.Serialization
 
                 var infos = new List<deserializeFieldInfo>();
 
+                StringComparison comparisonMode = _options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
                 foreach (var field in type.GetAllFields())
                 {
                     string rFieldName = field.Name.TrimStart('_');
@@ -987,9 +989,9 @@ namespace RT.Util.Serialization
                         continue;
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
-                    else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
+                    else if (_format.HasField(elem, rFieldName, fieldDeclaringType, comparisonMode))
                     {
-                        var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
+                        var value = _format.GetField(elem, rFieldName, fieldDeclaringType, comparisonMode);
                         if (!_format.IsNull(value) || !attrs.OfType<ClassifyNotNullAttribute>().Any())
                         {
                             var inf = new deserializeFieldInfo
@@ -1676,6 +1678,11 @@ namespace RT.Util.Serialization
         ///     affected by this option (but only by <see cref="ClassifyEnforceEnumAttribute"/>).</summary>
         /// <seealso cref="ClassifyEnforceEnumAttribute"/>
         public bool EnforceEnums = false;
+
+        /// <summary>
+        /// If true, Classify will attempt to deserialize into properties using case insensitive comparisons.
+        /// </summary>
+        public bool CaseInsensitive = false;
 
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
 

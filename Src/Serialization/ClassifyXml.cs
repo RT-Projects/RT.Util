@@ -297,18 +297,19 @@ namespace RT.Util.Serialization
             }
         }
 
-        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType)
+        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType, StringComparison comparisonMode)
         {
-            return element.Elements(fieldName).Any(elem =>
+            var els = element.Elements();
+            return els.Where(el => el.Name.LocalName.Equals(fieldName, comparisonMode)).Any(elem =>
             {
                 var attr = elem.Attribute("declaringType");
                 return attr == null || attr.Value == declaringType;
             });
         }
 
-        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType)
+        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType, StringComparison comparisonMode)
         {
-            return element.Elements(fieldName).FirstOrDefault(elem =>
+            return element.Elements().Where(el => el.Name.LocalName.Equals(fieldName, comparisonMode)).FirstOrDefault(elem =>
             {
                 var attr = elem.Attribute("declaringType");
                 return attr == null || attr.Value == declaringType;

@@ -273,21 +273,31 @@ namespace RT.Util.Serialization
                 .Select(kvp => new KeyValuePair<object, JsonValue>(kvp.Key.StartsWith(":") ? kvp.Key.Substring(1) : kvp.Key, kvp.Value));
         }
 
-        bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName, string declaringType)
+        bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName, string declaringType, StringComparison comparisonMode)
         {
             if (fieldName.StartsWith(':'))
                 fieldName = ":" + fieldName;
-            return element is JsonDict && element.ContainsKey(fieldName) && (
-                !(element[fieldName] is JsonDict) ||
-                !element[fieldName].ContainsKey(":declaringTypes") ||
-                element[fieldName][":declaringTypes"].Contains(declaringType));
+
+            if (element as JsonDict == null)
+                return false;
+
+            var foundName = element.Keys.FirstOrDefault(k => k.Equals(fieldName, comparisonMode));
+            if (foundName == null)
+                return false;
+
+            return 
+                !(element[foundName] is JsonDict) || 
+                !element[foundName].ContainsKey(":declaringTypes") || 
+                element[foundName][":declaringTypes"].Contains(declaringType);
         }
 
-        JsonValue IClassifyFormat<JsonValue>.GetField(JsonValue element, string fieldName, string declaringType)
+        JsonValue IClassifyFormat<JsonValue>.GetField(JsonValue element, string fieldName, string declaringType, StringComparison comparisonMode)
         {
             if (fieldName.StartsWith(':'))
                 fieldName = ":" + fieldName;
-            var consider = element[fieldName];
+
+            var foundName = element.Keys.FirstOrDefault(k => k.Equals(fieldName, comparisonMode));
+            var consider = element[foundName];
             if (consider is JsonDict && consider.ContainsKey(":declaringTypes"))
                 return consider[":values"][consider[":declaringTypes"].IndexOf(declaringType)];
             return consider;

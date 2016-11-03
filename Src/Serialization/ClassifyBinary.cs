@@ -709,22 +709,40 @@ namespace RT.Util.Serialization
                 return null;
             }
 
-            bool IClassifyFormat<node>.HasField(node element, string fieldName, string declaringType)
+            bool IClassifyFormat<node>.HasField(node element, string fieldName, string declaringType, StringComparison comparisonMode)
             {
-                return element is dictNode && (
-                    ((dictNode) element).Dictionary.ContainsKey(fieldName) ||
-                    ((dictNode) element).Dictionary.ContainsKey(new FieldNameWithType(fieldName, declaringType)));
+                var dict = element as dictNode;
+                if (dict == null)
+                    return false;
+
+                var foundName = dict.Dictionary.Keys.FirstOrDefault(ki => {
+                    if ((ki as string)?.Equals(fieldName) == true)
+                        return true;
+                    if ((ki as FieldNameWithType).FieldName.Equals(fieldName, comparisonMode))
+                        return true;
+                    return false;
+                });
+
+                if (foundName != null)
+                    return true;
+
+                return false;
             }
 
-            node IClassifyFormat<node>.GetField(node element, string fieldName, string declaringType)
+            node IClassifyFormat<node>.GetField(node element, string fieldName, string declaringType, StringComparison comparisonMode)
             {
                 var dict = ((dictNode) element).Dictionary;
                 node node;
 
-                if (dict.TryGetValue(new FieldNameWithType(fieldName, declaringType), out node))
-                    return node;
+                var foundName = dict.Keys.FirstOrDefault(ki => {
+                    if ((ki as string)?.Equals(fieldName) == true)
+                        return true;
+                    if ((ki as FieldNameWithType).FieldName.Equals(fieldName, comparisonMode))
+                        return true;
+                    return false;
+                });
 
-                if (dict.TryGetValue(fieldName, out node))
+                if (dict.TryGetValue(foundName, out node))
                     return node;
 
                 return null;
