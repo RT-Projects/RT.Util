@@ -718,7 +718,7 @@ namespace RT.Util.Serialization
                 var foundName = dict.Dictionary.Keys.FirstOrDefault(ki => {
                     if ((ki as string)?.Equals(fieldName) == true)
                         return true;
-                    if ((ki as FieldNameWithType).FieldName.Equals(fieldName, comparisonMode))
+                    if ((ki as FieldNameWithType)?.FieldName.Equals(fieldName, comparisonMode) == true)
                         return true;
                     return false;
                 });
@@ -737,7 +737,7 @@ namespace RT.Util.Serialization
                 var foundName = dict.Keys.FirstOrDefault(ki => {
                     if ((ki as string)?.Equals(fieldName) == true)
                         return true;
-                    if ((ki as FieldNameWithType).FieldName.Equals(fieldName, comparisonMode))
+                    if ((ki as FieldNameWithType)?.FieldName.Equals(fieldName, comparisonMode) == true)
                         return true;
                     return false;
                 });
