@@ -299,7 +299,7 @@ namespace RT.Util.Serialization
 
         bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType)
         {
-            return element.Elements(fieldName).Any(elem =>
+            return element.Elements().Where(el => el.Name.LocalName == fieldName).Any(elem =>
             {
                 var attr = elem.Attribute("declaringType");
                 return attr == null || attr.Value == declaringType;
@@ -308,7 +308,7 @@ namespace RT.Util.Serialization
 
         XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType)
         {
-            return element.Elements(fieldName).FirstOrDefault(elem =>
+            return element.Elements().Where(el => el.Name.LocalName == fieldName).FirstOrDefault(elem =>
             {
                 var attr = elem.Attribute("declaringType");
                 return attr == null || attr.Value == declaringType;

@@ -36,6 +36,35 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        /// Splits an input string at each point where the character type changes and returns the parts.
+        /// </summary>
+        public static IEnumerable<string> SplitByCharacterType(this string input)
+        {
+            if (String.IsNullOrEmpty(input)) throw new ArgumentNullException("input");
+
+            StringBuilder segment = new StringBuilder();
+            segment.Append(input[0]);
+            UnicodeCategory cat = Char.GetUnicodeCategory(input[0]);
+
+            for (int i = 1; i < input.Length; i++)
+            {
+                var tc = Char.GetUnicodeCategory(input[i]);
+                if (tc == cat)
+                {
+                    segment.Append(input[i]);
+                }
+                else
+                {
+                    yield return segment.ToString();
+                    segment.Clear();
+                    segment.Append(input[i]);
+                    cat = tc;
+                }
+            }
+            yield return segment.ToString();
+        }
+
+        /// <summary>
         ///     Escapes all necessary characters in the specified string so as to make it usable safely in an HTML or XML
         ///     context.</summary>
         /// <param name="input">

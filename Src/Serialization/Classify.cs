@@ -954,6 +954,7 @@ namespace RT.Util.Serialization
                 intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
 
                 var infos = new List<deserializeFieldInfo>();
+                var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -986,8 +987,13 @@ namespace RT.Util.Serialization
                     if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
                         continue;
 
+                    // [ClassifyName]
+                    var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
+                    if (classifyName != null || globalClassifyName != null)
+                        rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
+
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
-                    else if (_format.HasField(elem, rFieldName, fieldDeclaringType))
+                    if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                         if (!_format.IsNull(value) || !attrs.OfType<ClassifyNotNullAttribute>().Any())
@@ -1300,6 +1306,8 @@ namespace RT.Util.Serialization
                 var namesAlreadySeen = new HashSet<string>();
                 var needsDeclaringType = new HashSet<string>();
 
+                var globalClassifyName = saveType.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
+
                 foreach (var field in saveType.GetAllFields())
                 {
                     if (field.FieldType == saveType && saveType.IsValueType)
@@ -1328,8 +1336,14 @@ namespace RT.Util.Serialization
 
                     var attrs = getCustomAttributes(getAttrsFrom);
 
+                    // [ClassifyIgnore]
                     if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
                         continue;
+
+                    // [ClassifyName]
+                    var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
+                    if (classifyName != null)
+                        rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
                     object saveValue = field.GetValue(saveObject);
 
@@ -1904,4 +1918,65 @@ namespace RT.Util.Serialization
     ///     bitwise combinations of the declared values are allowed.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyEnforceEnumAttribute : Attribute { }
+
+    /// <summary>
+    /// Allows you to specify the type of naming convention you would like classify to follow
+    /// </summary>
+    public enum ClassifyNameConvention
+    {
+        UpperCamelcase,
+        LowerCamelcase,
+        Lowercase,
+        Uppercase,
+        DelimiterSeparated,
+    }
+
+    /// <summary>
+    /// Use on a Field or Property to override the default naming behaviour of Classify. 
+    /// If used on a class or struct, it will only modify property names and not the class name.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct)]
+    public sealed class ClassifyNameAttribute : Attribute
+    {
+        public string SerializedName { get; set; }
+        public ClassifyNameConvention? Convention { get; set; }
+
+        public ClassifyNameAttribute(ClassifyNameConvention convention)
+        {
+            Convention = convention;
+        }
+
+        public ClassifyNameAttribute(string serializedName)
+        {
+            SerializedName = serializedName;
+        }
+
+        internal string TransformName(string original)
+        {
+            if (original == null)
+                return null;
+
+            if (SerializedName != null)
+                return SerializedName;
+
+            if (Convention == null)
+                return original;
+
+            switch(Convention.Value)
+            {
+                case ClassifyNameConvention.Uppercase:
+                    return original.ToUpper();
+                case ClassifyNameConvention.Lowercase:
+                    return original.ToLower();
+                case ClassifyNameConvention.UpperCamelcase:
+                    return original.Length <= 1 ? original.ToUpper() : original[0].ToString().ToUpper() + new string(original.Skip(1).ToArray());
+                case ClassifyNameConvention.LowerCamelcase:
+                    return original.Length <= 1 ? original.ToLower() : original[0].ToString().ToLower() + new string(original.Skip(1).ToArray());
+                case ClassifyNameConvention.DelimiterSeparated:
+                    return String.Join("_", original.SplitByCharacterType());
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
+            }
+        }
+    }
 }
