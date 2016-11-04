@@ -1342,7 +1342,7 @@ namespace RT.Util.Serialization
 
                     // [ClassifyName]
                     var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
-                    if (classifyName != null)
+                    if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
                     object saveValue = field.GetValue(saveObject);
