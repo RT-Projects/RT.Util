@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 
 /*
@@ -1974,18 +1975,18 @@ namespace RT.Util.Serialization
             if (Convention == null)
                 return original;
 
-            switch(Convention.Value)
+            switch (Convention.Value)
             {
                 case ClassifyNameConvention.Uppercase:
                     return original.ToUpper();
                 case ClassifyNameConvention.Lowercase:
                     return original.ToLower();
                 case ClassifyNameConvention.UpperCamelcase:
-                    return original.Length <= 1 ? original.ToUpper() : original[0].ToString().ToUpper() + new string(original.Skip(1).ToArray());
+                    return char.ToUpperInvariant(original[0]) + original.Substring(1);
                 case ClassifyNameConvention.LowerCamelcase:
-                    return original.Length <= 1 ? original.ToLower() : original[0].ToString().ToLower() + new string(original.Skip(1).ToArray());
+                    return char.ToLowerInvariant(original[0]) + original.Substring(1);
                 case ClassifyNameConvention.DelimiterSeparated:
-                    return String.Join("_", original.SplitByCharacterType());
+                    return Regex.Replace(original, @"(?<=[^\p{Lu}_])(?=\p{Lu})", "_");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
             }
