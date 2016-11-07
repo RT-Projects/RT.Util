@@ -2286,6 +2286,104 @@ namespace RT.Util.Serialization
             Assert.Throws<InvalidOperationException>(() => { var arr2 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt2); });
             Assert.Throws<InvalidOperationException>(() => { var res2 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt2); });
         }
+
+        class ClassWithClassifyNameAttribute
+        {
+            public string UnchangedField = "X";
+            [ClassifyName("Changed")]
+            public string ChangedField = "Y";
+            [ClassifyName(ClassifyNameConvention.Uppercase)]
+            public string CaseChangedField = "Z";
+            [ClassifyName(ClassifyNameConvention.DelimiterSeparated)]
+            public string DelimiterChangedField = "W";
+
+            public string UnchangedProperty { get; set; } = "X";
+            [ClassifyName("Changed2")]
+            public string ChangedProperty { get; set; } = "Y";
+            [ClassifyName(ClassifyNameConvention.Uppercase)]
+            public string CaseChangedProperty { get; set; } = "Z";
+            [ClassifyName(ClassifyNameConvention.DelimiterSeparated)]
+            public string DelimiterChangedProperty { get; set; } = "W";
+        }
+
+        class ClassWithDuplicateClassifyNameAttribute
+        {
+            [ClassifyName("A")]
+            public string One = "One";
+            [ClassifyName("A")]
+            public string Two = "Two";
+        }
+
+        class ClassWithConflictingClassifyNameAttribute
+        {
+            [ClassifyName("Two")]
+            public string One = "One";
+            public string Two = "Two";
+        }
+
+        [ClassifyName("Forbidden")]
+        class ClassWithClassifyNameOnTypeAttribute
+        {
+            public string Foo = null;
+        }
+
+        [Test]
+        public void TestClassifyNameAttribute()
+        {
+            var json = ClassifyJson.Serialize(new ClassWithClassifyNameAttribute
+            {
+                UnchangedField = "A",
+                ChangedField = "B",
+                CaseChangedField = "C",
+                DelimiterChangedField = "D",
+                UnchangedProperty = "E",
+                ChangedProperty = "F",
+                CaseChangedProperty = "G",
+                DelimiterChangedProperty = "H"
+            });
+
+            Assert.IsTrue(json.ContainsKey("UnchangedField"));
+            Assert.AreEqual(json["UnchangedField"].GetStringSafe(), "A");
+            Assert.IsTrue(json.ContainsKey("Changed"));
+            Assert.AreEqual(json["Changed"].GetStringSafe(), "B");
+            Assert.IsTrue(json.ContainsKey("CASECHANGEDFIELD"));
+            Assert.AreEqual(json["CASECHANGEDFIELD"].GetStringSafe(), "C");
+            Assert.IsTrue(json.ContainsKey("Delimiter_Changed_Field"));
+            Assert.AreEqual(json["Delimiter_Changed_Field"].GetStringSafe(), "D");
+
+            Assert.IsTrue(json.ContainsKey("UnchangedProperty"));
+            Assert.AreEqual(json["UnchangedProperty"].GetStringSafe(), "E");
+            Assert.IsTrue(json.ContainsKey("Changed2"));
+            Assert.AreEqual(json["Changed2"].GetStringSafe(), "F");
+            Assert.IsTrue(json.ContainsKey("CASECHANGEDPROPERTY"));
+            Assert.AreEqual(json["CASECHANGEDPROPERTY"].GetStringSafe(), "G");
+            Assert.IsTrue(json.ContainsKey("Delimiter_Changed_Property"));
+            Assert.AreEqual(json["Delimiter_Changed_Property"].GetStringSafe(), "H");
+
+            Assert.IsFalse(json.ContainsKey("ChangedField"));
+            Assert.IsFalse(json.ContainsKey("CaseChangedField"));
+            Assert.IsFalse(json.ContainsKey("DelimiterChangedField"));
+            Assert.IsFalse(json.ContainsKey("ChangedProperty"));
+            Assert.IsFalse(json.ContainsKey("CaseChangedProperty"));
+            Assert.IsFalse(json.ContainsKey("DelimiterChangedProperty"));
+
+            var reconstructed = ClassifyJson.Deserialize<ClassWithClassifyNameAttribute>(json);
+            Assert.AreEqual(reconstructed.UnchangedField, "A");
+            Assert.AreEqual(reconstructed.ChangedField, "B");
+            Assert.AreEqual(reconstructed.CaseChangedField, "C");
+            Assert.AreEqual(reconstructed.DelimiterChangedField, "D");
+            Assert.AreEqual(reconstructed.UnchangedProperty, "E");
+            Assert.AreEqual(reconstructed.ChangedProperty, "F");
+            Assert.AreEqual(reconstructed.CaseChangedProperty, "G");
+            Assert.AreEqual(reconstructed.DelimiterChangedProperty, "H");
+
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithDuplicateClassifyNameAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithDuplicateClassifyNameAttribute>(new JsonDict()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithConflictingClassifyNameAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithConflictingClassifyNameAttribute>(new JsonDict()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithClassifyNameOnTypeAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithClassifyNameOnTypeAttribute>(new JsonDict()); });
+        }
     }
 
     class MisTypeOuter
