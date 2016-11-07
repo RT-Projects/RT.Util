@@ -1932,33 +1932,49 @@ namespace RT.Util.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyEnforceEnumAttribute : Attribute { }
 
-    /// <summary>
-    /// Allows you to specify the type of naming convention you would like classify to follow
-    /// </summary>
+    /// <summary>Specifies a naming convention for Classify to follow.</summary>
     public enum ClassifyNameConvention
     {
+        /// <summary>Capitalize each word and upper-case the first letter.</summary>
         UpperCamelcase,
+        /// <summary>Capitalize each word, but lower-case the first letter.</summary>
         LowerCamelcase,
+        /// <summary>Use all lower-case.</summary>
         Lowercase,
+        /// <summary>Use all upper-case.</summary>
         Uppercase,
+        /// <summary>Use the underscore character (<c>_</c>) to delimit words.</summary>
         DelimiterSeparated,
     }
 
     /// <summary>
-    /// Use on a Field or Property to override the default naming behaviour of Classify. 
-    /// If used on a class or struct, it will only modify property names and not the class name.
-    /// </summary>
+    ///     Use on a field or automatically-implemented property to override the default naming behavior of Classify. When
+    ///     used on a type, affects the names of fields and automatically-implemented properties declared in that type, not
+    ///     the type name.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct)]
     public sealed class ClassifyNameAttribute : Attribute
     {
+        /// <summary>
+        ///     An alternative name to use for this field in serialization, or <c>null</c> to use <see cref="Convention"/>
+        ///     instead.</summary>
         public string SerializedName { get; set; }
+        /// <summary>
+        ///     The naming convention to apply to the field names, or <c>null</c> to use <see cref="SerializedName"/> instead.</summary>
         public ClassifyNameConvention? Convention { get; set; }
 
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="convention">
+        ///     The naming convention to apply to the field names.</param>
         public ClassifyNameAttribute(ClassifyNameConvention convention)
         {
             Convention = convention;
         }
 
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="serializedName">
+        ///     An alternative name to use for this field in serialization.</param>
         public ClassifyNameAttribute(string serializedName)
         {
             SerializedName = serializedName;
