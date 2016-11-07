@@ -955,6 +955,9 @@ namespace RT.Util.Serialization
 
                 var infos = new List<deserializeFieldInfo>();
                 var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
+                if (globalClassifyName != null && globalClassifyName.SerializedName != null)
+                    throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
+                var usedFieldNames = new HashSet<Tuple<string, Type>>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -991,6 +994,9 @@ namespace RT.Util.Serialization
                     var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
+
+                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                        throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     if (_format.HasField(elem, rFieldName, fieldDeclaringType))
@@ -1307,6 +1313,9 @@ namespace RT.Util.Serialization
                 var needsDeclaringType = new HashSet<string>();
 
                 var globalClassifyName = saveType.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
+                if (globalClassifyName != null && globalClassifyName.SerializedName != null)
+                    throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
+                var usedFieldNames = new HashSet<Tuple<string, Type>>();
 
                 foreach (var field in saveType.GetAllFields())
                 {
@@ -1344,6 +1353,9 @@ namespace RT.Util.Serialization
                     var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
+
+                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                        throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     object saveValue = field.GetValue(saveObject);
 
