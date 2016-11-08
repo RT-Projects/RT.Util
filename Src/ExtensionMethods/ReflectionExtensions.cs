@@ -82,19 +82,6 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns a proper statically-typed collection of the custom attributes on this member.</summary>
-        /// <param name="member">
-        ///     Member whose custom attributes to return.</param>
-        /// <param name="inherit">
-        ///     Specifies whether to search this member's inheritance chain to find the attributes.</param>
-        /// <typeparam name="T">
-        ///     The type of attribute to search for. Only attributes that are assignable to this type are returned.</typeparam>
-        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo member, bool inherit = false)
-        {
-            return Attribute.GetCustomAttributes(member, inherit).OfType<T>();
-        }
-
-        /// <summary>
         ///     Returns a proper statically-typed collection of the custom attributes on this assembly.</summary>
         /// <param name="assembly">
         ///     Assembly whose custom attributes to return.</param>
