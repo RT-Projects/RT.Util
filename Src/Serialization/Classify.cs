@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 
 /*
@@ -955,6 +956,9 @@ namespace RT.Util.Serialization
 
                 var infos = new List<deserializeFieldInfo>();
                 var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
+                if (globalClassifyName != null && globalClassifyName.SerializedName != null)
+                    throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
+                var usedFieldNames = new HashSet<Tuple<string, Type>>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -991,6 +995,9 @@ namespace RT.Util.Serialization
                     var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
+
+                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                        throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     if (_format.HasField(elem, rFieldName, fieldDeclaringType))
@@ -1307,6 +1314,9 @@ namespace RT.Util.Serialization
                 var needsDeclaringType = new HashSet<string>();
 
                 var globalClassifyName = saveType.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
+                if (globalClassifyName != null && globalClassifyName.SerializedName != null)
+                    throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
+                var usedFieldNames = new HashSet<Tuple<string, Type>>();
 
                 foreach (var field in saveType.GetAllFields())
                 {
@@ -1344,6 +1354,9 @@ namespace RT.Util.Serialization
                     var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
+
+                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                        throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     object saveValue = field.GetValue(saveObject);
 
@@ -1919,33 +1932,49 @@ namespace RT.Util.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyEnforceEnumAttribute : Attribute { }
 
-    /// <summary>
-    /// Allows you to specify the type of naming convention you would like classify to follow
-    /// </summary>
+    /// <summary>Specifies a naming convention for Classify to follow.</summary>
     public enum ClassifyNameConvention
     {
+        /// <summary>Capitalize each word and upper-case the first letter.</summary>
         UpperCamelcase,
+        /// <summary>Capitalize each word, but lower-case the first letter.</summary>
         LowerCamelcase,
+        /// <summary>Use all lower-case.</summary>
         Lowercase,
+        /// <summary>Use all upper-case.</summary>
         Uppercase,
+        /// <summary>Use the underscore character (<c>_</c>) to delimit words.</summary>
         DelimiterSeparated,
     }
 
     /// <summary>
-    /// Use on a Field or Property to override the default naming behaviour of Classify. 
-    /// If used on a class or struct, it will only modify property names and not the class name.
-    /// </summary>
+    ///     Use on a field or automatically-implemented property to override the default naming behavior of Classify. When
+    ///     used on a type, affects the names of fields and automatically-implemented properties declared in that type, not
+    ///     the type name.</summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct)]
     public sealed class ClassifyNameAttribute : Attribute
     {
+        /// <summary>
+        ///     An alternative name to use for this field in serialization, or <c>null</c> to use <see cref="Convention"/>
+        ///     instead.</summary>
         public string SerializedName { get; set; }
+        /// <summary>
+        ///     The naming convention to apply to the field names, or <c>null</c> to use <see cref="SerializedName"/> instead.</summary>
         public ClassifyNameConvention? Convention { get; set; }
 
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="convention">
+        ///     The naming convention to apply to the field names.</param>
         public ClassifyNameAttribute(ClassifyNameConvention convention)
         {
             Convention = convention;
         }
 
+        /// <summary>
+        ///     Constructor.</summary>
+        /// <param name="serializedName">
+        ///     An alternative name to use for this field in serialization.</param>
         public ClassifyNameAttribute(string serializedName)
         {
             SerializedName = serializedName;
@@ -1962,18 +1991,18 @@ namespace RT.Util.Serialization
             if (Convention == null)
                 return original;
 
-            switch(Convention.Value)
+            switch (Convention.Value)
             {
                 case ClassifyNameConvention.Uppercase:
                     return original.ToUpper();
                 case ClassifyNameConvention.Lowercase:
                     return original.ToLower();
                 case ClassifyNameConvention.UpperCamelcase:
-                    return original.Length <= 1 ? original.ToUpper() : original[0].ToString().ToUpper() + new string(original.Skip(1).ToArray());
+                    return char.ToUpperInvariant(original[0]) + original.Substring(1);
                 case ClassifyNameConvention.LowerCamelcase:
-                    return original.Length <= 1 ? original.ToLower() : original[0].ToString().ToLower() + new string(original.Skip(1).ToArray());
+                    return char.ToLowerInvariant(original[0]) + original.Substring(1);
                 case ClassifyNameConvention.DelimiterSeparated:
-                    return String.Join("_", original.SplitByCharacterType());
+                    return Regex.Replace(original, @"(?<=[^\p{Lu}_])(?=\p{Lu})", "_");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
             }

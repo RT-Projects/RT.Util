@@ -52,18 +52,20 @@ namespace RT.Util.Serialization
             return xml;
         }
 
-        public void RoundTrip<T>(T value, Action<T> assertions = null, bool? enforceEnums = null)
+        public void RoundTrip<T>(T value, Action<T> assertions = null, bool? enforceEnums = null, Action<JsonValue> jsonSpecific = null, Action<XElement> xmlSpecific = null)
         {
             foreach (var enforce in enforceEnums == null ? new[] { false, true } : new[] { enforceEnums.Value })
             {
                 var opt = new ClassifyOptions { EnforceEnums = enforce };
 
                 var json = ClassifyJson.Serialize(value, opt);
+                jsonSpecific?.Invoke(json);
                 var obj = ClassifyJson.Deserialize<T>(json, opt);
                 assertions?.Invoke(obj);
 
                 var xml = ClassifyXml.Serialize(value, opt);
                 VerifyXml(xml);
+                xmlSpecific?.Invoke(xml);
                 obj = ClassifyXml.Deserialize<T>(xml, opt);
                 assertions?.Invoke(obj);
 
@@ -1700,34 +1702,12 @@ namespace RT.Util.Serialization
         [Test]
         public void TestHiddenFields()
         {
-            var derived = new hiddenFieldDerivedClass();
+            RoundTrip(new hiddenFieldDerivedClass(), deserialized =>
             {
-                // XML
-                var serialized = ClassifyXml.Serialize(derived);
-                var deserialized = ClassifyXml.Deserialize<hiddenFieldDerivedClass>(serialized);
-
                 Assert.AreEqual("47", deserialized.BaseHidden);
                 Assert.AreEqual("42", deserialized.DerivedHidden);
                 Assert.AreEqual("normal", deserialized.NormalField);
-            }
-            {
-                // JSON
-                var serialized = ClassifyJson.Serialize(derived);
-                var deserialized = ClassifyJson.Deserialize<hiddenFieldDerivedClass>(serialized);
-
-                Assert.AreEqual("47", deserialized.BaseHidden);
-                Assert.AreEqual("42", deserialized.DerivedHidden);
-                Assert.AreEqual("normal", deserialized.NormalField);
-            }
-            {
-                // Binary
-                var serialized = ClassifyBinary.Serialize(derived);
-                var deserialized = ClassifyBinary.Deserialize<hiddenFieldDerivedClass>(serialized);
-
-                Assert.AreEqual("47", deserialized.BaseHidden);
-                Assert.AreEqual("42", deserialized.DerivedHidden);
-                Assert.AreEqual("normal", deserialized.NormalField);
-            }
+            });
         }
 
         private class nonNullableTester
@@ -1740,20 +1720,11 @@ namespace RT.Util.Serialization
         [Test]
         public void TestNonNullableFields()
         {
-            var json = ClassifyJson.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
-            var obj = ClassifyJson.Deserialize<nonNullableTester>(json);
-            Assert.IsNull(obj.NullableString);
-            Assert.IsNotNull(obj.NonNullableString);
-
-            var xml = ClassifyXml.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
-            obj = ClassifyXml.Deserialize<nonNullableTester>(xml);
-            Assert.IsNull(obj.NullableString);
-            Assert.IsNotNull(obj.NonNullableString);
-
-            var binary = ClassifyBinary.Serialize(new nonNullableTester { NullableString = null, NonNullableString = null });
-            obj = ClassifyBinary.Deserialize<nonNullableTester>(binary);
-            Assert.IsNull(obj.NullableString);
-            Assert.IsNotNull(obj.NonNullableString);
+            RoundTrip(new nonNullableTester { NullableString = null, NonNullableString = null }, obj =>
+            {
+                Assert.IsNull(obj.NullableString);
+                Assert.IsNotNull(obj.NonNullableString);
+            });
         }
 
         private enum nonFlagsEnum { Zero = 0, One = 1, Two = 2 }
@@ -2112,6 +2083,7 @@ namespace RT.Util.Serialization
             Assert.AreEqual(1, dic["b"].Count);
             Assert.AreEqual(1, result["a"].Count);
             Assert.AreEqual(1, result["b"].Count);
+            Assert.IsTrue(ReferenceEquals(result["a"], result["b"]));
         }
 
         [Test]
@@ -2119,59 +2091,69 @@ namespace RT.Util.Serialization
         {
             var innerdic = new Dictionary<string, string> { { "d", "e" } };
             var dic = new Dictionary<string, Dictionary<string, string>> { { "a", innerdic }, { "b", innerdic } };
-            var json = ClassifyJson.Serialize(dic);
-            var result = ClassifyJson.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
-
-            Assert.AreEqual(result.Count, dic.Count);
-            foreach (var kvp in dic)
+            RoundTrip(dic, result =>
             {
-                Assert.IsTrue(result.ContainsKey(kvp.Key));
-                Assert.AreEqual(kvp.Value.Count, result[kvp.Key].Count);
-                foreach (var kvp2 in dic[kvp.Key])
+                Assert.AreEqual(result.Count, dic.Count);
+                foreach (var kvp in dic)
                 {
-                    Assert.IsTrue(result[kvp.Key].ContainsKey(kvp2.Key));
-                    Assert.AreEqual(kvp2.Value, result[kvp.Key][kvp2.Key]);
+                    Assert.IsTrue(result.ContainsKey(kvp.Key));
+                    Assert.AreEqual(kvp.Value.Count, result[kvp.Key].Count);
+                    foreach (var kvp2 in dic[kvp.Key])
+                    {
+                        Assert.IsTrue(result[kvp.Key].ContainsKey(kvp2.Key));
+                        Assert.AreEqual(kvp2.Value, result[kvp.Key][kvp2.Key]);
+                    }
                 }
-            }
-            foreach (var kvp in result)
-            {
-                Assert.IsTrue(dic.ContainsKey(kvp.Key));
-                Assert.AreEqual(kvp.Value.Count, dic[kvp.Key].Count);
-                foreach (var kvp2 in result[kvp.Key])
+                foreach (var kvp in result)
                 {
-                    Assert.IsTrue(dic[kvp.Key].ContainsKey(kvp2.Key));
-                    Assert.AreEqual(kvp2.Value, dic[kvp.Key][kvp2.Key]);
+                    Assert.IsTrue(dic.ContainsKey(kvp.Key));
+                    Assert.AreEqual(kvp.Value.Count, dic[kvp.Key].Count);
+                    foreach (var kvp2 in result[kvp.Key])
+                    {
+                        Assert.IsTrue(dic[kvp.Key].ContainsKey(kvp2.Key));
+                        Assert.AreEqual(kvp2.Value, dic[kvp.Key][kvp2.Key]);
+                    }
                 }
-            }
+                Assert.IsTrue(ReferenceEquals(result["a"], result["b"]));
+            });
         }
 
         [Test]
         public void TestDeclaredTypeIsObject()
         {
-            var json = ClassifyJson.Serialize<object>(true);
-            Assert.IsTrue(json.ContainsKey(":value"));
-            Assert.IsTrue(json[":value"].GetBool());
-            var obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOf(typeof(bool), obj);
-            Assert.IsTrue((bool) obj);
+            RoundTrip<object>(true, obj =>
+            {
+                Assert.IsInstanceOf(typeof(bool), obj);
+                Assert.IsTrue((bool) obj);
+            }, jsonSpecific: json =>
+            {
+                Assert.IsTrue(json.ContainsKey(":value"));
+                Assert.IsTrue(json[":value"].GetBool());
+            });
 
-            json = ClassifyJson.Serialize<object>(47);
-            Assert.IsTrue(json.ContainsKey(":value"));
-            Assert.AreEqual(47, json[":value"].GetInt());
-            obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOf(typeof(int), obj);
-            Assert.AreEqual(47, (int) obj);
+            RoundTrip<object>(47, obj =>
+            {
+                Assert.IsInstanceOf(typeof(int), obj);
+                Assert.AreEqual(47, (int) obj);
+            }, jsonSpecific: json =>
+            {
+                Assert.IsTrue(json.ContainsKey(":value"));
+                Assert.AreEqual(47, json[":value"].GetInt());
+            });
 
-            json = ClassifyJson.Serialize<object>(new int[] { 1, 2, 3 });
-            Assert.IsTrue(json.ContainsKey(":value"));
-            Assert.IsTrue(json[":value"].GetList().Select(v => v.GetInt()).SequenceEqual(new[] { 1, 2, 3 }));
-            obj = ClassifyJson.Deserialize<object>(json);
-            Assert.IsInstanceOf(typeof(int[]), obj);
-            var arr = (int[]) obj;
-            Assert.AreEqual(3, arr.Length);
-            Assert.AreEqual(1, arr[0]);
-            Assert.AreEqual(2, arr[1]);
-            Assert.AreEqual(3, arr[2]);
+            RoundTrip<object>(new int[] { 1, 2, 3 }, obj =>
+            {
+                Assert.IsInstanceOf(typeof(int[]), obj);
+                var arr = (int[]) obj;
+                Assert.AreEqual(3, arr.Length);
+                Assert.AreEqual(1, arr[0]);
+                Assert.AreEqual(2, arr[1]);
+                Assert.AreEqual(3, arr[2]);
+            }, jsonSpecific: json =>
+            {
+                Assert.IsTrue(json.ContainsKey(":value"));
+                Assert.IsTrue(json[":value"].GetList().Select(v => v.GetInt()).SequenceEqual(new[] { 1, 2, 3 }));
+            });
         }
 
         class zeroLengthArrays
@@ -2285,6 +2267,104 @@ namespace RT.Util.Serialization
             var opt2 = new ClassifyOptions().AddTypeSubstitution(new TestSubstExcSubstitution(false));
             Assert.Throws<InvalidOperationException>(() => { var arr2 = ClassifyXml.Deserialize<TestSubstExc[]>(XElement.Parse(xml1), opt2); });
             Assert.Throws<InvalidOperationException>(() => { var res2 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt2); });
+        }
+
+        class ClassWithClassifyNameAttribute
+        {
+            public string UnchangedField = "X";
+            [ClassifyName("Changed")]
+            public string ChangedField = "Y";
+            [ClassifyName(ClassifyNameConvention.Uppercase)]
+            public string CaseChangedField = "Z";
+            [ClassifyName(ClassifyNameConvention.DelimiterSeparated)]
+            public string DelimiterChangedField = "W";
+
+            public string UnchangedProperty { get; set; } = "X";
+            [ClassifyName("Changed2")]
+            public string ChangedProperty { get; set; } = "Y";
+            [ClassifyName(ClassifyNameConvention.Uppercase)]
+            public string CaseChangedProperty { get; set; } = "Z";
+            [ClassifyName(ClassifyNameConvention.DelimiterSeparated)]
+            public string DelimiterChangedProperty { get; set; } = "W";
+        }
+
+        class ClassWithDuplicateClassifyNameAttribute
+        {
+            [ClassifyName("A")]
+            public string One = "One";
+            [ClassifyName("A")]
+            public string Two = "Two";
+        }
+
+        class ClassWithConflictingClassifyNameAttribute
+        {
+            [ClassifyName("Two")]
+            public string One = "One";
+            public string Two = "Two";
+        }
+
+        [ClassifyName("Forbidden")]
+        class ClassWithClassifyNameOnTypeAttribute
+        {
+            public string Foo = null;
+        }
+
+        [Test]
+        public void TestClassifyNameAttribute()
+        {
+            var json = ClassifyJson.Serialize(new ClassWithClassifyNameAttribute
+            {
+                UnchangedField = "A",
+                ChangedField = "B",
+                CaseChangedField = "C",
+                DelimiterChangedField = "D",
+                UnchangedProperty = "E",
+                ChangedProperty = "F",
+                CaseChangedProperty = "G",
+                DelimiterChangedProperty = "H"
+            });
+
+            Assert.IsTrue(json.ContainsKey("UnchangedField"));
+            Assert.AreEqual(json["UnchangedField"].GetStringSafe(), "A");
+            Assert.IsTrue(json.ContainsKey("Changed"));
+            Assert.AreEqual(json["Changed"].GetStringSafe(), "B");
+            Assert.IsTrue(json.ContainsKey("CASECHANGEDFIELD"));
+            Assert.AreEqual(json["CASECHANGEDFIELD"].GetStringSafe(), "C");
+            Assert.IsTrue(json.ContainsKey("Delimiter_Changed_Field"));
+            Assert.AreEqual(json["Delimiter_Changed_Field"].GetStringSafe(), "D");
+
+            Assert.IsTrue(json.ContainsKey("UnchangedProperty"));
+            Assert.AreEqual(json["UnchangedProperty"].GetStringSafe(), "E");
+            Assert.IsTrue(json.ContainsKey("Changed2"));
+            Assert.AreEqual(json["Changed2"].GetStringSafe(), "F");
+            Assert.IsTrue(json.ContainsKey("CASECHANGEDPROPERTY"));
+            Assert.AreEqual(json["CASECHANGEDPROPERTY"].GetStringSafe(), "G");
+            Assert.IsTrue(json.ContainsKey("Delimiter_Changed_Property"));
+            Assert.AreEqual(json["Delimiter_Changed_Property"].GetStringSafe(), "H");
+
+            Assert.IsFalse(json.ContainsKey("ChangedField"));
+            Assert.IsFalse(json.ContainsKey("CaseChangedField"));
+            Assert.IsFalse(json.ContainsKey("DelimiterChangedField"));
+            Assert.IsFalse(json.ContainsKey("ChangedProperty"));
+            Assert.IsFalse(json.ContainsKey("CaseChangedProperty"));
+            Assert.IsFalse(json.ContainsKey("DelimiterChangedProperty"));
+
+            var reconstructed = ClassifyJson.Deserialize<ClassWithClassifyNameAttribute>(json);
+            Assert.AreEqual(reconstructed.UnchangedField, "A");
+            Assert.AreEqual(reconstructed.ChangedField, "B");
+            Assert.AreEqual(reconstructed.CaseChangedField, "C");
+            Assert.AreEqual(reconstructed.DelimiterChangedField, "D");
+            Assert.AreEqual(reconstructed.UnchangedProperty, "E");
+            Assert.AreEqual(reconstructed.ChangedProperty, "F");
+            Assert.AreEqual(reconstructed.CaseChangedProperty, "G");
+            Assert.AreEqual(reconstructed.DelimiterChangedProperty, "H");
+
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithDuplicateClassifyNameAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithDuplicateClassifyNameAttribute>(new JsonDict()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithConflictingClassifyNameAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithConflictingClassifyNameAttribute>(new JsonDict()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithClassifyNameOnTypeAttribute()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithClassifyNameOnTypeAttribute>(new JsonDict()); });
         }
     }
 
