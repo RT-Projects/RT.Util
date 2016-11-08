@@ -2304,7 +2304,7 @@ namespace RT.Util.Serialization
         }
 
         [ClassifyName("Forbidden")]
-        class ClassWithClassifyNameOnTypeAttribute
+        class ClassWithClassifyNameAttributeOnType
         {
             public string Foo = null;
         }
@@ -2363,8 +2363,8 @@ namespace RT.Util.Serialization
             Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithDuplicateClassifyNameAttribute>(new JsonDict()); });
             Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithConflictingClassifyNameAttribute()); });
             Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithConflictingClassifyNameAttribute>(new JsonDict()); });
-            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithClassifyNameOnTypeAttribute()); });
-            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithClassifyNameOnTypeAttribute>(new JsonDict()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithClassifyNameAttributeOnType()); });
+            Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithClassifyNameAttributeOnType>(new JsonDict()); });
         }
     }
 
