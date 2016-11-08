@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -32,6 +34,25 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>Reads all bytes until the end of stream and returns them in a byte array.</summary>
+        public static async Task<byte[]> ReadAllBytesAsync(this Stream stream, CancellationToken? token = null)
+        {
+            if (stream.CanSeek)
+                return await stream.ReadAsync((int)(stream.Length - stream.Position), token);
+
+            byte[] buffer = new byte[32768];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                while (true)
+                {
+                    int read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false);
+                    if (read <= 0)
+                        return ms.ToArray();
+                    ms.Write(buffer, 0, read);
+                }
+            }
+        }
+
         /// <summary>Reads all bytes until the end of stream and returns the number
         /// of bytes thus read without allocating too much memory.</summary>
         public static long ReadAllBytesGetLength(this Stream stream)
@@ -50,6 +71,24 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+        /// <summary>Reads all bytes until the end of stream and returns the number
+        /// of bytes thus read without allocating too much memory.</summary>
+        public static async Task<long> ReadAllBytesGetLengthAsync(this Stream stream, CancellationToken? token = null)
+        {
+            if (stream.CanSeek)
+                return stream.Length - stream.Position;
+
+            byte[] buffer = new byte[32768];
+            long lengthSoFar = 0;
+            while (true)
+            {
+                int read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false);
+                if (read <= 0)
+                    return lengthSoFar;
+                lengthSoFar += read;
+            }
+        }
+
         /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="encoding">Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
@@ -58,6 +97,22 @@ namespace RT.Util.ExtensionMethods
         {
             using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8))
                 return sr.ReadToEnd();
+        }
+
+        /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="encoding">Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
+        /// <returns>The text read from the stream.</returns>
+        public static async Task<string> ReadAllTextAsync(this Stream stream, Encoding encoding = null, CancellationToken? token = null)
+        {
+            byte[] buffer = new byte[32768];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false)) > 0)
+                    ms.Write(buffer, 0, read);
+                return ms.ToArray().FromUtf8();
+            }
         }
 
         /// <summary>
@@ -75,10 +130,31 @@ namespace RT.Util.ExtensionMethods
             return buf;
         }
 
+        /// <summary>
+        /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
+        /// before the end of the stream, a shorter (possibly empty) array is returned.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="length">Number of bytes to read from the stream.</param>
+        public static async Task<byte[]> ReadAsync(this Stream stream, int length, CancellationToken? token = null)
+        {
+            byte[] buf = new byte[length];
+            int read = await stream.FillBufferAsync(buf, 0, length, token);
+            if (read < length)
+                Array.Resize(ref buf, read);
+            return buf;
+        }
+
         /// <summary>Writes the specified data to the current stream.</summary>
         public static void Write(this Stream stream, byte[] data)
         {
             stream.Write(data, 0, data.Length);
+        }
+
+        /// <summary>Writes the specified data to the current stream.</summary>
+        public static Task WriteAsync(this Stream stream, byte[] data, CancellationToken? token = null)
+        {
+            return stream.WriteAsync(data, 0, data.Length, token ?? CancellationToken.None);
         }
 
         /// <summary>
@@ -96,6 +172,30 @@ namespace RT.Util.ExtensionMethods
             while (length > 0)
             {
                 var read = stream.Read(buffer, offset, length);
+                if (read == 0)
+                    return totalRead;
+                offset += read;
+                length -= read;
+                totalRead += read;
+            }
+            return totalRead;
+        }
+
+        /// <summary>
+        /// Attempts to fill the buffer with the specified number of bytes from the stream. If there are
+        /// fewer bytes left in the stream than requested then all available bytes will be read into the buffer.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <param name="buffer">Buffer to write the bytes to.</param>
+        /// <param name="offset">Offset at which to write the first byte read from the stream.</param>
+        /// <param name="length">Number of bytes to read from the stream.</param>
+        /// <returns>Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream ended before the required number of bytes were read.</returns>
+        public static async Task<int> FillBufferAsync(this Stream stream, byte[] buffer, int offset, int length, CancellationToken? token = null)
+        {
+            int totalRead = 0;
+            while (length > 0)
+            {
+                var read = await stream.ReadAsync(buffer, offset, length, token ?? CancellationToken.None).ConfigureAwait(false);
                 if (read == 0)
                     return totalRead;
                 offset += read;
