@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 namespace RT.Util.ExtensionMethods
 {
-    /// <summary>
-    /// Provides extension methods on the <see cref="Stream"/> type.
-    /// </summary>
+    /// <summary>Provides extension methods on the <see cref="Stream"/> type.</summary>
     public static class StreamExtensions
     {
         /// <summary>Reads all bytes until the end of stream and returns them in a byte array.</summary>
@@ -53,8 +51,9 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Reads all bytes until the end of stream and returns the number
-        /// of bytes thus read without allocating too much memory.</summary>
+        /// <summary>
+        ///     Reads all bytes until the end of stream and returns the number of bytes thus read without allocating too much
+        ///     memory.</summary>
         public static long ReadAllBytesGetLength(this Stream stream)
         {
             if (stream.CanSeek)
@@ -71,8 +70,9 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Reads all bytes until the end of stream and returns the number
-        /// of bytes thus read without allocating too much memory.</summary>
+        /// <summary>
+        ///     Reads all bytes until the end of stream and returns the number of bytes thus read without allocating too much
+        ///     memory.</summary>
         public static async Task<long> ReadAllBytesGetLengthAsync(this Stream stream, CancellationToken? token = null)
         {
             if (stream.CanSeek)
@@ -89,20 +89,28 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
-        /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="encoding">Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
-        /// <returns>The text read from the stream.</returns>
+        /// <summary>
+        ///     Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="encoding">
+        ///     Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
+        /// <returns>
+        ///     The text read from the stream.</returns>
         public static string ReadAllText(this Stream stream, Encoding encoding = null)
         {
             using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8))
                 return sr.ReadToEnd();
         }
 
-        /// <summary>Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="encoding">Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
-        /// <returns>The text read from the stream.</returns>
+        /// <summary>
+        ///     Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="encoding">
+        ///     Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
+        /// <returns>
+        ///     The text read from the stream.</returns>
         public static async Task<string> ReadAllTextAsync(this Stream stream, Encoding encoding = null, CancellationToken? token = null)
         {
             byte[] buffer = new byte[32768];
@@ -116,11 +124,12 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
-        /// before the end of the stream, a shorter (possibly empty) array is returned.
-        /// </summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="length">Number of bytes to read from the stream.</param>
+        ///     Attempts to read the specified number of bytes from the stream. If there are fewer bytes left before the end
+        ///     of the stream, a shorter (possibly empty) array is returned.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="length">
+        ///     Number of bytes to read from the stream.</param>
         public static byte[] Read(this Stream stream, int length)
         {
             byte[] buf = new byte[length];
@@ -131,11 +140,12 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Attempts to read the specified number of bytes from the stream. If there are fewer bytes left
-        /// before the end of the stream, a shorter (possibly empty) array is returned.
-        /// </summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="length">Number of bytes to read from the stream.</param>
+        ///     Attempts to read the specified number of bytes from the stream. If there are fewer bytes left before the end
+        ///     of the stream, a shorter (possibly empty) array is returned.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="length">
+        ///     Number of bytes to read from the stream.</param>
         public static async Task<byte[]> ReadAsync(this Stream stream, int length, CancellationToken? token = null)
         {
             byte[] buf = new byte[length];
@@ -158,14 +168,19 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Attempts to fill the buffer with the specified number of bytes from the stream. If there are
-        /// fewer bytes left in the stream than requested then all available bytes will be read into the buffer.
-        /// </summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="buffer">Buffer to write the bytes to.</param>
-        /// <param name="offset">Offset at which to write the first byte read from the stream.</param>
-        /// <param name="length">Number of bytes to read from the stream.</param>
-        /// <returns>Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream ended before the required number of bytes were read.</returns>
+        ///     Attempts to fill the buffer with the specified number of bytes from the stream. If there are fewer bytes left
+        ///     in the stream than requested then all available bytes will be read into the buffer.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="buffer">
+        ///     Buffer to write the bytes to.</param>
+        /// <param name="offset">
+        ///     Offset at which to write the first byte read from the stream.</param>
+        /// <param name="length">
+        ///     Number of bytes to read from the stream.</param>
+        /// <returns>
+        ///     Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream
+        ///     ended before the required number of bytes were read.</returns>
         public static int FillBuffer(this Stream stream, byte[] buffer, int offset, int length)
         {
             int totalRead = 0;
@@ -182,14 +197,19 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        /// Attempts to fill the buffer with the specified number of bytes from the stream. If there are
-        /// fewer bytes left in the stream than requested then all available bytes will be read into the buffer.
-        /// </summary>
-        /// <param name="stream">Stream to read from.</param>
-        /// <param name="buffer">Buffer to write the bytes to.</param>
-        /// <param name="offset">Offset at which to write the first byte read from the stream.</param>
-        /// <param name="length">Number of bytes to read from the stream.</param>
-        /// <returns>Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream ended before the required number of bytes were read.</returns>
+        ///     Attempts to fill the buffer with the specified number of bytes from the stream. If there are fewer bytes left
+        ///     in the stream than requested then all available bytes will be read into the buffer.</summary>
+        /// <param name="stream">
+        ///     Stream to read from.</param>
+        /// <param name="buffer">
+        ///     Buffer to write the bytes to.</param>
+        /// <param name="offset">
+        ///     Offset at which to write the first byte read from the stream.</param>
+        /// <param name="length">
+        ///     Number of bytes to read from the stream.</param>
+        /// <returns>
+        ///     Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream
+        ///     ended before the required number of bytes were read.</returns>
         public static async Task<int> FillBufferAsync(this Stream stream, byte[] buffer, int offset, int length, CancellationToken? token = null)
         {
             int totalRead = 0;
@@ -205,9 +225,12 @@ namespace RT.Util.ExtensionMethods
             return totalRead;
         }
 
-        /// <summary>Encodes the specified string as UTF-8 and writes it to the current stream.</summary>
-        /// <param name="stream">Stream to write text to.</param>
-        /// <param name="text">Text to write to the stream as UTF-8.</param>
+        /// <summary>
+        ///     Encodes the specified string as UTF-8 and writes it to the current stream.</summary>
+        /// <param name="stream">
+        ///     Stream to write text to.</param>
+        /// <param name="text">
+        ///     Text to write to the stream as UTF-8.</param>
         public static void WriteUtf8(this Stream stream, string text)
         {
             var data = text.ToUtf8();
@@ -216,26 +239,31 @@ namespace RT.Util.ExtensionMethods
 
         #region Optim write
 
-        /// <summary>Encodes a 32-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
+        /// <summary>
+        ///     Encodes a 32-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
         /// <remarks>
-        /// <para>Writes an integer 7 bits at a time. This allows small integers to be
-        /// stored in 1 byte, longer ones in 2, at the cost of storing the longest
-        /// ones in 5 bytes.</para>
-        /// 
-        /// <para>Example for a positive int:</para>
-        /// <code>00000000 00000000 01010101 01010101</code>
-        /// <para>becomes three bytes:</para>
-        /// <code>1,1010101 1,0101010 0,0000001</code>
-        /// 
-        /// <para>Example for a negative int:</para>
-        /// <code>11111111 11111111 11010101 01010101</code>
-        /// <para>becomes three bytes:</para>
-        /// <code>1,1010101 1,0101010 0,1111111</code>
-        /// 
-        /// <para>Note how an extra byte is needed in this example. This is similar to
-        /// requiring a sign bit, however this way the positive values are directly
-        /// compatible with unsigned Optim values.</para>
-        /// </remarks>
+        ///     <para>
+        ///         Writes an integer 7 bits at a time. This allows small integers to be stored in 1 byte, longer ones in 2,
+        ///         at the cost of storing the longest ones in 5 bytes.</para>
+        ///     <para>
+        ///         Example for a positive int:</para>
+        ///     <code>
+        ///         00000000 00000000 01010101 01010101</code>
+        ///     <para>
+        ///         becomes three bytes:</para>
+        ///     <code>
+        ///         1,1010101 1,0101010 0,0000001</code>
+        ///     <para>
+        ///         Example for a negative int:</para>
+        ///     <code>
+        ///         11111111 11111111 11010101 01010101</code>
+        ///     <para>
+        ///         becomes three bytes:</para>
+        ///     <code>
+        ///         1,1010101 1,0101010 0,1111111</code>
+        ///     <para>
+        ///         Note how an extra byte is needed in this example. This is similar to requiring a sign bit, however this
+        ///         way the positive values are directly compatible with unsigned Optim values.</para></remarks>
         public static void WriteInt32Optim(this Stream stream, int val)
         {
             while (val < -64 || val > 63)
@@ -246,8 +274,10 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) (val & 127));
         }
 
-        /// <summary>Encodes a 32-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
-        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
+        /// <summary>
+        ///     Encodes a 32-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
+        /// <remarks>
+        ///     See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteUInt32Optim(this Stream stream, uint val)
         {
             while (val >= 128)
@@ -258,8 +288,10 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) val);
         }
 
-        /// <summary>Encodes a 64-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
-        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
+        /// <summary>
+        ///     Encodes a 64-bit signed integer in a variable number of bytes, using fewer bytes for values closer to zero.</summary>
+        /// <remarks>
+        ///     See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteInt64Optim(this Stream stream, long val)
         {
             while (val < -64 || val > 63)
@@ -270,8 +302,10 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) (val & 127));
         }
 
-        /// <summary>Encodes a 64-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
-        /// <remarks>See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
+        /// <summary>
+        ///     Encodes a 64-bit unsigned integer in a variable number of bytes, using fewer bytes for smaller values.</summary>
+        /// <remarks>
+        ///     See <see cref="WriteInt32Optim"/> for the precise encoding.</remarks>
         public static void WriteUInt64Optim(this Stream stream, ulong val)
         {
             while (val >= 128)
@@ -282,16 +316,21 @@ namespace RT.Util.ExtensionMethods
             stream.WriteByte((byte) val);
         }
 
-        /// <summary>Encodes a decimal in a variable number of bytes, using fewer bytes for frequently-occurring low-precision values.</summary>
+        /// <summary>
+        ///     Encodes a decimal in a variable number of bytes, using fewer bytes for frequently-occurring low-precision
+        ///     values.</summary>
         /// <remarks>
-        /// <para>The first byte is a "header" byte. Its top bit indicates the sign of the value, while the remaining 7 bits encode the scale
-        /// and the length, in bytes, of the mantissa component. Since the scale can be anything between 0..28 and the length can be up to 12,
-        /// this number is simply an index into a lookup table which contains specific combinations of both values. These combinations were
-        /// selected by analyzing the actual distribution of mantissa length + exponent pairs making a few assumptions about the likely inputs
-        /// into arithmetic operations. The encoder makes sure to select a value representing the exact scale and the minimum representable
-        /// mantissa length.</para>
-        /// <para>The result is always at most 13 bytes long, which is the same as discarding the three unused bytes of the raw representation.</para>
-        /// </remarks>
+        ///     <para>
+        ///         The first byte is a "header" byte. Its top bit indicates the sign of the value, while the remaining 7 bits
+        ///         encode the scale and the length, in bytes, of the mantissa component. Since the scale can be anything
+        ///         between 0..28 and the length can be up to 12, this number is simply an index into a lookup table which
+        ///         contains specific combinations of both values. These combinations were selected by analyzing the actual
+        ///         distribution of mantissa length + exponent pairs making a few assumptions about the likely inputs into
+        ///         arithmetic operations. The encoder makes sure to select a value representing the exact scale and the
+        ///         minimum representable mantissa length.</para>
+        ///     <para>
+        ///         The result is always at most 13 bytes long, which is the same as discarding the three unused bytes of the
+        ///         raw representation.</para></remarks>
         public static void WriteDecimalOptim(this Stream stream, decimal val)
         {
             // .NET allows int[] to be cast to uint[] so just fool C# compiler into accepting this.
@@ -385,7 +424,9 @@ namespace RT.Util.ExtensionMethods
 
         #region Optim read
 
-        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteInt32Optim"/> or <see cref="StreamExtensions.WriteUInt32Optim"/>.</summary>
+        /// <summary>
+        ///     Decodes an integer encoded by <see cref="StreamExtensions.WriteInt32Optim"/> or <see
+        ///     cref="StreamExtensions.WriteUInt32Optim"/>.</summary>
         public static int ReadInt32Optim(this Stream stream)
         {
             byte b = 255;
@@ -423,7 +464,9 @@ namespace RT.Util.ExtensionMethods
             return res;
         }
 
-        /// <summary>Decodes an integer encoded by <see cref="StreamExtensions.WriteInt64Optim"/> or <see cref="StreamExtensions.WriteUInt64Optim"/>.</summary>
+        /// <summary>
+        ///     Decodes an integer encoded by <see cref="StreamExtensions.WriteInt64Optim"/> or <see
+        ///     cref="StreamExtensions.WriteUInt64Optim"/>.</summary>
         public static long ReadInt64Optim(this Stream stream)
         {
             byte b = 255;
