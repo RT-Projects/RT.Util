@@ -165,6 +165,15 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
+        ///     Calculates the distance between the specified point and the extended straight line identified by this edge.</summary>
+        public double Distance(PointD point)
+        {
+            var lambda = LambdaOfPointDroppedPerpendicularly(point);
+            var pointOnLine = Start + lambda * (End - Start);
+            return Math.Sqrt(Math.Pow(point.X - pointOnLine.X, 2) + Math.Pow(point.Y - pointOnLine.Y, 2));
+        }
+
+        /// <summary>
         ///     Returns true if the specified point lies exactly on this edge. Accurate results are not guaranteed on edges
         ///     which are not axis-aligned.</summary>
         public bool ContainsPoint(PointD point)
