@@ -144,13 +144,18 @@ namespace RT.Util.ExtensionMethods
         }
         private static IEnumerable<IEnumerable<T>> splitIterator<T>(IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
         {
-            int prevIndex = 0;
-            foreach (var index in splitWhat.Select((elem, ind) => new { e = elem, i = ind }).Where(x => splitWhere(x.e)))
+            var items = new List<T>();
+            foreach (var item in splitWhat)
             {
-                yield return splitWhat.Skip(prevIndex).Take(index.i - prevIndex);
-                prevIndex = index.i + 1;
+                if (splitWhere(item))
+                {
+                    yield return items;
+                    items = new List<T>();
+                }
+                else
+                    items.Add(item);
             }
-            yield return splitWhat.Skip(prevIndex);
+            yield return items;
         }
 
         /// <summary>
@@ -644,7 +649,7 @@ namespace RT.Util.ExtensionMethods
         ///     The input collection is empty.</exception>
         public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector,default(T), true, true).Key.Value;
+            return minMaxElement(source, valueSelector, default(T), true, true).Key.Value;
         }
 
         /// <summary>
