@@ -109,6 +109,8 @@ namespace RT.Util.ExtensionMethods
         ///     Stream to read from.</param>
         /// <param name="encoding">
         ///     Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
+        /// <param name="token">
+        ///     A cancellation token for this async task.</param>
         /// <returns>
         ///     The text read from the stream.</returns>
         public static async Task<string> ReadAllTextAsync(this Stream stream, Encoding encoding = null, CancellationToken? token = null)
@@ -146,6 +148,8 @@ namespace RT.Util.ExtensionMethods
         ///     Stream to read from.</param>
         /// <param name="length">
         ///     Number of bytes to read from the stream.</param>
+        /// <param name="token">
+        ///     A cancellation token for this async task.</param>
         public static async Task<byte[]> ReadAsync(this Stream stream, int length, CancellationToken? token = null)
         {
             byte[] buf = new byte[length];
@@ -161,7 +165,14 @@ namespace RT.Util.ExtensionMethods
             stream.Write(data, 0, data.Length);
         }
 
-        /// <summary>Writes the specified data to the current stream.</summary>
+        /// <summary>
+        ///     Writes the specified data to the current stream.</summary>
+        /// <param name="stream">
+        ///     The stream to write data to.</param>
+        /// <param name="data">
+        ///     The data to write to the stream.</param>
+        /// <param name="token">
+        ///     A cancellation token for this async task.</param>
         public static Task WriteAsync(this Stream stream, byte[] data, CancellationToken? token = null)
         {
             return stream.WriteAsync(data, 0, data.Length, token ?? CancellationToken.None);
@@ -207,6 +218,8 @@ namespace RT.Util.ExtensionMethods
         ///     Offset at which to write the first byte read from the stream.</param>
         /// <param name="length">
         ///     Number of bytes to read from the stream.</param>
+        /// <param name="token">
+        ///     A cancellation token for this async task.</param>
         /// <returns>
         ///     Number of bytes read from the stream into buffer. This may be less than requested, but only if the stream
         ///     ended before the required number of bytes were read.</returns>
