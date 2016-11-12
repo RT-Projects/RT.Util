@@ -14,10 +14,19 @@ namespace RT.Util.Geometry
         public List<PointD> Vertices { get { return _vertices; } }
 
         /// <summary>
-        ///     Initialises a polygon from a given list of vertices.</summary>
+        ///     Initializes a polygon from a given list of vertices.</summary>
         /// <param name="vertices">
-        ///     Vertices (corner points) to initialise polygon from.</param>
+        ///     Vertices (corner points) to initialize polygon from.</param>
         public PolygonD(IEnumerable<PointD> vertices)
+        {
+            _vertices = new List<PointD>(vertices);
+        }
+
+        /// <summary>
+        ///     Initializes a polygon from a given array of vertices.</summary>
+        /// <param name="vertices">
+        ///     Vertices (corner points) to initialize polygon from.</param>
+        public PolygonD(params PointD[] vertices)
         {
             _vertices = new List<PointD>(vertices);
         }
