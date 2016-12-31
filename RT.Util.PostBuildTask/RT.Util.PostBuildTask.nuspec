@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>RT.Util.PostBuildTask</id>
+    <version>1.0</version>
+    <authors>caesay</authors>
+    <owners>RT-Projects caesay rstarkov Timwi</owners>
+    <projectUrl>https://github.com/RT-Projects/RT.Util</projectUrl>
+    <iconUrl>https://avatars0.githubusercontent.com/u/14182444?v=3&amp;s=200</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Install nuget package to automatically run RT.Util post build checks at compile time</description>
+    <tags>C# MSBuild Build</tags>
+  </metadata>
+  <files>
+    <file src="build\**" target="build" />
+    <file src="bin\Release\RT.Util.PostBuildTask.dll" target="tools" />
+  </files>
+</package>

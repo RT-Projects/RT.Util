@@ -49,8 +49,14 @@ namespace RT.Util
         /// <returns>1 if any errors occurred, otherwise 0.</returns>
         public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
-            int countMethods = 0;
             var rep = new postBuildReporter(sourcePath);
+            return RunPostBuildChecks(sourcePath);
+        }
+
+        internal static int RunPostBuildChecks(IPostBuildReporter reporter, params Assembly[] assemblies)
+        {
+            int countMethods = 0;
+            var rep = reporter;
             var attempt = Ut.Lambda((Action action) =>
             {
                 try
@@ -59,30 +65,34 @@ namespace RT.Util
                 }
                 catch (Exception e)
                 {
-                    rep.AnyErrors = true;
-                    string indent = "";
                     while (e != null)
                     {
+                        if (e is TargetInvocationException)
+                        {
+                            e = e.InnerException;
+                            continue;
+                        }
+
                         var st = new StackTrace(e, true);
-                        string fileLine = null;
+                        string fileName = null;
+                        int fileLineNumber = 0;
+                        int fileColumnNumber = 0;
                         for (int i = 0; i < st.FrameCount; i++)
                         {
                             var frame = st.GetFrame(i);
                             if (frame.GetFileName() != null)
                             {
-                                fileLine = frame.GetFileName() + "(" + frame.GetFileLineNumber() + "," + frame.GetFileColumnNumber() + "): ";
+                                fileName = frame.GetFileName();
+                                fileLineNumber = frame.GetFileLineNumber();
+                                fileColumnNumber = frame.GetFileColumnNumber();
                                 break;
                             }
                         }
 
-                        Console.Error.WriteLine("{0}Error: {1}{2} ({3})".Fmt(
-                            fileLine,
-                            indent,
-                            e.Message.Replace("\n", " ").Replace("\r", ""),
-                            e.GetType().FullName));
-                        Console.Error.WriteLine(e.StackTrace);
+                        string message = e.Message.Replace("\n", " ").Replace("\r", "") + Environment.NewLine + e.StackTrace;
+                        rep.Error(message, fileName, fileLineNumber, fileColumnNumber);
+
                         e = e.InnerException;
-                        indent += "---- ";
                     }
                 }
             });
@@ -265,20 +275,22 @@ namespace RT.Util
     /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
     public interface IPostBuildReporter
     {
-        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
+        /// <summary>Searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
         /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
         /// outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
         void Error(string message, params string[] tokens);
 
-        /// <summary>When implemented in a class, outputs the error <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
+        /// <summary>Outputs the error <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
         void Error(string message, string filename, int lineNumber, int? columnNumber = null);
 
-        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
+        /// <summary>Searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
         /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
         /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
         void Warning(string message, params string[] tokens);
 
-        /// <summary>When implemented in a class, outputs the warning <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
+        /// <summary>Outputs the warning <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
         void Warning(string message, string filename, int lineNumber, int? columnNumber = null);
+
+        bool AnyErrors { get; }
     }
 }
