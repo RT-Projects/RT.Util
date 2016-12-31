@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>RT.Util.PostBuildTask</id>
-    <version>1.0</version>
+    <version>$version$</version>
     <authors>caesay</authors>
     <owners>RT-Projects caesay rstarkov Timwi</owners>
     <projectUrl>https://github.com/RT-Projects/RT.Util</projectUrl>
