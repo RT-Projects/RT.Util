@@ -176,14 +176,12 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>Returns an array containing all the edges of this polygon.</summary>
-        public EdgeD[] ToEdges()
+        public IEnumerable<EdgeD> ToEdges()
         {
-            var edges = new EdgeD[_vertices.Count];
             int i;
             for (i = 0; i < _vertices.Count - 1; i++)
-                edges[i] = new EdgeD(_vertices[i], _vertices[i + 1]);
-            edges[i] = new EdgeD(_vertices[i], _vertices[0]);
-            return edges;
+                yield return new EdgeD(_vertices[i], _vertices[i + 1]);
+            yield return new EdgeD(_vertices[i], _vertices[0]);
         }
     }
 }
