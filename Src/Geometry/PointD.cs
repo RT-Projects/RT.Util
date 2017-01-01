@@ -120,8 +120,8 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        ///     Converts the current <see cref="PointD"/> object to a <see cref="PointF"/>. Note that doing so
-        ///     loses precision.</summary>
+        ///     Converts the current <see cref="PointD"/> object to a <see cref="PointF"/>. Note that doing so loses
+        ///     precision.</summary>
         /// <returns>
         ///     Lower-precision <see cref="PointF"/>.</returns>
         public PointF ToPointF()
@@ -245,6 +245,18 @@ namespace RT.Util.Geometry
             var sina = Math.Sin(angle);
             var cosa = Math.Cos(angle);
             return new PointD(X * cosa + Y * sina, Y * cosa - X * sina);
+        }
+
+        /// <summary>Calculates the distance between this point and the origin.</summary>
+        public double Distance()
+        {
+            return Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2));
+        }
+
+        /// <summary>Calculates the distance between this point and <paramref name="other"/>.</summary>
+        public double Distance(PointD other)
+        {
+            return Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
         }
     }
 }
