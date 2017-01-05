@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
+using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
 
@@ -87,7 +89,7 @@ namespace RT.Util
                 }
             });
 
-            // Check 1: Custom-defined PostBuildCheck methods
+            // Step 1: Run all the custom-defined PostBuildCheck methods
             foreach (var ty in assemblies.SelectMany(asm => asm.GetTypes()))
             {
                 attempt(() =>
@@ -108,7 +110,7 @@ namespace RT.Util
                 });
             }
 
-            // Check 2: All “throw new ArgumentNullException(...)” statements should refer to an actual parameter
+            // Step 2: Run all the built-in checks on IL code
             foreach (var asm in assemblies)
                 foreach (var type in asm.GetTypes())
                     foreach (var meth in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
@@ -116,6 +118,8 @@ namespace RT.Util
                         {
                             var instructions = ILReader.ReadIL(meth, type).ToArray();
                             for (int i = 0; i < instructions.Length; i++)
+                            {
+                                // Check that “throw new ArgumentNullException(...)” statements refer to an actual parameter
                                 if (instructions[i].OpCode.Value == OpCodes.Newobj.Value)
                                 {
                                     var constructor = (ConstructorInfo) instructions[i].Operand;
@@ -159,11 +163,39 @@ namespace RT.Util
                                             getDebugMethodName(meth),
                                             "ArgumentException");
                                 }
+                                else if (i < instructions.Length - 1 && (instructions[i].OpCode.Value == OpCodes.Call.Value || instructions[i].OpCode.Value == OpCodes.Callvirt.Value) && instructions[i + 1].OpCode.Value == OpCodes.Pop.Value)
+                                {
+                                    var method = (MethodInfo) instructions[i].Operand;
+                                    var mType = method.DeclaringType;
+                                    if (postBuildGetNoPopMethods().Contains(method))
+                                        rep.Error(
+                                            @"Useless call to ""{0}.{1}"" (the return value is discarded).".Fmt(mType.FullName, method.Name),
+                                            getDebugClassName(meth),
+                                            getDebugMethodName(meth),
+                                            method.Name
+                                        );
+                                }
+                            }
                         });
 
             Console.WriteLine("Post-build checks ran on {0} assemblies, {1} methods and completed {2}.".Fmt(assemblies.Length, countMethods, rep.AnyErrors ? "with ERRORS" : "SUCCESSFULLY"));
 
             return rep.AnyErrors ? 1 : 0;
+        }
+
+        private static MethodInfo[] _postBuild_NoPopMethods;
+        private static MethodInfo[] postBuildGetNoPopMethods()
+        {
+            if (_postBuild_NoPopMethods == null)
+            {
+                var list = new List<MethodInfo>();
+                var stringMethods = new[] { "Normalize", "PadLeft", "PadRight", "Remove", "Replace", "ToLower", "ToLowerInvariant", "ToUpper", "ToUpperInvariant", "Trim", "TrimEnd", "TrimStart" };
+                list.AddRange(typeof(string).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => stringMethods.Contains(m.Name)));
+                list.AddRange(typeof(ConsoleColoredString).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => stringMethods.Contains(m.Name)));
+                list.AddRange(typeof(DateTime).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name.StartsWith("Add") || m.Name == "Subtract"));
+                _postBuild_NoPopMethods = list.ToArray();
+            }
+            return _postBuild_NoPopMethods;
         }
 
         private static string getDebugClassName(MethodInfo meth)
