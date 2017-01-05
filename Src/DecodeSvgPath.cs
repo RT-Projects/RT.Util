@@ -179,6 +179,7 @@ namespace RT.KitchenSink
             var numRegex = @"-?\d*(?:\.\d*)?\d(?:e-?\d+)?\s*,?\s*";
             var prevPoint = new PointD(0, 0);
             var prevControlPoint = new PointD(0, 0);
+            svgPath = svgPath.TrimStart();
             while (!string.IsNullOrWhiteSpace(svgPath))
             {
                 Match m;
