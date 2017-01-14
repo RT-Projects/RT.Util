@@ -43,10 +43,15 @@ namespace RT.Util.Geometry
         ///     Determines whether two edges intersect.</summary>
         /// <param name="r">
         ///     <see cref="EdgeD"/> to compare against.</param>
+        /// <param name="excludeVertexTouching">
+        ///     If <c>true</c>, edges that touch at the vertex are not considered to be intersecting.</param>
         /// <returns>
         ///     True if both edges intersect with each other.</returns>
-        public bool IntersectsWith(EdgeD r)
+        public bool IntersectsWith(EdgeD r, bool excludeVertexTouching = false)
         {
+            if (excludeVertexTouching && (r.Start == Start || r.End == Start || r.Start == End || r.End == End))
+                return false;
+
             double mx = End.X - Start.X;
             double my = End.Y - Start.Y;
             double rmx = r.End.X - r.Start.X;
@@ -58,7 +63,7 @@ namespace RT.Util.Geometry
             double n = (mx * dy + my * dx) / d;
             double q = (rmx * dy + rmy * dx) / d;
 
-            return (n >= 0 && n < 1 && q >= 0 && q < 1);
+            return (n >= 0 && n <= 1 && q >= 0 && q <= 1);
         }
 
         /// <summary>
