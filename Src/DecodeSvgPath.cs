@@ -194,15 +194,15 @@ namespace RT.KitchenSink
                     {
                         case 'M':
                             type = PathPieceType.Move;
-                            prevPoint = new PointD(numbers.SkipLast(1).Last(), numbers.Last());
-                            points = new[] { prevPoint };
+                            points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
+                            prevPoint = points[points.Length - 1];
                             break;
 
                         case 'm':
                             type = PathPieceType.Move;
-                            foreach (var point in numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())))
-                                prevPoint += point;
-                            points = new[] { prevPoint };
+                            points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
+                            for (int i = 0; i < points.Length; i++)
+                                prevPoint = (points[i] += prevPoint);
                             break;
 
                         case 'L':
