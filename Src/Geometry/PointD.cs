@@ -239,7 +239,12 @@ namespace RT.Util.Geometry
             return Dot(unitVector) * unitVector;
         }
 
-        /// <summary>Returns a vector of the same length as this vector, but rotated by the specified angle.</summary>
+        /// <summary>
+        ///     Returns a vector of the same length as this vector, but rotated by the specified.</summary>
+        /// <param name="angle">
+        ///     The angle in radians.</param>
+        /// <returns>
+        ///     The rotated point.</returns>
         public PointD Rotated(double angle)
         {
             var sina = Math.Sin(angle);
