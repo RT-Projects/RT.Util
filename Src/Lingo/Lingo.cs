@@ -352,25 +352,64 @@ namespace RT.Util.Lingo
                     control.Text = translated;
             }
 
-            if (control is ToolStrip)
+            if (control is MenuStrip)
+            {
+                translateMenu(((ToolStrip) control).Items, () =>
+                {
+                    foreach (ToolStripItem tsi in ((ToolStrip) control).Items)
+                        translateToolStripItem(tsi, translation, generateFields);
+                });
+            }
+            else if (control is ToolStrip)
+            {
                 foreach (ToolStripItem tsi in ((ToolStrip) control).Items)
                     translateToolStripItem(tsi, translation, generateFields);
+            }
             foreach (Control subcontrol in control.Controls)
                 translateControl(subcontrol, translation, generateFields);
         }
 
-        private static void translateToolStripItem(ToolStripItem tsi, object translation, List<trStringInfo> generateFields)
+        private static void translateMenu(ToolStripItemCollection items, Action action)
         {
-            if (!string.IsNullOrEmpty(tsi.Name) && !string.IsNullOrEmpty(tsi.Text) && !"notranslate".Equals(tsi.Tag))
+#if DEBUG
+            var toRemove = items.Cast<ToolStripItem>().Where(tsi => object.Equals(tsi.Tag, "dup/av")).ToArray();
+            foreach (var item in toRemove)
+                items.Remove(item);
+#endif
+            action();
+#if DEBUG
+            var used = items.Cast<ToolStripItem>().Where(tsi => tsi.Text.Contains('&')).Select(tsi => tsi.Text[tsi.Text.IndexOf('&') + 1]).GroupBy(c => char.ToLowerInvariant(c)).Select(gr => new { Ch = gr.Key, Count = gr.Count() }).ToArray();
+            if (used.Any(i => i.Count > 1) || items.Cast<ToolStripItem>().Any(tsi => object.Equals(tsi.Tag, "no_hotkey")))
+                items.Add(new ToolStripMenuItem($"duplicates: {used.Where(i => i.Count > 1).Select(i => i.Ch).Order().JoinString().Apply(s => s.Length == 0 ? "(none)" : s)}; available: {"abcdefghijklmnopqrstuvwxyz".Except(used.Select(i => i.Ch)).Order().JoinString()}") { Tag = "dup/av" });
+#endif
+        }
+
+        private static void translateToolStripItem(ToolStripItem tsItem, object translation, List<trStringInfo> generateFields)
+        {
+            if (!string.IsNullOrEmpty(tsItem.Name) && !string.IsNullOrEmpty(tsItem.Text) && !"notranslate".Equals(tsItem.Tag))
             {
-                string translated = translate(tsi.Name, tsi.Tag, translation, tsi.Text, tsi, generateFields);
+                string translated = translate(tsItem.Name, tsItem.Tag, translation, tsItem.Text, tsItem, generateFields);
                 if (translated != null)
-                    tsi.Text = translated;
+                {
+                    tsItem.Text = translated;
+                    if (!translated.Contains('&'))
+                    {
+                        tsItem.Text = "[!X] " + translated;
+                        tsItem.Tag = "no_hotkey";
+                    }
+                }
             }
-            if (tsi is ToolStripDropDownItem)
+            if (tsItem is ToolStripDropDownItem)
             {
-                foreach (ToolStripItem subitem in ((ToolStripDropDownItem) tsi).DropDownItems)
-                    translateToolStripItem(subitem, translation, generateFields);
+                var items = ((ToolStripDropDownItem) tsItem).DropDownItems;
+                if (items.Count > 0)
+                {
+                    translateMenu(items, () =>
+                    {
+                        foreach (ToolStripItem subitem in items)
+                            translateToolStripItem(subitem, translation, generateFields);
+                    });
+                }
             }
         }
 
