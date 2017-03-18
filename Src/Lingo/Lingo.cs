@@ -352,7 +352,7 @@ namespace RT.Util.Lingo
                     control.Text = translated;
             }
 
-            if (control is MenuStrip)
+            if (control is MenuStrip || control is ContextMenuStrip)
             {
                 translateMenu(((ToolStrip) control).Items, () =>
                 {
