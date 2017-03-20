@@ -120,7 +120,7 @@ namespace RT.Util
         ///     SMTP protocol error, or authentication failed.</exception>
         /// <exception cref="IOException">
         ///     Network error or timeout.</exception>
-        public RTSmtpClient(string host, int port, string username, string password, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null, int timeout = 10000)
+        public RTSmtpClient(string host, int port, string username = null, string password = null, SmtpEncryption encryption = SmtpEncryption.None, LoggerBase log = null, int timeout = 10000)
         {
             _log = log ?? new NullLogger();
             _log.Debug(2, "Connecting to {0}:{1}...".Fmt(host, port));
@@ -143,6 +143,12 @@ namespace RT.Util
 
             sendAndExpect(null, 220);
             sendAndExpect("EHLO localhost", 250);
+            if (username == null || password == null)
+            {
+                _log.Debug(3, "Connected without authentication.");
+                return;
+            }
+
             var result = sendAndExpect("AUTH LOGIN", 334).Trim();
             var resultDec = Convert.FromBase64String(result).FromUtf8();
             if (resultDec != "Username:")
