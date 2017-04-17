@@ -493,8 +493,6 @@ namespace RT.Util.Serialization
             co.List3 = new List<int>();
 
             var xml = VerifyXml(ClassifyXml.Serialize(co));
-            Assert.IsTrue(XNode.DeepEquals(XElement.Parse(@"<test>  <thingy stuff=""123"" /> </test>"), XElement.Parse(@"       <test  ><thingy    stuff  =  ""123""/>     </test>  ")));
-            Assert.IsFalse(XNode.DeepEquals(XElement.Parse(@"<test>  <thingy stufff=""123"" /> </test>"), XElement.Parse(@"       <test  ><thingy    stuff  =  ""123""/>     </test>  ")));
             Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
                 <item>
                   <Int1>5</Int1>
