@@ -138,6 +138,7 @@ namespace RT.Util
     {
         private Func<T, T, bool> _comparison;
         private Func<T, int> _getHashCode;
+
         /// <summary>
         ///     Compares two elements for equality.</summary>
         /// <remarks>
@@ -147,7 +148,7 @@ namespace RT.Util
         ///     Returns a hash code for an element.</summary>
         /// <remarks>
         ///     This method implements <see cref="IEqualityComparer&lt;T&gt;.GetHashCode(T)"/>.</remarks>
-        public int GetHashCode(T obj) { return _getHashCode(obj); }
+        public int GetHashCode(T obj) { return _getHashCode == null ? obj.GetHashCode() : _getHashCode(obj); }
 
         /// <summary>
         ///     Constructor.</summary>
@@ -156,6 +157,13 @@ namespace RT.Util
         /// <param name="getHashCode">
         ///     Provides the hash function for this equality comparer.</param>
         public CustomEqualityComparer(Func<T, T, bool> comparison, Func<T, int> getHashCode) { _comparison = comparison; _getHashCode = getHashCode; }
+
+        /// <summary>
+        ///     Constructor which re-uses the default hash function. Use this overload only if using the objects’ original
+        ///     hash function is appropriate for this equality comparison.</summary>
+        /// <param name="comparison">
+        ///     Provides the comparison function for this equality comparer.</param>
+        public CustomEqualityComparer(Func<T, T, bool> comparison) { _comparison = comparison; _getHashCode = null; }
 
         /// <summary>
         ///     Creates and returns an equality comparer that compares the equality of objects by comparing the equality of
