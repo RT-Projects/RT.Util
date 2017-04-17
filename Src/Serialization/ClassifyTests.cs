@@ -52,11 +52,12 @@ namespace RT.Util.Serialization
             return xml;
         }
 
-        public void RoundTrip<T>(T value, Action<T> assertions = null, bool? enforceEnums = null, Action<JsonValue> jsonSpecific = null, Action<XElement> xmlSpecific = null)
+        public void RoundTrip<T>(T value, Action<T> assertions = null, bool? enforceEnums = null, Action<JsonValue> jsonSpecific = null, Action<XElement> xmlSpecific = null, ClassifyOptions options = null)
         {
             foreach (var enforce in enforceEnums == null ? new[] { false, true } : new[] { enforceEnums.Value })
             {
-                var opt = new ClassifyOptions { EnforceEnums = enforce };
+                var opt = options ?? new ClassifyOptions();
+                opt.EnforceEnums = enforce;
 
                 var json = ClassifyJson.Serialize(value, opt);
                 jsonSpecific?.Invoke(json);
@@ -533,6 +534,96 @@ namespace RT.Util.Serialization
             Assert.AreEqual(co.Version1, cn.Version3);
             Assert.AreEqual(co.List1, cn.List2);
             Assert.AreEqual(co.List1, cn.List3);
+        }
+
+        [Test]
+        public void TestCustomIdentity()
+        {
+            // This test is the same as TestReferenceIdentity1 but with a custom SerializationEqualityComparer that deems everything as equal that passes object.Equals().
+
+            var co = new classRefTest1();
+            co.Int1 = co.Int2 = 5;
+            co.String1 = co.String2 = new string('a', 5);
+            co.String3 = new string('a', 5);
+            co.Version1 = co.Version2 = new Version(4, 7);
+            co.Version3 = new Version(4, 7);
+            co.List1 = co.List2 = new List<int>();
+            co.List3 = new List<int>();
+
+            var xml = VerifyXml(ClassifyXml.Serialize(co, new ClassifyOptions { SerializationEqualityComparer = new CustomEqualityComparer<object>((a, b) => a.Equals(b), o => o.GetHashCode()) }));
+            Assert.IsTrue(XNode.DeepEquals(xml, XElement.Parse(@"
+                <item>
+                  <Int1 refid=""0"">5</Int1>
+                  <Int2 ref=""0"" />
+                  <String1 refid=""1"">aaaaa</String1>
+                  <String2 ref=""1"" />
+                  <String3 ref=""1"" />
+                  <Version1 refid=""3"">
+                    <Major>4</Major>
+                    <Minor>7</Minor>
+                    <Build refid=""2"">-1</Build>
+                    <Revision ref=""2"" />
+                  </Version1>
+                  <Version2 ref=""3"" />
+                  <Version3 ref=""3"" />
+                  <List1 refid=""4"" />
+                  <List2 ref=""4"" />
+                  <List3 />
+                </item>")));
+
+            var cn = ClassifyXml.Deserialize<classRefTest1>(XElement.Parse(xml.ToString()));
+            Assert.IsTrue(object.ReferenceEquals(cn.String1, cn.String2));
+            Assert.IsTrue(object.ReferenceEquals(cn.String1, cn.String3));
+            Assert.IsTrue(object.ReferenceEquals(cn.Version1, cn.Version2));
+            Assert.IsTrue(object.ReferenceEquals(cn.Version1, cn.Version3));
+            Assert.IsTrue(object.ReferenceEquals(cn.List1, cn.List2));
+            Assert.IsFalse(object.ReferenceEquals(cn.List1, cn.List3));
+
+            // Some sanity checks
+            Assert.IsFalse(object.ReferenceEquals(co.Version1, cn.Version1));
+            Assert.IsFalse(object.ReferenceEquals(co.List1, cn.List1));
+            Assert.AreEqual(co.String1, cn.String2);
+            Assert.AreEqual(co.String1, cn.String3);
+            Assert.AreEqual(co.Version1, cn.Version2);
+            Assert.AreEqual(co.Version1, cn.Version3);
+            Assert.AreEqual(co.List1, cn.List2);
+            Assert.AreEqual(co.List1, cn.List3);
+        }
+
+        [Test]
+        public void TestCustomIdentityCycleDetection()
+        {
+            var list = new List<object>();
+            var obj = new Version(1, 2);
+            list.Add(obj);
+            list.Add(obj);
+
+            // The list contains two references to the same Version object, so this should maintain reference equality.
+            RoundTrip(list, assertions: list2 =>
+            {
+                Assert.IsNotNull(list2);
+                Assert.AreEqual(list2.Count, 2);
+                Assert.IsTrue(list2[0] is Version);
+                Assert.IsTrue(ReferenceEquals(list2[0], list2[1]));
+            });
+
+            // Turn off reference equality. The list contains two references to the same object, so this should serialize two copies of the Version object, and NOT trigger cycle detection
+            RoundTrip(list, options: new ClassifyOptions { SerializationEqualityComparer = new CustomEqualityComparer<object>((a, b) => false) }, assertions: list2 =>
+            {
+                Assert.IsNotNull(list2);
+                Assert.AreEqual(list2.Count, 2);
+                Assert.IsTrue(list2[0] is Version);
+                Assert.IsTrue(list2[1] is Version);
+                Assert.IsFalse(ReferenceEquals(list2[0], list2[1]));
+                Assert.IsTrue(Equals(list2[0], list2[1]));
+            });
+
+            list[0] = list;
+            // The list now contains itself, so this should trigger cycle detection.
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                ClassifyJson.Serialize(list, new ClassifyOptions { SerializationEqualityComparer = new CustomEqualityComparer<object>((a, b) => false) });
+            });
         }
 
         private sealed class classRefTest2

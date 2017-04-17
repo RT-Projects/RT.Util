@@ -383,37 +383,13 @@ namespace RT.Util.Serialization
                 public Func<object> WithoutDesubstitution;
             }
 
-            private Dictionary<int, declassifyRememberedObject> _rememberD
-            {
-                get
-                {
-                    if (_rememberCacheD == null)
-                        _rememberCacheD = new Dictionary<int, declassifyRememberedObject>();
-                    return _rememberCacheD;
-                }
-            }
-            private Dictionary<int, declassifyRememberedObject> _rememberCacheD;
+            private Dictionary<int, declassifyRememberedObject> _rememberCacheDeser;
+            private Dictionary<int, declassifyRememberedObject> _rememberDeser => _rememberCacheDeser ?? (_rememberCacheDeser = new Dictionary<int, declassifyRememberedObject>());
 
-            private HashSet<object> _rememberC
-            {
-                get
-                {
-                    if (_rememberCacheC == null)
-                        _rememberCacheC = new HashSet<object>(new CustomEqualityComparer<object>(object.ReferenceEquals, o => o.GetHashCode()));
-                    return _rememberCacheC;
-                }
-            }
-            private HashSet<object> _rememberCacheC;
+            private Dictionary<object, object> _rememberCacheSer;
+            private Dictionary<object, object> _rememberSer => _rememberCacheSer ?? (_rememberCacheSer = new Dictionary<object, object>(_options.ActualEqualityComparer));
 
-            private Dictionary<object, int> _requireRefId
-            {
-                get
-                {
-                    if (_requireRefIdCache == null)
-                        _requireRefIdCache = new Dictionary<object, int>(new CustomEqualityComparer<object>(object.ReferenceEquals, o => o.GetHashCode()));
-                    return _requireRefIdCache;
-                }
-            }
+            private Dictionary<object, int> _requireRefId => _requireRefIdCache ?? (_requireRefIdCache = new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode())));
             private Dictionary<object, int> _requireRefIdCache;
 
             private static Type[] _tupleTypes = new[] { typeof(KeyValuePair<,>), typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>) };
@@ -467,7 +443,7 @@ namespace RT.Util.Serialization
                 _doAtTheEnd = new List<Action>();
 
                 if (_format.IsReferable(elem))
-                    _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
+                    _rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
                 Type keyType, valueType;
                 var cat = tryGetCollectionInfo(type, out keyType, out valueType);
@@ -532,7 +508,7 @@ namespace RT.Util.Serialization
 
                     // Remember the result if something else refers to it
                     if (_format.IsReferable(elem))
-                        _rememberD[_format.GetReferenceID(elem)] = new declassifyRememberedObject
+                        _rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject
                         {
                             WithDesubstitution = withDesubstitution,
                             WithoutDesubstitution = withoutDesubstitution
@@ -547,7 +523,7 @@ namespace RT.Util.Serialization
                     return _ => new Func<object>(() =>
                     {
                         declassifyRememberedObject inf;
-                        if (!_rememberD.TryGetValue(refID, out inf))
+                        if (!_rememberDeser.TryGetValue(refID, out inf))
                             _format.ThrowMissingReferable(refID);
                         if (declaredType == substType)
                             return inf.WithoutDesubstitution();
@@ -1106,39 +1082,67 @@ namespace RT.Util.Serialization
                     }
                 }
 
+                // Preserve reference equality of objects before type substitution
+                object previousOriginalObject;
+                if (saveObject != null && _rememberSer.TryGetValue(saveObject, out previousOriginalObject))
+                {
+                    if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
+                    {
+                        int refId;
+                        if (!_requireRefId.TryGetValue(previousOriginalObject, out refId))
+                        {
+                            refId = _nextId;
+                            _nextId++;
+                            _requireRefId[previousOriginalObject] = refId;
+                        }
+                        return () => _format.FormatReference(refId);
+                    }
+                    else
+                    {
+                        // Detected a cycle in an object that the user indicated should not be deduplicated
+                        throw new InvalidOperationException(@"The object {0} (of type {1}) is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.".Fmt(previousOriginalObject, previousOriginalObject.GetType().FullName));
+                    }
+                }
+
                 // See if there’s a substitute type defined
                 ClassifyTypeOptions typeOptions;
                 var originalObject = saveObject;
                 var originalType = saveType;
-                var hasTypeSubstitution = false;
 
                 if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions.Substitutor != null)
                 {
                     saveObject = typeOptions.Substitutor.ToSubstitute(saveObject);
                     saveType = typeOptions.Substitutor.SubstituteType;
-                    hasTypeSubstitution = true;
-                }
 
-                // Preserve reference identity of reference types except string
-                if ((!(originalObject is ValueType) && !(originalObject is string) && _rememberC.Contains(originalObject)) ||
-                    (hasTypeSubstitution && !(saveObject is ValueType) && !(saveObject is string) && _rememberC.Contains(saveObject)))
-                {
-                    int refId;
-                    if (!_requireRefId.TryGetValue(originalObject, out refId) && !_requireRefId.TryGetValue(saveObject, out refId))
+                    // Preserve reference identity of the substitute objects
+                    if (saveObject != null && _rememberSer.TryGetValue(saveObject, out previousOriginalObject))
                     {
-                        refId = _nextId;
-                        _nextId++;
-                        _requireRefId[originalObject] = refId;
-                        _requireRefId[saveObject] = refId;
+                        if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
+                        {
+                            int refId;
+                            if (!_requireRefId.TryGetValue(previousOriginalObject, out refId))
+                            {
+                                refId = _nextId;
+                                _nextId++;
+                                _requireRefId[previousOriginalObject] = refId;
+                            }
+                            return () => _format.FormatReference(refId);
+                        }
+                        else
+                        {
+                            // Detected a cycle in an object that the user indicated should not be deduplicated
+                            throw new InvalidOperationException(@"The object {0} (of type {1}), which is a substitute for {2} (of type {3}), is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.".Fmt(previousOriginalObject, previousOriginalObject.GetType().FullName, originalObject, originalObject.GetType().FullName));
+                        }
                     }
-                    return () => _format.FormatReference(refId);
+
+                    // Remember the substituted object so that we can detect cycles and maintain reference equality
+                    if (saveObject != null)
+                        _rememberSer[saveObject] = saveObject;
                 }
 
                 // Remember this object so that we can detect cycles and maintain reference equality
-                if (originalObject != null && !(originalObject is ValueType) && !(originalObject is string))
-                    _rememberC.Add(originalObject);
-                if (hasTypeSubstitution && saveObject != null && !(saveObject is ValueType) && !(saveObject is string))
-                    _rememberC.Add(saveObject);
+                if (originalObject != null)
+                    _rememberSer[originalObject] = originalObject;
 
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
@@ -1300,6 +1304,12 @@ namespace RT.Util.Serialization
                         return retrievedElem;
                     };
                 }
+
+                // If the object is not considered reference-equal to itself, remove it from _rememberSer (we only put it in there to detect cycles).
+                if (originalObject != null && !_options.SerializationEqualityComparer.Equals(originalObject, originalObject))
+                    _rememberSer.Remove(originalObject);
+                if (saveObject != null && !_options.SerializationEqualityComparer.Equals(saveObject, saveObject))
+                    _rememberSer.Remove(saveObject);
 
                 return elem;
             }
@@ -1693,6 +1703,32 @@ namespace RT.Util.Serialization
         public ClassifyDesubstitutionFailedException() { }
     }
 
+    /// <summary>
+    ///     Provides an equality comparer that implements the default behavior for <see
+    ///     cref="ClassifyOptions.SerializationEqualityComparer"/>.</summary>
+    public sealed class ClassifyEqualityComparer : IEqualityComparer<object>
+    {
+        private ClassifyEqualityComparer() { }
+        /// <summary>Provides the singleton instance of this class.</summary>
+        public static IEqualityComparer<object> Instance = new ClassifyEqualityComparer();
+        /// <summary>
+        ///     Compares two arbitrary objects.</summary>
+        /// <param name="x">
+        ///     First object to compare.</param>
+        /// <param name="y">
+        ///     Second object to compare.</param>
+        /// <returns>
+        ///     <c>false</c> for strings and object reference equality for everything else.</returns>
+        public new bool Equals(object x, object y) => !(x is string) && ReferenceEquals(x, y);
+        /// <summary>
+        ///     Returns a hash code for the specified object.</summary>
+        /// <param name="obj">
+        ///     The object to generate a hash code for.</param>
+        /// <returns>
+        ///     The object’s own hash code.</returns>
+        public int GetHashCode(object obj) => obj.GetHashCode();
+    }
+
     /// <summary>Provides the ability to specify some options for use by <see cref="Classify"/>.</summary>
     public sealed class ClassifyOptions
     {
@@ -1703,6 +1739,46 @@ namespace RT.Util.Serialization
         ///     affected by this option (but only by <see cref="ClassifyEnforceEnumAttribute"/>).</summary>
         /// <seealso cref="ClassifyEnforceEnumAttribute"/>
         public bool EnforceEnums = false;
+
+        /// <summary>
+        ///     Provides a means to customize Classify’s definition of object equality, i.e. to control which objects are
+        ///     serialized as references to each other and which ones are duplicated in the serialized form.</summary>
+        /// <remarks>
+        ///     <para>
+        ///         The default comparer treats all strings as different, thus causing them to be re-serialized each time even
+        ///         if they are in fact equal. All other objects are tested for reference equality. This way, object reference
+        ///         equality is preserved across serializing and deserializing.</para>
+        ///     <para>
+        ///         An alternative may be, for example, to assign <c>EqualityComparer&lt;object&gt;.Default</c> here. This
+        ///         would treat objects as equal if they implement <c>IEquatable&lt;T&gt;</c> and deem each other as equal.
+        ///         Such a strategy would improve deduplication of information in the serialized form, but would cause the
+        ///         deserialized form to re-use object instances more than the original did.</para></remarks>
+        public IEqualityComparer<object> SerializationEqualityComparer
+        {
+            get { return _serializationEqualityComparer; }
+            set
+            {
+                _serializationEqualityComparer = value;
+                ActualEqualityComparer = new actualComparer(value);
+            }
+        }
+        private IEqualityComparer<object> _serializationEqualityComparer;
+
+        internal IEqualityComparer<object> ActualEqualityComparer { get; private set; }
+
+        class actualComparer : IEqualityComparer<object>
+        {
+            private IEqualityComparer<object> _parent;
+            public actualComparer(IEqualityComparer<object> parent) { _parent = parent; }
+            public new bool Equals(object x, object y) => ReferenceEquals(x, y) || _parent.Equals(x, y);
+            public int GetHashCode(object obj) => obj.GetHashCode();
+        }
+
+        /// <summary>Constructor.</summary>
+        public ClassifyOptions()
+        {
+            SerializationEqualityComparer = ClassifyEqualityComparer.Instance;
+        }
 
         internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
 
