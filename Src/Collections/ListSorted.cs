@@ -88,7 +88,7 @@ namespace RT.Util.Collections
         }
 
         /// <summary>Not supported in this class, will always throw an exception.</summary>
-        public void Insert(int index, T item)
+        void IList<T>.Insert(int index, T item)
         {
             throw new InvalidOperationException("Cannot insert an item at an arbitrary index into a ListSorted.");
         }
