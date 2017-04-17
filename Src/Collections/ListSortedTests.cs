@@ -58,7 +58,7 @@ namespace RT.Util.Collections
 
             try
             {
-                list.Insert(0, 8);
+                ((IList<int>) list).Insert(0, 8);
                 Assert.Fail();
             }
             catch { }
