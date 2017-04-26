@@ -1852,16 +1852,29 @@ namespace RT.Util.CommandLine
         ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
         public virtual void WriteUsageInfoToConsole(TranslationBase applicationTr = null, Translation tr = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
         {
+            ConsoleUtil.Write(GetUsageInfo(applicationTr, tr, helpProcessor));
+        }
+
+        /// <summary>
+        ///     Generates and returns usage information, followed by an error message describing to the user what it was that
+        ///     the parser didn't understand.</summary>
+        /// <param name="applicationTr">
+        ///     An object containing translations for the documentation strings. Set this to <c>null</c> only if your
+        ///     application is definitely monolingual (unlocalisable).</param>
+        /// <param name="tr">
+        ///     Contains translations for the messages used by the command-line parser. Set this to <c>null</c> only if your
+        ///     application is definitely monolingual (unlocalisable).</param>
+        /// <param name="helpProcessor">
+        ///     Specifies a callback which is invoked on every documentation string retrieved from the <see
+        ///     cref="DocumentationAttribute"/>s to generate the help text. This callback can modify the text arbitrarily.</param>
+        public ConsoleColoredString GetUsageInfo(TranslationBase applicationTr = null, Translation tr = null, Func<ConsoleColoredString, ConsoleColoredString> helpProcessor = null)
+        {
             if (tr == null)
                 tr = new Translation();
-
-            ConsoleUtil.Write(CommandLineParser.GenerateHelp(CommandInfo, ConsoleUtil.WrapToWidth(), applicationTr, tr, helpProcessor));
-
+            var str = CommandLineParser.GenerateHelp(CommandInfo, ConsoleUtil.WrapToWidth(), applicationTr, tr, helpProcessor);
             if (WriteErrorText)
-            {
-                Console.WriteLine();
-                ConsoleUtil.Write(GenerateErrorText(tr, ConsoleUtil.WrapToWidth()));
-            }
+                str += Environment.NewLine + GenerateErrorText(tr, ConsoleUtil.WrapToWidth());
+            return str;
         }
 
         /// <summary>
