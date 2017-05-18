@@ -187,7 +187,7 @@ namespace RT.Util.Geometry
                 return true;
             if (Start.X == End.X)
                 return (point.X == Start.X) && (point.Y >= Math.Min(Start.Y, End.Y)) && (point.Y <= Math.Max(Start.Y, End.Y));
-            return (point.Y == Start.Y + point.X * (End.Y - Start.Y) / (End.X - Start.X)) && (point.X >= Math.Min(Start.X, End.X)) && (point.X <= Math.Max(Start.X, End.X));
+            return (point.Y == (End.X * Start.Y - End.Y * Start.X) / (End.X - Start.X) + point.X * (End.Y - Start.Y) / (End.X - Start.X)) && (point.X >= Math.Min(Start.X, End.X)) && (point.X <= Math.Max(Start.X, End.X));
         }
 
         /// <summary>
