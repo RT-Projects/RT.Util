@@ -887,6 +887,13 @@ namespace RT.Util
             }
             return _runner.ExitCode;
         }
+
+        /// <summary>Sets the working directory for the command to the specified directory.</summary>
+        public FluidCommandRunner WithWorkingDirectory(string workingDir)
+        {
+            _runner.WorkingDirectory = workingDir;
+            return this;
+        }
     }
 
     /// <summary>Indicates that a command returned an exit code indicating a failure.</summary>
