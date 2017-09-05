@@ -1081,5 +1081,69 @@ namespace RT.Util.Consoles
             Color = foreground;
             BackgroundColor = background;
         }
+
+        /// <summary>
+        ///     Concatenates two <see cref="ConsoleColoredChar"/>s into a <see cref="ConsoleColoredString"/>.</summary>
+        /// <param name="char1">
+        ///     First input character to concatenate.</param>
+        /// <param name="char2">
+        ///     Second input character to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the input strings is preserved.</remarks>
+        public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredChar char2)
+        {
+            if (char1 == null)
+                return char2.ToConsoleColoredString();
+            if (char2 == null)
+                return char1.ToConsoleColoredString();
+            return new ConsoleColoredString(string.Concat(char1.Character, char2.Character), new[] { char1.Color, char2.Color }, new[] { char1.BackgroundColor, char2.BackgroundColor });
+        }
+
+        /// <summary>
+        ///     Concatenates a <see cref="ConsoleColoredChar"/> onto a string and returns a <see
+        ///     cref="ConsoleColoredString"/>.</summary>
+        /// <param name="char1">
+        ///     First input character to concatenate.</param>
+        /// <param name="string2">
+        ///     Second input string to concatenate.</param>
+        /// <remarks>
+        ///     The color of the character is preserved. The string is given the console default color.</remarks>
+        public static ConsoleColoredString operator +(ConsoleColoredChar char1, string string2)
+        {
+            if (char1 == null)
+                return string2 ?? "";    // implicit conversion
+            if (string2 == null || string2.Length == 0)
+                return char1.ToConsoleColoredString();
+
+            var totalLength = string2.Length + 1;
+            var foreground = new ConsoleColor?[totalLength];
+            foreground[0] = char1.Color;
+            var background = new ConsoleColor?[totalLength];
+            background[0] = char1.BackgroundColor;
+            return new ConsoleColoredString(char1.Character + string2, foreground, background);
+        }
+
+        /// <summary>
+        ///     Concatenates a string onto a <see cref="ConsoleColoredChar"/> and returns a <see
+        ///     cref="ConsoleColoredString"/>.</summary>
+        /// <param name="string1">
+        ///     First input string to concatenate.</param>
+        /// <param name="char2">
+        ///     Second input character to concatenate.</param>
+        /// <remarks>
+        ///     The color of the character is preserved. The string is given the console default color.</remarks>
+        public static ConsoleColoredString operator +(string string1, ConsoleColoredChar char2)
+        {
+            if (char2 == null)
+                return string1 ?? "";   // implicit conversion
+            if (string1 == null || string1.Length == 0)
+                return char2.ToConsoleColoredString(); ;
+
+            var foreground = new ConsoleColor?[string1.Length + 1];
+            foreground[string1.Length] = char2.Color;
+            var background = new ConsoleColor?[string1.Length + 1];
+            background[string1.Length] = char2.BackgroundColor;
+            return new ConsoleColoredString(string1 + char2.Character, foreground, background);
+        }
     }
 }
