@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -282,14 +283,14 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Brings the elements of the given list into a random order.</summary>
         /// <typeparam name="T">
-        ///     Type of elements in the list.</typeparam>
+        ///     Type of the list.</typeparam>
         /// <param name="list">
         ///     List to shuffle.</param>
         /// <param name="rnd">
         ///     Random number generator, or null to use <see cref="Rnd"/>.</param>
         /// <returns>
         ///     The list operated on.</returns>
-        public static IList<T> Shuffle<T>(this IList<T> list, Random rnd = null)
+        public static T Shuffle<T>(this T list, Random rnd = null) where T : IList
         {
             if (list == null)
                 throw new ArgumentNullException("list");
@@ -395,15 +396,35 @@ namespace RT.Util.ExtensionMethods
         /// <param name="key">
         ///     Key to look up.</param>
         /// <param name="defaultVal">
-        ///     Value to return if key is not contained in the dictionary.</param>
+        ///     Value to return if <paramref name="key"/> is not contained in the dictionary.</param>
         public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultVal)
         {
             if (dict == null)
                 throw new ArgumentNullException("dict");
             if (key == null)
                 throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
-            TValue value;
-            if (dict.TryGetValue(key, out value))
+            if (dict.TryGetValue(key, out TValue value))
+                return value;
+            else
+                return defaultVal;
+        }
+
+        /// <summary>
+        ///     Gets a value from a dictionary by key. If the key does not exist in the dictionary, the default value is
+        ///     returned instead.</summary>
+        /// <param name="dict">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key to look up.</param>
+        /// <param name="defaultVal">
+        ///     Value to return if <paramref name="key"/> is not contained in the dictionary.</param>
+        public static TValue? Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue? defaultVal = null) where TValue : struct
+        {
+            if (dict == null)
+                throw new ArgumentNullException("dict");
+            if (key == null)
+                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+            if (dict.TryGetValue(key, out TValue value))
                 return value;
             else
                 return defaultVal;
