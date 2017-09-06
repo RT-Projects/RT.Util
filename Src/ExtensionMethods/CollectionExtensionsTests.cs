@@ -183,7 +183,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestShuffle()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Shuffle<string>(null); });
+            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Shuffle<List<string>>(null); });
 
             var list = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
             Assert.DoesNotThrow(() => { { list.Shuffle(); };});
