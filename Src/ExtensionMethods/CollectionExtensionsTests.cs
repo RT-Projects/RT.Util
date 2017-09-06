@@ -161,22 +161,22 @@ namespace RT.Util.ExtensionMethods
 
             dic.IncSafe("someKey");
             Assert.AreEqual(1, dic.Count);
-            Assert.DoesNotThrow(() => { { var x = dic["someKey"]; };});
+            Assert.DoesNotThrow(() => { var x = dic["someKey"]; });
             Assert.AreEqual(1, dic["someKey"]);
 
             dic.IncSafe("someKey", 47);
             Assert.AreEqual(1, dic.Count);
-            Assert.DoesNotThrow(() => { { var x = dic["someKey"]; };});
+            Assert.DoesNotThrow(() => { var x = dic["someKey"]; });
             Assert.AreEqual(48, dic["someKey"]);
 
             dic.IncSafe("someOtherKey", 47);
             Assert.AreEqual(2, dic.Count);
-            Assert.DoesNotThrow(() => { { var x = dic["someOtherKey"]; };});
+            Assert.DoesNotThrow(() => { var x = dic["someOtherKey"]; });
             Assert.AreEqual(47, dic["someOtherKey"]);
 
             dic.IncSafe("someOtherKey");
             Assert.AreEqual(2, dic.Count);
-            Assert.DoesNotThrow(() => { { var x = dic["someOtherKey"]; };});
+            Assert.DoesNotThrow(() => { var x = dic["someOtherKey"]; });
             Assert.AreEqual(48, dic["someOtherKey"]);
         }
 
@@ -186,7 +186,7 @@ namespace RT.Util.ExtensionMethods
             Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Shuffle<List<string>>(null); });
 
             var list = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-            Assert.DoesNotThrow(() => { { list.Shuffle(); };});
+            Assert.DoesNotThrow(() => { list.Shuffle(); });
             Assert.AreEqual(10, list.Count);
             for (int i = 1; i <= 10; i++)
                 Assert.IsTrue(list.Contains(i));
