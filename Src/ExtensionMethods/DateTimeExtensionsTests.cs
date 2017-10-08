@@ -37,10 +37,10 @@ namespace RT.Util.ExtensionMethods
 
         #endregion
 
-        public string GetLocalSuffixAndEnsureItsValid()
+        public string GetLocalSuffixAndEnsureItsValid(DateTime date)
         {
             // We expect a suffix like "+01:00" or "-05:30"
-            string suffix = new DateTime(2008, 03, 25, 14, 35, 54, 456, DateTimeKind.Local).ToString("zzz");
+            string suffix = new DateTime(date.Year, date.Month, date.Day, 14, 35, 54, 456, DateTimeKind.Local).ToString("zzz");
             Assert.AreEqual(6, suffix.Length); // just so we know we're testing it properly...
             Assert.IsTrue(suffix[0] == '+' || suffix[0] == '-');
             Assert.IsTrue(char.IsDigit(suffix[1]));
@@ -56,61 +56,71 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestToIsoStringUtc()
         {
-            TestToIsoStringHelper(DateTimeKind.Utc, "Z");
+            TestToIsoStringHelper(DateTimeKind.Utc, _ => "Z");
         }
 
         [Test]
         public void TestToIsoStringUnspecified()
         {
-            TestToIsoStringHelper(DateTimeKind.Unspecified, "");
+            TestToIsoStringHelper(DateTimeKind.Unspecified, _ => "");
         }
 
         [Test]
         public void TestToIsoStringLocal()
         {
-            TestToIsoStringHelper(DateTimeKind.Local, GetLocalSuffixAndEnsureItsValid());
+            TestToIsoStringHelper(DateTimeKind.Local, dt =>
+            {
+                var suffix = GetLocalSuffixAndEnsureItsValid(dt);
+                return suffix.EndsWith(":00") ? suffix.Substring(0, suffix.Length - 3) : suffix;
+            });
         }
 
-        public void TestToIsoStringHelper(DateTimeKind kind, string expectedSuffix)
+        public void TestToIsoStringHelper(DateTimeKind kind, Func<DateTime, string> expectedSuffix)
         {
             DateTime dt;
-            expectedSuffix = expectedSuffix.EndsWith(":00") ? expectedSuffix.Substring(0, expectedSuffix.Length - 3) : expectedSuffix;
             // Some normal dates
             dt = new DateTime(new DateTime(2008, 03, 25, 14, 35, 54, 456, kind).Ticks + 1234, kind);
             Assert.AreEqual("2008-03-25 14:35:54", dt.ToIsoString());
-            Assert.AreEqual("2008-03-25 14:35:54.4561234" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("2008-03-25 14:35:54.4561234" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             dt = new DateTime(2008, 03, 25, 14, 35, 54, 456, kind);
             Assert.AreEqual("2008-03-25 14:35:54", dt.ToIsoString());
-            Assert.AreEqual("2008-03-25 14:35:54.456" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("2008-03-25 14:35:54.456" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             dt = new DateTime(2008, 03, 25, 14, 35, 54, 0, kind);
             Assert.AreEqual("2008-03-25 14:35:54", dt.ToIsoString());
-            Assert.AreEqual("2008-03-25 14:35:54" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("2008-03-25 14:35:54" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             dt = new DateTime(2008, 03, 25, 14, 35, 0, 0, kind);
             Assert.AreEqual("2008-03-25 14:35:00", dt.ToIsoString());
-            Assert.AreEqual("2008-03-25 14:35" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("2008-03-25 14:35" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             dt = new DateTime(2008, 03, 25, 0, 0, 0, 0, kind);
             Assert.AreEqual("2008-03-25 00:00:00", dt.ToIsoString());
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("2008-03-25" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
+            // DST
+            dt = new DateTime(2008, 01, 25, 14, 35, 54, 456, kind);
+            Assert.AreEqual("2008-01-25 14:35:54", dt.ToIsoString());
+            Assert.AreEqual("2008-01-25 14:35:54.456" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
+            dt = new DateTime(2008, 06, 25, 14, 35, 54, 456, kind);
+            Assert.AreEqual("2008-06-25 14:35:54", dt.ToIsoString());
+            Assert.AreEqual("2008-06-25 14:35:54.456" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             // Some corner cases
-            dt = new DateTime(1, 1, 1, 14, 35, 54, 0, kind);
-            Assert.AreEqual("0001-01-01 14:35:54", dt.ToIsoString());
-            Assert.AreEqual("0001-01-01 14:35:54" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            dt = new DateTime(2, 1, 1, 14, 35, 54, 0, kind); // .NET "zzz" specifier appears to be off by one for the year 0001 with respect to TimeZone.GetUtcOffset, but is correct from the year 0002 onwards
+            Assert.AreEqual("0002-01-01 14:35:54", dt.ToIsoString());
+            Assert.AreEqual("0002-01-01 14:35:54" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             dt = new DateTime(9999, 12, 30, 14, 35, 54, 0, kind);
             Assert.AreEqual("9999-12-30 14:35:54", dt.ToIsoString());
-            Assert.AreEqual("9999-12-30 14:35:54" + expectedSuffix, dt.ToIsoStringRoundtrip());
+            Assert.AreEqual("9999-12-30 14:35:54" + expectedSuffix(dt), dt.ToIsoStringRoundtrip());
             // Min/max precision cornercase
             dt = new DateTime(new DateTime(2008, 03, 25, 00, 00, 00, 000, kind).Ticks + 1234, kind);
-            Assert.AreEqual("2008-03-25 00:00:00.0001234" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Full, includeTimezone: true));
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Milliseconds, includeTimezone: true));
+            Assert.AreEqual("2008-03-25 00:00:00.0001234" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Full, includeTimezone: true));
+            Assert.AreEqual("2008-03-25" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Milliseconds, includeTimezone: true));
             dt = new DateTime(new DateTime(2008, 03, 25, 00, 00, 00, 456, kind).Ticks + 1234, kind);
-            Assert.AreEqual("2008-03-25 00:00:00.456" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Milliseconds, includeTimezone: true));
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Seconds, includeTimezone: true));
+            Assert.AreEqual("2008-03-25 00:00:00.456" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Milliseconds, includeTimezone: true));
+            Assert.AreEqual("2008-03-25" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Seconds, includeTimezone: true));
             dt = new DateTime(new DateTime(2008, 03, 25, 00, 00, 23, 456, kind).Ticks + 1234, kind);
-            Assert.AreEqual("2008-03-25 00:00:23" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Seconds, includeTimezone: true));
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Minutes, includeTimezone: true));
+            Assert.AreEqual("2008-03-25 00:00:23" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Seconds, includeTimezone: true));
+            Assert.AreEqual("2008-03-25" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Minutes, includeTimezone: true));
             dt = new DateTime(new DateTime(2008, 03, 25, 00, 12, 23, 456, kind).Ticks + 1234, kind);
-            Assert.AreEqual("2008-03-25 00:12" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Minutes, includeTimezone: true));
-            Assert.AreEqual("2008-03-25" + expectedSuffix, dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Days, includeTimezone: true));
+            Assert.AreEqual("2008-03-25 00:12" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Minutes, includeTimezone: true));
+            Assert.AreEqual("2008-03-25" + expectedSuffix(dt), dt.ToIsoStringOptimal(maxPrecision: IsoDatePrecision.Days, includeTimezone: true));
         }
 
         #endregion
@@ -132,7 +142,7 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestTryParseIsoLocal()
         {
-            string localsuf = GetLocalSuffixAndEnsureItsValid();
+            string localsuf = GetLocalSuffixAndEnsureItsValid(new DateTime(2008, 03, 25));
             TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf);
             if (localsuf.EndsWith(":00"))
                 TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf.Substring(0, localsuf.Length - 3));
