@@ -28,11 +28,11 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestGetNanoseconds()
         {
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0000001Z", 2008, 12, 31, 23, 45, 53, 100, DateTimeKind.Utc);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0000007Z", 2008, 12, 31, 23, 45, 53, 700, DateTimeKind.Utc);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.9999999Z", 2008, 12, 31, 23, 45, 53, 999999900, DateTimeKind.Utc);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.9876543Z", 2008, 12, 31, 23, 45, 53, 987654300, DateTimeKind.Utc);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0003456Z", 2008, 12, 31, 23, 45, 53, 345600, DateTimeKind.Utc);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0000001Z", _ => "", 2008, 12, 31, 23, 45, 53, 100, DateTimeKind.Utc);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0000007Z", _ => "", 2008, 12, 31, 23, 45, 53, 700, DateTimeKind.Utc);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.9999999Z", _ => "", 2008, 12, 31, 23, 45, 53, 999999900, DateTimeKind.Utc);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.9876543Z", _ => "", 2008, 12, 31, 23, 45, 53, 987654300, DateTimeKind.Utc);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.0003456Z", _ => "", 2008, 12, 31, 23, 45, 53, 345600, DateTimeKind.Utc);
         }
 
         #endregion
@@ -130,28 +130,27 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestTryParseIsoUtc()
         {
-            TestTryParseIsoValidHelper2(DateTimeKind.Utc, "Z");
+            TestTryParseIsoValidHelper2(DateTimeKind.Utc, _ => "Z");
         }
 
         [Test]
         public void TestTryParseIsoUnspecified()
         {
-            TestTryParseIsoValidHelper2(DateTimeKind.Unspecified, "");
+            TestTryParseIsoValidHelper2(DateTimeKind.Unspecified, _ => "");
         }
 
         [Test]
         public void TestTryParseIsoLocal()
         {
-            string localsuf = GetLocalSuffixAndEnsureItsValid(new DateTime(2008, 03, 25));
-            TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf);
-            if (localsuf.EndsWith(":00"))
-                TestTryParseIsoValidHelper2(DateTimeKind.Local, localsuf.Substring(0, localsuf.Length - 3));
+            TestTryParseIsoValidHelper2(DateTimeKind.Local, GetLocalSuffixAndEnsureItsValid);
+            if (GetLocalSuffixAndEnsureItsValid(new DateTime(2008, 03, 25)).EndsWith(":00"))
+                TestTryParseIsoValidHelper2(DateTimeKind.Local, dt => { var localsuf = GetLocalSuffixAndEnsureItsValid(dt); return localsuf.Substring(0, localsuf.Length - 3); });
         }
 
-        public void TestTryParseIsoValidHelper1(string str, int year, int month, int day, int hour, int minute, int second, int nanosecond, DateTimeKind kind)
+        public void TestTryParseIsoValidHelper1(string str, Func<DateTime, string> suffix, int year, int month, int day, int hour, int minute, int second, int nanosecond, DateTimeKind kind)
         {
             DateTime dt;
-            Assert.IsTrue(DateTimeExtensions.TryParseIso(str, out dt));
+            Assert.IsTrue(DateTimeExtensions.TryParseIso(str + suffix(new DateTime(year, month, day)), out dt));
             Assert_DateTimeContentIs(dt, year, month, day, hour, minute, second, nanosecond, kind);
             // And again, but after a roundtrip to string
             str = dt.ToIsoStringRoundtrip();
@@ -159,43 +158,43 @@ namespace RT.Util.ExtensionMethods
             Assert_DateTimeContentIs(dt, year, month, day, hour, minute, second, nanosecond, kind);
         }
 
-        public void TestTryParseIsoValidHelper2(DateTimeKind kind, string suffix)
+        public void TestTryParseIsoValidHelper2(DateTimeKind kind, Func<DateTime, string> suffix)
         {
             // Valid conversions 1
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1415926" + suffix, 2008, 12, 31, 23, 45, 53, 141592600, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.141592" + suffix, 2008, 12, 31, 23, 45, 53, 141592000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.14159" + suffix, 2008, 12, 31, 23, 45, 53, 141590000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1415" + suffix, 2008, 12, 31, 23, 45, 53, 141500000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.141" + suffix, 2008, 12, 31, 23, 45, 53, 141000000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.14" + suffix, 2008, 12, 31, 23, 45, 53, 140000000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1" + suffix, 2008, 12, 31, 23, 45, 53, 100000000, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45:53" + suffix, 2008, 12, 31, 23, 45, 53, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45.75000" + suffix, 2008, 12, 31, 23, 45, 45, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45.5" + suffix, 2008, 12, 31, 23, 45, 30, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23:45" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23.75000" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23.5" + suffix, 2008, 12, 31, 23, 30, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31 23" + suffix, 2008, 12, 31, 23, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12-31" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008-12" + suffix, 2008, 12, 1, 0, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("2008" + suffix, 2008, 1, 1, 0, 0, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-07-31 23:45:53.1415926", suffix, 2008, 07, 31, 23, 45, 53, 141592600, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.141592", suffix, 2008, 12, 31, 23, 45, 53, 141592000, kind);
+            TestTryParseIsoValidHelper1("2008-07-31 23:45:53.14159", suffix, 2008, 07, 31, 23, 45, 53, 141590000, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1415", suffix, 2008, 12, 31, 23, 45, 53, 141500000, kind);
+            TestTryParseIsoValidHelper1("2008-07-31 23:45:53.141", suffix, 2008, 07, 31, 23, 45, 53, 141000000, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.14", suffix, 2008, 12, 31, 23, 45, 53, 140000000, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53.1", suffix, 2008, 12, 31, 23, 45, 53, 100000000, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45:53", suffix, 2008, 12, 31, 23, 45, 53, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45.75000", suffix, 2008, 12, 31, 23, 45, 45, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45.5", suffix, 2008, 12, 31, 23, 45, 30, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23:45", suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23.75000", suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23.5", suffix, 2008, 12, 31, 23, 30, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31 23", suffix, 2008, 12, 31, 23, 0, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12-31", suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008-12", suffix, 2008, 12, 1, 0, 0, 0, 0, kind);
+            TestTryParseIsoValidHelper1("2008", suffix, 2008, 1, 1, 0, 0, 0, 0, kind);
             // Valid conversions 2
-            suffix = suffix.Replace(":", "");
-            TestTryParseIsoValidHelper1("20081231T234553.1415926" + suffix, 2008, 12, 31, 23, 45, 53, 141592600, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.141592" + suffix, 2008, 12, 31, 23, 45, 53, 141592000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.14159" + suffix, 2008, 12, 31, 23, 45, 53, 141590000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.1415" + suffix, 2008, 12, 31, 23, 45, 53, 141500000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.141" + suffix, 2008, 12, 31, 23, 45, 53, 141000000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.14" + suffix, 2008, 12, 31, 23, 45, 53, 140000000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553.1" + suffix, 2008, 12, 31, 23, 45, 53, 100000000, kind);
-            TestTryParseIsoValidHelper1("20081231T234553" + suffix, 2008, 12, 31, 23, 45, 53, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T2345.75000" + suffix, 2008, 12, 31, 23, 45, 45, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T2345.5" + suffix, 2008, 12, 31, 23, 45, 30, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T2345" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T23.75000" + suffix, 2008, 12, 31, 23, 45, 0, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T23.5" + suffix, 2008, 12, 31, 23, 30, 0, 0, kind);
-            TestTryParseIsoValidHelper1("20081231T23" + suffix, 2008, 12, 31, 23, 0, 0, 0, kind);
-            TestTryParseIsoValidHelper1("20081231" + suffix, 2008, 12, 31, 0, 0, 0, 0, kind);
+            var suffix2 = Ut.Lambda((DateTime d) => suffix(d).Replace(":", ""));
+            TestTryParseIsoValidHelper1("20080731T234553.1415926", suffix2, 2008, 07, 31, 23, 45, 53, 141592600, kind);
+            TestTryParseIsoValidHelper1("20081231T234553.141592", suffix2, 2008, 12, 31, 23, 45, 53, 141592000, kind);
+            TestTryParseIsoValidHelper1("20080731T234553.14159", suffix2, 2008, 07, 31, 23, 45, 53, 141590000, kind);
+            TestTryParseIsoValidHelper1("20081231T234553.1415", suffix2, 2008, 12, 31, 23, 45, 53, 141500000, kind);
+            TestTryParseIsoValidHelper1("20080731T234553.141", suffix2, 2008, 07, 31, 23, 45, 53, 141000000, kind);
+            TestTryParseIsoValidHelper1("20081231T234553.14", suffix2, 2008, 12, 31, 23, 45, 53, 140000000, kind);
+            TestTryParseIsoValidHelper1("20081231T234553.1", suffix2, 2008, 12, 31, 23, 45, 53, 100000000, kind);
+            TestTryParseIsoValidHelper1("20081231T234553", suffix2, 2008, 12, 31, 23, 45, 53, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T2345.75000", suffix2, 2008, 12, 31, 23, 45, 45, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T2345.5", suffix2, 2008, 12, 31, 23, 45, 30, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T2345", suffix2, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T23.75000", suffix2, 2008, 12, 31, 23, 45, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T23.5", suffix2, 2008, 12, 31, 23, 30, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231T23", suffix2, 2008, 12, 31, 23, 0, 0, 0, kind);
+            TestTryParseIsoValidHelper1("20081231", suffix2, 2008, 12, 31, 0, 0, 0, 0, kind);
 
             // Invalid conversions... not quite sure how to test these but something
             // is definitely better than nothing in this case.
