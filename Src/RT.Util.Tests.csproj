@@ -71,6 +71,7 @@
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
     <Compile Include="ExactConvertTests.cs" />
     <Compile Include="Serialization\ClassifyTests.cs" />
+    <Compile Include="Streams\ArithmeticCodingTests.cs" />
     <Compile Include="Streams\DynamicContentStreamTests.cs" />
     <Compile Include="Streams\NewlineNormalizerStreamTests.cs" />
     <Compile Include="Streams\BinaryStreamTests.cs" />
