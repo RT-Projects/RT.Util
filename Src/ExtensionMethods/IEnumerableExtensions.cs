@@ -782,12 +782,30 @@ namespace RT.Util.ExtensionMethods
             if (count < 0)
                 throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
             if (count == 0)
-                return new T[0];
+                return Enumerable.Empty<T>();
 
-            var collection = source as ICollection<T>;
-            if (collection != null)
-                return collection.Skip(Math.Max(0, collection.Count - count));
+            if (source is IList<T> list)
+                return takeLastFromList(list, count);
+            else if (source is ICollection<T> collection)
+                return takeLastFromCollection(collection, count);
+            else
+                return takeLast(source, count);
+        }
 
+        private static IEnumerable<T> takeLastFromList<T>(this IList<T> source, int count)
+        {
+            for (int i = Math.Max(0, source.Count - count); i < source.Count; i++)
+                yield return source[i];
+        }
+
+        private static IEnumerable<T> takeLastFromCollection<T>(this ICollection<T> source, int count)
+        {
+            foreach (var elem in source.Skip(Math.Max(0, source.Count - count)))
+                yield return elem;
+        }
+
+        private static IEnumerable<T> takeLast<T>(this IEnumerable<T> source, int count)
+        {
             var queue = new Queue<T>(count + 1);
             foreach (var item in source)
             {
@@ -795,7 +813,8 @@ namespace RT.Util.ExtensionMethods
                     queue.Dequeue();
                 queue.Enqueue(item);
             }
-            return queue.AsEnumerable();
+            foreach (var item in queue)
+                yield return item;
         }
 
         /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
