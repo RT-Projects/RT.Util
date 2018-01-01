@@ -28,46 +28,59 @@ namespace RT.Util.Drawing
     }
 
     /// <summary>
-    /// <para>Wraps a <see cref="System.Drawing.Graphics"/> to provide a hopefully more convenient interface.
-    /// The major bits of functionality are:</para>
-    /// <list type="bullet">
-    /// <item><description>all coordinates in doubles or <see cref="RT.Util.Geometry"/> structs;</description></item>
-    /// <item><description>support for the Y axis growing upwards;</description></item>
-    /// <item><description>functions targeted at drawing a 2d world onto a viewport of a specified size.</description></item>
-    /// </list>
-    /// <para>Common terms and abbreviations:</para>
-    /// <list type="table">
-    /// <item><term>Screen</term><description>Rectangular area that will be the final destination of the drawing.</description></item>
-    /// <item><term>Viewport</term><description>The region, defined in terms of the world coordinates, that is viewable on the screen.</description></item>
-    /// <item><term>World coordinates</term><description>Coordinates of the underlying "world" being represented.</description></item>
-    /// <item><term>Screen coordinates</term><description>Coordinates on the screen, can be used to directly draw on the underlying Graphics.</description></item>
-    /// <item><term>WX, WY, WW, WH</term><description>World X, Y, Width, Height, respectively</description></item>
-    /// <item><term>SX, SY, SW, SH</term><description>Screen X, Y, Width, Height, respectively</description></item>
-    /// </list>
-    /// </summary>
+    ///     <para>
+    ///         Wraps a <see cref="System.Drawing.Graphics"/> to provide a hopefully more convenient interface. The major bits
+    ///         of functionality are:</para>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             all coordinates in doubles or <see cref="RT.Util.Geometry"/> structs;</description></item>
+    ///         <item><description>
+    ///             support for the Y axis growing upwards;</description></item>
+    ///         <item><description>
+    ///             functions targeted at drawing a 2d world onto a viewport of a specified size.</description></item></list>
+    ///     <para>
+    ///         Common terms and abbreviations:</para>
+    ///     <list type="table">
+    ///         <item><term>
+    ///             Screen</term>
+    ///         <description>
+    ///             Rectangular area that will be the final destination of the drawing.</description></item>
+    ///         <item><term>
+    ///             Viewport</term>
+    ///         <description>
+    ///             The region, defined in terms of the world coordinates, that is viewable on the screen.</description></item>
+    ///         <item><term>
+    ///             World coordinates</term>
+    ///         <description>
+    ///             Coordinates of the underlying "world" being represented.</description></item>
+    ///         <item><term>
+    ///             Screen coordinates</term>
+    ///         <description>
+    ///             Coordinates on the screen, can be used to directly draw on the underlying Graphics.</description></item>
+    ///         <item><term>
+    ///             WX, WY, WW, WH</term>
+    ///         <description>
+    ///             World X, Y, Width, Height, respectively</description></item>
+    ///         <item><term>
+    ///             SX, SY, SW, SH</term>
+    ///         <description>
+    ///             Screen X, Y, Width, Height, respectively</description></item></list></summary>
     public sealed class Canvas
     {
 #pragma warning disable 1591    // Missing XML comment for publicly visible type or member
-        /// <summary>
-        /// The underlying Graphics. All the actual drawing is done onto this instance.
-        /// </summary>
+        /// <summary>The underlying Graphics. All the actual drawing is done onto this instance.</summary>
         public Graphics Graphics = null;
 
-        /// <summary>
-        /// Selects a coordinate axes mode.
-        /// </summary>
+        /// <summary>Selects a coordinate axes mode.</summary>
         public CoordinateAxesDirection CoordinateAxesDirection = CoordinateAxesDirection.RightDown;
 
         /// <summary>
-        /// Stores the screen size. "Screen" here refers to the final surface that this Canvas is destined for.
-        /// The screen size is used for "set viewport" methods which do not take a screen location: they assume
-        /// the relevant screen edge is meant instead.
-        /// </summary>
+        ///     Stores the screen size. "Screen" here refers to the final surface that this Canvas is destined for. The screen
+        ///     size is used for "set viewport" methods which do not take a screen location: they assume the relevant screen
+        ///     edge is meant instead.</summary>
         public Size ScreenSize;
 
-        /// <summary>
-        /// The font to be used by text drawing functions if no font is specified.
-        /// </summary>
+        /// <summary>The font to be used by text drawing functions if no font is specified.</summary>
         public Font DefaultFont = new Font("Arial", 10f);
 
         // Really try to keep these private if at all possible. ScaleX/Y must be greater than zero.
@@ -76,25 +89,19 @@ namespace RT.Util.Drawing
         private double _offsetX = 0;
         private double _offsetY = 0;
 
-        /// <summary>
-        /// Creates an instance without initializing any of the required fields.
-        /// </summary>
+        /// <summary>Creates an instance without initializing any of the required fields.</summary>
         public Canvas()
         {
         }
 
-        /// <summary>
-        /// Creates an instance using the specified Graphics as the underlying drawing surface.
-        /// </summary>
+        /// <summary>Creates an instance using the specified Graphics as the underlying drawing surface.</summary>
         public Canvas(Graphics graphics)
         {
             Graphics = graphics;
         }
 
         /// <summary>
-        /// Creates an instance using the specified graphics and screenSize. See <see cref="ScreenSize"/>
-        /// for more info.
-        /// </summary>
+        ///     Creates an instance using the specified graphics and screenSize. See <see cref="ScreenSize"/> for more info.</summary>
         public Canvas(Graphics graphics, Size screenSize)
         {
             Graphics = graphics;
@@ -102,18 +109,15 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Resets the scaling and offset so that world coordinates correspond to screen pixels.
-        /// Maintains the offsets so that all visible pixels have positive coordinates and one of
-        /// the corners is 0,0.
-        /// </summary>
+        ///     Resets the scaling and offset so that world coordinates correspond to screen pixels. Maintains the offsets so
+        ///     that all visible pixels have positive coordinates and one of the corners is 0,0.</summary>
         public void ResetViewport()
         {
         }
 
         /// <summary>
-        /// Sets the viewport so that the specified world coordinate is in the centre of the
-        /// viewable screen, using the specified scaling factor.
-        /// </summary>
+        ///     Sets the viewport so that the specified world coordinate is in the centre of the viewable screen, using the
+        ///     specified scaling factor.</summary>
         public void SetViewport(double centerWX, double centerWY, double scale)
         {
             _scaleX = _scaleY = scale;
@@ -121,11 +125,9 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Sets the scaling and offset so that the world coordinate "leftWX" corresponds to the leftmost
-        /// coordinate on the screen, world "topWY" to the topmost screen coordinate, etc. If "maintainAspect"
-        /// is "true", ensures that X and Y scaling is the same, by making one of the axes show more than implied by
-        /// the arguments passed in.
-        /// </summary>
+        ///     Sets the scaling and offset so that the world coordinate "leftWX" corresponds to the leftmost coordinate on
+        ///     the screen, world "topWY" to the topmost screen coordinate, etc. If "maintainAspect" is "true", ensures that X
+        ///     and Y scaling is the same, by making one of the axes show more than implied by the arguments passed in.</summary>
         public void SetViewport(double leftWX, double topWY, double rightWX, double bottomWY, bool maintainAspect)
         {
             switch (CoordinateAxesDirection)
@@ -181,9 +183,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Adjusts the offsets so that the world coordinate wx,wy is at the
-        /// screen coordinate sx,sy. Does not modify the scaling.
-        /// </summary>
+        ///     Adjusts the offsets so that the world coordinate wx,wy is at the screen coordinate sx,sy. Does not modify the
+        ///     scaling.</summary>
         public void MoveViewport(float sx, float sy, double wx, double wy)
         {
             // Want this to be true:
@@ -199,18 +200,16 @@ namespace RT.Util.Drawing
         #region World-to-screen conversion
 
         /// <summary>
-        /// Converts world X coordinate into screen X. Screen X is zero at the leftmost pixel
-        /// and Screen.Width at the rightmost pixel.
-        /// </summary>
+        ///     Converts world X coordinate into screen X. Screen X is zero at the leftmost pixel and Screen.Width at the
+        ///     rightmost pixel.</summary>
         public float SX(double wx)
         {
             return (float) (wx * _scaleX + _offsetX);
         }
 
         /// <summary>
-        /// Converts world Y coordinate into screen Y. Screen Y is zero at the topmost pixel
-        /// and Screen.Height at the bottommost pixel.
-        /// </summary>
+        ///     Converts world Y coordinate into screen Y. Screen Y is zero at the topmost pixel and Screen.Height at the
+        ///     bottommost pixel.</summary>
         public float SY(double wy)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
@@ -219,32 +218,16 @@ namespace RT.Util.Drawing
                 return (float) (wy * _scaleY + _offsetY);
         }
 
-        /// <summary>
-        /// Converts world width into screen width. Screen width is measured in pixels.
-        /// </summary>
-        public float SW(double ww)
-        {
-            return (float) (ww * _scaleX);
-        }
+        /// <summary>Converts world width into screen width. Screen width is measured in pixels.</summary>
+        public float SW(double ww) => (float) (ww * _scaleX);
 
-        /// <summary>
-        /// Converts world height into screen height. Screen height is measured in pixels.
-        /// </summary>
-        public float SH(double wh)
-        {
-            return (float) (wh * _scaleY);
-        }
+        /// <summary>Converts world height into screen height. Screen height is measured in pixels.</summary>
+        public float SH(double wh) => (float) (wh * _scaleY);
 
         /// <summary>Converts a world point to a screen point.</summary>
-        public PointF SP(PointD wp)
-        {
-            return new PointF(SX(wp.X), SY(wp.Y));
-        }
+        public PointF SP(PointD wp) => new PointF(SX(wp.X), SY(wp.Y));
 
-        /// <summary>
-        /// For internal use only. Converts world angle into screen angle as understood by
-        /// GDI routines.
-        /// </summary>
+        /// <summary>For internal use only. Converts world angle into screen angle as understood by GDI routines.</summary>
         private float sa(double wa)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
@@ -254,10 +237,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// For internal use only.
-        /// Given two world coordinates, one known to be smaller than the other one,
-        /// returns the one that would be higher on the screen, converted to screen coordinates.
-        /// </summary>
+        ///     For internal use only. Given two world coordinates, one known to be smaller than the other one, returns the
+        ///     one that would be higher on the screen, converted to screen coordinates.</summary>
         private float sTop(double yMin, double yMax)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightDown)
@@ -271,18 +252,16 @@ namespace RT.Util.Drawing
         #region Screen-to-world conversion
 
         /// <summary>
-        /// Converts screen X coordinate into world X. Screen X is zero at the leftmost pixel
-        /// and Screen.Width at the rightmost pixel.
-        /// </summary>
+        ///     Converts screen X coordinate into world X. Screen X is zero at the leftmost pixel and Screen.Width at the
+        ///     rightmost pixel.</summary>
         public double WX(float sx)
         {
             return (sx - _offsetX) / _scaleX;
         }
 
         /// <summary>
-        /// Converts screen Y coordinate into world Y. Screen Y is zero at the topmost pixel
-        /// and Screen.Height at the bottommost pixel.
-        /// </summary>
+        ///     Converts screen Y coordinate into world Y. Screen Y is zero at the topmost pixel and Screen.Height at the
+        ///     bottommost pixel.</summary>
         public double WY(float sy)
         {
             if (CoordinateAxesDirection == CoordinateAxesDirection.RightUp)
@@ -291,43 +270,26 @@ namespace RT.Util.Drawing
                 return (sy - _offsetY) / _scaleY;
         }
 
-        /// <summary>
-        /// Converts screen width into world width. Screen width is measured in pixels.
-        /// </summary>
-        public double WW(float sw)
-        {
-            return sw / _scaleX;
-        }
+        /// <summary>Converts screen width into world width. Screen width is measured in pixels.</summary>
+        public double WW(float sw) => sw / _scaleX;
 
-        /// <summary>
-        /// Converts screen height into world height. Screen height is measured in pixels.
-        /// </summary>
-        public double WH(float sh)
-        {
-            return sh / _scaleY;
-        }
+        /// <summary>Converts screen height into world height. Screen height is measured in pixels.</summary>
+        public double WH(float sh) => sh / _scaleY;
 
         /// <summary>Converts a screen point to a world point.</summary>
-        public PointD WP(PointF sp)
-        {
-            return new PointD(WX(sp.X), WY(sp.Y));
-        }
+        public PointD WP(PointF sp) => new PointD(WX(sp.X), WY(sp.Y));
 
         #endregion
 
         #region Drawing functions
 
-        /// <summary>
-        /// Fills the entire "screen" with the specified color.
-        /// </summary>
+        /// <summary>Fills the entire "screen" with the specified color.</summary>
         public void Clear(Color color)
         {
             Graphics.Clear(color);
         }
 
-        /// <summary>
-        /// Draws a straight line using the specified pen.
-        /// </summary>
+        /// <summary>Draws a straight line using the specified pen.</summary>
         public void DrawLine(Pen pen, EdgeD segment)
         {
             Graphics.DrawLine(pen,
@@ -335,61 +297,47 @@ namespace RT.Util.Drawing
                 SX(segment.End.X), SY(segment.End.Y));
         }
 
-        /// <summary>
-        /// Draws a straight line using the specified pen.
-        /// </summary>
+        /// <summary>Draws a straight line using the specified pen.</summary>
         public void DrawLine(Pen pen, PointD pt1, PointD pt2)
         {
             Graphics.DrawLine(pen, SX(pt1.X), SY(pt1.Y), SX(pt2.X), SY(pt2.Y));
         }
 
-        /// <summary>
-        /// Draws a straight line using the specified pen.
-        /// </summary>
+        /// <summary>Draws a straight line using the specified pen.</summary>
         public void DrawLine(Pen pen, double x1, double y1, double x2, double y2)
         {
             Graphics.DrawLine(pen, SX(x1), SY(y1), SX(x2), SY(y2));
         }
 
         /// <summary>
-        /// Draws a rectangle using the specified pen. "xMin" and "yMin" specify the corner
-        /// that has the smallest coordinates, so the resulting rectangle will be on coordinates
-        /// xMin, yMin, xMin+width, yMin+height.
-        /// </summary>
+        ///     Draws a rectangle using the specified pen. "xMin" and "yMin" specify the corner that has the smallest
+        ///     coordinates, so the resulting rectangle will be on coordinates xMin, yMin, xMin+width, yMin+height.</summary>
         public void DrawRectangle(Pen pen, double xMin, double yMin, double width, double height)
         {
             Graphics.DrawRectangle(pen, SX(xMin), sTop(yMin, yMin + height), SW(width) + 1, SH(height) + 1);
         }
 
-        /// <summary>
-        /// Draws a rectangle using the specified pen. The bounding box defines the coordinates.
-        /// </summary>
+        /// <summary>Draws a rectangle using the specified pen. The bounding box defines the coordinates.</summary>
         public void DrawRectangle(Pen pen, ref BoundingBoxD box)
         {
             Graphics.DrawRectangle(pen, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin) + 1, SH(box.Ymax - box.Ymin) + 1);
         }
 
         /// <summary>
-        /// Fills a rectangle using the specified brush. "xMin" and "yMin" specify the corner
-        /// that has the smallest coordinates, so the resulting rectangle will be on coordinates
-        /// xMin, yMin, xMin+width, yMin+height.
-        /// </summary>
+        ///     Fills a rectangle using the specified brush. "xMin" and "yMin" specify the corner that has the smallest
+        ///     coordinates, so the resulting rectangle will be on coordinates xMin, yMin, xMin+width, yMin+height.</summary>
         public void FillRectangle(Brush brush, double xMin, double yMin, double width, double height)
         {
             Graphics.FillRectangle(brush, SX(xMin), sTop(yMin, yMin + height), SW(width) + 1, SH(height) + 1);
         }
 
-        /// <summary>
-        /// Fills a rectangle using the specified brush. The bounding box defines the coordinates.
-        /// </summary>
+        /// <summary>Fills a rectangle using the specified brush. The bounding box defines the coordinates.</summary>
         public void FillRectangle(Brush brush, ref BoundingBoxD box)
         {
             Graphics.FillRectangle(brush, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin) + 1, SH(box.Ymax - box.Ymin) + 1);
         }
 
-        /// <summary>
-        /// Draws a circle using the specified pen.
-        /// </summary>
+        /// <summary>Draws a circle using the specified pen.</summary>
         public void DrawCircle(Pen pen, PointD center, double radius)
         {
             Graphics.DrawEllipse(pen,
@@ -397,9 +345,7 @@ namespace RT.Util.Drawing
                 SW(2 * radius), SH(2 * radius));
         }
 
-        /// <summary>
-        /// Draws a circle using the specified pen.
-        /// </summary>
+        /// <summary>Draws a circle using the specified pen.</summary>
         public void DrawCircle(Pen pen, double centerX, double centerY, double radius)
         {
             Graphics.DrawEllipse(pen,
@@ -407,9 +353,7 @@ namespace RT.Util.Drawing
                 SW(2 * radius), SH(2 * radius));
         }
 
-        /// <summary>
-        /// Fills a circle using the specified pen.
-        /// </summary>
+        /// <summary>Fills a circle using the specified pen.</summary>
         public void FillCircle(Brush brush, PointD center, double radius)
         {
             Graphics.FillEllipse(brush,
@@ -417,9 +361,7 @@ namespace RT.Util.Drawing
                 SW(2 * radius), SH(2 * radius));
         }
 
-        /// <summary>
-        /// Fills a circle using the specified pen.
-        /// </summary>
+        /// <summary>Fills a circle using the specified pen.</summary>
         public void FillCircle(Brush brush, double centerX, double centerY, double radius)
         {
             Graphics.FillEllipse(brush,
@@ -427,9 +369,7 @@ namespace RT.Util.Drawing
                 SW(2 * radius), SH(2 * radius));
         }
 
-        /// <summary>
-        /// Draws an arc using the specified pen.
-        /// </summary>
+        /// <summary>Draws an arc using the specified pen.</summary>
         public void DrawArc(Pen pen, PointD center, double radius, double startAngle, double sweepAngle)
         {
             // DrawArc angles are in fricken degrees! I bet they are converted to radians internally before use...
@@ -440,9 +380,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are
-        /// connected to the centre with straight lines.
-        /// </summary>
+        ///     Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are connected to the centre
+        ///     with straight lines.</summary>
         public void DrawPie(Pen pen, PointD center, double radius, double startAngle, double sweepAngle)
         {
             // DrawPie angles are in fricken degrees! I bet they are converted to radians internally before use...
@@ -453,9 +392,8 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are
-        /// connected to the centre with straight lines.
-        /// </summary>
+        ///     Draws a "pie" using the specified pen. A pie is a circular arc whose endpoints are connected to the centre
+        ///     with straight lines.</summary>
         public void DrawPie(Pen pen, double centerX, double centerY, double radius, double startAngle, double sweepAngle)
         {
             // DrawPie angles are in fricken degrees! I bet they are converted to radians internally before use...
@@ -466,9 +404,7 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws text using the specified font and brush. The text's bounding box is centered on
-        /// the specified point.
-        /// </summary>
+        ///     Draws text using the specified font and brush. The text's bounding box is centered on the specified point.</summary>
         public void DrawText(string text, Brush brush, Font font, double centerX, double centerY)
         {
             SizeF size = Graphics.MeasureString(text, font);
@@ -476,18 +412,15 @@ namespace RT.Util.Drawing
         }
 
         /// <summary>
-        /// Draws text using the specified font and brush. The text's bounding box is centered on
-        /// the specified point.
-        /// </summary>
+        ///     Draws text using the specified font and brush. The text's bounding box is centered on the specified point.</summary>
         public void DrawText(string text, Brush brush, Font font, PointD center)
         {
             DrawText(text, brush, font, center.X, center.Y);
         }
 
         /// <summary>
-        /// Draws text using the default font and the specified brush. The text's bounding box is centered on
-        /// the specified point.
-        /// </summary>
+        ///     Draws text using the default font and the specified brush. The text's bounding box is centered on the
+        ///     specified point.</summary>
         public void DrawText(string text, Brush brush, double centerX, double centerY)
         {
             DrawText(text, brush, DefaultFont, centerX, centerY);
@@ -547,17 +480,13 @@ namespace RT.Util.Drawing
             DrawText(text, brush, font, center.X + sd, center.Y - sd);
         }
 
-        /// <summary>
-        /// Draws a GraphicsPath using the specified pen.
-        /// </summary>
+        /// <summary>Draws a GraphicsPath using the specified pen.</summary>
         public void DrawPath(Pen pen, GraphicsPath path)
         {
             Graphics.DrawPath(pen, path);
         }
 
-        /// <summary>
-        /// Fills a GraphicsPath using the specified brush.
-        /// </summary>
+        /// <summary>Fills a GraphicsPath using the specified brush.</summary>
         public void FillPath(Brush brush, GraphicsPath path)
         {
             Graphics.FillPath(brush, path);
