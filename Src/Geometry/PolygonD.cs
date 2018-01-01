@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Geometry
 {
@@ -12,6 +13,11 @@ namespace RT.Util.Geometry
 
         /// <summary>Returns a list of vertices of the polygon.</summary>
         public List<PointD> Vertices { get { return _vertices; } }
+
+        /// <summary>
+        ///     Enumerates the edges of this polygon in vertex order. The enumerable is "live" and reflects any changes to
+        ///     <see cref="Vertices"/> immediately.</summary>
+        public IEnumerable<EdgeD> Edges => Vertices.ConsecutivePairs(closed: true).Select(pair => new EdgeD(pair.Item1, pair.Item2));
 
         /// <summary>
         ///     Initializes a polygon from a given list of vertices.</summary>

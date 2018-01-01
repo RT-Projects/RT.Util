@@ -235,6 +235,12 @@ namespace RT.Util.Drawing
             return (float) (wh * _scaleY);
         }
 
+        /// <summary>Converts a world point to a screen point.</summary>
+        public PointF SP(PointD wp)
+        {
+            return new PointF(SX(wp.X), SY(wp.Y));
+        }
+
         /// <summary>
         /// For internal use only. Converts world angle into screen angle as understood by
         /// GDI routines.
@@ -299,6 +305,12 @@ namespace RT.Util.Drawing
         public double WH(float sh)
         {
             return sh / _scaleY;
+        }
+
+        /// <summary>Converts a screen point to a world point.</summary>
+        public PointD WP(PointF sp)
+        {
+            return new PointD(WX(sp.X), WY(sp.Y));
         }
 
         #endregion

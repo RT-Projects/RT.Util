@@ -116,7 +116,7 @@ namespace RT.Util.Geometry
         /// <summary>Returns a hash code for the current <see cref="PointD"/>.</summary>
         public override int GetHashCode()
         {
-            return X.GetHashCode() ^ Y.GetHashCode();
+            return X.GetHashCode() * 31 + Y.GetHashCode();
         }
 
         /// <summary>

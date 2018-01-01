@@ -38,6 +38,8 @@ namespace RT.Util.Geometry
         public double Width { get { return Math.Abs(Start.X - End.X); } }
         /// <summary>Returns the difference in the Y-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
         public double Height { get { return Math.Abs(Start.Y - End.Y); } }
+        /// <summary>Returns the length of this edge (the distance between <see cref="Start"/> and <see cref="End"/>).</summary>
+        public double Length => (End - Start).Abs();
 
         /// <summary>
         ///     Determines whether two edges intersect.</summary>
