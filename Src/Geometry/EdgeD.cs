@@ -67,37 +67,24 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        ///     Compares two <see cref="EdgeD"/> objects for equality.</summary>
-        /// <param name="other">
-        ///     Object to compare this one against.</param>
-        /// <returns>
-        ///     True if considered equal.</returns>
+        ///     Compares two <see cref="EdgeD"/> ignoring direction: edges are considered equal as long as they have the same
+        ///     endpoints.</summary>
         public bool Equals(EdgeD other)
         {
             return (Start == other.Start && End == other.End) || (Start == other.End && End == other.Start);
         }
 
         /// <summary>
-        ///     Compares two <see cref="EdgeD"/> objects for equality.</summary>
-        /// <param name="one">
-        ///     First object to compare.</param>
-        /// <param name="other">
-        ///     Object to compare against.</param>
-        /// <returns>
-        ///     True if considered equal.</returns>
+        ///     Compares two <see cref="EdgeD"/> ignoring direction: edges are considered equal as long as they have the same
+        ///     endpoints.</summary>
         public static bool operator ==(EdgeD one, EdgeD other)
         {
             return one.Equals(other);
         }
 
         /// <summary>
-        ///     Compares two <see cref="EdgeD"/> objects for inequality.</summary>
-        /// <param name="one">
-        ///     First object to compare.</param>
-        /// <param name="other">
-        ///     Object to compare against.</param>
-        /// <returns>
-        ///     True if considered different.</returns>
+        ///     Compares two <see cref="EdgeD"/> ignoring direction: edges are considered equal as long as they have the same
+        ///     endpoints.</summary>
         public static bool operator !=(EdgeD one, EdgeD other)
         {
             return !one.Equals(other);
@@ -106,7 +93,13 @@ namespace RT.Util.Geometry
         /// <summary>Returns a hash code for the current <see cref="EdgeD"/>.</summary>
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            // Equality of edges ignores endpoint order; the hash code must do this too
+            var pt1 =
+                Start.X < End.X ? Start :
+                Start.X > End.X ? End :
+                Start.Y < End.Y ? Start : End;
+            var pt2 = pt1 == Start ? End : Start;
+            return pt1.GetHashCode() * 31 + pt2.GetHashCode();
         }
 
         /// <summary>
@@ -144,7 +137,7 @@ namespace RT.Util.Geometry
                 return Start + lambda * (End - Start);
         }
 
-        /// <summary>
+        /// <summary> 
         ///     Calculates the projection of the specified point onto the line defined by this edge. Returns the Lambda of
         ///     this point P, defined by P = Start + Lambda * (End - Start). Hence the lambda is 0 if the projection falls
         ///     exactly onto the Start point, and 1 if it falls on the End point.</summary>
