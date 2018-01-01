@@ -116,6 +116,7 @@
     <Compile Include="CustomComparer.cs" />
     <Compile Include="ExtensionMethods\TextReaderWriterExtensions.cs" />
     <Compile Include="Geometry\TriangleD.cs" />
+    <Compile Include="Geometry\Triangulate.cs" />
     <Compile Include="HClient.cs" />
     <Compile Include="ILReader.cs" />
     <Compile Include="Drawing\BytesBitmap.cs" />
