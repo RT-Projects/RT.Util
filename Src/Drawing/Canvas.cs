@@ -337,6 +337,30 @@ namespace RT.Util.Drawing
             Graphics.FillRectangle(brush, SX(box.Xmin), sTop(box.Ymin, box.Ymax), SW(box.Xmax - box.Xmin) + 1, SH(box.Ymax - box.Ymin) + 1);
         }
 
+        /// <summary>Draws a triangle using the specified pen.</summary>
+        public void DrawTriangle(Pen pen, TriangleD triangle)
+        {
+            DrawTriangle(pen, triangle.V1, triangle.V2, triangle.V3);
+        }
+
+        /// <summary>Draws a triangle using the specified pen.</summary>
+        public void DrawTriangle(Pen pen, PointD v1, PointD v2, PointD v3)
+        {
+            Graphics.DrawPolygon(pen, new[] { SP(v1), SP(v2), SP(v3) });
+        }
+
+        /// <summary>Fills a triangle using the specified brush.</summary>
+        public void FillTriangle(Brush brush, TriangleD triangle)
+        {
+            FillTriangle(brush, triangle.V1, triangle.V2, triangle.V3);
+        }
+
+        /// <summary>Fills a triangle using the specified brush.</summary>
+        public void FillTriangle(Brush brush, PointD v1, PointD v2, PointD v3)
+        {
+            Graphics.FillPolygon(brush, new[] { SP(v1), SP(v2), SP(v3) });
+        }
+
         /// <summary>Draws a circle using the specified pen.</summary>
         public void DrawCircle(Pen pen, PointD center, double radius)
         {
