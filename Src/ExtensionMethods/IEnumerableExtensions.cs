@@ -1429,6 +1429,29 @@ namespace RT.Util.ExtensionMethods
                 throw new InvalidOperationException("Cannot pick an element from an empty set.");
             return list[rnd == null ? Rnd.Next(list.Count) : rnd.Next(list.Count)];
         }
+
+        /// <summary>
+        ///     Returns only the non-<c>null</c> elements from the specified collection of nullable values as non-nullable
+        ///     values.</summary>
+        /// <typeparam name="T">
+        ///     The inner value type.</typeparam>
+        /// <param name="src">
+        ///     A collection of nullable values.</param>
+        /// <returns>
+        ///     A collection containing only those values that aren’t <c>null</c>.</returns>
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> src) where T : struct
+        {
+            if (src == null)
+                throw new ArgumentNullException(nameof(src));
+            return whereNotNullImpl(src);
+        }
+
+        private static IEnumerable<T> whereNotNullImpl<T>(IEnumerable<T?> src) where T : struct
+        {
+            foreach (var tq in src)
+                if (tq != null)
+                    yield return tq.Value;
+        }
     }
 
     /// <summary>
