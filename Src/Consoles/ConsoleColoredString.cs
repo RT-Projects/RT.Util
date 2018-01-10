@@ -1035,6 +1035,26 @@ namespace RT.Util.Consoles
             }
         }
 
+        public ConsoleColoredString PadLeft(int totalWidth) => PadLeft(totalWidth, ' ');
+        public ConsoleColoredString PadLeft(int totalWidth, ConsoleColoredChar paddingChar)
+        {
+            if (totalWidth < 0)
+                throw new ArgumentOutOfRangeException("totalWidth", "Total width cannot be negative.");
+            if (Length >= totalWidth)
+                return this;
+            return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
+        }
+
+        public ConsoleColoredString PadRight(int totalWidth) => PadRight(totalWidth, ' ');
+        public ConsoleColoredString PadRight(int totalWidth, ConsoleColoredChar paddingChar)
+        {
+            if (totalWidth < 0)
+                throw new ArgumentOutOfRangeException("totalWidth", "Total width cannot be negative.");
+            if (Length >= totalWidth)
+                return this;
+            return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
+        }
+
         /// <summary>
         ///     Returns a string in which the coloration of this ConsoleColoredString is represented as user-readable text.</summary>
         public string ToDebugString
@@ -1059,7 +1079,7 @@ namespace RT.Util.Consoles
     }
 
     /// <summary>Contains a character and a console foreground and background color.</summary>
-    public sealed class ConsoleColoredChar
+    public struct ConsoleColoredChar
     {
         /// <summary>Gets the character.</summary>
         public char Character { get; private set; }
@@ -1092,10 +1112,6 @@ namespace RT.Util.Consoles
         ///     The color of each character in the input strings is preserved.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredChar char2)
         {
-            if (char1 == null)
-                return char2.ToConsoleColoredString();
-            if (char2 == null)
-                return char1.ToConsoleColoredString();
             return new ConsoleColoredString(string.Concat(char1.Character, char2.Character), new[] { char1.Color, char2.Color }, new[] { char1.BackgroundColor, char2.BackgroundColor });
         }
 
@@ -1110,8 +1126,6 @@ namespace RT.Util.Consoles
         ///     The color of the character is preserved. The string is given the console default color.</remarks>
         public static ConsoleColoredString operator +(ConsoleColoredChar char1, string string2)
         {
-            if (char1 == null)
-                return string2 ?? "";    // implicit conversion
             if (string2 == null || string2.Length == 0)
                 return char1.ToConsoleColoredString();
 
@@ -1134,8 +1148,6 @@ namespace RT.Util.Consoles
         ///     The color of the character is preserved. The string is given the console default color.</remarks>
         public static ConsoleColoredString operator +(string string1, ConsoleColoredChar char2)
         {
-            if (char2 == null)
-                return string1 ?? "";   // implicit conversion
             if (string1 == null || string1.Length == 0)
                 return char2.ToConsoleColoredString(); ;
 
@@ -1145,5 +1157,11 @@ namespace RT.Util.Consoles
             background[string1.Length] = char2.BackgroundColor;
             return new ConsoleColoredString(string1 + char2.Character, foreground, background);
         }
+
+        /// <summary>
+        ///     Implicitly converts an uncolored <c>char</c> to a <see cref="ConsoleColoredChar"/> with no color.</summary>
+        /// <param name="ch">
+        ///     The character to convert.</param>
+        public static implicit operator ConsoleColoredChar(char ch) => new ConsoleColoredChar(ch, null);
     }
 }

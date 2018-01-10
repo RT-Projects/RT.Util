@@ -1108,8 +1108,8 @@ namespace RT.Util.ExtensionMethods
         {
             if (obj == null)
                 return ConsoleColoredString.Empty;
-            ConsoleColoredChar cc;
-            if ((cc = obj as ConsoleColoredChar) != null)
+
+            if (obj is ConsoleColoredChar cc)
                 return cc.Character.ToString().Color(cc.Color, cc.BackgroundColor);
             return (obj as ConsoleColoredString) ?? obj.ToString().Color(defaultForeground, defaultBackground);
         }
