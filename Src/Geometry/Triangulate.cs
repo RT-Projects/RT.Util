@@ -68,9 +68,9 @@ namespace RT.Util.Geometry
         public static IEnumerable<TriangleD> DelaunayConstrained(IEnumerable<PointD> vertices, IEnumerable<EdgeD> requiredEdges)
         {
             if (requiredEdges.Any(e => !vertices.Contains(e.Start) || !vertices.Contains(e.End)))
-                throw new ArgumentException("The end points of every required edge must be in the list of vertices to triangulate");
+                throw new ArgumentException("The end points of every required edge must be in the list of vertices to triangulate", nameof(requiredEdges));
             if (requiredEdges.Any(e => e.Start == e.End))
-                throw new ArgumentException("Required edges must have a non-zero length");
+                throw new ArgumentException("Required edges must have a non-zero length", nameof(requiredEdges));
 
             var curVertices = vertices.ToHashSet();
             var requiredEdgeSet = requiredEdges.ToHashSet(); // to avoid missing edges due to floating point errors, we update the list every time we split a required edge

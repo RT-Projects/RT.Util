@@ -1035,7 +1035,21 @@ namespace RT.Util.Consoles
             }
         }
 
+        /// <summary>
+        ///     Returns a new string that right-aligns the characters in this instance by padding them with spaces on the
+        ///     left, for a specified total length.</summary>
+        /// <param name="totalWidth">
+        ///     The number of characters in the resulting string, equal to the number of original characters plus any
+        ///     additional padding characters.</param>
         public ConsoleColoredString PadLeft(int totalWidth) => PadLeft(totalWidth, ' ');
+        /// <summary>
+        ///     Returns a new string that right-aligns the characters in this instance by padding them on the left with a
+        ///     specified colored character, for a specified total length.</summary>
+        /// <param name="totalWidth">
+        ///     The number of characters in the resulting string, equal to the number of original characters plus any
+        ///     additional padding characters.</param>
+        /// <param name="paddingChar">
+        ///     A colored padding character.</param>
         public ConsoleColoredString PadLeft(int totalWidth, ConsoleColoredChar paddingChar)
         {
             if (totalWidth < 0)
@@ -1045,7 +1059,21 @@ namespace RT.Util.Consoles
             return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
         }
 
+        /// <summary>
+        ///     Returns a new string that left-aligns the characters in this instance by padding them with spaces on the
+        ///     right, for a specified total length.</summary>
+        /// <param name="totalWidth">
+        ///     The number of characters in the resulting string, equal to the number of original characters plus any
+        ///     additional padding characters.</param>
         public ConsoleColoredString PadRight(int totalWidth) => PadRight(totalWidth, ' ');
+        /// <summary>
+        ///     Returns a new string that left-aligns the characters in this instance by padding them on the right with a
+        ///     specified colored character, for a specified total length.</summary>
+        /// <param name="totalWidth">
+        ///     The number of characters in the resulting string, equal to the number of original characters plus any
+        ///     additional padding characters.</param>
+        /// <param name="paddingChar">
+        ///     A colored padding character.</param>
         public ConsoleColoredString PadRight(int totalWidth, ConsoleColoredChar paddingChar)
         {
             if (totalWidth < 0)
