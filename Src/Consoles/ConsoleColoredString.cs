@@ -621,8 +621,7 @@ namespace RT.Util.Consoles
                             if (backgroundStr != null && backgroundStr != "" && !Enum.TryParse<ConsoleColor>(backgroundStr, true, out background))
                                 throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
 
-                            var objFormattable = args[num] as IFormattable;
-                            var result = args[num] as ConsoleColoredString;
+                            var result = (args[num] as ConsoleColoredString) ?? (args[num] as ConsoleColoredChar?)?.ToConsoleColoredString();
 
                             // If the object is a ConsoleColoredString, use it (and color it if a color is explicitly specified)
                             if (result != null)
@@ -639,6 +638,7 @@ namespace RT.Util.Consoles
                             // ... otherwise use IFormattable and/or the custom formatter (and then color the result of that, if specified).
                             else
                             {
+                                var objFormattable = args[num] as IFormattable;
                                 result = new ConsoleColoredString(
                                     formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
                                     formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
