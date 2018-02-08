@@ -501,6 +501,43 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Similar to <see cref="string.Remove(int)"/>, only for arrays. Returns a new array containing only the items
+        ///     before the specified <paramref name="startIndex"/>.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if <paramref name="startIndex"/> is the length of the array.</remarks>
+        public static T[] Remove<T>(this T[] array, int startIndex)
+        {
+            if (array == null)
+                throw new ArgumentNullException("array");
+            if (startIndex < 0)
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+            if (startIndex > array.Length)
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be greater than the length of the array.");
+            T[] result = new T[startIndex];
+            Array.Copy(array, 0, result, 0, startIndex);
+            return result;
+        }
+
+        /// <summary>
+        ///     Similar to <see cref="string.Remove(int,int)"/>, only for arrays. Returns a new array containing everything
+        ///     except the <paramref name="length"/> items starting from the specified <paramref name="startIndex"/>.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if <paramref name="length"/> is 0.</remarks>
+        public static T[] Remove<T>(this T[] array, int startIndex, int length)
+        {
+            if (array == null)
+                throw new ArgumentNullException("array");
+            if (startIndex < 0)
+                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+            if (length < 0 || startIndex + length > array.Length)
+                throw new ArgumentOutOfRangeException("length", "length cannot be negative or extend beyond the end of the array.");
+            T[] result = new T[array.Length - length];
+            Array.Copy(array, 0, result, 0, startIndex);
+            Array.Copy(array, startIndex + length, result, startIndex, array.Length - length - startIndex);
+            return result;
+        }
+
+        /// <summary>
         ///     Determines whether a subarray within the current array is equal to the specified other array.</summary>
         /// <param name="sourceArray">
         ///     First array to examine.</param>
