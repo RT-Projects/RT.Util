@@ -1011,7 +1011,7 @@ namespace RT.Util.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < infos.Count)
-                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].FieldToAssignTo.GetValue(intoObj), infos[i].EnforceEnum);
+                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].SubstituteConverter == null ? infos[i].FieldToAssignTo.GetValue(intoObj) : null, infos[i].EnforceEnum);
 
                     _doAtTheEnd.Add(() =>
                     {
