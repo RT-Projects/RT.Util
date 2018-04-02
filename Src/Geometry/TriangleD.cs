@@ -17,6 +17,9 @@ namespace RT.Util.Geometry
             V3 = v3;
         }
 
+        /// <summary>Returns a string representation of the triangle.</summary>
+        public override string ToString() => $"Δ {V1} : {V2} : {V3}";
+
         /// <summary>Gets the edge connecting vertices <see cref="V1"/> and <see cref="V2"/>.</summary>
         public EdgeD Edge12 => new EdgeD(V1, V2);
         /// <summary>Gets the edge connecting vertices <see cref="V2"/> and <see cref="V3"/>.</summary>

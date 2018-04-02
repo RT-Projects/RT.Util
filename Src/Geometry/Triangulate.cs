@@ -14,6 +14,9 @@ namespace RT.Util.Geometry
         ///     Adapted mainly from https://github.com/Bl4ckb0ne/delaunay-triangulation</remarks>
         public static IEnumerable<TriangleD> Delaunay(IEnumerable<PointD> vertices)
         {
+            if (!vertices.Any())
+                return new TriangleD[0];
+
             // Find a "super-triangle" which contains all vertices
             var minX = vertices.Min(v => v.X);
             var minY = vertices.Min(v => v.Y);
