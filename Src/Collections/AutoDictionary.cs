@@ -6,28 +6,21 @@ using System.Runtime.Serialization;
 namespace RT.Util.Collections
 {
     /// <summary>
-    ///     Implements a dictionary with a slightly different indexer, namely one that pretends every key has been
-    ///     pre-initialized using an initializer function. See Remarks.</summary>
-    /// <remarks>
-    ///     Only the indexer behaviour is changed; in every other way this behaves just like a standard, non-prepopulated
-    ///     dictionary. Moreover, the implementation is such that the new behaviour is only effective when used directly
-    ///     through the class; accessing the indexer through the <c>IDictionary</c> interface or the <c>Dictionary</c> base
-    ///     class will currently behave the same as it would for a standard dictionary.</remarks>
+    ///     Implements a dictionary with an indexer which automatically inserts missing keys on reads. In all other ways it
+    ///     behaves exactly the same as a standard dictionary.</summary>
     public class AutoDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         private Dictionary<TKey, TValue> _inner;
         private Func<TKey, TValue> _initializer;
 
         /// <summary>
-        ///     Gets or sets the element with the specified key. When getting a key that hasn't been set before, the getter
-        ///     behaves as if the dictionary has been pre-populated for every possible key using the initializer function (or
-        ///     default(TValue) if not provided).</summary>
+        ///     Gets or sets the element with the specified key. When getting a key that hasn't been set before, the key is
+        ///     added to the dictionary with a value returned by the initializer as configured in the constructor.</summary>
         public TValue this[TKey key]
         {
             get
             {
-                TValue v;
-                if (_inner.TryGetValue(key, out v))
+                if (_inner.TryGetValue(key, out TValue v))
                     return v;
                 v = _initializer == null ? default(TValue) : _initializer(key);
                 _inner.Add(key, v);
@@ -116,5 +109,33 @@ namespace RT.Util.Collections
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) { return ((ICollection<KeyValuePair<TKey, TValue>>) _inner).Remove(item); }
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() { return ((IEnumerable<KeyValuePair<TKey, TValue>>) _inner).GetEnumerator(); }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return ((IEnumerable) _inner).GetEnumerator(); }
+    }
+
+    /// <summary>Implements a two-level <see cref="AutoDictionary{TKey, TValue}"/>.</summary>
+    public class AutoDictionary<TKey1, TKey2, TValue> : AutoDictionary<TKey1, AutoDictionary<TKey2, TValue>>
+    {
+        /// <summary>Constructor.</summary>
+        public AutoDictionary(Func<TKey1, TKey2, TValue> initializer = null)
+            : base(key1 => new AutoDictionary<TKey2, TValue>(key2 => initializer == null ? default(TValue) : initializer(key1, key2)))
+        { }
+
+        /// <summary>Constructor.</summary>
+        public AutoDictionary(IEqualityComparer<TKey1> comparer1, IEqualityComparer<TKey2> comparer2, Func<TKey1, TKey2, TValue> initializer = null)
+            : base(comparer1, key1 => new AutoDictionary<TKey2, TValue>(comparer2, key2 => initializer == null ? default(TValue) : initializer(key1, key2)))
+        { }
+    }
+
+    /// <summary>Implements a three-level <see cref="AutoDictionary{TKey, TValue}"/>.</summary>
+    public class AutoDictionary<TKey1, TKey2, TKey3, TValue> : AutoDictionary<TKey1, AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>>
+    {
+        /// <summary>Constructor.</summary>
+        public AutoDictionary(Func<TKey1, TKey2, TKey3, TValue> initializer = null)
+            : base(key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(key2 => new AutoDictionary<TKey3, TValue>(key3 => initializer == null ? default(TValue) : initializer(key1, key2, key3))))
+        { }
+
+        /// <summary>Constructor.</summary>
+        public AutoDictionary(IEqualityComparer<TKey1> comparer1, IEqualityComparer<TKey2> comparer2, IEqualityComparer<TKey3> comparer3, Func<TKey1, TKey2, TKey3, TValue> initializer = null)
+            : base(comparer1, key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(comparer2, key2 => new AutoDictionary<TKey3, TValue>(comparer3, key3 => initializer == null ? default(TValue) : initializer(key1, key2, key3))))
+        { }
     }
 }
