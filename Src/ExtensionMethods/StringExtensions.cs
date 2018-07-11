@@ -1149,6 +1149,20 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Removes the overall indentation of the specified string while maintaining the relative indentation of each
+        ///     line.</summary>
+        /// <param name="str">
+        ///     String to remove indentation from.</param>
+        /// <returns>
+        ///     A string in which every line that isn’t all whitespace has had spaces removed from the beginning equal to the
+        ///     least amount of spaces at the beginning of any line.</returns>
+        public static string Unindent(this string str)
+        {
+            var least = Regex.Matches(str, @"^( *)(?![\r\n ]|\z)", RegexOptions.Multiline).Cast<Match>().Min(m => m.Groups[1].Length);
+            return least == 0 ? str : Regex.Replace(str, "^" + new string(' ', least), "", RegexOptions.Multiline);
+        }
+
+        /// <summary>
         ///     Inserts spaces at the beginning of every line contained within the specified string.</summary>
         /// <param name="str">
         ///     String to add indentation to.</param>
