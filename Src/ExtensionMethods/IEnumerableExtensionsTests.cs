@@ -159,6 +159,9 @@ namespace RT.Util.ExtensionMethods
         public void TestSubsequences()
         {
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.Subsequences<string>(null); });
+            Assert.Throws<ArgumentOutOfRangeException>(() => { IEnumerableExtensions.Subsequences(new string[0], 1); });
+            Assert.Throws<ArgumentOutOfRangeException>(() => { IEnumerableExtensions.Subsequences(new string[0], 0, 1); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.Subsequences(new string[0], 0, 0); });
 
             var input = new[] { 1, 2, 3 };
             var result = input.Subsequences().ToArray();
@@ -173,6 +176,15 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(result.Any(r => r.SequenceEqual(new[] { 2, 3 })));
             Assert.IsTrue(result.Any(r => r.SequenceEqual(new[] { 1, 2, 3 })));
             Assert.IsFalse(result.Any(r => r.SequenceEqual(new[] { 1, 2, 3, 4 })));
+
+            Assert.AreEqual(7, input.Subsequences(1).Count());
+            Assert.AreEqual(4, input.Subsequences(2).Count());
+            Assert.AreEqual(1, input.Subsequences(3).Count());
+
+            Assert.AreEqual(4, input.Subsequences(0, 1).Count());
+            Assert.AreEqual(7, input.Subsequences(0, 2).Count());
+            Assert.AreEqual(3, input.Subsequences(1, 1).Count());
+            Assert.AreEqual(6, input.Subsequences(1, 2).Count());
         }
 
         [Test]

@@ -301,33 +301,57 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns all subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</summary>
+        ///     Returns all subsequences of the specified lengths of the input <see cref="IEnumerable&lt;T&gt;"/>.</summary>
         /// <param name="source">
         ///     The sequence of items to generate subsequences of.</param>
+        /// <param name="minLength">
+        ///     The minimum length of a subsequence to return. But be between 0 and the length of the input collection.</param>
+        /// <param name="maxLength">
+        ///     The maximum length of a subsequence to return. But be between 0 and the length of the input collection. If
+        ///     <c>null</c> is specified, the size of the input collection is used.</param>
         /// <returns>
-        ///     A collection containing all subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
-        public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source)
+        ///     A collection containing all matching subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>
+        public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source, int minLength = 0, int? maxLength = null)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
-            // Ensure that the source IEnumerable is evaluated only once
-            return subsequences(source.ToArray());
-        }
 
-        private static IEnumerable<IEnumerable<T>> subsequences<T>(IEnumerable<T> source)
-        {
-            if (source.Any())
+            // Ensure that the source IEnumerable is evaluated only once
+            var input = (source as IList<T>) ?? source.ToArray();
+
+            if (minLength < 0 || minLength > input.Count)
+                throw new ArgumentOutOfRangeException("minLength", "minLength must be between 0 and the size of the collection.");
+            if (maxLength < 0 || maxLength > input.Count)
+                throw new ArgumentOutOfRangeException("maxLength", "maxLength must be between 0 and the size of the collection.");
+
+            IEnumerable<List<int>> subsequences(int range, int minLen, int maxLen)
             {
-                foreach (var comb in subsequences(source.Skip(1)))
+                var results = new List<List<int>>();
+                if (minLen <= 0 && range == 0)
+                    yield return new List<int>();
+                else if (range > 0 && maxLen > 0)
                 {
-                    yield return comb;
-                    yield return source.Take(1).Concat(comb);
+                    foreach (var list in subsequences(range - 1, minLen - 1, maxLen))
+                    {
+                        if (list.Count >= minLen)
+                        {
+                            if (list.Count < maxLen)
+                            {
+                                var list2 = list.ToList();
+                                list2.Add(range - 1);
+                                yield return list2;
+                            }
+                            yield return list;
+                        }
+                        else if (list.Count < maxLen)
+                        {
+                            list.Add(range - 1);
+                            yield return list;
+                        }
+                    }
                 }
             }
-            else
-            {
-                yield return Enumerable.Empty<T>();
-            }
+            return subsequences(input.Count, minLength, maxLength ?? input.Count).Select(ssq => ssq.Select(ix => input[ix]));
         }
 
         /// <summary>
