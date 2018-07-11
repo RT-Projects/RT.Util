@@ -175,6 +175,26 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
+        ///     Writes the specified <see cref="FormattableString"/> to the console.</summary>
+        /// <param name="value">
+        ///     Formattable string. You can use an interpolated string literal here.</param>
+        /// <param name="foreground">
+        ///     Default foreground color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+        ///     cref="ConsoleColoredChar"/> or a foreground color is unspecified.</param>
+        /// <param name="background">
+        ///     Default background color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+        ///     cref="ConsoleColoredChar"/> or a background color is unspecified.</param>
+        /// <param name="stdErr">
+        ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+        /// <param name="align">
+        ///     Horizontal alignment of the string within the remaining space of the current line. If the string does not fit,
+        ///     it will be printed as if left-aligned.</param>
+        public static void WriteLine(FormattableString value, ConsoleColor? foreground = null, ConsoleColor? background = null, bool stdErr = false, HorizontalTextAlignment align = HorizontalTextAlignment.Left)
+        {
+            WriteLine(value.Format.Color(foreground, background).Fmt(value.GetArguments()), stdErr, align);
+        }
+
+        /// <summary>
         ///     Writes the specified <see cref="ConsoleColoredString"/> followed by a newline to the console.</summary>
         /// <param name="value">
         ///     The string to print to the console.</param>
