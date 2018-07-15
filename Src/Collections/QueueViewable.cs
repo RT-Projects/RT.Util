@@ -41,6 +41,8 @@ namespace RT.Util.Collections
         public QueueViewable(IEnumerable<T> items)
         {
             _data = items.ToArray();
+            _count = _data.Length;
+            _tail = _count;
         }
 
         /// <summary>Adds an item at the tail of the queue.</summary>
