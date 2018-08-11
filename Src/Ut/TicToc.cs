@@ -6,28 +6,29 @@ namespace RT.Util
     {
         private static long _start = 0;
 
-        /// <summary>Starts a simple performance timer. Use <see cref="Toc"/> to stop.</summary>
-        public static void Tic()
+        /// <summary>
+        ///     Starts / resets a simple performance timer. Returns the number of seconds elapsed since the last call to <see
+        ///     cref="Tic"/>, or zero if this is the first call. See also <see cref="Toc"/>.</summary>
+        public static double Tic()
         {
+            long prevStart = _start;
             WinAPI.QueryPerformanceCounter(out _start);
+            return prevStart == 0 ? 0 : ((_start - prevStart) / (double) WinAPI.PerformanceFreq);
         }
 
-        /// <summary>
-        ///     Stops a simple performance timer started by <see cref="Tic"/> and returns the number of seconds elapsed, accurate
-        ///     to the resolution of the system timer. Note that there exists only a single timer; <see cref="Toc"/> returns the
-        ///     time since the very last call to <see cref="Tic"/>.</summary>
+        /// <summary>Returns the number of seconds elapsed since the last call to <see cref="Tic"/>.</summary>
         public static double Toc()
         {
             long stop;
             WinAPI.QueryPerformanceCounter(out stop);
-            return ((double) (stop - _start)) / (double) WinAPI.PerformanceFreq;
+            return (stop - _start) / (double) WinAPI.PerformanceFreq;
         }
     }
 
     /// <summary>
     ///     Provides a more accurate way to measure the amount of CPU time consumed by a thread, using the new
-    ///     QueryThreadCycleTime call introduced in Vista. Unlike <see cref="Ut.Tic"/>, this measures in unspecified units, and
-    ///     only counts the times when this thread is actually in possession of a CPU time slice.</summary>
+    ///     QueryThreadCycleTime call introduced in Vista. Unlike <see cref="Ut.Tic"/>, this measures in unspecified units,
+    ///     and only counts the times when this thread is actually in possession of a CPU time slice.</summary>
     public class TicTocCycles
     {
         private IntPtr _threadHandle;
@@ -57,15 +58,17 @@ namespace RT.Util
             _calibrationCycles = minCycles;
         }
 
-        /// <summary>Indicates the start of a measurement interval.</summary>
-        public void Tic()
+        /// <summary>
+        ///     Starts / resets the timer. Returns the the amount of CPU time consumed by this thread only since the last call
+        ///     to <see cref="Tic"/>, or zero if this is the first call.</summary>
+        public long Tic()
         {
+            ulong prevTicCycles = _ticCycles;
             WinAPI.QueryThreadCycleTime(_threadHandle, out _ticCycles);
+            return prevTicCycles == 0 ? 0 : ((long) _ticCycles - (long) prevTicCycles - _calibrationCycles);
         }
 
-        /// <summary>
-        ///     Indicates the end of a measurement interval. Returns the amount of CPU time consumed by _this thread only_ since
-        ///     the last call to <see cref="Tic"/>.</summary>
+        /// <summary>Returns the amount of CPU time consumed by this thread only since the last call to <see cref="Tic"/>.</summary>
         public long Toc()
         {
             ulong tocCycles;
