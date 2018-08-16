@@ -240,7 +240,7 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
-        ///     Returns a vector of the same length as this vector, but rotated by the specified.</summary>
+        ///     Returns a vector of the same length as this vector, but rotated by the specified <paramref name="angle"/>.</summary>
         /// <param name="angle">
         ///     The angle in radians.</param>
         /// <returns>
