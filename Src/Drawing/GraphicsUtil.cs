@@ -240,15 +240,13 @@ namespace RT.Util.Drawing
             var opaque = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(opaque))
             {
-                if (initGraphics != null)
-                    initGraphics(g);
+                initGraphics?.Invoke(g);
                 drawOpaqueLayer(g);
             }
             var trans = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(trans))
             {
-                if (initGraphics != null)
-                    initGraphics(g);
+                initGraphics?.Invoke(g);
                 drawTransparencyLayer(g);
             }
 

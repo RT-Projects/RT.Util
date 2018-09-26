@@ -305,9 +305,9 @@ namespace RT.Util.ExtensionMethods
         /// <param name="source">
         ///     The sequence of items to generate subsequences of.</param>
         /// <param name="minLength">
-        ///     The minimum length of a subsequence to return. But be between 0 and the length of the input collection.</param>
+        ///     The minimum length of a subsequence to return. Must be between 0 and the length of the input collection.</param>
         /// <param name="maxLength">
-        ///     The maximum length of a subsequence to return. But be between 0 and the length of the input collection. If
+        ///     The maximum length of a subsequence to return. Must be between 0 and the length of the input collection. If
         ///     <c>null</c> is specified, the size of the input collection is used.</param>
         /// <returns>
         ///     A collection containing all matching subsequences of the input <see cref="IEnumerable&lt;T&gt;"/>.</returns>

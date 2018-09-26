@@ -138,7 +138,7 @@ namespace RT.Util
                         {
                             Keyboard = (elem is Keys)
                                 ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) elem }
-                                : new WinAPI.KEYBDINPUT { wScan = (ushort) (char) elem, dwFlags = WinAPI.KEYEVENTF_UNICODE }
+                                : new WinAPI.KEYBDINPUT { wScan = (char) elem, dwFlags = WinAPI.KEYEVENTF_UNICODE }
                         }
                     };
                     var keyUp = keyDown;
@@ -635,15 +635,15 @@ namespace RT.Util
             where TTest5 : TObj
         {
             if (obj is TTest1)
-                action1((TTest1) (object) obj);
+                action1((TTest1) obj);
             else if (obj is TTest2)
-                action2((TTest2) (object) obj);
+                action2((TTest2) obj);
             else if (obj is TTest3)
-                action3((TTest3) (object) obj);
+                action3((TTest3) obj);
             else if (obj is TTest4)
-                action4((TTest4) (object) obj);
+                action4((TTest4) obj);
             else if (obj is TTest5)
-                action5((TTest5) (object) obj);
+                action5((TTest5) obj);
             else if (elseAction != null)
                 elseAction(obj);
         }
@@ -980,9 +980,9 @@ namespace RT.Util
         public static ushort BytesToUShort(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (ushort) (((ushort) buffer[index] << 8) | (ushort) buffer[index + 1]);
+                return (ushort) ((buffer[index] << 8) | buffer[index + 1]);
             else
-                return (ushort) ((ushort) buffer[index] | ((ushort) buffer[index + 1] << 8));
+                return (ushort) (buffer[index] | (buffer[index + 1] << 8));
         }
 
         /// <summary>
@@ -999,9 +999,9 @@ namespace RT.Util
         public static short BytesToShort(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (short) (((ushort) buffer[index] << 8) | (ushort) buffer[index + 1]);
+                return (short) ((buffer[index] << 8) | buffer[index + 1]);
             else
-                return (short) ((ushort) buffer[index] | ((ushort) buffer[index + 1] << 8));
+                return (short) (buffer[index] | (buffer[index + 1] << 8));
         }
 
         /// <summary>
@@ -1018,9 +1018,9 @@ namespace RT.Util
         public static uint BytesToUInt(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (uint) (((uint) buffer[index] << 24) | ((uint) buffer[index + 1] << 16) | ((uint) buffer[index + 2] << 8) | (uint) buffer[index + 3]);
+                return ((uint) buffer[index] << 24) | ((uint) buffer[index + 1] << 16) | ((uint) buffer[index + 2] << 8) | buffer[index + 3];
             else
-                return (uint) ((uint) buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24));
+                return buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24);
         }
 
         /// <summary>
@@ -1037,9 +1037,9 @@ namespace RT.Util
         public static int BytesToInt(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (int) (((int) buffer[index] << 24) | ((int) buffer[index + 1] << 16) | ((int) buffer[index + 2] << 8) | (int) buffer[index + 3]);
+                return (buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3];
             else
-                return (int) ((int) buffer[index] | ((int) buffer[index + 1] << 8) | ((int) buffer[index + 2] << 16) | ((int) buffer[index + 3] << 24));
+                return buffer[index] | (buffer[index + 1] << 8) | (buffer[index + 2] << 16) | (buffer[index + 3] << 24);
         }
 
         /// <summary>
@@ -1056,9 +1056,9 @@ namespace RT.Util
         public static ulong BytesToULong(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (ulong) (((ulong) buffer[index] << 56) | ((ulong) buffer[index + 1] << 48) | ((ulong) buffer[index + 2] << 40) | ((ulong) buffer[index + 3] << 32) | ((ulong) buffer[index + 4] << 24) | ((ulong) buffer[index + 5] << 16) | ((ulong) buffer[index + 6] << 8) | (ulong) buffer[index + 7]);
+                return ((ulong) buffer[index] << 56) | ((ulong) buffer[index + 1] << 48) | ((ulong) buffer[index + 2] << 40) | ((ulong) buffer[index + 3] << 32) | ((ulong) buffer[index + 4] << 24) | ((ulong) buffer[index + 5] << 16) | ((ulong) buffer[index + 6] << 8) | buffer[index + 7];
             else
-                return (ulong) ((ulong) buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56));
+                return buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56);
         }
 
         /// <summary>
@@ -1075,9 +1075,9 @@ namespace RT.Util
         public static long BytesToLong(byte[] buffer, int index, bool bigEndian = false)
         {
             if (bigEndian)
-                return (long) (((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | (long) buffer[index + 7]);
+                return ((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | buffer[index + 7];
             else
-                return (long) ((long) buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56));
+                return buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56);
         }
 
         private static class enumAttributeCache<TAttribute>
