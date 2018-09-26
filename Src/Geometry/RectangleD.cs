@@ -170,5 +170,8 @@ namespace RT.Util.Geometry
                 Width < 0 ? -Width : Width,
                 Height < 0 ? -Height : Height);
         }
+
+        /// <summary>Converts this rectangle to a <see cref="RectangleF"/>.</summary>
+        public RectangleF ToRectangleF() => new RectangleF((float) X, (float) Y, (float) Width, (float) Height);
     }
 }

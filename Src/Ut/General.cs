@@ -1160,7 +1160,15 @@ namespace RT.Util
         ///     The array of elements to hash.</param>
         /// <returns>
         ///     The computed hash value.</returns>
-        public static int ArrayHash(params object[] input)
+        public static int ArrayHash(params object[] input) => ArrayHash((Array) input);
+
+        /// <summary>
+        ///     Computes a hash value from an array of elements.</summary>
+        /// <param name="input">
+        ///     The array of elements to hash.</param>
+        /// <returns>
+        ///     The computed hash value.</returns>
+        public static int ArrayHash(Array input)
         {
             if (input == null)
                 return 0;
@@ -1173,7 +1181,9 @@ namespace RT.Util
             {
                 foreach (object t in input)
                 {
-                    if (t != null)
+                    if (t is Array arr)
+                        hash = hash * a + ArrayHash(arr);
+                    else if (t != null)
                         hash = hash * a + t.GetHashCode();
                     a = a * b;
                 }
