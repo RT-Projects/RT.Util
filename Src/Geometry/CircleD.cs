@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Geometry
 {
@@ -92,5 +94,132 @@ namespace RT.Util.Geometry
 
             return Tuple.Create(new CircleD(xa, ya, targetRadius), new CircleD(xb, yb, targetRadius));
         }
+
+        /// <summary>
+        ///     Determines whether this circle contains the specified <paramref name="point"/>.</summary>
+        /// <param name="point">
+        ///     Point to check.</param>
+        /// <returns>
+        ///     <c>true</c> if the point is contained in this circle, <c>false</c> otherwise.</returns>
+        public bool Contains(PointD point) => Center.Distance(point) <= Radius;
+
+        /// <summary>
+        ///     Returns the smallest circle that encloses all the given points. If 1 point is given, a circle of radius 0 is
+        ///     returned.</summary>
+        /// <param name="points">
+        ///     The set of points to circumscribe.</param>
+        /// <returns>
+        ///     The circumscribed circle.</returns>
+        /// <remarks>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             Runs in expected O(n) time, randomized.</description></item></list></remarks>
+        /// <exception cref="InvalidOperationException">
+        ///     The input collection contained zero points.</exception>
+        public static CircleD GetCircumscribedCircle(IList<PointD> points)
+        {
+            // Clone list to preserve the caller's data
+            List<PointD> shuffled = new List<PointD>(points).Shuffle();
+
+            // Progressively add points to circle or recompute circle
+            // Initially: No boundary points known
+            CircleD? circ = null;
+            for (int i = 0; i < shuffled.Count; i++)
+            {
+                PointD p = shuffled[i];
+                if (circ == null || !circ.Value.Contains(p))
+                    circ = MakeCircleOnePoint(shuffled.GetRange(0, i + 1), p);
+            }
+            if (circ == null)
+                throw new InvalidOperationException("The input collection did not contain any points.");
+            return circ.Value;
+
+            // One boundary point known
+            CircleD MakeCircleOnePoint(List<PointD> pts, PointD p)
+            {
+                CircleD c = new CircleD(p, 0);
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    PointD q = pts[i];
+                    if (!c.Contains(q))
+                    {
+                        if (c.Radius == 0)
+                            c = MakeDiameter(p, q);
+                        else
+                            c = MakeCircleTwoPoints(pts.GetRange(0, i + 1), p, q);
+                    }
+                }
+                return c;
+            }
+
+            // Two boundary pts known
+            CircleD MakeCircleTwoPoints(List<PointD> pts, PointD p, PointD q)
+            {
+                CircleD crc = MakeDiameter(p, q);
+                CircleD left = new CircleD(new PointD(0, 0), -1);
+                CircleD right = new CircleD(new PointD(0, 0), -1);
+
+                // For each point not in the two-point circle
+                PointD pq = q - p;
+                foreach (PointD r in pts)
+                {
+                    if (crc.Contains(r))
+                        continue;
+
+                    // Form a circumcircle and classify it on left or right side
+                    double cross = Cross(pq, r - p);
+                    CircleD c = MakeCircumcircle(p, q, r);
+                    if (c.Radius < 0)
+                        continue;
+                    else if (cross > 0 && (left.Radius < 0 || Cross(pq, c.Center - p) > Cross(pq, left.Center - p)))
+                        left = c;
+                    else if (cross < 0 && (right.Radius < 0 || Cross(pq, c.Center - p) < Cross(pq, right.Center - p)))
+                        right = c;
+                }
+
+                // Select which circle to return
+                if (left.Radius < 0 && right.Radius < 0)
+                    return crc;
+                else if (left.Radius < 0)
+                    return right;
+                else if (right.Radius < 0)
+                    return left;
+                else
+                    return left.Radius <= right.Radius ? left : right;
+            }
+
+            CircleD MakeDiameter(PointD a, PointD b)
+            {
+                PointD c = new PointD((a.X + b.X) / 2, (a.Y + b.Y) / 2);
+                return new CircleD(c, Math.Max(c.Distance(a), c.Distance(b)));
+            }
+
+            CircleD MakeCircumcircle(PointD a, PointD b, PointD c)
+            {
+                // Mathematical algorithm from Wikipedia: Circumscribed circle
+                double ox = (Math.Min(Math.Min(a.X, b.X), c.X) + Math.Max(Math.Min(a.X, b.X), c.X)) / 2;
+                double oy = (Math.Min(Math.Min(a.Y, b.Y), c.Y) + Math.Max(Math.Min(a.Y, b.Y), c.Y)) / 2;
+                double ax = a.X - ox, ay = a.Y - oy;
+                double bx = b.X - ox, by = b.Y - oy;
+                double cx = c.X - ox, cy = c.Y - oy;
+                double d = (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) * 2;
+                if (d == 0)
+                    return new CircleD(new PointD(0, 0), -1);
+                double x = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d;
+                double y = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d;
+                PointD p = new PointD(ox + x, oy + y);
+                double r = Math.Max(Math.Max(p.Distance(a), p.Distance(b)), p.Distance(c));
+                return new CircleD(p, r);
+            }
+
+            // Signed area / determinant thing
+            double Cross(PointD p, PointD q)
+            {
+                return p.X * q.Y - p.Y * q.X;
+            }
+        }
+
+        /// <summary>Returns the rectangle that fully encloses this circle.</summary>
+        public RectangleD ToRectangle() => new RectangleD(Center.X - Radius, Center.Y - Radius, Radius * 2, Radius * 2);
     }
 }
