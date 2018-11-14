@@ -13,7 +13,7 @@ namespace RT.KitchenSink
     public static class DecodeSvgPath
     {
         /// <summary>Encapsulates a piece of SVG path data.</summary>
-        public sealed class PathPiece
+        public class PathPiece
         {
             /// <summary>The type of piece (straight line, curve, etc.)</summary>
             public PathPieceType Type { get; private set; }
@@ -52,7 +52,7 @@ namespace RT.KitchenSink
                     case PathPieceType.Curve: ch = 'C'; break;
                     default: return "z";
                 }
-                return ch + Points.Select(p => $"{p.X},{p.Y}").JoinString(" ");
+                return ch + " " + Points.Select(p => $"{p.X},{p.Y}").JoinString(" ");
             }
 
             /// <summary>
@@ -72,6 +72,34 @@ namespace RT.KitchenSink
             }
         }
 
+        /// <summary>Encapsulates an elliptical arc in SVG path data.</summary>
+        public sealed class PathPieceArc : PathPiece
+        {
+            /// <summary>X radius of the ellipse.</summary>
+            public double RX { get; private set; }
+            /// <summary>Y radius of the ellipse.</summary>
+            public double RY { get; private set; }
+            /// <summary>Rotation (in degrees, clockwise) of the ellipse.</summary>
+            public double XAxisRotation { get; private set; }
+            /// <summary>Determines if the arc should be greater than or less than 180 degrees.</summary>
+            public bool LargeArcFlag { get; private set; }
+            /// <summary>Determines if the arc should begin moving at positive angles or negative ones.</summary>
+            public bool SweepFlag { get; private set; }
+            /// <summary>Constructor/</summary>
+            public PathPieceArc(double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, PointD endPoint)
+                : base(PathPieceType.Arc, new[] { endPoint })
+            {
+                RX = rx;
+                RY = ry;
+                XAxisRotation = xAxisRotation;
+                LargeArcFlag = largeArcFlag;
+                SweepFlag = sweepFlag;
+            }
+
+            /// <summary>Recreates the path in SVG path data syntax.</summary>
+            public override string ToString() => $"A {RX},{RY} {XAxisRotation} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X},{Points[0].Y}";
+        }
+
         /// <summary>Specifies a type of piece within an SVG path.</summary>
         public enum PathPieceType
         {
@@ -86,6 +114,8 @@ namespace RT.KitchenSink
             ///     three (two control points and an end-point). The first start point is the last point of the previous
             ///     piece.</summary>
             Curve,
+            /// <summary>Draws an elliptical arc.</summary>
+            Arc,
             /// <summary>Designates the end of a path or subpath.</summary>
             End
         }
@@ -178,6 +208,7 @@ namespace RT.KitchenSink
             // Parse all the commands and coordinates
             var numRegex = @"-?\d*(?:\.\d*)?\d(?:e-?\d+)?\s*,?\s*";
             var prevPoint = new PointD(0, 0);
+            var prevStartPoint = (PointD?) null;
             var prevControlPoint = new PointD(0, 0);
             svgPath = svgPath.TrimStart();
             while (!string.IsNullOrWhiteSpace(svgPath))
@@ -299,14 +330,30 @@ namespace RT.KitchenSink
                             throw new InvalidOperationException();
                     }
 
+                    if (prevStartPoint == null)
+                        prevStartPoint = points[0];
                     if (!prevControlPointDetermined)
                         prevControlPoint = prevPoint;
 
                     yield return new PathPiece(type, points);
                 }
-                else if ((m = Regex.Match(svgPath, @"^Z\s*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+                else if ((m = Regex.Match(svgPath, @"^Z\s*", RegexOptions.IgnoreCase)).Success)
                 {
                     yield return PathPiece.End;
+                    prevPoint = prevStartPoint ?? new PointD(0, 0);
+                    prevStartPoint = null;
+                }
+                else if ((m = Regex.Match(svgPath, @"^A\s*({0})*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+                {
+                    var numbers = m.Groups[1].Captures.Cast<Capture>().Select(c => double.Parse(c.Value.Trim().TrimEnd(',').Trim())).ToArray();
+                    if (numbers.Length % 7 != 0)
+                        Debugger.Break();
+                    for (int i = 0; i < numbers.Length; i += 7)
+                    {
+                        var p = new PointD(numbers[i + 5], numbers[i + 6]);
+                        prevPoint = m.Value[0] == 'a' ? p + prevPoint : p;
+                        yield return new PathPieceArc(numbers[i + 0], numbers[i + 1], numbers[i + 2], numbers[i + 3] != 0, numbers[i + 4] != 0, prevPoint);
+                    }
                 }
                 else
                 {
