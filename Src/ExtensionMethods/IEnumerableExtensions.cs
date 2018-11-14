@@ -482,6 +482,28 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Returns the index of the first element in this <paramref name="source"/> satisfying the specified <paramref
+        ///     name="predicate"/>, starting at the specified <paramref name="startIndex"/>. If no such elements are found,
+        ///     returns <c>-1</c>.</summary>
+        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate, int startIndex)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+            if (startIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative.");
+            int index = 0;
+            foreach (var v in source)
+            {
+                if (predicate(v) && index >= startIndex)
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        /// <summary>
         ///     Returns the index of the last element in this <paramref name="source"/> satisfying the specified <paramref
         ///     name="predicate"/>. If no such elements are found, returns <c>-1</c>.</summary>
         /// <remarks>
