@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 
 namespace RT.Util.Geometry
@@ -28,15 +28,15 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>Gets the X coordinate of the minimal-X boundary.</summary>
-        public double Left { get { return X; } }
+        public double Left => X;
         /// <summary>Gets the X coordinate of the minimal-Y boundary.</summary>
-        public double Top { get { return Y; } }
+        public double Top => Y;
         /// <summary>Gets the X coordinate of the maximal-X boundary.</summary>
-        public double Right { get { return X + Width; } }
+        public double Right => X + Width;
         /// <summary>Gets the Y coordinate of the maximal-Y boundary.</summary>
-        public double Bottom { get { return Y + Height; } }
+        public double Bottom => Y + Height;
         /// <summary>Returns true if this rectangle has zero extent.</summary>
-        public bool IsEmpty { get { return Width == 0 && Height == 0; } }
+        public bool IsEmpty => Width == 0 && Height == 0;
 
         /// <summary>
         ///     Checks if the perimeter of this rectangle intersects with that of <paramref name="rect"/>.</summary>
@@ -44,15 +44,12 @@ namespace RT.Util.Geometry
         ///     Other rectangle to check against.</param>
         /// <returns>
         ///     Returns true if the perimeter of this rectangle intersects with that of <paramref name="rect"/>.</returns>
-        public bool PerimeterIntersectsWith(RectangleD rect)
-        {
-            return Contains(rect.Left, rect.Top) || Contains(rect.Left, rect.Bottom)
+        public bool PerimeterIntersectsWith(RectangleD rect) => Contains(rect.Left, rect.Top) || Contains(rect.Left, rect.Bottom)
                 || Contains(rect.Right, rect.Top) || Contains(rect.Right, rect.Bottom)
                 || rect.Contains(Left, Top) || rect.Contains(Left, Bottom)
                 || rect.Contains(Right, Top) || rect.Contains(Right, Bottom)
                 || (rect.Left >= Left && rect.Right <= Right && rect.Top <= Top && rect.Bottom >= Bottom)
                 || (rect.Left <= Left && rect.Right >= Right && rect.Top >= Top && rect.Bottom <= Bottom);
-        }
 
         /// <summary>
         ///     Determines if this rectangle intersects with <paramref name="rect"/>.</summary>
@@ -60,54 +57,28 @@ namespace RT.Util.Geometry
         ///     The rectangle to test.</param>
         /// <returns>
         ///     Returns true if there is any intersection, otherwise false.</returns>
-        public bool IntersectsWith(RectangleD rect)
-        {
-            return (rect.X < X + Width) && (rect.X + rect.Width > X) && (rect.Y < Y + Height) && (rect.Y + rect.Height > Y);
-        }
+        public bool IntersectsWith(RectangleD rect) => (rect.X < X + Width) && (rect.X + rect.Width > X) && (rect.Y < Y + Height) && (rect.Y + rect.Height > Y);
 
         /// <summary>Returns true if the specified point is contained within the rectangle (or lies exactly on a boundary).</summary>
-        public bool Contains(double x, double y)
-        {
-            return (x >= Left) && (x <= Right) && (y >= Top) && (y <= Bottom);
-        }
+        public bool Contains(double x, double y) => (x >= Left) && (x <= Right) && (y >= Top) && (y <= Bottom);
 
         /// <summary>Returns true if the two rectangles have identical coordinates and sizes.</summary>
-        public bool Equals(RectangleD other)
-        {
-            return X == other.X && Y == other.Y && Width == other.Width && Height == other.Height;
-        }
+        public bool Equals(RectangleD other) => X == other.X && Y == other.Y && Width == other.Width && Height == other.Height;
 
         /// <summary>Compares two rectangles for equality using <see cref="Equals(RectangleD)"/>.</summary>
-        public static bool operator ==(RectangleD one, RectangleD other)
-        {
-            return one.Equals(other);
-        }
+        public static bool operator ==(RectangleD one, RectangleD other) => one.Equals(other);
 
         /// <summary>Compares two rectangles for inequality using <see cref="Equals(RectangleD)"/>.</summary>
-        public static bool operator !=(RectangleD one, RectangleD other)
-        {
-            return !one.Equals(other);
-        }
+        public static bool operator !=(RectangleD one, RectangleD other) => !one.Equals(other);
 
         /// <summary>Returns a hash code for the rectangle.</summary>
-        public override int GetHashCode()
-        {
-            return ToString().GetHashCode();
-        }
+        public override int GetHashCode() => ToString().GetHashCode();
 
         /// <summary>Converts the rectangle to a string representation.</summary>
-        public override string ToString()
-        {
-            return "(" + Left + ", " + Top + "); W=" + Width + "; H=" + Height;
-        }
+        public override string ToString() => "(" + Left + ", " + Top + "); W=" + Width + "; H=" + Height;
 
         /// <summary>Compares a rectangle to any other object.</summary>
-        public override bool Equals(object obj)
-        {
-            if (obj is RectangleD)
-                return Equals((RectangleD) obj);
-            return base.Equals(obj);
-        }
+        public override bool Equals(object obj) => obj is RectangleD ? Equals((RectangleD) obj) : base.Equals(obj);
 
         /// <summary>
         ///     Creates the smallest possible third rectangle that can contain both of two rectangles that form a union.</summary>
@@ -131,10 +102,7 @@ namespace RT.Util.Geometry
         ///     double-precision values to the nearest integer values.</summary>
         /// <returns>
         ///     A <c>System.Drawing.Rectangle</c>.</returns>
-        public Rectangle Round()
-        {
-            return new Rectangle((int) Math.Round(X), (int) Math.Round(Y), (int) Math.Round(Width), (int) Math.Round(Height));
-        }
+        public Rectangle Round() => new Rectangle((int) Math.Round(X), (int) Math.Round(Y), (int) Math.Round(Width), (int) Math.Round(Height));
 
         /// <summary>
         ///     Returns the smallest <c>System.Drawing.Rectangle</c> that entirely contains the current <see
@@ -162,14 +130,11 @@ namespace RT.Util.Geometry
         ///     negative, by flipping the rectangle as necessary.</summary>
         /// <returns>
         ///     A normalized <see cref="RectangleD"/>.</returns>
-        public RectangleD Normalize()
-        {
-            return new RectangleD(
+        public RectangleD Normalize() => new RectangleD(
                 Width < 0 ? X + Width : X,
                 Height < 0 ? Y + Height : Y,
                 Width < 0 ? -Width : Width,
                 Height < 0 ? -Height : Height);
-        }
 
         /// <summary>Converts this rectangle to a <see cref="RectangleF"/>.</summary>
         public RectangleF ToRectangleF() => new RectangleF((float) X, (float) Y, (float) Width, (float) Height);
