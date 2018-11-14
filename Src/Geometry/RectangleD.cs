@@ -74,6 +74,17 @@ namespace RT.Util.Geometry
         /// <summary>Returns a hash code for the rectangle.</summary>
         public override int GetHashCode() => ToString().GetHashCode();
 
+        /// <summary>Scales the rectangle’s position and size by the specified factor.</summary>
+        public static RectangleD operator *(RectangleD rect, double scale) => new RectangleD(rect.X * scale, rect.Y * scale, rect.Width * scale, rect.Height * scale);
+        /// <summary>Scales the rectangle’s position and size by the specified factor.</summary>
+        public static RectangleD operator *(double scale, RectangleD rect) => new RectangleD(rect.X * scale, rect.Y * scale, rect.Width * scale, rect.Height * scale);
+        /// <summary>Moves the rectangle’s position by the specified offset.</summary>
+        public static RectangleD operator +(RectangleD rect, PointD offset) => new RectangleD(rect.X + offset.X, rect.Y + offset.Y, rect.Width, rect.Height);
+        /// <summary>Moves the rectangle’s position by the specified offset.</summary>
+        public static RectangleD operator +(PointD offset, RectangleD rect) => new RectangleD(rect.X + offset.X, rect.Y + offset.Y, rect.Width, rect.Height);
+        /// <summary>Moves the rectangle’s position by the negation of the specified offset.</summary>
+        public static RectangleD operator -(RectangleD rect, PointD offset) => new RectangleD(rect.X - offset.X, rect.Y - offset.Y, rect.Width, rect.Height);
+
         /// <summary>Converts the rectangle to a string representation.</summary>
         public override string ToString() => "(" + Left + ", " + Top + "); W=" + Width + "; H=" + Height;
 
