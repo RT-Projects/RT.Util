@@ -38,6 +38,15 @@ namespace RT.Util.Geometry
         /// <summary>Returns true if this rectangle has zero extent.</summary>
         public bool IsEmpty => Width == 0 && Height == 0;
 
+        /// <summary>Returns the top-left point of this rectangle.</summary>
+        public PointD TopLeft => new PointD(Left, Top);
+        /// <summary>Returns the top-right point of this rectangle.</summary>
+        public PointD TopRight => new PointD(Right, Top);
+        /// <summary>Returns the bottom-left point of this rectangle.</summary>
+        public PointD BottomLeft => new PointD(Left, Bottom);
+        /// <summary>Returns the bottom-right point of this rectangle.</summary>
+        public PointD BottomRight => new PointD(Right, Bottom);
+
         /// <summary>
         ///     Checks if the perimeter of this rectangle intersects with that of <paramref name="rect"/>.</summary>
         /// <param name="rect">
