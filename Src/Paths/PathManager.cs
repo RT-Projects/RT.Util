@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using RT.Util;
 
 namespace RT.Util.Paths
 {
@@ -56,6 +55,11 @@ namespace RT.Util.Paths
 
         /// <summary>Contains the list of all included and excluded paths.</summary>
         public List<PathInfo> Paths { get; set; }
+
+        /// <summary>
+        ///     If set, this callback is invoked whenever a reparse point is encountered to decide whether to process it or
+        ///     skip it. If null, reparse points are not recursed into.</summary>
+        public Func<DirectoryInfo, bool> ShouldRecurseIntoReparsePoint { get; set; }
 
         /// <summary>Creates a deep clone of this class.</summary>
         public PathManager Clone()
@@ -279,8 +283,7 @@ namespace RT.Util.Paths
                 if (includeDirs)
                     yield return curDir;
 
-                // Until we can handle this properly, skip all reparse points to be safe.
-                if (curDir.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                if (curDir.Attributes.HasFlag(FileAttributes.ReparsePoint) && !shouldRecurseIntoReparse(curDir))
                     continue;
 
                 try
@@ -324,6 +327,13 @@ namespace RT.Util.Paths
                     toScan.Push(di);
                 }
             }
+        }
+
+        private bool shouldRecurseIntoReparse(DirectoryInfo curDir)
+        {
+            if (ShouldRecurseIntoReparsePoint == null)
+                return false;
+            return ShouldRecurseIntoReparsePoint(curDir);
         }
 
         /// <summary>
