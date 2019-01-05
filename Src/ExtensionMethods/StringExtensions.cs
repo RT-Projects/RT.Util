@@ -8,7 +8,7 @@ using RT.Util.Consoles;
 
 namespace RT.Util.ExtensionMethods
 {
-    /// <summary>Provides extension methods on the <see cref="String"/> type.</summary>
+    /// <summary>Provides extension methods on the <see cref="string"/> type.</summary>
     public static class StringExtensions
     {
         /// <summary>Contains the set of characters that are used in base64-url encoding.</summary>
@@ -104,40 +104,37 @@ namespace RT.Util.ExtensionMethods
             if (input == null)
                 throw new ArgumentNullException("input");
 
-            if (Regex.IsMatch(input, @"%[^0-9a-fA-F]|%.[^0-9a-fA-F]|%.?\z", RegexOptions.Singleline))
-                throw new ArgumentException("The input string is not in valid URL-escaped format.", "input");
-
             if (input.Length < 3)
                 return input.Replace('+', ' ');
 
-            int bufferSize = input.Length;
-            for (int i = 0; i < input.Length; i++)
-                if (input[i] == '%') { bufferSize -= 2; }
+            // The result is never going to be longer than the input string
+            byte[] buffer = new byte[input.Length];
 
-            byte[] buffer = new byte[bufferSize];
-
-            bufferSize = 0;
-            int j = 0;
-            while (j < input.Length)
+            var bufIx = 0;
+            var inpIx = 0;
+            while (inpIx < input.Length)
             {
-                if (input[j] == '%')
+                if (inpIx <= input.Length - 6 && input[inpIx] == '%' && input[inpIx + 1] == 'u' && int.TryParse(input.Substring(inpIx + 2, 4), NumberStyles.AllowHexSpecifier, null, out var i))
                 {
-                    try
-                    {
-                        buffer[bufferSize] = byte.Parse("" + input[j + 1] + input[j + 2], NumberStyles.HexNumber);
-                        bufferSize++;
-                    }
-                    catch (Exception) { }
-                    j += 3;
+                    bufIx += Encoding.UTF8.GetBytes(char.ConvertFromUtf32(i), 0, 1, buffer, bufIx);
+                    inpIx += 6;
+                }
+                else if (inpIx <= input.Length - 3 && input[inpIx] == '%' && int.TryParse(input.Substring(inpIx + 1, 2), NumberStyles.AllowHexSpecifier, null, out i))
+                {
+                    buffer[bufIx] = (byte) i;
+                    bufIx++;
+                    inpIx += 3;
+                }
+                else if (input[inpIx] != '%')
+                {
+                    buffer[bufIx] = input[inpIx] == '+' ? (byte) ' ' : (byte) input[inpIx];
+                    bufIx++;
+                    inpIx++;
                 }
                 else
-                {
-                    buffer[bufferSize] = input[j] == '+' ? (byte) ' ' : (byte) input[j];
-                    bufferSize++;
-                    j++;
-                }
+                    throw new ArgumentException("The input string is not in valid URL-escaped format.", "input");
             }
-            return Encoding.UTF8.GetString(buffer, 0, bufferSize);
+            return Encoding.UTF8.GetString(buffer, 0, bufIx);
         }
 
         /// <summary>Contains the set of characters disallowed in file names across all filesystems supported by our software.</summary>
@@ -509,7 +506,7 @@ namespace RT.Util.ExtensionMethods
                 for (int j = 0; j < _invBase64Url.Length; j++)
                     _invBase64Url[j] = -1;
                 for (int j = 0; j < CharsBase64Url.Length; j++)
-                    _invBase64Url[(int) CharsBase64Url[j]] = j;
+                    _invBase64Url[CharsBase64Url[j]] = j;
             }
 
             // See how many bytes are encoded at the end of the string
