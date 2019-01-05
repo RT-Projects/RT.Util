@@ -174,7 +174,7 @@ namespace RT.KitchenSink
                 var midT = (elem.Item1 + elem.Item2) / 2;
                 var midCurve = bé(start, c1, c2, end, midT);
                 var dist = new EdgeD(p1, p2).Distance(midCurve);
-                if (dist <= smoothness)
+                if (double.IsNaN(dist) || dist <= smoothness)
                     yield return p2;
                 else
                 {
