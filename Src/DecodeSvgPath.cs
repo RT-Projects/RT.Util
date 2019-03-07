@@ -56,13 +56,13 @@ namespace RT.KitchenSink
             }
 
             /// <summary>
-            ///     Returns a new <see cref="PathPiece"/> of the same <see cref="Type"/> in which all points have been mapped
-            ///     through the <paramref name="selector"/>.</summary>
+            ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have
+            ///     been mapped through the <paramref name="selector"/>.</summary>
             /// <param name="selector">
             ///     A function to pass all points through.</param>
             /// <returns>
-            ///     A new <see cref="PathPiece"/> of the same <see cref="Type"/>.</returns>
-            public PathPiece Select(Func<PointD, PointD> selector)
+            ///     A new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/>.</returns>
+            public virtual PathPiece Select(Func<PointD, PointD> selector)
             {
                 if (selector == null)
                     throw new ArgumentNullException(nameof(selector));
@@ -85,7 +85,13 @@ namespace RT.KitchenSink
             public bool LargeArcFlag { get; private set; }
             /// <summary>Determines if the arc should begin moving at positive angles or negative ones.</summary>
             public bool SweepFlag { get; private set; }
-            /// <summary>Constructor/</summary>
+            /// <summary>
+            ///     Returns the arc’s end-point.</summary>
+            /// <remarks>
+            ///     This is actually just <see cref="PathPiece.Points"/>[0].</remarks>
+            public PointD EndPoint { get { return Points[0]; } }
+
+            /// <summary>Constructor</summary>
             public PathPieceArc(double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, PointD endPoint)
                 : base(PathPieceType.Arc, new[] { endPoint })
             {
@@ -98,6 +104,20 @@ namespace RT.KitchenSink
 
             /// <summary>Recreates the path in SVG path data syntax.</summary>
             public override string ToString() => $"A {RX},{RY} {XAxisRotation} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X},{Points[0].Y}";
+
+            /// <summary>
+            ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have
+            ///     been mapped through the <paramref name="selector"/>.</summary>
+            /// <param name="selector">
+            ///     A function to pass all points through.</param>
+            /// <returns>
+            ///     A new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/>.</returns>
+            public override PathPiece Select(Func<PointD, PointD> selector)
+            {
+                if (selector == null)
+                    throw new ArgumentNullException(nameof(selector));
+                return new PathPieceArc(RX, RY, XAxisRotation, LargeArcFlag, SweepFlag, selector(EndPoint));
+            }
         }
 
         /// <summary>Specifies a type of piece within an SVG path.</summary>
