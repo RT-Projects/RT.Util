@@ -28,9 +28,9 @@ namespace RT.Util.ExtensionMethods
         public static void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
                 dic[key] = new List<V>();
             dic[key].Add(value);
@@ -52,9 +52,9 @@ namespace RT.Util.ExtensionMethods
         public static bool AddSafe<K, V>(this IDictionary<K, HashSet<V>> dic, K key, V value)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key))
                 dic[key] = new HashSet<V>();
             return dic[key].Add(value);
@@ -82,11 +82,11 @@ namespace RT.Util.ExtensionMethods
         public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value, IEqualityComparer<K2> comparer = null)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key1 == null)
-                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
             if (key2 == null)
-                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key1))
                 dic[key1] = comparer == null ? new Dictionary<K2, V>() : new Dictionary<K2, V>(comparer);
             dic[key1][key2] = value;
@@ -112,13 +112,12 @@ namespace RT.Util.ExtensionMethods
         public static bool RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key1 == null)
-                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
             if (key2 == null)
-                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
-            Dictionary<K2, V> inner;
-            if (!dic.TryGetValue(key1, out inner) || !inner.ContainsKey(key2))
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.TryGetValue(key1, out var inner) || !inner.ContainsKey(key2))
                 return false;
             inner.Remove(key2);
             if (inner.Count == 0)
@@ -146,11 +145,11 @@ namespace RT.Util.ExtensionMethods
         public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key1 == null)
-                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
             if (key2 == null)
-                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
             if (!dic.ContainsKey(key1))
                 dic[key1] = new Dictionary<K2, List<V>>();
             if (!dic[key1].ContainsKey(key2))
@@ -174,13 +173,10 @@ namespace RT.Util.ExtensionMethods
         public static int IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
-            if (!dic.ContainsKey(key))
-                return (dic[key] = amount);
-            else
-                return (dic[key] = dic[key] + amount);
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            return dic.ContainsKey(key) ? (dic[key] = dic[key] + amount) : (dic[key] = amount);
         }
 
         /// <summary>
@@ -200,9 +196,9 @@ namespace RT.Util.ExtensionMethods
         public static void RemoveSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
         {
             if (dic == null)
-                throw new ArgumentNullException("dic");
+                throw new ArgumentNullException(nameof(dic));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
             if (dic.ContainsKey(key))
             {
                 dic[key].Remove(value);
@@ -215,9 +211,9 @@ namespace RT.Util.ExtensionMethods
         public static bool Contains<TKey, TValue>(this IDictionary<TKey, HashSet<TValue>> source, TKey key, TValue value)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
             return source.ContainsKey(key) && source[key].Contains(value);
         }
 
@@ -235,15 +231,8 @@ namespace RT.Util.ExtensionMethods
         ///     The first key to check for.</param>
         /// <param name="key2">
         ///     The second key to check for.</param>
-        public static bool ContainsKeys<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> source, TKey1 key1, TKey2 key2)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            Dictionary<TKey2, TValue> dic;
-            if (!source.TryGetValue(key1, out dic))
-                return false;
-            return dic.ContainsKey(key2);
-        }
+        public static bool ContainsKeys<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> source, TKey1 key1, TKey2 key2) =>
+            source == null ? throw new ArgumentNullException(nameof(source)) : !source.TryGetValue(key1, out var dic) ? false : dic.ContainsKey(key2);
 
         /// <summary>
         ///     Gets the value associated with the specified combination of keys.</summary>
@@ -268,16 +257,10 @@ namespace RT.Util.ExtensionMethods
         public static bool TryGetValue<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> source, TKey1 key1, TKey2 key2, out TValue value)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
 
-            Dictionary<TKey2, TValue> dic;
-            if (!source.TryGetValue(key1, out dic))
-            {
-                value = default(TValue);
-                return false;
-            }
-
-            return dic.TryGetValue(key2, out value);
+            value = default;
+            return source.TryGetValue(key1, out var dic) ? dic.TryGetValue(key2, out value) : false;
         }
 
         /// <summary>
@@ -293,7 +276,7 @@ namespace RT.Util.ExtensionMethods
         public static T Shuffle<T>(this T list, Random rnd = null) where T : IList
         {
             if (list == null)
-                throw new ArgumentNullException("list");
+                throw new ArgumentNullException(nameof(list));
             for (int j = list.Count; j >= 1; j--)
             {
                 int item = rnd == null ? Rnd.Next(0, j) : rnd.Next(0, j);
@@ -314,9 +297,9 @@ namespace RT.Util.ExtensionMethods
             where TV : IEquatable<TV>
         {
             if (dictA == null)
-                throw new ArgumentNullException("dictA");
+                throw new ArgumentNullException(nameof(dictA));
             if (dictB == null)
-                throw new ArgumentNullException("dictB");
+                throw new ArgumentNullException(nameof(dictB));
             if (dictA.Count != dictB.Count)
                 return false;
             foreach (var key in dictA.Keys)
@@ -348,9 +331,9 @@ namespace RT.Util.ExtensionMethods
         public static void BinarySearch<TK, TV>(this SortedList<TK, TV> list, TK key, out int index1, out int index2)
         {
             if (list == null)
-                throw new ArgumentNullException("list");
+                throw new ArgumentNullException(nameof(list));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in SortedList.");
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in SortedList.");
 
             var keys = list.Keys;
             var comparer = Comparer<TK>.Default;
@@ -400,13 +383,10 @@ namespace RT.Util.ExtensionMethods
         public static TValue Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultVal)
         {
             if (dict == null)
-                throw new ArgumentNullException("dict");
+                throw new ArgumentNullException(nameof(dict));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
-            if (dict.TryGetValue(key, out TValue value))
-                return value;
-            else
-                return defaultVal;
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            return dict.TryGetValue(key, out var value) ? value : defaultVal;
         }
 
         /// <summary>
@@ -421,13 +401,10 @@ namespace RT.Util.ExtensionMethods
         public static TValue? Get<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue? defaultVal = null) where TValue : struct
         {
             if (dict == null)
-                throw new ArgumentNullException("dict");
+                throw new ArgumentNullException(nameof(dict));
             if (key == null)
-                throw new ArgumentNullException("key", "Null values cannot be used for keys in dictionaries.");
-            if (dict.TryGetValue(key, out TValue value))
-                return value;
-            else
-                return defaultVal;
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            return dict.TryGetValue(key, out var value) ? (TValue?) value : defaultVal;
         }
 
         /// <summary>
@@ -444,17 +421,13 @@ namespace RT.Util.ExtensionMethods
         public static TValue Get<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> dict, TKey1 key1, TKey2 key2, TValue defaultVal)
         {
             if (dict == null)
-                throw new ArgumentNullException("dict");
+                throw new ArgumentNullException(nameof(dict));
             if (key1 == null)
-                throw new ArgumentNullException("key1", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
             if (key2 == null)
-                throw new ArgumentNullException("key2", "Null values cannot be used for keys in dictionaries.");
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
 
-            Dictionary<TKey2, TValue> innerDic;
-            TValue value;
-            if (!dict.TryGetValue(key1, out innerDic) || !innerDic.TryGetValue(key2, out value))
-                return defaultVal;
-            return value;
+            return dict.TryGetValue(key1, out var innerDic) && innerDic.TryGetValue(key2, out var value) ? value : defaultVal;
         }
 
         /// <summary>
@@ -477,7 +450,7 @@ namespace RT.Util.ExtensionMethods
         public static T[] Subarray<T>(this T[] array, int startIndex)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             return Subarray(array, startIndex, array.Length - startIndex);
         }
 
@@ -490,11 +463,11 @@ namespace RT.Util.ExtensionMethods
         public static T[] Subarray<T>(this T[] array, int startIndex, int length)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             if (startIndex < 0)
-                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative.");
             if (length < 0 || startIndex + length > array.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or extend beyond the end of the array.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or extend beyond the end of the array.");
             T[] result = new T[length];
             Array.Copy(array, startIndex, result, 0, length);
             return result;
@@ -508,11 +481,11 @@ namespace RT.Util.ExtensionMethods
         public static T[] Remove<T>(this T[] array, int startIndex)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             if (startIndex < 0)
-                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative.");
             if (startIndex > array.Length)
-                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be greater than the length of the array.");
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be greater than the length of the array.");
             T[] result = new T[startIndex];
             Array.Copy(array, 0, result, 0, startIndex);
             return result;
@@ -526,11 +499,11 @@ namespace RT.Util.ExtensionMethods
         public static T[] Remove<T>(this T[] array, int startIndex, int length)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             if (startIndex < 0)
-                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative.");
             if (length < 0 || startIndex + length > array.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or extend beyond the end of the array.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or extend beyond the end of the array.");
             T[] result = new T[array.Length - length];
             Array.Copy(array, 0, result, 0, startIndex);
             Array.Copy(array, startIndex + length, result, startIndex, array.Length - length - startIndex);
@@ -552,7 +525,7 @@ namespace RT.Util.ExtensionMethods
         public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, IEqualityComparer<T> comparer = null)
         {
             if (otherArray == null)
-                throw new ArgumentNullException("otherArray");
+                throw new ArgumentNullException(nameof(otherArray));
             return SubarrayEquals(sourceArray, sourceStartIndex, otherArray, 0, otherArray.Length, comparer);
         }
 
@@ -575,15 +548,15 @@ namespace RT.Util.ExtensionMethods
         public static bool SubarrayEquals<T>(this T[] sourceArray, int sourceStartIndex, T[] otherArray, int otherStartIndex, int length, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
-                throw new ArgumentNullException("sourceArray");
+                throw new ArgumentNullException(nameof(sourceArray));
             if (sourceStartIndex < 0)
-                throw new ArgumentOutOfRangeException("The sourceStartIndex argument must be non-negative.", "sourceStartIndex");
+                throw new ArgumentOutOfRangeException(nameof(sourceStartIndex), "The sourceStartIndex argument must be non-negative.");
             if (otherArray == null)
-                throw new ArgumentNullException("otherArray");
+                throw new ArgumentNullException(nameof(otherArray));
             if (otherStartIndex < 0)
-                throw new ArgumentOutOfRangeException("The otherStartIndex argument must be non-negative.", "otherStartIndex");
+                throw new ArgumentOutOfRangeException(nameof(otherStartIndex), "The otherStartIndex argument must be non-negative.");
             if (length < 0 || sourceStartIndex + length > sourceArray.Length || otherStartIndex + length > otherArray.Length)
-                throw new ArgumentOutOfRangeException("The length argument must be non-negative and must be such that both subarrays are within the bounds of the respective source arrays.", "length");
+                throw new ArgumentOutOfRangeException(nameof(length), "The length argument must be non-negative and must be such that both subarrays are within the bounds of the respective source arrays.");
 
             if (comparer == null)
                 comparer = EqualityComparer<T>.Default;
@@ -613,9 +586,9 @@ namespace RT.Util.ExtensionMethods
         public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, int startIndex, int? sourceLength = null, IEqualityComparer<T> comparer = null)
         {
             if (sourceArray == null)
-                throw new ArgumentNullException("sourceArray");
+                throw new ArgumentNullException(nameof(sourceArray));
             if (findWhat == null)
-                throw new ArgumentNullException("findWhat");
+                throw new ArgumentNullException(nameof(findWhat));
             if (startIndex < 0 || startIndex > sourceArray.Length)
                 throw new ArgumentOutOfRangeException("startIndex");
             if (sourceLength != null && (sourceLength < 0 || sourceLength + startIndex > sourceArray.Length))
@@ -634,7 +607,7 @@ namespace RT.Util.ExtensionMethods
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll)
         {
             if (coll == null)
-                throw new ArgumentNullException("coll");
+                throw new ArgumentNullException(nameof(coll));
             return new ReadOnlyCollection<T>(coll);
         }
 
@@ -645,7 +618,7 @@ namespace RT.Util.ExtensionMethods
         public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll, ref ReadOnlyCollection<T> cache)
         {
             if (coll == null)
-                throw new ArgumentNullException("coll");
+                throw new ArgumentNullException(nameof(coll));
             if (cache == null || !cache.IsWrapperFor(coll))
                 cache = new ReadOnlyCollection<T>(coll);
             return cache;
@@ -657,7 +630,7 @@ namespace RT.Util.ExtensionMethods
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict)
         {
             if (dict == null)
-                throw new ArgumentNullException("dict");
+                throw new ArgumentNullException(nameof(dict));
             return new ReadOnlyDictionary<TK, TV>(dict);
         }
 
@@ -668,7 +641,7 @@ namespace RT.Util.ExtensionMethods
         public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict, ref ReadOnlyDictionary<TK, TV> cache)
         {
             if (dict == null)
-                throw new ArgumentNullException("dict");
+                throw new ArgumentNullException(nameof(dict));
             if (cache == null || !cache.IsWrapperFor(dict))
                 cache = new ReadOnlyDictionary<TK, TV>(dict);
             return cache;
@@ -680,9 +653,9 @@ namespace RT.Util.ExtensionMethods
         public static IDictionary<TKey, TValue> CopyMerge<TKey, TValue>(this IDictionary<TKey, TValue> first, IDictionary<TKey, TValue> second)
         {
             if (first == null)
-                throw new ArgumentNullException("first");
+                throw new ArgumentNullException(nameof(first));
             if (second == null)
-                throw new ArgumentNullException("second");
+                throw new ArgumentNullException(nameof(second));
             Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>(first);
             foreach (var kvp in second)
                 dict.Add(kvp.Key, kvp.Value);
@@ -693,7 +666,7 @@ namespace RT.Util.ExtensionMethods
         public static string ToHex(this IEnumerable<byte> data, int spacesEvery = 0)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
 
             var result = new StringBuilder();
             var i = 0;
@@ -714,7 +687,7 @@ namespace RT.Util.ExtensionMethods
         public static string ToHex(this byte[] data)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
 
             char[] charArr = new char[data.Length * 2];
             var j = 0;
@@ -734,7 +707,7 @@ namespace RT.Util.ExtensionMethods
         public static string ToHex(this uint[] data)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
 
             char[] charArr = new char[data.Length * 8];
             var j = 0;
@@ -906,9 +879,9 @@ namespace RT.Util.ExtensionMethods
     ///     The type of the value returned by the selector function.</typeparam>
     public sealed class ListSelectIterator<TInput, TResult> : IEnumerable<TResult>
     {
-        private IList<TInput> _source;
-        private Func<TInput, TResult> _selector;
-        private bool _reversed;
+        private readonly IList<TInput> _source;
+        private readonly Func<TInput, TResult> _selector;
+        private readonly bool _reversed;
 
         /// <summary>
         ///     Constructor.</summary>
@@ -920,9 +893,7 @@ namespace RT.Util.ExtensionMethods
         ///     Specifies whether or not to reverse the order of elements.</param>
         public ListSelectIterator(IList<TInput> source, Func<TInput, TResult> selector, bool reversed = false)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            _source = source;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
             _selector = selector;
             _reversed = reversed;
         }

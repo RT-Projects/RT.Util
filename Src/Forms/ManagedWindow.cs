@@ -41,7 +41,7 @@ namespace RT.Util.Forms
         /// <param name="settings">An object of type <see cref="ManagedWindow.Settings"/> from which the position and size of the form are retrieved, and in which they will be stored.</param>
         public ManagedWindow(Settings settings)
         {
-            if (settings == null) throw new ArgumentNullException("settings");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             _settings = settings;
 
             try

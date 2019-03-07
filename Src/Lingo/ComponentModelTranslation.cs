@@ -104,9 +104,9 @@ namespace RT.Util.Lingo
             : base()
         {
             if (objectType == null)
-                throw new ArgumentNullException("objectType");
+                throw new ArgumentNullException(nameof(objectType));
             if (translation == null)
-                throw new ArgumentNullException("translation");
+                throw new ArgumentNullException(nameof(translation));
             _objectType = objectType;
             _translation = translation;
         }

@@ -194,7 +194,7 @@ namespace RT.Util
         public static long UnboxIntegerToLong(object integer, TypeCode typeCode)
         {
             if (integer == null)
-                throw new ArgumentNullException("integer", "Cannot unbox a null object to a long.");
+                throw new ArgumentNullException(nameof(integer), "Cannot unbox a null object to a long.");
             switch (typeCode)
             {
                 case TypeCode.Byte:
@@ -246,13 +246,7 @@ namespace RT.Util
         /// this where the behaviour of the existing API would make sense... but really,
         /// I think this is how it really should have been since it is a lot more useful.
         /// </summary>
-        public static TypeCode GetTypeCode(object value)
-        {
-            if (value == null)
-                return TypeCode.Empty;
-            else
-                return Type.GetTypeCode(value.GetType());
-        }
+        public static TypeCode GetTypeCode(object value) => value == null ? TypeCode.Empty : Type.GetTypeCode(value.GetType());
 
         /// <summary>
         /// Returns true if the specified type is a supported type for converting to other
@@ -260,7 +254,7 @@ namespace RT.Util
         /// </summary>
         public static bool IsSupportedType(Type type)
         {
-            return !ExactConvert._isUnsupportedType[(int) Type.GetTypeCode(type)];
+            return !_isUnsupportedType[(int) Type.GetTypeCode(type)];
         }
 
         /// <summary>
@@ -269,7 +263,7 @@ namespace RT.Util
         /// </summary>
         public static bool IsSupportedType(TypeCode typeCode)
         {
-            return !ExactConvert._isUnsupportedType[(int) typeCode];
+            return !_isUnsupportedType[(int) typeCode];
         }
 
         #region Try - the main implementation of ExactConvert with all the business code
@@ -326,7 +320,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) byte.MaxValue)
+                if (val <= byte.MaxValue)
                 {
                     result = (byte) val;
                     return true;
@@ -356,14 +350,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) byte.MinValue && val <= (long) byte.MaxValue)
+                if (val >= byte.MinValue && val <= byte.MaxValue)
                 {
                     result = (byte) val;
                     return true;
                 }
             }
 
-            result = default(byte);
+            result = default;
             return false;
         }
 
@@ -390,7 +384,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) ushort.MaxValue)
+                if (val <= ushort.MaxValue)
                 {
                     result = (ushort) val;
                     return true;
@@ -420,14 +414,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) ushort.MinValue && val <= (long) ushort.MaxValue)
+                if (val >= ushort.MinValue && val <= ushort.MaxValue)
                 {
                     result = (ushort) val;
                     return true;
                 }
             }
 
-            result = default(ushort);
+            result = default;
             return false;
         }
 
@@ -454,7 +448,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) uint.MaxValue)
+                if (val <= uint.MaxValue)
                 {
                     result = (uint) val;
                     return true;
@@ -484,14 +478,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) uint.MinValue && val <= (long) uint.MaxValue)
+                if (val >= uint.MinValue && val <= uint.MaxValue)
                 {
                     result = (uint) val;
                     return true;
                 }
             }
 
-            result = default(uint);
+            result = default;
             return false;
         }
 
@@ -545,7 +539,7 @@ namespace RT.Util
                 }
             }
 
-            result = default(ulong);
+            result = default;
             return false;
         }
 
@@ -606,14 +600,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) sbyte.MinValue && val <= (long) sbyte.MaxValue)
+                if (val >= sbyte.MinValue && val <= sbyte.MaxValue)
                 {
                     result = (sbyte) val;
                     return true;
                 }
             }
 
-            result = default(sbyte);
+            result = default;
             return false;
         }
 
@@ -670,14 +664,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) short.MinValue && val <= (long) short.MaxValue)
+                if (val >= short.MinValue && val <= short.MaxValue)
                 {
                     result = (short) val;
                     return true;
                 }
             }
 
-            result = default(short);
+            result = default;
             return false;
         }
 
@@ -704,7 +698,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) int.MaxValue)
+                if (val <= int.MaxValue)
                 {
                     result = (int) val;
                     return true;
@@ -734,14 +728,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) int.MinValue && val <= (long) int.MaxValue)
+                if (val >= int.MinValue && val <= int.MaxValue)
                 {
                     result = (int) val;
                     return true;
                 }
             }
 
-            result = default(int);
+            result = default;
             return false;
         }
 
@@ -768,7 +762,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) long.MaxValue)
+                if (val <= long.MaxValue)
                 {
                     result = (long) val;
                     return true;
@@ -801,7 +795,7 @@ namespace RT.Util
                 return true;
             }
 
-            result = default(long);
+            result = default;
             return false;
         }
 
@@ -849,7 +843,7 @@ namespace RT.Util
                 }
 
                 // conversion failed
-                result = default(bool);
+                result = default;
                 return false;
             }
 
@@ -876,7 +870,7 @@ namespace RT.Util
             }
 
             // conversion failed
-            result = default(bool);
+            result = default;
             return false;
         }
 
@@ -913,7 +907,7 @@ namespace RT.Util
             else if (code == TypeCode.UInt64)
             {
                 ulong val = (ulong) value;
-                if (val <= (ulong) char.MaxValue)
+                if (val <= char.MaxValue)
                 {
                     result = (char) val;
                     return true;
@@ -923,14 +917,14 @@ namespace RT.Util
             else if (_isIntegerType[(int) code])
             {
                 long val = UnboxIntegerToLong(value, code);
-                if (val >= (long) char.MinValue && val <= (long) char.MaxValue)
+                if (val >= char.MinValue && val <= char.MaxValue)
                 {
                     result = (char) val;
                     return true;
                 }
             }
 
-            result = default(char);
+            result = default;
             return false;
         }
 
@@ -983,7 +977,7 @@ namespace RT.Util
                 }
             }
 
-            result = default(DateTime);
+            result = default;
             return false;
         }
 
@@ -1028,25 +1022,22 @@ namespace RT.Util
                 else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = float.NaN;
 
-                if (result == 0)
-                    return float.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
-                else
-                    return true;
+                return result == 0 ? float.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) : true;
             }
 
             else if (code == TypeCode.UInt64)
             {
-                result = (float) (ulong) value; // unbox as ulong, convert to float
+                result = (ulong) value; // unbox as ulong, convert to float
                 return true;
             }
 
             else if (_isIntegerType[(int) code])
             {
-                result = (float) UnboxIntegerToLong(value, code); // unbox as long, convert to float
+                result = UnboxIntegerToLong(value, code); // unbox as long, convert to float
                 return true;
             }
 
-            result = default(float);
+            result = default;
             return false;
         }
 
@@ -1068,7 +1059,7 @@ namespace RT.Util
             }
             else if (code == TypeCode.Single)
             {
-                result = (double) (float) value;
+                result = (float) value;
                 return true;
             }
             else if (code == TypeCode.Decimal)
@@ -1087,25 +1078,22 @@ namespace RT.Util
                 else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = double.NaN;
 
-                if (result == 0)
-                    return double.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
-                else
-                    return true;
+                return result == 0 ? double.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) : true;
             }
 
             else if (code == TypeCode.UInt64)
             {
-                result = (double) (ulong) value; // unbox as ulong, convert to double
+                result = (ulong) value; // unbox as ulong, convert to double
                 return true;
             }
 
             else if (_isIntegerType[(int) code])
             {
-                result = (double) UnboxIntegerToLong(value, code); // unbox as long, convert to double
+                result = UnboxIntegerToLong(value, code); // unbox as long, convert to double
                 return true;
             }
 
-            result = default(double);
+            result = default;
             return false;
         }
 
@@ -1149,17 +1137,17 @@ namespace RT.Util
 
             else if (code == TypeCode.UInt64)
             {
-                result = (decimal) (ulong) value; // unbox as ulong, convert to decimal
+                result = (ulong) value; // unbox as ulong, convert to decimal
                 return true;
             }
 
             else if (_isIntegerType[(int) code])
             {
-                result = (decimal) UnboxIntegerToLong(value, code); // unbox as long, convert to decimal
+                result = UnboxIntegerToLong(value, code); // unbox as long, convert to decimal
                 return true;
             }
 
-            result = default(decimal);
+            result = default;
             return false;
         }
 
@@ -1191,14 +1179,11 @@ namespace RT.Util
             else if (code == TypeCode.Single)
             {
                 float val = (float) value;
-                if (float.IsPositiveInfinity(val))
-                    result = "Inf";
-                else if (float.IsNegativeInfinity(val))
-                    result = "-Inf";
-                else if (float.IsNaN(val))
-                    result = "NaN";
-                else
-                    result = val.ToString("R", CultureInfo.InvariantCulture);
+                result =
+                    float.IsPositiveInfinity(val) ? "Inf" :
+                    float.IsNegativeInfinity(val) ? "-Inf" :
+                    float.IsNaN(val) ? "NaN" :
+                    val.ToString("R", CultureInfo.InvariantCulture);
                 return true;
             }
             else if (code == TypeCode.Decimal)
@@ -1209,14 +1194,11 @@ namespace RT.Util
             else if (code == TypeCode.Double)
             {
                 double val = (double) value;
-                if (double.IsPositiveInfinity(val))
-                    result = "Inf";
-                else if (double.IsNegativeInfinity(val))
-                    result = "-Inf";
-                else if (double.IsNaN(val))
-                    result = "NaN";
-                else
-                    result = val.ToString("R", CultureInfo.InvariantCulture);
+                result =
+                    double.IsPositiveInfinity(val) ? "Inf" :
+                    double.IsNegativeInfinity(val) ? "-Inf" :
+                    double.IsNaN(val) ? "NaN" :
+                    val.ToString("R", CultureInfo.InvariantCulture);
                 return true;
             }
             else if (code == TypeCode.Boolean)
@@ -1235,7 +1217,7 @@ namespace RT.Util
                 return true;
             }
 
-            result = default(string); // which is null
+            result = default; // which is null
             return false;
         }
 
@@ -1296,36 +1278,21 @@ namespace RT.Util
             object converted = null;
             switch (code)
             {
-                case TypeCode.Boolean:
-                    { bool temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Byte:
-                    { byte temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.SByte:
-                    { sbyte temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Int16:
-                    { short temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.UInt16:
-                    { ushort temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Int32:
-                    { int temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.UInt32:
-                    { uint temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Int64:
-                    { long temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.UInt64:
-                    { ulong temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Single:
-                    { float temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Double:
-                    { double temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Decimal:
-                    { decimal temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.DateTime:
-                    { DateTime temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.Char:
-                    { char temp; success = Try(value, out temp); converted = temp; break; }
-                case TypeCode.String:
-                    { string temp; success = Try(value, out temp); converted = temp; break; }
+                case TypeCode.Boolean: { success = Try(value, out bool temp); converted = temp; break; }
+                case TypeCode.Byte: { success = Try(value, out byte temp); converted = temp; break; }
+                case TypeCode.SByte: { success = Try(value, out sbyte temp); converted = temp; break; }
+                case TypeCode.Int16: { success = Try(value, out short temp); converted = temp; break; }
+                case TypeCode.UInt16: { success = Try(value, out ushort temp); converted = temp; break; }
+                case TypeCode.Int32: { success = Try(value, out int temp); converted = temp; break; }
+                case TypeCode.UInt32: { success = Try(value, out uint temp); converted = temp; break; }
+                case TypeCode.Int64: { success = Try(value, out long temp); converted = temp; break; }
+                case TypeCode.UInt64: { success = Try(value, out ulong temp); converted = temp; break; }
+                case TypeCode.Single: { success = Try(value, out float temp); converted = temp; break; }
+                case TypeCode.Double: { success = Try(value, out double temp); converted = temp; break; }
+                case TypeCode.Decimal: { success = Try(value, out decimal temp); converted = temp; break; }
+                case TypeCode.DateTime: { success = Try(value, out DateTime temp); converted = temp; break; }
+                case TypeCode.Char: { success = Try(value, out char temp); converted = temp; break; }
+                case TypeCode.String: { success = Try(value, out string temp); converted = temp; break; }
             }
             result = success ? converted : null;
             return success;
@@ -1495,8 +1462,7 @@ namespace RT.Util
         /// </summary>
         public static bool ToBool(object value)
         {
-            bool result;
-            To(value, out result);
+            To(value, out bool result);
             return result;
         }
 
@@ -1506,8 +1472,7 @@ namespace RT.Util
         /// </summary>
         public static byte ToByte(object value)
         {
-            byte result;
-            To(value, out result);
+            To(value, out byte result);
             return result;
         }
 
@@ -1517,8 +1482,7 @@ namespace RT.Util
         /// </summary>
         public static sbyte ToSByte(object value)
         {
-            sbyte result;
-            To(value, out result);
+            To(value, out sbyte result);
             return result;
         }
 
@@ -1528,8 +1492,7 @@ namespace RT.Util
         /// </summary>
         public static short ToShort(object value)
         {
-            short result;
-            To(value, out result);
+            To(value, out short result);
             return result;
         }
 
@@ -1539,8 +1502,7 @@ namespace RT.Util
         /// </summary>
         public static ushort ToUShort(object value)
         {
-            ushort result;
-            To(value, out result);
+            To(value, out ushort result);
             return result;
         }
 
@@ -1550,8 +1512,7 @@ namespace RT.Util
         /// </summary>
         public static int ToInt(object value)
         {
-            int result;
-            To(value, out result);
+            To(value, out int result);
             return result;
         }
 
@@ -1561,8 +1522,7 @@ namespace RT.Util
         /// </summary>
         public static uint ToUInt(object value)
         {
-            uint result;
-            To(value, out result);
+            To(value, out uint result);
             return result;
         }
 
@@ -1572,8 +1532,7 @@ namespace RT.Util
         /// </summary>
         public static long ToLong(object value)
         {
-            long result;
-            To(value, out result);
+            To(value, out long result);
             return result;
         }
 
@@ -1583,8 +1542,7 @@ namespace RT.Util
         /// </summary>
         public static ulong ToULong(object value)
         {
-            ulong result;
-            To(value, out result);
+            To(value, out ulong result);
             return result;
         }
 
@@ -1594,8 +1552,7 @@ namespace RT.Util
         /// </summary>
         public static float ToFloat(object value)
         {
-            float result;
-            To(value, out result);
+            To(value, out float result);
             return result;
         }
 
@@ -1605,8 +1562,7 @@ namespace RT.Util
         /// </summary>
         public static double ToDouble(object value)
         {
-            double result;
-            To(value, out result);
+            To(value, out double result);
             return result;
         }
 
@@ -1616,8 +1572,7 @@ namespace RT.Util
         /// </summary>
         public static decimal ToDecimal(object value)
         {
-            decimal result;
-            To(value, out result);
+            To(value, out decimal result);
             return result;
         }
 
@@ -1627,8 +1582,7 @@ namespace RT.Util
         /// </summary>
         public static DateTime ToDateTime(object value)
         {
-            DateTime result;
-            To(value, out result);
+            To(value, out DateTime result);
             return result;
         }
 
@@ -1638,8 +1592,7 @@ namespace RT.Util
         /// </summary>
         public static char ToChar(object value)
         {
-            char result;
-            To(value, out result);
+            To(value, out char result);
             return result;
         }
 
@@ -1649,8 +1602,7 @@ namespace RT.Util
         /// </summary>
         public static string ToString(object value)
         {
-            string result;
-            To(value, out result);
+            To(value, out string result);
             return result;
         }
 
@@ -1660,13 +1612,7 @@ namespace RT.Util
         /// Converts the value to type <paramref name="toType"/>. Throws an
         /// <see cref="ExactConvertException"/> if the object cannot be converted exactly.
         /// </summary>
-        public static object To(Type toType, object value)
-        {
-            object result;
-            if (!Try(toType, value, out result))
-                throw new ExactConvertException(value, toType);
-            return result;
-        }
+        public static object To(Type toType, object value) => Try(toType, value, out var result) ? result : throw new ExactConvertException(value, toType);
 
         /// <summary>
         /// Converts the value to type <typeparamref name="T"/>. Throws an
@@ -1724,165 +1670,105 @@ namespace RT.Util
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static bool? Bool(object value)
-            {
-                if (value == null) return null;
-                else return ToBool(value);
-            }
+            public static bool? Bool(object value) => value == null ? null : (bool?) ToBool(value);
 
             /// <summary>
             /// Converts the specified object to a nullable byte.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static byte? Byte(object value)
-            {
-                if (value == null) return null;
-                else return ToByte(value);
-            }
+            public static byte? Byte(object value) => value == null ? null : (byte?) ToByte(value);
 
             /// <summary>
             /// Converts the specified object to an nullable sbyte.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static sbyte? SByte(object value)
-            {
-                if (value == null) return null;
-                else return ToSByte(value);
-            }
+            public static sbyte? SByte(object value) => value == null ? null : (sbyte?) ToSByte(value);
 
             /// <summary>
             /// Converts the specified object to a nullable short.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static short? Short(object value)
-            {
-                if (value == null) return null;
-                else return ToShort(value);
-            }
+            public static short? Short(object value) => value == null ? null : (short?) ToShort(value);
 
             /// <summary>
             /// Converts the specified object to a nullable ushort.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static ushort? UShort(object value)
-            {
-                if (value == null) return null;
-                else return ToUShort(value);
-            }
+            public static ushort? UShort(object value) => value == null ? null : (ushort?) ToUShort(value);
 
             /// <summary>
             /// Converts the specified object to an nullable int.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static int? Int(object value)
-            {
-                if (value == null) return null;
-                else return ToInt(value);
-            }
+            public static int? Int(object value) => value == null ? null : (int?) ToInt(value);
 
             /// <summary>
             /// Converts the specified object to a nullable uint.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static uint? UInt(object value)
-            {
-                if (value == null) return null;
-                else return ToUInt(value);
-            }
+            public static uint? UInt(object value) => value == null ? null : (uint?) ToUInt(value);
 
             /// <summary>
             /// Converts the specified object to a nullable long.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static long? Long(object value)
-            {
-                if (value == null) return null;
-                else return ToLong(value);
-            }
+            public static long? Long(object value) => value == null ? null : (long?) ToLong(value);
 
             /// <summary>
             /// Converts the specified object to a nullable ulong.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static ulong? ULong(object value)
-            {
-                if (value == null) return null;
-                else return ToULong(value);
-            }
+            public static ulong? ULong(object value) => value == null ? null : (ulong?) ToULong(value);
 
             /// <summary>
             /// Converts the specified object to a nullable float.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static float? Float(object value)
-            {
-                if (value == null) return null;
-                else return ToFloat(value);
-            }
+            public static float? Float(object value) => value == null ? null : (float?) ToFloat(value);
 
             /// <summary>
             /// Converts the specified object to a nullable double.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static double? Double(object value)
-            {
-                if (value == null) return null;
-                else return ToDouble(value);
-            }
+            public static double? Double(object value) => value == null ? null : (double?) ToDouble(value);
 
             /// <summary>
             /// Converts the specified object to a nullable decimal.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static decimal? Decimal(object value)
-            {
-                if (value == null) return null;
-                else return ToDecimal(value);
-            }
+            public static decimal? Decimal(object value) => value == null ? null : (decimal?) ToDecimal(value);
 
             /// <summary>
             /// Converts the specified object to a nullable DateTime.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static DateTime? DateTime(object value)
-            {
-                if (value == null) return null;
-                else return ToDateTime(value);
-            }
+            public static DateTime? DateTime(object value) => value == null ? null : (DateTime?) ToDateTime(value);
 
             /// <summary>
             /// Converts the specified object to a nullable char.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static char? Char(object value)
-            {
-                if (value == null) return null;
-                else return ToChar(value);
-            }
+            public static char? Char(object value) => value == null ? null : (char?) ToChar(value);
 
             /// <summary>
             /// Converts the specified object to a nullable string.
             /// Returns null if <paramref name="value"/> is null.
             /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
             /// </summary>
-            public static string String(object value)
-            {
-                if (value == null) return null;
-                else return ExactConvert.ToString(value);
-            }
+            public static string String(object value) => value == null ? null : ExactConvert.ToString(value);
         }
     }
 

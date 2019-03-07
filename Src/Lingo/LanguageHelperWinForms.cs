@@ -28,8 +28,8 @@ namespace RT.Util.Lingo
             TranslationForm<TTranslation>.Settings settings, Icon icon, Func<Language> getCurrentLanguage)
             : base(programTitle, moduleName, editable, getCurrentLanguage)
         {
-            if (settings == null) throw new ArgumentNullException("settings");
-            if (icon == null) throw new ArgumentNullException("icon");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (icon == null) throw new ArgumentNullException(nameof(icon));
             _settings = settings;
             _icon = icon;
         }

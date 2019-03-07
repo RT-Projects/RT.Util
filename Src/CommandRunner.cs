@@ -705,7 +705,7 @@ namespace RT.Util
         public RunAsUserParams(string username, SecureString password, bool loadProfile = false, string domain = null)
         {
             if (username == null)
-                throw new ArgumentNullException("username");
+                throw new ArgumentNullException(nameof(username));
             Username = username;
             Password = password;
             LoadProfile = loadProfile;
@@ -726,7 +726,7 @@ namespace RT.Util
         public RunAsUserParams(string username, string password, bool loadProfile = false, string domain = null)
         {
             if (username == null)
-                throw new ArgumentNullException("username");
+                throw new ArgumentNullException(nameof(username));
             Username = username;
             Password = new SecureString();
             foreach (var c in password)

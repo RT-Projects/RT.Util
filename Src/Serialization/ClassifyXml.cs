@@ -219,10 +219,7 @@ namespace RT.Util.Serialization
         /// <param name="rootTagName">
         ///     Specifies the XML tag name to use for the root element of a serialized object.</param>
         /// <returns/>
-        public static IClassifyFormat<XElement> Create(string rootTagName = "item")
-        {
-            return new ClassifyXmlFormat { _rootTagName = rootTagName };
-        }
+        public static IClassifyFormat<XElement> Create(string rootTagName = "item") => new ClassifyXmlFormat { _rootTagName = rootTagName };
 
         private ClassifyXmlFormat() { }
 
@@ -264,22 +261,12 @@ namespace RT.Util.Serialization
             }
         }
 
-        IEnumerable<XElement> IClassifyFormat<XElement>.GetList(XElement element, int? tupleSize)
-        {
-            return tupleSize == null
-                ? element.Elements("item")
-                : Enumerable.Range(1, tupleSize.Value).Select(i => element.Element("item" + i));
-        }
+        IEnumerable<XElement> IClassifyFormat<XElement>.GetList(XElement element, int? tupleSize) =>
+            tupleSize == null ? element.Elements("item") : Enumerable.Range(1, tupleSize.Value).Select(i => element.Element("item" + i));
 
-        bool IClassifyFormat<XElement>.IsNull(XElement element)
-        {
-            return element.Attribute("null") != null;
-        }
+        bool IClassifyFormat<XElement>.IsNull(XElement element) => element.Attribute("null") != null;
 
-        XElement IClassifyFormat<XElement>.GetSelfValue(XElement element)
-        {
-            return element.Elements().FirstOrDefault();
-        }
+        XElement IClassifyFormat<XElement>.GetSelfValue(XElement element) => element.Elements().FirstOrDefault();
 
         void IClassifyFormat<XElement>.GetKeyValuePair(XElement element, out XElement key, out XElement value)
         {
@@ -297,65 +284,33 @@ namespace RT.Util.Serialization
             }
         }
 
-        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType)
-        {
-            return element.Elements().Where(el => el.Name.LocalName == fieldName).Any(elem =>
-            {
-                var attr = elem.Attribute("declaringType");
-                return attr == null || attr.Value == declaringType;
-            });
-        }
+        bool IClassifyFormat<XElement>.HasField(XElement element, string fieldName, string declaringType) =>
+            element.Elements().Where(el => el.Name.LocalName == fieldName).Any(elem => elem.Attribute("declaringType") == null || elem.Attribute("declaringType").Value == declaringType);
 
-        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType)
-        {
-            return element.Elements().Where(el => el.Name.LocalName == fieldName).FirstOrDefault(elem =>
-            {
-                var attr = elem.Attribute("declaringType");
-                return attr == null || attr.Value == declaringType;
-            });
-        }
+        XElement IClassifyFormat<XElement>.GetField(XElement element, string fieldName, string declaringType) =>
+            element.Elements().Where(el => el.Name.LocalName == fieldName).FirstOrDefault(elem => elem.Attribute("declaringType") == null || elem.Attribute("declaringType").Value == declaringType);
 
-        byte[] IClassifyFormat<XElement>.GetRawData(XElement element)
-        {
-            if (element.HasElements)
+        byte[] IClassifyFormat<XElement>.GetRawData(XElement element) =>
+            element.HasElements
                 // Support a list of integers as this was how Classify encoded byte arrays before GetRawData was introduced
-                return element.Elements().Select(el => ExactConvert.ToByte(el.Value)).ToArray();
+                ? element.Elements().Select(el => ExactConvert.ToByte(el.Value)).ToArray()
+                : Convert.FromBase64String(element.Value);
 
-            return Convert.FromBase64String(element.Value);
-        }
+        bool IClassifyFormat<XElement>.IsReference(XElement element) => element.Attribute("ref") != null;
+        bool IClassifyFormat<XElement>.IsReferable(XElement element) => element.Attribute("refid") != null;
 
-        bool IClassifyFormat<XElement>.IsReference(XElement element)
-        {
-            return element.Attribute("ref") != null;
-        }
-
-        bool IClassifyFormat<XElement>.IsReferable(XElement element)
-        {
-            return element.Attribute("refid") != null;
-        }
-
-        int IClassifyFormat<XElement>.GetReferenceID(XElement element)
-        {
-            return ExactConvert.ToInt(
-                element.Attribute("refid").NullOr(a => a.Value) ??
-                element.Attribute("ref").NullOr(a => a.Value) ??
-                Ut.Throw<string>(new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."))
-            );
-        }
-
-        XElement IClassifyFormat<XElement>.FormatNullValue()
-        {
-            return new XElement(_rootTagName, new XAttribute("null", "1"));
-        }
+        int IClassifyFormat<XElement>.GetReferenceID(XElement element) => ExactConvert.ToInt(
+            element.Attribute("refid").NullOr(a => a.Value) ??
+            element.Attribute("ref").NullOr(a => a.Value) ??
+            throw new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
 
         XElement IClassifyFormat<XElement>.FormatSimpleValue(object value)
         {
             var elem = new XElement(_rootTagName);
             if (value == null)
                 elem.Add(new XAttribute("null", "1"));
-            else if (value is string)
+            else if (value is string str)
             {
-                string str = (string) value;
                 if (str.Any(ch => ch < ' '))
                 {
                     elem.Add(new XAttribute("encoding", "c-literal"));
@@ -364,9 +319,8 @@ namespace RT.Util.Serialization
                 else
                     elem.Add(str);
             }
-            else if (value is char)
+            else if (value is char ch)
             {
-                char ch = (char) value;
                 if (ch <= ' ')
                 {
                     elem.Add(new XAttribute("encoding", "codepoint"));
@@ -379,11 +333,6 @@ namespace RT.Util.Serialization
                 elem.Add(ExactConvert.ToString(value));
 
             return elem;
-        }
-
-        XElement IClassifyFormat<XElement>.FormatSelfValue(XElement value)
-        {
-            return new XElement(_rootTagName, value);
         }
 
         XElement IClassifyFormat<XElement>.FormatList(bool isTuple, IEnumerable<XElement> values)
@@ -401,36 +350,22 @@ namespace RT.Util.Serialization
             return new XElement(_rootTagName, key, value);
         }
 
-        XElement IClassifyFormat<XElement>.FormatDictionary(IEnumerable<KeyValuePair<object, XElement>> values)
-        {
-            return new XElement(_rootTagName, values.Select(kvp =>
+        XElement IClassifyFormat<XElement>.FormatDictionary(IEnumerable<KeyValuePair<object, XElement>> values) =>
+            new XElement(_rootTagName, values.Select(kvp =>
             {
                 kvp.Value.Name = "item";
                 kvp.Value.Add(new XAttribute("key", ExactConvert.ToString(kvp.Key)));
                 return kvp.Value;
             }));
-        }
 
-        XElement IClassifyFormat<XElement>.FormatObject(IEnumerable<ObjectFieldInfo<XElement>> fields)
-        {
-            return new XElement(_rootTagName, fields.Select(kvp =>
+        XElement IClassifyFormat<XElement>.FormatObject(IEnumerable<ObjectFieldInfo<XElement>> fields) =>
+            new XElement(_rootTagName, fields.Select(kvp =>
             {
                 kvp.Value.Name = kvp.FieldName;
                 if (kvp.DeclaringType != null)
                     kvp.Value.Add(new XAttribute("declaringType", kvp.DeclaringType));
                 return kvp.Value;
             }));
-        }
-
-        XElement IClassifyFormat<XElement>.FormatRawData(byte[] value)
-        {
-            return new XElement(_rootTagName, Convert.ToBase64String(value));
-        }
-
-        XElement IClassifyFormat<XElement>.FormatReference(int refId)
-        {
-            return new XElement(_rootTagName, new XAttribute("ref", refId));
-        }
 
         XElement IClassifyFormat<XElement>.FormatReferable(XElement element, int refId)
         {
@@ -450,9 +385,12 @@ namespace RT.Util.Serialization
             return element;
         }
 
-        void IClassifyFormat<XElement>.ThrowMissingReferable(int refID)
-        {
+        XElement IClassifyFormat<XElement>.FormatNullValue() => new XElement(_rootTagName, new XAttribute("null", "1"));
+        XElement IClassifyFormat<XElement>.FormatSelfValue(XElement value) => new XElement(_rootTagName, value);
+        XElement IClassifyFormat<XElement>.FormatRawData(byte[] value) => new XElement(_rootTagName, Convert.ToBase64String(value));
+        XElement IClassifyFormat<XElement>.FormatReference(int refId) => new XElement(_rootTagName, new XAttribute("ref", refId));
+
+        void IClassifyFormat<XElement>.ThrowMissingReferable(int refID) =>
             throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but no matching element with the corresponding attribute refid=""{0}"" was encountered during deserialization. If such an attribute is present somewhere in the XML, the relevant element was not deserialized as an object (most likely because a field corresponding to a parent element was removed from its class declaration).".Fmt(refID));
-        }
     }
 }

@@ -21,21 +21,18 @@ namespace RT.Util
         ///     The file size in bytes.</param>
         /// <returns>
         ///     The converted string.</returns>
-        public static string SizeToString(long size)
-        {
-            if (size == 0)
-                return "0";
-            else if (size < 1024)
-                return size.ToString("#,###");
-            else if (size < 1024 * 1024)
-                return (size / 1024d).ToString("#,###.## KB");
-            else if (size < 1024 * 1024 * 1024)
-                return (size / 1024d / 1024d).ToString("#,###.## MB");
-            else if (size < 1024L * 1024 * 1024 * 1024)
-                return (size / 1024d / 1024d / 1024d).ToString("#,###.## GB");
-            else
-                return (size / 1024d / 1024d / 1024d / 1024d).ToString("#,###.## TB");
-        }
+        public static string SizeToString(long size) =>
+            size == 0
+                ? "0"
+                : size < 1024
+                    ? size.ToString("#,###")
+                    : size < 1024 * 1024
+                        ? (size / 1024d).ToString("#,###.## KB")
+                        : size < 1024 * 1024 * 1024
+                            ? (size / 1024d / 1024d).ToString("#,###.## MB")
+                            : size < 1024L * 1024 * 1024 * 1024
+                                ? (size / 1024d / 1024d / 1024d).ToString("#,###.## GB")
+                                : (size / 1024d / 1024d / 1024d / 1024d).ToString("#,###.## TB");
 
         /// <summary>Returns the smaller of the two IComparable values. If the values are equal, returns the first one.</summary>
         public static T Min<T>(T val1, T val2) where T : IComparable<T>
@@ -107,13 +104,12 @@ namespace RT.Util
         public static void SendKeystrokes(IEnumerable<object> keys)
         {
             if (keys == null)
-                throw new ArgumentNullException("keys");
+                throw new ArgumentNullException(nameof(keys));
 
             var input = new List<WinAPI.INPUT>();
             foreach (var elem in keys)
             {
-                Tuple<Keys, bool> t;
-                if ((t = elem as Tuple<Keys, bool>) != null)
+                if (elem is Tuple<Keys, bool> t)
                 {
                     var keyEvent = new WinAPI.INPUT
                     {
@@ -130,7 +126,7 @@ namespace RT.Util
                 else
                 {
                     if (!(elem is Keys || elem is char))
-                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, or Tuple<Keys, bool>.", "keys");
+                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, or Tuple<Keys, bool>.", nameof(keys));
                     var keyDown = new WinAPI.INPUT
                     {
                         Type = WinAPI.INPUT_KEYBOARD,
@@ -230,20 +226,6 @@ namespace RT.Util
             }
         }
 
-        /// <summary>
-        ///     Throws the specified exception.</summary>
-        /// <typeparam name="TResult">
-        ///     The type to return.</typeparam>
-        /// <param name="exception">
-        ///     The exception to throw.</param>
-        /// <returns>
-        ///     This method never returns a value. It always throws.</returns>
-        [DebuggerHidden]
-        public static TResult Throw<TResult>(Exception exception)
-        {
-            throw exception;
-        }
-
         /// <summary>Determines whether the Ctrl key is pressed.</summary>
         public static bool Ctrl { get { return Control.ModifierKeys.HasFlag(Keys.Control); } }
         /// <summary>Determines whether the Alt key is pressed.</summary>
@@ -320,7 +302,7 @@ namespace RT.Util
         public static T[] NewArray<T>(int size, Func<int, T> initialiser)
         {
             if (initialiser == null)
-                throw new ArgumentNullException("initialiser");
+                throw new ArgumentNullException(nameof(initialiser));
             var result = new T[size];
             for (int i = 0; i < size; i++)
             {
@@ -387,23 +369,23 @@ namespace RT.Util
         /// <summary>
         ///     Returns the integer represented by the specified string, or null if the string does not represent a valid
         ///     32-bit integer.</summary>
-        public static int? ParseInt32(string value) { int result; return int.TryParse(value, out result) ? (int?) result : null; }
+        public static int? ParseInt32(string value) => int.TryParse(value, out var result) ? (int?) result : null;
         /// <summary>
         ///     Returns the integer represented by the specified string, or null if the string does not represent a valid
         ///     64-bit integer.</summary>
-        public static long? ParseInt64(string value) { long result; return long.TryParse(value, out result) ? (long?) result : null; }
+        public static long? ParseInt64(string value) => long.TryParse(value, out var result) ? (long?) result : null;
         /// <summary>
         ///     Returns the floating-point number represented by the specified string, or null if the string does not
         ///     represent a valid double-precision floating-point number.</summary>
-        public static double? ParseDouble(string value) { double result; return double.TryParse(value, out result) ? (double?) result : null; }
+        public static double? ParseDouble(string value) => double.TryParse(value, out var result) ? (double?) result : null;
         /// <summary>
         ///     Returns the date/time stamp represented by the specified string, or null if the string does not represent a
         ///     valid date/time stamp.</summary>
-        public static DateTime? ParseDateTime(string value) { DateTime result; return DateTime.TryParse(value, out result) ? (DateTime?) result : null; }
+        public static DateTime? ParseDateTime(string value) => DateTime.TryParse(value, out var result) ? (DateTime?) result : null;
         /// <summary>
         ///     Returns the enum value represented by the specified string, or null if the string does not represent a valid
         ///     enum value.</summary>
-        public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct { T result; return Enum.TryParse<T>(value, ignoreCase, out result) ? (T?) result : null; }
+        public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct => Enum.TryParse<T>(value, ignoreCase, out var result) ? (T?) result : null;
 
         /// <summary>
         ///     Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the
@@ -446,7 +428,7 @@ namespace RT.Util
                 case 15: return typeof(Func<,,,,,,,,,,,,,,,>);
                 case 16: return typeof(Func<,,,,,,,,,,,,,,,,>);
             }
-            throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
+            throw new ArgumentException("numParameters must be between 0 and 16.", nameof(numParameters));
         }
 
         private static Type actionType(int numParameters)
@@ -471,350 +453,7 @@ namespace RT.Util
                 case 15: return typeof(Action<,,,,,,,,,,,,,,>);
                 case 16: return typeof(Action<,,,,,,,,,,,,,,,>);
             }
-            throw new ArgumentException("numParameters must be between 0 and 16.", "numParameters");
-        }
-
-        /// <summary>
-        ///     Executes the specified action if the current object is of the specified type, and the alternative action
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest">
-        ///     Type the object must have at runtime to execute the action.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="action">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
-        /// <param name="elseAction">
-        ///     Action to execute otherwise. If it's null, this action is not performed.</param>
-        public static void IfType<TObj, TTest>(this TObj obj, Action<TTest> action, Action<TObj> elseAction = null)
-        {
-            if (obj is TTest)
-                action((TTest) (object) obj);
-            else if (elseAction != null)
-                elseAction(obj);
-        }
-
-        /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="action1">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="action2">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="elseAction">
-        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the action called.</returns>
-        public static void IfType<TObj, TTest1, TTest2>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TObj> elseAction = null)
-        {
-            if (obj is TTest1)
-                action1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                action2((TTest2) (object) obj);
-            else if (elseAction != null)
-                elseAction(obj);
-        }
-
-        /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
-        /// <typeparam name="TTest3">
-        ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="action1">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="action2">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="action3">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
-        /// <param name="elseAction">
-        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the action called.</returns>
-        public static void IfType<TObj, TTest1, TTest2, TTest3>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TTest3> action3, Action<TObj> elseAction = null)
-        {
-            if (obj is TTest1)
-                action1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                action2((TTest2) (object) obj);
-            else if (obj is TTest3)
-                action3((TTest3) (object) obj);
-            else if (elseAction != null)
-                elseAction(obj);
-        }
-
-        /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
-        /// <typeparam name="TTest3">
-        ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
-        /// <typeparam name="TTest4">
-        ///     Type the object must have at runtime to execute <paramref name="action4"/>.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="action1">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="action2">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="action3">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
-        /// <param name="action4">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest4"/>.</param>
-        /// <param name="elseAction">
-        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the action called.</returns>
-        public static void IfType<TObj, TTest1, TTest2, TTest3, TTest4>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TTest3> action3, Action<TTest4> action4, Action<TObj> elseAction = null)
-        {
-            if (obj is TTest1)
-                action1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                action2((TTest2) (object) obj);
-            else if (obj is TTest3)
-                action3((TTest3) (object) obj);
-            else if (obj is TTest4)
-                action4((TTest4) (object) obj);
-            else if (elseAction != null)
-                elseAction(obj);
-        }
-
-        /// <summary>
-        ///     Executes the relevant action depending on the type of the current object, or the alternative action otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="action1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="action2"/>.</typeparam>
-        /// <typeparam name="TTest3">
-        ///     Type the object must have at runtime to execute <paramref name="action3"/>.</typeparam>
-        /// <typeparam name="TTest4">
-        ///     Type the object must have at runtime to execute <paramref name="action4"/>.</typeparam>
-        /// <typeparam name="TTest5">
-        ///     Type the object must have at runtime to execute <paramref name="action5"/>.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="action1">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="action2">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="action3">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
-        /// <param name="action4">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest4"/>.</param>
-        /// <param name="action5">
-        ///     Action to execute if <paramref name="obj"/> has the type <typeparamref name="TTest5"/>.</param>
-        /// <param name="elseAction">
-        ///     Action to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the action called.</returns>
-        public static void IfType<TObj, TTest1, TTest2, TTest3, TTest4, TTest5>(this TObj obj, Action<TTest1> action1, Action<TTest2> action2, Action<TTest3> action3, Action<TTest4> action4, Action<TTest5> action5, Action<TObj> elseAction = null)
-            where TTest1 : TObj
-            where TTest2 : TObj
-            where TTest3 : TObj
-            where TTest4 : TObj
-            where TTest5 : TObj
-        {
-            if (obj is TTest1)
-                action1((TTest1) obj);
-            else if (obj is TTest2)
-                action2((TTest2) obj);
-            else if (obj is TTest3)
-                action3((TTest3) obj);
-            else if (obj is TTest4)
-                action4((TTest4) obj);
-            else if (obj is TTest5)
-                action5((TTest5) obj);
-            else if (elseAction != null)
-                elseAction(obj);
-        }
-
-        /// <summary>
-        ///     Executes the relevant function depending on the type of the current object, or the alternative function
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest">
-        ///     Type the object must have at runtime to execute the function.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the functions.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="function">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
-        /// <param name="elseFunction">
-        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the function called.</returns>
-        public static TResult IfType<TObj, TTest, TResult>(this TObj obj, Func<TTest, TResult> function, Func<TObj, TResult> elseFunction = null)
-        {
-            if (obj is TTest)
-                return function((TTest) (object) obj);
-            else if (elseFunction != null)
-                return elseFunction(obj);
-            else
-                return default(TResult);
-        }
-
-        /// <summary>
-        ///     Executes the relevant function depending on the type of the current object, or returns the alternative value
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest">
-        ///     Type the object must have at runtime to execute the function.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the functions.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="function">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest"/>.</param>
-        /// <param name="elseValue">
-        ///     Value to return otherwise.</param>
-        /// <returns>
-        ///     The result of <paramref name="function"/> or the value of <paramref name="elseValue"/>.</returns>
-        public static TResult IfType<TObj, TTest, TResult>(this TObj obj, Func<TTest, TResult> function, TResult elseValue)
-        {
-            if (obj is TTest)
-                return function((TTest) (object) obj);
-            else
-                return elseValue;
-        }
-
-        /// <summary>
-        ///     Executes the relevant function depending on the type of the current object, or the alternative function
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the functions.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="function1">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="function2">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="elseFunction">
-        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the function called.</returns>
-        public static TResult IfType<TObj, TTest1, TTest2, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TObj, TResult> elseFunction = null)
-        {
-            if (obj is TTest1)
-                return function1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                return function2((TTest2) (object) obj);
-            else if (elseFunction != null)
-                return elseFunction(obj);
-            else
-                return default(TResult);
-        }
-
-        /// <summary>
-        ///     Executes the relevant function depending on the type of the current object, or the alternative function
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
-        /// <typeparam name="TTest3">
-        ///     Type the object must have at runtime to execute <paramref name="function3"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the functions.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="function1">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="function2">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="function3">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
-        /// <param name="elseFunction">
-        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the function called.</returns>
-        public static TResult IfType<TObj, TTest1, TTest2, TTest3, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TTest3, TResult> function3, Func<TObj, TResult> elseFunction = null)
-        {
-            if (obj is TTest1)
-                return function1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                return function2((TTest2) (object) obj);
-            else if (obj is TTest3)
-                return function3((TTest3) (object) obj);
-            else if (elseFunction != null)
-                return elseFunction(obj);
-            else
-                return default(TResult);
-        }
-
-        /// <summary>
-        ///     Executes the relevant function depending on the type of the current object, or the alternative function
-        ///     otherwise.</summary>
-        /// <typeparam name="TObj">
-        ///     Static type of the object to examine.</typeparam>
-        /// <typeparam name="TTest1">
-        ///     Type the object must have at runtime to execute <paramref name="function1"/>.</typeparam>
-        /// <typeparam name="TTest2">
-        ///     Type the object must have at runtime to execute <paramref name="function2"/>.</typeparam>
-        /// <typeparam name="TTest3">
-        ///     Type the object must have at runtime to execute <paramref name="function3"/>.</typeparam>
-        /// <typeparam name="TTest4">
-        ///     Type the object must have at runtime to execute <paramref name="function4"/>.</typeparam>
-        /// <typeparam name="TResult">
-        ///     Type of the result returned by the functions.</typeparam>
-        /// <param name="obj">
-        ///     Object whose type is to be examined.</param>
-        /// <param name="function1">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest1"/>.</param>
-        /// <param name="function2">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest2"/>.</param>
-        /// <param name="function3">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest3"/>.</param>
-        /// <param name="function4">
-        ///     Function to execute if <paramref name="obj"/> has the type <typeparamref name="TTest4"/>.</param>
-        /// <param name="elseFunction">
-        ///     Function to execute otherwise. If it's null, <c>default(TResult)</c> is returned.</param>
-        /// <returns>
-        ///     The result of the function called.</returns>
-        public static TResult IfType<TObj, TTest1, TTest2, TTest3, TTest4, TResult>(this TObj obj, Func<TTest1, TResult> function1, Func<TTest2, TResult> function2, Func<TTest3, TResult> function3, Func<TTest4, TResult> function4, Func<TObj, TResult> elseFunction = null)
-        {
-            if (obj is TTest1)
-                return function1((TTest1) (object) obj);
-            else if (obj is TTest2)
-                return function2((TTest2) (object) obj);
-            else if (obj is TTest3)
-                return function3((TTest3) (object) obj);
-            else if (obj is TTest4)
-                return function4((TTest4) (object) obj);
-            else if (elseFunction != null)
-                return elseFunction(obj);
-            else
-                return default(TResult);
+            throw new ArgumentException("numParameters must be between 0 and 16.", nameof(numParameters));
         }
 
         /// <summary>
@@ -832,7 +471,7 @@ namespace RT.Util
         public static TResult Apply<TSource, TResult>(this TSource source, Func<TSource, TResult> func)
         {
             if (func == null)
-                throw new ArgumentNullException("func");
+                throw new ArgumentNullException(nameof(func));
             return func(source);
         }
 
@@ -849,7 +488,7 @@ namespace RT.Util
         public static void Apply<TSource>(this TSource source, Action<TSource> action)
         {
             if (action == null)
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             action(source);
         }
 
@@ -895,8 +534,7 @@ namespace RT.Util
                     catch { }
                     if (hResult != -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
                         throw;
-                    if (onSharingVio != null)
-                        onSharingVio();
+                    onSharingVio?.Invoke();
                 }
 
                 if (maximum != null)
@@ -941,25 +579,23 @@ namespace RT.Util
         public static string GetLongestCommonSubstring(params string[] strings)
         {
             if (strings == null)
-                throw new ArgumentNullException("strings");
+                throw new ArgumentNullException(nameof(strings));
             if (strings.Length < 1)
-                throw new ArgumentException("The 'strings' array must contain at least one value.", "strings");
+                throw new ArgumentException("The 'strings' array must contain at least one value.", nameof(strings));
 
             if (strings.Length == 1)
                 return strings[0];
 
             // Optimisation: Instantiate these things only once (including the closure class for the lambda)
             var skipped = strings.Skip(1);
-            string substr = null;
-            Func<string, bool> contains = s => s.Contains(substr);
 
             for (var len = strings.Min(str => str.Length); len >= 1; len--)
             {
                 var maxIndex = strings[0].Length - len;
                 for (var index = 0; index <= maxIndex; index++)
                 {
-                    substr = strings[0].Substring(index, len);
-                    if (skipped.All(contains))
+                    var substr = strings[0].Substring(index, len);
+                    if (skipped.All(s => s.Contains(substr)))
                         return substr;
                 }
             }
@@ -979,10 +615,9 @@ namespace RT.Util
         ///     The converted 16-bit unsigned integer.</returns>
         public static ushort BytesToUShort(byte[] buffer, int index, bool bigEndian = false)
         {
-            if (bigEndian)
-                return (ushort) ((buffer[index] << 8) | buffer[index + 1]);
-            else
-                return (ushort) (buffer[index] | (buffer[index + 1] << 8));
+            return bigEndian
+                ? (ushort) ((buffer[index] << 8) | buffer[index + 1])
+                : (ushort) (buffer[index] | (buffer[index + 1] << 8));
         }
 
         /// <summary>
@@ -998,10 +633,9 @@ namespace RT.Util
         ///     The converted 16-bit signed integer.</returns>
         public static short BytesToShort(byte[] buffer, int index, bool bigEndian = false)
         {
-            if (bigEndian)
-                return (short) ((buffer[index] << 8) | buffer[index + 1]);
-            else
-                return (short) (buffer[index] | (buffer[index + 1] << 8));
+            return bigEndian
+                ? (short) ((buffer[index] << 8) | buffer[index + 1])
+                : (short) (buffer[index] | (buffer[index + 1] << 8));
         }
 
         /// <summary>
@@ -1017,10 +651,9 @@ namespace RT.Util
         ///     The converted 32-bit unsigned integer.</returns>
         public static uint BytesToUInt(byte[] buffer, int index, bool bigEndian = false)
         {
-            if (bigEndian)
-                return ((uint) buffer[index] << 24) | ((uint) buffer[index + 1] << 16) | ((uint) buffer[index + 2] << 8) | buffer[index + 3];
-            else
-                return buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24);
+            return bigEndian
+                ? ((uint) buffer[index] << 24) | ((uint) buffer[index + 1] << 16) | ((uint) buffer[index + 2] << 8) | buffer[index + 3]
+                : buffer[index] | ((uint) buffer[index + 1] << 8) | ((uint) buffer[index + 2] << 16) | ((uint) buffer[index + 3] << 24);
         }
 
         /// <summary>
@@ -1034,13 +667,9 @@ namespace RT.Util
         ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
         /// <returns>
         ///     The converted 32-bit signed integer.</returns>
-        public static int BytesToInt(byte[] buffer, int index, bool bigEndian = false)
-        {
-            if (bigEndian)
-                return (buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3];
-            else
-                return buffer[index] | (buffer[index + 1] << 8) | (buffer[index + 2] << 16) | (buffer[index + 3] << 24);
-        }
+        public static int BytesToInt(byte[] buffer, int index, bool bigEndian = false) => bigEndian
+                ? (buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3]
+                : buffer[index] | (buffer[index + 1] << 8) | (buffer[index + 2] << 16) | (buffer[index + 3] << 24);
 
         /// <summary>
         ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
@@ -1053,13 +682,9 @@ namespace RT.Util
         ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
         /// <returns>
         ///     The converted 64-bit unsigned integer.</returns>
-        public static ulong BytesToULong(byte[] buffer, int index, bool bigEndian = false)
-        {
-            if (bigEndian)
-                return ((ulong) buffer[index] << 56) | ((ulong) buffer[index + 1] << 48) | ((ulong) buffer[index + 2] << 40) | ((ulong) buffer[index + 3] << 32) | ((ulong) buffer[index + 4] << 24) | ((ulong) buffer[index + 5] << 16) | ((ulong) buffer[index + 6] << 8) | buffer[index + 7];
-            else
-                return buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56);
-        }
+        public static ulong BytesToULong(byte[] buffer, int index, bool bigEndian = false) => bigEndian
+                ? ((ulong) buffer[index] << 56) | ((ulong) buffer[index + 1] << 48) | ((ulong) buffer[index + 2] << 40) | ((ulong) buffer[index + 3] << 32) | ((ulong) buffer[index + 4] << 24) | ((ulong) buffer[index + 5] << 16) | ((ulong) buffer[index + 6] << 8) | buffer[index + 7]
+                : buffer[index] | ((ulong) buffer[index + 1] << 8) | ((ulong) buffer[index + 2] << 16) | ((ulong) buffer[index + 3] << 24) | ((ulong) buffer[index + 4] << 32) | ((ulong) buffer[index + 5] << 40) | ((ulong) buffer[index + 6] << 48) | ((ulong) buffer[index + 7] << 56);
 
         /// <summary>
         ///     Converts the bytes at the specified <paramref name="index"/> within the specified <paramref name="buffer"/> to
@@ -1072,15 +697,11 @@ namespace RT.Util
         ///     <c>true</c> to interpret the data as big-endian byte order; <c>false</c> for little-endian byte order.</param>
         /// <returns>
         ///     The converted 64-bit signed integer.</returns>
-        public static long BytesToLong(byte[] buffer, int index, bool bigEndian = false)
-        {
-            if (bigEndian)
-                return ((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | buffer[index + 7];
-            else
-                return buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56);
-        }
+        public static long BytesToLong(byte[] buffer, int index, bool bigEndian = false) => bigEndian
+                ? ((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | buffer[index + 7]
+                : buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56);
 
-        private static class enumAttributeCache<TAttribute>
+        private static class EnumAttributeCache<TAttribute>
         {
             public static Dictionary<Type, Dictionary<Enum, TAttribute[]>> Dictionary = new Dictionary<Type, Dictionary<Enum, TAttribute[]>>();
         }
@@ -1102,9 +723,9 @@ namespace RT.Util
         public static TAttribute[] GetCustomAttributes<TAttribute>(this Enum enumValue) where TAttribute : Attribute
         {
             if (enumValue == null)
-                throw new ArgumentNullException("enumValue");
+                throw new ArgumentNullException(nameof(enumValue));
             var enumType = enumValue.GetType();
-            var dic = enumAttributeCache<TAttribute>.Dictionary;
+            var dic = EnumAttributeCache<TAttribute>.Dictionary;
             TAttribute[] arr;
             if (!dic.ContainsKeys(enumType, enumValue))
             {
@@ -1144,7 +765,7 @@ namespace RT.Util
         public static TAttribute GetCustomAttribute<TAttribute>(this Enum enumValue) where TAttribute : Attribute
         {
             if (enumValue == null)
-                throw new ArgumentNullException("enumValue");
+                throw new ArgumentNullException(nameof(enumValue));
             return GetCustomAttributes<TAttribute>(enumValue).SingleOrDefault();
         }
 

@@ -20,7 +20,7 @@ namespace RT.KitchenSink.Collections
         public LazyList(IEnumerable<T> enumerable)
         {
             if (enumerable == null)
-                throw new ArgumentNullException("enumerable");
+                throw new ArgumentNullException(nameof(enumerable));
             _enumerator = enumerable.GetEnumerator();
         }
 

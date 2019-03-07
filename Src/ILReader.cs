@@ -21,7 +21,7 @@ namespace RT.Util.IL
         public static IEnumerable<Instruction> ReadIL(MethodBase method, Type genericContext)
         {
             if (method == null)
-                throw new ArgumentNullException("method");
+                throw new ArgumentNullException(nameof(method));
             return readIL(method, genericContext);
         }
 

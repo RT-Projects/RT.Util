@@ -144,19 +144,19 @@ namespace RT.KitchenSink
         ///     The safest way to use this is with a <c>foreach</c> loop.</remarks>
         public IEnumerator<T> GetEnumerator()
         {
-            return new enumerator(this);
+            return new Enumerator(this);
         }
 
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
-        private sealed class enumerator : IEnumerator<T>
+        private sealed class Enumerator : IEnumerator<T>
         {
             private Channel<T> _this;
             private T _current;
             private bool _everMoved = false;
             private bool _reachedEnd = false;
 
-            public enumerator(Channel<T> channel) { _this = channel; }
+            public Enumerator(Channel<T> channel) { _this = channel; }
 
             public T Current
             {

@@ -136,7 +136,7 @@ namespace RT.Util
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 _text = value;
             }
         }
@@ -147,7 +147,7 @@ namespace RT.Util
         public RhoText(string text)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             Text = text;
         }
 
@@ -173,7 +173,7 @@ namespace RT.Util
         public IDictionary<string, string> Attributes
         {
             get { return _attributes; }
-            set { if (value == null) throw new ArgumentNullException("value"); _attributes = value; }
+            set { if (value == null) throw new ArgumentNullException(nameof(value)); _attributes = value; }
         }
         /// <summary>
         ///     Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/>
@@ -181,7 +181,7 @@ namespace RT.Util
         public IList<RhoNode> Children
         {
             get { return _children; }
-            set { if (value == null) throw new ArgumentNullException("value"); _children = value; }
+            set { if (value == null) throw new ArgumentNullException(nameof(value)); _children = value; }
         }
 
         private IDictionary<string, string> _attributes;
@@ -206,9 +206,9 @@ namespace RT.Util
         public RhoElement(string name, string value, IDictionary<string, string> attributes, List<RhoNode> elements)
         {
             if (attributes == null)
-                throw new ArgumentNullException("attributes");
+                throw new ArgumentNullException(nameof(attributes));
             if (elements == null)
-                throw new ArgumentNullException("elements");
+                throw new ArgumentNullException(nameof(elements));
             Name = name;
             Value = value;
             Attributes = new ReadOnlyDictionary<string, string>(attributes);

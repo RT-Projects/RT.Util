@@ -99,15 +99,15 @@ namespace RT.Util.Text
         private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, HorizontalTextAlignment? alignment, ConsoleColor? background = null)
         {
             if (col < 0)
-                throw new ArgumentOutOfRangeException("col", col, @"""col"" cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(col), col, @"""col"" cannot be negative.");
             if (row < 0)
-                throw new ArgumentOutOfRangeException("row", row, @"""row"" cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(row), row, @"""row"" cannot be negative.");
             if (colSpan < 1)
-                throw new ArgumentOutOfRangeException("colSpan", colSpan, @"""colSpan"" cannot be less than 1.");
+                throw new ArgumentOutOfRangeException(nameof(colSpan), colSpan, @"""colSpan"" cannot be less than 1.");
             if (rowSpan < 1)
-                throw new ArgumentOutOfRangeException("rowSpan", rowSpan, @"""rowSpan"" cannot be less than 1.");
+                throw new ArgumentOutOfRangeException(nameof(rowSpan), rowSpan, @"""rowSpan"" cannot be less than 1.");
             if (content == null)
-                throw new ArgumentNullException("content");
+                throw new ArgumentNullException(nameof(content));
 
             // Complain if setting this cell would overlap with another cell due to its colspan or rowspan
             if (row >= _cells.Count || col >= _cells[row].Count || _cells[row][col] == null || _cells[row][col] is surrogateCell)
@@ -475,7 +475,7 @@ namespace RT.Util.Text
         public void SetRowBackground(int row, ConsoleColor? backgroundColor)
         {
             if (row < 0)
-                throw new ArgumentOutOfRangeException("row", row, @"""row"" cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(row), row, @"""row"" cannot be negative.");
             while (row >= _rowBackgrounds.Count)
                 _rowBackgrounds.Add(null);
             _rowBackgrounds[row] = backgroundColor;

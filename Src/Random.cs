@@ -93,7 +93,7 @@ namespace RT.Util
         public static string GenerateString(int length, string takeCharactersFrom = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", Random rnd = null)
         {
             if (takeCharactersFrom == null)
-                throw new ArgumentNullException("takeCharactersFrom");
+                throw new ArgumentNullException(nameof(takeCharactersFrom));
             return new string(Ut.NewArray(length, i => takeCharactersFrom[rnd == null ? Rnd.Next(takeCharactersFrom.Length) : rnd.Next(takeCharactersFrom.Length)]));
         }
     }
@@ -174,7 +174,7 @@ namespace RT.Util
         public static string GenerateString(int length, string takeCharactersFrom = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
         {
             if (takeCharactersFrom == null)
-                throw new ArgumentNullException("takeCharactersFrom");
+                throw new ArgumentNullException(nameof(takeCharactersFrom));
             var chars = new char[length];
             var bytes = NextBytes(length * 4);
             for (int i = 0; i < length; i++)

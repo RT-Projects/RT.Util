@@ -66,7 +66,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString(string input, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             _text = input;
             var l = input.Length;
             _foreground = new ConsoleColor?[l];
@@ -94,9 +94,9 @@ namespace RT.Util.Consoles
         public ConsoleColoredString(string input, ConsoleColor?[] foregroundColors, ConsoleColor?[] backgroundColors = null)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             if (foregroundColors == null)
-                throw new ArgumentNullException("foregroundColors");
+                throw new ArgumentNullException(nameof(foregroundColors));
             if (input.Length != foregroundColors.Length)
                 throw new InvalidOperationException("The number of characters must match the number of foreground colors.");
             if (backgroundColors != null && input.Length != backgroundColors.Length)
@@ -302,7 +302,7 @@ namespace RT.Util.Consoles
         public char CharAt(int index)
         {
             if (index < 0 || index >= _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index must be greater or equal to 0 and smaller than the length of the ConsoleColoredString.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index must be greater or equal to 0 and smaller than the length of the ConsoleColoredString.");
             return _text[index];
         }
 
@@ -337,7 +337,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString Insert(int startIndex, ConsoleColoredString value)
         {
             if (startIndex < 0 || startIndex > Length)
-                throw new ArgumentOutOfRangeException("startIndex", "startIndex cannot be negative or greater than the length of the string.");
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative or greater than the length of the string.");
             return Substring(0, startIndex) + value + Substring(startIndex);
         }
 
@@ -451,7 +451,7 @@ namespace RT.Util.Consoles
         public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args)
         {
             if (format == null)
-                throw new ArgumentNullException("format");
+                throw new ArgumentNullException(nameof(format));
             return format.Fmt(args);
         }
 
@@ -470,7 +470,7 @@ namespace RT.Util.Consoles
         public static ConsoleColoredString Format(ConsoleColoredString format, IFormatProvider provider, params object[] args)
         {
             if (format == null)
-                throw new ArgumentNullException("format");
+                throw new ArgumentNullException(nameof(format));
             return format.Fmt(provider, args);
         }
 
@@ -484,7 +484,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString Fmt(IFormatProvider provider, params object[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             return FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.Stringify, provider, args).JoinColoredString();
         }
 
@@ -502,7 +502,7 @@ namespace RT.Util.Consoles
         public IEnumerable<object> FmtEnumerable(IFormatProvider provider, params object[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             return FmtEnumerableInternal(FormatBehavior.Colored, provider, args);
         }
 
@@ -835,9 +835,9 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
             if (length < 0 || index + length > _text.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
             return Substring(0, index) + Substring(index, length).Color(foreground) + Substring(index + length);
         }
 
@@ -858,9 +858,9 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
             if (length < 0 || index + length > _text.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
             return Substring(0, index) + Substring(index, length).Color(foreground).ColorBackground(background) + Substring(index + length);
         }
 
@@ -877,7 +877,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
 
             return Substring(0, index) + Substring(index).Color(foreground);
         }
@@ -897,7 +897,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
 
             return Substring(0, index) + Substring(index).Color(foreground).ColorBackground(background);
         }
@@ -916,9 +916,9 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstringBackground(int index, int length, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
             if (length < 0 || index + length > _text.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
             return Substring(0, index) + Substring(index, length).ColorBackground(background) + Substring(index + length);
         }
 
@@ -935,7 +935,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ColorSubstringBackground(int index, ConsoleColor? background)
         {
             if (index < 0 || index > _text.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
 
             return Substring(0, index) + Substring(index).ColorBackground(background);
         }
@@ -970,9 +970,9 @@ namespace RT.Util.Consoles
         public ConsoleColoredString Replace(string oldValue, ConsoleColoredString newValue, StringComparison comparison = StringComparison.Ordinal)
         {
             if (oldValue == null)
-                throw new ArgumentNullException("oldValue");
+                throw new ArgumentNullException(nameof(oldValue));
             if (newValue == null)
-                throw new ArgumentNullException("newValue");
+                throw new ArgumentNullException(nameof(newValue));
 
             var index = 0;
             var newText = new List<ConsoleColoredString>();
@@ -1009,11 +1009,11 @@ namespace RT.Util.Consoles
         public ConsoleColoredString ReplaceText(string oldValue, string newValue, StringComparison comparison = StringComparison.Ordinal)
         {
             if (oldValue == null)
-                throw new ArgumentNullException("oldValue");
+                throw new ArgumentNullException(nameof(oldValue));
             if (oldValue.Length == 0)
-                throw new ArgumentException("oldValue cannot be the empty string.", "oldValue");
+                throw new ArgumentException("oldValue cannot be the empty string.", nameof(oldValue));
             if (newValue == null)
-                throw new ArgumentNullException("newValue");
+                throw new ArgumentNullException(nameof(newValue));
 
             var index = 0;
             var newText = new List<ConsoleColoredString>();
@@ -1053,7 +1053,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString PadLeft(int totalWidth, ConsoleColoredChar paddingChar)
         {
             if (totalWidth < 0)
-                throw new ArgumentOutOfRangeException("totalWidth", "Total width cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.");
             if (Length >= totalWidth)
                 return this;
             return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
@@ -1077,7 +1077,7 @@ namespace RT.Util.Consoles
         public ConsoleColoredString PadRight(int totalWidth, ConsoleColoredChar paddingChar)
         {
             if (totalWidth < 0)
-                throw new ArgumentOutOfRangeException("totalWidth", "Total width cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.");
             if (Length >= totalWidth)
                 return this;
             return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);

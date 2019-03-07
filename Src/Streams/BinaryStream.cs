@@ -22,7 +22,7 @@ namespace RT.Util.Streams
         public BinaryStream(Stream underlyingStream)
         {
             if (underlyingStream == null)
-                throw new ArgumentNullException("underlyingStream");
+                throw new ArgumentNullException(nameof(underlyingStream));
             _stream = underlyingStream;
         }
 
@@ -115,7 +115,7 @@ namespace RT.Util.Streams
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             _stream.Write(buffer, offset, count);
         }
 
@@ -137,7 +137,7 @@ namespace RT.Util.Streams
         public void WriteBytes(byte[] data)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             _stream.Write(data, 0, data.Length);
         }
 

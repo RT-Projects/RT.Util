@@ -40,11 +40,11 @@ namespace RT.Util.Drawing
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (hue < 0 || hue >= 360)
-                throw new ArgumentOutOfRangeException("hue", hue, "hue must be between 0 (incl.) and 360 (excl.).");
+                throw new ArgumentOutOfRangeException(nameof(hue), hue, "hue must be between 0 (incl.) and 360 (excl.).");
             if (saturation < 0 || saturation > 1)
-                throw new ArgumentOutOfRangeException("saturation", saturation, "saturation must be between 0 and 1 (incl.).");
+                throw new ArgumentOutOfRangeException(nameof(saturation), saturation, "saturation must be between 0 and 1 (incl.).");
             if (value < 0 || value > 1)
-                throw new ArgumentOutOfRangeException("value", value, "value must be between 0 and 1 (incl.).");
+                throw new ArgumentOutOfRangeException(nameof(value), value, "value must be between 0 and 1 (incl.).");
 
             double h = hue;
             double s = saturation;
@@ -168,13 +168,13 @@ namespace RT.Util.Drawing
         public static unsafe Bitmap SetTransparencyChannel(this Bitmap source, Bitmap transparencyLayer, int channel, bool invert = false)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (transparencyLayer == null)
-                throw new ArgumentNullException("transparencyLayer");
+                throw new ArgumentNullException(nameof(transparencyLayer));
             if (source.Width != transparencyLayer.Width || source.Height != transparencyLayer.Height)
-                throw new ArgumentException("transparencyLayer must be the same size as source.", "transparencyLayer");
+                throw new ArgumentException("transparencyLayer must be the same size as source.", nameof(transparencyLayer));
             if (channel < 0 || channel > 3)
-                throw new ArgumentException("channel must be 0, 1, 2 or 3.", "channel");
+                throw new ArgumentException("channel must be 0, 1, 2 or 3.", nameof(channel));
 
             var sBits = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             var tBits = transparencyLayer.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -339,15 +339,15 @@ namespace RT.Util.Drawing
         public static GraphicsPath RoundedRectangle(float x, float y, float width, float height, float radius, bool tolerant = false)
         {
             if (width <= 0)
-                throw new ArgumentException("'width' must be positive.", "width");
+                throw new ArgumentException("'width' must be positive.", nameof(width));
             if (height <= 0)
-                throw new ArgumentException("'height' must be positive.", "height");
+                throw new ArgumentException("'height' must be positive.", nameof(height));
             if (radius <= 0)
-                throw new ArgumentException("'radius' must be positive.", "radius");
+                throw new ArgumentException("'radius' must be positive.", nameof(radius));
             if (width < 2 * radius || height < 2 * radius)
             {
                 if (!tolerant)
-                    throw new ArgumentException("'radius' is too large to fit into the width and/or height.", "radius");
+                    throw new ArgumentException("'radius' is too large to fit into the width and/or height.", nameof(radius));
                 radius = Math.Min(width / 2, height / 2);
             }
 
@@ -402,17 +402,17 @@ namespace RT.Util.Drawing
         public static float GetMaximumFontSize(this Graphics graphics, FontFamily fontFamily, string text, FontStyle style = FontStyle.Regular, bool allowWordWrapping = false, float? maxWidth = null, float? maxHeight = null)
         {
             if (graphics == null)
-                throw new ArgumentNullException("graphics");
+                throw new ArgumentNullException(nameof(graphics));
             if (string.IsNullOrEmpty(text))
-                throw new ArgumentException("text cannot be null or empty.", "text");
+                throw new ArgumentException("text cannot be null or empty.", nameof(text));
             if (maxWidth != null && maxWidth.Value < 1)
-                throw new ArgumentException("Maximum width cannot be zero or negative.", "maxWidth");
+                throw new ArgumentException("Maximum width cannot be zero or negative.", nameof(maxWidth));
             if (maxHeight != null && maxHeight.Value < 1)
-                throw new ArgumentException("Maximum height cannot be zero or negative.", "maxHeight");
+                throw new ArgumentException("Maximum height cannot be zero or negative.", nameof(maxHeight));
             if (maxWidth == null && maxHeight == null)
-                throw new ArgumentException("maxWidth and maxHeight cannot both be null.", "maxHeight");
+                throw new ArgumentException("maxWidth and maxHeight cannot both be null.", nameof(maxHeight));
             if (maxWidth == null && allowWordWrapping)
-                throw new ArgumentException("maxWidth cannot be null if allowWordWrapping is true.", "maxWidth");
+                throw new ArgumentException("maxWidth cannot be null if allowWordWrapping is true.", nameof(maxWidth));
 
             float low = 1;
             float? high = null;

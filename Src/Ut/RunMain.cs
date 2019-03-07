@@ -35,7 +35,7 @@ namespace RT.Util
         public static int RunMain(Func<int> main, Func<Exception, int> onUnhandledMain, Action<Exception> onUnhandledThread = null)
         {
             if (onUnhandledMain == null)
-                throw new ArgumentNullException("onUnhandledMain");
+                throw new ArgumentNullException(nameof(onUnhandledMain));
             if (onUnhandledThread == null)
                 onUnhandledThread = excp => { onUnhandledMain(excp); };
 

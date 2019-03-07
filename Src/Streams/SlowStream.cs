@@ -23,7 +23,7 @@ namespace RT.Util.Streams
         public SlowStream(Stream stream, int chunkSize = 1024)
         {
             if (chunkSize < 1)
-                throw new ArgumentOutOfRangeException("chunkSize", "chunkSize cannot be zero or negative.");
+                throw new ArgumentOutOfRangeException(nameof(chunkSize), "chunkSize cannot be zero or negative.");
             _stream = stream;
             ChunkSize = chunkSize;
         }

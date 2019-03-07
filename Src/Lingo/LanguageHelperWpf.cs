@@ -26,8 +26,8 @@ namespace RT.Util.Lingo
             TranslationWindow.Settings settings, ImageSource icon, Func<Language> getCurrentLanguage)
             : base(programTitle, moduleName, editable, getCurrentLanguage)
         {
-            if (settings == null) throw new ArgumentNullException("settings");
-            if (icon == null) throw new ArgumentNullException("icon");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (icon == null) throw new ArgumentNullException(nameof(icon));
             _settings = settings;
             _icon = icon;
         }
@@ -112,8 +112,8 @@ namespace RT.Util.Lingo
             TranslationForm<TTranslation>.Settings settings, System.Drawing.Icon icon, Func<Language> getCurrentLanguage)
             : base(programTitle, moduleName, editable, getCurrentLanguage)
         {
-            if (settings == null) throw new ArgumentNullException("settings");
-            if (icon == null) throw new ArgumentNullException("icon");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (icon == null) throw new ArgumentNullException(nameof(icon));
             _settings = settings;
             _icon = icon;
         }

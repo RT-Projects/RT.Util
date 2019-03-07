@@ -15,9 +15,9 @@ namespace RT.Util.Lingo
         public static void TranslateWindow(Window window, object translation)
         {
             if (window == null)
-                throw new ArgumentNullException("window");
+                throw new ArgumentNullException(nameof(window));
             if (translation == null)
-                throw new ArgumentNullException("translation");
+                throw new ArgumentNullException(nameof(translation));
 
             translateControlWpf(window, translation, null);
         }

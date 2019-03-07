@@ -15,7 +15,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             // Make sure that ‘source’ is evaluated only once
             var sourceArr = source as IList<T> ?? source.ToArray();
             return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => new Tuple<T, T>(item1, item2)));
@@ -25,7 +25,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<TResult> AllPairs<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TSource, TResult> selector)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             // Make sure that ‘source’ is evaluated only once
             var sourceArr = source as IList<TSource> ?? source.ToArray();
             return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => selector(item1, item2)));
@@ -37,7 +37,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return uniquePairsIterator(source);
         }
         private static IEnumerable<Tuple<T, T>> uniquePairsIterator<T>(IEnumerable<T> source)
@@ -60,7 +60,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return selectConsecutivePairsIterator(source, closed, Tuple.Create);
         }
 
@@ -78,7 +78,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<TResult> SelectConsecutivePairs<T, TResult>(this IEnumerable<T> source, bool closed, Func<T, T, TResult> selector)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (selector == null)
                 throw new ArgumentNullException(nameof(selector));
             return selectConsecutivePairsIterator(source, closed, selector);
@@ -118,9 +118,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (comparison == null)
-                throw new ArgumentNullException("comparison");
+                throw new ArgumentNullException(nameof(comparison));
             return source.OrderBy(x => x, new CustomComparer<T>(comparison));
         }
 
@@ -137,9 +137,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
         {
             if (splitWhat == null)
-                throw new ArgumentNullException("splitWhat");
+                throw new ArgumentNullException(nameof(splitWhat));
             if (splitWhere == null)
-                throw new ArgumentNullException("splitWhere");
+                throw new ArgumentNullException(nameof(splitWhere));
             return splitIterator(splitWhat, splitWhere);
         }
         private static IEnumerable<IEnumerable<T>> splitIterator<T>(IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
@@ -167,7 +167,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> Concat<T>(this IEnumerable<T> source, T element)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return concatIterator(element, source, false);
         }
 
@@ -180,7 +180,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> Concat<T>(this T head, IEnumerable<T> tail)
         {
             if (tail == null)
-                throw new ArgumentNullException("tail");
+                throw new ArgumentNullException(nameof(tail));
             return concatIterator(head, tail, true);
         }
 
@@ -218,9 +218,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (comparer == null)
-                throw new ArgumentNullException("comparer");
+                throw new ArgumentNullException(nameof(comparer));
             var arr = source.ToArray();
             if (arr.Length < 2)
                 return arr;
@@ -284,7 +284,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<IEnumerable<T>> Permutations<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             // Ensure that the source IEnumerable is evaluated only once
             return permutations(source as T[] ?? source.ToArray());
         }
@@ -314,15 +314,15 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<IEnumerable<T>> Subsequences<T>(this IEnumerable<T> source, int minLength = 0, int? maxLength = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
 
             // Ensure that the source IEnumerable is evaluated only once
             var input = (source as IList<T>) ?? source.ToArray();
 
             if (minLength < 0 || minLength > input.Count)
-                throw new ArgumentOutOfRangeException("minLength", "minLength must be between 0 and the size of the collection.");
+                throw new ArgumentOutOfRangeException(nameof(minLength), "minLength must be between 0 and the size of the collection.");
             if (maxLength < 0 || maxLength > input.Count)
-                throw new ArgumentOutOfRangeException("maxLength", "maxLength must be between 0 and the size of the collection.");
+                throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be between 0 and the size of the collection.");
 
             IEnumerable<List<int>> subsequences(int range, int minLen, int maxLen)
             {
@@ -365,7 +365,7 @@ namespace RT.Util.ExtensionMethods
         public static T? FirstOrNull<T>(this IEnumerable<T> source) where T : struct
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             using (var e = source.GetEnumerator())
             {
                 if (e.MoveNext())
@@ -388,7 +388,7 @@ namespace RT.Util.ExtensionMethods
         public static T FirstOrDefault<T>(this IEnumerable<T> source, T @default)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             using (var e = source.GetEnumerator())
             {
                 if (e.MoveNext())
@@ -414,9 +414,9 @@ namespace RT.Util.ExtensionMethods
         public static T FirstOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate, T @default)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (predicate == null)
-                throw new ArgumentNullException("predicate");
+                throw new ArgumentNullException(nameof(predicate));
             using (var e = source.GetEnumerator())
             {
                 while (e.MoveNext())
@@ -448,11 +448,11 @@ namespace RT.Util.ExtensionMethods
         public static TResult FirstOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, bool> predicate, Func<TSource, TResult> resultSelector, TResult @default)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (predicate == null)
-                throw new ArgumentNullException("predicate");
+                throw new ArgumentNullException(nameof(predicate));
             if (resultSelector == null)
-                throw new ArgumentNullException("resultSelector");
+                throw new ArgumentNullException(nameof(resultSelector));
             using (var e = source.GetEnumerator())
             {
                 while (e.MoveNext())
@@ -468,9 +468,9 @@ namespace RT.Util.ExtensionMethods
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (predicate == null)
-                throw new ArgumentNullException("predicate");
+                throw new ArgumentNullException(nameof(predicate));
             int index = 0;
             foreach (var v in source)
             {
@@ -512,9 +512,9 @@ namespace RT.Util.ExtensionMethods
         public static int LastIndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (predicate == null)
-                throw new ArgumentNullException("predicate");
+                throw new ArgumentNullException(nameof(predicate));
 
             var list = source as IList<T>;
             if (list != null)
@@ -543,7 +543,7 @@ namespace RT.Util.ExtensionMethods
         public static int IndexOf<T>(this IEnumerable<T> source, T element, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (comparer == null)
                 comparer = EqualityComparer<T>.Default;
             int index = 0;
@@ -569,7 +569,7 @@ namespace RT.Util.ExtensionMethods
         public static TSource MinOrDefault<TSource>(this IEnumerable<TSource> source, TSource @default = default(TSource))
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return minMax<TSource>(source, @default, min: true);
         }
 
@@ -591,9 +591,9 @@ namespace RT.Util.ExtensionMethods
         public static TResult MinOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, TResult @default = default(TResult))
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (selector == null)
-                throw new ArgumentNullException("selector");
+                throw new ArgumentNullException(nameof(selector));
             return minMax<TResult>(source.Select(selector), @default, min: true);
         }
 
@@ -610,7 +610,7 @@ namespace RT.Util.ExtensionMethods
         public static TSource MaxOrDefault<TSource>(this IEnumerable<TSource> source, TSource @default = default(TSource))
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return minMax<TSource>(source, @default, min: false);
         }
 
@@ -632,9 +632,9 @@ namespace RT.Util.ExtensionMethods
         public static TResult MaxOrDefault<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector, TResult @default = default(TResult))
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (selector == null)
-                throw new ArgumentNullException("selector");
+                throw new ArgumentNullException(nameof(selector));
             return minMax<TResult>(source.Select(selector), @default, min: false);
         }
 
@@ -773,9 +773,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count, bool throwIfNotEnough = false)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
             if (count == 0)
                 return source;
 
@@ -824,9 +824,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
             if (count == 0)
                 return Enumerable.Empty<T>();
 
@@ -873,11 +873,11 @@ namespace RT.Util.ExtensionMethods
         public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence, IEqualityComparer<T> comparer)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (sequence == null)
-                throw new ArgumentNullException("sequence");
+                throw new ArgumentNullException(nameof(sequence));
             if (comparer == null)
-                throw new ArgumentNullException("comparer");
+                throw new ArgumentNullException(nameof(comparer));
 
             using (var sourceEnum = source.GetEnumerator())
             using (var seqEnum = sequence.GetEnumerator())
@@ -898,7 +898,7 @@ namespace RT.Util.ExtensionMethods
         public static Queue<T> ToQueue<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return new Queue<T>(source);
         }
 
@@ -906,7 +906,7 @@ namespace RT.Util.ExtensionMethods
         public static Stack<T> ToStack<T>(this IEnumerable<T> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return new Stack<T>(source);
         }
 
@@ -914,7 +914,7 @@ namespace RT.Util.ExtensionMethods
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return comparer == null ? new HashSet<T>(source) : new HashSet<T>(source, comparer);
         }
 
@@ -941,11 +941,11 @@ namespace RT.Util.ExtensionMethods
             Func<TSource, TKey1> key1Selector, Func<TSource, TKey2> key2Selector, IEqualityComparer<TKey1> comparer1 = null, IEqualityComparer<TKey2> comparer2 = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (key1Selector == null)
-                throw new ArgumentNullException("key1Selector");
+                throw new ArgumentNullException(nameof(key1Selector));
             if (key2Selector == null)
-                throw new ArgumentNullException("key2Selector");
+                throw new ArgumentNullException(nameof(key2Selector));
 
             var newDic = new Dictionary<TKey1, Dictionary<TKey2, TSource>>(comparer1 ?? EqualityComparer<TKey1>.Default);
             foreach (var elem in source)
@@ -981,13 +981,13 @@ namespace RT.Util.ExtensionMethods
             IEqualityComparer<TKey1> comparer1 = null, IEqualityComparer<TKey2> comparer2 = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (key1Selector == null)
-                throw new ArgumentNullException("key1Selector");
+                throw new ArgumentNullException(nameof(key1Selector));
             if (key2Selector == null)
-                throw new ArgumentNullException("key2Selector");
+                throw new ArgumentNullException(nameof(key2Selector));
             if (elementSelector == null)
-                throw new ArgumentNullException("elementSelector");
+                throw new ArgumentNullException(nameof(elementSelector));
 
             var newDic = new Dictionary<TKey1, Dictionary<TKey2, TValue>>(comparer1 ?? EqualityComparer<TKey1>.Default);
             foreach (var elem in source)
@@ -1009,9 +1009,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<int> SelectIndexWhere<T>(this IEnumerable<T> source, Predicate<T> predicate)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (predicate == null)
-                throw new ArgumentNullException("predicate");
+                throw new ArgumentNullException(nameof(predicate));
             return selectIndexWhereIterator(source, predicate);
         }
         private static IEnumerable<int> selectIndexWhereIterator<T>(this IEnumerable<T> source, Predicate<T> predicate)
@@ -1047,11 +1047,11 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<TResult> SelectTwo<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (selector1 == null)
-                throw new ArgumentNullException("selector1");
+                throw new ArgumentNullException(nameof(selector1));
             if (selector2 == null)
-                throw new ArgumentNullException("selector2");
+                throw new ArgumentNullException(nameof(selector2));
             return selectTwoIterator(source, selector1, selector2);
         }
         private static IEnumerable<TResult> selectTwoIterator<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
@@ -1086,7 +1086,7 @@ namespace RT.Util.ExtensionMethods
         public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)
         {
             if (values == null)
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             if (lastSeparator == null)
                 lastSeparator = separator;
 
@@ -1128,7 +1128,7 @@ namespace RT.Util.ExtensionMethods
         public static ConsoleColoredString JoinColoredString<T>(this IEnumerable<T> values, ConsoleColoredString separator = null, ConsoleColoredString prefix = null, ConsoleColoredString suffix = null, ConsoleColor defaultColor = ConsoleColor.Gray)
         {
             if (values == null)
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
 
             using (var enumerator = values.GetEnumerator())
             {
@@ -1166,7 +1166,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> InsertBetween<T>(this IEnumerable<T> source, T extraElement)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
         }
 
@@ -1186,7 +1186,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> InsertBetweenWithAnd<T>(this IEnumerable<T> source, T comma, T and)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return insertBetweenWithAndIterator(source, comma, and);
         }
 
@@ -1239,7 +1239,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, int chunkSize)
         {
             if (chunkSize <= 0)
-                throw new ArgumentException("chunkSize must be greater than zero.", "chunkSize");
+                throw new ArgumentException("chunkSize must be greater than zero.", nameof(chunkSize));
             return splitIterator(source, chunkSize);
         }
         private static IEnumerable<IEnumerable<T>> splitIterator<T>(this IEnumerable<T> source, int chunkSize)
@@ -1269,7 +1269,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return groupConsecutiveIterator(source, x => x, null, null);
         }
 
@@ -1286,7 +1286,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return groupConsecutiveIterator(source, x => x, itemEquality, null);
         }
 
@@ -1303,7 +1303,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return groupConsecutiveIterator(source, x => x, null, itemComparer);
         }
 
@@ -1324,7 +1324,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<ConsecutiveGroup<TItem, TKey>> GroupConsecutiveBy<TItem, TKey>(this IEnumerable<TItem> source, Func<TItem, TKey> selector, IEqualityComparer<TKey> keyComparer = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             var comparer = keyComparer ?? EqualityComparer<TKey>.Default;
             return groupConsecutiveIterator(source, selector, null, keyComparer);
         }
@@ -1404,7 +1404,7 @@ namespace RT.Util.ExtensionMethods
         public static T MaxCountElement<T>(this IEnumerable<T> source, out int count, IEqualityComparer<T> comparer = null)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             var counts = new Dictionary<T, int>(comparer);
             var curMaxElement = default(T);
             count = 0;
@@ -1426,7 +1426,7 @@ namespace RT.Util.ExtensionMethods
         public static int SumUnchecked(this IEnumerable<int> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             unchecked
             {
                 var sum = 0;
@@ -1442,9 +1442,9 @@ namespace RT.Util.ExtensionMethods
         public static int SumUnchecked<T>(this IEnumerable<T> source, Func<T, int> selector)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (selector == null)
-                throw new ArgumentNullException("selector");
+                throw new ArgumentNullException(nameof(selector));
             unchecked
             {
                 var sum = 0;

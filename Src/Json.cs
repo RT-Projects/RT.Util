@@ -107,7 +107,7 @@ namespace RT.Util.Json
         private OffsetToLineCol _offsetConverter;
         public OffsetToLineCol OffsetConverter { get { if (_offsetConverter == null) _offsetConverter = new OffsetToLineCol(Json); return _offsetConverter; } }
 
-        private bool _allowJavaScript;
+        private readonly bool _allowJavaScript;
 
         private JsonParserState() { }
 
@@ -145,8 +145,7 @@ namespace RT.Util.Json
         {
             get
             {
-                int line, col;
-                OffsetConverter.GetLineAndColumn(Pos, out line, out col);
+                OffsetConverter.GetLineAndColumn(Pos, out var line, out var col);
                 return "Before: {2}   After: {3}   At: {0},{1}".Fmt(line, col, Json.SubstringSafe(Pos - 15, 15), Json.SubstringSafe(Pos, 15));
             }
         }
@@ -255,39 +254,39 @@ namespace RT.Util.Json
                     case null: throw new JsonParseException(this, "Unexpected end of string literal.");
                     case '"': Pos++; goto while_break; // break out of the while... argh.
                     case '\\':
+                    {
+                        Pos++;
+                        switch (Cur)
                         {
-                            Pos++;
-                            switch (Cur)
-                            {
-                                case null: throw new JsonParseException(this, "Unexpected end of string literal.");
-                                case '"': sb.Append('"'); break;
-                                case '\\': sb.Append('\\'); break;
-                                case '/': sb.Append('/'); break;
-                                case 'b': sb.Append('\b'); break;
-                                case 'f': sb.Append('\f'); break;
-                                case 'n': sb.Append('\n'); break;
-                                case 'r': sb.Append('\r'); break;
-                                case 't': sb.Append('\t'); break;
-                                case 'u':
-                                    var hex = Json.SubstringSafe(Pos + 1, 4);
-                                    if (hex.Length != 4)
-                                        throw new JsonParseException(this, "Unexpected end of a \\u escape sequence.");
-                                    int code;
-                                    if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out code))
-                                        throw new JsonParseException(this, "Expected a four-digit hexadecimal number.");
-                                    sb.Append((char) code);
-                                    Pos += 4;
+                            case null: throw new JsonParseException(this, "Unexpected end of string literal.");
+                            case '"': sb.Append('"'); break;
+                            case '\\': sb.Append('\\'); break;
+                            case '/': sb.Append('/'); break;
+                            case 'b': sb.Append('\b'); break;
+                            case 'f': sb.Append('\f'); break;
+                            case 'n': sb.Append('\n'); break;
+                            case 'r': sb.Append('\r'); break;
+                            case 't': sb.Append('\t'); break;
+                            case 'u':
+                                var hex = Json.SubstringSafe(Pos + 1, 4);
+                                if (hex.Length != 4)
+                                    throw new JsonParseException(this, "Unexpected end of a \\u escape sequence.");
+                                int code;
+                                if (!int.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out code))
+                                    throw new JsonParseException(this, "Expected a four-digit hexadecimal number.");
+                                sb.Append((char) code);
+                                Pos += 4;
+                                break;
+                            default:
+                                if (_allowJavaScript && Cur == '\'')
+                                {
+                                    sb.Append('\'');
                                     break;
-                                default:
-                                    if (_allowJavaScript && Cur == '\'')
-                                    {
-                                        sb.Append('\'');
-                                        break;
-                                    }
-                                    throw new JsonParseException(this, "Unknown escape sequence.");
-                            }
+                                }
+                                throw new JsonParseException(this, "Unknown escape sequence.");
                         }
-                        break;
+                    }
+                    break;
                     default:
                         sb.Append(Cur.Value);
                         break;
@@ -353,19 +352,12 @@ namespace RT.Util.Json
                     Pos++;
             }
 
-            JsonNumber result;
             string number = Json.Substring(fromPos, Pos - fromPos);
-            long lng;
-            ulong ulng;
-            double dbl;
 
-            if (long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out lng))
-                result = lng;
-            else if (ulong.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulng))
-                result = ulng;
-            else if (double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out dbl))
-                result = dbl;
-            else
+            var result =
+                long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out var lng) ? (JsonNumber) lng :
+                ulong.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ulng) ? ulng :
+                double.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out var dbl) ? dbl :
                 throw new JsonParseException(this, "Expected a number.");
 
             ConsumeWhitespace();
@@ -578,7 +570,7 @@ namespace RT.Util.Json
         public static implicit operator JsonValue(List<JsonValue> values) => values == null ? null : new JsonList(values);
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
-        public static explicit operator string(JsonValue value) => value == null ? null : value.GetString();
+        public static explicit operator string(JsonValue value) => value?.GetString();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
         public static explicit operator bool(JsonValue value) => value.GetBool();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
@@ -605,58 +597,58 @@ namespace RT.Util.Json
         public static explicit operator int? (JsonValue value) => value == null ? (int?) null : value.GetInt(NumericConversionOptions.AllowTruncation);
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
-        public static explicit operator string[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (string) value).ToArray();
+        public static explicit operator string[] (JsonValue values) => values?.GetList().Select(value => (string) value).ToArray();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (bool) value).ToArray();
+        public static explicit operator bool[] (JsonValue values) => values?.GetList().Select(value => (bool) value).ToArray();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (bool?) value).ToArray();
+        public static explicit operator bool?[] (JsonValue values) => values?.GetList().Select(value => (bool?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (double) value).ToArray();
+        public static explicit operator double[] (JsonValue values) => values?.GetList().Select(value => (double) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (double?) value).ToArray();
+        public static explicit operator double?[] (JsonValue values) => values?.GetList().Select(value => (double?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (decimal) value).ToArray();
+        public static explicit operator decimal[] (JsonValue values) => values?.GetList().Select(value => (decimal) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (decimal?) value).ToArray();
+        public static explicit operator decimal?[] (JsonValue values) => values?.GetList().Select(value => (decimal?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (long) value).ToArray();
+        public static explicit operator long[] (JsonValue values) => values?.GetList().Select(value => (long) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (long?) value).ToArray();
+        public static explicit operator long?[] (JsonValue values) => values?.GetList().Select(value => (long?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator ulong[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong) value).ToArray();
+        public static explicit operator ulong[] (JsonValue values) => values?.GetList().Select(value => (ulong) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator ulong?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong?) value).ToArray();
+        public static explicit operator ulong?[] (JsonValue values) => values?.GetList().Select(value => (ulong?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (int) value).ToArray();
+        public static explicit operator int[] (JsonValue values) => values?.GetList().Select(value => (int) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int?[] (JsonValue values) => values == null ? null : values.GetList().Select(value => (int?) value).ToArray();
+        public static explicit operator int?[] (JsonValue values) => values?.GetList().Select(value => (int?) value).ToArray();
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<string>(JsonValue values) => values == null ? null : values.GetList().Select(value => (string) value).ToList();
+        public static explicit operator List<string>(JsonValue values) => values?.GetList().Select(value => (string) value).ToList();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<bool>(JsonValue values) => values == null ? null : values.GetList().Select(value => (bool) value).ToList();
+        public static explicit operator List<bool>(JsonValue values) => values?.GetList().Select(value => (bool) value).ToList();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<bool?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (bool?) value).ToList();
+        public static explicit operator List<bool?>(JsonValue values) => values?.GetList().Select(value => (bool?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<double>(JsonValue values) => values == null ? null : values.GetList().Select(value => (double) value).ToList();
+        public static explicit operator List<double>(JsonValue values) => values?.GetList().Select(value => (double) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<double?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (double?) value).ToList();
+        public static explicit operator List<double?>(JsonValue values) => values?.GetList().Select(value => (double?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<decimal>(JsonValue values) => values == null ? null : values.GetList().Select(value => (decimal) value).ToList();
+        public static explicit operator List<decimal>(JsonValue values) => values?.GetList().Select(value => (decimal) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<decimal?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (decimal?) value).ToList();
+        public static explicit operator List<decimal?>(JsonValue values) => values?.GetList().Select(value => (decimal?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<long>(JsonValue values) => values == null ? null : values.GetList().Select(value => (long) value).ToList();
+        public static explicit operator List<long>(JsonValue values) => values?.GetList().Select(value => (long) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<long?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (long?) value).ToList();
+        public static explicit operator List<long?>(JsonValue values) => values?.GetList().Select(value => (long?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<ulong>(JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong) value).ToList();
+        public static explicit operator List<ulong>(JsonValue values) => values?.GetList().Select(value => (ulong) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<ulong?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (ulong?) value).ToList();
+        public static explicit operator List<ulong?>(JsonValue values) => values?.GetList().Select(value => (ulong?) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<int>(JsonValue values) => values == null ? null : values.GetList().Select(value => (int) value).ToList();
+        public static explicit operator List<int>(JsonValue values) => values?.GetList().Select(value => (int) value).ToList();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator List<int?>(JsonValue values) => values == null ? null : values.GetList().Select(value => (int?) value).ToList();
+        public static explicit operator List<int?>(JsonValue values) => values?.GetList().Select(value => (int?) value).ToList();
 
         /// <summary>
         ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers,
@@ -678,7 +670,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual JsonList getList(bool safe) => safe ? null : Ut.Throw<JsonList>(new InvalidOperationException("Only list values can be converted to list."));
+        protected virtual JsonList getList(bool safe) => safe ? (JsonList) null : throw new InvalidOperationException("Only list values can be converted to list.");
 
         /// <summary>
         ///     Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
@@ -694,7 +686,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual JsonDict getDict(bool safe) => safe ? null : Ut.Throw<JsonDict>(new InvalidOperationException("Only dict values can be converted to dict."));
+        protected virtual JsonDict getDict(bool safe) => safe ? (JsonDict) null : throw new InvalidOperationException("Only dict values can be converted to dict.");
 
         /// <summary>Converts the current value to a <c>string</c>. Throws if the conversion is not valid.</summary>
         public string GetString(StringConversionOptions options = StringConversionOptions.Strict) => getString(options, false);
@@ -716,7 +708,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual string getString(StringConversionOptions options, bool safe) => safe ? null : Ut.Throw<string>(new InvalidOperationException("Only string values can be converted to string."));
+        protected virtual string getString(StringConversionOptions options, bool safe) => safe ? (string) null : throw new InvalidOperationException("Only string values can be converted to string.");
 
         /// <summary>Converts the current value to a <c>bool</c>. Throws if the conversion is not valid.</summary>
         public bool GetBool(BoolConversionOptions options = BoolConversionOptions.Strict) => getBool(options, false).Value;
@@ -738,7 +730,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual bool? getBool(BoolConversionOptions options, bool safe) => safe ? null : Ut.Throw<bool?>(new InvalidOperationException("Only bool values can be converted to bool."));
+        protected virtual bool? getBool(BoolConversionOptions options, bool safe) => safe ? (bool?) null : throw new InvalidOperationException("Only bool values can be converted to bool.");
 
         /// <summary>Converts the current value to a <c>double</c>. Throws if the conversion is not valid.</summary>
         public double GetDouble(NumericConversionOptions options = NumericConversionOptions.Strict) => getDouble(options, false).Value;
@@ -760,7 +752,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual double? getDouble(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<double?>(new InvalidOperationException("Only numeric values can be converted to double."));
+        protected virtual double? getDouble(NumericConversionOptions options, bool safe) => safe ? (double?) null : throw new InvalidOperationException("Only numeric values can be converted to double.");
 
         /// <summary>Converts the current value to a <c>decimal</c>. Throws if the conversion is not valid.</summary>
         public decimal GetDecimal(NumericConversionOptions options = NumericConversionOptions.Strict) => getDecimal(options, false).Value;
@@ -782,7 +774,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual decimal? getDecimal(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<decimal?>(new InvalidOperationException("Only numeric values can be converted to decimal."));
+        protected virtual decimal? getDecimal(NumericConversionOptions options, bool safe) => safe ? (decimal?) null : throw new InvalidOperationException("Only numeric values can be converted to decimal.");
 
         /// <summary>Converts the current value to a <c>long</c>. Throws if the conversion is not valid.</summary>
         public long GetLong(NumericConversionOptions options = NumericConversionOptions.Strict) => getLong(options, false).Value;
@@ -804,7 +796,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual long? getLong(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<long?>(new InvalidOperationException("Only numeric values can be converted to long."));
+        protected virtual long? getLong(NumericConversionOptions options, bool safe) => safe ? (long?) null : throw new InvalidOperationException("Only numeric values can be converted to long.");
 
         /// <summary>Converts the current value to a <c>ulong</c>. Throws if the conversion is not valid.</summary>
         public ulong GetULong(NumericConversionOptions options = NumericConversionOptions.Strict) => getULong(options, false).Value;
@@ -826,7 +818,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual ulong? getULong(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<ulong?>(new InvalidOperationException("Only numeric values can be converted to ulong."));
+        protected virtual ulong? getULong(NumericConversionOptions options, bool safe) => safe ? (ulong?) null : throw new InvalidOperationException("Only numeric values can be converted to ulong.");
 
         /// <summary>Converts the current value to an <c>int</c>. Throws if the conversion is not valid.</summary>
         public int GetInt(NumericConversionOptions options = NumericConversionOptions.Strict) => getInt(options, false).Value;
@@ -848,7 +840,7 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected virtual int? getInt(NumericConversionOptions options, bool safe) => safe ? null : Ut.Throw<int?>(new InvalidOperationException("Only numeric values can be converted to int."));
+        protected virtual int? getInt(NumericConversionOptions options, bool safe) => safe ? (int?) null : throw new InvalidOperationException("Only numeric values can be converted to int.");
 
         #region Both IList and IDictionary
 
@@ -1155,11 +1147,11 @@ namespace RT.Util.Json
         public static string Fmt(string js, params JsonValue[] namevalues)
         {
             if (js == null)
-                throw new ArgumentNullException("js");
+                throw new ArgumentNullException(nameof(js));
             if (namevalues == null)
-                throw new ArgumentNullException("namevalues");
+                throw new ArgumentNullException(nameof(namevalues));
             if (namevalues.Length % 2 != 0)
-                throw new ArgumentException("namevalues must have an even number of values.", "namevalues");
+                throw new ArgumentException("namevalues must have an even number of values.", nameof(namevalues));
 
             var tokens = new StringBuilder();
             var nextTokenCanBeRegex = true;
@@ -1257,7 +1249,7 @@ namespace RT.Util.Json
         public JsonList(IEnumerable<JsonValue> items)
         {
             if (items == null)
-                throw new ArgumentNullException("items");
+                throw new ArgumentNullException(nameof(items));
             List = new List<JsonValue>(items is ICollection<JsonValue> ? ((ICollection<JsonValue>) items).Count + 2 : 4);
             List.AddRange(items);
         }
@@ -1272,7 +1264,7 @@ namespace RT.Util.Json
         public static new JsonList Parse(string jsonList, bool allowJavaScript = false)
         {
             if (jsonList == null)
-                throw new ArgumentNullException("jsonList");
+                throw new ArgumentNullException(nameof(jsonList));
             var ps = new JsonParserState(jsonList, allowJavaScript);
             var result = ps.ParseList();
             if (ps.Cur != null)
@@ -1321,12 +1313,7 @@ namespace RT.Util.Json
         public override bool Equals(JsonValue other) => other is JsonList ? Equals((JsonList) other) : false;
 
         /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-        public bool Equals(JsonList other)
-        {
-            if (other == null) return false;
-            if (this.Count != other.Count) return false;
-            return this.Zip(other, (v1, v2) => (v1 == null) == (v2 == null) && (v1 == null || v1.Equals(v2))).All(b => b);
-        }
+        public bool Equals(JsonList other) => other != null && Count == other.Count && this.Zip(other, (v1, v2) => (v1 == null) == (v2 == null) && (v1 == null || v1.Equals(v2))).All(b => b);
 
         /// <summary>Returns a hash code representing this object.</summary>
         public override int GetHashCode()
@@ -1461,7 +1448,7 @@ namespace RT.Util.Json
         public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
         {
             if (items == null)
-                throw new ArgumentNullException("items");
+                throw new ArgumentNullException(nameof(items));
             Dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> ? ((ICollection<KeyValuePair<string, JsonValue>>) items).Count + 2 : 4);
             foreach (var item in items)
                 Dict.Add(item.Key, item.Value);
@@ -1548,11 +1535,10 @@ namespace RT.Util.Json
         public bool Equals(JsonDict other)
         {
             if (other == null) return false;
-            if (this.Count != other.Count) return false;
+            if (Count != other.Count) return false;
             foreach (var kvp in this)
             {
-                JsonValue val;
-                if (!other.TryGetValue(kvp.Key, out val))
+                if (!other.TryGetValue(kvp.Key, out var val))
                     return false;
                 if ((kvp.Value == null) != (val == null))
                     return false;
@@ -1703,8 +1689,7 @@ namespace RT.Util.Json
         ///         Console.WriteLine(dict.List.Count);     // outputs 3</code></example>
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            JsonValue value;
-            if (Dict.TryGetValue(binder.Name, out value))
+            if (Dict.TryGetValue(binder.Name, out var value))
             {
                 result = value;
                 return true;
@@ -1723,9 +1708,7 @@ namespace RT.Util.Json
         /// <summary>Constructs a <see cref="JsonString"/> instance from the specified string.</summary>
         public JsonString(string value)
         {
-            if (value == null)
-                throw new ArgumentNullException("value");
-            _value = value;
+            _value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -1767,7 +1750,7 @@ namespace RT.Util.Json
         }
 
         /// <summary>Converts the specified <see cref="JsonString"/> value to an ordinary string.</summary>
-        public static implicit operator string(JsonString value) => value == null ? null : value._value;
+        public static implicit operator string(JsonString value) => value?._value;
         /// <summary>Converts the specified ordinary string to a <see cref="JsonString"/> value.</summary>
         public static implicit operator JsonString(string value) => value == null ? null : new JsonString(value);
 
@@ -1792,10 +1775,9 @@ namespace RT.Util.Json
             else
                 result = double.Parse(_value, CultureInfo.InvariantCulture);
 
-            if (double.IsNaN(result) || double.IsInfinity(result))
-                return safe ? null : Ut.Throw<double?>(new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."));
-
-            return result;
+            return double.IsNaN(result) || double.IsInfinity(result)
+                ? (safe ? (double?) null : throw new InvalidOperationException("This string cannot be converted to a double because JSON doesn't support NaNs and infinities."))
+                : result;
         }
 
         /// <summary>
@@ -1805,17 +1787,12 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override decimal? getDecimal(NumericConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromString))
-                return base.getDecimal(options, safe);
-
-            if (!safe)
-                return decimal.Parse(_value, CultureInfo.InvariantCulture);
-
-            decimal result;
-            return decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result) ? result : (decimal?) null;
-        }
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe) =>
+            options.HasFlag(NumericConversionOptions.AllowConversionFromString)
+                ? safe
+                   ? (decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result) ? (decimal?) result : null)
+                   : decimal.Parse(_value, CultureInfo.InvariantCulture)
+                : base.getDecimal(options, safe);
 
         /// <summary>
         ///     Converts the current value to <c>int</c>.</summary>
@@ -1830,32 +1807,22 @@ namespace RT.Util.Json
                 return base.getInt(options, safe);
 
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
-            {
-                if (!safe)
-                    return int.Parse(_value, CultureInfo.InvariantCulture);
+                return safe
+                    ? (int.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intResult) ? (int?) intResult : null)
+                    : int.Parse(_value, CultureInfo.InvariantCulture);
 
-                int result;
-                return int.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result) ? result : (int?) null;
+            decimal result;
+            if (safe)
+            {
+                if (!decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
+                    return null;
             }
             else
-            {
-                decimal result;
-                if (safe)
-                {
-                    if (!decimal.TryParse(_value, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
-                        return null;
-                }
-                else
-                    result = decimal.Parse(_value, CultureInfo.InvariantCulture);
+                result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
-                if (result != decimal.Truncate(result))
-                    return safe ? null : Ut.Throw<int?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
-
-                if (safe && (result < int.MinValue || result > int.MaxValue))
-                    return null;
-
-                return (int) result;
-            }
+            return result != decimal.Truncate(result)
+                ? (safe ? (int?) null : throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)))
+                : (safe && (result < int.MinValue || result > int.MaxValue) ? null : (int?) (int) result);
         }
 
         /// <summary>
@@ -1872,11 +1839,9 @@ namespace RT.Util.Json
 
             if (!options.HasFlag(NumericConversionOptions.AllowZeroFractionToInteger))
             {
-                if (!safe)
-                    return long.Parse(_value, CultureInfo.InvariantCulture);
-
-                long result;
-                return long.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result) ? result : (long?) null;
+                return safe
+                    ? long.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result) ? (long?) result : null
+                    : long.Parse(_value, CultureInfo.InvariantCulture);
             }
             else
             {
@@ -1889,13 +1854,9 @@ namespace RT.Util.Json
                 else
                     result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
-                if (result != decimal.Truncate(result))
-                    return safe ? null : Ut.Throw<long?>(new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)));
-
-                if (safe && (result < long.MinValue || result > long.MaxValue))
-                    return null;
-
-                return (long) result;
+                return result != decimal.Truncate(result)
+                    ? (safe ? (int?) null : throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)))
+                    : (safe && (result < long.MinValue || result > long.MaxValue) ? (long?) null : (long) result);
             }
         }
 
@@ -1906,16 +1867,11 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override bool? getBool(BoolConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(BoolConversionOptions.AllowConversionFromString))
-                return base.getBool(options, safe);
-
-            return
-                False.Contains(_value, TrueFalseComparer) ? false :
-                True.Contains(_value, TrueFalseComparer) ? true :
-                safe ? (bool?) null : Ut.Throw<bool?>(new InvalidOperationException("String must represent a boolean, but \"{0}\" is not a valid boolean.".Fmt(_value)));
-        }
+        protected override bool? getBool(BoolConversionOptions options, bool safe) =>
+            !options.HasFlag(BoolConversionOptions.AllowConversionFromString) ? base.getBool(options, safe) :
+            False.Contains(_value, TrueFalseComparer) ? false :
+            True.Contains(_value, TrueFalseComparer) ? true :
+            safe ? (bool?) null : throw new InvalidOperationException("String must represent a boolean, but \"{0}\" is not a valid boolean.".Fmt(_value));
 
         /// <summary>
         ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with
@@ -2072,12 +2028,8 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override decimal? getDecimal(NumericConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.getDecimal(options, safe);
-            return _value ? 1m : 0m;
-        }
+        protected override decimal? getDecimal(NumericConversionOptions options, bool safe) =>
+            options.HasFlag(NumericConversionOptions.AllowConversionFromBool) ? (_value ? 1m : 0m) : base.getDecimal(options, safe);
 
         /// <summary>
         ///     Converts the current value to <c>double</c>.</summary>
@@ -2086,12 +2038,8 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override double? getDouble(NumericConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.getDouble(options, safe);
-            return _value ? 1d : 0d;
-        }
+        protected override double? getDouble(NumericConversionOptions options, bool safe) =>
+            options.HasFlag(NumericConversionOptions.AllowConversionFromBool) ? (_value ? 1d : 0d) : base.getDouble(options, safe);
 
         /// <summary>
         ///     Converts the current value to <c>int</c>.</summary>
@@ -2100,12 +2048,8 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override int? getInt(NumericConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.getInt(options, safe);
-            return _value ? 1 : 0;
-        }
+        protected override int? getInt(NumericConversionOptions options, bool safe) =>
+            options.HasFlag(NumericConversionOptions.AllowConversionFromBool) ? (_value ? 1 : 0) : base.getInt(options, safe);
 
         /// <summary>
         ///     Converts the current value to <c>long</c>.</summary>
@@ -2114,12 +2058,8 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override long? getLong(NumericConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(NumericConversionOptions.AllowConversionFromBool))
-                return base.getLong(options, safe);
-            return _value ? 1L : 0L;
-        }
+        protected override long? getLong(NumericConversionOptions options, bool safe) =>
+            options.HasFlag(NumericConversionOptions.AllowConversionFromBool) ? (_value ? 1L : 0L) : base.getLong(options, safe);
 
         /// <summary>
         ///     Converts the current value to <c>string</c>.</summary>
@@ -2128,12 +2068,8 @@ namespace RT.Util.Json
         /// <param name="safe">
         ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
         ///     throws.</param>
-        protected override string getString(StringConversionOptions options, bool safe)
-        {
-            if (!options.HasFlag(StringConversionOptions.AllowConversionFromBool))
-                return base.getString(options, safe);
-            return _value ? "true" : "false";
-        }
+        protected override string getString(StringConversionOptions options, bool safe) =>
+            options.HasFlag(StringConversionOptions.AllowConversionFromBool) ? (_value ? "true" : "false") : base.getString(options, safe);
     }
 
     /// <summary>
@@ -2218,12 +2154,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override string getString(StringConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
-                    return base.getString(options, safe);
-                return Value.ToString();
-            }
+            protected override string getString(StringConversionOptions options, bool safe) =>
+                options.HasFlag(StringConversionOptions.AllowConversionFromNumber) ? Value.ToString() : base.getString(options, safe);
 
             /// <summary>
             ///     Converts the current value to <c>bool</c>.</summary>
@@ -2232,12 +2164,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override bool? getBool(BoolConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
-                    return base.getBool(options, safe);
-                return Value != 0;
-            }
+            protected override bool? getBool(BoolConversionOptions options, bool safe) =>
+                options.HasFlag(BoolConversionOptions.AllowConversionFromNumber) ? Value != 0 : base.getBool(options, safe);
 
             public override void AppendIndented(StringBuilder sb, int indentation = 0)
             {
@@ -2246,11 +2174,7 @@ namespace RT.Util.Json
 
             public override int GetHashCode() => Value.GetHashCode();
 
-            public override bool Equals(JsonNumber other)
-            {
-                long val;
-                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
-            }
+            public override bool Equals(JsonNumber other) => other != null && ExactConvert.Try(other.RawValue, out long val) && (val == Value);
 
             public override object RawValue => Value;
         }
@@ -2327,12 +2251,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override string getString(StringConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
-                    return base.getString(options, safe);
-                return Value.ToString();
-            }
+            protected override string getString(StringConversionOptions options, bool safe) =>
+                options.HasFlag(StringConversionOptions.AllowConversionFromNumber) ? Value.ToString() : base.getString(options, safe);
 
             /// <summary>
             ///     Converts the current value to <c>bool</c>.</summary>
@@ -2341,12 +2261,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override bool? getBool(BoolConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
-                    return base.getBool(options, safe);
-                return Value != 0;
-            }
+            protected override bool? getBool(BoolConversionOptions options, bool safe) =>
+                options.HasFlag(BoolConversionOptions.AllowConversionFromNumber) ? Value != 0 : base.getBool(options, safe);
 
             public override void AppendIndented(StringBuilder sb, int indentation = 0)
             {
@@ -2354,13 +2270,7 @@ namespace RT.Util.Json
             }
 
             public override int GetHashCode() => Value.GetHashCode();
-
-            public override bool Equals(JsonNumber other)
-            {
-                ulong val;
-                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
-            }
-
+            public override bool Equals(JsonNumber other) => other != null && ExactConvert.Try(other.RawValue, out ulong val) && (val == Value);
             public override object RawValue => Value;
         }
 
@@ -2395,16 +2305,12 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override int? getInt(NumericConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
-                    return safe ? null : Ut.Throw<int?>(new InvalidCastException("Only integer values can be converted to int."));
-                if (Value >= int.MinValue && Value <= int.MaxValue)
-                    return (int) Value;
-                if (safe)
-                    return null;
-                throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.");
-            }
+            protected override int? getInt(NumericConversionOptions options, bool safe) =>
+                options.HasFlag(NumericConversionOptions.AllowTruncation) || Value == Math.Truncate(Value)
+                    ? Value >= int.MinValue && Value <= int.MaxValue
+                        ? (int) Value
+                        : safe ? (int?) null : throw new InvalidCastException("Cannot cast to int because the value exceeds the representable range.")
+                    : safe ? (int?) null : throw new InvalidCastException("Only integer values can be converted to int.");
 
             /// <summary>
             ///     Converts the current value to <c>long</c>.</summary>
@@ -2413,16 +2319,12 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override long? getLong(NumericConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
-                    return safe ? null : Ut.Throw<long?>(new InvalidCastException("Only integer values can be converted to int."));
-                if (Value >= long.MinValue && Value <= long.MaxValue)
-                    return (long) Value;
-                if (safe)
-                    return null;
-                throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.");
-            }
+            protected override long? getLong(NumericConversionOptions options, bool safe) =>
+                options.HasFlag(NumericConversionOptions.AllowTruncation) || Value == Math.Truncate(Value)
+                    ? Value >= long.MinValue && Value <= long.MaxValue
+                        ? (long) Value
+                        : safe ? (long?) null : throw new InvalidCastException("Cannot cast to long because the value exceeds the representable range.")
+                    : safe ? (long?) null : throw new InvalidCastException("Only integer values can be converted to int.");
 
             /// <summary>
             ///     Converts the current value to <c>ulong</c>.</summary>
@@ -2431,16 +2333,12 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override ulong? getULong(NumericConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(NumericConversionOptions.AllowTruncation) && Value != Math.Truncate(Value))
-                    return safe ? null : Ut.Throw<ulong?>(new InvalidCastException("Only integer values can be converted to int."));
-                if (Value >= ulong.MinValue && Value <= ulong.MaxValue)
-                    return (ulong) Value;
-                if (safe)
-                    return null;
-                throw new InvalidCastException("Cannot cast to ulong because the value exceeds the representable range.");
-            }
+            protected override ulong? getULong(NumericConversionOptions options, bool safe) =>
+                options.HasFlag(NumericConversionOptions.AllowTruncation) || Value == Math.Truncate(Value)
+                    ? Value >= ulong.MinValue && Value <= ulong.MaxValue
+                        ? (ulong) Value
+                        : safe ? (ulong?) null : throw new InvalidCastException("Cannot cast to ulong because the value exceeds the representable range.")
+                    : safe ? (ulong?) null : throw new InvalidCastException("Only integer values can be converted to int.");
 
             /// <summary>
             ///     Converts the current value to <c>string</c>.</summary>
@@ -2449,12 +2347,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override string getString(StringConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(StringConversionOptions.AllowConversionFromNumber))
-                    return base.getString(options, safe);
-                return Value.ToString();
-            }
+            protected override string getString(StringConversionOptions options, bool safe) =>
+                options.HasFlag(StringConversionOptions.AllowConversionFromNumber) ? Value.ToString() : base.getString(options, safe);
 
             /// <summary>
             ///     Converts the current value to <c>bool</c>.</summary>
@@ -2463,12 +2357,8 @@ namespace RT.Util.Json
             /// <param name="safe">
             ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>,
             ///     throws.</param>
-            protected override bool? getBool(BoolConversionOptions options, bool safe)
-            {
-                if (!options.HasFlag(BoolConversionOptions.AllowConversionFromNumber))
-                    return base.getBool(options, safe);
-                return Value != 0;
-            }
+            protected override bool? getBool(BoolConversionOptions options, bool safe) =>
+                options.HasFlag(BoolConversionOptions.AllowConversionFromNumber) ? Value != 0 : base.getBool(options, safe);
 
             public override void AppendIndented(StringBuilder sb, int indentation = 0)
             {
@@ -2476,13 +2366,7 @@ namespace RT.Util.Json
             }
 
             public override int GetHashCode() => Value.GetHashCode();
-
-            public override bool Equals(JsonNumber other)
-            {
-                double val;
-                return other != null && ExactConvert.Try(other.RawValue, out val) && (val == Value);
-            }
-
+            public override bool Equals(JsonNumber other) => other != null && ExactConvert.Try(other.RawValue, out double val) && (val == Value);
             public override object RawValue => Value;
         }
 
@@ -2490,12 +2374,10 @@ namespace RT.Util.Json
         private JsonNumber() { }
 
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified double-precision floating-point number.</summary>
-        public static JsonNumber Create(double value)
-        {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new ArgumentException("JSON disallows NaNs and infinities.", nameof(value));
-            return new JSDouble(value);
-        }
+        public static JsonNumber Create(double value) =>
+            double.IsNaN(value) || double.IsInfinity(value)
+                ? throw new ArgumentException("JSON disallows NaNs and infinities.", nameof(value))
+                : new JSDouble(value);
 
         /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
         public static JsonNumber Create(long value) => new JSLong(value);
@@ -2507,17 +2389,14 @@ namespace RT.Util.Json
         /// <summary>
         ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see
         ///     Remarks on <see cref="JsonNumber"/>.</summary>
-        public static JsonNumber Create(decimal value)
-        {
-            if (value == decimal.Truncate(value))
-            {
-                if (value >= long.MinValue && value <= long.MaxValue)
-                    return new JSLong((long) value);
-                else if (value >= ulong.MinValue && value <= ulong.MaxValue)
-                    return new JSULong((ulong) value);
-            }
-            return new JSDouble((double) value);
-        }
+        public static JsonNumber Create(decimal value) =>
+            value == decimal.Truncate(value)
+                ? value >= long.MinValue && value <= long.MaxValue
+                    ? new JSLong((long) value)
+                    : value >= ulong.MinValue && value <= ulong.MaxValue
+                        ? new JSULong((ulong) value)
+                        : (JsonNumber) new JSDouble((double) value)
+                : new JSDouble((double) value);
 
         /// <summary>
         ///     Parses the specified JSON as a JSON number. All other types of JSON values result in a <see
@@ -2735,43 +2614,17 @@ namespace RT.Util.Json
         /// <remarks>
         ///     Two instances of <see cref="JsonSafeValue"/> are considered equal if the underlying values are equal. See <see
         ///     cref="JsonValue.Equals(JsonValue)"/> for details.</remarks>
-        public bool Equals(JsonSafeValue other)
-        {
-            if (other == null)
-                return false;
-            if (Value == null)
-                return other.Value == null;
-            return Value.Equals(other.Value);
-        }
+        public bool Equals(JsonSafeValue other) => other != null && (Value == null ? other.Value == null : Value.Equals(other.Value));
 
         /// <summary>
         ///     If the underlying value is a list, and the specified <paramref name="index"/> exists within the list, returns
         ///     the associated item; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
-        public JsonValue this[int index]
-        {
-            get
-            {
-                var list = Value as JsonList;
-                if (list == null || index < 0 || index >= list.Count)
-                    return JsonNoValue.Instance;
-                return ((JsonList) Value)[index] ?? JsonNoValue.Instance;
-            }
-        }
+        public JsonValue this[int index] => (Value is JsonList list) && index >= 0 && index < list.Count ? (list[index] ?? JsonNoValue.Instance) : JsonNoValue.Instance;
 
         /// <summary>
         ///     If the underlying value is a dictionary, and the specified <paramref name="key"/> exists within the
         ///     dictionary, gets the value associated with that key; otherwise, returns a <see cref="JsonNoValue"/> instance.</summary>
-        public JsonValue this[string key]
-        {
-            get
-            {
-                var dict = Value as JsonDict;
-                JsonValue value;
-                if (dict == null || !dict.TryGetValue(key, out value))
-                    return JsonNoValue.Instance;
-                return value ?? JsonNoValue.Instance;
-            }
-        }
+        public JsonValue this[string key] => (Value is JsonDict dict) && dict.TryGetValue(key, out var value) ? (value ?? JsonNoValue.Instance) : JsonNoValue.Instance;
     }
 
     /// <summary>
@@ -2837,11 +2690,11 @@ namespace RT.Util.Json
         public static JsonDict ToJsonDict<T>(this IEnumerable<T> source, Func<T, string> keySelector, Func<T, JsonValue> valueSelector)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (keySelector == null)
-                throw new ArgumentNullException("keySelector");
+                throw new ArgumentNullException(nameof(keySelector));
             if (valueSelector == null)
-                throw new ArgumentNullException("valueSelector");
+                throw new ArgumentNullException(nameof(valueSelector));
 
             var newDict = new JsonDict();
             foreach (var elem in source)
@@ -2862,9 +2715,9 @@ namespace RT.Util.Json
         public static JsonList ToJsonList<T>(this IEnumerable<T> source, Func<T, JsonValue> elementSelector)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (elementSelector == null)
-                throw new ArgumentNullException("elementSelector");
+                throw new ArgumentNullException(nameof(elementSelector));
 
             var newList = new JsonList();
             foreach (var elem in source)
@@ -2881,7 +2734,7 @@ namespace RT.Util.Json
         public static JsonList ToJsonList(this IEnumerable<JsonValue> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return new JsonList(source);
         }
 
@@ -2894,7 +2747,7 @@ namespace RT.Util.Json
         public static JsonList ToJsonList(this IEnumerable<string> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             return new JsonList(source.Select(str => (JsonValue) str));
         }
     }

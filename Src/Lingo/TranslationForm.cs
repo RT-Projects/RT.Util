@@ -497,9 +497,9 @@ namespace RT.Util.Lingo
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
                 if (chkField == null)
-                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", "type");
+                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", nameof(type));
                 else
-                    throw new ArgumentException($@"Field ""{chkField.DeclaringType.FullName}.{chkField.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", "type");
+                    throw new ArgumentException($@"Field ""{chkField.DeclaringType.FullName}.{chkField.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", nameof(type));
             }
 
             var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);

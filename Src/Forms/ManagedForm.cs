@@ -28,7 +28,7 @@ namespace RT.Util.Forms
         public ManagedForm(Settings settings)
         {
             if (settings == null)
-                throw new ArgumentNullException("settings");
+                throw new ArgumentNullException(nameof(settings));
             _settings = settings;
 
             var vs = SystemInformation.VirtualScreen;

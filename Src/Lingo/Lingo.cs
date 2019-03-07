@@ -169,9 +169,9 @@ namespace RT.Util.Lingo
             public void TranslateControl(Control control, object translation)
             {
                 if (control == null)
-                    throw new ArgumentNullException("control");
+                    throw new ArgumentNullException(nameof(control));
                 if (translation == null)
-                    throw new ArgumentNullException("translation");
+                    throw new ArgumentNullException(nameof(translation));
 
                 var lst = new List<trStringInfo>();
                 translateControl(control, translation, lst);
@@ -184,9 +184,9 @@ namespace RT.Util.Lingo
             public void TranslateWindow(System.Windows.Window window, object translation)
             {
                 if (window == null)
-                    throw new ArgumentNullException("window");
+                    throw new ArgumentNullException(nameof(window));
                 if (translation == null)
-                    throw new ArgumentNullException("translation");
+                    throw new ArgumentNullException(nameof(translation));
 
                 var lst = new List<trStringInfo>();
                 translateControlWpf(window, translation, lst);
@@ -333,9 +333,9 @@ namespace RT.Util.Lingo
         public static void TranslateControl(Control control, object translation)
         {
             if (control == null)
-                throw new ArgumentNullException("control");
+                throw new ArgumentNullException(nameof(control));
             if (translation == null)
-                throw new ArgumentNullException("translation");
+                throw new ArgumentNullException(nameof(translation));
 
             translateControl(control, translation, null);
         }

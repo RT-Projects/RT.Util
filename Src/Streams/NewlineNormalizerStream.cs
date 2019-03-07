@@ -46,7 +46,7 @@ namespace RT.Util.Streams
         {
             _newline = newline ?? Environment.NewLine.ToUtf8();
             if (_newline.Length < 1)
-                throw new ArgumentException("newline cannot be the empty array.", "newline");
+                throw new ArgumentException("newline cannot be the empty array.", nameof(newline));
             _underlyingStream = underlyingStream;
         }
 
@@ -92,7 +92,7 @@ namespace RT.Util.Streams
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (count < 1)
-                throw new ArgumentOutOfRangeException("count", "count cannot be zero or negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be zero or negative.");
 
             // If there is stuff left to output, output as much of it as possible
             if (_stillToOutput != null && _stillToOutputLength > 0)
@@ -191,7 +191,7 @@ namespace RT.Util.Streams
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
 
             while (count > 0)
             {
@@ -283,9 +283,9 @@ namespace RT.Util.Streams
         {
             _newline = newline ?? Environment.NewLine.ToUtf16();
             if (_newline.Length < 1)
-                throw new ArgumentException("newline cannot be the empty array.", "newline");
+                throw new ArgumentException("newline cannot be the empty array.", nameof(newline));
             if (_newline.Length % 2 != 0)
-                throw new ArgumentException("newline must have an even number of bytes.", "newline");
+                throw new ArgumentException("newline must have an even number of bytes.", nameof(newline));
             _underlyingStream = underlyingStream;
             _bigEndian = bigEndian;
         }
@@ -337,7 +337,7 @@ namespace RT.Util.Streams
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (count < 1)
-                throw new ArgumentOutOfRangeException("count", "count cannot be zero or negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be zero or negative.");
 
             if (_singleByteToOutput != null)
             {
@@ -477,7 +477,7 @@ namespace RT.Util.Streams
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "count cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
             if (count == 0)
                 return;
 

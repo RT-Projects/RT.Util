@@ -29,7 +29,7 @@ namespace RT.Util
         public MultipartFormDataHelper(HttpWebRequest request)
         {
             if (request == null)
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
             _request = request;
             var boundary = Rnd.NextBytes(15).ToHex();
             _bytesBoundary = ("--" + boundary + "\r\n").ToUtf8();
@@ -77,9 +77,9 @@ namespace RT.Util
         public void AddField(string name, string value)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             if (_request == null)
                 throw new InvalidOperationException("The request has already been sent in full. This operation is no longer legal.");
             if (_currentFileStream != null)
@@ -115,9 +115,9 @@ namespace RT.Util
         public MultipartFileStream AddFile(string name, string filename, string contentType = "application/octet-stream")
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (filename == null)
-                throw new ArgumentNullException("filename");
+                throw new ArgumentNullException(nameof(filename));
             if (_request == null)
                 throw new InvalidOperationException("The request has already been sent in full. This operation is no longer legal.");
             if (_currentFileStream != null)
@@ -160,7 +160,7 @@ namespace RT.Util
         public void AddFile(string name, string filename, byte[] data, string contentType = "application/octet-stream")
         {
             if (data == null)
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             using (var filestream = AddFile(name, filename, contentType))
                 filestream.Write(data);
         }

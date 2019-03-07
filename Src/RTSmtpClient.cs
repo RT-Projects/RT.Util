@@ -240,17 +240,17 @@ namespace RT.Util
         public void SendEmail(MailAddress from, IEnumerable<MailAddress> to, IEnumerable<string> headers, string bodyPlain, string bodyHtml)
         {
             if (from == null)
-                throw new ArgumentNullException("from");
+                throw new ArgumentNullException(nameof(from));
             if (to == null)
-                throw new ArgumentNullException("to");
+                throw new ArgumentNullException(nameof(to));
             if (to.Count() == 0)
                 return;
             if (bodyPlain == null && bodyHtml == null)
-                throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", "bodyHtml");
+                throw new ArgumentException("You must have either a plain-text or an HTML to your e-mail (or both).", nameof(bodyHtml));
             if (bodyPlain == null)
                 bodyPlain = "This e-mail is only available in HTML format.";
             if (headers == null)
-                throw new ArgumentNullException("headers");
+                throw new ArgumentNullException(nameof(headers));
 
             var toHeader = to.Select(t => @"""{0}"" <{1}>".Fmt(t.DisplayName, t.Address)).JoinString(", ");
             _log.Debug(2, "Sending email to " + toHeader);
@@ -323,7 +323,7 @@ namespace RT.Util
             // implementation. The 78 character limit is a "should" limit that appears to be widely broken already without ill effects. The
             // 998 limit is worked around by forbidding header values this long and saving the trouble of correctly breaking the lines.
             if (!validHeaderName(name))
-                throw new ArgumentException("This email header name is not valid as per RFC 5322", "name");
+                throw new ArgumentException("This email header name is not valid as per RFC 5322", nameof(name));
 
             var chunks = new List<chunk>();
             addChunk(chunks, name + ": ");
@@ -342,9 +342,9 @@ namespace RT.Util
             // thing this renders impossible is /very/ long address displaynames.
 
             if (!validHeaderName(name))
-                throw new ArgumentException("This email header name is not valid as per RFC 5322", "name");
+                throw new ArgumentException("This email header name is not valid as per RFC 5322", nameof(name));
             if (addresses.Length == 0)
-                throw new ArgumentException("At least one address is required", "addresses");
+                throw new ArgumentException("At least one address is required", nameof(addresses));
 
             var chunks = new List<chunk>();
             addChunk(chunks, name + ": ");

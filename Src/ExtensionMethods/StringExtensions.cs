@@ -49,7 +49,7 @@ namespace RT.Util.ExtensionMethods
         public static string HtmlEscape(this string input, bool leaveSingleQuotesAlone = false, bool leaveDoubleQuotesAlone = false)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             var result = input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
             if (!leaveSingleQuotesAlone)
                 result = result.Replace("'", "&#39;");
@@ -80,9 +80,9 @@ namespace RT.Util.ExtensionMethods
         public static string UrlEscape(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             byte[] utf8 = input.ToUtf8();
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             foreach (byte b in utf8)
                 if (_urlAllowedBytes.Contains(b))
                     sb.Append((char) b);
@@ -102,7 +102,7 @@ namespace RT.Util.ExtensionMethods
         public static string UrlUnescape(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             if (input.Length < 3)
                 return input.Replace('+', ' ');
@@ -132,7 +132,7 @@ namespace RT.Util.ExtensionMethods
                     inpIx++;
                 }
                 else
-                    throw new ArgumentException("The input string is not in valid URL-escaped format.", "input");
+                    throw new ArgumentException("The input string is not in valid URL-escaped format.", nameof(input));
             }
             return Encoding.UTF8.GetString(buffer, 0, bufIx);
         }
@@ -157,7 +157,7 @@ namespace RT.Util.ExtensionMethods
         public static string FilenameCharactersEscape(this string input, bool includeNonAscii = false)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             var result = new StringBuilder(input.Length + input.Length / 2);
             foreach (char c in input)
@@ -182,7 +182,7 @@ namespace RT.Util.ExtensionMethods
         public static string FilenameCharactersUnescape(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             var result = new StringBuilder(input.Length);
             byte[] decode = new byte[4];
@@ -254,7 +254,7 @@ namespace RT.Util.ExtensionMethods
         public static byte[] ToUtf8(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.UTF8.GetBytes(input);
         }
 
@@ -267,7 +267,7 @@ namespace RT.Util.ExtensionMethods
         public static byte[] ToUtf16(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.Unicode.GetBytes(input);
         }
 
@@ -280,7 +280,7 @@ namespace RT.Util.ExtensionMethods
         public static byte[] ToUtf16BE(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.BigEndianUnicode.GetBytes(input);
         }
 
@@ -295,7 +295,7 @@ namespace RT.Util.ExtensionMethods
         public static string FromUtf8(this byte[] input, bool removeBom = false)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             var result = Encoding.UTF8.GetString(input);
             if (removeBom && result[0] == '\ufeff')
                 return result.Substring(1);
@@ -311,7 +311,7 @@ namespace RT.Util.ExtensionMethods
         public static string FromUtf16(this byte[] input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.Unicode.GetString(input);
         }
 
@@ -324,7 +324,7 @@ namespace RT.Util.ExtensionMethods
         public static string FromUtf16BE(this byte[] input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.BigEndianUnicode.GetString(input);
         }
 
@@ -337,7 +337,7 @@ namespace RT.Util.ExtensionMethods
         public static int Utf8Length(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.UTF8.GetByteCount(input);
         }
 
@@ -350,7 +350,7 @@ namespace RT.Util.ExtensionMethods
         public static int Utf16Length(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return Encoding.Unicode.GetByteCount(input);
         }
 
@@ -379,7 +379,7 @@ namespace RT.Util.ExtensionMethods
         public static string JsEscape(this string input, JsQuotes quotes = JsQuotes.Double)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             var sb = new StringBuilder();
             sb.AppendJsEscaped(input, quotes);
@@ -398,9 +398,9 @@ namespace RT.Util.ExtensionMethods
         public static void AppendJsEscaped(this StringBuilder sb, string input, JsQuotes quotes = JsQuotes.Double)
         {
             if (sb == null)
-                throw new ArgumentNullException("sb");
+                throw new ArgumentNullException(nameof(sb));
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             if (quotes != JsQuotes.None)
                 sb.Append(quotes == JsQuotes.Double ? '"' : '\'');
@@ -441,7 +441,7 @@ namespace RT.Util.ExtensionMethods
         public static string SqlEscape(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             return "'" + input.Replace("'", "''") + "'";
         }
 
@@ -452,7 +452,7 @@ namespace RT.Util.ExtensionMethods
         public static string Base64UrlEncode(this byte[] bytes)
         {
             if (bytes == null)
-                throw new ArgumentNullException("bytes");
+                throw new ArgumentNullException(nameof(bytes));
 
             StringBuilder result = new StringBuilder();
             int i = 0;
@@ -495,9 +495,9 @@ namespace RT.Util.ExtensionMethods
         public static byte[] Base64UrlDecode(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             if (input.Any(ch => !CharsBase64Url.Contains(ch)))
-                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.", "input");
+                throw new ArgumentException("The input string to Base64UrlDecode is not a valid base-64-url encoded string.", nameof(input));
 
             if (_invBase64Url == null)
             {
@@ -562,7 +562,7 @@ namespace RT.Util.ExtensionMethods
         public static string CLiteralEscape(this string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             var result = new StringBuilder(value.Length + value.Length / 2);
 
@@ -621,7 +621,7 @@ namespace RT.Util.ExtensionMethods
         public static string CLiteralUnescape(this string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             var result = new StringBuilder(value.Length);
 
@@ -685,7 +685,7 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<string> Trim(this IEnumerable<string> values)
         {
             if (values == null)
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             var arr = values.ToArray();
             var begin = 0;
             while (begin < arr.Length && string.IsNullOrEmpty(arr[begin]))
@@ -708,9 +708,9 @@ namespace RT.Util.ExtensionMethods
         public static string Fmt(this string formatString, IFormatProvider provider, params object[] args)
         {
             if (formatString == null)
-                throw new ArgumentNullException("formatString");
+                throw new ArgumentNullException(nameof(formatString));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             return formatString.Color(null).FmtEnumerableInternal(ConsoleColoredString.FormatBehavior.Stringify, provider, args).JoinString();
         }
 
@@ -728,9 +728,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<object> FmtEnumerable(this string formatString, IFormatProvider provider, params object[] args)
         {
             if (formatString == null)
-                throw new ArgumentNullException("formatString");
+                throw new ArgumentNullException(nameof(formatString));
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
             return formatString.Color(null).FmtEnumerableInternal(0, provider, args);
         }
 
@@ -753,11 +753,11 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<string> WordWrap(this string text, int maxWidth, int hangingIndent = 0)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             if (maxWidth < 1)
-                throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
+                throw new ArgumentOutOfRangeException(nameof(maxWidth), maxWidth, "maxWidth cannot be less than 1");
             if (hangingIndent < 0)
-                throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(hangingIndent), hangingIndent, "hangingIndent cannot be negative.");
             if (text == null || text.Length == 0)
                 return Enumerable.Empty<string>();
 
@@ -804,11 +804,11 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<ConsoleColoredString> WordWrap(this ConsoleColoredString text, int maxWidth, int hangingIndent = 0)
         {
             if (text == null)
-                throw new ArgumentNullException("text");
+                throw new ArgumentNullException(nameof(text));
             if (maxWidth < 1)
-                throw new ArgumentOutOfRangeException("maxWidth", maxWidth, "maxWidth cannot be less than 1");
+                throw new ArgumentOutOfRangeException(nameof(maxWidth), maxWidth, "maxWidth cannot be less than 1");
             if (hangingIndent < 0)
-                throw new ArgumentOutOfRangeException("hangingIndent", hangingIndent, "hangingIndent cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(hangingIndent), hangingIndent, "hangingIndent cannot be negative.");
             if (text == null || text.Length == 0)
                 return Enumerable.Empty<ConsoleColoredString>();
 
@@ -915,7 +915,7 @@ namespace RT.Util.ExtensionMethods
         public static string UnifyLineEndings(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
             string[] lines = Regex.Split(input, @"\r\n|\r|\n");
             return lines.JoinString("\r\n");
         }
@@ -926,7 +926,7 @@ namespace RT.Util.ExtensionMethods
         public static bool UrlStartsWith(this string url, string path)
         {
             if (url == null)
-                throw new ArgumentNullException("url");
+                throw new ArgumentNullException(nameof(url));
             return (url == path) || url.StartsWith(path + "/") || url.StartsWith(path + "?");
         }
 
@@ -936,7 +936,7 @@ namespace RT.Util.ExtensionMethods
         public static string SubstringSafe(this string source, int startIndex)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (startIndex >= source.Length)
                 return "";
             else if (startIndex < 0)
@@ -951,7 +951,7 @@ namespace RT.Util.ExtensionMethods
         public static string SubstringSafe(this string source, int startIndex, int length)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (startIndex < 0)
             {
                 length += startIndex;
@@ -971,7 +971,7 @@ namespace RT.Util.ExtensionMethods
         public static bool EqualsNoCase(this string strthis, string str)
         {
             if (strthis == null)
-                throw new ArgumentNullException("strthis");
+                throw new ArgumentNullException(nameof(strthis));
             return strthis.Equals(str, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -981,9 +981,9 @@ namespace RT.Util.ExtensionMethods
         public static bool ContainsNoCase(this string strthis, string str)
         {
             if (strthis == null)
-                throw new ArgumentNullException("strthis");
+                throw new ArgumentNullException(nameof(strthis));
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             return strthis.IndexOf(str, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
@@ -993,7 +993,7 @@ namespace RT.Util.ExtensionMethods
         public static bool EndsWith(this string str, char? ch)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (ch == null)
                 return true;
             return str != null && str.Length > 0 && str[str.Length - 1] == ch.Value;
@@ -1005,7 +1005,7 @@ namespace RT.Util.ExtensionMethods
         public static bool StartsWith(this string str, char? ch)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (ch == null)
                 return true;
             return str != null && str.Length > 0 && str[0] == ch.Value;
@@ -1024,7 +1024,7 @@ namespace RT.Util.ExtensionMethods
         public static ConsoleColoredString Color(this string str, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             return new ConsoleColoredString(str, foreground, background);
         }
 
@@ -1060,11 +1060,11 @@ namespace RT.Util.ExtensionMethods
         public static ConsoleColoredString ColorSubstring(this string str, int index, int length, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (index < 0 || index > str.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
             if (length < 0 || index + length > str.Length)
-                throw new ArgumentOutOfRangeException("length", "length cannot be negative or span beyond the end of the string.");
+                throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
 
             return str.Substring(0, index) + str.Substring(index, length).Color(foreground, background) + str.Substring(index + length);
         }
@@ -1084,9 +1084,9 @@ namespace RT.Util.ExtensionMethods
         public static ConsoleColoredString ColorSubstring(this string str, int index, ConsoleColor? foreground, ConsoleColor? background = null)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (index < 0 || index > str.Length)
-                throw new ArgumentOutOfRangeException("index", "index cannot be negative or greater than the length of the input string.");
+                throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
 
             return str.Substring(0, index) + str.Substring(index).Color(foreground, background);
         }
@@ -1208,9 +1208,9 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<string> Split(this string str, int chunkSize)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (chunkSize <= 0)
-                throw new ArgumentException("chunkSize must be greater than zero.", "chunkSize");
+                throw new ArgumentException("chunkSize must be greater than zero.", nameof(chunkSize));
             if (str.Length == 0)
                 return Enumerable.Empty<string>();
             return splitIterator(str, chunkSize);
@@ -1227,13 +1227,13 @@ namespace RT.Util.ExtensionMethods
         public static string Replace(this string str, string oldValue, string newValue, StringComparison comparison)
         {
             if (str == null)
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             if (oldValue == null)
-                throw new ArgumentNullException("oldValue");
+                throw new ArgumentNullException(nameof(oldValue));
             if (oldValue.Length == 0)
-                throw new ArgumentException("oldValue cannot be the empty string.", "oldValue");
+                throw new ArgumentException("oldValue cannot be the empty string.", nameof(oldValue));
             if (newValue == null)
-                throw new ArgumentNullException("newValue");
+                throw new ArgumentNullException(nameof(newValue));
             var output = "";
             while (true)
             {

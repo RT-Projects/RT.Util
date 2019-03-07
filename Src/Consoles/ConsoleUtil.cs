@@ -151,7 +151,7 @@ namespace RT.Util.Consoles
         public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
         {
             if (message == null)
-                throw new ArgumentNullException("message");
+                throw new ArgumentNullException(nameof(message));
 
             int width;
             try

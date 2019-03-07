@@ -44,9 +44,9 @@ namespace RT.Util.Lingo
             if (!type.IsDefined<LingoStringClassAttribute>(true))
             {
                 if (field == null)
-                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", "type");
+                    throw new ArgumentException($@"Type ""{type.FullName}"" must be marked with the [LingoStringClass] attribute.", nameof(type));
                 else
-                    throw new ArgumentException($@"Field ""{field.DeclaringType.FullName}.{field.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", "type");
+                    throw new ArgumentException($@"Field ""{field.DeclaringType.FullName}.{field.Name}"" must either be marked with the [LingoIgnore] attribute, or be of type TrString, TrStringNumbers, or a type with the [LingoStringClass] attribute.", nameof(type));
             }
 
             var thisClassGroups = type.GetCustomAttributes(true).OfType<LingoInGroupAttribute>().Select(attr => attr.Group);
@@ -204,7 +204,7 @@ namespace RT.Util.Lingo
             set
             {
                 if (value == false)
-                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", "value");
+                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", nameof(value));
                 TranslationTr.Old = NewOriginal;
             }
         }
@@ -234,7 +234,7 @@ namespace RT.Util.Lingo
             set
             {
                 if (value == false)
-                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", "value");
+                    throw new ArgumentException(@"You can't set HasOriginalChanged to false.", nameof(value));
                 TranslationTr.Old = NewOriginal.ToArray();
             }
         }

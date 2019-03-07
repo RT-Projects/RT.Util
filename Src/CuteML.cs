@@ -58,7 +58,7 @@ namespace RT.Util
         public static CuteNode ParseCuteML(this string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             var curTag = new CuteTag(null, null, 0);
             if (input.Length == 0)
@@ -272,7 +272,7 @@ namespace RT.Util
         ///     amount by which opening this tag has advanced the text position.</returns>
         public delegate Tuple<TState, int> CuteNextState<TState>(TState oldState, char cuteTag, string parameter);
 
-        private sealed class cuteWalkData<TState>
+        private sealed class CuteWalkData<TState>
         {
             public bool AtStartOfLine;
             public List<string> WordPieces;
@@ -289,7 +289,7 @@ namespace RT.Util
             public void CuteWalkWordWrap(CuteNode node, TState initialState)
             {
                 if (node == null)
-                    throw new ArgumentNullException("node");
+                    throw new ArgumentNullException(nameof(node));
 
                 cuteWalkWordWrapRecursive(node, initialState, false);
 
@@ -299,10 +299,7 @@ namespace RT.Util
 
             private void cuteWalkWordWrapRecursive(CuteNode node, TState state, bool curNowrap)
             {
-                CuteTag tag;
-                CuteText text;
-
-                if ((tag = node as CuteTag) != null)
+                if (node is CuteTag tag)
                 {
                     var newState = state;
                     if (tag.Tag == '+')
@@ -316,7 +313,7 @@ namespace RT.Util
                     foreach (var child in tag.Children)
                         cuteWalkWordWrapRecursive(child, newState, curNowrap);
                 }
-                else if ((text = node as CuteText) != null)
+                else if (node is CuteText text)
                 {
                     var txt = text.Text;
                     for (int i = 0; i < txt.Length; i++)
@@ -459,10 +456,10 @@ namespace RT.Util
             CuteMeasure<TState> measure, CuteRender<TState> render, CuteNextLine<TState> advanceToNextLine, CuteNextState<TState> nextState)
         {
             if (node == null)
-                throw new ArgumentNullException("node");
+                throw new ArgumentNullException(nameof(node));
             if (wrapWidth <= 0)
-                throw new ArgumentException("Wrap width must be greater than zero.", "wrapWidth");
-            var data = new cuteWalkData<TState>
+                throw new ArgumentException("Wrap width must be greater than zero.", nameof(wrapWidth));
+            var data = new CuteWalkData<TState>
             {
                 AtStartOfLine = true,
                 WordPieces = new List<string>(),
@@ -555,7 +552,7 @@ namespace RT.Util
         public IEnumerable<ConsoleColoredString> ToConsoleColoredStrings(int wrapWidth = int.MaxValue, int hangingIndent = 0)
         {
             var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
-            CuteML.WordWrap(this, new cuteWordWrapState(ConsoleColor.Gray, 0), wrapWidth,
+            CuteML.WordWrap(this, new CuteWordWrapState(ConsoleColor.Gray, 0), wrapWidth,
                 (state, text) => text.Length,
                 (state, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, state.Color); },
                 (state, newParagraph, indent) =>
@@ -590,13 +587,13 @@ namespace RT.Util
             return results;
         }
 
-        private class cuteWordWrapState
+        private class CuteWordWrapState
         {
             public ConsoleColor Color { get; private set; }
             public int Indent { get; private set; }
-            public cuteWordWrapState(ConsoleColor color, int indent) { Color = color; Indent = indent; }
-            public cuteWordWrapState SetColor(ConsoleColor color) { return new cuteWordWrapState(color, Indent); }
-            public cuteWordWrapState SetIndent(int indent) { return new cuteWordWrapState(Color, indent); }
+            public CuteWordWrapState(ConsoleColor color, int indent) { Color = color; Indent = indent; }
+            public CuteWordWrapState SetColor(ConsoleColor color) { return new CuteWordWrapState(color, Indent); }
+            public CuteWordWrapState SetIndent(int indent) { return new CuteWordWrapState(Color, indent); }
             public override string ToString() { return "Color={0}, Indent={1}".Fmt(Color, Indent); }
         }
     }
@@ -701,19 +698,17 @@ namespace RT.Util
         public CuteText(string text, int index = 0)
             : base(index)
         {
-            if (text == null)
-                throw new ArgumentNullException("text", "The 'text' for a CuteText node cannot be null.");
-            Text = text;
+            Text = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for a CuteText node cannot be null.");
         }
 
         /// <summary>Returns an XML representation of this EggsML node.</summary>
-        public override object ToXml() { return Text; }
+        public override object ToXml() => Text;
 
         /// <summary>Determines whether this node contains any textual content.</summary>
-        public override bool HasText { get { return Text != null && Text.Length > 0; } }
+        public override bool HasText => Text != null && Text.Length > 0;
 
         /// <summary>Returns the contained text in CuteML-escaped form.</summary>
-        public override string ToString() { return Text.EscapeCuteML(); }
+        public override string ToString() => Text.EscapeCuteML();
 
         internal override void textify(StringBuilder builder) { builder.Append(Text); }
     }

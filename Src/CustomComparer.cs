@@ -31,7 +31,7 @@ namespace RT.Util
         ///     this comparer will use the IComparable interface if implemented.</param>
         public static CustomComparer<T> By<TBy>(Func<T, TBy> selector, IComparer<TBy> comparer = null)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             if (comparer == null)
                 comparer = Comparer<TBy>.Default;
             return new CustomComparer<T>((a, b) => comparer.Compare(selector(a), selector(b)));
@@ -45,8 +45,8 @@ namespace RT.Util
         ///     Comparison to use for comparing the results of the selector function.</param>
         public static CustomComparer<T> By<TBy>(Func<T, TBy> selector, Comparison<TBy> comparison)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
-            if (comparison == null) throw new ArgumentNullException("comparison");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+            if (comparison == null) throw new ArgumentNullException(nameof(comparison));
             return new CustomComparer<T>((a, b) => comparison(selector(a), selector(b)));
         }
 
@@ -59,7 +59,7 @@ namespace RT.Util
         ///     for filenames etc).</param>
         public static CustomComparer<T> By(Func<T, string> selector, bool ignoreCase)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture;
             return new CustomComparer<T>((a, b) => comparer.Compare(selector(a), selector(b)));
         }
@@ -74,7 +74,7 @@ namespace RT.Util
         ///     this comparer will use the IComparable interface if implemented.</param>
         public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector, IComparer<TBy> comparer = null)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             if (comparer == null)
                 comparer = Comparer<TBy>.Default;
             return new CustomComparer<T>((a, b) =>
@@ -96,7 +96,7 @@ namespace RT.Util
         ///     Comparison to use for comparing the results of the selector function.</param>
         public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector, Comparison<TBy> comparison)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             return new CustomComparer<T>((a, b) =>
             {
                 int result = Compare(a, b);
@@ -117,7 +117,7 @@ namespace RT.Util
         ///     for filenames etc).</param>
         public CustomComparer<T> ThenBy(Func<T, string> selector, bool ignoreCase)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture;
             return new CustomComparer<T>((a, b) =>
             {
@@ -174,8 +174,8 @@ namespace RT.Util
         ///     Comparer to use for comparing the results of the selector function.</param>
         public static CustomEqualityComparer<T> By<TBy>(Func<T, TBy> selector, IEqualityComparer<TBy> comparer)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
-            if (comparer == null) throw new ArgumentNullException("comparer");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
             return new CustomEqualityComparer<T>((a, b) => comparer.Equals(selector(a), selector(b)), a => comparer.GetHashCode(selector(a)));
         }
 
@@ -192,7 +192,7 @@ namespace RT.Util
         ///     override.</param>
         public static CustomEqualityComparer<T> By<TBy>(Func<T, TBy> selector, Func<TBy, TBy, bool> comparison = null, Func<TBy, int> getHashCode = null)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             var default_ = EqualityComparer<TBy>.Default;
             var cmp = comparison == null
                 ? Ut.Lambda((T a, T b) => default_.Equals(selector(a), selector(b)))
@@ -213,7 +213,7 @@ namespace RT.Util
         ///     for filenames etc).</param>
         public static CustomEqualityComparer<T> By(Func<T, string> selector, bool ignoreCase)
         {
-            if (selector == null) throw new ArgumentNullException("selector");
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
             return CustomEqualityComparer<T>.By(selector, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture);
         }
 

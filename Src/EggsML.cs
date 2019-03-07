@@ -39,17 +39,8 @@ namespace RT.Util
     ///             The double-quote character (<c>"</c>) can be used to escape long strings of special characters, e.g. URLs.</description></item></list></remarks>
     public static class EggsML
     {
-        /// <summary>Returns an array containing all characters that have a special meaning in EggsML.</summary>
-        public static char[] SpecialCharacters
-        {
-            get
-            {
-                if (_specialCharacters == null)
-                    _specialCharacters = "~@#$%^&*_=+/\\[]{}<>|`\"".ToCharArray();
-                return _specialCharacters;
-            }
-        }
-        private static char[] _specialCharacters = null;
+        /// <summary>Returns all characters that have a special meaning in EggsML.</summary>
+        public static string SpecialCharacters => "~@#$%^&*_=+/\\[]{}<>|`\"";
 
         /// <summary>
         ///     Parses the specified EggsML input.</summary>
@@ -75,7 +66,7 @@ namespace RT.Util
         public static EggsNode Parse(string input)
         {
             if (input == null)
-                throw new ArgumentNullException("input");
+                throw new ArgumentNullException(nameof(input));
 
             var curTag = new EggsTag(null, 0);
             if (input.Length == 0)
@@ -197,23 +188,14 @@ namespace RT.Util
         /// <summary>
         ///     Escapes the input string such that it can be used in EggsML syntax. The result will either have no special
         ///     characters in it or be entirely enclosed in double-quotes.</summary>
-        public static string Escape(string input)
-        {
-            if (!input.Any(ch => SpecialCharacters.Contains(ch)))
-                return input;
-            if (input.All(ch => ch == '"'))
-                return new string('"', input.Length * 2);
-            return @"""" + input.Replace(@"""", @"""""") + @"""";
-        }
+        public static string Escape(string input) =>
+            !input.Any(ch => SpecialCharacters.Contains(ch))
+                ? input
+                : input.All(ch => ch == '"')
+                    ? new string('"', input.Length * 2)
+                    : @"""" + input.Replace(@"""", @"""""") + @"""";
 
-        internal static char? opposite(char? p)
-        {
-            if (p == '[') return ']';
-            if (p == '<') return '>';
-            if (p == '{') return '}';
-            return p;
-        }
-
+        internal static char? opposite(char? p) => p == '[' ? ']' : p == '<' ? '>' : p == '{' ? '}' : p;
         internal static bool alwaysOpens(char? p) { return p == '[' || p == '<' || p == '{'; }
         private static bool alwaysCloses(char? p) { return p == ']' || p == '>' || p == '}'; }
 
@@ -275,7 +257,7 @@ namespace RT.Util
         ///     the amount by which opening this tag has advanced the text position.</returns>
         public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag, string parameter);
 
-        private sealed class eggWalkData<TState>
+        private sealed class EggWalkData<TState>
         {
             public bool AtStartOfLine;
             public List<string> WordPieces;
@@ -294,7 +276,7 @@ namespace RT.Util
             public void EggWalkWordWrap(EggsNode node, TState initialState)
             {
                 if (node == null)
-                    throw new ArgumentNullException("node");
+                    throw new ArgumentNullException(nameof(node));
 
                 eggWalkWordWrapRecursive(node, initialState, false);
 
@@ -304,10 +286,7 @@ namespace RT.Util
 
             private void eggWalkWordWrapRecursive(EggsNode node, TState state, bool curNowrap)
             {
-                EggsTag tag;
-                EggsText text;
-
-                if ((tag = node as EggsTag) != null)
+                if (node is EggsTag tag)
                 {
                     var newState = state;
                     if (tag.Tag == '+')
@@ -331,7 +310,7 @@ namespace RT.Util
                     if (CurParameter != null)
                         throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
                 }
-                else if ((text = node as EggsText) != null)
+                else if (node is EggsText text)
                 {
                     if (CurParameter != null)
                         throw new InvalidOperationException("An angle-bracket tag must be immediately followed by another tag.");
@@ -518,10 +497,10 @@ namespace RT.Util
             EggMeasure<TState> measure, EggRender<TState> render, EggNextLine<TState> advanceToNextLine, EggNextState<TState> nextState)
         {
             if (node == null)
-                throw new ArgumentNullException("node");
+                throw new ArgumentNullException(nameof(node));
             if (wrapWidth <= 0)
-                throw new ArgumentException("Wrap width must be greater than zero.", "wrapWidth");
-            var data = new eggWalkData<TState>
+                throw new ArgumentException("Wrap width must be greater than zero.", nameof(wrapWidth));
+            var data = new EggWalkData<TState>
             {
                 AtStartOfLine = true,
                 WordPieces = new List<string>(),
@@ -740,16 +719,15 @@ namespace RT.Util
                 return Tag == null ? "" : EggsML.alwaysOpens(Tag) ? Tag.ToString() + EggsML.opposite(Tag) : Tag + "`" + Tag;
 
             var childrenStr = stringify(_children, Tag);
-            if (Tag == null)
-                return childrenStr;
-
-            return childrenStr.StartsWith(Tag)
-                ? childrenStr.EndsWith(EggsML.opposite(Tag))
-                    ? Tag + "`" + childrenStr + "`" + EggsML.opposite(Tag)
-                    : Tag + "`" + childrenStr + EggsML.opposite(Tag)
-                : childrenStr.EndsWith(EggsML.opposite(Tag))
-                    ? Tag + childrenStr + "`" + EggsML.opposite(Tag)
-                    : Tag + childrenStr + EggsML.opposite(Tag);
+            return Tag == null
+                ? childrenStr
+                : childrenStr.StartsWith(Tag)
+                    ? childrenStr.EndsWith(EggsML.opposite(Tag))
+                        ? Tag + "`" + childrenStr + "`" + EggsML.opposite(Tag)
+                        : Tag + "`" + childrenStr + EggsML.opposite(Tag)
+                    : childrenStr.EndsWith(EggsML.opposite(Tag))
+                        ? Tag + childrenStr + "`" + EggsML.opposite(Tag)
+                        : Tag + childrenStr + EggsML.opposite(Tag);
         }
 
         /// <summary>Returns an XML representation of this EggsML node.</summary>
@@ -804,9 +782,7 @@ namespace RT.Util
         public EggsText(string text, int index = 0)
             : base(index)
         {
-            if (text == null)
-                throw new ArgumentNullException("text", "The 'text' for an EggsText node cannot be null.");
-            Text = text;
+            Text = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for an EggsText node cannot be null.");
         }
 
         /// <summary>
@@ -814,18 +790,16 @@ namespace RT.Util
         /// <remarks>
         ///     This does not necessarily return the same EggsML that was originally parsed. For example, redundant uses of
         ///     the <c>`</c> character are removed.</remarks>
-        public override string ToString()
-        {
-            if (Text.Where(ch => EggsML.SpecialCharacters.Contains(ch) && ch != '"').Take(3).Count() >= 3)
-                return string.Concat("\"", Text.Replace("\"", "\"\""), "\"");
-            return new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
-        }
+        public override string ToString() =>
+            Text.Where(ch => EggsML.SpecialCharacters.Contains(ch) && ch != '"').Take(3).Count() >= 3
+                ? string.Concat("\"", Text.Replace("\"", "\"\""), "\"")
+                : new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
 
         /// <summary>Returns an XML representation of this EggsML node.</summary>
-        public override object ToXml() { return Text; }
+        public override object ToXml() => Text;
 
         /// <summary>Determines whether this node contains any textual content.</summary>
-        public override bool HasText { get { return Text != null && Text.Length > 0; } }
+        public override bool HasText => Text != null && Text.Length > 0;
 
         internal override void textify(StringBuilder builder) { builder.Append(Text); }
     }

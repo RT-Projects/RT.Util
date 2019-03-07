@@ -24,9 +24,9 @@ namespace RT.Util.Lingo
         /// <param name="getCurrentLanguage">A callback that returns the currently active language whenever called.</param>
         public LanguageHelper(string programTitle, string moduleName, bool editable, Func<Language> getCurrentLanguage)
         {
-            if (programTitle == null) throw new ArgumentNullException("programTitle");
-            if (moduleName == null) throw new ArgumentNullException("moduleName");
-            if (getCurrentLanguage == null) throw new ArgumentNullException("getCurrentLanguage");
+            if (programTitle == null) throw new ArgumentNullException(nameof(programTitle));
+            if (moduleName == null) throw new ArgumentNullException(nameof(moduleName));
+            if (getCurrentLanguage == null) throw new ArgumentNullException(nameof(getCurrentLanguage));
             _programTitle = programTitle;
             _moduleName = moduleName;
             _editable = editable;

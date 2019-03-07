@@ -60,16 +60,15 @@ namespace RT.Util
             while (true)
             {
                 var nextStep = node(prevResult);
-                var call = nextStep as WorkStep<T>.Call;
-                if (call != null)
+                if (nextStep is WorkStep<T>.Call call)
                 {
                     evaluationStack.Push(node);
                     node = call.Callee;
-                    prevResult = default(T);
+                    prevResult = default;
                 }
                 else
                 {
-                    prevResult = nextStep == null ? default(T) : ((WorkStep<T>.Return) nextStep).Result;
+                    prevResult = nextStep == null ? default : ((WorkStep<T>.Return) nextStep).Result;
                     if (evaluationStack.Count == 0)
                         return prevResult;
                     node = evaluationStack.Pop();
@@ -103,7 +102,7 @@ namespace RT.Util
             // cannot really convert a null to a null here, as the result of this implicit conversion is expected
             // to be a Call, but we allow WorkNode<T> delegates to return null to indicate a Return.
             if (work == null)
-                throw new ArgumentNullException("work", "The implicit conversion from WorkNode<T> to WorkStep<T> cannot accept null.");
+                throw new ArgumentNullException(nameof(work), "The implicit conversion from WorkNode<T> to WorkStep<T> cannot accept null.");
             return new Call(work);
         }
 

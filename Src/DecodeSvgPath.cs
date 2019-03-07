@@ -33,10 +33,8 @@ namespace RT.KitchenSink
             {
                 if (type == PathPieceType.End)
                     throw new ArgumentException("type cannot be End. Use the static PathPiece.End value instead.", nameof(type));
-                if (points == null)
-                    throw new ArgumentNullException(nameof(points));
                 Type = type;
-                Points = points;
+                Points = points ?? throw new ArgumentNullException(nameof(points));
             }
 
             private PathPiece() { }
@@ -66,9 +64,7 @@ namespace RT.KitchenSink
             {
                 if (selector == null)
                     throw new ArgumentNullException(nameof(selector));
-                if (Type == PathPieceType.End)
-                    return this;
-                return new PathPiece(Type, Points.Select(selector).ToArray());
+                return Type == PathPieceType.End ? this : new PathPiece(Type, Points.Select(selector).ToArray());
             }
         }
 

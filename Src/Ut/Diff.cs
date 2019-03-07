@@ -37,9 +37,9 @@ namespace RT.Util
             Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor = null)
         {
             if (old == null)
-                throw new ArgumentNullException("old");
+                throw new ArgumentNullException(nameof(old));
             if (@new == null)
-                throw new ArgumentNullException("new");
+                throw new ArgumentNullException(nameof(@new));
             return diffIterator(old as IList<T> ?? old.ToArray(), @new as IList<T> ?? @new.ToArray(), comparer ?? EqualityComparer<T>.Default, predicate, postProcessor);
         }
 
@@ -73,15 +73,12 @@ namespace RT.Util
                 yield return Tuple.Create(old[i], DiffOp.None);
         }
 
-        private sealed class diffSeqLink
+        private sealed class DiffSeqLink
         {
             public int x;
             public int y;
-            public diffSeqLink prev;
-            public override string ToString()
-            {
-                return "{0}, {1}{2}".Fmt(x, y, prev == null ? null : " >");
-            }
+            public DiffSeqLink prev;
+            public override string ToString() => "{0}, {1}{2}".Fmt(x, y, prev == null ? null : " >");
         }
 
         private static IEnumerable<Tuple<T, DiffOp>> diffImpl<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
@@ -91,8 +88,8 @@ namespace RT.Util
                 if (predicate == null || predicate(newa[i]))
                     newhash.AddSafe(newa[i], i);
 
-            var sequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
-            var newSequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
+            var sequences = new DiffSeqLink[olda.Count - startMatch - endMatch + 1];
+            var newSequences = new DiffSeqLink[olda.Count - startMatch - endMatch + 1];
             var seqCount = 0;
 
             for (int xindex = startMatch; xindex < olda.Count - endMatch; xindex++)
@@ -111,7 +108,7 @@ namespace RT.Util
                     if (((k == seqCount) || (yindex < sequences[k].y)) &&
                         ((k == 0) || (yindex > last.y)))
                     {
-                        newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = last };
+                        newSequences[k] = new DiffSeqLink { x = xindex, y = yindex, prev = last };
                         k++;
                         if (k > seqCount)
                         {
@@ -125,9 +122,9 @@ namespace RT.Util
                     Array.Copy(newSequences, sequences, k);
             }
 
-            diffSeqLink[] sequence = new diffSeqLink[seqCount + 1];
+            DiffSeqLink[] sequence = new DiffSeqLink[seqCount + 1];
             var index = 0;
-            var sequenceRev = new diffSeqLink { x = olda.Count - endMatch, y = newa.Count - endMatch, prev = seqCount > 0 ? sequences[seqCount - 1] : null };
+            var sequenceRev = new DiffSeqLink { x = olda.Count - endMatch, y = newa.Count - endMatch, prev = seqCount > 0 ? sequences[seqCount - 1] : null };
             while (sequenceRev != null)
             {
                 sequence[seqCount - index] = sequenceRev;

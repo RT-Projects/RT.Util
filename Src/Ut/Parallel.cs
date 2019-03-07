@@ -26,7 +26,7 @@ namespace RT.Util
         public static void Parallel(int maxSimultaneous, params Action[] actions)
         {
             if (maxSimultaneous < 1)
-                throw new ArgumentException("maxSimultaneous cannot be zero or negative.", "maxSimultaneous");
+                throw new ArgumentException("maxSimultaneous cannot be zero or negative.", nameof(maxSimultaneous));
 
             if (actions == null || actions.Length == 0)
                 return;

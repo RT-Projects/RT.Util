@@ -236,14 +236,11 @@ namespace RT.Util.Serialization
             if (element is JsonDict && element.ContainsKey(":value"))
                 element = element[":value"];
 
-            if (element is JsonString)
-                return element.GetString();
-            else if (element is JsonBool)
-                return element.GetBool();
-            else if (element is JsonNumber)
-                return ((JsonNumber) element).RawValue;
-            else
-                return null;
+            return
+                element is JsonString ? element.GetString() :
+                element is JsonBool ? element.GetBool() :
+                element is JsonNumber ? ((JsonNumber) element).RawValue :
+                null;
         }
 
         JsonValue IClassifyFormat<JsonValue>.GetSelfValue(JsonValue element)
@@ -251,12 +248,8 @@ namespace RT.Util.Serialization
             return element[":value"];
         }
 
-        IEnumerable<JsonValue> IClassifyFormat<JsonValue>.GetList(JsonValue element, int? tupleSize)
-        {
-            if (element is JsonDict && element.ContainsKey(":value"))
-                return element[":value"].GetList();
-            return element.GetList();
-        }
+        IEnumerable<JsonValue> IClassifyFormat<JsonValue>.GetList(JsonValue element, int? tupleSize) =>
+            element is JsonDict && element.ContainsKey(":value") ? element[":value"].GetList() : element.GetList();
 
         void IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element, out JsonValue key, out JsonValue value)
         {
@@ -288,9 +281,9 @@ namespace RT.Util.Serialization
             if (fieldName.StartsWith(':'))
                 fieldName = ":" + fieldName;
             var consider = element[fieldName];
-            if (consider is JsonDict && consider.ContainsKey(":declaringTypes"))
-                return consider[":values"][consider[":declaringTypes"].IndexOf(declaringType)];
-            return consider;
+            return consider is JsonDict && consider.ContainsKey(":declaringTypes")
+                ? consider[":values"][consider[":declaringTypes"].IndexOf(declaringType)]
+                : consider;
         }
 
         byte[] IClassifyFormat<JsonValue>.GetRawData(JsonValue element)
@@ -332,7 +325,7 @@ namespace RT.Util.Serialization
             return
                 element.ContainsKey(":ref") ? element[":ref"].GetInt() :
                 element.ContainsKey(":refid") ? element[":refid"].GetInt() :
-                Ut.Throw<int>(new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
+                throw new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true.");
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatNullValue()

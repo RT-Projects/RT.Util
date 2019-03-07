@@ -158,7 +158,7 @@ namespace RT.Util.Serialization
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            return new classifier<TElement>(format, options).Deserialize(type, elem);
+            return new Classifier<TElement>(format, options).Deserialize(type, elem);
         }
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem);
+            return (T) new Classifier<TElement>(format, options).Deserialize(typeof(T), elem);
         }
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace RT.Util.Serialization
         ///     A new instance of the requested type.</returns>
         public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Deserialize(type, elem);
+            return new Classifier<TElement>(format, options).Deserialize(type, elem);
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         public static void DeserializeIntoObject<TElement, T>(TElement element, T intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            new classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, null);
+            new Classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, null);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace RT.Util.Serialization
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            new classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, null);
+            new Classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, null);
         }
 
         /// <summary>
@@ -276,7 +276,7 @@ namespace RT.Util.Serialization
         ///     Options.</param>
         public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            var element = new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
+            var element = new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
             PathUtil.CreatePathToFile(filename);
             using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
                 format.WriteToStream(element, f);
@@ -298,7 +298,7 @@ namespace RT.Util.Serialization
         ///     The serialized form generated from the object.</returns>
         public static TElement Serialize<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Serialize(saveObject, typeof(T))();
+            return new Classifier<TElement>(format, options).Serialize(saveObject, typeof(T))();
         }
 
         /// <summary>
@@ -317,7 +317,7 @@ namespace RT.Util.Serialization
         ///     The serialized form generated from the object.</returns>
         public static TElement Serialize<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            return new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
+            return new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
         }
 
         // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
@@ -325,7 +325,7 @@ namespace RT.Util.Serialization
         // All enum types are also treated as if they were listed here.
         private static Type[] _simpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
 
-        private sealed class classifier<TElement>
+        private sealed class Classifier<TElement>
         {
             private ClassifyOptions _options;
             private int _nextId = 0;
@@ -359,8 +359,7 @@ namespace RT.Util.Serialization
 
             private object[] getCustomAttributes(MemberInfo member)
             {
-                object[] attrs;
-                if (!_attributesCache.TryGetValue(member, out attrs))
+                if (!_attributesCache.TryGetValue(member, out var attrs))
                 {
                     attrs = member.GetCustomAttributes(true);
                     _attributesCache[member] = attrs;
@@ -368,23 +367,20 @@ namespace RT.Util.Serialization
                 return attrs;
             }
 
-            public classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
+            public Classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
             {
-                if (format == null)
-                    throw new ArgumentNullException("format");
-
+                _format = format ?? throw new ArgumentNullException(nameof(format));
                 _options = options ?? DefaultOptions ?? new ClassifyOptions(); // in case someone set default options to null
-                _format = format;
             }
 
-            private sealed class declassifyRememberedObject
+            private sealed class DeclassifyRememberedObject
             {
                 public Func<object> WithDesubstitution;
                 public Func<object> WithoutDesubstitution;
             }
 
-            private Dictionary<int, declassifyRememberedObject> _rememberCacheDeser;
-            private Dictionary<int, declassifyRememberedObject> _rememberDeser => _rememberCacheDeser ?? (_rememberCacheDeser = new Dictionary<int, declassifyRememberedObject>());
+            private Dictionary<int, DeclassifyRememberedObject> _rememberCacheDeser;
+            private Dictionary<int, DeclassifyRememberedObject> _rememberDeser => _rememberCacheDeser ?? (_rememberCacheDeser = new Dictionary<int, DeclassifyRememberedObject>());
 
             private Dictionary<object, object> _rememberCacheSer;
             private Dictionary<object, object> _rememberSer => _rememberCacheSer ?? (_rememberCacheSer = new Dictionary<object, object>(_options.ActualEqualityComparer));
@@ -406,9 +402,7 @@ namespace RT.Util.Serialization
                 foreach (var action in _doAtTheEnd)
                     action();
                 var result = resultFunc();
-                if (type.IsEnum && _options.EnforceEnums && !allowEnumValue(type, result))
-                    return type.GetDefaultValue();
-                return result;
+                return type.IsEnum && _options.EnforceEnums && !allowEnumValue(type, result) ? type.GetDefaultValue() : result;
             }
 
             // Function to make sure a declassified object is only generated once
@@ -422,8 +416,10 @@ namespace RT.Util.Serialization
                     {
                         retrieved = true;
                         retrievedObj = res();
-                        retrievedObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
-                        retrievedObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                        if (retrievedObj is IClassifyObjectProcessor objP)
+                            objP.AfterDeserialize();
+                        if (retrievedObj is IClassifyObjectProcessor<TElement> objT)
+                            objT.AfterDeserialize(elem);
                         typeOptions?.AfterDeserialize(retrievedObj, elem);
                     }
                     return retrievedObj;
@@ -432,8 +428,7 @@ namespace RT.Util.Serialization
 
             public void DeserializeIntoObject(Type type, TElement elem, object intoObj, object parentNode)
             {
-                ClassifyTypeOptions typeOptions = null;
-                if (_options._typeOptions.TryGetValue(type, out typeOptions))
+                if (_options._typeOptions.TryGetValue(type, out var typeOptions))
                 {
                     if (typeOptions.Substitutor != null)
                         throw new InvalidOperationException("Cannot use type substitution when populating a provided object.");
@@ -443,10 +438,9 @@ namespace RT.Util.Serialization
                 _doAtTheEnd = new List<Action>();
 
                 if (_format.IsReferable(elem))
-                    _rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
+                    _rememberDeser[_format.GetReferenceID(elem)] = new DeclassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
-                Type keyType, valueType;
-                var cat = tryGetCollectionInfo(type, out keyType, out valueType);
+                var cat = tryGetCollectionInfo(type, out var keyType, out var valueType);
                 var result =
                     cat == null ? CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type)) :
                     cat == CollectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums)) :
@@ -457,8 +451,10 @@ namespace RT.Util.Serialization
                     action();
                 result();
 
-                intoObj.IfType((IClassifyObjectProcessor obj) => { obj.AfterDeserialize(); });
-                intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterDeserialize(elem); });
+                if (intoObj is IClassifyObjectProcessor objP)
+                    objP.AfterDeserialize();
+                if (intoObj is IClassifyObjectProcessor<TElement> objT)
+                    objT.AfterDeserialize(elem);
                 typeOptions?.AfterDeserialize(intoObj, elem);
             }
 
@@ -481,8 +477,7 @@ namespace RT.Util.Serialization
                 var substType = declaredType;
                 var hasTypeSubstitution = false;
 
-                ClassifyTypeOptions typeOptions = null;
-                if (_options._typeOptions.TryGetValue(declaredType, out typeOptions))
+                if (_options._typeOptions.TryGetValue(declaredType, out var typeOptions))
                 {
                     if (typeOptions.Substitutor != null)
                     {
@@ -508,7 +503,7 @@ namespace RT.Util.Serialization
 
                     // Remember the result if something else refers to it
                     if (_format.IsReferable(elem))
-                        _rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject
+                        _rememberDeser[_format.GetReferenceID(elem)] = new DeclassifyRememberedObject
                         {
                             WithDesubstitution = withDesubstitution,
                             WithoutDesubstitution = withoutDesubstitution
@@ -522,8 +517,7 @@ namespace RT.Util.Serialization
                     var refID = _format.GetReferenceID(elem);
                     return _ => new Func<object>(() =>
                     {
-                        declassifyRememberedObject inf;
-                        if (!_rememberDeser.TryGetValue(refID, out inf))
+                        if (!_rememberDeser.TryGetValue(refID, out var inf))
                             _format.ThrowMissingReferable(refID);
                         if (declaredType == substType)
                             return inf.WithoutDesubstitution();
@@ -538,8 +532,7 @@ namespace RT.Util.Serialization
                 }
 
                 var serializedType = substType;
-                bool isFullType;
-                var typeName = _format.GetType(elem, out isFullType);
+                var typeName = _format.GetType(elem, out var isFullType);
                 if (typeName != null)
                 {
                     serializedType = isFullType ? Type.GetType(typeName) ?? Type.GetType(typeName, asmName => AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == asmName.FullName), null) :
@@ -573,8 +566,7 @@ namespace RT.Util.Serialization
                     TElement[] values;
                     if (genericDefinition == typeof(KeyValuePair<,>))
                     {
-                        TElement key, value;
-                        _format.GetKeyValuePair(elem, out key, out value);
+                        _format.GetKeyValuePair(elem, out var key, out var value);
                         values = new[] { key, value };
                     }
                     else
@@ -600,8 +592,7 @@ namespace RT.Util.Serialization
                 else
                 {
                     // Check if it’s an array, collection or dictionary
-                    Type keyType, valueType;
-                    var cat = tryGetCollectionInfo(serializedType, out keyType, out valueType);
+                    var cat = tryGetCollectionInfo(serializedType, out var keyType, out var valueType);
                     WorkNode<Func<object>> workNode;
                     switch (cat)
                     {
@@ -681,7 +672,8 @@ namespace RT.Util.Serialization
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
             private WorkNode<Func<object>> deserializeIntoDictionary(Type keyType, Type valueType, TElement elem, object already, bool enforceEnums)
             {
-                already.IfType((IClassifyObjectProcessor<TElement> dict) => { dict.BeforeDeserialize(elem); });
+                if (already is IClassifyObjectProcessor<TElement> dict)
+                    dict.BeforeDeserialize(elem);
 
                 typeof(ICollection<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
                 var addMethod = typeof(IDictionary<,>).MakeGenericType(keyType, valueType).GetMethod("Add", new Type[] { keyType, valueType });
@@ -735,8 +727,7 @@ namespace RT.Util.Serialization
 
                 // STEP 1 (done here): Generate an object[] of object[]s of object[]s containing the still-serialized elements (TElement).
                 // At the same time, if ‘lengths’ isn’t already populated from ‘already’, populated it from the serialized form.
-                Func<bool, int, TElement, object> recurse = null;
-                recurse = (first, rnk, el) =>
+                object recurse(bool first, int rnk, TElement el)
                 {
                     var thisList = _format.GetList(el, null).ToArray();
                     if (first && already == null)
@@ -750,7 +741,7 @@ namespace RT.Util.Serialization
                     for (int i = 0; i < thisList.Length; i++)
                         newList[i] = rnk == rank ? thisList[i] : recurse(i == 0, rnk, thisList[i]);
                     return newList;
-                };
+                }
 
                 // If ‘lengths’ isn’t already populated from ‘already’, this call populates it from the serialized form
                 var arrays = (object[]) recurse(true, 0, elem);
@@ -789,8 +780,7 @@ namespace RT.Util.Serialization
                             // STEP 3 (done at the end): put all the deserialized elements into the array.
                             _doAtTheEnd.Add(() =>
                             {
-                                Action<int[], int, object> recurse3 = null;
-                                recurse3 = (indices, rnk, obj) =>
+                                void recurse3(int[] indices, int rnk, object obj)
                                 {
                                     if (rnk == rank)
                                     {
@@ -806,7 +796,8 @@ namespace RT.Util.Serialization
                                             recurse3(indices, rnk + 1, ((object[]) obj)[i]);
                                         }
                                     }
-                                };
+                                }
+
                                 recurse3(ixs, 0, arrays);
                             });
                             return new Func<object>(() => already);
@@ -840,7 +831,8 @@ namespace RT.Util.Serialization
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
             private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, CollectionCategory cat, TElement elem, object already, bool enforceEnums)
             {
-                already.IfType((IClassifyObjectProcessor<TElement> list) => { list.BeforeDeserialize(elem); });
+                if (already is IClassifyObjectProcessor<TElement> list)
+                    list.BeforeDeserialize(elem);
 
                 var baseType = (cat == CollectionCategory.Stack ? typeof(Stack<>) : cat == CollectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>));
                 baseType.MakeGenericType(valueType).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
@@ -881,7 +873,6 @@ namespace RT.Util.Serialization
             ///     <c>null</c> if the type is not a supported collection type, otherwise the category of collection.</returns>
             private static CollectionCategory? tryGetCollectionInfo(Type type, out Type keyType, out Type valueType)
             {
-                Type[] typeParams;
                 keyType = null;
                 valueType = null;
 
@@ -890,7 +881,7 @@ namespace RT.Util.Serialization
                     valueType = type.GetElementType();
                     return CollectionCategory.Array;
                 }
-                else if (type.TryGetGenericParameters(typeof(IDictionary<,>), out typeParams) && (typeParams[0].IsEnum || _simpleTypes.Contains(typeParams[0])))
+                else if (type.TryGetGenericParameters(typeof(IDictionary<,>), out var typeParams) && (typeParams[0].IsEnum || _simpleTypes.Contains(typeParams[0])))
                 {
                     // Dictionaries which are stored specially (key is a simple type).
                     // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -917,7 +908,7 @@ namespace RT.Util.Serialization
                 return null;
             }
 
-            private struct deserializeFieldInfo
+            private struct DeserializeFieldInfo
             {
                 public FieldInfo FieldToAssignTo;
                 public TElement ElementToAssign;
@@ -928,9 +919,10 @@ namespace RT.Util.Serialization
 
             private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type)
             {
-                intoObj.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeDeserialize(elem); });
+                if (intoObj is IClassifyObjectProcessor<TElement> objT)
+                    objT.BeforeDeserialize(elem);
 
-                var infos = new List<deserializeFieldInfo>();
+                var infos = new List<DeserializeFieldInfo>();
                 var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
                 if (globalClassifyName != null && globalClassifyName.SerializedName != null)
                     throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
@@ -981,7 +973,7 @@ namespace RT.Util.Serialization
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                         if (!_format.IsNull(value) || !attrs.OfType<ClassifyNotNullAttribute>().Any())
                         {
-                            var inf = new deserializeFieldInfo
+                            var inf = new DeserializeFieldInfo
                             {
                                 FieldToAssignTo = field,
                                 DeserializeAsType = field.FieldType,
@@ -1057,7 +1049,7 @@ namespace RT.Util.Serialization
                 Func<TElement> elem;
 
                 // Add a “type” attribute if the instance type is different from the field’s declared type
-                Type saveType = declaredType;
+                var saveType = declaredType;
                 string typeStr = null;
                 bool typeStrIsFull = false;
                 if (saveObject != null)
@@ -1068,8 +1060,7 @@ namespace RT.Util.Serialization
                     if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
                     {
                         // ... but only add this attribute if it is not a collection, because then Classify doesn’t care about the type when restoring the object anyway
-                        Type[] typeParameters;
-                        if (!declaredType.IsArray && !declaredType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && !declaredType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
+                        if (!declaredType.IsArray && !declaredType.TryGetGenericParameters(typeof(IDictionary<,>), out var typeParameters) && !declaredType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
                         {
                             if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
                                 typeStr = saveType.Namespace.Equals(declaredType.Namespace) && !saveType.IsArray ? saveType.Name : saveType.FullName;
@@ -1083,13 +1074,11 @@ namespace RT.Util.Serialization
                 }
 
                 // Preserve reference equality of objects before type substitution
-                object previousOriginalObject;
-                if (saveObject != null && _rememberSer.TryGetValue(saveObject, out previousOriginalObject))
+                if (saveObject != null && _rememberSer.TryGetValue(saveObject, out var previousOriginalObject))
                 {
                     if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
                     {
-                        int refId;
-                        if (!_requireRefId.TryGetValue(previousOriginalObject, out refId))
+                        if (!_requireRefId.TryGetValue(previousOriginalObject, out var refId))
                         {
                             refId = _nextId;
                             _nextId++;
@@ -1105,11 +1094,10 @@ namespace RT.Util.Serialization
                 }
 
                 // See if there’s a substitute type defined
-                ClassifyTypeOptions typeOptions;
                 var originalObject = saveObject;
                 var originalType = saveType;
 
-                if (_options._typeOptions.TryGetValue(saveType, out typeOptions) && typeOptions.Substitutor != null)
+                if (_options._typeOptions.TryGetValue(saveType, out var typeOptions) && typeOptions.Substitutor != null)
                 {
                     saveObject = typeOptions.Substitutor.ToSubstitute(saveObject);
                     saveType = typeOptions.Substitutor.SubstituteType;
@@ -1119,8 +1107,7 @@ namespace RT.Util.Serialization
                     {
                         if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
                         {
-                            int refId;
-                            if (!_requireRefId.TryGetValue(previousOriginalObject, out refId))
+                            if (!_requireRefId.TryGetValue(previousOriginalObject, out var refId))
                             {
                                 refId = _nextId;
                                 _nextId++;
@@ -1147,8 +1134,10 @@ namespace RT.Util.Serialization
                 if (saveObject == null)
                     return () => _format.FormatNullValue();
 
-                saveObject.IfType((IClassifyObjectProcessor obj) => { obj.BeforeSerialize(); });
-                saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.BeforeSerialize(); });
+                if (saveObject is IClassifyObjectProcessor objP)
+                    objP.BeforeSerialize();
+                if (saveObject is IClassifyObjectProcessor<TElement> objT)
+                    objT.BeforeSerialize();
                 typeOptions?.BeforeSerialize<TElement>(saveObject);
 
                 if (typeof(TElement).IsAssignableFrom(saveType))
@@ -1164,7 +1153,6 @@ namespace RT.Util.Serialization
                     elem = () => _format.FormatRawData((byte[]) saveObject);
                 else
                 {
-                    Type[] typeParameters;
                     Array saveArray;
                     bool isStack = false;
 
@@ -1195,7 +1183,7 @@ namespace RT.Util.Serialization
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
                     }
-                    else if (saveType.TryGetGenericParameters(typeof(IDictionary<,>), out typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
+                    else if (saveType.TryGetGenericParameters(typeof(IDictionary<,>), out var typeParameters) && (typeParameters[0].IsEnum || _simpleTypes.Contains(typeParameters[0])))
                     {
                         // It’s a dictionary with a simple-type key.
                         // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
@@ -1248,14 +1236,7 @@ namespace RT.Util.Serialization
                         var arrays = recurse(ixs, 0);
 
                         // STEP 2: Call _format.FormatList() on everything.
-                        Func<object, TElement> recurse2 = null;
-                        recurse2 = obj =>
-                        {
-                            var arr = obj as object[];
-                            if (arr != null)
-                                return _format.FormatList(false, arr.Select(recurse2));
-                            return ((Func<TElement>) obj)();
-                        };
+                        TElement recurse2(object obj) => obj is object[] arr ? _format.FormatList(false, arr.Select(recurse2)) : ((Func<TElement>) obj)();
                         elem = () => recurse2(arrays);
                     }
                     else if (
@@ -1287,18 +1268,18 @@ namespace RT.Util.Serialization
                 // and add the refid if it needs it
                 {
                     bool retrieved = false;
-                    TElement retrievedElem = default(TElement);
-                    Func<TElement> previousElem = elem;
+                    TElement retrievedElem = default;
+                    var previousElem = elem;
                     elem = () =>
                     {
                         if (!retrieved)
                         {
                             retrieved = true;
                             retrievedElem = previousElem();
-                            int refId;
-                            if (_requireRefId.TryGetValue(originalObject, out refId) || _requireRefId.TryGetValue(saveObject, out refId))
+                            if (_requireRefId.TryGetValue(originalObject, out var refId) || _requireRefId.TryGetValue(saveObject, out refId))
                                 retrievedElem = _format.FormatReferable(retrievedElem, refId);
-                            saveObject.IfType((IClassifyObjectProcessor<TElement> obj) => { obj.AfterSerialize(retrievedElem); });
+                            if (saveObject is IClassifyObjectProcessor<TElement> objE)
+                                objE.AfterSerialize(retrievedElem);
                             typeOptions?.AfterSerialize(saveObject, retrievedElem);
                         }
                         return retrievedElem;
@@ -1452,8 +1433,7 @@ namespace RT.Util.Serialization
 
         private static void postBuildStep(Type type, object instance, MemberInfo member, IPostBuildReporter rep, HashSet<Type> alreadyChecked, IEnumerable<string> chain)
         {
-            ClassifyTypeOptions opts;
-            if (DefaultOptions._typeOptions.TryGetValue(type, out opts) && opts.Substitutor != null)
+            if (DefaultOptions._typeOptions.TryGetValue(type, out var opts) && opts.Substitutor != null)
             {
                 postBuildStep(opts.Substitutor.SubstituteType, opts.Substitutor.ToSubstitute(instance), member, rep, alreadyChecked, chain.Concat("Type substitution: " + opts.Substitutor.SubstituteType.FullName));
                 return;
@@ -1468,8 +1448,7 @@ namespace RT.Util.Serialization
                 return;
             }
 
-            Type[] genericTypeArguments;
-            if (type.TryGetGenericParameters(typeof(IDictionary<,>), out genericTypeArguments) || type.TryGetGenericParameters(typeof(ICollection<>), out genericTypeArguments))
+            if (type.TryGetGenericParameters(typeof(IDictionary<,>), out var genericTypeArguments) || type.TryGetGenericParameters(typeof(ICollection<>), out genericTypeArguments))
             {
                 foreach (var typeArg in genericTypeArguments)
                     postBuildStep(typeArg, null, member, rep, alreadyChecked, chain.Concat("Dictionary type argument " + typeArg.FullName));
@@ -1759,17 +1738,17 @@ namespace RT.Util.Serialization
             set
             {
                 _serializationEqualityComparer = value;
-                ActualEqualityComparer = new actualComparer(value);
+                ActualEqualityComparer = new ActualComparer(value);
             }
         }
         private IEqualityComparer<object> _serializationEqualityComparer;
 
         internal IEqualityComparer<object> ActualEqualityComparer { get; private set; }
 
-        class actualComparer : IEqualityComparer<object>
+        class ActualComparer : IEqualityComparer<object>
         {
             private IEqualityComparer<object> _parent;
-            public actualComparer(IEqualityComparer<object> parent) { _parent = parent; }
+            public ActualComparer(IEqualityComparer<object> parent) { _parent = parent; }
             public new bool Equals(object x, object y) => ReferenceEquals(x, y) || _parent.Equals(x, y);
             public int GetHashCode(object obj) => obj.GetHashCode();
         }
@@ -1797,8 +1776,7 @@ namespace RT.Util.Serialization
         {
             if (substitutor == null)
                 throw new ArgumentNullException(nameof(substitutor));
-            ClassifyTypeOptions opt;
-            if (_typeOptions.TryGetValue(typeof(TTrue), out opt) && opt.Substitutor != null)
+            if (_typeOptions.TryGetValue(typeof(TTrue), out var opt) && opt.Substitutor != null)
                 throw new ArgumentException($"A substitution for type {typeof(TTrue).FullName} has already been defined.", nameof(substitutor));
             (opt ?? (_typeOptions[typeof(TTrue)] = new ClassifyTypeOptions())).Substitutor = new ClassifySubstitutor(typeof(TSubstitute), obj => substitutor.FromSubstitute((TSubstitute) obj), obj => substitutor.ToSubstitute((TTrue) obj));
             return this;
@@ -1981,14 +1959,13 @@ namespace RT.Util.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public sealed class ClassifyIgnoreIfAttribute : Attribute
     {
-        private object _value;
         /// <summary>
         ///     Constructs an <see cref="ClassifyIgnoreIfAttribute"/> instance.</summary>
         /// <param name="value">
         ///     Specifies the value which causes a field or automatically-implemented property to be ignored.</param>
-        public ClassifyIgnoreIfAttribute(object value) { _value = value; }
+        public ClassifyIgnoreIfAttribute(object value) { Value = value; }
         /// <summary>Retrieves the value which causes a field or automatically-implemented property to be ignored.</summary>
-        public object Value { get { return _value; } }
+        public object Value { get; private set; }
     }
 
     /// <summary>

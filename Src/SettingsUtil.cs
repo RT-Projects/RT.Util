@@ -601,7 +601,7 @@ namespace RT.Util
         public SerializerInfoAttribute(string defaultFileExtension)
         {
             if (defaultFileExtension == null)
-                throw new ArgumentNullException("defaultFileExtension");
+                throw new ArgumentNullException(nameof(defaultFileExtension));
             DefaultFileExtension = defaultFileExtension;
             AutoConvertFrom = false;
         }

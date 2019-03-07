@@ -116,7 +116,7 @@ namespace RT.Util.Controls
                 if (_paragraphSpacing == value)
                     return;
                 if (value < 0)
-                    throw new ArgumentException("ParagraphSpacing cannot be negative.", "value");
+                    throw new ArgumentException("ParagraphSpacing cannot be negative.", nameof(value));
                 _cachedPreferredSizes.Clear();
                 _cachedRendering = null;
                 _paragraphSpacing = value;
@@ -210,7 +210,7 @@ namespace RT.Util.Controls
                         break;
 
                     default:
-                        throw new ArgumentException("value must be one of the ContentAlignment enum values.", "value");
+                        throw new ArgumentException("value must be one of the ContentAlignment enum values.", nameof(value));
                 }
             }
         }

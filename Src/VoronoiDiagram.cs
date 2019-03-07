@@ -383,7 +383,7 @@ namespace RT.KitchenSink.Geometry
 
             private int rectEdge(PointD p, double width, double height)
             {
-                return p.Y == 0 ? 0 : p.X == width ? 1 : p.Y == height ? 2 : p.X == 0 ? 3 : Ut.Throw<int>(new Exception("Point is not on the edge."));
+                return p.Y == 0 ? 0 : p.X == width ? 1 : p.Y == height ? 2 : p.X == 0 ? 3 : throw new Exception("Point is not on the edge.");
             }
 
             public PolygonD ToPolygonD(bool autocomplete, double width, double height)

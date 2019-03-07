@@ -22,8 +22,8 @@ namespace RT.Util.Collections
     ///         the items below the index too.</para></remarks>
     public class AutoList<T> : IList<T>
     {
-        private List<T> _inner;
-        private Func<int, T> _initializer;
+        private readonly List<T> _inner;
+        private readonly Func<int, T> _initializer;
 
         /// <summary>
         ///     Gets or sets the element at the specified index. The behaviour of both the getter and the setter is
@@ -36,7 +36,7 @@ namespace RT.Util.Collections
                 // default(T) cannot possibly create a value that we'd need to store immediately in order to preserve the infinite list illusion,
                 // so do not grow the list for this if the user supplied no initializer.
                 if (_initializer == null)
-                    return index >= Count ? default(T) : _inner[index];
+                    return index >= Count ? default : _inner[index];
 
                 fill(index + 1);
                 return _inner[index];
@@ -52,14 +52,14 @@ namespace RT.Util.Collections
         private void fill(int index)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", "'index' cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(index), "'index' cannot be negative.");
             while (index > Count)
-                Add(_initializer == null ? default(T) : _initializer(Count));
+                Add(_initializer == null ? default : _initializer(Count));
         }
         private void fill(int index, int count)
         {
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "'count' cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "'count' cannot be negative.");
             fill(index + count);
         }
 
@@ -141,7 +141,7 @@ namespace RT.Util.Collections
         public AutoList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
             if (converter == null)
-                throw new ArgumentNullException("converter");
+                throw new ArgumentNullException(nameof(converter));
             var list = new AutoList<TOutput>(_inner.Count);
             foreach (var item in _inner)
                 list.Add(converter(item));
@@ -155,7 +155,7 @@ namespace RT.Util.Collections
         public AutoList<T> FindAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match");
+                throw new ArgumentNullException(nameof(match));
             var list = new AutoList<T>();
             foreach (var item in _inner)
                 if (match(item))
@@ -180,12 +180,12 @@ namespace RT.Util.Collections
         public AutoList<T> GetRange(int index, int count)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", "'index' cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(index), "'index' cannot be negative.");
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", "'count' cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), "'count' cannot be negative.");
             fill(index, count);
             while (_inner.Count < index + count)
-                _inner.Add(_initializer == null ? default(T) : _initializer(_inner.Count));
+                _inner.Add(_initializer == null ? default : _initializer(_inner.Count));
             var list = new AutoList<T>(count);
             for (int i = 0; i < count; i++)
                 list.Add(_inner[i + index]);

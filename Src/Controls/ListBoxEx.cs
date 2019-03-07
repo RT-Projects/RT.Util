@@ -90,7 +90,7 @@ namespace RT.Util.Controls
             set
             {
                 if (value < 0 || value >= Items.Count)
-                    throw new ArgumentException("OutlineIndex cannot be negative or greater than the size of the collection.", "value");
+                    throw new ArgumentException("OutlineIndex cannot be negative or greater than the size of the collection.", nameof(value));
                 WinAPI.SendMessage(Handle, WinAPI.LB_SETCARETINDEX, (uint) value, 0);
             }
         }

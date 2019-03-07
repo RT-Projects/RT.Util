@@ -103,7 +103,7 @@ namespace RT.Util
         public virtual void ConfigureVerbosity(string settings)
         {
             if (settings == null)
-                throw new ArgumentNullException("settings");
+                throw new ArgumentNullException(nameof(settings));
 
             // 0 - set all types to this level
             // w1 - set warning log to this level
