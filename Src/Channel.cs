@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace RT.KitchenSink
@@ -178,7 +176,12 @@ namespace RT.KitchenSink
             public bool MoveNext()
             {
                 _everMoved = true;
-                return _this.TryRead(out _current);
+                if (_reachedEnd)
+                    return false;
+                var ret = _this.TryRead(out _current);
+                if (!ret)
+                    _reachedEnd = true;
+                return ret;
             }
 
             public void Reset()
