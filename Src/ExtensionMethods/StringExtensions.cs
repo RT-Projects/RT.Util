@@ -1155,7 +1155,7 @@ namespace RT.Util.ExtensionMethods
         ///     least amount of spaces at the beginning of any line.</returns>
         public static string Unindent(this string str)
         {
-            var least = Regex.Matches(str, @"^( *)(?![\r\n ]|\z)", RegexOptions.Multiline).Cast<Match>().Min(m => m.Groups[1].Length);
+            var least = Regex.Matches(str, @"^( *)(?![\r\n ]|\z)", RegexOptions.Multiline).Cast<Match>().MinOrDefault(m => m.Groups[1].Length, 0);
             return least == 0 ? str : Regex.Replace(str, "^" + new string(' ', least), "", RegexOptions.Multiline);
         }
 
