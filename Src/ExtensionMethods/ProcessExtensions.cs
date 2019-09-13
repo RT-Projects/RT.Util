@@ -15,17 +15,17 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         /// For each process in the system, enumerates a tuple of parent-process-id,process-id.
         /// </summary>
-        public static IEnumerable<Tuple<int, int>> ParentChildProcessIds()
+        public static IEnumerable<(int parentProcessId, int processId)> ParentChildProcessIds()
         {
-            WinAPI.PROCESSENTRY32 procEntry = new WinAPI.PROCESSENTRY32();
+            var procEntry = new WinAPI.PROCESSENTRY32();
             procEntry.dwSize = (uint) Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32));
-            IntPtr handleToSnapshot = WinAPI.CreateToolhelp32Snapshot((uint) WinAPI.SnapshotFlags.Process, 0);
+            var handleToSnapshot = WinAPI.CreateToolhelp32Snapshot((uint) WinAPI.SnapshotFlags.Process, 0);
             try
             {
                 if (WinAPI.Process32First(handleToSnapshot, ref procEntry))
                 {
                     do
-                        yield return Tuple.Create((int) procEntry.th32ParentProcessID, (int) procEntry.th32ProcessID);
+                        yield return ((int) procEntry.th32ParentProcessID, (int) procEntry.th32ProcessID);
                     while (WinAPI.Process32Next(handleToSnapshot, ref procEntry));
                 }
                 else
@@ -44,9 +44,9 @@ namespace RT.Util.ExtensionMethods
         /// <param name="recursive">If true, all the children's children are included recursively. If false, only direct children are included.</param>
         public static List<int> ChildProcessIds(this Process process, bool recursive)
         {
-            Dictionary<int, List<int>> tree = new Dictionary<int, List<int>>();
+            var tree = new Dictionary<int, List<int>>();
             foreach (var pair in ParentChildProcessIds())
-                tree.AddSafe(pair.Item1, pair.Item2);
+                tree.AddSafe(pair.parentProcessId, pair.processId);
 
             if (!recursive)
             {
@@ -57,8 +57,8 @@ namespace RT.Util.ExtensionMethods
             }
             else
             {
-                List<int> children = new List<int>();
-                Queue<int> todo = new Queue<int>();
+                var children = new List<int>();
+                var todo = new Queue<int>();
                 todo.Enqueue(process.Id);
                 while (todo.Count > 0)
                 {

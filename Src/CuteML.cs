@@ -270,7 +270,7 @@ namespace RT.Util
         /// <returns>
         ///     The next state (return the old state for all tags that should not have a meaning) and an integer indicating the
         ///     amount by which opening this tag has advanced the text position.</returns>
-        public delegate Tuple<TState, int> CuteNextState<TState>(TState oldState, char cuteTag, string parameter);
+        public delegate (TState newState, int advance) CuteNextState<TState>(TState oldState, char cuteTag, string parameter);
 
         private sealed class CuteWalkData<TState>
         {
@@ -307,8 +307,8 @@ namespace RT.Util
                     else if (tag.Tag != null)
                     {
                         var tup = NextState(state, tag.Tag.Value, tag.Attribute);
-                        newState = tup.Item1;
-                        X += tup.Item2;
+                        newState = tup.newState;
+                        X += tup.advance;
                     }
                     foreach (var child in tag.Children)
                         cuteWalkWordWrapRecursive(child, newState, curNowrap);
@@ -570,17 +570,17 @@ namespace RT.Util
                             ConsoleColor color;
                             if (!Enum.TryParse(parameter, true, out color))
                                 throw new InvalidOperationException("“{0}” is not a valid ConsoleColor value.".Fmt(parameter));
-                            return Tuple.Create(state.SetColor(color), 0);
+                            return (state.SetColor(color), 0);
                         case '*':
-                            return Tuple.Create(curLight ? state : state.SetColor((ConsoleColor) ((int) state.Color + 8)), 0);
+                            return (curLight ? state : state.SetColor((ConsoleColor) ((int) state.Color + 8)), 0);
                         case '-':
-                            return Tuple.Create(curLight ? state.SetColor((ConsoleColor) ((int) state.Color - 8)) : state, 0);
+                            return (curLight ? state.SetColor((ConsoleColor) ((int) state.Color - 8)) : state, 0);
                         case '.':
                             var bullet = (parameter ?? "*") + " ";
                             results[results.Count - 1] += new ConsoleColoredString(bullet, state.Color);
-                            return Tuple.Create(state.SetIndent(state.Indent + bullet.Length), 2);
+                            return (state.SetIndent(state.Indent + bullet.Length), 2);
                     }
-                    return Tuple.Create(state, 0);
+                    return (state, 0);
                 });
             if (results.Last().Length == 0)
                 results.RemoveAt(results.Count - 1);

@@ -255,7 +255,7 @@ namespace RT.Util
         /// <returns>
         ///     The next state (return the old state for all tags that should not have a meaning) and an integer indicating
         ///     the amount by which opening this tag has advanced the text position.</returns>
-        public delegate Tuple<TState, int> EggNextState<TState>(TState oldState, char eggTag, string parameter);
+        public delegate (TState newState, int advance) EggNextState<TState>(TState oldState, char eggTag, string parameter);
 
         private sealed class EggWalkData<TState>
         {
@@ -302,8 +302,8 @@ namespace RT.Util
                     {
                         var tup = NextState(state, tag.Tag.Value, CurParameter);
                         CurParameter = null;
-                        newState = tup.Item1;
-                        X += tup.Item2;
+                        newState = tup.newState;
+                        X += tup.advance;
                     }
                     foreach (var child in tag.Children)
                         eggWalkWordWrapRecursive(child, newState, curNowrap);
@@ -655,7 +655,7 @@ namespace RT.Util
                         case '=': color = ConsoleColor.DarkGray; break;
                         case '*': color = curLight ? color : (ConsoleColor) ((int) color + 8); break;
                     }
-                    return Tuple.Create(color, 0);
+                    return (color, 0);
                 });
             if (results.Last().Length == 0)
                 results.RemoveAt(results.Count - 1);

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
@@ -604,16 +603,16 @@ namespace RT.Util.Controls
                     switch (tag)
                     {
                         // ITALICS
-                        case '/': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Italic)), 0);
+                        case '/': return (state.ChangeFont(new Font(font, font.Style | FontStyle.Italic)), 0);
 
                         // BOLD
-                        case '*': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Bold)), 0);
+                        case '*': return (state.ChangeFont(new Font(font, font.Style | FontStyle.Bold)), 0);
 
                         // UNDERLINE
-                        case '_': return Tuple.Create(state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
+                        case '_': return (state.ChangeFont(new Font(font, font.Style | FontStyle.Underline)), 0);
 
                         // MNEMONICS
-                        case '&': return Tuple.Create(state.SetMnemonic(), 0);
+                        case '&': return (state.SetMnemonic(), 0);
 
                         // BULLET POINT
                         case '[':
@@ -622,7 +621,7 @@ namespace RT.Util.Controls
                             if (renderings != null)
                                 renderings.Add(new renderingInfo(_bullet, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
                             x += advance;
-                            return Tuple.Create(state.ChangeBlockIndent(state.BlockIndent + advance), advance);
+                            return (state.ChangeBlockIndent(state.BlockIndent + advance), advance);
 
                         // LINK (e.g. <link target>{link text}, link target may be omitted)
                         case '{':
@@ -630,7 +629,7 @@ namespace RT.Util.Controls
                                 break;
                             var linkLocation = new linkLocationInfo { LinkID = parameter };
                             locations.Add(linkLocation);
-                            return Tuple.Create(state.ChangeColor(Enabled ? LinkColor : SystemColors.GrayText).AddActiveLocation(linkLocation), 0);
+                            return (state.ChangeColor(Enabled ? LinkColor : SystemColors.GrayText).AddActiveLocation(linkLocation), 0);
 
                         // TOOLTIP (e.g. <tooltip text>#main text#)
                         case '#':
@@ -638,14 +637,14 @@ namespace RT.Util.Controls
                                 break;
                             var tooltipLocation = new tooltipLocationInfo { Tooltip = parameter };
                             locations.Add(tooltipLocation);
-                            return Tuple.Create(state.AddActiveLocation(tooltipLocation), 0);
+                            return (state.AddActiveLocation(tooltipLocation), 0);
 
                         // COLOUR (e.g. <colour>=coloured text=, revert to default colour if no <colour> specified)
                         case '=':
                             var color = parameter == null ? initialForeColor : (Color) (_colorConverter ?? (_colorConverter = new ColorConverter())).ConvertFromString(parameter);
-                            return Tuple.Create(state.ChangeColor(color), 0);
+                            return (state.ChangeColor(color), 0);
                     }
-                    return Tuple.Create(state, 0);
+                    return (state, 0);
                 });
 
             var totalSize = new Size(actualWidth + glyphOverhang.Width, y + measure(initialFont, " ", g).Height + glyphOverhang.Height);

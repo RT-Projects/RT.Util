@@ -179,23 +179,23 @@ namespace RT.KitchenSink
         {
             yield return start;
 
-            var stack = new Stack<Tuple<double, double>>();
-            stack.Push(Tuple.Create(0d, 1d));
+            var stack = new Stack<(double from, double to)>();
+            stack.Push((0, 1));
 
             while (stack.Count > 0)
             {
                 var elem = stack.Pop();
                 var p1 = bé(start, c1, c2, end, elem.Item1);
                 var p2 = bé(start, c1, c2, end, elem.Item2);
-                var midT = (elem.Item1 + elem.Item2) / 2;
+                var midT = (elem.from + elem.to) / 2;
                 var midCurve = bé(start, c1, c2, end, midT);
                 var dist = new EdgeD(p1, p2).Distance(midCurve);
                 if (double.IsNaN(dist) || dist <= smoothness)
                     yield return p2;
                 else
                 {
-                    stack.Push(Tuple.Create(midT, elem.Item2));
-                    stack.Push(Tuple.Create(elem.Item1, midT));
+                    stack.Push((midT, elem.to));
+                    stack.Push((elem.from, midT));
                 }
             }
         }

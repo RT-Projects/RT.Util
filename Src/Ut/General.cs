@@ -90,16 +90,16 @@ namespace RT.Util
         ///             For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and
         ///             release.</description></item>
         ///         <item><description>
-        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c>, the bool specifies whether to simulate only a
-        ///             key-down (false) or only a key-up (true).</description></item></list></remarks>
+        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c> or <c>ValueType&lt;Keys, bool&gt;</c>, the bool
+        ///             specifies whether to simulate only a key-down (false) or only a key-up (true).</description></item></list></remarks>
         /// <example>
         ///     <para>
         ///         The following example demonstrates how to use this method to send the key combination Win+R:</para>
         ///     <code>
         ///         Ut.SendKeystrokes(Ut.NewArray&lt;object&gt;(
-        ///             Tuple.Create(Keys.LWin, true),
+        ///             (Keys.LWin, false),
         ///             Keys.R,
-        ///             Tuple.Create(Keys.LWin, false)
+        ///             (Keys.LWin, true)
         ///         ));</code></example>
         public static void SendKeystrokes(IEnumerable<object> keys)
         {
@@ -109,24 +109,29 @@ namespace RT.Util
             var input = new List<WinAPI.INPUT>();
             foreach (var elem in keys)
             {
-                if (elem is Tuple<Keys, bool> t)
+                void sendTuple(Keys key, bool isUp)
                 {
                     var keyEvent = new WinAPI.INPUT
                     {
                         Type = WinAPI.INPUT_KEYBOARD,
                         SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
                         {
-                            Keyboard = new WinAPI.KEYBDINPUT { wVk = (ushort) t.Item1 }
+                            Keyboard = new WinAPI.KEYBDINPUT { wVk = (ushort) key }
                         }
                     };
-                    if (t.Item2)
+                    if (isUp)
                         keyEvent.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
                     input.Add(keyEvent);
                 }
+
+                if (elem is Tuple<Keys, bool> t)
+                    sendTuple(t.Item1, t.Item2);
+                else if (elem is ValueTuple<Keys, bool> vt)
+                    sendTuple(vt.Item1, vt.Item2);
                 else
                 {
                     if (!(elem is Keys || elem is char))
-                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, or Tuple<Keys, bool>.", nameof(keys));
+                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, Tuple<Keys, bool> or ValueTuple<Keys, bool>.", nameof(keys));
                     var keyDown = new WinAPI.INPUT
                     {
                         Type = WinAPI.INPUT_KEYBOARD,

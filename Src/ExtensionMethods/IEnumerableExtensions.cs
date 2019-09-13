@@ -12,13 +12,13 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Returns an enumeration of tuples containing all pairs of elements from the source collection. For example, the
         ///     input sequence 1, 2 yields the pairs [1,1], [1,2], [2,1], and [2,2].</summary>
-        public static IEnumerable<Tuple<T, T>> AllPairs<T>(this IEnumerable<T> source)
+        public static IEnumerable<(T, T)> AllPairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
             // Make sure that ‘source’ is evaluated only once
             var sourceArr = source as IList<T> ?? source.ToArray();
-            return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => new Tuple<T, T>(item1, item2)));
+            return sourceArr.SelectMany(item1 => sourceArr.Select(item2 => (item1, item2)));
         }
 
         /// <summary>Returns an enumeration of objects computed from all pairs of elements from the source collection.</summary>
@@ -34,19 +34,20 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Returns an enumeration of tuples containing all unique pairs of distinct elements from the source collection.
         ///     For example, the input sequence 1, 2, 3 yields the pairs [1,2], [1,3] and [2,3] only.</summary>
-        public static IEnumerable<Tuple<T, T>> UniquePairs<T>(this IEnumerable<T> source)
+        public static IEnumerable<(T, T)> UniquePairs<T>(this IEnumerable<T> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return uniquePairsIterator(source);
-        }
-        private static IEnumerable<Tuple<T, T>> uniquePairsIterator<T>(IEnumerable<T> source)
-        {
-            // Make sure that ‘source’ is evaluated only once
-            IList<T> arr = source as IList<T> ?? source.ToArray();
-            for (int i = 0; i < arr.Count - 1; i++)
-                for (int j = i + 1; j < arr.Count; j++)
-                    yield return new Tuple<T, T>(arr[i], arr[j]);
+
+            IEnumerable<(T, T)> uniquePairsIterator()
+            {
+                // Make sure that ‘source’ is evaluated only once
+                var arr = source as IList<T> ?? source.ToArray();
+                for (int i = 0; i < arr.Count - 1; i++)
+                    for (int j = i + 1; j < arr.Count; j++)
+                        yield return (arr[i], arr[j]);
+            }
+            return uniquePairsIterator();
         }
 
         /// <summary>
@@ -57,11 +58,11 @@ namespace RT.Util.ExtensionMethods
         ///     If true, an additional pair containing the last and first element is included. For example, if the source
         ///     collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref
         ///     name="closed"/> is false, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is true.</param>
-        public static IEnumerable<Tuple<T, T>> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
+        public static IEnumerable<(T, T)> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return selectConsecutivePairsIterator(source, closed, Tuple.Create);
+            return selectConsecutivePairsIterator(source, closed, (i1, i2) => (i1, i2));
         }
 
         /// <summary>

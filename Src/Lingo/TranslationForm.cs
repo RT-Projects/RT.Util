@@ -102,17 +102,17 @@ namespace RT.Util.Lingo
             createPanelsForType(null, typeof(TTranslation), orig, _translation, dicPanels, lstUngroupedPanels, lstAllPanels, null, "");
 
             // Discover all the group types, their enum values, and then their attributes
-            Dictionary<object, Tuple<string, string>> dic = new Dictionary<object, Tuple<string, string>>();
+            var dic = new Dictionary<object, (string groupName, string groupDescription)>();
             foreach (var type in dicPanels.Select(kvp => kvp.Key.GetType()).Distinct())
                 foreach (var f in type.GetFields(BindingFlags.Static | BindingFlags.Public))
                     foreach (var attr in f.GetCustomAttributes<LingoGroupAttribute>())
-                        dic.Add(f.GetValue(null), Tuple.Create(attr.GroupName, attr.Description));
+                        dic.Add(f.GetValue(null), (attr.GroupName, attr.Description));
 
             // Create all the list items
             foreach (var kvp in dic)
                 if (dicPanels.ContainsKey(kvp.Key))
                 {
-                    var listItem = new TranslationGroupListItem { Label = kvp.Value.Item1, Notes = kvp.Value.Item2, TranslationPanels = dicPanels[kvp.Key].ToArray() };
+                    var listItem = new TranslationGroupListItem { Label = kvp.Value.groupName, Notes = kvp.Value.groupDescription, TranslationPanels = dicPanels[kvp.Key].ToArray() };
                     _lstGroups.Items.Add(listItem);
                     foreach (var tp in dicPanels[kvp.Key])
                         tp.ListItems.Add(listItem);

@@ -32,9 +32,9 @@ namespace RT.Util
         ///     DiffOp&gt;&gt;</c> corresponds either to an element present only in <paramref name="old"/> (the element is
         ///     considered “deleted”), an element present only in <paramref name="new"/> (the element is considered
         ///     “inserted”) or an element present in both.</returns>
-        public static IEnumerable<Tuple<T, DiffOp>> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new,
+        public static IEnumerable<(T item, DiffOp op)> Diff<T>(IEnumerable<T> old, IEnumerable<T> @new,
             IEqualityComparer<T> comparer = null, Func<T, bool> predicate = null,
-            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor = null)
+            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<(T item, DiffOp op)>> postProcessor = null)
         {
             if (old == null)
                 throw new ArgumentNullException(nameof(old));
@@ -43,14 +43,14 @@ namespace RT.Util
             return diffIterator(old as IList<T> ?? old.ToArray(), @new as IList<T> ?? @new.ToArray(), comparer ?? EqualityComparer<T>.Default, predicate, postProcessor);
         }
 
-        private static IEnumerable<Tuple<T, DiffOp>> diffIterator<T>(IList<T> old, IList<T> @new,
+        private static IEnumerable<(T item, DiffOp op)> diffIterator<T>(IList<T> old, IList<T> @new,
             IEqualityComparer<T> comparer, Func<T, bool> predicate,
-            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor)
+            Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<(T item, DiffOp op)>> postProcessor)
         {
             var startMatchIndex = 0;
             while (startMatchIndex < old.Count && startMatchIndex < @new.Count && comparer.Equals(old[startMatchIndex], @new[startMatchIndex]))
             {
-                yield return Tuple.Create(old[startMatchIndex], DiffOp.None);
+                yield return (old[startMatchIndex], DiffOp.None);
                 startMatchIndex++;
             }
 
@@ -64,13 +64,13 @@ namespace RT.Util
             else
             {
                 for (int i = startMatchIndex; i < old.Count - endMatchIndex; i++)
-                    yield return Tuple.Create(old[i], DiffOp.Del);
+                    yield return (old[i], DiffOp.Del);
                 for (int i = startMatchIndex; i < @new.Count - endMatchIndex; i++)
-                    yield return Tuple.Create(@new[i], DiffOp.Ins);
+                    yield return (@new[i], DiffOp.Ins);
             }
 
             for (int i = old.Count - endMatchIndex; i < old.Count; i++)
-                yield return Tuple.Create(old[i], DiffOp.None);
+                yield return (old[i], DiffOp.None);
         }
 
         private sealed class DiffSeqLink
@@ -81,7 +81,7 @@ namespace RT.Util
             public override string ToString() => "{0}, {1}{2}".Fmt(x, y, prev == null ? null : " >");
         }
 
-        private static IEnumerable<Tuple<T, DiffOp>> diffImpl<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<Tuple<T, DiffOp>>> postProcessor, int startMatch, int endMatch)
+        private static IEnumerable<(T item, DiffOp op)> diffImpl<T>(IList<T> olda, IList<T> newa, IEqualityComparer<T> comparer, Func<T, bool> predicate, Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<(T item, DiffOp op)>> postProcessor, int startMatch, int endMatch)
         {
             var newhash = new Dictionary<T, List<int>>(comparer);
             for (int i = startMatch; i < newa.Count - endMatch; i++)
@@ -138,7 +138,7 @@ namespace RT.Util
             {
                 while (curold < match.x && curnew < match.y && comparer.Equals(olda[curold], newa[curnew]))
                 {
-                    yield return Tuple.Create(olda[curold], DiffOp.None);
+                    yield return (olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }
@@ -168,21 +168,21 @@ namespace RT.Util
                     else
                     {
                         for (; curold < mx; curold++)
-                            yield return Tuple.Create(olda[curold], DiffOp.Del);
+                            yield return (olda[curold], DiffOp.Del);
                         for (; curnew < my; curnew++)
-                            yield return Tuple.Create(newa[curnew], DiffOp.Ins);
+                            yield return (newa[curnew], DiffOp.Ins);
                     }
                 }
 
                 while (curold < match.x && curnew < match.y)
                 {
-                    yield return Tuple.Create(olda[curold], DiffOp.None);
+                    yield return (olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }
                 if (curold < olda.Count - endMatch && curnew < newa.Count - endMatch)
                 {
-                    yield return Tuple.Create(olda[curold], DiffOp.None);
+                    yield return (olda[curold], DiffOp.None);
                     curold++;
                     curnew++;
                 }

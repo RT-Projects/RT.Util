@@ -42,9 +42,9 @@ namespace RT.Util
                         throw new Exception("The function is not consistently returning the same value for the same set, or there is an internal error in this algorithm.");
 
                 var rangeToSplit = breadthFirst ? state.LargestRange : state.SmallestRange;
-                int mid = (rangeToSplit.Item1 + rangeToSplit.Item2) / 2;
-                var split1 = Tuple.Create(rangeToSplit.Item1, mid);
-                var split2 = Tuple.Create(mid + 1, rangeToSplit.Item2);
+                int mid = (rangeToSplit.from + rangeToSplit.to) / 2;
+                var split1 = (rangeToSplit.from, to: mid);
+                var split2 = (from: mid + 1, rangeToSplit.to);
 
                 state.ApplyTemporarySplit(rangeToSplit, split1);
                 if (test(state))
@@ -71,35 +71,35 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Encapsulates the state of the <see cref="Ut.ReduceRequiredSet"/> algorithm and exposes statistics about it.</summary>
+        ///     Encapsulates the state of the <see cref="ReduceRequiredSet"/> algorithm and exposes statistics about it.</summary>
         public abstract class ReduceRequiredSetState<T>
         {
             /// <summary>Internal; do not use.</summary>
-            protected List<Tuple<int, int>> Ranges;
+            protected List<(int from, int to)> Ranges;
             /// <summary>Internal; do not use.</summary>
             protected List<T> Items;
             /// <summary>Internal; do not use.</summary>
-            protected Tuple<int, int> ExcludedRange, IncludedRange;
+            protected (int from, int to)? ExcludedRange, IncludedRange;
 
             /// <summary>
             ///     Enumerates every item that is known to be in the final required set. "Definitely" doesn't mean that there
             ///     exists no subset resulting in "true" without these members. Rather, it means that the algorithm will
             ///     definitely return these values, and maybe some others too.</summary>
-            public IEnumerable<T> DefinitelyRequired { get { return Ranges.Where(r => r.Item1 == r.Item2).Select(r => Items[r.Item1]); } }
+            public IEnumerable<T> DefinitelyRequired { get { return Ranges.Where(r => r.from == r.to).Select(r => Items[r.from]); } }
             /// <summary>
             ///     Gets the current number of partitions containing uncertain items. The more of these, the slower the
             ///     algorithm will converge from here onwards.</summary>
-            public int PartitionsCount { get { return Ranges.Count - Ranges.Count(r => r.Item1 == r.Item2); } }
+            public int PartitionsCount { get { return Ranges.Count - Ranges.Count(r => r.from == r.to); } }
             /// <summary>
             ///     Gets the number of items in the smallest partition. This is the value that is halved upon a successful
             ///     depth-first iteration.</summary>
-            public int SmallestPartitionSize { get { return Ranges.Where(r => r.Item1 != r.Item2).Min(r => r.Item2 - r.Item1 + 1); } }
+            public int SmallestPartitionSize { get { return Ranges.Where(r => r.from != r.to).Min(r => r.to - r.from + 1); } }
             /// <summary>
             ///     Gets the number of items in the largest partition. This is the value that is halved upon a successful
             ///     breadth-first iteration.</summary>
-            public int LargestPartitionSize { get { return Ranges.Max(r => r.Item2 - r.Item1 + 1); } }
+            public int LargestPartitionSize { get { return Ranges.Max(r => r.to - r.from + 1); } }
             /// <summary>Gets the total number of items about which the algorithm is currently undecided.</summary>
-            public int ItemsRemaining { get { return Ranges.Where(r => r.Item1 != r.Item2).Sum(r => r.Item2 - r.Item1 + 1); } }
+            public int ItemsRemaining { get { return Ranges.Where(r => r.from != r.to).Sum(r => r.to - r.from + 1); } }
 
             /// <summary>Gets the set of items for which the function should be evaluated in the current step.</summary>
             public IEnumerable<T> SetToTest
@@ -108,11 +108,11 @@ namespace RT.Util
                 {
                     var ranges = Ranges.AsEnumerable();
                     if (ExcludedRange != null)
-                        ranges = ranges.Where(r => r != ExcludedRange);
+                        ranges = ranges.Where(r => r != ExcludedRange.Value);
                     if (IncludedRange != null)
-                        ranges = ranges.Concat(IncludedRange);
+                        ranges = ranges.Concat(IncludedRange.Value);
                     return ranges
-                        .SelectMany(range => Enumerable.Range(range.Item1, range.Item2 - range.Item1 + 1))
+                        .SelectMany(range => Enumerable.Range(range.from, range.to - range.from + 1))
                         .Order()
                         .Select(i => Items[i]);
                 }
@@ -124,22 +124,22 @@ namespace RT.Util
             public ReduceRequiredSetStateInternal(IEnumerable<T> items)
             {
                 Items = items.ToList();
-                Ranges = new List<Tuple<int, int>>();
-                Ranges.Add(Tuple.Create(0, Items.Count - 1));
+                Ranges = new List<(int from, int to)>();
+                Ranges.Add((0, Items.Count - 1));
             }
 
-            public bool AnyPartitions { get { return Ranges.Any(r => r.Item1 != r.Item2); } }
-            public Tuple<int, int> LargestRange { get { return Ranges.MaxElement(t => t.Item2 - t.Item1); } }
-            public Tuple<int, int> SmallestRange { get { return Ranges.Where(r => r.Item1 != r.Item2).MinElement(t => t.Item2 - t.Item1); } }
+            public bool AnyPartitions { get { return Ranges.Any(r => r.from != r.to); } }
+            public (int from, int to) LargestRange { get { return Ranges.MaxElement(t => t.to - t.from); } }
+            public (int from, int to) SmallestRange { get { return Ranges.Where(r => r.from != r.to).MinElement(t => t.to - t.from); } }
 
-            public void AddRange(Tuple<int, int> range) { Ranges.Add(range); }
-            public void RemoveRange(Tuple<int, int> range) { if (!Ranges.Remove(range)) throw new InvalidOperationException("Ut.ReduceRequiredSet has a bug. Code: 826432"); }
+            public void AddRange((int from, int to) range) { Ranges.Add(range); }
+            public void RemoveRange((int from, int to) range) { if (!Ranges.Remove(range)) throw new InvalidOperationException("Ut.ReduceRequiredSet has a bug. Code: 826432"); }
 
             public void ResetTemporarySplit()
             {
                 ExcludedRange = IncludedRange = null;
             }
-            public void ApplyTemporarySplit(Tuple<int, int> rangeToSplit, Tuple<int, int> splitRange)
+            public void ApplyTemporarySplit((int from, int to) rangeToSplit, (int from, int to) splitRange)
             {
                 ExcludedRange = rangeToSplit;
                 IncludedRange = splitRange;

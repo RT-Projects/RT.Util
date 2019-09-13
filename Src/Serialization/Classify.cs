@@ -388,7 +388,11 @@ namespace RT.Util.Serialization
             private Dictionary<object, int> _requireRefId => _requireRefIdCache ?? (_requireRefIdCache = new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode())));
             private Dictionary<object, int> _requireRefIdCache;
 
-            private static Type[] _tupleTypes = new[] { typeof(KeyValuePair<,>), typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>) };
+            private static Type[] _tupleTypes = new[] {
+                typeof(KeyValuePair<,>),
+                typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>), typeof(Tuple<,,,,,,,>),
+                typeof(ValueTuple<>), typeof(ValueTuple<,>), typeof(ValueTuple<,,>), typeof(ValueTuple<,,,>), typeof(ValueTuple<,,,,>), typeof(ValueTuple<,,,,,>), typeof(ValueTuple<,,,,,,>), typeof(ValueTuple<,,,,,,,>)
+            };
 
             private static bool isIntegerType(Type t)
             {
@@ -926,7 +930,7 @@ namespace RT.Util.Serialization
                 var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
                 if (globalClassifyName != null && globalClassifyName.SerializedName != null)
                     throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
-                var usedFieldNames = new HashSet<Tuple<string, Type>>();
+                var usedFieldNames = new HashSet<(string fieldName, Type delaringType)>();
 
                 foreach (var field in type.GetAllFields())
                 {
@@ -964,7 +968,7 @@ namespace RT.Util.Serialization
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
-                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                    if (!usedFieldNames.Add((rFieldName, field.DeclaringType)))
                         throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
@@ -1307,7 +1311,7 @@ namespace RT.Util.Serialization
                 var globalClassifyName = saveType.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
                 if (globalClassifyName != null && globalClassifyName.SerializedName != null)
                     throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
-                var usedFieldNames = new HashSet<Tuple<string, Type>>();
+                var usedFieldNames = new HashSet<(string fieldName, Type delaringType)>();
 
                 foreach (var field in saveType.GetAllFields())
                 {
@@ -1346,7 +1350,7 @@ namespace RT.Util.Serialization
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
-                    if (!usedFieldNames.Add(Tuple.Create(rFieldName, field.DeclaringType)))
+                    if (!usedFieldNames.Add((rFieldName, field.DeclaringType)))
                         throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
 
                     object saveValue = field.GetValue(saveObject);
