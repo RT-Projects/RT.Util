@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util.ExtensionMethods
 {
-    /// <summary>
-    /// Provides extension methods on numeric types.
-    /// </summary>
+    /// <summary>Provides extension methods on numeric types.</summary>
     public static class NumericExtensions
     {
         /// <summary>
-        /// Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
-        /// The returned number will be no less than the minimum value and no greater than the maximum value. Throws
-        /// an exception if min value is greater than the max value.
-        /// </summary>
+        ///     Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
+        ///     The returned number will be no less than the minimum value and no greater than the maximum value. Throws an
+        ///     exception if min value is greater than the max value.</summary>
         public static int Clip(this int value, int minimumValue, int maximumValue)
         {
             if (minimumValue > maximumValue)
@@ -28,10 +22,9 @@ namespace RT.Util.ExtensionMethods
         public static int ClipMax(this int value, int maxnimumValue) { return value >= maxnimumValue ? maxnimumValue : value; }
 
         /// <summary>
-        /// Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
-        /// The returned number will be no less than the minimum value and no greater than the maximum value. Throws
-        /// an exception if min value is greater than the max value.
-        /// </summary>
+        ///     Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
+        ///     The returned number will be no less than the minimum value and no greater than the maximum value. Throws an
+        ///     exception if min value is greater than the max value.</summary>
         public static double Clip(this double value, double minimumValue, double maximumValue)
         {
             if (minimumValue > maximumValue)
@@ -45,10 +38,9 @@ namespace RT.Util.ExtensionMethods
         public static double ClipMax(this double value, double maxnimumValue) { return value >= maxnimumValue ? maxnimumValue : value; }
 
         /// <summary>
-        /// Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
-        /// The returned number will be no less than the minimum value and no greater than the maximum value. Throws
-        /// an exception if min value is greater than the max value.
-        /// </summary>
+        ///     Clips this value to the range defined by <paramref name="minimumValue"/> and <paramref name="maximumValue"/>.
+        ///     The returned number will be no less than the minimum value and no greater than the maximum value. Throws an
+        ///     exception if min value is greater than the max value.</summary>
         public static decimal Clip(this decimal value, decimal minimumValue, decimal maximumValue)
         {
             if (minimumValue > maximumValue)
@@ -62,8 +54,11 @@ namespace RT.Util.ExtensionMethods
         public static decimal ClipMax(this decimal value, decimal maxnimumValue) { return value >= maxnimumValue ? maxnimumValue : value; }
 
         /// <summary>
-        /// Attempts to parse this string as an int, returning null if the parse fails.
-        /// </summary>
+        ///     Determines whether <paramref name="value"/> is between <paramref name="min"/> and <paramref name="max"/>
+        ///     (inclusive).</summary>
+        public static bool IsBetween(this int value, int min, int max) => value >= min && value <= max;
+
+        /// <summary>Attempts to parse this string as an int, returning null if the parse fails.</summary>
         public static int? TryParseAsInt(this string value)
         {
             int result;
