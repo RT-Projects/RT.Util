@@ -443,7 +443,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Similar to <see cref="string.Substring(int)"/>, only for arrays. Returns a new array containing all items from
+        ///     Similar to <see cref="string.Substring(int)"/>, but for arrays. Returns a new array containing all items from
         ///     the specified <paramref name="startIndex"/> onwards.</summary>
         /// <remarks>
         ///     Returns a new copy of the array even if <paramref name="startIndex"/> is 0.</remarks>
@@ -455,7 +455,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Similar to <see cref="string.Substring(int,int)"/>, only for arrays. Returns a new array containing <paramref
+        ///     Similar to <see cref="string.Substring(int,int)"/>, but for arrays. Returns a new array containing <paramref
         ///     name="length"/> items from the specified <paramref name="startIndex"/> onwards.</summary>
         /// <remarks>
         ///     Returns a new copy of the array even if <paramref name="startIndex"/> is 0 and <paramref name="length"/> is
@@ -474,7 +474,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Similar to <see cref="string.Remove(int)"/>, only for arrays. Returns a new array containing only the items
+        ///     Similar to <see cref="string.Remove(int)"/>, but for arrays. Returns a new array containing only the items
         ///     before the specified <paramref name="startIndex"/>.</summary>
         /// <remarks>
         ///     Returns a new copy of the array even if <paramref name="startIndex"/> is the length of the array.</remarks>
@@ -492,7 +492,7 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Similar to <see cref="string.Remove(int,int)"/>, only for arrays. Returns a new array containing everything
+        ///     Similar to <see cref="string.Remove(int,int)"/>, but for arrays. Returns a new array containing everything
         ///     except the <paramref name="length"/> items starting from the specified <paramref name="startIndex"/>.</summary>
         /// <remarks>
         ///     Returns a new copy of the array even if <paramref name="length"/> is 0.</remarks>
@@ -507,6 +507,42 @@ namespace RT.Util.ExtensionMethods
             T[] result = new T[array.Length - length];
             Array.Copy(array, 0, result, 0, startIndex);
             Array.Copy(array, startIndex + length, result, startIndex, array.Length - length - startIndex);
+            return result;
+        }
+
+        /// <summary>
+        ///     Similar to <see cref="string.Insert(int, string)"/>, but for arrays. Returns a new array with the <paramref
+        ///     name="values"/> inserted starting from the specified <paramref name="startIndex"/>.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if <paramref name="values"/> is empty.</remarks>
+        public static T[] Insert<T>(this T[] array, int startIndex, params T[] values)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+            if (startIndex < 0 || startIndex > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex must be between 0 and the size of the input array.");
+            T[] result = new T[array.Length + values.Length];
+            Array.Copy(array, 0, result, 0, startIndex);
+            Array.Copy(values, 0, result, startIndex, values.Length);
+            Array.Copy(array, startIndex, result, startIndex + values.Length, array.Length - startIndex);
+            return result;
+        }
+
+        /// <summary>
+        ///     Similar to <see cref="string.Insert(int, string)"/>, but for arrays and for a single value. Returns a new
+        ///     array with the <paramref name="value"/> inserted at the specified <paramref name="startIndex"/>.</summary>
+        public static T[] Insert<T>(this T[] array, int startIndex, T value)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (startIndex < 0 || startIndex > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex must be between 0 and the size of the input array.");
+            T[] result = new T[array.Length + 1];
+            Array.Copy(array, 0, result, 0, startIndex);
+            result[startIndex] = value;
+            Array.Copy(array, startIndex, result, startIndex + 1, array.Length - startIndex);
             return result;
         }
 
@@ -564,6 +600,30 @@ namespace RT.Util.ExtensionMethods
                 if (!comparer.Equals(sourceArray[sourceStartIndex + i], otherArray[otherStartIndex + i]))
                     return false;
             return true;
+        }
+
+        /// <summary>
+        ///     Searches the current array for a specified subarray and returns the index of the first occurrence, or -1 if
+        ///     not found.</summary>
+        /// <param name="sourceArray">
+        ///     Array in which to search for the subarray.</param>
+        /// <param name="findWhat">
+        ///     Subarray to search for.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer.</param>
+        /// <returns>
+        ///     The index of the first match, or -1 if no match is found.</returns>
+        public static int IndexOfSubarray<T>(this T[] sourceArray, T[] findWhat, IEqualityComparer<T> comparer = null)
+        {
+            if (sourceArray == null)
+                throw new ArgumentNullException(nameof(sourceArray));
+            if (findWhat == null)
+                throw new ArgumentNullException(nameof(findWhat));
+
+            for (int i = 0; i <= sourceArray.Length; i++)
+                if (sourceArray.SubarrayEquals(i, findWhat, 0, findWhat.Length, comparer))
+                    return i;
+            return -1;
         }
 
         /// <summary>

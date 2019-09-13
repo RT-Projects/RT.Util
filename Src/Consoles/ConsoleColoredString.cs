@@ -40,7 +40,7 @@ namespace RT.Util.Consoles
         {
             if (input == null)
                 return null;
-            return new ConsoleColoredString(input, (ConsoleColor?) null, (ConsoleColor?) null);
+            return new ConsoleColoredString(input, null, (ConsoleColor?) null);
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace RT.Util.Consoles
                 throw new InvalidOperationException("The number of characters must match the number of background colors.");
             _text = input;
             _foreground = foregroundColors;
-            _background = backgroundColors != null ? backgroundColors : new ConsoleColor?[input.Length];
+            _background = backgroundColors ?? (new ConsoleColor?[input.Length]);
         }
 
         /// <summary>
@@ -140,6 +140,24 @@ namespace RT.Util.Consoles
                 Array.Copy(str._background, 0, _background, index, str.Length);
                 index += str.Length;
             }
+        }
+
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> from the specified <see cref="FormattableString"/>.</summary>
+        /// <param name="value">
+        ///     Formattable string. You can use an interpolated string literal here.</param>
+        /// <param name="foreground">
+        ///     Default foreground color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+        ///     cref="ConsoleColoredChar"/> or a foreground color is unspecified.</param>
+        /// <param name="background">
+        ///     Default background color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+        ///     cref="ConsoleColoredChar"/> or a background color is unspecified.</param>
+        public ConsoleColoredString(FormattableString value, ConsoleColor? foreground = null, ConsoleColor? background = null)
+        {
+            var result = value.Format.Color(foreground, background).Fmt(value.GetArguments());
+            _text = result._text;
+            _foreground = result._foreground;
+            _background = result._background;
         }
 
         /// <summary>Returns the number of characters in this <see cref="ConsoleColoredString"/>.</summary>
@@ -306,23 +324,23 @@ namespace RT.Util.Consoles
             return _text[index];
         }
 
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(char)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(char)"/>.</summary>
         public int IndexOf(char value) { return _text.IndexOf(value); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string)"/>.</summary>
         public int IndexOf(string value) { return _text.IndexOf(value); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(char,int)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(char,int)"/>.</summary>
         public int IndexOf(char value, int startIndex) { return _text.IndexOf(value, startIndex); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string,int)"/>.</summary>
         public int IndexOf(string value, int startIndex) { return _text.IndexOf(value, startIndex); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string,StringComparison)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string,StringComparison)"/>.</summary>
         public int IndexOf(string value, StringComparison comparisonType) { return _text.IndexOf(value, comparisonType); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(char,int,int)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(char,int,int)"/>.</summary>
         public int IndexOf(char value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int,int)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string,int,int)"/>.</summary>
         public int IndexOf(string value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int,StringComparison)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string,int,StringComparison)"/>.</summary>
         public int IndexOf(string value, int startIndex, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, comparisonType); }
-        /// <summary>Equivalent to <see cref="System.String.IndexOf(string,int,int,StringComparison)"/>.</summary>
+        /// <summary>Equivalent to <see cref="string.IndexOf(string,int,int,StringComparison)"/>.</summary>
         public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
 
         /// <summary>
