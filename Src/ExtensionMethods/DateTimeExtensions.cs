@@ -119,7 +119,7 @@ namespace RT.Util.ExtensionMethods
                 case IsoDateFormat.CompactReadable: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: '-', includeTimezone: includeTimezone);
                 case IsoDateFormat.FilenameReadable: return datetime.ToIsoStringCustom(precision, charInDate: '.', charInTime: '.', charBetween: '-', includeTimezone: includeTimezone);
                 case IsoDateFormat.Iso8601: return datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: 'T', includeTimezone: includeTimezone);
-                default: throw new InternalErrorException("usbwdg");
+                default: throw new Exception("usbwdg");
             }
         }
 

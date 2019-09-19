@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -106,13 +106,13 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
-            return source.OrderBy(Comparer<T>.Default.Compare);
+            return source.OrderBy(k => k);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparer.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
-            return source.OrderBy(comparer.Compare);
+            return source.OrderBy(k => k, comparer);
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
@@ -762,7 +762,7 @@ namespace RT.Util.ExtensionMethods
                 {
                     if (doThrow)
                         throw new InvalidOperationException("source contains no elements.");
-                    return Ut.KeyValuePair((int?) null, default(T));
+                    return new KeyValuePair<int?, T>(null, default);
                 }
                 T minMaxElem = enumerator.Current;
                 TValue minMaxValue = valueSelector(minMaxElem);
@@ -779,7 +779,7 @@ namespace RT.Util.ExtensionMethods
                         minMaxIndex = curIndex;
                     }
                 }
-                return Ut.KeyValuePair((int?) minMaxIndex, minMaxElem);
+                return new KeyValuePair<int?, T>(minMaxIndex, minMaxElem);
             }
         }
 
@@ -1560,7 +1560,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Returns a string that represents this group’s key and its count.</summary>
         public override string ToString()
         {
-            return "{0}; Count = {1}".Fmt(Key, Count);
+            return $"{Key}; Count = {Count}";
         }
     }
 }

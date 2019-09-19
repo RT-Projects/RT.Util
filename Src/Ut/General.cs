@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -199,7 +199,7 @@ namespace RT.Util
         public static string VersionOfExe()
         {
             var v = Assembly.GetEntryAssembly().GetName().Version;
-            return "{0}.{1}.{2} ({3})".Fmt(v.Major, v.Minor, v.Build, v.Revision); // in our use: v.Build is build#, v.Revision is p4 changelist
+            return $"{v.Major}.{v.Minor}.{v.Build} ({v.Revision})"; // in our use: v.Build is build#, v.Revision is p4 changelist
         }
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace RT.Util
             {
                 if (System.Diagnostics.Debugger.IsAttached)
                     System.Diagnostics.Debugger.Break();
-                throw new InternalErrorException(message ?? "Assertion failure");
+                throw new Exception(message ?? "Assertion failure");
             }
         }
 
@@ -227,7 +227,7 @@ namespace RT.Util
                 var failure = collection.FirstOrDefault(x => !assertion(x)); // only so that it can be inspected in the debugger
                 if (System.Diagnostics.Debugger.IsAttached)
                     System.Diagnostics.Debugger.Break();
-                throw new InternalErrorException(message ?? "Assertion failure");
+                throw new Exception(message ?? "Assertion failure");
             }
         }
 

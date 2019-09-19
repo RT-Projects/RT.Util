@@ -397,8 +397,9 @@ namespace RT.Util.ExtensionMethods
         {
             get
             {
+                T[] newArray<T>(params T[] array) => array;
                 if (_decimalOptimEncodeLUT == null)
-                    _decimalOptimEncodeLUT = Ut.NewArray(
+                    _decimalOptimEncodeLUT = newArray(
                         new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 },
                         new byte[] { 255, 13, 14, 15, 16, 17, 255, 255, 255, 255, 255, 255, 18 },
                         new byte[] { 255, 19, 20, 21, 22, 23, 255, 255, 255, 255, 255, 255, 24 },

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -549,7 +549,7 @@ namespace RT.Util.ExtensionMethods
                     result[resultIndex++] = (byte) (v0 << 2 | v1 >> 4);
                 }
                 else
-                    throw new InternalErrorException("Internal error in Base64UrlDecode");
+                    throw new Exception("Internal error in Base64UrlDecode");
             }
 
             return result;
@@ -634,7 +634,7 @@ namespace RT.Util.ExtensionMethods
                 else
                 {
                     if (i + 1 >= value.Length)
-                        throw new ArgumentException("String ends before the escape sequence at position {0} is complete".Fmt(i), "value");
+                        throw new ArgumentException($"String ends before the escape sequence at position {i} is complete", "value");
                     i++;
                     c = value[i];
                     int code;
@@ -657,21 +657,21 @@ namespace RT.Util.ExtensionMethods
                             while (len <= 4 && i + len < value.Length && ((value[i + len] >= '0' && value[i + len] <= '9') || (value[i + len] >= 'a' && value[i + len] <= 'f') || (value[i + len] >= 'A' && value[i + len] <= 'F')))
                                 len++;
                             if (len == 0)
-                                throw new ArgumentException(@"Invalid hex escape sequence ""\x"" at position {0}".Fmt(i - 2), "value");
+                                throw new ArgumentException($@"Invalid hex escape sequence ""\x"" at position {i - 2}", "value");
                             code = int.Parse(value.Substring(i, len), NumberStyles.AllowHexSpecifier);
                             result.Append((char) code);
                             i += len - 1;
                             break;
                         case 'u':
                             if (i + 4 >= value.Length)
-                                throw new ArgumentException(@"Invalid hex escape sequence ""\u"" at position {0}".Fmt(i), "value");
+                                throw new ArgumentException($@"Invalid hex escape sequence ""\u"" at position {i}", "value");
                             i++;
                             code = int.Parse(value.Substring(i, 4), NumberStyles.AllowHexSpecifier);
                             result.Append((char) code);
                             i += 3;
                             break;
                         default:
-                            throw new ArgumentException("Unrecognised escape sequence at position {0}: \\{1}".Fmt(i - 1, c), "value");
+                            throw new ArgumentException($"Unrecognised escape sequence at position {i - 1}: \\{c}", "value");
                     }
                 }
 
@@ -917,7 +917,7 @@ namespace RT.Util.ExtensionMethods
             if (input == null)
                 throw new ArgumentNullException(nameof(input));
             string[] lines = Regex.Split(input, @"\r\n|\r|\n");
-            return lines.JoinString("\r\n");
+            return string.Join("\r\n", lines);
         }
 
         /// <summary>
@@ -1129,7 +1129,7 @@ namespace RT.Util.ExtensionMethods
                 else if (input[j] >= 'A' && input[j] <= 'F')
                     upperNibble = input[j] - 'A' + 10;
                 else
-                    throw new InvalidOperationException("The character '{0}' is not a valid hexadecimal digit.".Fmt(input[j]));
+                    throw new InvalidOperationException($"The character '{input[j]}' is not a valid hexadecimal digit.");
                 j++;
                 if (input[j] >= '0' && input[j] <= '9')
                     lowerNibble = input[j] - '0';
@@ -1138,7 +1138,7 @@ namespace RT.Util.ExtensionMethods
                 else if (input[j] >= 'A' && input[j] <= 'F')
                     lowerNibble = input[j] - 'A' + 10;
                 else
-                    throw new InvalidOperationException("The character '{0}' is not a valid hexadecimal digit.".Fmt(input[j]));
+                    throw new InvalidOperationException($"The character '{input[j]}' is not a valid hexadecimal digit.");
                 j++;
                 result[i] = (byte) ((upperNibble << 4) + lowerNibble);
             }
@@ -1184,14 +1184,12 @@ namespace RT.Util.ExtensionMethods
         ///     The string to transform.</param>
         public static string RemoveCommonIndentation(this string str)
         {
+            var minLen = Regex.Matches(str, @"^(?> *)(?!\r|$| )", RegexOptions.Multiline)
+                        .Cast<Match>()
+                        .Min(m => m.Length);
             return Regex.Replace(
                 str,
-                "^(?> {1}{0}{2})|^(?> {1}0,{0}{2}(\r|$))".Fmt(
-                    Regex.Matches(str, @"^(?> *)(?!\r|$| )", RegexOptions.Multiline)
-                        .Cast<Match>()
-                        .Min(m => m.Length),
-                    "{",
-                    "}"),
+                $"^(?> {{{minLen}}})|^(?> {{0,{minLen}}}(\r|$))",
                 "",
                 RegexOptions.Multiline);
         }
