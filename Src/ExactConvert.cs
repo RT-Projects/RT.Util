@@ -227,7 +227,7 @@ namespace RT.Util
                             throw new InvalidOperationException("Unexpected DateTime.Kind while unboxing it to a long.");
                     }
                 default:
-                    throw new InvalidOperationException("Cannot unbox an object of type {0} to a long.".Fmt(typeCode));
+                    throw new InvalidOperationException($"Cannot unbox an object of type {typeCode} to a long.");
             }
         }
 
@@ -1775,16 +1775,14 @@ namespace RT.Util
     /// <summary>
     /// Represents an exception thrown in the case of conversion failure when using <see cref="ExactConvert"/>.
     /// </summary>
-    public sealed class ExactConvertException : RTException
+    public sealed class ExactConvertException : Exception
     {
         /// <summary>
         /// Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.
         /// </summary>
-        public ExactConvertException(object value, Type targetType)
+        internal ExactConvertException(object value, Type targetType)
+            : base($"Cannot do an exact conversion from value \"{value}\" of type \"{ExactConvert.GetTypeCode(value)}\" to type \"{Type.GetTypeCode(targetType)}\".")
         {
-            TypeCode from = ExactConvert.GetTypeCode(value);
-            TypeCode to = Type.GetTypeCode(targetType);
-            _message = string.Format("Cannot do an exact conversion from value \"{2}\" of type \"{0}\" to type \"{1}\".", from, to, value);
         }
     }
 
