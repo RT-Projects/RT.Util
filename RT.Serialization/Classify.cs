@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using RT.PostBuild;
+using RT.Util;
 using RT.Util.ExtensionMethods;
 
 /*
@@ -14,7 +16,7 @@ using RT.Util.ExtensionMethods;
  * Built-in versioning support (e.g. in XML, using attribute like ver="1"), an IClassifyVersioned { Version { get } }, and passing it to IClassify[Object/Type]Processor<TElement>
  */
 
-namespace RT.Util.Serialization
+namespace RT.Serialization
 {
     /// <summary>
     ///     Provides static methods to represent objects of (almost) arbitrary classes in various formats (such as XML or

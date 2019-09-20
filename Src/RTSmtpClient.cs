@@ -8,8 +8,8 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using RT.Serialization;
 using RT.Util.ExtensionMethods;
-using RT.Util.Serialization;
 
 namespace RT.Util
 {

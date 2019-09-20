@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Src\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
+  </ItemGroup>
+
+</Project>

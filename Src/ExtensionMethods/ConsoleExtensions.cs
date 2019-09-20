@@ -6,7 +6,10 @@ using RT.Util.Consoles;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Console-related extension methods.</summary>
-    public static class ConsoleExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class ConsoleExtensions
     {
         /// <summary>Formats a string in a way compatible with <see cref="string.Format(string, object[])"/>.</summary>
         public static string Fmt(this string formatString, params object[] args)

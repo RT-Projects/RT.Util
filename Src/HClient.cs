@@ -2,9 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using RT.Util;
+using RT.Json;
 using RT.Util.ExtensionMethods;
-using RT.Util.Json;
 
 namespace RT.Util
 {

@@ -6,7 +6,10 @@ using System.Reflection;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Provides extension methods on types involved in the Reflection API.</summary>
-    public static class ReflectionExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class ReflectionExtensions
     {
         /// <summary>
         ///     Determines whether the current type is, derives from, or implements the specified generic type, and determines

@@ -5,10 +5,11 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using RT.Serialization;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
 
-namespace RT.Util.Json
+namespace RT.Json
 {
     /// <summary>
     ///     Specifies the degree of strictness or leniency when converting a <see cref="JsonValue"/> to a numerical type such
@@ -73,6 +74,17 @@ namespace RT.Util.Json
 
         /// <summary>Specifies maximum leniency.</summary>
         Lenient = AllowConversionFromNumber | AllowConversionFromString
+    }
+
+    /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
+    public enum JsQuotes
+    {
+        /// <summary>Put single quotes around the output. Single quotes are allowed in JavaScript only, but not in JSON.</summary>
+        Single,
+        /// <summary>Put double quotes around the output. Double quotes are allowed both in JavaScript and JSON.</summary>
+        Double,
+        /// <summary>Do not put any quotes around the output. The escaped output may be surrounded with either type of quotes.</summary>
+        None
     }
 
     /// <summary>Represents a JSON parsing exception.</summary>
@@ -1569,7 +1581,7 @@ namespace RT.Util.Json
             {
                 if (!first)
                     yield return ",";
-                yield return kvp.Key.JsEscape(JsQuotes.Double);
+                yield return kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double);
                 yield return ":";
                 foreach (var piece in JsonValue.ToEnumerable(kvp.Value))
                     yield return piece;
@@ -1592,7 +1604,7 @@ namespace RT.Util.Json
                 sb.Append("{ ");
                 foreach (var kvp in Dict)
                 {
-                    sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
+                    sb.Append(kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double));
                     sb.Append(": ");
                     JsonValue.AppendIndented(kvp.Value, sb, indentation);
                 }
@@ -1609,7 +1621,7 @@ namespace RT.Util.Json
                 sb.AppendLine();
                 for (int i = 0; i <= indentation; i++)
                     sb.Append("  ");
-                sb.Append(kvp.Key.JsEscape(JsQuotes.Double));
+                sb.Append(kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double));
                 sb.Append(": ");
                 JsonValue.AppendIndented(kvp.Value, sb, indentation + 1);
                 first = false;
@@ -1922,14 +1934,14 @@ namespace RT.Util.Json
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
         public override void AppendIndented(StringBuilder sb, int indentation = 0)
         {
-            sb.AppendJsEscaped(_value, JsQuotes.Double);
+            sb.AppendJsEscaped(_value, Util.ExtensionMethods.JsQuotes.Double);
         }
 
         /// <summary>
         ///     Returns a JavaScript-compatible representation of this string.</summary>
         /// <param name="quotes">
         ///     Specifies the style of quotes to use around the string.</param>
-        public string ToString(JsQuotes quotes) => _value.JsEscape(quotes);
+        public string ToString(JsQuotes quotes) => _value.JsEscape((Util.ExtensionMethods.JsQuotes) quotes);
     }
 
     /// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>

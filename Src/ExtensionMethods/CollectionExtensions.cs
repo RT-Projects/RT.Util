@@ -7,7 +7,10 @@ namespace RT.Util.ExtensionMethods
     /// <summary>
     ///     Provides extension methods on various collection types or interfaces in the System.Collections.Generic namespace
     ///     such as <see cref="Dictionary&lt;K,V&gt;"/> and on arrays.</summary>
-    public static class CollectionExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class CollectionExtensions
     {
         /// <summary>Determines whether the current HashSet-in-a-Dictionary contains the specified key and value.</summary>
         public static bool Contains<TKey, TValue>(this IDictionary<TKey, HashSet<TValue>> source, TKey key, TValue value)
@@ -603,7 +606,10 @@ namespace RT.Util.ExtensionMethods
     ///     The type of the elements of the original collection.</typeparam>
     /// <typeparam name="TResult">
     ///     The type of the value returned by the selector function.</typeparam>
-    public sealed class ListSelectIterator<TInput, TResult> : IEnumerable<TResult>
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class ListSelectIterator<TInput, TResult> : IEnumerable<TResult>
     {
         private readonly IList<TInput> _source;
         private readonly Func<TInput, TResult> _selector;

@@ -5,7 +5,10 @@ using System.Text.RegularExpressions;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Defines one of several common date/time formats which are either ISO-8601 compatible or very slight deviations from it.</summary>
-    public enum IsoDateFormat
+#if EXPORT_UTIL
+    public
+#endif
+    enum IsoDateFormat
     {
         /// <summary>A delimited, readable format. Known as "extended" in ISO-8601. Example: <c>2007-12-31 21:15</c>.</summary>
         HumanReadable,
@@ -20,7 +23,10 @@ namespace RT.Util.ExtensionMethods
     }
 
     /// <summary>Defines a precision for a date/time stamp.</summary>
-    public enum IsoDatePrecision
+#if EXPORT_UTIL
+    public
+#endif
+    enum IsoDatePrecision
     {
         /// <summary>Day precision: <c>2011-12-31</c></summary>
         Days = 10,
@@ -37,7 +43,10 @@ namespace RT.Util.ExtensionMethods
     /// <summary>
     /// Provides extension methods on the <see cref="DateTime"/> type.
     /// </summary>
-    public static class DateTimeExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class DateTimeExtensions
     {
         /// <summary>
         /// Inexplicably, the DateTime type does not offer any way of retrieving the full precision

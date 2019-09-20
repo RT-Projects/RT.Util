@@ -1,4 +1,4 @@
-﻿using RT.Util.Serialization;
+﻿using RT.Serialization;
 
 namespace RT.Util.Lingo
 {

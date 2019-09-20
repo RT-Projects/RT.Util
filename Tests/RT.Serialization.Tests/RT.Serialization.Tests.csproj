@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="nunit" Version="3.11.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
+    <ProjectReference Include="..\..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
+    <ProjectReference Include="..\..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
+    <ProjectReference Include="..\..\RT.Serialization\RT.Serialization.csproj" />
+    <ProjectReference Include="..\..\Src\RT.Util.csproj" />
+  </ItemGroup>
+
+</Project>

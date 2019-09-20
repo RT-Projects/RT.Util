@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
+    <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Src\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\StreamExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StreamExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
+    <Compile Include="..\Src\Ut\General.cs" Link="SharedInternalUtil\Ut\General.cs" />
+  </ItemGroup>
+
+</Project>

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using RT.PostBuild;
+using RT.Serialization;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 using RT.Util.Lingo;
@@ -579,7 +581,7 @@ namespace RT.Util.CommandLine
         ///     Performs safety checks to ensure that the structure of your command-line syntax defining class is valid
         ///     according to the criteria laid out in the documentation of <see cref="CommandLineParser"/>. Run this method as
         ///     a post-build step to ensure reliability of execution. For an example of use, see <see
-        ///     cref="Ut.RunPostBuildChecks"/>.</summary>
+        ///     cref="PostBuildChecker.RunPostBuildChecks"/>.</summary>
         /// <typeparam name="TArgs">
         ///     The class containing the fields and attributes which define the command-line syntax.</typeparam>
         /// <param name="rep">

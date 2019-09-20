@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.IL
 {
     /// <summary>Decodes the IL inside a specified method.</summary>
-    public static class ILReader
+#if EXPORT_UTIL
+    public
+#endif
+    static class ILReader
     {
         private static Dictionary<short, OpCode> _opCodeList = typeof(OpCodes).GetFields().Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode) f.GetValue(null)).ToDictionary(o => o.Value);
 
@@ -97,7 +98,10 @@ namespace RT.Util.IL
     }
 
     /// <summary>Describes an IL instruction in a method.</summary>
-    public sealed class Instruction
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class Instruction
     {
         /// <summary>The byte offset at which this instruction starts.</summary>
         public int StartOffset { get; private set; }

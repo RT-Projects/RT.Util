@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using RT.Json;
+using RT.Util;
 using RT.Util.ExtensionMethods;
-using RT.Util.Json;
 
-namespace RT.Util.Serialization
+namespace RT.Serialization
 {
     /// <summary>Offers a convenient way to use <see cref="Classify"/> to serialize objects using the JSON format.</summary>
     public static class ClassifyJson

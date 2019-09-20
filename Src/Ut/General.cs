@@ -12,7 +12,10 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     /// <summary>This class offers some generic static functions which are hard to categorize under any more specific classes.</summary>
-    public static partial class Ut
+#if EXPORT_UTIL
+    public
+#endif
+    static partial class Ut
     {
         /// <summary>
         ///     Converts file size in bytes to a string that uses KB, MB, GB or TB.</summary>

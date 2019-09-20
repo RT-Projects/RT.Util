@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util
+namespace RT.Serialization
 {
     /// <summary>
     /// <para>
@@ -66,7 +66,10 @@ namespace RT.Util
     /// * NaN
     /// </code>
     /// </remarks>
-    public static class ExactConvert
+#if EXPORT_EXACTCONVERT
+    public
+#endif
+    static class ExactConvert
     {
         private static readonly bool[] _isIntegerType;
         private static readonly bool[] _isUnsignedType;
@@ -1775,7 +1778,10 @@ namespace RT.Util
     /// <summary>
     /// Represents an exception thrown in the case of conversion failure when using <see cref="ExactConvert"/>.
     /// </summary>
-    public sealed class ExactConvertException : Exception
+#if EXPORT_EXACTCONVERT
+    public
+#endif
+    sealed class ExactConvertException : Exception
     {
         /// <summary>
         /// Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.

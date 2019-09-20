@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Provides extension methods on the <see cref="Stream"/> type.</summary>
-    public static class StreamExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class StreamExtensions
     {
         /// <summary>Reads all bytes until the end of stream and returns them in a byte array.</summary>
         public static byte[] ReadAllBytes(this Stream stream)

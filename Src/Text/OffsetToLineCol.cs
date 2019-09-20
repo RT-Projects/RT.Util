@@ -9,7 +9,10 @@ namespace RT.Util.Text
     /// different strings. All common newline styles are supported.
     /// </summary>
     [Serializable]
-    public sealed class OffsetToLineCol
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class OffsetToLineCol
     {
         private int[] _lineStarts;
 

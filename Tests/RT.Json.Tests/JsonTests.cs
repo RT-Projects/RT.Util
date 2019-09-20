@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using RT.Util.Json;
 
-namespace RT.Util
+namespace RT.Json.Tests
 {
     [TestFixture]
     public sealed class JsonTests

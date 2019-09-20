@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace RT.Util.Serialization
+namespace RT.Serialization
 {
     /// <summary>
     ///     Used by <see cref="Classify"/> to serialize and deserialize objects. Implement this to enable serialization to a

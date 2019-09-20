@@ -8,7 +8,10 @@ using System.Text.RegularExpressions;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Provides extension methods on the <see cref="string"/> type.</summary>
-    public static class StringExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class StringExtensions
     {
         /// <summary>Contains the set of characters that are used in base64-url encoding.</summary>
         public const string CharsBase64Url = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -1104,7 +1107,10 @@ namespace RT.Util.ExtensionMethods
     }
 
     /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
-    public enum JsQuotes
+#if EXPORT_UTIL
+    public
+#endif
+    enum JsQuotes
     {
         /// <summary>Put single quotes around the output. Single quotes are allowed in JavaScript only, but not in JSON.</summary>
         Single,

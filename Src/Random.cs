@@ -7,7 +7,10 @@ using System.Security.Cryptography;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Extension methods related to random number generation.</summary>
-    public static class RngExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class RngExtensions
     {
         /// <summary>
         ///     Returns a random element from the specified collection.</summary>

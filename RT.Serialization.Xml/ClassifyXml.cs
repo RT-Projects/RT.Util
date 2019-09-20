@@ -6,7 +6,7 @@ using System.Text;
 using System.Xml.Linq;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Serialization
+namespace RT.Serialization
 {
     /// <summary>Offers a convenient way to use <see cref="Classify"/> to serialize objects using the XML format.</summary>
     public static class ClassifyXml

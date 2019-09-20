@@ -66,11 +66,8 @@
     <Compile Include="ExtensionMethods\XmlLinqExtensionsTests.cs" />
     <Compile Include="Geometry\GeomUtTests.cs" />
     <Compile Include="Geometry\IntersectTests.cs" />
-    <Compile Include="JsonTests.cs" />
     <Compile Include="Paths\PathUtilTests.cs" />
     <Compile Include="Properties\UtilTestAssemblyInfo.cs" />
-    <Compile Include="ExactConvertTests.cs" />
-    <Compile Include="Serialization\ClassifyTests.cs" />
     <Compile Include="Streams\ArithmeticCodingTests.cs" />
     <Compile Include="Streams\DynamicContentStreamTests.cs" />
     <Compile Include="Streams\NewlineNormalizerStreamTests.cs" />
@@ -84,11 +81,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\RT.NUnitDirect\Src\RT.NUnitDirect.csproj">
       <Project>{275ECB9D-F75E-45F8-BB34-AD122589D2CC}</Project>
-      <Name>NUnitDirect</Name>
+      <Name>RT.NUnitDirect</Name>
     </ProjectReference>
     <ProjectReference Include="RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
-      <Name>Util</Name>
+      <Name>RT.Util</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

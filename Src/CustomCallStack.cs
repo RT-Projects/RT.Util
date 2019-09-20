@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RT.Util
 {
     /// <summary>
     ///     Provides static functionality to execute work on an unlimited call stack, which is not limited to 1 MB as the
     ///     standard call stack is.</summary>
-    public static class CustomCallStack
+#if EXPORT_UTIL
+    public
+#endif
+    static class CustomCallStack
     {
         /// <summary>
         ///     Runs the specified work on a custom call stack, which is not limited to 1 MB as the standard call stack is.
@@ -85,7 +86,10 @@ namespace RT.Util
     ///     This type is closed: Every value is either <c>null</c> or an instance of <see cref="WorkStep{T}.Return"/> or <see
     ///     cref="WorkStep{T}.Call"/>. The value <c>null</c> is treated as being equivalent to a <see
     ///     cref="WorkStep{T}.Return"/> containing a <c>default(T)</c>.</remarks>
-    public abstract class WorkStep<T>
+#if EXPORT_UTIL
+    public
+#endif
+    abstract class WorkStep<T>
     {
         /// <summary>Implicitly converts from a result value to a <see cref="Return"/>.</summary>
         public static implicit operator WorkStep<T>(T result)
@@ -149,5 +153,8 @@ namespace RT.Util
     /// <returns>
     ///     The next step of computation (which is either a <see cref="WorkStep{T}.Return"/> or a <see
     ///     cref="WorkStep{T}.Call"/>).</returns>
-    public delegate WorkStep<T> WorkNode<T>(T previousSubresult);
+#if EXPORT_UTIL
+    public
+#endif
+    delegate WorkStep<T> WorkNode<T>(T previousSubresult);
 }

@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 
-namespace RT.Util
+namespace RT.Serialization.Tests
 {
     [TestFixture]
     public sealed class ExactConvertTests

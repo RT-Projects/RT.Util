@@ -5,7 +5,10 @@ using System.Linq;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Extension methods related to custom comparer.</summary>
-    public static class CustomComparerExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class CustomComparerExtensions
     {
         /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
         public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
@@ -25,7 +28,10 @@ namespace RT.Util
     ///     Encapsulates an IComparer&lt;T&gt; that uses a comparison function provided as a delegate.</summary>
     /// <typeparam name="T">
     ///     The type of elements to be compared.</typeparam>
-    public sealed class CustomComparer<T> : IComparer<T>
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class CustomComparer<T> : IComparer<T>
     {
         private Comparison<T> _comparison;
         /// <summary>
@@ -152,7 +158,10 @@ namespace RT.Util
     ///     Encapsulates an IEqualityComparer&lt;T&gt; that uses an equality comparison function provided as a delegate.</summary>
     /// <typeparam name="T">
     ///     The type of elements to be compared for equality.</typeparam>
-    public sealed class CustomEqualityComparer<T> : IEqualityComparer<T>
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class CustomEqualityComparer<T> : IEqualityComparer<T>
     {
         private Func<T, T, bool> _comparison;
         private Func<T, int> _getHashCode;

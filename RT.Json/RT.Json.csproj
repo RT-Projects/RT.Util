@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="ExactConvert.cs" />
+    <Compile Include="..\Src\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
+    <Compile Include="..\Src\Text\OffsetToLineCol.cs" Link="SharedInternalUtil\Text\OffsetToLineCol.cs" />
+  </ItemGroup>
+
+</Project>

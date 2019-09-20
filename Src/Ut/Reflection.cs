@@ -5,7 +5,10 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Util
 {
-    public static partial class Ut
+#if EXPORT_UTIL
+    public
+#endif
+    static partial class Ut
     {
         /// <summary>
         ///     Returns the set of custom attributes of the specified <typeparamref name="TAttribute"/> type that are attached

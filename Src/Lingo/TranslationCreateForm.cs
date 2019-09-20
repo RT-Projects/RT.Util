@@ -4,8 +4,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using RT.Serialization;
 using RT.Util.Dialogs;
-using RT.Util.Serialization;
 
 namespace RT.Util.Lingo
 {

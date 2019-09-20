@@ -6,13 +6,13 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
-using RT.Util.Consoles;
+using RT.Util;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
 
-namespace RT.Util
+namespace RT.PostBuild
 {
-    public static partial class Ut
+    public static class PostBuildChecker
     {
         /// <summary>Runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build event. See remarks for details.</summary>
         /// <remarks><para>In non-DEBUG mode, does nothing and returns 0.</para>
@@ -187,7 +187,7 @@ namespace RT.Util
                 var list = new List<MethodInfo>();
                 var stringMethods = new[] { "Normalize", "PadLeft", "PadRight", "Remove", "Replace", "ToLower", "ToLowerInvariant", "ToUpper", "ToUpperInvariant", "Trim", "TrimEnd", "TrimStart" };
                 list.AddRange(typeof(string).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => stringMethods.Contains(m.Name)));
-                list.AddRange(typeof(ConsoleColoredString).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => stringMethods.Contains(m.Name)));
+                //list.AddRange(typeof(ConsoleColoredString).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => stringMethods.Contains(m.Name)));
                 list.AddRange(typeof(DateTime).GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(m => m.Name.StartsWith("Add") || m.Name == "Subtract"));
                 _postBuild_NoPopMethods = list.ToArray();
             }
@@ -288,25 +288,5 @@ namespace RT.Util
                 Console.Error.WriteLine("{0} CS9999: {1}", errorOrWarning, message);
             }
         }
-    }
-
-    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
-    public interface IPostBuildReporter
-    {
-        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
-        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
-        /// outputs the error <paramref name="message"/> including the filename and line number where the last token was found.</summary>
-        void Error(string message, params string[] tokens);
-
-        /// <summary>When implemented in a class, outputs the error <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
-        void Error(string message, string filename, int lineNumber, int? columnNumber = null);
-
-        /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,
-        /// and then starts searching there to find the first occurrence of each of the subsequent <paramref name="tokens"/> within the same file. When found,
-        /// outputs the warning <paramref name="message"/> including the filename and line number where the last token was found.</summary>
-        void Warning(string message, params string[] tokens);
-
-        /// <summary>When implemented in a class, outputs the warning <paramref name="message"/> including the specified <paramref name="filename"/>, <paramref name="lineNumber"/> and optional <paramref name="columnNumber"/>.</summary>
-        void Warning(string message, string filename, int lineNumber, int? columnNumber = null);
     }
 }

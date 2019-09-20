@@ -6,7 +6,10 @@ using System.Text;
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Provides extension methods on the <see cref="IEnumerable&lt;T&gt;"/> type.</summary>
-    public static class IEnumerableExtensions
+#if EXPORT_UTIL
+    public
+#endif
+    static class IEnumerableExtensions
     {
         /// <summary>
         ///     Returns an enumeration of tuples containing all pairs of elements from the source collection. For example, the
@@ -1664,7 +1667,10 @@ namespace RT.Util.ExtensionMethods
     ///     Type of the elements in the sequence.</typeparam>
     /// <typeparam name="TKey">
     ///     Type of the key by which elements were compared.</typeparam>
-    public class ConsecutiveGroup<TItem, TKey> : IEnumerable<TItem>
+#if EXPORT_UTIL
+    public
+#endif
+    class ConsecutiveGroup<TItem, TKey> : IEnumerable<TItem>
     {
         /// <summary>Index in the original sequence where the group started.</summary>
         public int Index { get; private set; }

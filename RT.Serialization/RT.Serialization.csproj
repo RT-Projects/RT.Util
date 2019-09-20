@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DefineConstants>EXPORT_EXACTCONVERT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Src\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\Src\ExtensionMethods\ReflectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\ReflectionExtensions.cs" />
+    <Compile Include="..\Src\CustomCallStack.cs" Link="SharedInternalUtil\CustomCallStack.cs" />
+    <Compile Include="..\Src\CustomComparer.cs" Link="SharedInternalUtil\CustomComparer.cs" />
+    <Compile Include="..\Src\Ut\General.cs" Link="SharedInternalUtil\Ut\General.cs" />
+  </ItemGroup>
+
+</Project>

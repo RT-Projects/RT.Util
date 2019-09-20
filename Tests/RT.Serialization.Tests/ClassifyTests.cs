@@ -6,10 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
+using RT.Json;
+using RT.Util;
 using RT.Util.ExtensionMethods;
-using RT.Util.Json;
 
-namespace RT.Util.Serialization
+namespace RT.Serialization.Tests
 {
     [TestFixture]
     public sealed class ClassifyTests
@@ -1119,7 +1120,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C1 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C1>
                     </B>
@@ -1133,7 +1134,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C2 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C2 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C2>
                     </B>
@@ -1147,7 +1148,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C3 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C3 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C3>
                     </B>
@@ -1161,7 +1162,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C4 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C4 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Base>XML</Base>
                         </C4>
                     </B>
@@ -1175,7 +1176,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C5 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C5 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C5>
                     </B>
@@ -1189,7 +1190,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C6 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C6 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C6>
                     </B>
@@ -1203,7 +1204,7 @@ namespace RT.Util.Serialization
             xml = XElement.Parse(@"
                 <item>
                     <B>
-                        <C1 fulltype=""RT.Util.Serialization.ClassifyTests+bunchDerivedClass, RT.UtilTests, Version=1.0.9999.9999, Culture=neutral, PublicKeyToken=null"">
+                        <C1 fulltype=""RT.Serialization.Tests.ClassifyTests+bunchDerivedClass, RT.Serialization.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"">
                             <Derived>XML</Derived>
                         </C1>
                     </B>
