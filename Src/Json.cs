@@ -146,7 +146,7 @@ namespace RT.Util.Json
             get
             {
                 OffsetConverter.GetLineAndColumn(Pos, out var line, out var col);
-                return "Before: {2}   After: {3}   At: {0},{1}".Fmt(line, col, Json.SubstringSafe(Pos - 15, 15), Json.SubstringSafe(Pos, 15));
+                return $"Before: {Json.SubstringSafe(Pos - 15, 15)}   After: {Json.SubstringSafe(Pos, 15)}   At: {line},{col}";
             }
         }
 
@@ -196,7 +196,7 @@ namespace RT.Util.Json
                 return null;
             }
             else
-                throw new JsonParseException(this, "Unknown keyword: \"{0}\"".Fmt(word));
+                throw new JsonParseException(this, $"Unknown keyword: \"{word}\"");
         }
 
         private string peekLowercaseAzWord()
@@ -1060,7 +1060,7 @@ namespace RT.Util.Json
         public static string ToString(JsonValue value) => value == null ? "null" : value.ToString();
 
         /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
-        public override string ToString() => ToEnumerable().JoinString();
+        public override string ToString() => string.Join("", ToEnumerable());
 
         /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
         public static string ToStringIndented(JsonValue value) => value == null ? "null" : value.ToStringIndented();
@@ -1105,18 +1105,18 @@ namespace RT.Util.Json
         public abstract IEnumerable<string> ToEnumerable();
 
         private const string _fmt_tokenTemplate = @"
-            \{\{(?<placeholder>[^\{\}]*?)\}\}|
+            \{{\{{(?<placeholder>[^\{{\}}]*?)\}}\}}|
             (?<comment>//[^\n]*|/\*.*?\*/)|
             (?<stringliteral>'(?:[^'\\]|\\.)*'|""(?:[^""\\]|\\.)*"")|
             (?<return>\breturn\b)|
-            (?<identifier>[\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Pc}\p{Lm}\$][\w\$]*)|
+            (?<identifier>[\p{{Ll}}\p{{Lu}}\p{{Lt}}\p{{Lo}}\p{{Pc}}\p{{Lm}}\$][\w\$]*)|
             (?<regex>{0})|
             (?<number>0x\d+|\d*(?:\d|\.\d+)(?:[Ee][\+\-]\d+)?)|
-            (?<operator>[=!]==|[\+\-\*/%<>&\^\|=!]=|<<=|>>=|>>>=|<<|>>>|>>|\+\+|--|&&|\|\||[<>=%\+\-\*/%&\^\|!~\?:\(\)\[\]\{\}\.,;])|
+            (?<operator>[=!]==|[\+\-\*/%<>&\^\|=!]=|<<=|>>=|>>>=|<<|>>>|>>|\+\+|--|&&|\|\||[<>=%\+\-\*/%&\^\|!~\?:\(\)\[\]\{{\}}\.,;])|
             (?<else>.)
         ";
-        private static readonly Regex _fmt_tokenWithoutRegex = new Regex(_fmt_tokenTemplate.Fmt("(?!)"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-        private static readonly Regex _fmt_tokenWithRegex = new Regex(_fmt_tokenTemplate.Fmt(@"/(?:[^/\\]|\\.)*/"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        private static readonly Regex _fmt_tokenWithoutRegex = new Regex(string.Format(_fmt_tokenTemplate, "(?!)"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        private static readonly Regex _fmt_tokenWithRegex = new Regex(string.Format(_fmt_tokenTemplate, @"/(?:[^/\\]|\\.)*/"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         /// <summary>
         ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
@@ -1171,7 +1171,7 @@ namespace RT.Util.Json
                     var name = m.Groups["placeholder"].Value;
                     var index = Enumerable.Range(0, namevalues.Length / 2).IndexOf(i => namevalues[2 * i].GetString() == name);
                     if (index == -1)
-                        throw new InvalidOperationException("namevalues does not contain a value named \"{0}\".".Fmt(name));
+                        throw new InvalidOperationException($"namevalues does not contain a value named \"{name}\".");
                     js = JsonValue.ToString(namevalues[2 * index + 1]) + js.Substring(m.Index + m.Length);
                     idx = 0;
                     continue;
@@ -1821,7 +1821,7 @@ namespace RT.Util.Json
                 result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
             return result != decimal.Truncate(result)
-                ? (safe ? (int?) null : throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)))
+                ? (safe ? (int?) null : throw new InvalidOperationException($"String must represent an integer, but \"{_value}\" has a fractional part."))
                 : (safe && (result < int.MinValue || result > int.MaxValue) ? null : (int?) (int) result);
         }
 
@@ -1855,7 +1855,7 @@ namespace RT.Util.Json
                     result = decimal.Parse(_value, CultureInfo.InvariantCulture);
 
                 return result != decimal.Truncate(result)
-                    ? (safe ? (int?) null : throw new InvalidOperationException("String must represent an integer, but \"{0}\" has a fractional part.".Fmt(_value)))
+                    ? (safe ? (int?) null : throw new InvalidOperationException($"String must represent an integer, but \"{_value}\" has a fractional part."))
                     : (safe && (result < long.MinValue || result > long.MaxValue) ? (long?) null : (long) result);
             }
         }
@@ -1871,7 +1871,7 @@ namespace RT.Util.Json
             !options.HasFlag(BoolConversionOptions.AllowConversionFromString) ? base.getBool(options, safe) :
             False.Contains(_value, TrueFalseComparer) ? false :
             True.Contains(_value, TrueFalseComparer) ? true :
-            safe ? (bool?) null : throw new InvalidOperationException("String must represent a boolean, but \"{0}\" is not a valid boolean.".Fmt(_value));
+            safe ? (bool?) null : throw new InvalidOperationException($"String must represent a boolean, but \"{_value}\" is not a valid boolean.");
 
         /// <summary>
         ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with
@@ -2646,8 +2646,8 @@ namespace RT.Util.Json
         public static JsonRaw FromDate(DateTime datetime) => new JsonRaw
         (
             datetime.TimeOfDay == TimeSpan.Zero
-                ? "new Date({0}, {1}, {2})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day)
-                : "new Date({0}, {1}, {2}, {3}, {4}, {5}, {6})".Fmt(datetime.Year, datetime.Month - 1, datetime.Day, datetime.Hour, datetime.Minute, datetime.Second, datetime.Millisecond)
+                ? $"new Date({datetime.Year}, {datetime.Month - 1}, {datetime.Day})"
+                : $"new Date({datetime.Year}, {datetime.Month - 1}, {datetime.Day}, {datetime.Hour}, {datetime.Minute}, {datetime.Second}, {datetime.Millisecond})"
         );
 
         /// <summary>See <see cref="JsonValue.ToEnumerable()"/>.</summary>
