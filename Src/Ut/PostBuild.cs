@@ -14,7 +14,7 @@ namespace RT.Util
 {
     public static partial class Ut
     {
-        /// <summary>In DEBUG mode, runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build event. See remarks for details.</summary>
+        /// <summary>Runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build event. See remarks for details.</summary>
         /// <remarks><para>In non-DEBUG mode, does nothing and returns 0.</para>
         /// <para>Intended use is as follows:</para>
         /// <list type="bullet">
@@ -77,11 +77,7 @@ namespace RT.Util
                             }
                         }
 
-                        Console.Error.WriteLine("{0}Error: {1}{2} ({3})".Fmt(
-                            fileLine,
-                            indent,
-                            e.Message.Replace("\n", " ").Replace("\r", ""),
-                            e.GetType().FullName));
+                        Console.Error.WriteLine($"{fileLine}Error: {indent}{e.Message.Replace("\n", " ").Replace("\r", "")} ({e.GetType().FullName})");
                         Console.Error.WriteLine(e.StackTrace);
                         e = e.InnerException;
                         indent += "---- ";
@@ -104,7 +100,7 @@ namespace RT.Util
                         }
                         else
                             rep.Error(
-                                "The type {0} has a method called PostBuildCheck() that is not of the expected signature. There should be one parameter of type {1}, and the return type should be void.".Fmt(ty.FullName, typeof(IPostBuildReporter).FullName),
+                                $"The type {ty.FullName} has a method called PostBuildCheck() that is not of the expected signature. There should be one parameter of type {typeof(IPostBuildReporter).FullName}, and the return type should be void.",
                                 (ty.IsValueType ? "struct " : "class ") + ty.Name, "PostBuildCheck");
                     }
                 });
@@ -145,8 +141,8 @@ namespace RT.Util
                                     {
                                         rep.Error(
                                             Regex.IsMatch(meth.DeclaringType.Name, @"<.*>d__\d")
-                                                ? @"The iterator method ""{0}.{1}"" constructs a {2}. Move this argument check outside the iterator.".Fmt(type.FullName, meth.Name, wrongException, wrong)
-                                                : @"The method ""{0}.{1}"" constructs an {2} with a parameter name ""{3}"" which doesn't appear to be a parameter in that method.".Fmt(type.FullName, meth.Name, wrongException, wrong),
+                                                ? $@"The iterator method ""{type.FullName}.{meth.Name}"" constructs a {wrongException}. Move this argument check outside the iterator."
+                                                : $@"The method ""{type.FullName}.{meth.Name}"" constructs an {wrongException} with a parameter name ""{wrong}"" which doesn't appear to be a parameter in that method.",
                                             getDebugClassName(meth),
                                             getDebugMethodName(meth),
                                             wrongException,
@@ -157,8 +153,8 @@ namespace RT.Util
                                     if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
                                         rep.Error(
                                             Regex.IsMatch(meth.DeclaringType.Name, @"<.*>d__\d")
-                                                ? @"The iterator method ""{0}.{1}"" constructs an ArgumentException. Move this argument check outside the iterator.".Fmt(type.FullName, meth.Name)
-                                                : @"The method ""{0}.{1}"" uses the single-argument constructor to ArgumentException. Please use the two-argument constructor and specify the parameter name. If there is no parameter involved, use InvalidOperationException.".Fmt(type.FullName, meth.Name),
+                                                ? $@"The iterator method ""{type.FullName}.{meth.Name}"" constructs an ArgumentException. Move this argument check outside the iterator."
+                                                : $@"The method ""{type.FullName}.{meth.Name}"" uses the single-argument constructor to ArgumentException. Please use the two-argument constructor and specify the parameter name. If there is no parameter involved, use InvalidOperationException.",
                                             getDebugClassName(meth),
                                             getDebugMethodName(meth),
                                             "ArgumentException");
@@ -169,7 +165,7 @@ namespace RT.Util
                                     var mType = method.DeclaringType;
                                     if (postBuildGetNoPopMethods().Contains(method))
                                         rep.Error(
-                                            @"Useless call to ""{0}.{1}"" (the return value is discarded).".Fmt(mType.FullName, method.Name),
+                                            $@"Useless call to ""{mType.FullName}.{method.Name}"" (the return value is discarded).",
                                             getDebugClassName(meth),
                                             getDebugMethodName(meth),
                                             method.Name
@@ -178,7 +174,7 @@ namespace RT.Util
                             }
                         });
 
-            Console.WriteLine("Post-build checks ran on {0} assemblies, {1} methods and completed {2}.".Fmt(assemblies.Length, countMethods, rep.AnyErrors ? "with ERRORS" : "SUCCESSFULLY"));
+            Console.WriteLine($"Post-build checks ran on {assemblies.Length} assemblies, {countMethods} methods and completed {(rep.AnyErrors ? "with ERRORS" : "SUCCESSFULLY")}.");
 
             return rep.AnyErrors ? 1 : 0;
         }
@@ -233,12 +229,12 @@ namespace RT.Util
             public void Error(string message, string filename, int lineNumber, int? columnNumber = null)
             {
                 AnyErrors = true;
-                outputLine("Error", filename, columnNumber == null ? lineNumber.ToString() : "{0},{1}".Fmt(lineNumber, columnNumber), message);
+                outputLine("Error", filename, columnNumber == null ? lineNumber.ToString() : $"{lineNumber},{columnNumber}", message);
             }
 
             public void Warning(string message, string filename, int lineNumber, int? columnNumber = null)
             {
-                outputLine("Warning", filename, columnNumber == null ? lineNumber.ToString() : "{0},{1}".Fmt(lineNumber, columnNumber), message);
+                outputLine("Warning", filename, columnNumber == null ? lineNumber.ToString() : $"{lineNumber},{columnNumber}", message);
             }
 
             private void outputLine(string errorOrWarning, string filename, string lineOrLineAndColumn, string message)
@@ -251,7 +247,7 @@ namespace RT.Util
                 if (tokens == null || tokens.Length == 0 || tokens.All(t => t == null))
                 {
                     var frame = new StackFrame(2, true);
-                    outputLine(errorOrWarning, frame.GetFileName(), "{0},{1}".Fmt(frame.GetFileLineNumber(), frame.GetFileColumnNumber()), message);
+                    outputLine(errorOrWarning, frame.GetFileName(), $"{frame.GetFileLineNumber()},{frame.GetFileColumnNumber()}", message);
                     return;
                 }
                 try
