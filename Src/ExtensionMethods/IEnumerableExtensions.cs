@@ -1,8 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RT.Util.Consoles;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -113,16 +112,6 @@ namespace RT.Util.ExtensionMethods
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
             return source.OrderBy(k => k, comparer);
-        }
-
-        /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
-        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            if (comparison == null)
-                throw new ArgumentNullException(nameof(comparison));
-            return source.OrderBy(x => x, new CustomComparer<T>(comparison));
         }
 
         /// <summary>
@@ -1021,6 +1010,201 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Adds an element to a List&lt;V&gt; stored in the current IDictionary&lt;K, List&lt;V&gt;&gt;. If the specified
+        ///     key does not exist in the current IDictionary, a new List is created.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Key.</param>
+        public static void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.ContainsKey(key))
+                dic[key] = new List<V>();
+            dic[key].Add(value);
+        }
+
+        /// <summary>
+        ///     Adds an element to a HashSet&lt;V&gt; stored in the current IDictionary&lt;K, HashSet&lt;V&gt;&gt;. If the
+        ///     specified key does not exist in the current IDictionary, a new HashSet is created.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the HashSets.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the HashSet is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the HashSet located at the specified Key.</param>
+        public static bool AddSafe<K, V>(this IDictionary<K, HashSet<V>> dic, K key, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.ContainsKey(key))
+                dic[key] = new HashSet<V>();
+            return dic[key].Add(value);
+        }
+
+        /// <summary>
+        ///     Adds an element to a two-level Dictionary&lt;,&gt;. If the specified key does not exist in the outer
+        ///     Dictionary, a new Dictionary is created.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the outer Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the inner Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the inner Dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the inner Dictionary is located in the outer Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the value is located in the inner Dictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the inner Dictionary.</param>
+        /// <param name="comparer">
+        ///     Optional equality comparer to pass into the inner dictionary if a new one is created.</param>
+        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2, V value, IEqualityComparer<K2> comparer = null)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key1 == null)
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.ContainsKey(key1))
+                dic[key1] = comparer == null ? new Dictionary<K2, V>() : new Dictionary<K2, V>(comparer);
+            dic[key1][key2] = value;
+        }
+
+        /// <summary>
+        ///     Removes an element from a two-level Dictionary&lt;,&gt;. If this leaves the inner dictionary empty, the key is
+        ///     removed from the outer Dictionary.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the outer Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the inner Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the inner Dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the inner Dictionary is located in the outer Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the value is located in the inner Dictionary.</param>
+        /// <returns>
+        ///     A value indicating whether a value was removed or not.</returns>
+        public static bool RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key1 == null)
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.TryGetValue(key1, out var inner) || !inner.ContainsKey(key2))
+                return false;
+            inner.Remove(key2);
+            if (inner.Count == 0)
+                dic.Remove(key1);
+            return true;
+        }
+
+        /// <summary>
+        ///     Adds an element to a List&lt;V&gt; stored in a two-level Dictionary&lt;,&gt;. If the specified key does not
+        ///     exist in the current Dictionary, a new List is created.</summary>
+        /// <typeparam name="K1">
+        ///     Type of the key of the first-level Dictionary.</typeparam>
+        /// <typeparam name="K2">
+        ///     Type of the key of the second-level Dictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key1">
+        ///     Key at which the second-level Dictionary is located in the first-level Dictionary.</param>
+        /// <param name="key2">
+        ///     Key at which the list is located in the second-level Dictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Keys.</param>
+        public static void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key1 == null)
+                throw new ArgumentNullException(nameof(key1), "Null values cannot be used for keys in dictionaries.");
+            if (key2 == null)
+                throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
+            if (!dic.ContainsKey(key1))
+                dic[key1] = new Dictionary<K2, List<V>>();
+            if (!dic[key1].ContainsKey(key2))
+                dic[key1][key2] = new List<V>();
+            dic[key1][key2].Add(value);
+        }
+
+        /// <summary>
+        ///     Increments an integer in an <see cref="IDictionary&lt;K, V&gt;"/> by the specified amount. If the specified
+        ///     key does not exist in the current dictionary, the value <paramref name="amount"/> is inserted.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the dictionary.</typeparam>
+        /// <param name="dic">
+        ///     Dictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the dictionary.</param>
+        /// <param name="amount">
+        ///     The amount by which to increment the integer.</param>
+        /// <returns>
+        ///     The new value at the specified key.</returns>
+        public static int IncSafe<K>(this IDictionary<K, int> dic, K key, int amount = 1)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            return dic.ContainsKey(key) ? (dic[key] = dic[key] + amount) : (dic[key] = amount);
+        }
+
+        /// <summary>
+        ///     Removes the first occurrence of an element from a List&lt;V&gt; stored in the current IDictionary&lt;K,
+        ///     List&lt;V&gt;&gt;. If this leaves the list stored at the specified key empty, the key is removed from the
+        ///     IDictionary. If the key is not in the dictionary to begin with, nothing happens.</summary>
+        /// <typeparam name="K">
+        ///     Type of the key of the IDictionary.</typeparam>
+        /// <typeparam name="V">
+        ///     Type of the values in the Lists.</typeparam>
+        /// <param name="dic">
+        ///     IDictionary to operate on.</param>
+        /// <param name="key">
+        ///     Key at which the list is located in the IDictionary.</param>
+        /// <param name="value">
+        ///     Value to add to the List located at the specified Key.</param>
+        public static void RemoveSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
+            if (dic.ContainsKey(key))
+            {
+                dic[key].Remove(value);
+                if (dic[key].Count == 0)
+                    dic.Remove(key);
+            }
+        }
+
+        /// <summary>
         ///     Returns a collection of integers containing the indexes at which the elements of the source collection match
         ///     the given predicate.</summary>
         /// <typeparam name="T">
@@ -1146,36 +1330,6 @@ namespace RT.Util.ExtensionMethods
                 }
                 sb.Append(lastSeparator).Append(prefix).Append(prev).Append(suffix);
                 return sb.ToString();
-            }
-        }
-
-        /// <summary>Equivalent to <see cref="JoinString{T}"/>, but for <see cref="ConsoleColoredString"/>s.</summary>
-        public static ConsoleColoredString JoinColoredString<T>(this IEnumerable<T> values, ConsoleColoredString separator = null, ConsoleColoredString prefix = null, ConsoleColoredString suffix = null, ConsoleColor defaultColor = ConsoleColor.Gray)
-        {
-            if (values == null)
-                throw new ArgumentNullException(nameof(values));
-
-            using (var enumerator = values.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                    return ConsoleColoredString.Empty;
-
-                var list = new List<ConsoleColoredString>(values is ICollection<T> ? ((ICollection<T>) values).Count * 4 : 8);
-                bool first = true;
-                do
-                {
-                    if (!first && separator != null)
-                        list.Add(separator);
-                    first = false;
-                    if (prefix != null)
-                        list.Add(prefix);
-                    if (enumerator.Current != null)
-                        list.Add(enumerator.Current.ToConsoleColoredString(defaultColor));
-                    if (suffix != null)
-                        list.Add(suffix);
-                }
-                while (enumerator.MoveNext());
-                return new ConsoleColoredString(list);
             }
         }
 
@@ -1477,28 +1631,6 @@ namespace RT.Util.ExtensionMethods
                     sum += selector(value);
                 return sum;
             }
-        }
-
-        /// <summary>
-        ///     Returns a random element from the specified collection.</summary>
-        /// <typeparam name="T">
-        ///     The type of the elements in the collection.</typeparam>
-        /// <param name="src">
-        ///     The collection to pick from.</param>
-        /// <param name="rnd">
-        ///     Optionally, a random number generator to use.</param>
-        /// <returns>
-        ///     The element randomly picked.</returns>
-        /// <remarks>
-        ///     This method enumerates the entire input sequence into an array.</remarks>
-        public static T PickRandom<T>(this IEnumerable<T> src, Random rnd = null)
-        {
-            if (src == null)
-                throw new ArgumentNullException(nameof(src));
-            var list = (src as IList<T>) ?? src.ToArray();
-            if (list.Count == 0)
-                throw new InvalidOperationException("Cannot pick an element from an empty set.");
-            return list[rnd == null ? Rnd.Next(list.Count) : rnd.Next(list.Count)];
         }
 
         /// <summary>

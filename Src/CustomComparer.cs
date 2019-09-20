@@ -1,5 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+
+namespace RT.Util.ExtensionMethods
+{
+    /// <summary>Extension methods related to custom comparer.</summary>
+    public static class CustomComparerExtensions
+    {
+        /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparison delegate.</summary>
+        public static IEnumerable<T> OrderBy<T>(this IEnumerable<T> source, Comparison<T> comparison)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (comparison == null)
+                throw new ArgumentNullException(nameof(comparison));
+            return source.OrderBy(x => x, new CustomComparer<T>(comparison));
+        }
+    }
+}
 
 namespace RT.Util
 {

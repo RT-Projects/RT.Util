@@ -118,6 +118,7 @@
     <Compile Include="CustomCallStack.cs" />
     <Compile Include="CuteML.cs" />
     <Compile Include="CustomComparer.cs" />
+    <Compile Include="ExtensionMethods\ConsoleExtensions.cs" />
     <Compile Include="ExtensionMethods\TextReaderWriterExtensions.cs" />
     <Compile Include="Geometry\TriangleD.cs" />
     <Compile Include="Geometry\Triangulate.cs" />
@@ -239,8 +240,10 @@
     <Compile Include="Ut\InternalError.cs" />
     <Compile Include="Random.cs" />
     <Compile Include="Ut\ReduceRequiredSet.cs" />
+    <Compile Include="Ut\Reflection.cs" />
     <Compile Include="Ut\RunMain.cs" />
     <Compile Include="Ut\TicToc.cs" />
+    <Compile Include="Ut\WinForms.cs" />
     <Compile Include="Waiter.cs" />
     <Compile Include="WinAPI.cs" />
   </ItemGroup>

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
-using RT.Util.Collections;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -55,9 +53,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestOrderBy()
         {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(new string[0], null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.OrderBy<string>(null, (a, b) => a.CompareTo(b)); });
+            Assert.Throws<ArgumentNullException>(() => { CustomComparerExtensions.OrderBy<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { CustomComparerExtensions.OrderBy<string>(new string[0], null); });
+            Assert.Throws<ArgumentNullException>(() => { CustomComparerExtensions.OrderBy<string>(null, (a, b) => a.CompareTo(b)); });
 
             var s = new[] { "some", "blah", "Stuff", "apple" };
             var sSorted = s.OrderBy((a, b) => a[1].CompareTo(b[1]));

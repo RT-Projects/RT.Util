@@ -3,6 +3,61 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+namespace RT.Util.ExtensionMethods
+{
+    using RT.Util.Collections;
+
+    /// <summary>Extension methods related to read-only collections.</summary>
+    public static class ReadOnlyCollectionExtensions
+    {
+        /// <summary>
+        ///     Creates and returns a read-only wrapper around this collection. Note: a new wrapper is created on every call.
+        ///     Consider caching it.</summary>
+        public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll)
+        {
+            if (coll == null)
+                throw new ArgumentNullException(nameof(coll));
+            return new ReadOnlyCollection<T>(coll);
+        }
+
+        /// <summary>
+        ///     Gets a read-only wrapper around this collection. If <paramref name="cache"/> is already a wrapper for this
+        ///     collection returns that, otherwise creates a new wrapper, stores it in <paramref name="cache"/>, and returns
+        ///     that.</summary>
+        public static ReadOnlyCollection<T> AsReadOnly<T>(this ICollection<T> coll, ref ReadOnlyCollection<T> cache)
+        {
+            if (coll == null)
+                throw new ArgumentNullException(nameof(coll));
+            if (cache == null || !cache.IsWrapperFor(coll))
+                cache = new ReadOnlyCollection<T>(coll);
+            return cache;
+        }
+
+        /// <summary>
+        ///     Creates and returns a read-only wrapper around this dictionary. Note: a new wrapper is created on every call.
+        ///     Consider caching it.</summary>
+        public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict)
+        {
+            if (dict == null)
+                throw new ArgumentNullException(nameof(dict));
+            return new ReadOnlyDictionary<TK, TV>(dict);
+        }
+
+        /// <summary>
+        ///     Gets a read-only wrapper around this dictionary. If <paramref name="cache"/> is already a wrapper for this
+        ///     dictionary returns that, otherwise creates a new wrapper, stores it in <paramref name="cache"/>, and returns
+        ///     that.</summary>
+        public static ReadOnlyDictionary<TK, TV> AsReadOnly<TK, TV>(this IDictionary<TK, TV> dict, ref ReadOnlyDictionary<TK, TV> cache)
+        {
+            if (dict == null)
+                throw new ArgumentNullException(nameof(dict));
+            if (cache == null || !cache.IsWrapperFor(dict))
+                cache = new ReadOnlyDictionary<TK, TV>(dict);
+            return cache;
+        }
+    }
+}
+
 namespace RT.Util.Collections
 {
     /// <summary>

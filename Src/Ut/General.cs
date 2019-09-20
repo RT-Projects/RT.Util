@@ -1,13 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
-using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -73,105 +72,6 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Sends the specified sequence of key strokes to the active application. See remarks for details.</summary>
-        /// <param name="keys">
-        ///     A collection of objects of type <see cref="Keys"/>, <see cref="char"/>, or <c>System.Tuple&lt;Keys,
-        ///     bool&gt;</c>.</param>
-        /// <exception cref="ArgumentNullException">
-        ///     <paramref name="keys"/> was null.</exception>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="keys"/> contains an object which is of an unexpected type. Only <see cref="Keys"/>, <see
-        ///     cref="char"/> and <c>System.Tuple&lt;System.Windows.Forms.Keys, bool&gt;</c> are accepted.</exception>
-        /// <remarks>
-        ///     <list type="bullet">
-        ///         <item><description>
-        ///             For objects of type <see cref="Keys"/>, the relevant key is pressed and released.</description></item>
-        ///         <item><description>
-        ///             For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and
-        ///             release.</description></item>
-        ///         <item><description>
-        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c> or <c>ValueType&lt;Keys, bool&gt;</c>, the bool
-        ///             specifies whether to simulate only a key-down (false) or only a key-up (true).</description></item></list></remarks>
-        /// <example>
-        ///     <para>
-        ///         The following example demonstrates how to use this method to send the key combination Win+R:</para>
-        ///     <code>
-        ///         Ut.SendKeystrokes(Ut.NewArray&lt;object&gt;(
-        ///             (Keys.LWin, false),
-        ///             Keys.R,
-        ///             (Keys.LWin, true)
-        ///         ));</code></example>
-        public static void SendKeystrokes(IEnumerable<object> keys)
-        {
-            if (keys == null)
-                throw new ArgumentNullException(nameof(keys));
-
-            var input = new List<WinAPI.INPUT>();
-            foreach (var elem in keys)
-            {
-                void sendTuple(Keys key, bool isUp)
-                {
-                    var keyEvent = new WinAPI.INPUT
-                    {
-                        Type = WinAPI.INPUT_KEYBOARD,
-                        SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
-                        {
-                            Keyboard = new WinAPI.KEYBDINPUT { wVk = (ushort) key }
-                        }
-                    };
-                    if (isUp)
-                        keyEvent.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
-                    input.Add(keyEvent);
-                }
-
-                if (elem is Tuple<Keys, bool> t)
-                    sendTuple(t.Item1, t.Item2);
-                else if (elem is ValueTuple<Keys, bool> vt)
-                    sendTuple(vt.Item1, vt.Item2);
-                else
-                {
-                    if (!(elem is Keys || elem is char))
-                        throw new ArgumentException(@"The input collection is expected to contain only objects of type Keys, char, Tuple<Keys, bool> or ValueTuple<Keys, bool>.", nameof(keys));
-                    var keyDown = new WinAPI.INPUT
-                    {
-                        Type = WinAPI.INPUT_KEYBOARD,
-                        SpecificInput = new WinAPI.MOUSEKEYBDHARDWAREINPUT
-                        {
-                            Keyboard = (elem is Keys)
-                                ? new WinAPI.KEYBDINPUT { wVk = (ushort) (Keys) elem }
-                                : new WinAPI.KEYBDINPUT { wScan = (char) elem, dwFlags = WinAPI.KEYEVENTF_UNICODE }
-                        }
-                    };
-                    var keyUp = keyDown;
-                    keyUp.SpecificInput.Keyboard.dwFlags |= WinAPI.KEYEVENTF_KEYUP;
-                    input.Add(keyDown);
-                    input.Add(keyUp);
-                }
-            }
-            var inputArr = input.ToArray();
-            WinAPI.SendInput((uint) inputArr.Length, inputArr, Marshal.SizeOf(input[0]));
-        }
-
-        /// <summary>
-        ///     Sends the specified key the specified number of times.</summary>
-        /// <param name="key">
-        ///     Key stroke to send.</param>
-        /// <param name="times">
-        ///     Number of times to send the <paramref name="key"/>.</param>
-        public static void SendKeystrokes(Keys key, int times)
-        {
-            if (times > 0)
-                SendKeystrokes(Enumerable.Repeat((object) key, times));
-        }
-
-        /// <summary>Sends key strokes equivalent to typing the specified text.</summary>
-        public static void SendKeystrokesForText(string text)
-        {
-            if (!string.IsNullOrEmpty(text))
-                SendKeystrokes(text.Cast<object>());
-        }
-
-        /// <summary>
         ///     Reads the specified file and computes the SHA1 hash function from its contents.</summary>
         /// <param name="path">
         ///     Path to the file to compute SHA1 hash function from.</param>
@@ -230,13 +130,6 @@ namespace RT.Util
                 throw new Exception(message ?? "Assertion failure");
             }
         }
-
-        /// <summary>Determines whether the Ctrl key is pressed.</summary>
-        public static bool Ctrl { get { return Control.ModifierKeys.HasFlag(Keys.Control); } }
-        /// <summary>Determines whether the Alt key is pressed.</summary>
-        public static bool Alt { get { return Control.ModifierKeys.HasFlag(Keys.Alt); } }
-        /// <summary>Determines whether the Shift key is pressed.</summary>
-        public static bool Shift { get { return Control.ModifierKeys.HasFlag(Keys.Shift); } }
 
         /// <summary>
         ///     Allows the use of C#’s powerful type inference when declaring local lambdas whose delegate type doesn't make
@@ -391,75 +284,6 @@ namespace RT.Util
         ///     Returns the enum value represented by the specified string, or null if the string does not represent a valid
         ///     enum value.</summary>
         public static T? ParseEnum<T>(string value, bool ignoreCase = false) where T : struct => Enum.TryParse<T>(value, ignoreCase, out var result) ? (T?) result : null;
-
-        /// <summary>
-        ///     Creates a delegate using Action&lt;,*&gt; or Func&lt;,*&gt; depending on the number of parameters of the
-        ///     specified method.</summary>
-        /// <param name="firstArgument">
-        ///     Object to call the method on, or null for static methods.</param>
-        /// <param name="method">
-        ///     The method to call.</param>
-        public static Delegate CreateDelegate(object firstArgument, MethodInfo method)
-        {
-            var param = method.GetParameters();
-            return Delegate.CreateDelegate(
-                method.ReturnType == typeof(void)
-                    ? param.Length == 0 ? typeof(Action) : actionType(param.Length).MakeGenericType(param.Select(p => p.ParameterType).ToArray())
-                    : funcType(param.Length).MakeGenericType(param.Select(p => p.ParameterType).Concat(method.ReturnType).ToArray()),
-                firstArgument,
-                method
-            );
-        }
-
-        private static Type funcType(int numParameters)
-        {
-            switch (numParameters)
-            {
-                case 0: return typeof(Func<>);
-                case 1: return typeof(Func<,>);
-                case 2: return typeof(Func<,,>);
-                case 3: return typeof(Func<,,,>);
-                case 4: return typeof(Func<,,,,>);
-                case 5: return typeof(Func<,,,,,>);
-                case 6: return typeof(Func<,,,,,,>);
-                case 7: return typeof(Func<,,,,,,,>);
-                case 8: return typeof(Func<,,,,,,,,>);
-                case 9: return typeof(Func<,,,,,,,,,>);
-                case 10: return typeof(Func<,,,,,,,,,,>);
-                case 11: return typeof(Func<,,,,,,,,,,,>);
-                case 12: return typeof(Func<,,,,,,,,,,,,>);
-                case 13: return typeof(Func<,,,,,,,,,,,,,>);
-                case 14: return typeof(Func<,,,,,,,,,,,,,,>);
-                case 15: return typeof(Func<,,,,,,,,,,,,,,,>);
-                case 16: return typeof(Func<,,,,,,,,,,,,,,,,>);
-            }
-            throw new ArgumentException("numParameters must be between 0 and 16.", nameof(numParameters));
-        }
-
-        private static Type actionType(int numParameters)
-        {
-            switch (numParameters)
-            {
-                case 0: return typeof(Action);
-                case 1: return typeof(Action<>);
-                case 2: return typeof(Action<,>);
-                case 3: return typeof(Action<,,>);
-                case 4: return typeof(Action<,,,>);
-                case 5: return typeof(Action<,,,,>);
-                case 6: return typeof(Action<,,,,,>);
-                case 7: return typeof(Action<,,,,,,>);
-                case 8: return typeof(Action<,,,,,,,>);
-                case 9: return typeof(Action<,,,,,,,,>);
-                case 10: return typeof(Action<,,,,,,,,,>);
-                case 11: return typeof(Action<,,,,,,,,,,>);
-                case 12: return typeof(Action<,,,,,,,,,,,>);
-                case 13: return typeof(Action<,,,,,,,,,,,,>);
-                case 14: return typeof(Action<,,,,,,,,,,,,,>);
-                case 15: return typeof(Action<,,,,,,,,,,,,,,>);
-                case 16: return typeof(Action<,,,,,,,,,,,,,,,>);
-            }
-            throw new ArgumentException("numParameters must be between 0 and 16.", nameof(numParameters));
-        }
 
         /// <summary>
         ///     Executes the specified function with the specified argument.</summary>
@@ -712,75 +536,6 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Returns the set of custom attributes of the specified <typeparamref name="TAttribute"/> type that are attached
-        ///     to the declaration of the enum value represented by <paramref name="enumValue"/>.</summary>
-        /// <typeparam name="TAttribute">
-        ///     The type of the custom attributes to retrieve.</typeparam>
-        /// <param name="enumValue">
-        ///     The enum value for which to retrieve the custom attributes.</param>
-        /// <returns>
-        ///     An array containing the custom attributes, or <c>null</c> if <paramref name="enumValue"/> does not correspond
-        ///     to a declared value.</returns>
-        /// <remarks>
-        ///     This method keeps an internal cache forever.</remarks>
-        /// <exception cref="ArgumentNullException">
-        ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
-        public static TAttribute[] GetCustomAttributes<TAttribute>(this Enum enumValue) where TAttribute : Attribute
-        {
-            if (enumValue == null)
-                throw new ArgumentNullException(nameof(enumValue));
-            var enumType = enumValue.GetType();
-            var dic = EnumAttributeCache<TAttribute>.Dictionary;
-            TAttribute[] arr;
-            if (!dic.ContainsKeys(enumType, enumValue))
-            {
-                arr = null;
-                foreach (var field in enumType.GetFields(BindingFlags.Static | BindingFlags.Public))
-                {
-                    var attrs = field.GetCustomAttributes<TAttribute>().ToArray();
-                    var enumVal = (Enum) field.GetValue(null);
-                    dic.AddSafe(enumType, enumVal, attrs);
-                    if (enumVal.Equals(enumValue))
-                        arr = attrs;
-                }
-                return arr;
-            }
-            return dic.TryGetValue(enumType, enumValue, out arr) ? arr : null;
-        }
-
-        /// <summary>
-        ///     Returns the single custom attribute of the specified <typeparamref name="TAttribute"/> type that is attached
-        ///     to the declaration of the enum value represented by <paramref name="enumValue"/>, or <c>null</c> if there is
-        ///     no such attribute.</summary>
-        /// <typeparam name="TAttribute">
-        ///     The type of the custom attribute to retrieve.</typeparam>
-        /// <param name="enumValue">
-        ///     The enum value for which to retrieve the custom attribute.</param>
-        /// <returns>
-        ///     The custom attribute, or <c>null</c> if the enum value does not have a custom attribute of the specified type
-        ///     attached to it. If <paramref name="enumValue"/> does not correspond to a declared enum value, or there is more
-        ///     than one custom attribute of the same type, an exception is thrown.</returns>
-        /// <remarks>
-        ///     This method uses <see cref="Ut.GetCustomAttributes{TAttribute}(Enum)"/>, which keeps an internal cache
-        ///     forever.</remarks>
-        /// <exception cref="ArgumentNullException">
-        ///     <paramref name="enumValue"/> is <c>null</c>.</exception>
-        /// <exception cref="InvalidOperationException">
-        ///     There is more than one custom attribute of the specified type attached to the enum value declaration.</exception>
-        public static TAttribute GetCustomAttribute<TAttribute>(this Enum enumValue) where TAttribute : Attribute
-        {
-            if (enumValue == null)
-                throw new ArgumentNullException(nameof(enumValue));
-            return GetCustomAttributes<TAttribute>(enumValue).SingleOrDefault();
-        }
-
-        /// <summary>Returns true if this value is equal to the default value for this type.</summary>
-        public static bool IsDefault<T>(this T val) where T : struct
-        {
-            return val.Equals(default(T));
-        }
-
-        /// <summary>
         ///     Computes a hash value from an array of elements.</summary>
         /// <param name="input">
         ///     The array of elements to hash.</param>
@@ -836,6 +591,69 @@ namespace RT.Util
             for (int i = 0; i < steps; i++)
                 yield return start + i * step;
             yield return end;
+        }
+
+        /// <summary>Generates a representation of the specified byte sequence as hexadecimal numbers (“hexdump”).</summary>
+        public static string ToHex(this IEnumerable<byte> data, int spacesEvery = 0)
+        {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            var result = new StringBuilder();
+            var i = 0;
+            foreach (var bb in data)
+            {
+                byte b = (byte) (bb >> 4);
+                result.Append((char) (b < 10 ? '0' + b : 'W' + b));   // 'a'-10 = 'W'
+                b = (byte) (bb & 0xf);
+                result.Append((char) (b < 10 ? '0' + b : 'W' + b));
+                i++;
+                if (spacesEvery != 0 && i % spacesEvery == 0)
+                    result.Append(" ");
+            }
+            return result.ToString();
+        }
+
+        /// <summary>Generates a representation of the specified byte array as hexadecimal numbers (“hexdump”).</summary>
+        public static string ToHex(this byte[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            char[] charArr = new char[data.Length * 2];
+            var j = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                byte b = (byte) (data[i] >> 4);
+                charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
+                j++;
+                b = (byte) (data[i] & 0xf);
+                charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);
+                j++;
+            }
+            return new string(charArr);
+        }
+
+        /// <summary>Generates a representation of the specified uint array as hexadecimal numbers (“hexdump”).</summary>
+        public static string ToHex(this uint[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            char[] charArr = new char[data.Length * 8];
+            var j = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                uint d = data[i];
+                for (int k = 0; k < 8; k++)
+                {
+                    byte b = (byte) (d >> 28);
+                    charArr[j] = (char) (b < 10 ? '0' + b : 'W' + b);   // 'a'-10 = 'W'
+                    d <<= 4;
+                    j++;
+                }
+            }
+            return new string(charArr);
         }
     }
 }
