@@ -19,7 +19,7 @@
     <ProjectReference Include="..\..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
     <ProjectReference Include="..\..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
     <ProjectReference Include="..\..\RT.Serialization\RT.Serialization.csproj" />
-    <ProjectReference Include="..\..\Src\RT.Util.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Util.csproj" />
   </ItemGroup>
 
 </Project>

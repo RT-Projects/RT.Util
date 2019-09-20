@@ -1,13 +1,13 @@
 
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSink", "Src\RT.KitchenSink.csproj", "{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSink", "RT.Util\RT.KitchenSink.csproj", "{7EDB80B5-CA44-4AD9-BF23-18A9470FEB69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Src\RT.Util.csproj", "{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "RT.Util\RT.Util.csproj", "{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSinkTests", "Src\RT.KitchenSink.Tests.csproj", "{EA7E9C00-DD8B-43DC-84F6-AE2F9F41ED30}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSinkTests", "RT.Util\RT.KitchenSink.Tests.csproj", "{EA7E9C00-DD8B-43DC-84F6-AE2F9F41ED30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilTests", "Src\RT.Util.Tests.csproj", "{98AF4286-D1A7-4753-B405-24DB585D713C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilTests", "RT.Util\RT.Util.Tests.csproj", "{98AF4286-D1A7-4753-B405-24DB585D713C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NUnitDirect", "..\RT.NUnitDirect\Src\RT.NUnitDirect.csproj", "{275ECB9D-F75E-45F8-BB34-AD122589D2CC}"
 EndProject

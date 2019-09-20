@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Src\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
-    <Compile Include="..\Src\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
-    <Compile Include="..\Src\Ut\General.cs" Link="SharedInternalUtil\Ut\General.cs" />
-    <Compile Include="..\Src\ILReader.cs" Link="SharedInternalUtil\ILReader.cs" />
+    <Compile Include="..\RT.Util\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
+    <Compile Include="..\RT.Util\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\RT.Util\Ut\General.cs" Link="SharedInternalUtil\Ut\General.cs" />
+    <Compile Include="..\RT.Util\ILReader.cs" Link="SharedInternalUtil\ILReader.cs" />
   </ItemGroup>
 
 </Project>
