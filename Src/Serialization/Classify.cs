@@ -277,7 +277,7 @@ namespace RT.Util.Serialization
         public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
             var element = new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
-            PathUtil.CreatePathToFile(filename);
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(".", filename)));
             using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
                 format.WriteToStream(element, f);
         }
@@ -545,7 +545,7 @@ namespace RT.Util.Serialization
                             .Where(t => t != null)
                             .FirstOrDefault();
                     if (serializedType == null)
-                        throw new Exception("The type {0} needed for deserialization cannot be found.".Fmt(typeName));
+                        throw new Exception($"The type {typeName} needed for deserialization cannot be found.");
                 }
                 var genericDefinition = serializedType.IsGenericType ? serializedType.GetGenericTypeDefinition() : null;
 
@@ -577,7 +577,7 @@ namespace RT.Util.Serialization
                         values = _format.GetList(elem, genericArguments.Length).ToArray();
 
                     if (genericArguments.Length > values.Length)
-                        throw new InvalidOperationException("While trying to deserialize a tuple with {0} elements, Classify encountered a serialized form with only {1} elements.".Fmt(genericArguments.Length, values.Length));
+                        throw new InvalidOperationException($"While trying to deserialize a tuple with {genericArguments.Length} elements, Classify encountered a serialized form with only {values.Length} elements.");
 
                     int i = -1;
                     return prevResult =>
@@ -639,14 +639,14 @@ namespace RT.Util.Serialization
                             }
                             catch (Exception e)
                             {
-                                throw new Exception("An object of type {0} could not be created:\n{1}".Fmt(serializedType.FullName, e.Message), e);
+                                throw new Exception($"An object of type {serializedType.FullName} could not be created:\n{e.Message}", e);
                             }
 
                             workNode = deserializeIntoObject(elem, ret, serializedType);
                             break;
 
                         default:
-                            throw new InternalErrorException(@"An internal bug in Classify was encountered. (56049)");
+                            throw new Exception(@"An internal bug in Classify was encountered. (56049)");
                     }
 
                     var first = true;
@@ -1060,7 +1060,7 @@ namespace RT.Util.Serialization
                 {
                     saveType = saveObject.GetType();
                     if (saveType == typeof(IntPtr) || saveType == typeof(Pointer))
-                        throw new NotSupportedException("Classify does not support serializing values of type \"{0}\". Consider marking the offending field with [ClassifyIgnore].".Fmt(saveType));
+                        throw new NotSupportedException($"Classify does not support serializing values of type \"{saveType}\". Consider marking the offending field with [ClassifyIgnore].");
                     if (declaredType != saveType && !(saveType.IsValueType && declaredType == typeof(Nullable<>).MakeGenericType(saveType)))
                     {
                         // ... but only add this attribute if it is not a collection, because then Classify doesn’t care about the type when restoring the object anyway
@@ -1093,7 +1093,7 @@ namespace RT.Util.Serialization
                     else
                     {
                         // Detected a cycle in an object that the user indicated should not be deduplicated
-                        throw new InvalidOperationException(@"The object {0} (of type {1}) is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.".Fmt(previousOriginalObject, previousOriginalObject.GetType().FullName));
+                        throw new InvalidOperationException($@"The object {previousOriginalObject} (of type {previousOriginalObject.GetType().FullName}) is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.");
                     }
                 }
 
@@ -1122,7 +1122,7 @@ namespace RT.Util.Serialization
                         else
                         {
                             // Detected a cycle in an object that the user indicated should not be deduplicated
-                            throw new InvalidOperationException(@"The object {0} (of type {1}), which is a substitute for {2} (of type {3}), is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.".Fmt(previousOriginalObject, previousOriginalObject.GetType().FullName, originalObject, originalObject.GetType().FullName));
+                            throw new InvalidOperationException($@"The object {previousOriginalObject} (of type {previousOriginalObject.GetType().FullName}), which is a substitute for {originalObject} (of type {originalObject.GetType().FullName}), is part of a cycle, but Classify is configured (via ClassifyOptions.SerializationEqualityComparer) to not use reference identity on this object, so the cycle cannot be serialized.");
                         }
                     }
 
@@ -1316,7 +1316,7 @@ namespace RT.Util.Serialization
                 foreach (var field in saveType.GetAllFields())
                 {
                     if (field.FieldType == saveType && saveType.IsValueType)
-                        throw new InvalidOperationException(@"Cannot serialize an instance of the type {0} because it is a value type that contains itself.".Fmt(saveType.FullName));
+                        throw new InvalidOperationException($@"Cannot serialize an instance of the type {saveType.FullName} because it is a value type that contains itself.");
 
                     // Ignore the backing field for events
                     if (typeof(Delegate).IsAssignableFrom(field.FieldType) && saveType.GetEvent(field.Name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance) != null)
@@ -1429,7 +1429,7 @@ namespace RT.Util.Serialization
             }
             catch (MissingMethodException)
             {
-                rep.Error("The type {0} does not have a parameterless constructor.".Fmt(type.FullName), "class", type.Name);
+                rep.Error($"The type {type.FullName} does not have a parameterless constructor.", "class", type.Name);
                 return;
             }
             postBuildStep(type, instance, null, rep, new HashSet<Type>(), Enumerable.Empty<string>());
@@ -1462,9 +1462,9 @@ namespace RT.Util.Serialization
             if (type == typeof(Pointer) || type == typeof(IntPtr) || type.IsPointer || type.IsByRef)
             {
                 if (member == null)
-                    rep.Error("Classify cannot serialize the type {0}. Use [ClassifyIgnore] to mark the field as not to be serialized".Fmt(type.FullName, chain.JoinString(", ")));
+                    rep.Error($"Classify cannot serialize the type {type.FullName}. Use [ClassifyIgnore] to mark the field as not to be serialized. Chain: {string.Join(", ", chain)}");
                 else
-                    rep.Error("Classify cannot serialize the type {0}, used by field {1}.{2}. Use [ClassifyIgnore] to mark the field as not to be serialized. Chain: {3}".Fmt(type.FullName, member.DeclaringType.FullName, member.Name, chain.JoinString(", ")), member.DeclaringType.Name, member.Name);
+                    rep.Error($"Classify cannot serialize the type {type.FullName}, used by field {member.DeclaringType.FullName}.{member.Name}. Use [ClassifyIgnore] to mark the field as not to be serialized. Chain: {string.Join(", ", chain)}", member.DeclaringType.Name, member.Name);
                 return;
             }
 
@@ -1475,10 +1475,9 @@ namespace RT.Util.Serialization
             {
                 if (instance == null && !type.IsValueType && type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) == null)
                     rep.Error(
-                        "The {3} {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}. (Chain: {4})"
-                            .Fmt(member.NullOr(m => m.DeclaringType.FullName), member.NullOr(m => m.Name), type.FullName, member is FieldInfo ? "field" : "property",
-                                chain.JoinString(", ")),
-                        member.NullOr(m => m.DeclaringType.Name), member.NullOr(m => m.Name));
+                        string.Format("The {3} {0}.{1} is set to null by default, and its type, {2}, does not have a parameterless constructor. Assign a non-null instance to the field in {0}'s constructor or declare a parameterless constructor in {2}. (Chain: {4})",
+                            member?.DeclaringType.FullName, member?.Name, type.FullName, member is FieldInfo ? "field" : "property", string.Join(", ", chain)),
+                        member?.DeclaringType.Name, member?.Name);
                 else
                 {
                     var inst = instance ?? (type.ContainsGenericParameters ? null : Activator.CreateInstance(type, true));

@@ -257,7 +257,7 @@ namespace RT.Util.Serialization
                     return (char) int.Parse(element.Value);
 
                 default:
-                    throw new InvalidDataException("XmlClassifyFormat does not recognize encoding \"{0}\" on XML tags.".Fmt(enc.Value));
+                    throw new InvalidDataException($"XmlClassifyFormat does not recognize encoding \"{enc.Value}\" on XML tags.");
             }
         }
 
@@ -300,8 +300,8 @@ namespace RT.Util.Serialization
         bool IClassifyFormat<XElement>.IsReferable(XElement element) => element.Attribute("refid") != null;
 
         int IClassifyFormat<XElement>.GetReferenceID(XElement element) => ExactConvert.ToInt(
-            element.Attribute("refid").NullOr(a => a.Value) ??
-            element.Attribute("ref").NullOr(a => a.Value) ??
+            element.Attribute("refid")?.Value ??
+            element.Attribute("ref")?.Value ??
             throw new InvalidOperationException("The XML Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
 
         XElement IClassifyFormat<XElement>.FormatSimpleValue(object value)
@@ -376,7 +376,7 @@ namespace RT.Util.Serialization
         string IClassifyFormat<XElement>.GetType(XElement element, out bool isFullType)
         {
             isFullType = element.Attribute("fulltype") != null;
-            return element.Attribute(isFullType ? "fulltype" : "type").NullOr(e => e.Value);
+            return element.Attribute(isFullType ? "fulltype" : "type")?.Value;
         }
 
         XElement IClassifyFormat<XElement>.FormatWithType(XElement element, string type, bool isFullType)
@@ -391,6 +391,6 @@ namespace RT.Util.Serialization
         XElement IClassifyFormat<XElement>.FormatReference(int refId) => new XElement(_rootTagName, new XAttribute("ref", refId));
 
         void IClassifyFormat<XElement>.ThrowMissingReferable(int refID) =>
-            throw new InvalidOperationException(@"An element with the attribute ref=""{0}"" was encountered, but no matching element with the corresponding attribute refid=""{0}"" was encountered during deserialization. If such an attribute is present somewhere in the XML, the relevant element was not deserialized as an object (most likely because a field corresponding to a parent element was removed from its class declaration).".Fmt(refID));
+            throw new InvalidOperationException($@"An element with the attribute ref=""{refID}"" was encountered, but no matching element with the corresponding attribute refid=""{0}"" was encountered during deserialization. If such an attribute is present somewhere in the XML, the relevant element was not deserialized as an object (most likely because a field corresponding to a parent element was removed from its class declaration).");
     }
 }
