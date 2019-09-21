@@ -8,7 +8,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     /// <summary>Represents a path-related exception.</summary>
-    public sealed class PathException : RTException
+    public sealed class PathException : Exception
     {
         /// <summary>Constructor.</summary>
         public PathException() : base() { }

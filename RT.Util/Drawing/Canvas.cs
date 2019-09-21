@@ -134,15 +134,15 @@ namespace RT.Util.Drawing
             {
                 case CoordinateAxesDirection.RightUp:
                     if (leftWX >= rightWX || bottomWY >= topWY)
-                        throw new RTException("RightUp coordinate system requires that leftWX < rightWX and bottomWY < topWY.");
+                        throw new ArgumentException("RightUp coordinate system requires that leftWX < rightWX and bottomWY < topWY.");
                     break;
                 case CoordinateAxesDirection.RightDown:
                     if (leftWX >= rightWX || topWY >= bottomWY)
-                        throw new RTException("RightDown coordinate system requires that leftWX < rightWX and topWY < bottomWY.");
+                        throw new ArgumentException("RightDown coordinate system requires that leftWX < rightWX and topWY < bottomWY.");
                     break;
             }
             if (leftWX > rightWX && (CoordinateAxesDirection == CoordinateAxesDirection.RightUp || CoordinateAxesDirection == CoordinateAxesDirection.RightDown))
-                throw new RTException("Coordinate systems with the X axis going from right towards the left are not supported (yet)");
+                throw new NotSupportedException("Coordinate systems with the X axis going from right towards the left are not supported (yet)");
 
             // Want to make it so that:
             //   0 == SX(leftWX)

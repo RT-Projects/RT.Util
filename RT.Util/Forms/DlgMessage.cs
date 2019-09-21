@@ -235,7 +235,7 @@ namespace RT.Util.Dialogs
             if (Buttons == null || Buttons.Length == 0)
                 Buttons = new[] { DlgMessageForm.DefaultOKCaption };
             if (Buttons.Length > 4)
-                throw new RTException("The number of message buttons must not exceed 4. Actual number: {0}".Fmt(Buttons.Length));
+                throw new ArgumentException("The number of message buttons must not exceed 4. Actual number: {0}".Fmt(Buttons.Length));
 
             if (Message == null)
                 Message = "";
@@ -253,7 +253,7 @@ namespace RT.Util.Dialogs
                 CancelButton = Buttons.Length - 1;
 
             if (AcceptButton > Buttons.Length - 1 || CancelButton > Buttons.Length - 1)
-                throw new RTException("AcceptButton or CancelButton is too large for the specified number of buttons.");
+                throw new ArgumentException("AcceptButton or CancelButton is too large for the specified number of buttons.");
         }
 
         /// <summary>

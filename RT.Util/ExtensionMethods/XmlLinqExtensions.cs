@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
@@ -41,7 +42,7 @@ namespace RT.Util.ExtensionMethods
         {
             XElement result = element.Element(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an element named \"{1}\".".Fmt(element.Path(), name));
+                throw new InvalidOperationException("Element \"{0}\" is expected contain an element named \"{1}\".".Fmt(element.Path(), name));
             else
                 return result;
         }
@@ -53,7 +54,7 @@ namespace RT.Util.ExtensionMethods
         {
             XAttribute result = element.Attribute(name);
             if (result == null)
-                throw new RTException("Element \"{0}\" is expected contain an attribute named \"{1}\".".Fmt(element.Path(), name));
+                throw new InvalidOperationException("Element \"{0}\" is expected contain an attribute named \"{1}\".".Fmt(element.Path(), name));
             else
                 return result;
         }
@@ -68,7 +69,7 @@ namespace RT.Util.ExtensionMethods
             if (double.TryParse(value, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, CultureInfo.InvariantCulture, out result))
                 return result;
             else
-                throw new RTException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")".Fmt(attribute.Path()));
+                throw new InvalidOperationException("Attribute \"{0}\" is expected to contain a number (convertible to \"double\")".Fmt(attribute.Path()));
         }
 
         /// <summary>
@@ -81,7 +82,7 @@ namespace RT.Util.ExtensionMethods
                 return defaultValue;
             else
                 try { return ExactConvert.To<T>(el.Value); }
-                catch (ExactConvertException E) { throw new RTException(("Element \"{0}/{1}\", when present, must contain a value convertible to a certain type: " + E.Message).Fmt(element.Path(), name)); }
+                catch (ExactConvertException E) { throw new InvalidOperationException(("Element \"{0}/{1}\", when present, must contain a value convertible to a certain type: " + E.Message).Fmt(element.Path(), name)); }
         }
 
         /// <summary>

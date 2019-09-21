@@ -30,7 +30,7 @@ namespace RT.Util.ExtensionMethods
                 }
                 else
                 {
-                    throw new RTException("Process enumeration failed; win32 error code: {0}".Fmt(Marshal.GetLastWin32Error()));
+                    throw new InternalErrorException("Process enumeration failed; win32 error code: {0}".Fmt(Marshal.GetLastWin32Error()));
                 }
             }
             finally

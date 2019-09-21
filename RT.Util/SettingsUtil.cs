@@ -609,7 +609,7 @@ namespace RT.Util
     }
 
     /// <summary>Indicates that the user chose to cancel the current operation.</summary>
-    public sealed class SettingsCancelException : RTException
+    public sealed class SettingsCancelException : Exception
     {
         /// <summary>Creates an exception instance with the specified message.</summary>
         public SettingsCancelException()

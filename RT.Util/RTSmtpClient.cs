@@ -14,7 +14,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util
 {
     /// <summary>Encapsulates an error condition that occurred during an SMTP exchange.</summary>
-    public sealed class RTSmtpException : RTException
+    public sealed class RTSmtpException : Exception
     {
         /// <summary>Contains the SMTP conversation (protocol text sent back and forth) up to the point of the error.</summary>
         public List<string> Conversation { get; private set; }
