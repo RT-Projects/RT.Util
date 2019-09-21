@@ -218,8 +218,6 @@
     <Compile Include="RTException.cs" />
     <Compile Include="SettingsUtil.cs" />
     <Compile Include="SoundPlayerAsync.cs" />
-    <Compile Include="Streams\ArithmeticCodingReader.cs" />
-    <Compile Include="Streams\ArithmeticCodingWriter.cs" />
     <Compile Include="Streams\CRC32Stream.cs" />
     <Compile Include="Streams\DynamicContentStream.cs" />
     <Compile Include="Streams\RSyncChecksumStream.cs" />
