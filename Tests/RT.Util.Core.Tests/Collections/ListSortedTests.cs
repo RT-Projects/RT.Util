@@ -76,12 +76,7 @@ namespace RT.Util.Collections
             var list = new ListSorted<TestThingy>(20);
             list.Add(A); list.Add(B); list.Add(C); list.Add(D); list.Add(E);
             assertSeqEquals(list, A, B, C, D, E);
-            try
-            {
-                assertSeqEquals(list, A, C, B, D, E);
-                Assert.Fail();
-            }
-            catch { }
+            assertSeqNotEquals(list, A, C, B, D, E);
         }
 
         [Test]
@@ -201,6 +196,20 @@ namespace RT.Util.Collections
             Assert.AreEqual(seq1.Count, seq2.Length);
             for (int i = 0; i < seq1.Count; i++)
                 Assert.AreSame(seq1[i], seq2[i]);
+        }
+
+        private void assertSeqNotEquals(ListSorted<TestThingy> seq1, params TestThingy[] seq2)
+        {
+            bool areSame()
+            {
+                if (seq1.Count != seq2.Length)
+                    return false;
+                for (int i = 0; i < seq1.Count; i++)
+                    if (seq1[i] != seq2[i])
+                        return false;
+                return true;
+            }
+            Assert.IsFalse(areSame());
         }
     }
 }

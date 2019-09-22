@@ -8,11 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
-    <Compile Include="..\RT.Util.Core\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
+    <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
   </ItemGroup>
 
 </Project>

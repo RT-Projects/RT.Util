@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Xml;
-using RT.Util.ExtensionMethods;
+using RT.Serialization;
 using RT.Util;
+using RT.Util.ExtensionMethods;
 
 // TODO: possible areas of improvement
 //
@@ -1378,7 +1379,7 @@ namespace RT.KitchenSink.Collections
     /// <summary>
     /// All RVariant exceptions derive from this one.
     /// </summary>
-    public class RVariantException : RTException
+    public class RVariantException : Exception
     {
         /// <summary>
         /// Should only be used by constructors which initialise the error message in
@@ -1403,9 +1404,9 @@ namespace RT.KitchenSink.Collections
     {
         /// <summary>Creates a conversion error exception with the appropriate message.</summary>
         public RVariantConvertException(RVariant variant, TypeCode desiredType)
+            : base(string.Format("Location \"{0}\": value \"{1}\" cannot be converted to type \"{2}\"",
+                variant.FullPathNoNull, variant.Value, desiredType))
         {
-            _message = string.Format("Location \"{0}\": value \"{1}\" cannot be converted to type \"{2}\"",
-                variant.FullPathNoNull, variant.Value, desiredType);
         }
     }
 
@@ -1417,19 +1418,16 @@ namespace RT.KitchenSink.Collections
     {
         /// <summary>Creates a value-not-found exception with the appropriate message.</summary>
         public RVariantNotFoundException(RVariant variant, TypeCode desiredType)
+            : base(string.Format("Location \"{0}\": expected a Value convertible to \"{1}\"",
+                    variant.FullPathNoNull, desiredType))
         {
-            if (variant.Kind != RVariantKind.Value)
-            {
-                _message = string.Format("Location \"{0}\": expected a Value convertible to \"{1}\"",
-                    variant.FullPathNoNull, desiredType);
-            }
         }
 
         /// <summary>Creates a value-not-found exception with the appropriate message.</summary>
         public RVariantNotFoundException(RVariant variant, RVariantKind desiredKind)
+            : base(string.Format("Location \"{0}\": expected a variant of kind {1}",
+                variant.FullPathNoNull, desiredKind))
         {
-            _message = string.Format("Location \"{0}\": expected a variant of kind {1}",
-                variant.FullPathNoNull, desiredKind);
         }
     }
 

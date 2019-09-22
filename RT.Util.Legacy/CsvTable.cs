@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using RT.Util.Collections;
-using RT.Util.ExtensionMethods;
 using RT.KitchenSink.Collections;
+using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink
 {

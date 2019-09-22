@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using NUnit.Framework;
-using RT.Util;
+using RT.Serialization;
 
 namespace RT.KitchenSink.Collections.Tests
 {
@@ -30,7 +30,7 @@ namespace RT.KitchenSink.Collections.Tests
         RVariant valOneLevelList;
         RVariant valComplex;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void InitAll()
         {
             valStub = new RVariant();

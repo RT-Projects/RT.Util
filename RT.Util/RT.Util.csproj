@@ -1,289 +1,48 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RT.Util</RootNamespace>
-    <AssemblyName>RT.Util</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <OutputPath>..\Builds\$(Configuration)</OutputPath>
-    <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
-    <DocumentationFile>..\Builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFramework>net472</TargetFramework>
+    <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <Configurations>Debug;Release;DebugUnsafe;ReleaseUnsafe</Configurations>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnsafe|AnyCPU'">
     <Optimize>false</Optimize>
-    <DefineConstants>DEBUG;TRACE;EXPORT_UTIL</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE;EXPORT_UTIL</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugUnsafe|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>TRACE;DEBUG;UNSAFE;EXPORT_UTIL</DefineConstants>
+    <DefineConstants>TRACE;UNSAFE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseUnsafe|AnyCPU'">
-    <DefineConstants>TRACE;UNSAFE;EXPORT_UTIL</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnsafe|AnyCPU'">
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>latest</LangVersion>
+    <DefineConstants>TRACE;UNSAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Lingo\TranslationWindow.xaml" />
+    <Page Include="Lingo\TranslationWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
+    <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
+    <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
+    <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
-    <Reference Include="System.XML" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Collections\AutoDictionary.cs" />
-    <Compile Include="Collections\AutoList.cs" />
-    <Compile Include="Collections\BinValues.cs" />
-    <Compile Include="Collections\ListSorted.cs" />
-    <Compile Include="Collections\QueueViewable.cs" />
-    <Compile Include="Collections\ReadOnlyCollections.cs" />
-    <Compile Include="Collections\RecentlyUsedCache.cs" />
-    <Compile Include="CommandLine.cs" />
-    <Compile Include="Consoles\ColoredConsoleOut.cs" />
-    <Compile Include="Consoles\ConsoleColoredString.cs" />
-    <Compile Include="Consoles\ConsoleUtil.cs" />
-    <Compile Include="Controls\TextBoxEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\DoubleBufferedPanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\HotkeyEdit.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\LabelEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\ListBoxEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\MenuRadioGroup.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\MenuRadioItem.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\NativeToolStripRenderer.cs" />
-    <Compile Include="Controls\NiceClosePanel.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\ScrollableLabelEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\Separator.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\SplitContainerEx.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Controls\TextBoxAutoHeight.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="CustomCallStack.cs" />
-    <Compile Include="CuteML.cs" />
-    <Compile Include="CustomComparer.cs" />
-    <Compile Include="ExtensionMethods\ConsoleExtensions.cs" />
-    <Compile Include="ExtensionMethods\TextReaderWriterExtensions.cs" />
-    <Compile Include="Geometry\TriangleD.cs" />
-    <Compile Include="Geometry\Triangulate.cs" />
-    <Compile Include="HClient.cs" />
-    <Compile Include="ILReader.cs" />
-    <Compile Include="Drawing\BytesBitmap.cs" />
-    <Compile Include="Drawing\Canvas.cs" />
-    <Compile Include="Drawing\GraphicsTransformer.cs" />
-    <Compile Include="Drawing\GraphicsUtil.cs" />
-    <Compile Include="EggsML.cs" />
-    <Compile Include="ExtensionMethods\CollectionExtensions.cs" />
-    <Compile Include="ExtensionMethods\DateTimeExtensions.cs" />
-    <Compile Include="ExtensionMethods\IEnumerableExtensions.cs" />
-    <Compile Include="ExtensionMethods\IQueryableExtensions.cs" />
-    <Compile Include="ExtensionMethods\NumericExtensions.cs" />
-    <Compile Include="ExtensionMethods\ProcessExtensions.cs" />
-    <Compile Include="ExtensionMethods\ReflectionExtensions.cs" />
-    <Compile Include="ExtensionMethods\StreamExtensions.cs" />
-    <Compile Include="ExtensionMethods\StringExtensions.cs" />
-    <Compile Include="ExtensionMethods\WindowsFormsExtensions.cs" />
-    <Compile Include="ExtensionMethods\XmlLinqExtensions.cs" />
-    <Compile Include="Forms\DlgMessage.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\DlgMessage.Designer.cs">
-      <DependentUpon>DlgMessage.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\ManagedForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\ManagedWindow.cs" />
-    <Compile Include="FpsCounter.cs" />
-    <Compile Include="Geometry\ArcD.cs" />
-    <Compile Include="Geometry\BoundingBoxD.cs" />
-    <Compile Include="Geometry\CircleD.cs" />
-    <Compile Include="Geometry\EdgeD.cs" />
-    <Compile Include="Geometry\GeomUt.cs" />
-    <Compile Include="Geometry\Intersect.cs" />
-    <Compile Include="Geometry\PointD.cs" />
-    <Compile Include="Geometry\PolygonD.cs" />
-    <Compile Include="Geometry\RectangleD.cs" />
-    <Compile Include="GlobalKeyboardListener.cs" />
-    <Compile Include="Forms\InputBox.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\InputBox.Designer.cs">
-      <DependentUpon>InputBox.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Lingo\ComponentModelTranslation.cs" />
-    <Compile Include="Lingo\LanguageHelper.cs" />
-    <Compile Include="Lingo\LanguageHelperWinForms.cs" />
-    <Compile Include="Lingo\LanguageHelperWpf.cs" />
-    <Compile Include="Lingo\Languages.cs" />
-    <Compile Include="Lingo\Lingo.cs" />
-    <Compile Include="Lingo\LingoAttributes.cs" />
-    <Compile Include="Lingo\LingoWpf.cs" />
-    <Compile Include="Lingo\NumberSystem.cs" />
-    <Compile Include="Lingo\TranslatableException.cs" />
-    <Compile Include="Lingo\TranslationBase.cs" />
-    <Compile Include="Lingo\TranslationCreateForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Lingo\TranslationDialog.cs" />
-    <Compile Include="Lingo\TranslationForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Lingo\TranslationWindow.xaml.cs">
-      <DependentUpon>TranslationWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Lingo\TrString.cs" />
-    <Compile Include="Log.cs" />
-    <Compile Include="MultipartFormDataHelper.cs" />
-    <Compile Include="NameGenerator.cs" />
-    <Compile Include="Paths\PathManager.cs" />
-    <Compile Include="Paths\PathUtil.cs" />
-    <Compile Include="CommandRunner.cs" />
-    <Compile Include="Regex2.cs" />
-    <Compile Include="RhoML.cs" />
-    <Compile Include="RTSmtpClient.cs" />
-    <Compile Include="RummageAttributes.cs" />
-    <Compile Include="Stopwatch.cs" />
-    <Compile Include="Streams\BinaryStream.cs" />
-    <Compile Include="Streams\ConsoleLoggingStream.cs" />
-    <Compile Include="Streams\DoNotCloseStream.cs" />
-    <Compile Include="Streams\HashingStream.cs" />
-    <Compile Include="Streams\NewlineNormalizerStream.cs" />
-    <Compile Include="Streams\TimeoutableStream.cs" />
-    <Compile Include="Text\Alignment.cs" />
-    <Compile Include="Text\OffsetToLineCol.cs" />
-    <Compile Include="Threading\Periodic.cs" />
-    <Compile Include="Threading\RateLimitedAction.cs" />
-    <Compile Include="Tmr.cs" />
-    <Compile Include="Ut\Extensions.cs" />
-    <Compile Include="Ut\OnException.cs" />
-    <Compile Include="Ut\Parallel.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Exception.cs" />
-    <Compile Include="SettingsUtil.cs" />
-    <Compile Include="SoundPlayerAsync.cs" />
-    <Compile Include="Streams\CRC32Stream.cs" />
-    <Compile Include="Streams\DynamicContentStream.cs" />
-    <Compile Include="Streams\RSyncChecksumStream.cs" />
-    <Compile Include="Streams\SlowStream.cs" />
-    <Compile Include="Streams\VoidStream.cs" />
-    <Compile Include="EnumStrong.cs" />
-    <Compile Include="Text\TextTable.cs" />
-    <Compile Include="Ut\Diff.cs" />
-    <Compile Include="Ut\General.cs" />
-    <Compile Include="Random.cs" />
-    <Compile Include="Ut\ReduceRequiredSet.cs" />
-    <Compile Include="Ut\Reflection.cs" />
-    <Compile Include="Ut\RunMain.cs" />
-    <Compile Include="Ut\TicToc.cs" />
-    <Compile Include="Ut\WinForms.cs" />
-    <Compile Include="Waiter.cs" />
-    <Compile Include="WinAPI.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Forms\DlgMessage.resx">
-      <DependentUpon>DlgMessage.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\InputBox.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>InputBox.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="Lingo\TranslationWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\RT.Json\RT.Json.csproj">
-      <Project>{e2fc4a33-b56b-4d47-a6f9-89054e5f80aa}</Project>
-      <Name>RT.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj">
-      <Project>{66ffaa2c-f727-4732-8709-a3d807a569a4}</Project>
-      <Name>RT.PostBuild</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj">
-      <Project>{afbde5ec-10fb-458f-b2ab-21c4399d5fed}</Project>
-      <Name>RT.Serialization.Binary</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj">
-      <Project>{b1c60b1a-e957-49b1-9a6d-90f7b16bea77}</Project>
-      <Name>RT.Serialization.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj">
-      <Project>{6ee95158-7c70-4ccb-a0b8-e6be033e9a32}</Project>
-      <Name>RT.Serialization.Xml</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj">
-      <Project>{2d52f4d3-167d-47c1-ab16-10f9649e8963}</Project>
-      <Name>RT.Serialization</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

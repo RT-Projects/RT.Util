@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace RT.Util
 {
-    public static partial class Ut
+    public static partial class UtWin
     {
         /// <summary>
         ///     Sends the specified sequence of key strokes to the active application. See remarks for details.</summary>

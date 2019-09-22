@@ -11,7 +11,7 @@ namespace RT.Util.Streams
     [TestFixture]
     public sealed class NewlineNormalizerStreamTests
     {
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream8bitReading()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf8(), "\r".ToUtf8(), "\r\n".ToUtf8() }.Permutations();
@@ -40,7 +40,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream8bitWriting()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf8(), "\r".ToUtf8(), "\r\n".ToUtf8() }.Permutations();
@@ -69,7 +69,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream16bitLittleEndianRead()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16(), "\r".ToUtf16(), "\r\n".ToUtf16() }.Permutations();
@@ -98,7 +98,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream16bitLittleEndianWrite()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16(), "\r".ToUtf16(), "\r\n".ToUtf16() }.Permutations();
@@ -127,7 +127,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream16bitBigEndianRead()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16BE(), "\r".ToUtf16BE(), "\r\n".ToUtf16BE() }.Permutations();
@@ -156,7 +156,7 @@ namespace RT.Util.Streams
             }
         }
 
-        [Test, Timeout(30000)]
+        [Test]
         public void TestNewlineNormalizerStream16bitBigEndianWrite()
         {
             var newlinePermutations = new byte[][] { "\n".ToUtf16BE(), "\r".ToUtf16BE(), "\r\n".ToUtf16BE() }.Permutations();

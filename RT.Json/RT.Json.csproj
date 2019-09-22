@@ -8,10 +8,10 @@
 
   <ItemGroup>
     <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="ExactConvert.cs" />
-    <Compile Include="..\RT.Util\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
-    <Compile Include="..\RT.Util\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
-    <Compile Include="..\RT.Util\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
-    <Compile Include="..\RT.Util\Text\OffsetToLineCol.cs" Link="SharedInternalUtil\Text\OffsetToLineCol.cs" />
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\StringExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StringExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\Text\OffsetToLineCol.cs" Link="SharedInternalUtil\Text\OffsetToLineCol.cs" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
-﻿using NUnit.Framework;
-using System.Xml.Linq;
+﻿using System;
 using System.Globalization;
+using System.Xml.Linq;
+using NUnit.Framework;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -21,7 +22,7 @@ namespace RT.Util.ExtensionMethods
         XDocument doc;
         XElement root;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Setup()
         {
             doc = XDocument.Parse(xml);
@@ -57,7 +58,7 @@ namespace RT.Util.ExtensionMethods
                 root.ChkElement("actions").ChkElement("not-here");
                 Assert.Fail("Exception expected");
             }
-            catch (RTException E)
+            catch (Exception E)
             {
                 Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
                 Assert.IsTrue(E.Message.Contains("not-here"));
@@ -77,7 +78,7 @@ namespace RT.Util.ExtensionMethods
                 root.ChkElement("actions").ChkAttribute("not-here");
                 Assert.Fail("Exception expected");
             }
-            catch (RTException E)
+            catch (Exception E)
             {
                 Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
                 Assert.IsTrue(E.Message.Contains("not-here"));
@@ -93,7 +94,7 @@ namespace RT.Util.ExtensionMethods
                 double dummy = root.Attribute("unique-id").AsDouble();
                 Assert.Fail("Expected exception");
             }
-            catch (RTException E)
+            catch (Exception E)
             {
                 Assert.IsTrue(E.Message.Contains("double"));
             }

@@ -46,8 +46,8 @@ namespace RT.Util.Paths
             // Invalid paths
             assertPathToggle(@"C:\blah\thing", @"", ToggleRelativeProblem.InvalidToggledPath);
             assertPathToggle(@"", @"thing\blah", ToggleRelativeProblem.InvalidBasePath);
-            assertPathToggle(@"C:\blah\thing", @"thing\*\blah", ToggleRelativeProblem.InvalidToggledPath);
-            assertPathToggle(@"C:\blah\*\thing", @"thing\blah", ToggleRelativeProblem.InvalidBasePath);
+            //assertPathToggle(@"C:\blah\thing", @"thing\*\blah", ToggleRelativeProblem.InvalidToggledPath); - this is valid in Core
+            //assertPathToggle(@"C:\blah\*\thing", @"thing\blah", ToggleRelativeProblem.InvalidBasePath); - this is valid in Core
             // UNC paths
             assertPathToggle(@"\\serv\share\blah\thing", @"..\stuff\more", @"\\serv\share\blah\stuff\more");
             assertPathToggle(@"\\serv\share\blah\thing", @"\\serv\share\blah\stuff\more", @"..\stuff\more");
