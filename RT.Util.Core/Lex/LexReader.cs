@@ -88,8 +88,8 @@ namespace RT.KitchenSink.Lex
 
         public void Consume(int count)
         {
-            if (count < 0) throw new ArgumentException("Count cannot be negative");
-            if (_offset + count > _text.Length) throw new ArgumentException("There aren't enough characters left in the input");
+            if (count < 0) throw new ArgumentException("Count cannot be negative", nameof(count));
+            if (_offset + count > _text.Length) throw new InvalidOperationException("There aren't enough characters left in the input");
             _offset += count;
         }
 
@@ -103,8 +103,8 @@ namespace RT.KitchenSink.Lex
 
         public string ConsumeString(int count)
         {
-            if (count < 0) throw new ArgumentException("Count cannot be negative");
-            if (_offset + count > _text.Length) throw new ArgumentException("There aren't enough characters left in the input");
+            if (count < 0) throw new ArgumentException("Count cannot be negative", nameof(count));
+            if (_offset + count > _text.Length) throw new InvalidOperationException("There aren't enough characters left in the input");
             string result = _text.Substring(_offset, count);
             _offset += count;
             return result;
@@ -141,8 +141,8 @@ namespace RT.KitchenSink.Lex
             get
             {
                 int offs = _offset + offsetFromCurrent;
-                if (offs < 0) throw new ArgumentException("Resulting offset is out of range (too small)");
-                if (offs >= _text.Length) throw new ArgumentException("Resulting offset is out of range (too large)");
+                if (offs < 0) throw new InvalidOperationException("Resulting offset is out of range (too small)");
+                if (offs >= _text.Length) throw new InvalidOperationException("Resulting offset is out of range (too large)");
                 return _text[offs];
             }
         }

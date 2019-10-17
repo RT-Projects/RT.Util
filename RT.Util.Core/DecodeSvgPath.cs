@@ -153,24 +153,28 @@ namespace RT.KitchenSink
             if (bézierSmoothness <= 0)
                 throw new ArgumentOutOfRangeException(nameof(bézierSmoothness), "The bézierSmoothness parameter cannot be zero or negative.");
 
-            foreach (var group in pieces.Split(pp => pp.Type == PathPieceType.End).Where(gr => gr.Any()).Select(gr => gr.ToArray()))
+            IEnumerable<IEnumerable<PointD>> iterator()
             {
-                yield return Enumerable.Range(0, group.Length).SelectMany(grIx =>
+                foreach (var group in pieces.Split(pp => pp.Type == PathPieceType.End).Where(gr => gr.Any()).Select(gr => gr.ToArray()))
                 {
-                    var next = group[grIx];
-                    var prev = group[(grIx + group.Length - 1) % group.Length];
+                    yield return Enumerable.Range(0, group.Length).SelectMany(grIx =>
+                    {
+                        var next = group[grIx];
+                        var prev = group[(grIx + group.Length - 1) % group.Length];
 
-                    if (next.Type == PathPieceType.Move || next.Type == PathPieceType.Line)
-                        return next.Points;
+                        if (next.Type == PathPieceType.Move || next.Type == PathPieceType.Line)
+                            return next.Points;
 
-                    if (next.Type == PathPieceType.Curve)
-                        return Enumerable.Range(0, next.Points.Length / 3)
-                            .SelectMany(ix => smoothBézier(ix == 0 ? prev.Points[prev.Points.Length - 1] : next.Points[3 * ix - 1], next.Points[3 * ix], next.Points[3 * ix + 1], next.Points[3 * ix + 2], bézierSmoothness).Skip(1))
-                            .ToArray();
+                        if (next.Type == PathPieceType.Curve)
+                            return Enumerable.Range(0, next.Points.Length / 3)
+                                .SelectMany(ix => smoothBézier(ix == 0 ? prev.Points[prev.Points.Length - 1] : next.Points[3 * ix - 1], next.Points[3 * ix], next.Points[3 * ix + 1], next.Points[3 * ix + 2], bézierSmoothness).Skip(1))
+                                .ToArray();
 
-                    throw new InvalidOperationException();
-                });
+                        throw new InvalidOperationException();
+                    });
+                }
             }
+            return iterator();
         }
 
         private static PointD bé(PointD start, PointD c1, PointD c2, PointD end, double t) => Math.Pow((1 - t), 3) * start + 3 * (1 - t) * (1 - t) * t * c1 + 3 * (1 - t) * t * t * c2 + Math.Pow(t, 3) * end;

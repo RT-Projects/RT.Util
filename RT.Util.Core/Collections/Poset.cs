@@ -76,7 +76,7 @@ namespace RT.KitchenSink.Collections
         public void AddElement(T element)
         {
             if (element.PartialCompareTo(_elements[0]) != PartialComparisonResult.Equal)
-                throw new ArgumentException("Cannot add an element to a PosetNode which is not equal to the elements already in it.");
+                throw new ArgumentException("Cannot add an element to a PosetNode which is not equal to the elements already in it.", nameof(element));
             _elements.Add(element);
         }
 
