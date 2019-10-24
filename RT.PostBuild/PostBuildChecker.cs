@@ -14,41 +14,54 @@ namespace RT.PostBuild
 {
     public static class PostBuildChecker
     {
-        /// <summary>Runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build event. See remarks for details.</summary>
-        /// <remarks><para>In non-DEBUG mode, does nothing and returns 0.</para>
-        /// <para>Intended use is as follows:</para>
-        /// <list type="bullet">
-        ///    <item><description><para>Add the following line to your project's post-build event:</para>
-        ///        <code>"$(TargetPath)" --post-build-check "$(SolutionDir)."</code></description></item>
-        ///    <item><description><para>Add the following code at the beginning of your project's Main() method:</para>
-        ///        <code>
-        ///            if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
-        ///                return Ut.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());
-        ///        </code>
-        ///        <para>If your project entails several assemblies, you can specify additional assemblies in the call to <see cref="Ut.RunPostBuildChecks"/>.
-        ///            For example, you could specify <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para>
-        ///        </description></item>
-        ///    <item><description>
-        ///        <para>Add post-build check methods to any type where they may be relevant. For example, for a command-line program that uses
-        ///            <see cref="RT.Util.CommandLine.CommandLineParser"/>, you might use code similar to the following:</para>
-        ///        <code>
-        ///            #if DEBUG
-        ///                private static void PostBuildCheck(IPostBuildReporter rep)
-        ///                {
-        ///                    // Replace “CommandLine” with the name of your command-line type, and “Translation”
-        ///                    // with the name of your translation type (<see cref="RT.Util.Lingo.TranslationBase"/>)
-        ///                    CommandLineParser.PostBuildStep&lt;CommandLine&gt;(rep, typeof(Translation));
-        ///                }
-        ///            #endif
-        ///        </code>
-        ///        <para>The method is expected to have one parameter of type <see cref="IPostBuildReporter"/>, a return type of void, and it is expected
-        ///            to be static and non-public. Errors and warnings can be reported by calling methods on said <see cref="IPostBuildReporter"/> object.
-        ///            Alternatively, throwing an exception will also report an error.</para>
-        ///    </description></item>
-        /// </list></remarks>
-        /// <param name="sourcePath">Specifies the path to the folder containing the C# source files.</param>
-        /// <param name="assemblies">Specifies the compiled assemblies from which to run post-build checks.</param>
-        /// <returns>1 if any errors occurred, otherwise 0.</returns>
+        /// <summary>
+        ///     Runs all post-build checks defined in the specified assemblies. This is intended to be run as a post-build
+        ///     event. See remarks for details.</summary>
+        /// <remarks>
+        ///     <para>
+        ///         In non-DEBUG mode, does nothing and returns 0.</para>
+        ///     <para>
+        ///         Intended use is as follows:</para>
+        ///     <list type="bullet">
+        ///         <item><description>
+        ///             <para>
+        ///                 Add the following line to your project's post-build event:</para>
+        ///             <code>
+        ///                 "$(TargetPath)" --post-build-check "$(SolutionDir)."</code></description></item>
+        ///         <item><description>
+        ///             <para>
+        ///                 Add the following code at the beginning of your project's Main() method:</para>
+        ///             <code>
+        ///                 if (args.Length == 2 &amp;&amp; args[0] == "--post-build-check")
+        ///                     return PostBuildChecker.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());</code>
+        ///             <para>
+        ///                 If your project entails several assemblies, you can specify additional assemblies in the call to
+        ///                 <see cref="PostBuildChecker.RunPostBuildChecks"/>. For example, you could specify
+        ///                 <c>typeof(SomeTypeInMyLibrary).Assembly</c>.</para></description></item>
+        ///         <item><description>
+        ///             <para>
+        ///                 Add post-build check methods to any type where they may be relevant. For example, you might use
+        ///                 code similar to the following:</para>
+        ///             <code>
+        ///                 #if DEBUG
+        ///                     private static void PostBuildCheck(IPostBuildReporter rep)
+        ///                     {
+        ///                         if (somethingWrong())
+        ///                             rep.Error("Error XYZ occurred.", "class", "Gizmo");
+        ///                     }
+        ///                 #endif</code>
+        ///             <para>
+        ///                 The method is expected to have one parameter of type <see cref="IPostBuildReporter"/>, a return
+        ///                 type of void, and it is expected to be static and non-public. Errors and warnings can be reported
+        ///                 by calling methods on said <see cref="IPostBuildReporter"/> object. (In the above example,
+        ///                 PostBuildChecker will attempt to find a class called Gizmo to link the error message to a location
+        ///                 in the source.) Throwing an exception will also report an error.</para></description></item></list></remarks>
+        /// <param name="sourcePath">
+        ///     Specifies the path to the folder containing the C# source files.</param>
+        /// <param name="assemblies">
+        ///     Specifies the compiled assemblies from which to run post-build checks.</param>
+        /// <returns>
+        ///     1 if any errors occurred, otherwise 0.</returns>
         public static int RunPostBuildChecks(string sourcePath, params Assembly[] assemblies)
         {
             int countMethods = 0;
