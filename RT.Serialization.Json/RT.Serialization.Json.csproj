@@ -6,6 +6,10 @@
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>..\Builds\Release-netstandard2.0\RT.Serialization.Json.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />

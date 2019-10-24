@@ -6,6 +6,10 @@
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>..\Builds\Release-netstandard2.0\RT.PostBuild.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\RT.Util.Core\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />

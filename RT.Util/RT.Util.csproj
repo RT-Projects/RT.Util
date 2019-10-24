@@ -17,6 +17,7 @@
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;UNSAFE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>..\Builds\ReleaseUnsafe-net472\RT.Util.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

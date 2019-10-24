@@ -6,6 +6,10 @@
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>..\Builds\Release-netstandard2.0\RT.Json.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="ExactConvert.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
