@@ -27,7 +27,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
@@ -44,7 +44,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
@@ -61,7 +61,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static T Deserialize<T>(JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
@@ -78,7 +78,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     A new instance of the requested type.</returns>
         public static object Deserialize(Type type, JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
@@ -98,7 +98,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         public static void DeserializeIntoObject<T>(JsonValue json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
         {
             Classify.DeserializeIntoObject(json, intoObject, format ?? DefaultFormat, options);
@@ -115,7 +115,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
         {
             Classify.DeserializeFileIntoObject(filename, intoObject, format ?? DefaultFormat, options);
@@ -132,7 +132,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
         {
             Classify.SerializeToFile(saveObject, filename, format ?? DefaultFormat, options);
@@ -149,7 +149,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
         {
             Classify.SerializeToFile(saveType, saveObject, filename, format ?? DefaultFormat, options);
@@ -164,7 +164,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
         public static JsonValue Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
@@ -181,7 +181,7 @@ namespace RT.Serialization
         /// <param name="options">
         ///     Options.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
         /// <returns>
         ///     The serialized form generated from the object.</returns>
         public static JsonValue Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)

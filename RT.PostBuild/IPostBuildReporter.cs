@@ -1,6 +1,6 @@
 ﻿namespace RT.PostBuild
 {
-    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="Ut.RunPostBuildChecks"/>.</summary>
+    /// <summary>Provides the ability to output post-build messages (with filename and line number) to Console.Error. This interface is used by <see cref="PostBuildChecker.RunPostBuildChecks"/>.</summary>
     public interface IPostBuildReporter
     {
         /// <summary>When implemented in a class, searches the source directory for the first occurrence of the first token in <paramref name="tokens"/>,

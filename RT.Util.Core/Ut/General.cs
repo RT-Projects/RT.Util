@@ -107,7 +107,7 @@ namespace RT.Util
 
         /// <summary>
         ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
-        ///     cref="InternalErrorException"/> afterwards.</summary>
+        ///     cref="Exception"/> afterwards.</summary>
         [DebuggerHidden]
         public static void Assert(bool assertion, string message = null)
         {
@@ -121,7 +121,7 @@ namespace RT.Util
 
         /// <summary>
         ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see
-        ///     cref="InternalErrorException"/> afterwards.</summary>
+        ///     cref="Exception"/> afterwards.</summary>
         [DebuggerHidden]
         public static void AssertAll<T>(IEnumerable<T> collection, Func<T, bool> assertion, string message = null)
         {
