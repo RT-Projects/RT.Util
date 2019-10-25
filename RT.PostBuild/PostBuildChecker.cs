@@ -12,6 +12,7 @@ using RT.Util.IL;
 
 namespace RT.PostBuild
 {
+    /// <summary>Exposes methods to run post-build checks and fail the build if the checks fail.</summary>
     public static class PostBuildChecker
     {
         /// <summary>

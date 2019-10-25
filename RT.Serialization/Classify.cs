@@ -1404,7 +1404,7 @@ namespace RT.Serialization
         /// <summary>
         ///     Performs safety checks to ensure that a specific type doesn't cause Classify exceptions. Run this method as a
         ///     post-build step to ensure reliability of execution. For an example of use, see <see
-        ///     cref="Ut.RunPostBuildChecks"/>.</summary>
+        ///     cref="PostBuildChecker.RunPostBuildChecks"/>.</summary>
         /// <typeparam name="T">
         ///     The type that must be Classify-able.</typeparam>
         /// <param name="rep">
@@ -1417,7 +1417,7 @@ namespace RT.Serialization
         /// <summary>
         ///     Performs safety checks to ensure that a specific type doesn't cause Classify exceptions. Run this method as a
         ///     post-build step to ensure reliability of execution. For an example of use, see <see
-        ///     cref="Ut.RunPostBuildChecks"/>.</summary>
+        ///     cref="PostBuildChecker.RunPostBuildChecks"/>.</summary>
         /// <param name="type">
         ///     The type that must be Classify-able.</param>
         /// <param name="rep">

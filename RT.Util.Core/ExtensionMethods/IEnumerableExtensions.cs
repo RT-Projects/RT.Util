@@ -374,6 +374,8 @@ namespace RT.Util.ExtensionMethods
         ///     The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">
         ///     The <see cref="IEnumerable&lt;T&gt;"/> to return the first element of.</param>
+        /// <param name="predicate">
+        ///     Only consider elements that satisfy this predicate.</param>
         /// <returns>
         ///     <c>null</c> if <paramref name="source"/> is empty; otherwise, the first element in <paramref name="source"/>.</returns>
         public static T? FirstOrNull<T>(this IEnumerable<T> source, Func<T, bool> predicate) where T : struct
