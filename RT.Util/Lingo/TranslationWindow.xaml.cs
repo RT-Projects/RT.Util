@@ -10,8 +10,6 @@ using System.Windows.Media;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 
-#warning TODO: Lingo/WPF is unfinished and sort of belongs on a branch. Search for comments with "TODO" in them before deleting this warning.
-
 namespace RT.Util.Lingo
 {
     /// <summary>

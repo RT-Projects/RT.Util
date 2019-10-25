@@ -7,6 +7,7 @@ namespace RT.Util.Lingo
 {
     /// <summary>Helps an application using Lingo to display language selection UI using WPF controls.</summary>
     /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>
+    [Obsolete("TODO: Lingo/WPF is unfinished and sort of belongs on a branch. Search for comments with \"TODO\" in them before deleting this warning.")]
     public class LanguageHelperWpf<TTranslation> : LanguageHelper<TTranslation> where TTranslation : TranslationBase, new()
     {
         private readonly TranslationWindow.Settings _settings;
