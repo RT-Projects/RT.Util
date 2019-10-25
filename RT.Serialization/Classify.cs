@@ -61,8 +61,9 @@ namespace RT.Serialization
     ///             supported type.</description></item>
     ///         <item><description>
     ///             Classify handles values of the type of the serialized form specially. For example, if you are serializing
-    ///             to XML, serializing an <see cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you
-    ///             are classifying to JSON, the same goes for <see cref="Json.JsonValue"/> objects, etc.</description></item>
+    ///             to XML using <see cref="System.Xml.Linq.XElement"/>, serializing an actual <see
+    ///             cref="System.Xml.Linq.XElement"/> object generates the XML directly; if you are classifying to JSON, the
+    ///             same goes for JSON value objects, etc.</description></item>
     ///         <item><description>
     ///             For classes that don’t implement any of the above-mentioned collection interfaces, Classify supports
     ///             polymorphism. The actual type of an instance is persisted if it is different from the declared type.</description></item>
@@ -131,7 +132,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -150,7 +151,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -172,7 +173,7 @@ namespace RT.Serialization
         /// <param name="elem">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -191,7 +192,7 @@ namespace RT.Serialization
         /// <param name="elem">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -213,7 +214,7 @@ namespace RT.Serialization
         /// <param name="intoObject">
         ///     Object to assign values to in order to reconstruct the original object.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void DeserializeIntoObject<TElement, T>(TElement element, T intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
@@ -232,7 +233,7 @@ namespace RT.Serialization
         ///     Object to assign values to in order to reconstruct the original object. Also determines the type of object
         ///     expected.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void DeserializeFileIntoObject<TElement>(string filename, object intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
@@ -254,7 +255,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void SerializeToFile<TElement, T>(T saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
@@ -273,7 +274,7 @@ namespace RT.Serialization
         /// <param name="filename">
         ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
@@ -293,7 +294,7 @@ namespace RT.Serialization
         /// <param name="saveObject">
         ///     Object to be serialized.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -312,7 +313,7 @@ namespace RT.Serialization
         /// <param name="saveObject">
         ///     Object to be serialized.</param>
         /// <param name="format">
-        ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
+        ///     Implementation of a Classify format.</param>
         /// <param name="options">
         ///     Options.</param>
         /// <returns>
@@ -1576,7 +1577,8 @@ namespace RT.Serialization
     ///     implements this interface and then pass an instance of that type to <see
     ///     cref="ClassifyOptions.AddTypeProcessor{TElement}"/>.</summary>
     /// <typeparam name="TElement">
-    ///     Type of the serialized form. For example, for <see cref="ClassifyJson"/>, this is <see cref="Json.JsonValue"/>.</typeparam>
+    ///     Type of the serialized form. For example, for an XML-based ClassifyFormat, this might be <see
+    ///     cref="System.Xml.Linq.XElement"/>.</typeparam>
     /// <remarks>
     ///     This interface has no effect when implemented by the object being serialized or deserialized. For that, use <see
     ///     cref="IClassifyObjectProcessor{TElement}"/>.</remarks>
@@ -1792,8 +1794,8 @@ namespace RT.Serialization
         ///     specified <see cref="IClassifyTypeProcessor{TElement}"/> implementation before and after serializing or
         ///     deserializing to/from a Classify format that uses <typeparamref name="TElement"/> as its serialized form.</summary>
         /// <typeparam name="TElement">
-        ///     The type of the serialized form. For example, for <see cref="ClassifyJson"/>, this is <see
-        ///     cref="Json.JsonValue"/>.</typeparam>
+        ///     The type of the serialized form. For example, for an XML-based ClassifyFormat, this might be <see
+        ///     cref="System.Xml.Linq.XElement"/>.</typeparam>
         /// <param name="type">
         ///     The type of objects to run through the type processor.</param>
         /// <param name="processor">
