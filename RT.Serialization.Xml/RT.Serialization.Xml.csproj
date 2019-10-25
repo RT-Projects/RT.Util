@@ -9,8 +9,6 @@
     <Version>1.0.0.9999</Version>
     <Authors>Timwi;rstarkov;caesay</Authors>
     <Description>Serialize classes to/from XML. The feature set is optimized for maintaining backwards compatibility of serialized files as the classes evolve, in particular when used for application settings / configuration.</Description>
-    <RepositoryUrl>https://github.com/RT-Projects/RT.Util/</RepositoryUrl>
-    <PackageIconUrl>https://avatars0.githubusercontent.com/u/14182444?v=3&amp;s=200</PackageIconUrl>
     <PackageTags>rt.util;classify;serialize;serialization;settings;config</PackageTags>
   </PropertyGroup>
 

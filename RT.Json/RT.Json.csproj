@@ -9,8 +9,6 @@
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi</Authors>
     <Description>A JSON parser written before Json.NET became good. Slower than Json.NET. API aimed at stringent (non-lenient) access.</Description>
-    <RepositoryUrl>https://github.com/RT-Projects/RT.Util/</RepositoryUrl>
-    <PackageIconUrl>https://avatars0.githubusercontent.com/u/14182444?v=3&amp;s=200</PackageIconUrl>
     <PackageTags>rt.util;json</PackageTags>
   </PropertyGroup>
 
