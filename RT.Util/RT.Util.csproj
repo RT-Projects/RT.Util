@@ -4,6 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <Configurations>Debug;Release;DebugUnsafe;ReleaseUnsafe</Configurations>
 
     <Version>1.0.0.9999</Version>
@@ -25,7 +26,6 @@
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;UNSAFE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>..\Builds\ReleaseUnsafe-net472\RT.Util.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
