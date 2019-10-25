@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,6 +6,7 @@ using System.Windows.Forms;
 
 namespace RT.Util
 {
+    /// <summary>Offers some Windows-specific static functions which are hard to categorize under any more specific classes.</summary>
     public static partial class UtWin
     {
         /// <summary>
