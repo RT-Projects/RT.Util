@@ -28,9 +28,9 @@ namespace RT.Util.Consoles
         public static ConsoleColoredString NewLine { get { return _newline ?? (_newline = new ConsoleColoredString(Environment.NewLine, (ConsoleColor?) null)); } }
         private static ConsoleColoredString _newline = null;
 
-        private string _text;
-        private ConsoleColor?[] _foreground;
-        private ConsoleColor?[] _background;
+        private readonly string _text;
+        private readonly ConsoleColor?[] _foreground;
+        private readonly ConsoleColor?[] _background;
 
         /// <summary>
         ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/>.</summary>
@@ -54,6 +54,9 @@ namespace RT.Util.Consoles
                 return null;
             return input._text;
         }
+
+        /// <summary>Initializes an empty <see cref="ConsoleColoredString"/>.</summary>
+        public ConsoleColoredString() { _text = ""; _foreground = new ConsoleColor?[0]; _background = new ConsoleColor?[0]; }
 
         /// <summary>
         ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors.</summary>
@@ -139,6 +142,28 @@ namespace RT.Util.Consoles
                 Array.Copy(str._foreground, 0, _foreground, index, str.Length);
                 Array.Copy(str._background, 0, _background, index, str.Length);
                 index += str.Length;
+            }
+        }
+
+        /// <summary>
+        ///     Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see
+        ///     cref="ConsoleColoredChar"/>s.</summary>
+        /// <param name="characters">
+        ///     Input characters to concatenate.</param>
+        /// <remarks>
+        ///     The color of each character in the input strings is preserved.</remarks>
+        public ConsoleColoredString(params ConsoleColoredChar[] characters)
+        {
+            var builder = new StringBuilder();
+            foreach (var ch in characters)
+                builder.Append(ch.Character);
+            _text = builder.ToString();
+            _foreground = new ConsoleColor?[_text.Length];
+            _background = new ConsoleColor?[_text.Length];
+            for (var i = 0; i < characters.Length; i++)
+            {
+                _foreground[i] = characters[i].Color;
+                _background[i] = characters[i].BackgroundColor;
             }
         }
 
