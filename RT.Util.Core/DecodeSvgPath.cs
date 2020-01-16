@@ -363,16 +363,14 @@ namespace RT.KitchenSink
                     prevPoint = prevStartPoint ?? new PointD(0, 0);
                     prevStartPoint = null;
                 }
-                else if ((m = Regex.Match(svgPath, @"^A\s*({0})*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+                else if ((m = Regex.Match(svgPath, @"^A\s*(({0})({0})({0})([01])[\s,]*([01])[\s,]*({0})({0}))+".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
                 {
-                    var numbers = m.Groups[1].Captures.Cast<Capture>().Select(c => double.Parse(c.Value.Trim().TrimEnd(',').Trim())).ToArray();
-                    if (numbers.Length % 7 != 0)
-                        Debugger.Break();
-                    for (int i = 0; i < numbers.Length; i += 7)
+                    for (var cp = 0; cp < m.Groups[1].Captures.Count; cp++)
                     {
-                        var p = new PointD(numbers[i + 5], numbers[i + 6]);
+                        double convert(int gr) => double.Parse(m.Groups[gr].Captures[cp].Value.Trim().TrimEnd(',').Trim());
+                        var p = new PointD(convert(7), convert(8));
                         prevPoint = m.Value[0] == 'a' ? p + prevPoint : p;
-                        yield return new PathPieceArc(numbers[i + 0], numbers[i + 1], numbers[i + 2], numbers[i + 3] != 0, numbers[i + 4] != 0, prevPoint);
+                        yield return new PathPieceArc(convert(2), convert(3), convert(4), m.Groups[5].Captures[cp].Value != "0", m.Groups[6].Captures[cp].Value != "0", prevPoint);
                     }
                 }
                 else
