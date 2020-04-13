@@ -65,11 +65,11 @@ namespace RT.Util
                 {
                     evaluationStack.Push(node);
                     node = call.Callee;
-                    prevResult = default;
+                    prevResult = default(T);
                 }
                 else
                 {
-                    prevResult = nextStep == null ? default : ((WorkStep<T>.Return) nextStep).Result;
+                    prevResult = nextStep == null ? default(T) : ((WorkStep<T>.Return) nextStep).Result;
                     if (evaluationStack.Count == 0)
                         return prevResult;
                     node = evaluationStack.Pop();

@@ -64,7 +64,7 @@ namespace RT.Util.ExtensionMethods
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            value = default;
+            value = default(TValue);
             return source.TryGetValue(key1, out var dic) ? dic.TryGetValue(key2, out value) : false;
         }
 

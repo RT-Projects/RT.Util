@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Controls;
 using System.Windows.Media;
-using RT.Util.Dialogs;
+using RT.Util.Forms;
 
 namespace RT.Util.Lingo
 {

@@ -12,6 +12,10 @@
     <PackageTags>rt.util;json</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="ExactConvert.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />

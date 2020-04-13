@@ -1,7 +1,7 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace RT.Util.Dialogs
+namespace RT.Util.Forms
 {
     /// <summary>
     /// Provides a simple dialog containing a single-line text box,

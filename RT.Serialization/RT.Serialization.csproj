@@ -13,6 +13,10 @@
     <PackageTags>rt.util;classify;serialize;serialization;settings;config</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
   </ItemGroup>

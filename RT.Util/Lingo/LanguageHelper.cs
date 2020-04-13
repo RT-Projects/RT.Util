@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using RT.Util.Dialogs;
+using RT.Util.Forms;
 
 namespace RT.Util.Lingo
 {

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Resources;
 using System.Windows.Forms;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Dialogs
+namespace RT.Util.Forms
 {
     /// <summary>
     ///     Selects the type of dialog for <see cref="DlgMessage"/> to show. This specifies the sound and, unless explicitly

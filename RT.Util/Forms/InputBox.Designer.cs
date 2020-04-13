@@ -1,4 +1,4 @@
-namespace RT.Util.Dialogs
+﻿namespace RT.Util.Forms
 {
     sealed partial class InputBox
     {

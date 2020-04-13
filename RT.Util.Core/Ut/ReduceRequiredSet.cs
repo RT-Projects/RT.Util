@@ -108,7 +108,7 @@ namespace RT.Util
                 {
                     var ranges = Ranges.AsEnumerable();
                     if (ExcludedRange != null)
-                        ranges = ranges.Where(r => r != ExcludedRange.Value);
+                        ranges = ranges.Where(r => !r.Equals(ExcludedRange.Value));
                     if (IncludedRange != null)
                         ranges = ranges.Concat(IncludedRange.Value);
                     return ranges

@@ -1,4 +1,4 @@
-namespace RT.Util.Dialogs
+﻿namespace RT.Util.Forms
 {
     partial class DlgMessageForm
     {
@@ -192,13 +192,13 @@ namespace RT.Util.Dialogs
             this.img.TabStop = false;
             this.img.Visible = false;
             // 
-            // MessageEx
+            // Message
             // 
             this.Message.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.Message.Location = new System.Drawing.Point(190, 25);
+            this.Message.Location = new System.Drawing.Point(71, 25);
             this.Message.Margin = new System.Windows.Forms.Padding(5);
             this.Message.MinimumSize = new System.Drawing.Size(175, 0);
-            this.Message.Name = "MessageEx";
+            this.Message.Name = "Message";
             this.Message.Size = new System.Drawing.Size(175, 16);
             this.Message.TabIndex = 16;
             this.Message.Text = "Save changes to this file?";

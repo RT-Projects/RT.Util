@@ -36,7 +36,7 @@ namespace RT.Util.Collections
                 // default(T) cannot possibly create a value that we'd need to store immediately in order to preserve the infinite list illusion,
                 // so do not grow the list for this if the user supplied no initializer.
                 if (_initializer == null)
-                    return index >= Count ? default : _inner[index];
+                    return index >= Count ? default(T) : _inner[index];
 
                 fill(index + 1);
                 return _inner[index];
@@ -54,7 +54,7 @@ namespace RT.Util.Collections
             if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index), "'index' cannot be negative.");
             while (index > Count)
-                Add(_initializer == null ? default : _initializer(Count));
+                Add(_initializer == null ? default(T) : _initializer(Count));
         }
         private void fill(int index, int count)
         {
@@ -185,7 +185,7 @@ namespace RT.Util.Collections
                 throw new ArgumentOutOfRangeException(nameof(count), "'count' cannot be negative.");
             fill(index, count);
             while (_inner.Count < index + count)
-                _inner.Add(_initializer == null ? default : _initializer(_inner.Count));
+                _inner.Add(_initializer == null ? default(T) : _initializer(_inner.Count));
             var list = new AutoList<T>(count);
             for (int i = 0; i < count; i++)
                 list.Add(_inner[i + index]);

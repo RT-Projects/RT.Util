@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Util.Controls;
-using RT.Util.Dialogs;
+using RT.Util.Forms;
 
 namespace RT.Util.Lingo
 {

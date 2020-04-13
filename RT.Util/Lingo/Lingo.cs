@@ -10,7 +10,7 @@ using System.Text;
 using System.Windows.Forms;
 using RT.PostBuild;
 using RT.Serialization;
-using RT.Util.Dialogs;
+using RT.Util.Forms;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
 

@@ -11,7 +11,7 @@ using System.Threading;
 using System.Xml;
 using RT.PostBuild;
 using RT.Serialization;
-using RT.Util.Dialogs;
+using RT.Util.Forms;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util

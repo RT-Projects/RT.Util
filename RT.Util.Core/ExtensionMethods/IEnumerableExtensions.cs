@@ -756,7 +756,7 @@ namespace RT.Util.ExtensionMethods
                 {
                     if (doThrow)
                         throw new InvalidOperationException("source contains no elements.");
-                    return new KeyValuePair<int?, T>(null, default);
+                    return new KeyValuePair<int?, T>(null, default(T));
                 }
                 T minMaxElem = enumerator.Current;
                 TValue minMaxValue = valueSelector(minMaxElem);
