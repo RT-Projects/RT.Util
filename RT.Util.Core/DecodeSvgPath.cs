@@ -54,6 +54,23 @@ namespace RT.KitchenSink
             }
 
             /// <summary>
+            ///     Recreates the path in SVG path data syntax.</summary>
+            /// <param name="decimalPlaces">
+            ///     Specifies the number of decimal places to use for the floating-point numbers.</param>
+            public string ToString(int decimalPlaces)
+            {
+                char ch;
+                switch (Type)
+                {
+                    case PathPieceType.Move: ch = 'M'; break;
+                    case PathPieceType.Line: ch = 'L'; break;
+                    case PathPieceType.Curve: ch = 'C'; break;
+                    default: return "z";
+                }
+                return ch + " " + Points.Select(p => $"{p.X.ToString($"0.{new string('#', decimalPlaces)}")},{p.Y.ToString($"0.{new string('#', decimalPlaces)}")}").JoinString(" ");
+            }
+
+            /// <summary>
             ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have
             ///     been mapped through the <paramref name="selector"/>.</summary>
             /// <param name="selector">
