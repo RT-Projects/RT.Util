@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\RT.Util.Core\CustomComparer.cs" Link="CustomComparer.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\StreamExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\StreamExtensions.cs" />

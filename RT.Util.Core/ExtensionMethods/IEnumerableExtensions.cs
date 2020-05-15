@@ -60,12 +60,7 @@ namespace RT.Util.ExtensionMethods
         ///     If true, an additional pair containing the last and first element is included. For example, if the source
         ///     collection contains { 1, 2, 3, 4 } then the enumeration contains { (1, 2), (2, 3), (3, 4) } if <paramref
         ///     name="closed"/> is false, and { (1, 2), (2, 3), (3, 4), (4, 1) } if <paramref name="closed"/> is true.</param>
-        public static IEnumerable<(T, T)> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return selectConsecutivePairsIterator(source, closed, (i1, i2) => (i1, i2));
-        }
+        public static IEnumerable<(T, T)> ConsecutivePairs<T>(this IEnumerable<T> source, bool closed) => SelectConsecutivePairs(source, closed, (i1, i2) => (i1, i2));
 
         /// <summary>
         ///     Enumerates all consecutive pairs of the elements.</summary>
@@ -84,25 +79,26 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(source));
             if (selector == null)
                 throw new ArgumentNullException(nameof(selector));
-            return selectConsecutivePairsIterator(source, closed, selector);
-        }
-        private static IEnumerable<TResult> selectConsecutivePairsIterator<T, TResult>(IEnumerable<T> source, bool closed, Func<T, T, TResult> selector)
-        {
-            using (var enumer = source.GetEnumerator())
+
+            IEnumerable<TResult> selectConsecutivePairsIterator()
             {
-                bool any = enumer.MoveNext();
-                if (!any)
-                    yield break;
-                T first = enumer.Current;
-                T last = enumer.Current;
-                while (enumer.MoveNext())
+                using (var enumer = source.GetEnumerator())
                 {
-                    yield return selector(last, enumer.Current);
-                    last = enumer.Current;
+                    bool any = enumer.MoveNext();
+                    if (!any)
+                        yield break;
+                    T first = enumer.Current;
+                    T last = enumer.Current;
+                    while (enumer.MoveNext())
+                    {
+                        yield return selector(last, enumer.Current);
+                        last = enumer.Current;
+                    }
+                    if (closed)
+                        yield return selector(last, first);
                 }
-                if (closed)
-                    yield return selector(last, first);
             }
+            return selectConsecutivePairsIterator();
         }
 
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
@@ -133,22 +129,23 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(splitWhat));
             if (splitWhere == null)
                 throw new ArgumentNullException(nameof(splitWhere));
-            return splitIterator(splitWhat, splitWhere);
-        }
-        private static IEnumerable<IEnumerable<T>> splitIterator<T>(IEnumerable<T> splitWhat, Func<T, bool> splitWhere)
-        {
-            var items = new List<T>();
-            foreach (var item in splitWhat)
+
+            IEnumerable<IEnumerable<T>> splitIterator()
             {
-                if (splitWhere(item))
+                var items = new List<T>();
+                foreach (var item in splitWhat)
                 {
-                    yield return items;
-                    items = new List<T>();
+                    if (splitWhere(item))
+                    {
+                        yield return items;
+                        items = new List<T>();
+                    }
+                    else
+                        items.Add(item);
                 }
-                else
-                    items.Add(item);
+                yield return items;
             }
-            yield return items;
+            return splitIterator();
         }
 
         /// <summary>
@@ -161,7 +158,13 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return concatIterator(element, source, false);
+            IEnumerable<T> concatIterator()
+            {
+                foreach (var e in source)
+                    yield return e;
+                yield return element;
+            }
+            return concatIterator();
         }
 
         /// <summary>
@@ -174,17 +177,13 @@ namespace RT.Util.ExtensionMethods
         {
             if (tail == null)
                 throw new ArgumentNullException(nameof(tail));
-            return concatIterator(head, tail, true);
-        }
-
-        private static IEnumerable<T> concatIterator<T>(T extraElement, IEnumerable<T> source, bool insertAtStart)
-        {
-            if (insertAtStart)
-                yield return extraElement;
-            foreach (var e in source)
-                yield return e;
-            if (!insertAtStart)
-                yield return extraElement;
+            IEnumerable<T> concatIterator()
+            {
+                yield return head;
+                foreach (var e in tail)
+                    yield return e;
+            }
+            return concatIterator();
         }
 
         /// <summary>
@@ -220,52 +219,52 @@ namespace RT.Util.ExtensionMethods
             int[] map = new int[arr.Length];
             for (int i = 0; i < arr.Length; i++)
                 map[i] = i;
-            return quickSort(arr, map, 0, arr.Length - 1, comparer);
-        }
 
-        private static int compareForStableSort<T>(T elem1, int elem1Index, T elem2, int elem2Index, IComparer<T> comparer)
-        {
-            int r = comparer.Compare(elem1, elem2);
-            return r != 0 ? r : elem1Index.CompareTo(elem2Index);
-        }
-
-        private static IEnumerable<T> quickSort<T>(T[] items, int[] map, int left, int right, IComparer<T> comparer)
-        {
-            while (left < right)
+            IEnumerable<T> quickSort(T[] items, int left, int right)
             {
-                int curleft = left;
-                int curright = right;
-                int pivotIndex = map[curleft + ((curright - curleft) >> 1)];
-                T pivot = items[pivotIndex];
-                do
+                int compareForStableSort(T elem1, int elem1Index, T elem2, int elem2Index)
                 {
-                    while ((curleft < map.Length) && compareForStableSort(pivot, pivotIndex, items[map[curleft]], map[curleft], comparer) > 0)
-                        curleft++;
-                    while ((curright >= 0) && compareForStableSort(pivot, pivotIndex, items[map[curright]], map[curright], comparer) < 0)
-                        curright--;
-                    if (curleft > curright)
-                        break;
-
-                    if (curleft < curright)
-                    {
-                        int tmp = map[curleft];
-                        map[curleft] = map[curright];
-                        map[curright] = tmp;
-                    }
-                    curleft++;
-                    curright--;
+                    int r = comparer.Compare(elem1, elem2);
+                    return r != 0 ? r : elem1Index.CompareTo(elem2Index);
                 }
-                while (curleft <= curright);
-                if (left < curright)
-                    foreach (var s in quickSort(items, map, left, curright, comparer))
-                        yield return s;
-                else if (left == curright)
-                    yield return items[map[curright]];
-                if (curright + 1 < curleft)
-                    yield return items[map[curright + 1]];
-                left = curleft;
+
+                while (left < right)
+                {
+                    int curleft = left;
+                    int curright = right;
+                    int pivotIndex = map[curleft + ((curright - curleft) >> 1)];
+                    T pivot = items[pivotIndex];
+                    do
+                    {
+                        while ((curleft < map.Length) && compareForStableSort(pivot, pivotIndex, items[map[curleft]], map[curleft]) > 0)
+                            curleft++;
+                        while ((curright >= 0) && compareForStableSort(pivot, pivotIndex, items[map[curright]], map[curright]) < 0)
+                            curright--;
+                        if (curleft > curright)
+                            break;
+
+                        if (curleft < curright)
+                        {
+                            int tmp = map[curleft];
+                            map[curleft] = map[curright];
+                            map[curright] = tmp;
+                        }
+                        curleft++;
+                        curright--;
+                    }
+                    while (curleft <= curright);
+                    if (left < curright)
+                        foreach (var s in quickSort(items, left, curright))
+                            yield return s;
+                    else if (left == curright)
+                        yield return items[map[curright]];
+                    if (curright + 1 < curleft)
+                        yield return items[map[curright + 1]];
+                    left = curleft;
+                }
+                yield return items[map[left]];
             }
-            yield return items[map[left]];
+            return quickSort(arr, 0, arr.Length - 1);
         }
 
         /// <summary>
@@ -589,7 +588,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return minMax<TSource>(source, @default, min: true);
+            return minMax(source, @default, min: true);
         }
 
         /// <summary>
@@ -613,7 +612,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(source));
             if (selector == null)
                 throw new ArgumentNullException(nameof(selector));
-            return minMax<TResult>(source.Select(selector), @default, min: true);
+            return minMax(source.Select(selector), @default, min: true);
         }
 
         /// <summary>
@@ -630,7 +629,7 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return minMax<TSource>(source, @default, min: false);
+            return minMax(source, @default, min: false);
         }
 
         /// <summary>
@@ -654,7 +653,7 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(source));
             if (selector == null)
                 throw new ArgumentNullException(nameof(selector));
-            return minMax<TResult>(source.Select(selector), @default, min: false);
+            return minMax(source.Select(selector), @default, min: false);
         }
 
         private static T minMax<T>(IEnumerable<T> source, T @default, bool min)
@@ -677,34 +676,32 @@ namespace RT.Util.ExtensionMethods
         ///     Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
-        public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), true, true).Value;
-        }
+        public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: true, doThrow: true).Value.minMaxElem;
 
         /// <summary>
         ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or
         ///     a default value if the collection is empty.</summary>
-        public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
+        public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, defaultValue, true, false).Value;
+            var tup = minMaxElement(source, valueSelector, min: true, doThrow: false);
+            return tup == null ? defaultValue : tup.Value.minMaxElem;
         }
 
         /// <summary>
         ///     Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
-        public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), false, true).Value;
-        }
+        public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: false, doThrow: true).Value.minMaxElem;
 
         /// <summary>
         ///     Returns the first element from the input sequence for which the value selector returns the largest value, or a
         ///     default value if the collection is empty.</summary>
         public static T MaxElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
         {
-            return minMaxElement(source, valueSelector, defaultValue, false, false).Value;
+            var tup = minMaxElement(source, valueSelector, min: false, doThrow: false);
+            return tup == null ? defaultValue : tup.Value.minMaxElem;
         }
 
         /// <summary>
@@ -712,38 +709,30 @@ namespace RT.Util.ExtensionMethods
         ///     smallest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
-        public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), true, true).Key.Value;
-        }
+        public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: true, doThrow: true).Value.minMaxIndex;
 
         /// <summary>
         ///     Returns the index of the first element from the input sequence for which the value selector returns the
         ///     smallest value, or <c>null</c> if the collection is empty.</summary>
-        public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), true, false).Key;
-        }
+        public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: true, doThrow: false)?.minMaxIndex;
 
         /// <summary>
         ///     Returns the index of the first element from the input sequence for which the value selector returns the
         ///     largest value.</summary>
         /// <exception cref="InvalidOperationException">
         ///     The input collection is empty.</exception>
-        public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), false, true).Key.Value;
-        }
+        public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: false, doThrow: true).Value.minMaxIndex;
 
         /// <summary>
         ///     Returns the index of the first element from the input sequence for which the value selector returns the
         ///     largest value, or a default value if the collection is empty.</summary>
-        public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
-        {
-            return minMaxElement(source, valueSelector, default(T), false, false).Key;
-        }
+        public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+            minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxIndex;
 
-        private static KeyValuePair<int?, T> minMaxElement<T, TValue, TResult>(IEnumerable<T> source, Func<T, TValue> valueSelector, TResult defaultValue, bool min, bool doThrow) where TValue : IComparable<TValue>
+        private static (int minMaxIndex, T minMaxElem)? minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow) where TValue : IComparable<TValue>
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -756,16 +745,16 @@ namespace RT.Util.ExtensionMethods
                 {
                     if (doThrow)
                         throw new InvalidOperationException("source contains no elements.");
-                    return new KeyValuePair<int?, T>(null, default(T));
+                    return null;
                 }
-                T minMaxElem = enumerator.Current;
-                TValue minMaxValue = valueSelector(minMaxElem);
-                int minMaxIndex = 0;
-                int curIndex = 0;
+                var minMaxElem = enumerator.Current;
+                var minMaxValue = valueSelector(minMaxElem);
+                var minMaxIndex = 0;
+                var curIndex = 0;
                 while (enumerator.MoveNext())
                 {
                     curIndex++;
-                    TValue value = valueSelector(enumerator.Current);
+                    var value = valueSelector(enumerator.Current);
                     if (min ? (value.CompareTo(minMaxValue) < 0) : (value.CompareTo(minMaxValue) > 0))
                     {
                         minMaxValue = value;
@@ -773,7 +762,7 @@ namespace RT.Util.ExtensionMethods
                         minMaxIndex = curIndex;
                     }
                 }
-                return new KeyValuePair<int?, T>(minMaxIndex, minMaxElem);
+                return (minMaxIndex, minMaxElem);
             }
         }
 
@@ -798,42 +787,41 @@ namespace RT.Util.ExtensionMethods
             if (count == 0)
                 return source;
 
-            var collection = source as ICollection<T>;
-            if (collection != null)
+            if (source is ICollection<T> collection)
             {
                 if (throwIfNotEnough && collection.Count < count)
                     throw new InvalidOperationException("The collection does not contain enough elements.");
                 return collection.Take(Math.Max(0, collection.Count - count));
             }
 
-            return skipLastIterator(source, count, throwIfNotEnough);
-        }
-        private static IEnumerable<T> skipLastIterator<T>(IEnumerable<T> source, int count, bool throwIfNotEnough)
-        {
-            var queue = new T[count];
-            int headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
-            int collected = 0;
-
-            foreach (var item in source)
+            IEnumerable<T> skipLastIterator()
             {
-                if (collected < count)
-                {
-                    queue[headtail] = item;
-                    headtail++;
-                    collected++;
-                }
-                else
-                {
-                    if (headtail == count)
-                        headtail = 0;
-                    yield return queue[headtail];
-                    queue[headtail] = item;
-                    headtail++;
-                }
-            }
+                var queue = new T[count];
+                int headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
+                int collected = 0;
 
-            if (throwIfNotEnough && collected < count)
-                throw new InvalidOperationException("The collection does not contain enough elements.");
+                foreach (var item in source)
+                {
+                    if (collected < count)
+                    {
+                        queue[headtail] = item;
+                        headtail++;
+                        collected++;
+                    }
+                    else
+                    {
+                        if (headtail == count)
+                            headtail = 0;
+                        yield return queue[headtail];
+                        queue[headtail] = item;
+                        headtail++;
+                    }
+                }
+
+                if (throwIfNotEnough && collected < count)
+                    throw new InvalidOperationException("The collection does not contain enough elements.");
+            }
+            return skipLastIterator();
         }
 
         /// <summary>
@@ -850,36 +838,41 @@ namespace RT.Util.ExtensionMethods
                 return Enumerable.Empty<T>();
 
             if (source is IList<T> list)
-                return takeLastFromList(list, count);
-            else if (source is ICollection<T> collection)
-                return takeLastFromCollection(collection, count);
-            else
-                return takeLast(source, count);
-        }
-
-        private static IEnumerable<T> takeLastFromList<T>(this IList<T> source, int count)
-        {
-            for (int i = Math.Max(0, source.Count - count); i < source.Count; i++)
-                yield return source[i];
-        }
-
-        private static IEnumerable<T> takeLastFromCollection<T>(this ICollection<T> source, int count)
-        {
-            foreach (var elem in source.Skip(Math.Max(0, source.Count - count)))
-                yield return elem;
-        }
-
-        private static IEnumerable<T> takeLast<T>(this IEnumerable<T> source, int count)
-        {
-            var queue = new Queue<T>(count + 1);
-            foreach (var item in source)
             {
-                if (queue.Count == count)
-                    queue.Dequeue();
-                queue.Enqueue(item);
+                // Make this a local iterator-block function so that list.Count is only evaluated when enumeration begins
+                IEnumerable<T> takeLastFromList()
+                {
+                    for (int i = Math.Max(0, list.Count - count); i < list.Count; i++)
+                        yield return list[i];
+                }
+                return takeLastFromList();
             }
-            foreach (var item in queue)
-                yield return item;
+            else if (source is ICollection<T> collection)
+            {
+                // Make this a local iterator-block function so that collection.Count is only evaluated when enumeration begins
+                IEnumerable<T> takeLastFromCollection()
+                {
+                    foreach (var elem in collection.Skip(Math.Max(0, collection.Count - count)))
+                        yield return elem;
+                }
+                return takeLastFromCollection();
+            }
+            else
+            {
+                IEnumerable<T> takeLast()
+                {
+                    var queue = new Queue<T>(count + 1);
+                    foreach (var item in source)
+                    {
+                        if (queue.Count == count)
+                            queue.Dequeue();
+                        queue.Enqueue(item);
+                    }
+                    foreach (var item in queue)
+                        yield return item;
+                }
+                return takeLast();
+            }
         }
 
         /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
@@ -1226,20 +1219,21 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(source));
             if (predicate == null)
                 throw new ArgumentNullException(nameof(predicate));
-            return selectIndexWhereIterator(source, predicate);
-        }
-        private static IEnumerable<int> selectIndexWhereIterator<T>(this IEnumerable<T> source, Predicate<T> predicate)
-        {
-            int i = 0;
-            using (var e = source.GetEnumerator())
+
+            IEnumerable<int> selectIndexWhereIterator()
             {
-                while (e.MoveNext())
+                int i = 0;
+                using (var e = source.GetEnumerator())
                 {
-                    if (predicate(e.Current))
-                        yield return i;
-                    i++;
+                    while (e.MoveNext())
+                    {
+                        if (predicate(e.Current))
+                            yield return i;
+                        i++;
+                    }
                 }
             }
+            return selectIndexWhereIterator();
         }
 
         /// <summary>
@@ -1266,16 +1260,20 @@ namespace RT.Util.ExtensionMethods
                 throw new ArgumentNullException(nameof(selector1));
             if (selector2 == null)
                 throw new ArgumentNullException(nameof(selector2));
-            return selectTwoIterator(source, selector1, selector2);
-        }
-        private static IEnumerable<TResult> selectTwoIterator<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> selector1, Func<TSource, TResult> selector2)
-        {
-            foreach (var elem in source)
+
+            IEnumerable<TResult> selectTwoIterator()
             {
-                yield return selector1(elem);
-                yield return selector2(elem);
+                foreach (var elem in source)
+                {
+                    yield return selector1(elem);
+                    yield return selector2(elem);
+                }
             }
+            return selectTwoIterator();
         }
+
+        /// <summary>Returns the original collection but with every value cast to their nullable equivalent.</summary>
+        public static IEnumerable<TResult?> SelectNullable<TResult>(this IEnumerable<TResult> source) where TResult : struct => source.Select(val => (TResult?) val);
 
         /// <summary>
         ///     Turns all elements in the enumerable to strings and joins them using the specified <paramref
@@ -1371,29 +1369,30 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            return insertBetweenWithAndIterator(source, comma, and);
-        }
 
-        private static IEnumerable<T> insertBetweenWithAndIterator<T>(IEnumerable<T> source, T comma, T and)
-        {
-            using (var enumerator = source.GetEnumerator())
+            IEnumerable<T> insertBetweenWithAndIterator()
             {
-                if (!enumerator.MoveNext())
-                    yield break;
-                yield return enumerator.Current;
-                if (!enumerator.MoveNext())
-                    yield break;
-
-                var prev = enumerator.Current;
-                while (enumerator.MoveNext())
+                using (var enumerator = source.GetEnumerator())
                 {
-                    yield return comma;
+                    if (!enumerator.MoveNext())
+                        yield break;
+                    yield return enumerator.Current;
+                    if (!enumerator.MoveNext())
+                        yield break;
+
+                    var prev = enumerator.Current;
+                    while (enumerator.MoveNext())
+                    {
+                        yield return comma;
+                        yield return prev;
+                        prev = enumerator.Current;
+                    }
+                    yield return and;
                     yield return prev;
-                    prev = enumerator.Current;
                 }
-                yield return and;
-                yield return prev;
             }
+
+            return insertBetweenWithAndIterator();
         }
 
         /// <summary>Determines whether this sequence comprises the values provided in the specified order.</summary>
@@ -1424,37 +1423,23 @@ namespace RT.Util.ExtensionMethods
         {
             if (chunkSize <= 0)
                 throw new ArgumentException("chunkSize must be greater than zero.", nameof(chunkSize));
-            return splitIterator(source, chunkSize);
-        }
-        private static IEnumerable<IEnumerable<T>> splitIterator<T>(this IEnumerable<T> source, int chunkSize)
-        {
-            var list = new List<T>(chunkSize);
-            foreach (var item in source)
-            {
-                list.Add(item);
-                if (list.Count == chunkSize)
-                {
-                    yield return list;
-                    list = new List<T>(chunkSize);
-                }
-            }
-            if (list.Count > 0)
-                yield return list;
-        }
 
-        /// <summary>
-        ///     Accumulates consecutive equal elements.</summary>
-        /// <typeparam name="TItem">
-        ///     The type of items in the input sequence.</typeparam>
-        /// <param name="source">
-        ///     The input sequence from which to accumulate groups of consecutive elements.</param>
-        /// <returns>
-        ///     A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return groupConsecutiveIterator(source, x => x, null, null);
+            IEnumerable<IEnumerable<T>> splitIterator()
+            {
+                var list = new List<T>(chunkSize);
+                foreach (var item in source)
+                {
+                    list.Add(item);
+                    if (list.Count == chunkSize)
+                    {
+                        yield return list;
+                        list = new List<T>(chunkSize);
+                    }
+                }
+                if (list.Count > 0)
+                    yield return list;
+            }
+            return splitIterator();
         }
 
         /// <summary>
@@ -1467,12 +1452,8 @@ namespace RT.Util.ExtensionMethods
         ///     An optional function to determine equality of items.</param>
         /// <returns>
         ///     A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return groupConsecutiveIterator(source, x => x, itemEquality, null);
-        }
+        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, Func<TItem, TItem, bool> itemEquality) =>
+            GroupConsecutiveBy(source, x => x, new CustomEqualityComparer<TItem>(itemEquality));
 
         /// <summary>
         ///     Accumulates consecutive equal elements.</summary>
@@ -1484,12 +1465,8 @@ namespace RT.Util.ExtensionMethods
         ///     An optional equality comparer to determine item equality by.</param>
         /// <returns>
         ///     A collection containing each sequence of consecutive equal elements.</returns>
-        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return groupConsecutiveIterator(source, x => x, null, itemComparer);
-        }
+        public static IEnumerable<ConsecutiveGroup<TItem, TItem>> GroupConsecutive<TItem>(this IEnumerable<TItem> source, IEqualityComparer<TItem> itemComparer = null) =>
+            GroupConsecutiveBy(source, x => x, itemComparer);
 
         /// <summary>
         ///     Accumulates consecutive elements that are equal when processed by a selector.</summary>
@@ -1509,32 +1486,33 @@ namespace RT.Util.ExtensionMethods
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
-            var comparer = keyComparer ?? EqualityComparer<TKey>.Default;
-            return groupConsecutiveIterator(source, selector, null, keyComparer);
-        }
+            if (selector == null)
+                throw new ArgumentNullException(nameof(selector));
 
-        private static IEnumerable<ConsecutiveGroup<TItem, TKey>> groupConsecutiveIterator<TItem, TKey>(IEnumerable<TItem> source, Func<TItem, TKey> selector, Func<TKey, TKey, bool> itemEquality, IEqualityComparer<TKey> itemComparer)
-        {
-            bool any = false;
-            TKey prevKey = default(TKey);
-            var index = 0;
-            var currentList = new List<TItem>();
-            foreach (var elem in source)
+            IEnumerable<ConsecutiveGroup<TItem, TKey>> groupConsecutiveIterator()
             {
-                var key = selector(elem);
-                if (!any)
-                    any = true;
-                else if (itemEquality != null ? !itemEquality(prevKey, key) : itemComparer != null ? !itemComparer.Equals(prevKey, key) : !object.Equals(prevKey, key))
+                var any = false;
+                var prevKey = default(TKey);
+                var index = 0;
+                var currentList = new List<TItem>();
+                foreach (var elem in source)
                 {
-                    yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
-                    currentList = new List<TItem>();
+                    var key = selector(elem);
+                    if (!any)
+                        any = true;
+                    else if (keyComparer != null ? !keyComparer.Equals(prevKey, key) : !Equals(prevKey, key))
+                    {
+                        yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
+                        currentList = new List<TItem>();
+                    }
+                    currentList.Add(elem);
+                    prevKey = key;
+                    index++;
                 }
-                currentList.Add(elem);
-                prevKey = key;
-                index++;
+                if (any)
+                    yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
             }
-            if (any)
-                yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
+            return groupConsecutiveIterator();
         }
 
         /// <summary>
@@ -1566,11 +1544,7 @@ namespace RT.Util.ExtensionMethods
         /// <returns>
         ///     Of all elements that occur the most number of times, the one whose last instance occurs soonest in the
         ///     sequence.</returns>
-        public static T MaxCountElement<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
-        {
-            int count;
-            return MaxCountElement<T>(source, out count, comparer);
-        }
+        public static T MaxCountElement<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null) => MaxCountElement(source, out _, comparer);
 
         /// <summary>
         ///     Determines which element occurs the most often in the specified input sequence, and how often.</summary>
@@ -1651,20 +1625,21 @@ namespace RT.Util.ExtensionMethods
         {
             if (src == null)
                 throw new ArgumentNullException(nameof(src));
-            return whereNotNullImpl(src);
-        }
 
-        private static IEnumerable<T> whereNotNullImpl<T>(IEnumerable<T?> src) where T : struct
-        {
-            foreach (var tq in src)
-                if (tq != null)
-                    yield return tq.Value;
+            IEnumerable<T> whereNotNullIterator()
+            {
+                foreach (var tq in src)
+                    if (tq != null)
+                        yield return tq.Value;
+            }
+            return whereNotNullIterator();
         }
     }
 
     /// <summary>
     ///     Encapsulates information about a group generated by <see
-    ///     cref="IEnumerableExtensions.GroupConsecutive{TItem}(IEnumerable{TItem})"/> and its overloads.</summary>
+    ///     cref="IEnumerableExtensions.GroupConsecutive{TItem}(IEnumerable{TItem}, IEqualityComparer{TItem})"/> and its
+    ///     overloads.</summary>
     /// <typeparam name="TItem">
     ///     Type of the elements in the sequence.</typeparam>
     /// <typeparam name="TKey">
@@ -1681,7 +1656,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>The key by which the items in this group are deemed equal.</summary>
         public TKey Key { get; private set; }
 
-        private IEnumerable<TItem> _group;
+        private readonly IEnumerable<TItem> _group;
         internal ConsecutiveGroup(int index, List<TItem> group, TKey key)
         {
             Index = index;
@@ -1693,7 +1668,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>
         ///     Returns an enumerator that iterates through the collection.</summary>
         /// <returns>
-        ///     A <see cref="System.Collections.Generic.IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
+        ///     An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
         public IEnumerator<TItem> GetEnumerator() { return _group.GetEnumerator(); }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
 

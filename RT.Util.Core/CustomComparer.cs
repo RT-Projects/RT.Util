@@ -222,11 +222,11 @@ namespace RT.Util
             if (selector == null) throw new ArgumentNullException(nameof(selector));
             var default_ = EqualityComparer<TBy>.Default;
             var cmp = comparison == null
-                ? Ut.Lambda((T a, T b) => default_.Equals(selector(a), selector(b)))
-                : (a, b) => comparison(selector(a), selector(b));
+                ? new Func<T, T, bool>((T a, T b) => default_.Equals(selector(a), selector(b)))
+                : new Func<T, T, bool>((T a, T b) => comparison(selector(a), selector(b)));
             var ghc = getHashCode == null
-                ? Ut.Lambda((T a) => default_.GetHashCode(selector(a)))
-                : a => getHashCode(selector(a));
+                ? new Func<T, int>((T a) => default_.GetHashCode(selector(a)))
+                : new Func<T, int>((T a) => getHashCode(selector(a)));
             return new CustomEqualityComparer<T>(cmp, ghc);
         }
 
@@ -243,6 +243,5 @@ namespace RT.Util
             if (selector == null) throw new ArgumentNullException(nameof(selector));
             return CustomEqualityComparer<T>.By(selector, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture);
         }
-
     }
 }
