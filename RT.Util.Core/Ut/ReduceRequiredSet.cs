@@ -49,15 +49,13 @@ namespace RT.Util
                 state.ApplyTemporarySplit(rangeToSplit, split1);
                 if (test(state))
                 {
-                    state.RemoveRange(rangeToSplit);
-                    state.AddRange(split1);
+                    state.SolidifyTemporarySplit();
                     continue;
                 }
                 state.ApplyTemporarySplit(rangeToSplit, split2);
                 if (test(state))
                 {
-                    state.RemoveRange(rangeToSplit);
-                    state.AddRange(split2);
+                    state.SolidifyTemporarySplit();
                     continue;
                 }
                 state.ResetTemporarySplit();
@@ -143,6 +141,13 @@ namespace RT.Util
             {
                 ExcludedRange = rangeToSplit;
                 IncludedRange = splitRange;
+            }
+
+            public void SolidifyTemporarySplit()
+            {
+                RemoveRange(ExcludedRange.Value);
+                AddRange(IncludedRange.Value);
+                ResetTemporarySplit();
             }
         }
     }
