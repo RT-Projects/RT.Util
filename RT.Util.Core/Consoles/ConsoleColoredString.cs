@@ -122,6 +122,35 @@ namespace RT.Util.Consoles
         }
 
         /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which all characters from the specified <paramref
+        ///     name="startIndex"/> onwards have been removed.</summary>
+        /// <param name="startIndex">
+        ///     Index of the first character to remove.</param>
+        public ConsoleColoredString Remove(int startIndex) => Remove(startIndex, Length - startIndex);
+
+        /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which the specified range of characters has been removed.</summary>
+        /// <param name="startIndex">
+        ///     Index of the start of the range of characters to remove.</param>
+        /// <param name="count">
+        ///     Number of characters to remove from the <paramref name="startIndex"/> onwards.</param>
+        public ConsoleColoredString Remove(int startIndex, int count)
+        {
+            if (startIndex < 0 || startIndex > Length)
+                throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative or greater than the length of the string.");
+            if (count < 0 || startIndex + count > Length)
+                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative or extend beyond the end of the string.");
+
+            var foreground = new ConsoleColor?[Length - count];
+            Array.Copy(_foreground, 0, foreground, 0, startIndex);
+            Array.Copy(_foreground, startIndex + count, foreground, startIndex, Length - startIndex - count);
+            var background = new ConsoleColor?[Length - count];
+            Array.Copy(_background, 0, background, 0, startIndex);
+            Array.Copy(_background, startIndex + count, background, startIndex, Length - startIndex - count);
+            return new ConsoleColoredString(_text.Remove(startIndex, count), foreground, background);
+        }
+
+        /// <summary>
         ///     Constructs a <see cref="ConsoleColoredString"/> by concatenating the specified <see
         ///     cref="ConsoleColoredString"/>s.</summary>
         /// <param name="strings">
