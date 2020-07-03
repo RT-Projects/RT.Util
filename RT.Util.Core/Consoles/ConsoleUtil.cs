@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
@@ -14,17 +15,18 @@ namespace RT.Util.Consoles
         {
             _consoleInfoInitialised = true;
 
-            var hOut = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
-            if (hOut == WinAPI.INVALID_HANDLE_VALUE)
-                _stdOutState = ConsoleState.Unavailable;
-            else
-                _stdOutState = WinAPI.GetFileType(hOut) == WinAPI.FILE_TYPE_CHAR ? ConsoleState.Console : ConsoleState.Redirected;
+            _stdOutState = ConsoleState.Unavailable;
+            _stdErrState = ConsoleState.Unavailable;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var hOut = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
+                if (hOut != WinAPI.INVALID_HANDLE_VALUE)
+                    _stdOutState = WinAPI.GetFileType(hOut) == WinAPI.FILE_TYPE_CHAR ? ConsoleState.Console : ConsoleState.Redirected;
 
-            var hErr = WinAPI.GetStdHandle(WinAPI.STD_ERROR_HANDLE);
-            if (hErr == WinAPI.INVALID_HANDLE_VALUE)
-                _stdErrState = ConsoleState.Unavailable;
-            else
-                _stdErrState = WinAPI.GetFileType(hErr) == WinAPI.FILE_TYPE_CHAR ? ConsoleState.Console : ConsoleState.Redirected;
+                var hErr = WinAPI.GetStdHandle(WinAPI.STD_ERROR_HANDLE);
+                if (hErr != WinAPI.INVALID_HANDLE_VALUE)
+                    _stdErrState = WinAPI.GetFileType(hErr) == WinAPI.FILE_TYPE_CHAR ? ConsoleState.Console : ConsoleState.Redirected;
+            }
         }
 
         /// <summary>Represents the state of a console output stream.</summary>
