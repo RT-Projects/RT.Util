@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+
+    <Version>1.0.0.9999</Version>
+    <Authors>Timwi;rstarkov</Authors>
+    <Description></Description>
+    <PackageTags>rt.lingo;translation</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
+    <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -27,13 +27,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Lingo\TranslationWindow.xaml" />
-    <Page Include="Lingo\TranslationWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
     <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
@@ -48,7 +41,6 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
 
