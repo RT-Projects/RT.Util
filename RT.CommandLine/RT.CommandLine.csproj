@@ -8,7 +8,7 @@
 
     <Version>1.0.0.9999</Version>
     <Authors>Timwi;rstarkov</Authors>
-    <Description></Description>
+    <Description>A command line parser that populates a class or a set of classes, with support for advanced help text formatting and translations using RT.Lingo.</Description>
     <PackageTags>rt.commandline;command line;parser</PackageTags>
   </PropertyGroup>
 
