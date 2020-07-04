@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>
     /// Provides a means for an application to throw exceptions containing translatable messages without the need to pass a <see cref="TranslationBase"/>-derived object to all methods that could throw exceptions.

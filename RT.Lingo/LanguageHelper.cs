@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using RT.Util;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Helps an application using Lingo to display language selection UI.</summary>
     /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>

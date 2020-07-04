@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Contains methods and properties to be implemented by the different implementations of the Lingo translation GUI.</summary>
     internal interface ITranslationDialog

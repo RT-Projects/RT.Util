@@ -10,7 +10,7 @@ using System.Windows.Media;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>
     /// Interaction logic for TranslationWindow.xaml

@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Helps an application using Lingo to display language selection UI using WPF controls.</summary>
     /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>

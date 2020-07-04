@@ -1,6 +1,6 @@
 ﻿using RT.Serialization;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Abstract base class to represent translations of a piece of software.</summary>
     public abstract class TranslationBase

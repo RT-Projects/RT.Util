@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using RT.Util.Controls;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Helps an application using Lingo to display language selection UI using WinForms controls.</summary>
     /// <typeparam name="TTranslation">The type of the class holding the program’s translation.</typeparam>

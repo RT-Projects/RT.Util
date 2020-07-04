@@ -2,7 +2,7 @@
 using System.Reflection;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Lists all the languages that have an ISO-639-1 two-letter code, and a selection of languages with an ISO-639-2 three-letter code.</summary>
     public enum Language

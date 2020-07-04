@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Holds the translation of a member's description.</summary>
     [LingoStringClass]

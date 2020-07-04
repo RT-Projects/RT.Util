@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
+using RT.Util;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Specifies notes to the translator, detailing the purpose, context, or format of a translatable string.</summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false), RummageKeepUsersReflectionSafe]

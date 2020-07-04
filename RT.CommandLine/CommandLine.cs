@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using RT.Lingo;
 using RT.PostBuild;
 using RT.Serialization;
+using RT.Util;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
-using RT.Util.Lingo;
 using RT.Util.Text;
 
-namespace RT.Util.CommandLine
+namespace RT.CommandLine
 {
     /// <summary>
     ///     Implements a command-line parser that can turn the commands and options specified by the user on the command line

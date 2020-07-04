@@ -5,7 +5,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     public static partial class Lingo
     {

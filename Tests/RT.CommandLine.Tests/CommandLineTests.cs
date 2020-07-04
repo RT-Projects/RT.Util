@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using NUnit.Framework;
-using RT.Util.CommandLine;
 
-namespace RT.Util
+namespace RT.CommandLine.Tests
 {
     [TestFixture]
     public sealed class CmdLineTests

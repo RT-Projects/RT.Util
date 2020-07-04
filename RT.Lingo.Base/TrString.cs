@@ -4,7 +4,7 @@ using RT.Serialization;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Represents a translatable string.</summary>
     public sealed class TrString

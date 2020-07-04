@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Abstract class to represent a number system.</summary>
     public abstract class NumberSystem

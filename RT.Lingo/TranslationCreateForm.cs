@@ -5,9 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using RT.Serialization;
+using RT.Util;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Provides a dialog in which the user can create a new translation of the software.</summary>
     public sealed class TranslationCreateForm : Form

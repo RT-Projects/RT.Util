@@ -9,7 +9,7 @@ using RT.Util.Controls;
 using RT.Util.ExtensionMethods;
 using RT.Util.Forms;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Provides a GUI for the user to edit a translation for the application.</summary>
     /// <typeparam name="TTranslation">The type containing the <see cref="TrString"/> and <see cref="TrStringNum"/> fields to be translated.</typeparam>

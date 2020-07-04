@@ -10,11 +10,12 @@ using System.Text;
 using System.Windows.Forms;
 using RT.PostBuild;
 using RT.Serialization;
+using RT.Util;
 using RT.Util.Forms;
 using RT.Util.ExtensionMethods;
 using RT.Util.IL;
 
-namespace RT.Util.Lingo
+namespace RT.Lingo
 {
     /// <summary>Used for functions which change the language of the program.</summary>
     /// <typeparam name="TTranslation">The type of the translation class.</typeparam>
@@ -223,7 +224,7 @@ namespace RT.Util.Lingo
 
                 var f = new StringBuilder();
 
-                f.AppendLine("using RT.Util.Lingo;");
+                f.AppendLine("using RT.Lingo;");
                 f.AppendLine("");
                 bool first = true;
                 foreach (var kvp in _codeSoFar)
