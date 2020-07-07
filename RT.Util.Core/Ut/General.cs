@@ -658,5 +658,12 @@ namespace RT.Util
             }
             return new string(charArr);
         }
+
+        /// <summary>Converts the current <see cref="KeyValuePair{TKey, TValue}(TKey, TValue)"/> to a value tuple.</summary>
+        public static (TKey key, TValue value) ToTuple<TKey, TValue>(this KeyValuePair<TKey, TValue> kvp) => (kvp.Key, kvp.Value);
+        /// <summary>
+        ///     Converts the current sequence of <see cref="KeyValuePair{TKey, TValue}(TKey, TValue)"/>s to a sequence of
+        ///     value tuples.</summary>
+        public static IEnumerable<(TKey key, TValue value)> ToTuples<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> kvps) => kvps.Select(kvp => (kvp.Key, kvp.Value));
     }
 }
