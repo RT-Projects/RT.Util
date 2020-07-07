@@ -1182,10 +1182,15 @@ namespace RT.Serialization
                         {
                             var items = Enumerable.Range(0, genericArguments.Length).Select(i =>
                             {
-                                var property = saveType.GetProperty("Item" + (i + 1));
-                                if (property == null)
-                                    throw new InvalidOperationException("Cannot find expected item property in Tuple type.");
-                                return Serialize(property.GetValue(saveObject, null), genericArguments[i]);
+                                // System.Tuple<>
+                                var property = saveType.GetProperty("Item" + (i + 1), BindingFlags.Instance | BindingFlags.Public);
+                                if (property != null)
+                                    return Serialize(property.GetValue(saveObject, null), genericArguments[i]);
+                                // System.ValueType<>
+                                var field = saveType.GetField("Item" + (i + 1), BindingFlags.Instance | BindingFlags.Public);
+                                if (field != null)
+                                    return Serialize(field.GetValue(saveObject), genericArguments[i]);
+                                throw new InvalidOperationException("Cannot find expected item property in Tuple type.");
                             }).ToArray();
                             elem = () => _format.FormatList(true, items.Select(item => item()));
                         }
