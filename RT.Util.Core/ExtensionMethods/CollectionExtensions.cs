@@ -325,6 +325,25 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Returns a new array in which a single element has been replaced.</summary>
+        /// <param name="array">
+        ///     The array from which to create a new array with one element replaced.</param>
+        /// <param name="index">
+        ///     The index at which to replace one element.</param>
+        /// <param name="element">
+        ///     The new element to replace the old element with.</param>
+        public static T[] Replace<T>(this T[] array, int index, T element)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (index < 0 || index > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(index), "index must be between 0 and the size of the input array.");
+            var result = (T[]) array.Clone();
+            result[index] = element;
+            return result;
+        }
+
+        /// <summary>
         ///     Determines whether a subarray within the current array is equal to the specified other array.</summary>
         /// <param name="sourceArray">
         ///     First array to examine.</param>
