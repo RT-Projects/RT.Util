@@ -215,9 +215,18 @@ namespace RT.Util.ExtensionMethods
         ///     Source collection to convert to a dictionary.</param>
         /// <param name="comparer">
         ///     An optional equality comparer to compare keys.</param>
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer = null)
+        /// <param name="ignoreDuplicateKeys">
+        ///     If <c>true</c>, duplicate keys are ignored and only their first occurrence added to the dictionary. Otherwise,
+        ///     a duplicate key causes an exception.</param>
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> comparer = null, bool ignoreDuplicateKeys = false)
         {
-            return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer ?? EqualityComparer<TKey>.Default);
+            if (!ignoreDuplicateKeys)
+                return source.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer ?? EqualityComparer<TKey>.Default);
+            var result = new Dictionary<TKey, TValue>();
+            foreach (var entry in source)
+                if (!result.ContainsKey(entry.Key))
+                    result.Add(entry.Key, entry.Value);
+            return result;
         }
 
         /// <summary>
