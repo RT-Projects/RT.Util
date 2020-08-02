@@ -1787,7 +1787,7 @@ namespace RT.Serialization
         /// Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.
         /// </summary>
         internal ExactConvertException(object value, Type targetType)
-            : base($"Cannot do an exact conversion from value \"{value}\" of type \"{ExactConvert.GetTypeCode(value)}\" to type \"{Type.GetTypeCode(targetType)}\".")
+            : base($"Cannot do an exact conversion from value ‘{value}’ of type ‘{ExactConvert.GetTypeCode(value)}’ to type ‘{targetType}’.")
         {
         }
     }
