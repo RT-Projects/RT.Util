@@ -677,8 +677,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Invokes a selector on each element of a collection and returns the minimum resulting value, or <c>null</c>
-        ///     if the sequence is empty.</summary>
+        ///     Invokes a selector on each element of a collection and returns the minimum resulting value, or <c>null</c> if
+        ///     the sequence is empty.</summary>
         /// <typeparam name="TSource">
         ///     The type of the elements of <paramref name="source"/>.</typeparam>
         /// <typeparam name="TResult">
@@ -716,8 +716,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Invokes a selector on each element of a collection and returns the maximum resulting value, or <c>null</c>
-        ///     if the sequence is empty.</summary>
+        ///     Invokes a selector on each element of a collection and returns the maximum resulting value, or <c>null</c> if
+        ///     the sequence is empty.</summary>
         /// <typeparam name="TSource">
         ///     The type of the elements of <paramref name="source"/>.</typeparam>
         /// <typeparam name="TResult">
@@ -1715,6 +1715,62 @@ namespace RT.Util.ExtensionMethods
                         yield return tq.Value;
             }
             return whereNotNullIterator();
+        }
+
+        /// <summary>
+        ///     Determines whether all elements of a sequence satisfy a condition by incorporating the element's index.</summary>
+        /// <typeparam name="T">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">
+        ///     An <see cref="IEnumerable{T}"/> that contains the elements to apply the predicate to.</param>
+        /// <param name="predicate">
+        ///     A function to test each element for a condition; the second parameter of the function represents the index of
+        ///     the source element.</param>
+        /// <returns>
+        ///     <c>true</c> if every element of the source sequence passes the test in the specified <paramref
+        ///     name="predicate"/>, or if the sequence is empty; otherwise, false.</returns>
+        public static bool All<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+            var ix = 0;
+            foreach (var elem in source)
+            {
+                if (!predicate(elem, ix))
+                    return false;
+                ix++;
+            }
+            return true;
+        }
+
+        /// <summary>
+        ///     Determines whether any element of a sequence satisfies a condition by incorporating the element's index.</summary>
+        /// <typeparam name="T">
+        ///     The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">
+        ///     An <see cref="IEnumerable{T}"/> that contains the elements to apply the predicate to.</param>
+        /// <param name="predicate">
+        ///     A function to test each element for a condition; the second parameter of the function represents the index of
+        ///     the source element.</param>
+        /// <returns>
+        ///     <c>true</c> if any elements in the source sequence pass the test in the specified <paramref
+        ///     name="predicate"/>; otherwise, false.</returns>
+        public static bool Any<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+            var ix = 0;
+            foreach (var elem in source)
+            {
+                if (predicate(elem, ix))
+                    return true;
+                ix++;
+            }
+            return false;
         }
     }
 
