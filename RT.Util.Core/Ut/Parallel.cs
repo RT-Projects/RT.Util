@@ -154,14 +154,14 @@ namespace RT.Util
         ///     Function that returns a collection for each input item.</param>
         public static IEnumerable<TResult> ParallelSelectMany<TSource, TResult>(this IEnumerable<TSource> items, int maxSimultaneous, Func<TSource, IEnumerable<TResult>> selector)
         {
-            var list = new List<IEnumerable<TResult>>();
+            var list = new List<TResult>();
             items.ParallelForEach(maxSimultaneous, source =>
             {
                 var result = selector(source).ToList();
                 lock (list)
-                    list.Add(result);
+                    list.AddRange(result);
             });
-            return list.SelectMany(item => item);
+            return list;
         }
 
         /// <summary>
