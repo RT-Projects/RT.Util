@@ -2359,6 +2359,57 @@ namespace RT.Serialization.Tests
             Assert.Throws<InvalidOperationException>(() => { var res2 = ClassifyXml.Deserialize<TestSubstExcWrapper>(XElement.Parse(xml2), opt2); });
         }
 
+        class ClassWithReadonlyMembers
+        {
+            public string one { get; } = "one";
+            public string two { get; set; } = "two";
+            public string three => "three";
+            public string four = "four";
+            public readonly string five = "five";
+        }
+
+        [Test]
+        public void TestReadonlyMember()
+        {
+            JsonValue json;
+            ClassWithReadonlyMembers obj;
+
+            // readonly members should NOT be serialized
+            json = ClassifyJson.Serialize(new ClassWithReadonlyMembers(), new ClassifyOptions { IgnoreReadonlyMembers = true });
+            Assert.IsFalse(json.ContainsKey("one"));
+            Assert.IsTrue(json.ContainsKey("two"));
+            Assert.IsFalse(json.ContainsKey("three"));
+            Assert.IsTrue(json.ContainsKey("four"));
+            Assert.IsFalse(json.ContainsKey("five"));
+
+            // readonly members _should_ be serialized
+            json = ClassifyJson.Serialize(new ClassWithReadonlyMembers(), new ClassifyOptions { IgnoreReadonlyMembers = false });
+            Assert.IsTrue(json.ContainsKey("one"));
+            Assert.IsTrue(json.ContainsKey("two"));
+            Assert.IsFalse(json.ContainsKey("three"));
+            Assert.IsTrue(json.ContainsKey("four"));
+            Assert.IsTrue(json.ContainsKey("five"));
+
+            string jsonText = @"{""one"":""serialized"",""two"":""serialized"",""four"":""serialized"",""five"":""serialized""}";
+            json = JsonValue.Parse(jsonText);
+
+            // readonly members that have been serialized should NOT be deserialized.
+            obj = ClassifyJson.Deserialize<ClassWithReadonlyMembers>(json, new ClassifyOptions { IgnoreReadonlyMembers = true });
+            Assert.AreEqual(obj.one, "one");
+            Assert.AreEqual(obj.two, "serialized");
+            Assert.AreEqual(obj.three, "three");
+            Assert.AreEqual(obj.four, "serialized");
+            Assert.AreEqual(obj.five, "five");
+
+            // readonly members that have been serialized _should_ be deserialized
+            obj = ClassifyJson.Deserialize<ClassWithReadonlyMembers>(json, new ClassifyOptions { IgnoreReadonlyMembers = false });
+            Assert.AreEqual(obj.one, "serialized");
+            Assert.AreEqual(obj.two, "serialized");
+            Assert.AreEqual(obj.three, "three");
+            Assert.AreEqual(obj.four, "serialized");
+            Assert.AreEqual(obj.five, "serialized");
+        }
+
         class ClassWithClassifyNameAttribute
         {
             public string UnchangedField = "X";

@@ -937,6 +937,10 @@ namespace RT.Serialization
 
                 foreach (var field in type.GetAllFields())
                 {
+                    // Skip readonly members if requested via options
+                    if (_options.IgnoreReadonlyMembers && field.IsInitOnly)
+                        continue;
+
                     string rFieldName = field.Name.TrimStart('_');
                     MemberInfo getAttrsFrom = field;
 
@@ -1328,6 +1332,10 @@ namespace RT.Serialization
 
                     // Ignore the backing field for events
                     if (typeof(Delegate).IsAssignableFrom(field.FieldType) && saveType.GetEvent(field.Name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance) != null)
+                        continue;
+
+                    // Skip readonly members if requested via options
+                    if (_options.IgnoreReadonlyMembers && field.IsInitOnly)
                         continue;
 
                     string rFieldName = field.Name.TrimStart('_');
@@ -1730,6 +1738,11 @@ namespace RT.Serialization
         ///     affected by this option (but only by <see cref="ClassifyEnforceEnumAttribute"/>).</summary>
         /// <seealso cref="ClassifyEnforceEnumAttribute"/>
         public bool EnforceEnums = false;
+
+        /// <summary>
+        ///     This option will cause Classify to ignore any auto-generated properties which have no setter, or any fields 
+        ///     marked with the C# "readonly" keyword. </summary>
+        public bool IgnoreReadonlyMembers = false;
 
         /// <summary>
         ///     Provides a means to customize Classify’s definition of object equality, i.e. to control which objects are
