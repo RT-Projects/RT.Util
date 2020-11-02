@@ -335,6 +335,7 @@ namespace RT.Serialization
             private List<Action> _doAtTheEnd;
             private IClassifyFormat<TElement> _format;
             private Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
+            private HashSet<string> _classifySimpleAttributes;
 
             private enum CollectionCategory
             {
@@ -360,14 +361,39 @@ namespace RT.Serialization
                 Other
             }
 
-            private object[] getCustomAttributes(MemberInfo member)
+            private bool hasClassifyAttribute<T>(MemberInfo member) where T : Attribute
+            {
+                return getClassifyAttributeOrNull<T>(member) != null;
+            }
+
+            private T getClassifyAttributeOrNull<T>(MemberInfo member) where T : Attribute
             {
                 if (!_attributesCache.TryGetValue(member, out var attrs))
                 {
                     attrs = member.GetCustomAttributes(true);
                     _attributesCache[member] = attrs;
                 }
-                return attrs;
+
+                if (_classifySimpleAttributes == null)
+                {
+                    _classifySimpleAttributes = Assembly.GetExecutingAssembly()
+                        .GetTypes()
+                        .Where(t => typeof(Attribute).IsAssignableFrom(t))
+                        .Where(t => t.Name.StartsWith("Classify") && t.Name.EndsWith("Attribute"))
+                        .Where(t => t.GetConstructors().Length == 1 && t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
+                        .Select(t => t.Name)
+                        .ToHashSet();
+                }
+
+                foreach (var attr in attrs)
+                {
+                    if (attr is T match)
+                        return match;
+                    else if (typeof(T).Name == attr.GetType().Name && _classifySimpleAttributes.Contains(attr.GetType().Name))
+                        return Activator.CreateInstance<T>(); // it's a simple attribute declared externally: return an instance of the "real" classify attribute
+                }
+
+                return null;
             }
 
             public Classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
@@ -958,8 +984,6 @@ namespace RT.Serialization
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
-                    var attrs = getCustomAttributes(getAttrsFrom);
-
                     // Skip events
                     if (type.GetEvent(rFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static) != null)
                         continue;
@@ -967,11 +991,11 @@ namespace RT.Serialization
                     var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
 
                     // [ClassifyIgnore]
-                    if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
+                    if (hasClassifyAttribute<ClassifyIgnoreAttribute>(getAttrsFrom))
                         continue;
 
                     // [ClassifyName]
-                    var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
+                    var classifyName = getClassifyAttributeOrNull<ClassifyNameAttribute>(getAttrsFrom);
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
@@ -982,18 +1006,18 @@ namespace RT.Serialization
                     if (_format.HasField(elem, rFieldName, fieldDeclaringType))
                     {
                         var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
-                        if (!_format.IsNull(value) || !attrs.OfType<ClassifyNotNullAttribute>().Any())
+                        if (!_format.IsNull(value) || !hasClassifyAttribute<ClassifyNotNullAttribute>(getAttrsFrom))
                         {
                             var inf = new DeserializeFieldInfo
                             {
                                 FieldToAssignTo = field,
                                 DeserializeAsType = field.FieldType,
                                 ElementToAssign = value,
-                                EnforceEnum = attrs.OfType<ClassifyEnforceEnumAttribute>().Any()
+                                EnforceEnum = hasClassifyAttribute<ClassifyEnforceEnumAttribute>(getAttrsFrom),
                             };
 
                             // [ClassifySubstitute]
-                            var substituteAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
+                            var substituteAttr = getClassifyAttributeOrNull<ClassifySubstituteAttribute>(getAttrsFrom);
                             if (substituteAttr != null)
                             {
                                 var substitutor = substituteAttr.GetSubstitutor(field.FieldType);
@@ -1313,8 +1337,8 @@ namespace RT.Serialization
 
             private IEnumerable<ObjectFieldInfo<Func<TElement>>> serializeObject(object saveObject, Type saveType)
             {
-                bool typeHasIgnoreIfDefault = saveType.IsDefined<ClassifyIgnoreIfDefaultAttribute>(true);
-                bool typeHasIgnoreIfEmpty = saveType.IsDefined<ClassifyIgnoreIfEmptyAttribute>(true);
+                bool typeHasIgnoreIfDefault = saveType.IsDefinedOrIsNamedLike<ClassifyIgnoreIfDefaultAttribute>(true);
+                bool typeHasIgnoreIfEmpty = saveType.IsDefinedOrIsNamedLike<ClassifyIgnoreIfEmptyAttribute>(true);
 
                 var results = new List<Tuple<string, Type, Func<TElement>>>();
                 var namesAlreadySeen = new HashSet<string>();
@@ -1355,14 +1379,12 @@ namespace RT.Serialization
                         rFieldName = rFieldName.Substring(1, rFieldName.Length - "<>i__Field".Length);
                     }
 
-                    var attrs = getCustomAttributes(getAttrsFrom);
-
                     // [ClassifyIgnore]
-                    if (attrs.OfType<ClassifyIgnoreAttribute>().Any())
+                    if (hasClassifyAttribute<ClassifyIgnoreAttribute>(getAttrsFrom))
                         continue;
 
                     // [ClassifyName]
-                    var classifyName = attrs.OfType<ClassifyNameAttribute>().FirstOrDefault();
+                    var classifyName = getClassifyAttributeOrNull<ClassifyNameAttribute>(getAttrsFrom);
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
@@ -1371,7 +1393,7 @@ namespace RT.Serialization
 
                     object saveValue = field.GetValue(saveObject);
 
-                    if (typeHasIgnoreIfDefault || attrs.OfType<ClassifyIgnoreIfDefaultAttribute>().Any())
+                    if (typeHasIgnoreIfDefault || hasClassifyAttribute<ClassifyIgnoreIfDefaultAttribute>(getAttrsFrom))
                     {
                         if (saveValue == null)
                             continue;
@@ -1381,12 +1403,12 @@ namespace RT.Serialization
                             continue;
                     }
 
-                    var ignoreIf = attrs.OfType<ClassifyIgnoreIfAttribute>().FirstOrDefault();
+                    var ignoreIf = getClassifyAttributeOrNull<ClassifyIgnoreIfAttribute>(getAttrsFrom);
                     if (ignoreIf != null && saveValue != null && saveValue.Equals(ignoreIf.Value))
                         continue;
 
                     // Arrays, lists and dictionaries all implement ICollection
-                    if ((typeHasIgnoreIfEmpty || attrs.OfType<ClassifyIgnoreIfEmptyAttribute>().Any()) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
+                    if ((typeHasIgnoreIfEmpty || hasClassifyAttribute<ClassifyIgnoreIfEmptyAttribute>(getAttrsFrom)) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
                         continue;
 
                     if (!namesAlreadySeen.Add(rFieldName))
@@ -1395,7 +1417,7 @@ namespace RT.Serialization
                     Func<TElement> elem;
 
                     // [ClassifySubstitute]
-                    var substAttr = attrs.OfType<ClassifySubstituteAttribute>().FirstOrDefault();
+                    var substAttr = getClassifyAttributeOrNull<ClassifySubstituteAttribute>(getAttrsFrom);
                     if (substAttr != null)
                     {
                         var substitutor = substAttr.GetSubstitutor(field.FieldType);
@@ -1509,7 +1531,7 @@ namespace RT.Serialization
                         else if (type.GetEvent(f.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance) != null)
                             continue;
 
-                        if (m.IsDefined<ClassifyIgnoreAttribute>())
+                        if (m.IsDefinedOrIsNamedLike<ClassifyIgnoreAttribute>())
                             continue;
                         postBuildStep(f.FieldType, inst == null ? null : f.GetValue(inst), m, rep, alreadyChecked, chain.Concat(m.DeclaringType.FullName + "." + m.Name));
                     }
@@ -1906,12 +1928,6 @@ namespace RT.Serialization
     }
 
     /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, it is ignored by <see
-    ///     cref="Classify"/>. Data stored in this field or automatically-implemented property is not persisted.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyIgnoreAttribute : Attribute { }
-
-    /// <summary>
     ///     Indicates that the value stored in this field or automatically-implemented property should be converted to another
     ///     type when serializing and back when deserializing. This takes precedence over any type substitution configured in
     ///     a <see cref="ClassifyOptions"/> object.</summary>
@@ -1950,33 +1966,6 @@ namespace RT.Serialization
 
     /// <summary>
     ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> omits its
-    ///     serialization if the value is null, 0, false, etc. If it is used on a type, it applies to all fields and
-    ///     automatically-implemented properties in the type. See also remarks.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item><description>
-    ///             Using this together with <see cref="ClassifyIgnoreIfEmptyAttribute"/> will cause the distinction between
-    ///             null and an empty collection to be lost. However, a collection containing only null elements is persisted
-    ///             correctly.</description></item>
-    ///         <item><description>
-    ///             Do not use this custom attribute on a field that has a non-default value set in the containing class’s
-    ///             constructor. Doing so will cause a serialized null/0/false value to revert to that constructor value upon
-    ///             deserialization.</description></item></list></remarks>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
-    public sealed class ClassifyIgnoreIfDefaultAttribute : Attribute { }
-
-    /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> omits its
-    ///     serialization if that serialization would be completely empty. If it is used on a type, it applies to all
-    ///     collection-type fields in the type. See also remarks.</summary>
-    /// <remarks>
-    ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between null
-    ///     and an empty collection to be lost. However, a collection containing only null elements is persisted correctly.</remarks>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
-    public sealed class ClassifyIgnoreIfEmptyAttribute : Attribute { }
-
-    /// <summary>
-    ///     If this attribute is used on a field or automatically-implemented property, <see cref="Classify"/> omits its
     ///     serialization if the field’s or property’s value is equal to the specified value. See also remarks.</summary>
     /// <remarks>
     ///     Using this together with <see cref="ClassifyIgnoreIfDefaultAttribute"/> will cause the distinction between the
@@ -1992,23 +1981,6 @@ namespace RT.Serialization
         /// <summary>Retrieves the value which causes a field or automatically-implemented property to be ignored.</summary>
         public object Value { get; private set; }
     }
-
-    /// <summary>
-    ///     Specifies that Classify shall not set this field or automatically-implemented property to <c>null</c>. If the
-    ///     serialized form is <c>null</c>, the field or automatically-implemented property is instead left at the default
-    ///     value assigned by the object’s default constructor.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyNotNullAttribute : Attribute { }
-
-    /// <summary>
-    ///     To be used on a field or automatically-implemented property of an enum type or a collection involving an enum
-    ///     type. Specifies that Classify shall not allow integer values that are not explicitly declared in the relevant enum
-    ///     type. If the serialized form is such an integer, fields or automatically-implemented properties of an enum type
-    ///     are instead left at the default value assigned by the object’s default constructor, while in collections, the
-    ///     relevant element is omitted (changing the size of the collection). If the enum type has the [Flags] attribute,
-    ///     bitwise combinations of the declared values are allowed.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class ClassifyEnforceEnumAttribute : Attribute { }
 
     /// <summary>Specifies a naming convention for Classify to follow.</summary>
     public enum ClassifyNameConvention
@@ -2084,6 +2056,14 @@ namespace RT.Serialization
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
             }
+        }
+    }
+
+    internal static class AttributeExtensions
+    {
+        public static bool IsDefinedOrIsNamedLike<T>(this MemberInfo member, bool inherit = false)
+        {
+            return member.IsDefined(typeof(T), inherit) || member.GetCustomAttributes(inherit).Any(a => a.GetType().Name == typeof(T).Name);
         }
     }
 }

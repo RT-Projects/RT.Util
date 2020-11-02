@@ -2507,6 +2507,35 @@ namespace RT.Serialization.Tests
             Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Serialize(new ClassWithClassifyNameAttributeOnType()); });
             Assert.Throws<InvalidOperationException>(() => { ClassifyJson.Deserialize<ClassWithClassifyNameAttributeOnType>(new JsonDict()); });
         }
+
+        class ClassWithUserDefinedAttributeOne
+        {
+            [ClassifyIgnore]
+            public string One = "One";
+            public string Two = "Two";
+        }
+
+        class ClassWithUserDefinedAttributeTwo
+        {
+            [UserDefined.ClassifyIgnore]
+            public string One = "One";
+            public string Two = "Two";
+        }
+
+        [Test]
+        public void TestUserDefinedAttribute()
+        {
+            var j1 = ClassifyJson.Serialize(new ClassWithUserDefinedAttributeOne());
+            var j2 = ClassifyJson.Serialize(new ClassWithUserDefinedAttributeTwo());
+
+            Assert.AreEqual(j1.ToString(), j2.ToString());
+
+            Assert.IsFalse(j1.ContainsKey("One"));
+            Assert.IsFalse(j2.ContainsKey("One"));
+
+            Assert.IsTrue(j1.ContainsKey("Two"));
+            Assert.IsTrue(j2.ContainsKey("Two"));
+        }
     }
 
     class MisTypeOuter
@@ -2515,4 +2544,11 @@ namespace RT.Serialization.Tests
     }
     abstract class MisTypeBase { }
     class MisTypeDerived : MisTypeBase { }
+
+
+}
+
+namespace UserDefined
+{
+    class ClassifyIgnoreAttribute : Attribute { }
 }
