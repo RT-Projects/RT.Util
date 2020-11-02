@@ -395,7 +395,8 @@ namespace RT.Serialization
                     {
                         yield return match;
                     }
-                    else if ((fuzzyMatch = _classifyAttributes.SingleOrDefault(t => t.Name == attr.GetType().Name)) != null)
+                    // search for any attribute named the same as a known ClassifyAttribute
+                    else if (typeof(T).Name == attr.GetType().Name && (fuzzyMatch = _classifyAttributes.SingleOrDefault(t => t.Name == attr.GetType().Name)) != null)
                     {
                         yield return Activator.CreateInstance<T>();
                     }
