@@ -57,6 +57,23 @@ namespace RT.Serialization
         /// <typeparam name="T">
         ///     Type of object to reconstruct.</typeparam>
         /// <param name="json">
+        ///     Json string to reconstruct object from.</param>
+        /// <param name="options">
+        ///     Options.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
+        /// <returns>
+        ///     A new instance of the requested type.</returns>
+        public static T Deserialize<T>(string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
+        {
+            return Classify.Deserialize<JsonValue, T>(JsonValue.Parse(json), format ?? DefaultFormat, options);
+        }
+
+        /// <summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
+        /// <typeparam name="T">
+        ///     Type of object to reconstruct.</typeparam>
+        /// <param name="json">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="options">
         ///     Options.</param>
@@ -74,6 +91,23 @@ namespace RT.Serialization
         /// <param name="type">
         ///     Type of object to reconstruct.</param>
         /// <param name="json">
+        ///     Json string to reconstruct object from.</param>
+        /// <param name="options">
+        ///     Options.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
+        /// <returns>
+        ///     A new instance of the requested type.</returns>
+        public static object Deserialize(Type type, string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
+        {
+            return Classify.Deserialize(type, JsonValue.Parse(json), format ?? DefaultFormat, options);
+        }
+
+        /// <summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
+        /// <param name="type">
+        ///     Type of object to reconstruct.</param>
+        /// <param name="json">
         ///     Serialized form to reconstruct object from.</param>
         /// <param name="options">
         ///     Options.</param>
@@ -84,6 +118,24 @@ namespace RT.Serialization
         public static object Deserialize(Type type, JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
         {
             return Classify.Deserialize(type, json, format ?? DefaultFormat, options);
+        }
+
+        /// <summary>
+        ///     Reconstructs an object of the specified type from the specified serialized form by applying the values to an
+        ///     existing instance of the type.</summary>
+        /// <typeparam name="T">
+        ///     Type of object to reconstruct.</typeparam>
+        /// <param name="json">
+        ///     Json string to reconstruct object from.</param>
+        /// <param name="intoObject">
+        ///     Object to assign values to in order to reconstruct the original object.</param>
+        /// <param name="options">
+        ///     Options.</param>
+        /// <param name="format">
+        ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
+        public static void DeserializeIntoObject<T>(string json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
+        {
+            Classify.DeserializeIntoObject(JsonValue.Parse(json), intoObject, format ?? DefaultFormat, options);
         }
 
         /// <summary>
