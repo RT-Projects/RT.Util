@@ -335,7 +335,7 @@ namespace RT.Serialization
             private List<Action> _doAtTheEnd;
             private IClassifyFormat<TElement> _format;
             private Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
-            private Type[] _classifyAttributes;
+            private HashSet<string> _classifySimpleAttributes;
 
             private enum CollectionCategory
             {
@@ -361,17 +361,12 @@ namespace RT.Serialization
                 Other
             }
 
-            private bool hasClassifyAttribute<T>(MemberInfo member)
+            private bool hasClassifyAttribute<T>(MemberInfo member) where T : Attribute
             {
-                return getAllClassifyAttributes<T>(member).Any();
+                return getClassifyAttributeOrNull<T>(member) != null;
             }
 
-            private T getClassifyAttribute<T>(MemberInfo member)
-            {
-                return getAllClassifyAttributes<T>(member).FirstOrDefault();
-            }
-
-            private IEnumerable<T> getAllClassifyAttributes<T>(MemberInfo member)
+            private T getClassifyAttributeOrNull<T>(MemberInfo member) where T : Attribute
             {
                 if (!_attributesCache.TryGetValue(member, out var attrs))
                 {
@@ -379,27 +374,26 @@ namespace RT.Serialization
                     _attributesCache[member] = attrs;
                 }
 
-                if (_classifyAttributes == null)
+                if (_classifySimpleAttributes == null)
                 {
-                    _classifyAttributes = Assembly.GetExecutingAssembly()
+                    _classifySimpleAttributes = Assembly.GetExecutingAssembly()
                         .GetTypes()
-                        .Where(t => typeof(ClassifyAttribute).IsAssignableFrom(t))
-                        .Where(t => t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
-                        .ToArray();
+                        .Where(t => typeof(Attribute).IsAssignableFrom(t))
+                        .Where(t => t.Name.StartsWith("Classify") && t.Name.EndsWith("Attribute"))
+                        .Where(t => t.GetConstructors().Length == 1 && t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
+                        .Select(t => t.Name)
+                        .ToHashSet();
                 }
 
                 foreach (var attr in attrs)
                 {
                     if (attr is T match)
-                    {
-                        yield return match;
-                    }
-                    // search for any attribute named the same as a known ClassifyAttribute
-                    else if (typeof(T).Name == attr.GetType().Name && _classifyAttributes.SingleOrDefault(t => t.Name == attr.GetType().Name) != null)
-                    {
-                        yield return Activator.CreateInstance<T>();
-                    }
+                        return match;
+                    else if (typeof(T).Name == attr.GetType().Name && _classifySimpleAttributes.Contains(attr.GetType().Name))
+                        return Activator.CreateInstance<T>(); // it's a simple attribute declared externally: return an instance of the "real" classify attribute
                 }
+
+                return null;
             }
 
             public Classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
@@ -997,7 +991,7 @@ namespace RT.Serialization
                         continue;
 
                     // [ClassifyName]
-                    var classifyName = getClassifyAttribute<ClassifyNameAttribute>(getAttrsFrom);
+                    var classifyName = getClassifyAttributeOrNull<ClassifyNameAttribute>(getAttrsFrom);
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
@@ -1019,7 +1013,7 @@ namespace RT.Serialization
                             };
 
                             // [ClassifySubstitute]
-                            var substituteAttr = getClassifyAttribute<ClassifySubstituteAttribute>(getAttrsFrom);
+                            var substituteAttr = getClassifyAttributeOrNull<ClassifySubstituteAttribute>(getAttrsFrom);
                             if (substituteAttr != null)
                             {
                                 var substitutor = substituteAttr.GetSubstitutor(field.FieldType);
@@ -1382,7 +1376,7 @@ namespace RT.Serialization
                         continue;
 
                     // [ClassifyName]
-                    var classifyName = getClassifyAttribute<ClassifyNameAttribute>(getAttrsFrom);
+                    var classifyName = getClassifyAttributeOrNull<ClassifyNameAttribute>(getAttrsFrom);
                     if (classifyName != null || globalClassifyName != null)
                         rFieldName = (classifyName ?? globalClassifyName).TransformName(rFieldName);
 
@@ -1401,7 +1395,7 @@ namespace RT.Serialization
                             continue;
                     }
 
-                    var ignoreIf = getClassifyAttribute<ClassifyIgnoreIfAttribute>(getAttrsFrom);
+                    var ignoreIf = getClassifyAttributeOrNull<ClassifyIgnoreIfAttribute>(getAttrsFrom);
                     if (ignoreIf != null && saveValue != null && saveValue.Equals(ignoreIf.Value))
                         continue;
 
@@ -1415,7 +1409,7 @@ namespace RT.Serialization
                     Func<TElement> elem;
 
                     // [ClassifySubstitute]
-                    var substAttr = getClassifyAttribute<ClassifySubstituteAttribute>(getAttrsFrom);
+                    var substAttr = getClassifyAttributeOrNull<ClassifySubstituteAttribute>(getAttrsFrom);
                     if (substAttr != null)
                     {
                         var substitutor = substAttr.GetSubstitutor(field.FieldType);
@@ -2049,6 +2043,14 @@ namespace RT.Serialization
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
             }
+        }
+    }
+
+    internal static class AttributeExtensions
+    {
+        public static bool IsDefinedOrIsNamedLike<T>(this MemberInfo member, bool inherit = false)
+        {
+            return member.IsDefined(typeof(T), inherit) || member.GetCustomAttributes(inherit).Any(a => a.GetType().Name == typeof(T).Name);
         }
     }
 }
