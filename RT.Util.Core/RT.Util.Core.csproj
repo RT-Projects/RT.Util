@@ -6,6 +6,7 @@
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <DefineConstants>EXPORT_UTIL</DefineConstants>
+    <LangVersion>latest</LangVersion>
 
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
