@@ -12,7 +12,7 @@ namespace RT.Util
         ///     Runs all of the specified actions in parallel, each in a thread of its own.</summary>
         /// <param name="actions">
         ///     Actions to run.</param>
-        public static void Parallel(params Action[] actions)
+        public static void Parallel(params Action<int>[] actions)
         {
             Parallel(int.MaxValue, actions);
         }
@@ -22,8 +22,8 @@ namespace RT.Util
         /// <param name="maxSimultaneous">
         ///     Maximum number of concurrent threads allowed.</param>
         /// <param name="actions">
-        ///     Actions to run.</param>
-        public static void Parallel(int maxSimultaneous, params Action[] actions)
+        ///     Actions to run. The parameter is the index of the thread running it.</param>
+        public static void Parallel(int maxSimultaneous, params Action<int>[] actions)
         {
             if (maxSimultaneous < 1)
                 throw new ArgumentException("maxSimultaneous cannot be zero or negative.", nameof(maxSimultaneous));
@@ -34,11 +34,11 @@ namespace RT.Util
             var exceptionLock = new object();
             Exception exception = null;
 #if !DEBUG
-            actions = actions.Select(act => new Action(() =>
+            actions = actions.Select(act => new Action<int>(i =>
             {
                 try
                 {
-                    act();
+                    act(i);
                 }
                 catch (Exception e)
                 {
@@ -53,9 +53,10 @@ namespace RT.Util
             if (maxSimultaneous > actions.Length)
             {
                 // Just fire them all off
-                foreach (var action in actions)
+                for (var idFor = 0; idFor < actions.Length; idFor++)
                 {
-                    var thread = new Thread(new ThreadStart(action));
+                    var id = idFor; // capture the correct value for the lambda
+                    var thread = new Thread(new ThreadStart(() => actions[id](id)));
                     thread.Start();
                     threads.Add(thread);
                 }
@@ -63,21 +64,22 @@ namespace RT.Util
             else
             {
                 // Create a queue and have each thread take actions from the queue as needed
-                var todo = new Queue<Action>(actions);
-                for (int i = 0; i < maxSimultaneous; i++)
+                var todo = new Queue<Action<int>>(actions);
+                for (int idFor = 0; idFor < maxSimultaneous; idFor++)
                 {
+                    var id = idFor; // capture the correct value for the lambda
                     var thread = new Thread(() =>
                     {
                         while (true)
                         {
-                            Action action;
+                            Action<int> action;
                             lock (todo)
                             {
                                 if (todo.Count == 0)
                                     return;
                                 action = todo.Dequeue();
                             }
-                            action();
+                            action(id);
                         }
                     });
                     thread.Start();
@@ -103,7 +105,20 @@ namespace RT.Util
         ///     Action to run for each element.</param>
         public static void ParallelForEach<T>(this IEnumerable<T> items, Action<T> action)
         {
-            ParallelForEach<T>(items, int.MaxValue, action);
+            ParallelForEach(items, int.MaxValue, action);
+        }
+
+        /// <summary>
+        ///     Runs the specified action in parallel for each item in the input collection.</summary>
+        /// <typeparam name="T">
+        ///     Type of the items in the collection.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the action.</param>
+        /// <param name="action">
+        ///     Action to run for each element. The second parameter is the index of the thread running it.</param>
+        public static void ParallelForEach<T>(this IEnumerable<T> items, Action<T, int> action)
+        {
+            ParallelForEach(items, int.MaxValue, action);
         }
 
         /// <summary>
@@ -119,7 +134,24 @@ namespace RT.Util
         ///     Action to run for each element.</param>
         public static void ParallelForEach<T>(this IEnumerable<T> items, int maxSimultaneous, Action<T> action)
         {
-            var actions = items.Select(item => new Action(() => action(item))).ToArray();
+            var actions = items.Select(item => new Action<int>(i => action(item))).ToArray();
+            Parallel(maxSimultaneous, actions);
+        }
+
+        /// <summary>
+        ///     Runs the specified action in parallel for each item in the input collection, using no more than the specified
+        ///     maximum number of threads.</summary>
+        /// <typeparam name="T">
+        ///     Type of the items in the collection.</typeparam>
+        /// <param name="items">
+        ///     Input collection of items to pass to the action.</param>
+        /// <param name="maxSimultaneous">
+        ///     Maximum number of concurrent threads allowed.</param>
+        /// <param name="action">
+        ///     Action to run for each element. The second parameter is the index of the thread running it.</param>
+        public static void ParallelForEach<T>(this IEnumerable<T> items, int maxSimultaneous, Action<T, int> action)
+        {
+            var actions = items.Select(item => new Action<int>(i => action(item, i))).ToArray();
             Parallel(maxSimultaneous, actions);
         }
 
