@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\RT.Util.Core\ExtensionMethods\CollectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\CollectionExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\DictionaryExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DictionaryExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\DateTimeExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DateTimeExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\ReflectionExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\ReflectionExtensions.cs" />

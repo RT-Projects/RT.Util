@@ -20,14 +20,14 @@ namespace RT.Util.ExtensionMethods
             // **  void AddSafe<K, V>(this IDictionary<K, List<V>> dic, K key, V value)
             // **
             {
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), null, null); });
-                Assert.DoesNotThrow(() => { IEnumerableExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), "", null); });
-                Assert.DoesNotThrow(() => { IEnumerableExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>((IDictionary<string, List<string>>) null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>((IDictionary<string, HashSet<string>>) null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), null, null); });
+                Assert.DoesNotThrow(() => { DictionaryExtensions.AddSafe<string, string>(new Dictionary<string, List<string>>(), "", null); });
+                Assert.DoesNotThrow(() => { DictionaryExtensions.AddSafe<string, string>(new Dictionary<string, HashSet<string>>(), "", null); });
 
                 var dicWithList = new Dictionary<string, List<GenericParameter>>();
 
@@ -66,23 +66,23 @@ namespace RT.Util.ExtensionMethods
             // **  void RemoveSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, V>> dic, K1 key1, K2 key2)
             // **
             {
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(null, null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(null, "", null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(null, null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(null, "", "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, "", null); });
-                Assert.DoesNotThrow(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(null, null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(null, "", null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(null, null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(null, "", "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, "", null); });
+                Assert.DoesNotThrow(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", "", null); });
 
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(null, null, ""); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(null, "", ""); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, ""); });
-                Assert.DoesNotThrow(() => { IEnumerableExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", ""); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(null, null, ""); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(null, "", ""); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), null, ""); });
+                Assert.DoesNotThrow(() => { DictionaryExtensions.RemoveSafe<string, string, string>(new Dictionary<string, Dictionary<string, string>>(), "", ""); });
 
                 var dic = new Dictionary<string, Dictionary<string, GenericParameter>>();
 
@@ -116,14 +116,14 @@ namespace RT.Util.ExtensionMethods
             // **  void AddSafe<K1, K2, V>(this IDictionary<K1, Dictionary<K2, List<V>>> dic, K1 key1, K2 key2, V value)
             // **
             {
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, "", null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, "", "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), null, null, null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), null, "", null); });
-                Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), "", null, null); });
-                Assert.DoesNotThrow(() => { IEnumerableExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), "", "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, "", null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>((IDictionary<string, Dictionary<string, List<string>>>) null, "", "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), null, null, null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), null, "", null); });
+                Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), "", null, null); });
+                Assert.DoesNotThrow(() => { DictionaryExtensions.AddSafe<string, string, string>(new Dictionary<string, Dictionary<string, List<string>>>(), "", "", null); });
 
                 var dic = new Dictionary<string, Dictionary<string, List<GenericParameter>>>();
 
@@ -149,10 +149,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestIncSafe()
         {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IncSafe<string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IncSafe<string>(new Dictionary<string, int>(), null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IncSafe<string>(null, ""); });
-            Assert.DoesNotThrow(() => { IEnumerableExtensions.IncSafe<string>(new Dictionary<string, int>(), ""); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.IncSafe<string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.IncSafe<string>(new Dictionary<string, int>(), null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.IncSafe<string>(null, ""); });
+            Assert.DoesNotThrow(() => { DictionaryExtensions.IncSafe<string>(new Dictionary<string, int>(), ""); });
 
             var dic = new Dictionary<string, int>();
             Assert.AreEqual(0, dic.Count);
@@ -194,9 +194,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestDictionaryEqual()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.DictionaryEqual<string, string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.DictionaryEqual<string, string>(new Dictionary<string, string>(), null); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.DictionaryEqual<string, string>(null, new Dictionary<string, string>()); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.DictionaryEqual<string, string>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.DictionaryEqual<string, string>(new Dictionary<string, string>(), null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.DictionaryEqual<string, string>(null, new Dictionary<string, string>()); });
 
             var dic1 = new Dictionary<string, string>();
             var dic2 = new Dictionary<string, string>();
@@ -270,10 +270,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestGet()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Get<string, string>(null, null, null); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Get<string, string>(new Dictionary<string, string>(), null, null); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Get<string, string>(null, "", null); });
-            Assert.DoesNotThrow(() => { CollectionExtensions.Get<string, string>(new Dictionary<string, string>(), "", null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.Get<string, string>(null, null, null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.Get<string, string>(new Dictionary<string, string>(), null, null); });
+            Assert.Throws<ArgumentNullException>(() => { DictionaryExtensions.Get<string, string>(null, "", null); });
+            Assert.DoesNotThrow(() => { DictionaryExtensions.Get<string, string>(new Dictionary<string, string>(), "", null); });
 
             var dic = new Dictionary<string, string>();
             Assert.AreEqual(null, dic.Get("key", null));
@@ -289,10 +289,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestSubarray()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Subarray<string>(null, 0); });
-            Assert.DoesNotThrow(() => { CollectionExtensions.Subarray(new string[0], 0); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.Subarray<string>(null, 0, 0); });
-            Assert.DoesNotThrow(() => { CollectionExtensions.Subarray(new string[0], 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.Subarray<string>(null, 0); });
+            Assert.DoesNotThrow(() => { ArrayExtensions.Subarray(new string[0], 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.Subarray<string>(null, 0, 0); });
+            Assert.DoesNotThrow(() => { ArrayExtensions.Subarray(new string[0], 0, 0); });
 
             var inputArr = new int[] { 1, 2, 3, 4 };
 
@@ -337,10 +337,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestSubarrayEquals()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.SubarrayEquals<string>(null, 0, null, 0, 0); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.SubarrayEquals<string>(new string[0], 0, null, 0, 0); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.SubarrayEquals<string>(null, 0, new string[0], 0, 0); });
-            Assert.DoesNotThrow(() => { CollectionExtensions.SubarrayEquals<string>(new string[0], 0, new string[0], 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.SubarrayEquals<string>(null, 0, null, 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.SubarrayEquals<string>(new string[0], 0, null, 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.SubarrayEquals<string>(null, 0, new string[0], 0, 0); });
+            Assert.DoesNotThrow(() => { ArrayExtensions.SubarrayEquals<string>(new string[0], 0, new string[0], 0, 0); });
 
             Assert.IsTrue(new string[0].SubarrayEquals(0, new string[0], 0, 0));
 
@@ -380,10 +380,10 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestIndexOfSubarray()
         {
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.IndexOfSubarray<string>(null, null, 0, 0); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.IndexOfSubarray<string>(new string[0], null, 0, 0); });
-            Assert.Throws<ArgumentNullException>(() => { CollectionExtensions.IndexOfSubarray<string>(null, new string[0], 0, 0); });
-            Assert.DoesNotThrow(() => { CollectionExtensions.IndexOfSubarray<string>(new string[0], new string[0], 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.IndexOfSubarray<string>(null, null, 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.IndexOfSubarray<string>(new string[0], null, 0, 0); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.IndexOfSubarray<string>(null, new string[0], 0, 0); });
+            Assert.DoesNotThrow(() => { ArrayExtensions.IndexOfSubarray<string>(new string[0], new string[0], 0, 0); });
 
             Assert.AreEqual(0, new int[0].IndexOfSubarray(new int[0], 0, 0));
             Assert.AreEqual(-1, new int[0].IndexOfSubarray(new int[] { 1 }, 0, 0));
@@ -420,6 +420,19 @@ namespace RT.Util.ExtensionMethods
 
             var longList = new[] { long.MaxValue, long.MaxValue - 1 };
             Assert.AreEqual(-3, longList.SumUnchecked(lng => unchecked((int) lng)));
+        }
+
+        [Test]
+        public void TestArrayConcat()
+        {
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.Concat<int>(null, null); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.Concat<int>(new int[1], null); });
+            Assert.Throws<ArgumentNullException>(() => { ArrayExtensions.Concat<int>(null, new int[1]); });
+
+            Assert.IsTrue(new int[] { 1, 2 }.SequenceEqual(new int[] { 1 }.Concat(new int[] { 2 })));
+            Assert.IsTrue(new int[] { 1, 2 }.SequenceEqual(new int[0].Concat(new int[] { 1, 2 })));
+            Assert.IsTrue(new int[] { 1, 2 }.SequenceEqual(new int[] { 1, 2 }.Concat(new int[0])));
+            Assert.AreEqual(0, new int[0].Concat(new int[0]).Length);
         }
     }
 }

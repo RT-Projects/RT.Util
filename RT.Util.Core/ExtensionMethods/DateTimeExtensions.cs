@@ -208,7 +208,7 @@ namespace RT.Util.ExtensionMethods
         /// </summary>
         public static bool TryParseIso(string str, out DateTime result)
         {
-            result = default(DateTime);
+            result = default;
             var match = isoRegexBasic.Match(str);
             if (!match.Success)
                 match = isoRegexExtended.Match(str);
@@ -278,8 +278,7 @@ namespace RT.Util.ExtensionMethods
         /// <summary>Parse the specified string as an ISO-formatted DateTime. See <see cref="TryParseIso"/> for more info.</summary>
         public static DateTime ParseIso(string str)
         {
-            DateTime result;
-            if (!TryParseIso(str, out result))
+            if (!TryParseIso(str, out var result))
                 throw new FormatException("The string is not in a recognized date/time format.");
             return result;
         }
