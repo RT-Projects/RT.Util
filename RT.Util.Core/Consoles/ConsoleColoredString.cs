@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace RT.Util.Consoles
     ///             Each character has two optional <see cref="ConsoleColor"/> values associated with it, one indicating the
     ///             foreground color and one the background color. Those characters whose color is <c>null</c> are printed in
     ///             the default color of the console (which the user can customize in the console window UI).</description></item></list></remarks>
-    public sealed class ConsoleColoredString
+    public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>
     {
         /// <summary>Represents an empty colored string. This field is read-only.</summary>
         public static ConsoleColoredString Empty { get { return _empty ?? (_empty = new ConsoleColoredString()); } }
@@ -1176,6 +1177,10 @@ namespace RT.Util.Consoles
                 return sb.ToString();
             }
         }
+
+        /// <summary>Implements <see cref="IEnumerable{T}.GetEnumerator"/>.</summary>
+        public IEnumerator<ConsoleColoredChar> GetEnumerator() => Enumerable.Range(0, Length).Select(ix => this[ix]).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     /// <summary>Contains a character and a console foreground and background color.</summary>
