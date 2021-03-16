@@ -92,13 +92,13 @@ namespace RT.Util
     /// <summary>Provides methods to send e-mails via an SMTP server.</summary>
     public sealed class RTSmtpClient : IDisposable
     {
-        private TcpClient _tcp;
-        private Stream _tcpStream;
-        private SslStream _sslStream;
-        private TextWriter _writer;
-        private TextReader _reader;
-        private List<string> _conversation;
-        private LoggerBase _log;
+        private readonly TcpClient _tcp;
+        private readonly Stream _tcpStream;
+        private readonly SslStream _sslStream;
+        private readonly TextWriter _writer;
+        private readonly TextReader _reader;
+        private readonly List<string> _conversation;
+        private readonly LoggerBase _log;
 
         /// <summary>
         ///     Creates a connection to the SMTP server and authenticates the specified user.</summary>

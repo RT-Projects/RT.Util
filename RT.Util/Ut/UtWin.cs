@@ -27,7 +27,7 @@ namespace RT.Util
         ///             For objects of type <see cref="char"/>, the specified Unicode character is simulated as a keypress and
         ///             release.</description></item>
         ///         <item><description>
-        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c> or <c>ValueType&lt;Keys, bool&gt;</c>, the bool
+        ///             For objects of type <c>Tuple&lt;Keys, bool&gt;</c> or <c>ValueTuple&lt;Keys, bool&gt;</c>, the bool
         ///             specifies whether to simulate only a key-down (false) or only a key-up (true).</description></item></list></remarks>
         /// <example>
         ///     <para>

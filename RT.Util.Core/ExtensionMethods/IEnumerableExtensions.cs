@@ -501,6 +501,26 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         ///     Returns the index of the first element in this <paramref name="source"/> satisfying the specified <paramref
+        ///     name="predicate"/>. The second parameter receives the index of each element. If no such elements are found,
+        ///     returns <c>-1</c>.</summary>
+        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+            int index = 0;
+            foreach (var v in source)
+            {
+                if (predicate(v, index))
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        ///     Returns the index of the first element in this <paramref name="source"/> satisfying the specified <paramref
         ///     name="predicate"/>, starting at the specified <paramref name="startIndex"/>. If no such elements are found,
         ///     returns <c>-1</c>.</summary>
         public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate, int startIndex)

@@ -211,8 +211,9 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestIndexOfPredicate()
         {
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, null); });
-            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], null); });
+            // Single-parameter lambda
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, (Func<string, bool>) null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], (Func<string, bool>) null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, str => str != null); });
             Assert.DoesNotThrow(() => { IEnumerableExtensions.IndexOf<string>(new string[0], str => str != null); });
 
@@ -220,6 +221,19 @@ namespace RT.Util.ExtensionMethods
             Assert.AreEqual(2, input.IndexOf(i => i == 3));
             Assert.AreEqual(2, input.IndexOf(i => i > 2));
             Assert.AreEqual(-1, input.IndexOf(i => i > 5));
+
+            // Two-parameter lambda
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, (Func<string, int, bool>) null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(new string[0], (Func<string, int, bool>) null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.IndexOf<string>(null, (str, ix) => str != null); });
+            Assert.DoesNotThrow(() => { IEnumerableExtensions.IndexOf<string>(new string[0], (str, ix) => str != null); });
+
+            Assert.AreEqual(2, input.IndexOf((i, ix) => i == 3));
+            Assert.AreEqual(2, input.IndexOf((i, ix) => i > 2));
+            Assert.AreEqual(-1, input.IndexOf((i, ix) => i > 5));
+            Assert.AreEqual(0, input.IndexOf((i, ix) => ix < i));
+            Assert.AreEqual(1, input.IndexOf((i, ix) => 2 * ix == i));
+            Assert.AreEqual(-1, input.IndexOf((i, ix) => ix >= i));
         }
 
         [Test]
