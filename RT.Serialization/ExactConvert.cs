@@ -1,71 +1,69 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Serialization
 {
     /// <summary>
-    /// <para>
-    /// Provides functionality similar to <see cref="System.Convert"/>, but ensures that all conversions are lossless and roundtrippable.
-    /// Whenever a conversion cannot be performed exactly, an <see cref="ExactConvertException"/> is thrown.
-    /// </para>
-    /// </summary>
+    ///     <para>
+    ///         Provides functionality similar to <see cref="System.Convert"/>, but ensures that all conversions are lossless
+    ///         and roundtrippable. Whenever a conversion cannot be performed exactly, an <see cref="ExactConvertException"/>
+    ///         is thrown.</para></summary>
     /// <remarks>
-    /// <code>
-    /// SUPPORTED TYPES
-    ///
-    /// Supported types are classified as follows. The categories are used in defining
-    /// the behaviour of the various conversion types and are vital to understanding what
-    /// to expect of the corner cases.
-    ///
-    ///   Integer types:
-    ///       standard - byte, sbyte, short, ushort, int, uint, long, ulong, or any enum type
-    ///       bool - as integer this is defined exactly as 0 or 1
-    ///       char - as integer this is the binary value of the char, identical to the "ushort" type
-    ///       datetime - as integer, this is the number of ticks of the datetime as UTC.
-    ///                  The range is DateTime.MinValue.Ticks ... MaxValue.Ticks.
-    ///
-    ///   Fractional types:
-    ///       single, double
-    ///       decimal
-    ///
-    ///   String type:
-    ///       string
-    ///
-    ///   Unsupported type:
-    ///       any other type not listed above
-    ///       null reference (*ALWAYS* behaves exactly the same as if there
-    ///                       was actually an object of an unsupported type)
-    ///
-    /// Definition of terms:
-    ///     "succeed" / "fail" - these terms do not specify the method by which the outcome of
-    ///         a conversion is conveyed. This is a separate aspect discussed later.
-    ///
-    /// ExactConvert only allows a conversion to succeed if a roundtrip conversion would result in
-    /// at most a very small error. The "very small error" only exists when a Fractional
-    /// type is the destination - in this case, ExactConvert picks the nearest
-    /// representable value.
-    ///
-    /// A general trait of ExactConvert is that the rules are defined for whole source/destination type
-    /// pairs. A necessary exception to this principle is conversion from string, due to the arbitrary
-    /// nature of string values.
-    ///
-    /// As a consequence of the above principle, ExactConvert does not allow
-    /// Fractional types to be converted to Integer types.
-    ///
-    /// Something to beware of: some of the built-in conversions use national strings for
-    /// values, e.g. for True/False/Infinity etc. To avoid any issues like programs crashing
-    /// on Spanish computers but not on British ones, the following strings are hard-coded.
-    /// All conversions _from_ strings are case-insensitive.
-    ///
-    /// * True
-    /// * False
-    /// * Inf
-    /// * NaN
-    /// </code>
-    /// </remarks>
+    ///     <code>
+    ///         SUPPORTED TYPES
+    ///         
+    ///         Supported types are classified as follows. The categories are used in defining
+    ///         the behaviour of the various conversion types and are vital to understanding what
+    ///         to expect of the corner cases.
+    ///         
+    ///           Integer types:
+    ///               standard - byte, sbyte, short, ushort, int, uint, long, ulong, or any enum type
+    ///               bool - as integer this is defined exactly as 0 or 1
+    ///               char - as integer this is the binary value of the char, identical to the "ushort" type
+    ///               datetime - as integer, this is the number of ticks of the datetime as UTC.
+    ///                          The range is DateTime.MinValue.Ticks ... MaxValue.Ticks.
+    ///         
+    ///           Fractional types:
+    ///               single, double
+    ///               decimal
+    ///         
+    ///           String type:
+    ///               string
+    ///         
+    ///           Unsupported type:
+    ///               any other type not listed above
+    ///               null reference (*ALWAYS* behaves exactly the same as if there
+    ///                               was actually an object of an unsupported type)
+    ///         
+    ///         Definition of terms:
+    ///             "succeed" / "fail" - these terms do not specify the method by which the outcome of
+    ///                 a conversion is conveyed. This is a separate aspect discussed later.
+    ///         
+    ///         ExactConvert only allows a conversion to succeed if a roundtrip conversion would result in
+    ///         at most a very small error. The "very small error" only exists when a Fractional
+    ///         type is the destination - in this case, ExactConvert picks the nearest
+    ///         representable value.
+    ///         
+    ///         A general trait of ExactConvert is that the rules are defined for whole source/destination type
+    ///         pairs. A necessary exception to this principle is conversion from string, due to the arbitrary
+    ///         nature of string values.
+    ///         
+    ///         As a consequence of the above principle, ExactConvert does not allow
+    ///         Fractional types to be converted to Integer types.
+    ///         
+    ///         Something to beware of: some of the built-in conversions use national strings for
+    ///         values, e.g. for True/False/Infinity etc. To avoid any issues like programs crashing
+    ///         on Spanish computers but not on British ones, the following strings are hard-coded.
+    ///         All conversions _from_ strings are case-insensitive.
+    ///         
+    ///         * True
+    ///         * False
+    ///         * Inf
+    ///         * NaN</code></remarks>
 #if EXPORT_EXACTCONVERT
     public
 #endif
@@ -76,9 +74,8 @@ namespace RT.Serialization
         private static readonly bool[] _isUnsupportedType;
 
         /// <summary>
-        /// Initialises the internally-used lookup tables for determining what kind
-        /// of type is being dealt with (e.g. is this an unsigned type?)
-        /// </summary>
+        ///     Initialises the internally-used lookup tables for determining what kind of type is being dealt with (e.g. is
+        ///     this an unsigned type?)</summary>
         static ExactConvert()
         {
             int max = 0;
@@ -116,21 +113,20 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Returns true if the specified type is one of the 8 built-in "true" integer types:
-        /// the signed and unsigned 8, 16, 32 and 64-bit types.
-        /// </summary>
-        /// <param name="type">The type to be tested.</param>
+        ///     Returns true if the specified type is one of the 8 built-in "true" integer types: the signed and unsigned 8,
+        ///     16, 32 and 64-bit types.</summary>
+        /// <param name="type">
+        ///     The type to be tested.</param>
         public static bool IsTrueIntegerType(Type type)
         {
             return IsTrueIntegerType(Type.GetTypeCode(type));
         }
 
         /// <summary>
-        /// Returns true if the specified type is one of the 8 built-in "true" integer types:
-        /// the signed and unsigned 8, 16, 32 and 64-bit types.
-        /// </summary>
-        /// <param name="typeCode">The code of the type to be tested - use <see cref="GetTypeCode"/>
-        /// to get the code of an object's type.</param>
+        ///     Returns true if the specified type is one of the 8 built-in "true" integer types: the signed and unsigned 8,
+        ///     16, 32 and 64-bit types.</summary>
+        /// <param name="typeCode">
+        ///     The code of the type to be tested - use <see cref="GetTypeCode"/> to get the code of an object's type.</param>
         public static bool IsTrueIntegerType(TypeCode typeCode)
         {
             return (typeCode != TypeCode.Boolean)
@@ -140,60 +136,52 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Returns true if the specified type is a nullable form of one of the 8 built-in "true" integer types:
-        /// the signed and unsigned 8, 16, 32 and 64-bit types.
-        /// </summary>
-        /// <param name="type">The type to be tested.</param>
+        ///     Returns true if the specified type is a nullable form of one of the 8 built-in "true" integer types: the
+        ///     signed and unsigned 8, 16, 32 and 64-bit types.</summary>
+        /// <param name="type">
+        ///     The type to be tested.</param>
         public static bool IsTrueIntegerNullableType(Type type)
         {
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsTrueIntegerType(type.GetGenericArguments()[0]);
         }
 
         /// <summary>
-        /// Returns true if the specified type is integer-compatible (in other words, a string of digits can be
-        /// converted to it using <see cref="ExactConvert"/>). This includes all types that are <see cref="IsTrueIntegerType(Type)"/>
-        /// as well as DateTime, Char and Boolean.
-        /// </summary>
-        /// <param name="type">The type to be tested.</param>
+        ///     Returns true if the specified type is integer-compatible (in other words, a string of digits can be converted
+        ///     to it using <see cref="ExactConvert"/>). This includes all types that are <see
+        ///     cref="IsTrueIntegerType(Type)"/> as well as DateTime, Char and Boolean.</summary>
+        /// <param name="type">
+        ///     The type to be tested.</param>
         public static bool IsIntegerCompatibleType(Type type)
         {
             var code = Type.GetTypeCode(type);
-            return IsIntegerCompatibleType(code);
+            return IsIntegerCompatibleType(code) || type == typeof(BigInteger);
         }
 
         /// <summary>
-        /// Returns true if the specified type is integer-compatible (in other words, a string of digits can be
-        /// converted to it using <see cref="ExactConvert"/>). This includes all types that are <see cref="IsTrueIntegerType(Type)"/>
-        /// as well as DateTime, Char and Boolean.
-        /// </summary>
-        /// <param name="typeCode">The code of the type to be tested - use <see cref="GetTypeCode"/>
-        /// to get the code of an object's type.</param>
+        ///     Returns true if the specified type is integer-compatible (in other words, a string of digits can be converted
+        ///     to it using <see cref="ExactConvert"/>). This includes all types that are <see
+        ///     cref="IsTrueIntegerType(Type)"/> as well as DateTime, Char and Boolean.</summary>
+        /// <param name="typeCode">
+        ///     The code of the type to be tested - use <see cref="GetTypeCode"/> to get the code of an object's type.</param>
         public static bool IsIntegerCompatibleType(TypeCode typeCode)
         {
             return _isIntegerType[(int) typeCode];
         }
 
         /// <summary>
-        /// C# does not allow a boxed integer type to be unboxed as anything other
-        /// than the true type of the boxed integer. This utility function unboxes the
-        /// integer as the correct type and then casts it to a long, returning the result.
-        ///
-        /// Throws an exception if the object is null or not one of the built-in integer
-        /// types.
-        ///
-        /// Does not support unboxing of a ulong because the cast to long would be lossy
-        /// and misleading. Will throw an exception when given a boxed ulong.
-        /// </summary>
+        ///     C# does not allow a boxed integer type to be unboxed as anything other than the true type of the boxed
+        ///     integer. This utility function unboxes the integer as the correct type and then casts it to a long, returning
+        ///     the result. Throws an exception if the object is null or not one of the built-in integer types. Does not
+        ///     support unboxing of a ulong because the cast to long would be lossy and misleading. Will throw an exception
+        ///     when given a boxed ulong.</summary>
         public static long UnboxIntegerToLong(object integer)
         {
             return UnboxIntegerToLong(integer, GetTypeCode(integer));
         }
 
         /// <summary>
-        /// A faster version of UnboxIntegerToLong(object) if the TypeCode is
-        /// already provided. Behaviour is undefined if typeCode does not match
-        /// the type of the object passed in.
-        /// </summary>
+        ///     A faster version of UnboxIntegerToLong(object) if the TypeCode is already provided. Behaviour is undefined if
+        ///     typeCode does not match the type of the object passed in.</summary>
         public static long UnboxIntegerToLong(object integer, TypeCode typeCode)
         {
             if (integer == null)
@@ -235,35 +223,28 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Crutches needed all around... TypeCode.Empty is described as the type code
-        /// for "a null reference". Unfortunately the only way to retrieve a TypeCode
-        /// is from a Type object, which can't represent the type of a null reference
-        /// (well... actually one can't really talk about a _type_ of a _null_ reference
-        /// in C# at all as far as I understand).
-        ///
-        /// Well anyway, wrapping up the rant, this function fills in the spot of a
-        /// function that's clearly missing: Type.GetTypeCode(object), which returns
-        /// TypeCode.Empty if asked to get the type of a null object.
-        ///
-        /// Something at the back of my mind tells me that there's one way of looking at
-        /// this where the behaviour of the existing API would make sense... but really,
-        /// I think this is how it really should have been since it is a lot more useful.
-        /// </summary>
+        ///     Crutches needed all around... TypeCode.Empty is described as the type code for "a null reference".
+        ///     Unfortunately the only way to retrieve a TypeCode is from a Type object, which can't represent the type of a
+        ///     null reference (well... actually one can't really talk about a _type_ of a _null_ reference in C# at all as
+        ///     far as I understand). Well anyway, wrapping up the rant, this function fills in the spot of a function that's
+        ///     clearly missing: Type.GetTypeCode(object), which returns TypeCode.Empty if asked to get the type of a null
+        ///     object. Something at the back of my mind tells me that there's one way of looking at this where the behaviour
+        ///     of the existing API would make sense... but really, I think this is how it really should have been since it is
+        ///     a lot more useful.</summary>
         public static TypeCode GetTypeCode(object value) => value == null ? TypeCode.Empty : Type.GetTypeCode(value.GetType());
 
         /// <summary>
-        /// Returns true if the specified type is a supported type for converting to other
-        /// types supported by <see cref="ExactConvert"/>.
-        /// </summary>
+        ///     Returns true if the specified type is a supported type for converting to other types supported by <see
+        ///     cref="ExactConvert"/>.</summary>
         public static bool IsSupportedType(Type type)
         {
-            return !_isUnsupportedType[(int) Type.GetTypeCode(type)];
+            return !_isUnsupportedType[(int) Type.GetTypeCode(type)] || type == typeof(BigInteger);
         }
 
         /// <summary>
-        /// Returns true if the specified type code is that of a supported type for converting to
-        /// other types supported by <see cref="ExactConvert"/>.
-        /// </summary>
+        ///     Returns true if the specified type code is that of a supported type for converting to other types supported by
+        ///     <see cref="ExactConvert"/>. This does not cover supported objects whose type code is <see
+        ///     cref="TypeCode.Object"/>.</summary>
         public static bool IsSupportedType(TypeCode typeCode)
         {
             return !_isUnsupportedType[(int) typeCode];
@@ -302,11 +283,9 @@ namespace RT.Serialization
         #region Unsigned
 
         /// <summary>
-        /// Converts the specified object to a byte.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a byte. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out byte result)
         {
             TypeCode code = GetTypeCode(value);
@@ -318,7 +297,7 @@ namespace RT.Serialization
             }
 
             else if (code == TypeCode.String)
-                return byte.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+                return byte.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
@@ -360,17 +339,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= byte.MinValue && val <= byte.MaxValue)
+            {
+                result = (byte) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a ushort.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a ushort. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out ushort result)
         {
             TypeCode code = GetTypeCode(value);
@@ -382,7 +364,7 @@ namespace RT.Serialization
             }
 
             else if (code == TypeCode.String)
-                return ushort.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+                return ushort.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
@@ -424,17 +406,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= ushort.MinValue && val <= ushort.MaxValue)
+            {
+                result = (ushort) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a uint.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a uint. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out uint result)
         {
             TypeCode code = GetTypeCode(value);
@@ -446,7 +431,7 @@ namespace RT.Serialization
             }
 
             else if (code == TypeCode.String)
-                return uint.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+                return uint.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
@@ -488,17 +473,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= uint.MinValue && val <= uint.MaxValue)
+            {
+                result = (uint) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a ulong.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a ulong. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out ulong result)
         {
             TypeCode code = GetTypeCode(value);
@@ -510,7 +498,7 @@ namespace RT.Serialization
             }
 
             else if (code == TypeCode.String)
-                return ulong.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+                return ulong.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
 
             else if (_isIntegerType[(int) code])
             {
@@ -542,6 +530,12 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= ulong.MinValue && val <= ulong.MaxValue)
+            {
+                result = (ulong) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
@@ -551,12 +545,9 @@ namespace RT.Serialization
         #region Signed
 
         /// <summary>
-        /// Converts the specified object to an sbyte.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to an sbyte. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out sbyte result)
         {
             TypeCode code = GetTypeCode(value);
@@ -610,17 +601,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= sbyte.MinValue && val <= sbyte.MaxValue)
+            {
+                result = (sbyte) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a short.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a short. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out short result)
         {
             TypeCode code = GetTypeCode(value);
@@ -674,17 +668,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= short.MinValue && val <= short.MaxValue)
+            {
+                result = (short) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to an int.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to an int. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out int result)
         {
             TypeCode code = GetTypeCode(value);
@@ -738,17 +735,20 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= int.MinValue && val <= int.MaxValue)
+            {
+                result = (int) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a long.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a long. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out long result)
         {
             TypeCode code = GetTypeCode(value);
@@ -792,10 +792,70 @@ namespace RT.Serialization
                 }
             }
 
-            else if (_isIntegerType[(long) code])
-            {   // special case: no limit test is necessary since all other types fit
+            else if (_isIntegerType[(int) code])
+            {
+                // special case: no limit test is necessary since all other types fit
                 result = UnboxIntegerToLong(value, code);
                 return true;
+            }
+
+            else if (code == TypeCode.Object && value is BigInteger val && val >= long.MinValue && val <= long.MaxValue)
+            {
+                result = (long) val;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
+        ///     Converts the specified object to a BigInteger. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
+        public static bool Try(object value, out BigInteger result)
+        {
+            TypeCode code = GetTypeCode(value);
+
+            if (code == TypeCode.Object && value is BigInteger bval) // fast track if it's already the right type
+            {
+                result = bval;
+                return true;
+            }
+
+            else if (code == TypeCode.String)
+                return BigInteger.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
+
+            else if (code == TypeCode.UInt64)
+            {
+                result = (ulong) value;     // unboxing, then implicit conversion to BigInteger
+                return true;
+            }
+
+            else if (_isIntegerType[(int) code])
+            {
+                result = UnboxIntegerToLong(value, code);   // implicit conversion to BigInteger
+                return true;
+            }
+
+            else if (code == TypeCode.Single || code == TypeCode.Double)
+            {
+                var dbl = code == TypeCode.Single ? (float) value : (double) value;
+                if (Math.Truncate(dbl) == dbl)
+                {
+                    result = BigInteger.Parse(dbl.ToString("0"));
+                    return true;
+                }
+            }
+
+            else if (code == TypeCode.Decimal)
+            {
+                var decml = (decimal) value;
+                if (decimal.Truncate(decml) == decml)
+                {
+                    result = BigInteger.Parse(decml.ToString("0"));
+                    return true;
+                }
             }
 
             result = default;
@@ -809,17 +869,11 @@ namespace RT.Serialization
         #region To integer/bool
 
         /// <summary>
-        /// Converts the specified object to a bool.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        ///
-        /// If the value is one of the integer types, the exact conversion only succeeds
-        /// if the value is in range, i.e. 0 or 1. If converting from a string, the string
-        /// must be exactly (case-insensitive) equal to "True" or "False", or the conversion
-        /// will fail.
-        /// </summary>
+        ///     Converts the specified object to a bool. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful. If the value is one of the integer types, the exact conversion only succeeds if the value is in
+        ///     range, i.e. 0 or 1. If converting from a string, the string must be exactly (case-insensitive) equal to "True"
+        ///     or "False", or the conversion will fail.</summary>
         public static bool Try(object value, out bool result)
         {
             TypeCode code = GetTypeCode(value);
@@ -872,6 +926,12 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && (val.IsZero || val.IsOne))
+            {
+                result = val.IsOne;
+                return true;
+            }
+
             // conversion failed
             result = default;
             return false;
@@ -882,12 +942,9 @@ namespace RT.Serialization
         #region To integer/char
 
         /// <summary>
-        /// Converts the specified object to a char.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a char. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out char result)
         {
             TypeCode code = GetTypeCode(value);
@@ -927,6 +984,12 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val && val >= char.MinValue && val <= char.MaxValue)
+            {
+                result = (char) val;
+                return true;
+            }
+
             result = default;
             return false;
         }
@@ -936,15 +999,10 @@ namespace RT.Serialization
         #region To integer/datetime
 
         /// <summary>
-        /// Converts the specified object to a DateTime.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        ///
-        /// When converting from string, supports a subset of the ISO 8601 formats - for
-        /// more details see <see cref="DateTimeExtensions.TryParseIso"/>.
-        /// </summary>
+        ///     Converts the specified object to a DateTime. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful. When converting from string, supports a subset of the ISO 8601 formats - for more details see
+        ///     <see cref="DateTimeExtensions.TryParseIso"/>.</summary>
         public static bool Try(object value, out DateTime result)
         {
             TypeCode code = GetTypeCode(value);
@@ -980,6 +1038,15 @@ namespace RT.Serialization
                 }
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val)
+            {
+                if (val >= DateTime.MinValue.Ticks && val <= DateTime.MaxValue.Ticks)
+                {
+                    result = new DateTime((long) val, DateTimeKind.Utc);
+                    return true;
+                }
+            }
+
             result = default;
             return false;
         }
@@ -989,12 +1056,9 @@ namespace RT.Serialization
         #region To fractional
 
         /// <summary>
-        /// Converts the specified object to a float.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a float. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out float result)
         {
             TypeCode code = GetTypeCode(value);
@@ -1040,17 +1104,22 @@ namespace RT.Serialization
                 return true;
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val)
+            {
+                // This is slow, but it ensures the conversion remains exact
+                var str = val.ToString();
+                if (float.TryParse(str, out result))
+                    return result.ToString() == str;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a double.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a double. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out double result)
         {
             TypeCode code = GetTypeCode(value);
@@ -1096,17 +1165,22 @@ namespace RT.Serialization
                 return true;
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val)
+            {
+                // This is slow, but it ensures the conversion remains exact
+                var str = val.ToString();
+                if (double.TryParse(str, out result))
+                    return result.ToString() == str;
+            }
+
             result = default;
             return false;
         }
 
         /// <summary>
-        /// Converts the specified object to a decimal.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to a decimal. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(object value, out decimal result)
         {
             TypeCode code = GetTypeCode(value);
@@ -1150,6 +1224,14 @@ namespace RT.Serialization
                 return true;
             }
 
+            else if (code == TypeCode.Object && value is BigInteger val)
+            {
+                // This is slow, but it ensures the conversion remains exact
+                var str = val.ToString();
+                if (decimal.TryParse(str, out result))
+                    return result.ToString() == str;
+            }
+
             result = default;
             return false;
         }
@@ -1159,17 +1241,12 @@ namespace RT.Serialization
         #region To string
 
         /// <summary>
-        /// Converts the specified object to a string.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to the type's default value
-        /// if the conversion is unsuccessful, which in this case means null (!!!).
-        ///
-        /// Note that the result will only ever be false if the value is one of the
-        /// unsupported types - all supported types can be converted to a string.
-        /// (So can the unsupported ones but it's a different matter. Unsupported types
-        /// are not supported by this method for consistency with the other overloads.)
-        /// </summary>
+        ///     Converts the specified object to a string. Returns true if successful, or false if the object cannot be
+        ///     converted exactly. <paramref name="result"/> is set to the type's default value if the conversion is
+        ///     unsuccessful, which in this case means null (!!!). Note that the result will only ever be false if the value
+        ///     is one of the unsupported types - all supported types can be converted to a string. (So can the unsupported
+        ///     ones but it's a different matter. Unsupported types are not supported by this method for consistency with the
+        ///     other overloads.)</summary>
         public static bool Try(object value, out string result)
         {
             TypeCode code = GetTypeCode(value);
@@ -1219,6 +1296,11 @@ namespace RT.Serialization
                 result = value.ToString();
                 return true;
             }
+            else if (code == TypeCode.Object && value is BigInteger val)
+            {
+                result = val.ToString();
+                return true;
+            }
 
             result = default; // which is null
             return false;
@@ -1236,12 +1318,9 @@ namespace RT.Serialization
         private static TEnum toEnum<TEnum>(ulong value) { return (TEnum) (object) value; }
 
         /// <summary>
-        /// Converts the specified object to the type <paramref name="toType"/>.
-        ///
-        /// Returns true if successful, or false if the object cannot be converted exactly.
-        /// <paramref name="result"/> is set to null
-        /// if the conversion is unsuccessful.
-        /// </summary>
+        ///     Converts the specified object to the type <paramref name="toType"/>. Returns true if successful, or false if
+        ///     the object cannot be converted exactly. <paramref name="result"/> is set to null if the conversion is
+        ///     unsuccessful.</summary>
         public static bool Try(Type toType, object value, out object result)
         {
             if (toType.IsEnum)
@@ -1253,7 +1332,7 @@ namespace RT.Serialization
                     result = parameters[1];
                     return succeeded;
                 }
-                else if (value != null && _isIntegerType[(int) Type.GetTypeCode(value.GetType())])
+                else if (value != null && (_isIntegerType[(int) Type.GetTypeCode(value.GetType())] || value is BigInteger))
                 {
                     try
                     {
@@ -1296,6 +1375,7 @@ namespace RT.Serialization
                 case TypeCode.DateTime: { success = Try(value, out DateTime temp); converted = temp; break; }
                 case TypeCode.Char: { success = Try(value, out char temp); converted = temp; break; }
                 case TypeCode.String: { success = Try(value, out string temp); converted = temp; break; }
+                case TypeCode.Object when toType == typeof(BigInteger): { success = Try(value, out BigInteger temp); converted = temp; break; }
             }
             result = success ? converted : null;
             return success;
@@ -1306,9 +1386,8 @@ namespace RT.Serialization
         #region Convert - result is an "out" parameter; throw on failure
 
         /// <summary>
-        /// Converts the specified object to a bool.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a bool. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out bool result)
         {
             if (!Try(value, out result))
@@ -1316,9 +1395,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a byte.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a byte. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out byte result)
         {
             if (!Try(value, out result))
@@ -1326,9 +1404,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to an sbyte.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to an sbyte. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out sbyte result)
         {
             if (!Try(value, out result))
@@ -1336,9 +1413,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a short.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a short. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out short result)
         {
             if (!Try(value, out result))
@@ -1346,9 +1422,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a ushort.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a ushort. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out ushort result)
         {
             if (!Try(value, out result))
@@ -1356,9 +1431,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to an int.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to an int. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out int result)
         {
             if (!Try(value, out result))
@@ -1366,9 +1440,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a uint.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a uint. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out uint result)
         {
             if (!Try(value, out result))
@@ -1376,9 +1449,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a long.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a long. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out long result)
         {
             if (!Try(value, out result))
@@ -1386,9 +1458,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a ulong.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a ulong. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out ulong result)
         {
             if (!Try(value, out result))
@@ -1396,9 +1467,17 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a float.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a ulong. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
+        public static void To(object value, out BigInteger result)
+        {
+            if (!Try(value, out result))
+                throw new ExactConvertException(value, typeof(BigInteger));
+        }
+
+        /// <summary>
+        ///     Converts the specified object to a float. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out float result)
         {
             if (!Try(value, out result))
@@ -1406,9 +1485,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a double.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a double. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out double result)
         {
             if (!Try(value, out result))
@@ -1416,9 +1494,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a decimal.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a decimal. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out decimal result)
         {
             if (!Try(value, out result))
@@ -1426,9 +1503,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a DateTime.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a DateTime. Throws an <see cref="ExactConvertException"/> if the object
+        ///     cannot be converted exactly.</summary>
         public static void To(object value, out DateTime result)
         {
             if (!Try(value, out result))
@@ -1436,9 +1512,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a char.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a char. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static void To(object value, out char result)
         {
             if (!Try(value, out result))
@@ -1446,9 +1521,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a string.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a string. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static void To(object value, out string result)
         {
             if (!Try(value, out result))
@@ -1460,9 +1534,8 @@ namespace RT.Serialization
         #region ToType - result is returned; throw on failure
 
         /// <summary>
-        /// Converts the specified object to a bool.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a bool. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static bool ToBool(object value)
         {
             To(value, out bool result);
@@ -1470,9 +1543,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a byte.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a byte. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static byte ToByte(object value)
         {
             To(value, out byte result);
@@ -1480,9 +1552,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to an sbyte.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to an sbyte. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static sbyte ToSByte(object value)
         {
             To(value, out sbyte result);
@@ -1490,9 +1561,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a short.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a short. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static short ToShort(object value)
         {
             To(value, out short result);
@@ -1500,9 +1570,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a ushort.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a ushort. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static ushort ToUShort(object value)
         {
             To(value, out ushort result);
@@ -1510,9 +1579,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to an int.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to an int. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static int ToInt(object value)
         {
             To(value, out int result);
@@ -1520,9 +1588,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a uint.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a uint. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static uint ToUInt(object value)
         {
             To(value, out uint result);
@@ -1530,9 +1597,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a long.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a long. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static long ToLong(object value)
         {
             To(value, out long result);
@@ -1540,9 +1606,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a ulong.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a ulong. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static ulong ToULong(object value)
         {
             To(value, out ulong result);
@@ -1550,9 +1615,17 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a float.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a BigInteger. Throws an <see cref="ExactConvertException"/> if the object
+        ///     cannot be converted exactly.</summary>
+        public static BigInteger ToBigInteger(object value)
+        {
+            To(value, out BigInteger result);
+            return result;
+        }
+
+        /// <summary>
+        ///     Converts the specified object to a float. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static float ToFloat(object value)
         {
             To(value, out float result);
@@ -1560,9 +1633,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a double.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a double. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static double ToDouble(object value)
         {
             To(value, out double result);
@@ -1570,9 +1642,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a decimal.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a decimal. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static decimal ToDecimal(object value)
         {
             To(value, out decimal result);
@@ -1580,9 +1651,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a DateTime.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a DateTime. Throws an <see cref="ExactConvertException"/> if the object
+        ///     cannot be converted exactly.</summary>
         public static DateTime ToDateTime(object value)
         {
             To(value, out DateTime result);
@@ -1590,9 +1660,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a char.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a char. Throws an <see cref="ExactConvertException"/> if the object cannot be
+        ///     converted exactly.</summary>
         public static char ToChar(object value)
         {
             To(value, out char result);
@@ -1600,9 +1669,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Converts the specified object to a string.
-        /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the specified object to a string. Throws an <see cref="ExactConvertException"/> if the object cannot
+        ///     be converted exactly.</summary>
         public static string ToString(object value)
         {
             To(value, out string result);
@@ -1612,17 +1680,18 @@ namespace RT.Serialization
         #endregion
 
         /// <summary>
-        /// Converts the value to type <paramref name="toType"/>. Throws an
-        /// <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the value to type <paramref name="toType"/>. Throws an <see cref="ExactConvertException"/> if the
+        ///     object cannot be converted exactly.</summary>
         public static object To(Type toType, object value) => Try(toType, value, out var result) ? result : throw new ExactConvertException(value, toType);
 
         /// <summary>
-        /// Converts the value to type <typeparamref name="T"/>. Throws an
-        /// <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-        /// </summary>
+        ///     Converts the value to type <typeparamref name="T"/>. Throws an <see cref="ExactConvertException"/> if the
+        ///     object cannot be converted exactly.</summary>
         public static T To<T>(object value)
         {
+            if (typeof(T) == typeof(BigInteger))
+                return (T) (object) ToBigInteger(value);
+
             TypeCode code = Type.GetTypeCode(typeof(T));
             switch (code)
             {
@@ -1662,130 +1731,99 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        /// Contains static methods to perform an exact conversion to a nullable type.
-        /// These methods return null only if the input is null. A failed conversion
-        /// results in an <see cref="ExactConvertException"/>.
-        /// </summary>
+        ///     Contains static methods to perform an exact conversion to a nullable type. These methods return null only if
+        ///     the input is null. A failed conversion results in an <see cref="ExactConvertException"/>.</summary>
         public static class ToNullable
         {
             /// <summary>
-            /// Converts the specified object to a nullable bool.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable bool. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static bool? Bool(object value) => value == null ? null : (bool?) ToBool(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable byte.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable byte. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static byte? Byte(object value) => value == null ? null : (byte?) ToByte(value);
 
             /// <summary>
-            /// Converts the specified object to an nullable sbyte.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to an nullable sbyte. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static sbyte? SByte(object value) => value == null ? null : (sbyte?) ToSByte(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable short.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable short. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static short? Short(object value) => value == null ? null : (short?) ToShort(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable ushort.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable ushort. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static ushort? UShort(object value) => value == null ? null : (ushort?) ToUShort(value);
 
             /// <summary>
-            /// Converts the specified object to an nullable int.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to an nullable int. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static int? Int(object value) => value == null ? null : (int?) ToInt(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable uint.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable uint. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static uint? UInt(object value) => value == null ? null : (uint?) ToUInt(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable long.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable long. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static long? Long(object value) => value == null ? null : (long?) ToLong(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable ulong.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable ulong. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static ulong? ULong(object value) => value == null ? null : (ulong?) ToULong(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable float.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable BigInteger. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
+            public static BigInteger? BigInteger(object value) => value == null ? null : (BigInteger?) ToBigInteger(value);
+
+            /// <summary>
+            ///     Converts the specified object to a nullable float. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static float? Float(object value) => value == null ? null : (float?) ToFloat(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable double.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable double. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static double? Double(object value) => value == null ? null : (double?) ToDouble(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable decimal.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable decimal. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static decimal? Decimal(object value) => value == null ? null : (decimal?) ToDecimal(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable DateTime.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable DateTime. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static DateTime? DateTime(object value) => value == null ? null : (DateTime?) ToDateTime(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable char.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable char. Returns null if <paramref name="value"/> is null. Throws
+            ///     an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static char? Char(object value) => value == null ? null : (char?) ToChar(value);
 
             /// <summary>
-            /// Converts the specified object to a nullable string.
-            /// Returns null if <paramref name="value"/> is null.
-            /// Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.
-            /// </summary>
+            ///     Converts the specified object to a nullable string. Returns null if <paramref name="value"/> is null.
+            ///     Throws an <see cref="ExactConvertException"/> if the object cannot be converted exactly.</summary>
             public static string String(object value) => value == null ? null : ExactConvert.ToString(value);
         }
     }
 
-    /// <summary>
-    /// Represents an exception thrown in the case of conversion failure when using <see cref="ExactConvert"/>.
-    /// </summary>
+    /// <summary>Represents an exception thrown in the case of conversion failure when using <see cref="ExactConvert"/>.</summary>
 #if EXPORT_EXACTCONVERT
     public
 #endif
     sealed class ExactConvertException : Exception
     {
-        /// <summary>
-        /// Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.
-        /// </summary>
+        /// <summary>Initialises an exception to represent conversion failure when using <see cref="ExactConvert"/>.</summary>
         internal ExactConvertException(object value, Type targetType)
             : base($"Cannot do an exact conversion from value ‘{value}’ of type ‘{ExactConvert.GetTypeCode(value)}’ to type ‘{targetType}’.")
         {

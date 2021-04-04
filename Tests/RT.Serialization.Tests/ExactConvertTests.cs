@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using NUnit.Framework;
 
 namespace RT.Serialization.Tests
@@ -655,6 +656,73 @@ namespace RT.Serialization.Tests
             Assert.IsFalse(ExactConvert.Try(new AnUnsupportedClass(), out result)); Assert.AreEqual(failValue, result);
         }
 
+        [Test]
+        public void TestExactToBigInteger()
+        {
+            BigInteger/**/ result;
+            BigInteger/**/ failValue = default(BigInteger/**/);
+            // From bool (so we don't need to bother with this simple type further down)
+            Assert.IsTrue(ExactConvert.Try(false, out result)); Assert.AreEqual(BigInteger.Zero, result);
+            Assert.IsTrue(ExactConvert.Try(true, out result)); Assert.AreEqual(BigInteger.One, result);
+            // Extremes of unsigned integers
+            Assert.IsTrue(ExactConvert.Try(byte.MinValue, out result)); Assert.AreEqual((BigInteger) byte.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(byte.MaxValue, out result)); Assert.AreEqual((BigInteger) byte.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(ushort.MinValue, out result)); Assert.AreEqual((BigInteger) ushort.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(ushort.MaxValue, out result)); Assert.AreEqual((BigInteger) ushort.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(uint.MinValue, out result)); Assert.AreEqual((BigInteger) uint.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(uint.MaxValue, out result)); Assert.AreEqual((BigInteger) uint.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(ulong.MinValue, out result)); Assert.AreEqual((BigInteger) ulong.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(ulong.MaxValue, out result)); Assert.AreEqual((BigInteger) ulong.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(char.MinValue, out result)); Assert.AreEqual((BigInteger) char.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(char.MaxValue, out result)); Assert.AreEqual((BigInteger) char.MaxValue, result);
+            // Extremes of signed integers
+            Assert.IsTrue(ExactConvert.Try(sbyte.MinValue, out result)); Assert.AreEqual((BigInteger) sbyte.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(sbyte.MaxValue, out result)); Assert.AreEqual((BigInteger) sbyte.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(short.MinValue, out result)); Assert.AreEqual((BigInteger) short.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(short.MaxValue, out result)); Assert.AreEqual((BigInteger) short.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(int.MinValue, out result)); Assert.AreEqual((BigInteger) int.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(int.MaxValue, out result)); Assert.AreEqual((BigInteger) int.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(long.MinValue, out result)); Assert.AreEqual((BigInteger) long.MinValue, result);
+            Assert.IsTrue(ExactConvert.Try(long.MaxValue, out result)); Assert.AreEqual((BigInteger) long.MaxValue, result);
+            Assert.IsTrue(ExactConvert.Try(DateTime.MinValue, out result)); Assert.AreEqual((BigInteger) DateTime.MinValue.Ticks, result);
+            Assert.IsTrue(ExactConvert.Try(DateTime.MaxValue, out result)); Assert.AreEqual((BigInteger) DateTime.MaxValue.Ticks, result);
+            // In-range from all integer types
+            Assert.IsTrue(ExactConvert.Try((byte) 247, out result)); Assert.AreEqual((BigInteger) 247, result);
+            Assert.IsTrue(ExactConvert.Try((sbyte) 118, out result)); Assert.AreEqual((BigInteger) 118, result);
+            Assert.IsTrue(ExactConvert.Try((sbyte) -118, out result)); Assert.AreEqual((BigInteger) (-118), result);
+            Assert.IsTrue(ExactConvert.Try((short) 21149, out result)); Assert.AreEqual((BigInteger) 21149, result);
+            Assert.IsTrue(ExactConvert.Try((short) -21149, out result)); Assert.AreEqual((BigInteger) (-21149), result);
+            Assert.IsTrue(ExactConvert.Try((ushort) 51150, out result)); Assert.AreEqual((BigInteger) 51150, result);
+            Assert.IsTrue(ExactConvert.Try((int) 311111151, out result)); Assert.AreEqual((BigInteger) 311111151, result);
+            Assert.IsTrue(ExactConvert.Try((int) -311111151, out result)); Assert.AreEqual((BigInteger) (-311111151), result);
+            Assert.IsTrue(ExactConvert.Try((uint) 4111111152, out result)); Assert.AreEqual((BigInteger) 4111111152, result);
+            Assert.IsTrue(ExactConvert.Try(9111111111111111153L, out result)); Assert.AreEqual((BigInteger) 9111111111111111153L, result);
+            Assert.IsTrue(ExactConvert.Try(-9111111111111111153L, out result)); Assert.AreEqual((BigInteger) (-9111111111111111153L), result);
+            Assert.IsTrue(ExactConvert.Try(9911111111111111154UL, out result)); Assert.AreEqual((BigInteger) 9911111111111111154UL, result);
+            Assert.IsTrue(ExactConvert.Try('\uA747', out result)); Assert.AreEqual((BigInteger) 0xA747, result);
+            Assert.IsTrue(ExactConvert.Try(new DateTime(91111111111111156L), out result)); Assert.AreEqual((BigInteger) 91111111111111156L, result);
+            Assert.IsTrue(ExactConvert.Try("9911111111111111157", out result)); Assert.AreEqual((BigInteger) 9911111111111111157UL, result);
+            Assert.IsTrue(ExactConvert.Try("18446744073709551657", out result)); Assert.AreEqual(BigInteger.Parse("18446744073709551657"), result);
+            // Invalid strings
+            Assert.IsFalse(ExactConvert.Try("", out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try("8s", out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try("0x20", out result)); Assert.AreEqual(failValue, result);
+            // From fractional
+            Assert.IsTrue(ExactConvert.Try(1.0f, out result)); Assert.AreEqual(BigInteger.One, result);
+            Assert.IsTrue(ExactConvert.Try(float.MaxValue, out result)); Assert.AreEqual(BigInteger.Parse("340282346638529000000000000000000000000"), result);
+            Assert.IsTrue(ExactConvert.Try(1.0d, out result)); Assert.AreEqual(BigInteger.One, result);
+            Assert.IsTrue(ExactConvert.Try(double.MaxValue, out result)); Assert.AreEqual(BigInteger.Parse("179769313486232000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), result);
+            Assert.IsTrue(ExactConvert.Try(1.0m, out result)); Assert.AreEqual(BigInteger.One, result);
+            Assert.IsTrue(ExactConvert.Try(decimal.MaxValue, out result)); Assert.AreEqual(BigInteger.Parse("79228162514264337593543950335"), result);
+            Assert.IsFalse(ExactConvert.Try(1.5f, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try(1.5d, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try(1.5m, out result)); Assert.AreEqual(failValue, result);
+            // From unsupported
+            Assert.IsFalse(ExactConvert.Try(null, out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try(new AnUnsupportedStruct(), out result)); Assert.AreEqual(failValue, result);
+            Assert.IsFalse(ExactConvert.Try(new AnUnsupportedClass(), out result)); Assert.AreEqual(failValue, result);
+        }
+
         #endregion
 
         #endregion
@@ -1211,110 +1279,110 @@ namespace RT.Serialization.Tests
             switch (code)
             {
                 case TypeCode.Boolean:
-                    {
-                        bool val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    bool val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Byte:
-                    {
-                        byte val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    byte val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.SByte:
-                    {
-                        sbyte val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    sbyte val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Int16:
-                    {
-                        short val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    short val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.UInt16:
-                    {
-                        ushort val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    ushort val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Int32:
-                    {
-                        int val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    int val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.UInt32:
-                    {
-                        uint val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    uint val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Int64:
-                    {
-                        long val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    long val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.UInt64:
-                    {
-                        ulong val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    ulong val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Single:
-                    {
-                        float val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    float val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Double:
-                    {
-                        double val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    double val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Decimal:
-                    {
-                        decimal val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    decimal val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.String:
-                    {
-                        string val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    string val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.Char:
-                    {
-                        char val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val);
-                        break;
-                    }
+                {
+                    char val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val);
+                    break;
+                }
                 case TypeCode.DateTime:
-                    {
-                        DateTime val;
-                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                        Assert.AreEqual(value, val); Assert.AreEqual(((DateTime) value).Kind, ((DateTime) val).Kind);
-                        break;
-                    }
+                {
+                    DateTime val;
+                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                    Assert.AreEqual(value, val); Assert.AreEqual(((DateTime) value).Kind, ((DateTime) val).Kind);
+                    break;
+                }
                 default:
                     Assert.Fail("Unexpected TypeCode.");
                     return;
