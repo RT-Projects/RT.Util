@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
@@ -10,7 +11,7 @@ namespace RT.Serialization
     /// <summary>Offers a convenient way to use <see cref="Classify"/> to serialize objects using a compact binary format.</summary>
     public static class ClassifyBinary
     {
-        private static IClassifyFormat<node> DefaultFormat = ClassifyBinaryFormat.Default;
+        private static readonly IClassifyFormat<node> DefaultFormat = ClassifyBinaryFormat.Default;
 
         /// <summary>
         ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -92,8 +93,8 @@ namespace RT.Serialization
         }
 
         /// <summary>
-        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
-        ///     The type of object is inferred from the object passed in.</summary>
+        ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired
+        ///     type. The type of object is inferred from the object passed in.</summary>
         /// <param name="filename">
         ///     Path and filename of the file to read from.</param>
         /// <param name="intoObject">
@@ -218,7 +219,7 @@ namespace RT.Serialization
             List = 0x1c,
             ListWithRefId = 0x1d,
             Ref = 0x1e,
-            // 0x1f: unused
+            BigInteger = 0x1f,
 
             Mask = 0x1f,
 
@@ -230,7 +231,7 @@ namespace RT.Serialization
         }
 
         // These must correspond index-by-index with those in _withRefs
-        private static DataType[] _reffables = new[] {
+        private static readonly DataType[] _reffables = new[] {
             DataType.DictionaryInt64,
             DataType.DictionaryString,
             DataType.DictionaryOther,
@@ -240,7 +241,7 @@ namespace RT.Serialization
         };
 
         // These must correspond index-by-index with those in _reffables
-        private static DataType[] _withRefs = new[] {
+        private static readonly DataType[] _withRefs = new[] {
             DataType.DictionaryInt64WithRefId,
             DataType.DictionaryStringWithRefId,
             DataType.DictionaryOtherWithRefId,
@@ -313,6 +314,7 @@ namespace RT.Serialization
                     case DataType.Single: stream.Write(BitConverter.GetBytes((float) Value)); break;
                     case DataType.Int64: stream.Write(BitConverter.GetBytes((long) Value)); break;
                     case DataType.UInt64: stream.Write(BitConverter.GetBytes((ulong) Value)); break;
+                    case DataType.BigInteger: WriteBigInteger(stream, (BigInteger) Value); break;
                     case DataType.Double: stream.Write(BitConverter.GetBytes((double) Value)); break;
                     case DataType.DateTime: stream.Write(BitConverter.GetBytes(((DateTime) Value).ToBinary())); break;
                     case DataType.Decimal: stream.WriteDecimalOptim((decimal) Value); break;
@@ -323,6 +325,17 @@ namespace RT.Serialization
                     case DataType.True: break;
                     case DataType.Ref: stream.WriteInt32Optim((int) Value); break;
                 }
+            }
+
+            private void WriteBigInteger(Stream stream, BigInteger value)
+            {
+                var encode = value < 0 ? (~value) : value;
+                while (encode > 0)
+                {
+                    stream.Write(BitConverter.GetBytes((ulong) (encode % (ulong.MaxValue - 1))));
+                    encode /= ulong.MaxValue - 1;
+                }
+                stream.Write(BitConverter.GetBytes(value < 0 ? ulong.MaxValue - 1 : ulong.MaxValue));
             }
         }
 
@@ -402,9 +415,9 @@ namespace RT.Serialization
                             break;
 
                         case DataType.DictionaryTwoStrings:
-                            if (kvp.Key is string)
+                            if (kvp.Key is string key)
                             {
-                                WriteBuffer(stream, ((string) kvp.Key).ToUtf8(), true);
+                                WriteBuffer(stream, key.ToUtf8(), true);
                                 WriteBuffer(stream, new byte[0], true);
                             }
                             else
@@ -514,6 +527,7 @@ namespace RT.Serialization
                     case DataType.Single: node = new valueNode { Value = BitConverter.ToSingle(stream.Read(4), 0) }; break;
                     case DataType.Int64: node = new valueNode { Value = BitConverter.ToInt64(stream.Read(8), 0) }; break;
                     case DataType.UInt64: node = new valueNode { Value = BitConverter.ToUInt64(stream.Read(8), 0) }; break;
+                    case DataType.BigInteger: node = new valueNode { Value = readBigInteger(stream) }; break;
                     case DataType.Double: node = new valueNode { Value = BitConverter.ToDouble(stream.Read(8), 0) }; break;
                     case DataType.DateTime: node = new valueNode { Value = DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0)) }; break;
                     case DataType.Decimal: node = new valueNode { Value = stream.ReadDecimalOptim() }; break;
@@ -612,6 +626,20 @@ namespace RT.Serialization
                 return node;
             }
 
+            private BigInteger readBigInteger(Stream stream)
+            {
+                var value = BigInteger.Zero;
+                var mult = BigInteger.One;
+                var read = BitConverter.ToUInt64(stream.Read(8), 0);
+                while (read < ulong.MaxValue - 1)
+                {
+                    value += read * mult;
+                    mult *= ulong.MaxValue - 1;
+                    read = BitConverter.ToUInt64(stream.Read(8), 0);
+                }
+                return (read == ulong.MaxValue - 1) ? ~value : value;
+            }
+
             void IClassifyFormat<node>.WriteToStream(node element, Stream stream)
             {
                 element.WriteToStream(stream);
@@ -642,6 +670,7 @@ namespace RT.Serialization
                     case DataType.DateTime:
                     case DataType.Decimal:
                     case DataType.String:
+                    case DataType.BigInteger:
                         return ((valueNode) element).Value;
 
                     case DataType.RawData:
@@ -762,10 +791,11 @@ namespace RT.Serialization
 
             valueNode tryFormatSimpleValue<T>(object value, DataType dt)
             {
-                object result, retour;
-                if (!ExactConvert.Try(typeof(T), value, out result))
+                if (value is T)
+                    return new valueNode { DataType = dt, Value = value };
+                if (!ExactConvert.Try(typeof(T), value, out var result))
                     return null;
-                if (!ExactConvert.Try(value.GetType(), result, out retour) || !retour.Equals(value))
+                if (!ExactConvert.Try(value.GetType(), result, out var retour) || !retour.Equals(value))
                     return null;
                 return new valueNode { DataType = dt, Value = result };
             }
@@ -786,7 +816,7 @@ namespace RT.Serialization
 
                 // Use the smallest possible representation of the input.
                 // Note that if the input is, say, the Int64 value 1, it will be stored compactly as the boolean “true”.
-                // In fact, even the string "true" will be stored that way and correctly converted back.
+                // In fact, even the strings "True" and "False" will be stored that way and correctly converted back.
                 // Strings that roundtrip-convert to DateTime are also stored compactly as DateTime.
                 var node =
                     tryFormatSimpleValue<bool>(value, DataType.False) ??
@@ -798,7 +828,8 @@ namespace RT.Serialization
                     tryFormatSimpleValue<uint>(value, DataType.UInt32) ??
                     tryFormatSimpleValue<long>(value, DataType.Int64) ??
                     tryFormatSimpleValue<ulong>(value, DataType.UInt64) ??
-                    tryFormatSimpleValue<DateTime>(value, DataType.DateTime);
+                    tryFormatSimpleValue<DateTime>(value, DataType.DateTime) ??
+                    tryFormatSimpleValue<BigInteger>(value, DataType.BigInteger);
 
                 if (node != null)
                 {

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -326,15 +327,22 @@ namespace RT.Serialization
         // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
         // This list determines both which types are (de-)classified using GetSimpleValue/FormatSimpleValue, and which types of dictionary keys use GetDictionary/FormatDictionary (all others use GetList/FormatList with GetKeyValuePair/FormatKeyValuePair)
         // All enum types are also treated as if they were listed here.
-        private static Type[] _simpleTypes = { typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(decimal), typeof(float), typeof(double), typeof(bool), typeof(char), typeof(string), typeof(DateTime) };
+        private static readonly Type[] _simpleTypes = {
+            // Integers
+            typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(BigInteger),
+            // Floating-point numbers
+            typeof(decimal), typeof(float), typeof(double),
+            // Other
+            typeof(bool), typeof(char), typeof(string), typeof(DateTime)
+        };
 
         private sealed class Classifier<TElement>
         {
-            private ClassifyOptions _options;
+            private readonly ClassifyOptions _options;
             private int _nextId = 0;
             private List<Action> _doAtTheEnd;
-            private IClassifyFormat<TElement> _format;
-            private Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
+            private readonly IClassifyFormat<TElement> _format;
+            private readonly Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
             private HashSet<string> _classifySimpleAttributes;
 
             private enum CollectionCategory
@@ -1184,8 +1192,8 @@ namespace RT.Serialization
                     elem = () => _format.FormatSimpleValue(saveObject);
                 else if (ExactConvert.IsSupportedType(saveType))
                     elem = () => _format.FormatSimpleValue(ExactConvert.ToString(saveObject));
-                else if (saveObject is byte[])
-                    elem = () => _format.FormatRawData((byte[]) saveObject);
+                else if (saveObject is byte[] byteArray)
+                    elem = () => _format.FormatRawData(byteArray);
                 else
                 {
                     Array saveArray;

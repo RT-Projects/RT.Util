@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using RT.Json;
 using RT.Util;
@@ -392,35 +393,25 @@ namespace RT.Serialization
                 return null;
 
             // JSON can’t represent NaN and infinities, so use ExactConvert.ToString() for those.
-            if (value is double && !double.IsNaN((double) value) && !double.IsInfinity((double) value))
-                return (double) value;
-            if (value is float && !float.IsNaN((float) value) && !float.IsInfinity((float) value))
-                return (float) value;
-            if (value is byte)
-                return (long) (byte) value;
-            if (value is sbyte)
-                return (sbyte) value;
-            if (value is short)
-                return (short) value;
-            if (value is ushort)
-                return (ulong) (ushort) value;
-            if (value is int)
-                return (int) value;
-            if (value is uint)
-                return (ulong) (uint) value;
-            if (value is long)
-                return (long) value;
-            if (value is ulong)
-                return (ulong) value;
-            if (value is decimal)
-                return (decimal) value;
-            if (value is bool)
-                return (bool) value;
-            if (value is string)
-                return (string) value;
-
-            // This takes care of enum types, DateTime and doubles/floats that are NaN or infinities
-            return ExactConvert.ToString(value);
+            return value switch
+            {
+                double dbl when !double.IsNaN(dbl) && !double.IsInfinity(dbl) => dbl,
+                float flt when !float.IsNaN(flt) && !float.IsInfinity(flt) => flt,
+                byte b => (long) b,
+                sbyte sb => sb,
+                short sh => sh,
+                ushort ush => (ulong) ush,
+                int i => i,
+                uint ui => (ulong) ui,
+                long l => l,
+                ulong ul => ul,
+                decimal dc => dc,
+                bool bl => bl,
+                string str => str,
+                BigInteger bi => ExactConvert.Try(bi, out ulong ul) ? ul : (JsonValue) ExactConvert.ToString(bi),
+                // This takes care of enum types, DateTime and doubles/floats that are NaN or infinities
+                _ => ExactConvert.ToString(value)
+            };
         }
 
         JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(JsonValue value)

@@ -36,10 +36,11 @@ namespace RT.Serialization
 
         /// <summary>
         ///     Called when Classify expects the element to be one of the following types: <c>byte</c>, <c>sbyte</c>,
-        ///     <c>short</c>, <c>ushort</c>, <c>int</c>, <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>decimal</c>, <c>float</c>,
-        ///     <c>double</c>, <c>bool</c>, <c>char</c>, <c>string</c>, <c>DateTime</c> or an enum type. The implementation is
-        ///     free to return a value of any of these types, and Classify will automatically use <see cref="ExactConvert"/>
-        ///     to convert the value to the required target type.</summary>
+        ///     <c>short</c>, <c>ushort</c>, <c>int</c>, <c>uint</c>, <c>long</c>, <c>ulong</c>, <see
+        ///     cref="System.Numerics.BigInteger"/>, <c>decimal</c>, <c>float</c>, <c>double</c>, <c>bool</c>, <c>char</c>,
+        ///     <c>string</c>, <see cref="DateTime"/> or an enum type. The implementation is free to return a value of any of
+        ///     these types, and Classify will automatically use <see cref="ExactConvert"/> to convert the value to the
+        ///     required target type.</summary>
         /// <remarks>
         ///     This should decode values passed into <see cref="FormatSimpleValue"/>, although it is acceptable if the type
         ///     has changed, as long as <see cref="ExactConvert"/> will convert the decoded value back to the original value.</remarks>
@@ -190,8 +191,8 @@ namespace RT.Serialization
 
         /// <summary>
         ///     Generates an element that represents a <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>, <c>int</c>,
-        ///     <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>decimal</c>, <c>float</c>, <c>double</c>, <c>bool</c>, <c>char</c>,
-        ///     <c>string</c>, <c>DateTime</c> or an enum value.</summary>
+        ///     <c>uint</c>, <c>long</c>, <c>ulong</c>, <see cref="System.Numerics.BigInteger"/>, <c>decimal</c>,
+        ///     <c>float</c>, <c>double</c>, <c>bool</c>, <c>char</c>, <c>string</c>, <see cref="DateTime"/> or an enum value.</summary>
         /// <param name="value">
         ///     The value to encode.</param>
         /// <returns>

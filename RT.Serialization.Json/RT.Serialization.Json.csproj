@@ -10,6 +10,7 @@
     <Authors>Timwi;rstarkov;caesay</Authors>
     <Description>Serialize classes to/from JSON. The feature set is optimized for maintaining backwards compatibility of serialized files as the classes evolve, in particular when used for application settings / configuration.</Description>
     <PackageTags>rt.util;classify;serialize;serialization;settings;config</PackageTags>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
