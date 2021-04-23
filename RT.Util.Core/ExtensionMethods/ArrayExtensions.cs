@@ -226,7 +226,7 @@ namespace RT.Util.ExtensionMethods
             if (findWhat == null)
                 throw new ArgumentNullException(nameof(findWhat));
 
-            for (int i = 0; i <= sourceArray.Length; i++)
+            for (int i = 0; i <= sourceArray.Length - findWhat.Length; i++)
                 if (sourceArray.SubarrayEquals(i, findWhat, 0, findWhat.Length, comparer))
                     return i;
             return -1;
