@@ -29,7 +29,15 @@ namespace RT.Util
         ///     A hopefully smaller set of values that still causes the function to return true.</returns>
         public static IEnumerable<T> ReduceRequiredSet<T>(IEnumerable<T> items, Func<ReduceRequiredSetState<T>, bool> test, bool breadthFirst = false, bool skipConsistencyTest = false)
         {
-            var state = new ReduceRequiredSetStateInternal<T>(items);
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+            var itemsList = (items as IList<T>) ?? items.ToList();
+            if (itemsList.Count == 0)
+                throw new ArgumentException("The set of items for ReduceRequiredSet can’t be empty.", nameof(items));
+            if (test == null)
+                throw new ArgumentNullException(nameof(test));
+
+            var state = new ReduceRequiredSetStateInternal<T>(itemsList);
 
             if (!skipConsistencyTest)
                 if (!test(state))
@@ -75,7 +83,7 @@ namespace RT.Util
             /// <summary>Internal; do not use.</summary>
             protected List<(int from, int to)> Ranges;
             /// <summary>Internal; do not use.</summary>
-            protected List<T> Items;
+            protected IList<T> Items;
             /// <summary>Internal; do not use.</summary>
             protected (int from, int to)? ExcludedRange, IncludedRange;
 
@@ -119,11 +127,10 @@ namespace RT.Util
 
         internal sealed class ReduceRequiredSetStateInternal<T> : ReduceRequiredSetState<T>
         {
-            public ReduceRequiredSetStateInternal(IEnumerable<T> items)
+            public ReduceRequiredSetStateInternal(IList<T> items)
             {
-                Items = items.ToList();
-                Ranges = new List<(int from, int to)>();
-                Ranges.Add((0, Items.Count - 1));
+                Items = items;
+                Ranges = new List<(int from, int to)> { (0, Items.Count - 1) };
             }
 
             public bool AnyPartitions { get { return Ranges.Any(r => r.from != r.to); } }
