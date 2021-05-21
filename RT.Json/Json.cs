@@ -586,54 +586,54 @@ namespace RT.Json
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
         public static explicit operator bool(JsonValue value) => value.GetBool();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool? (JsonValue value) => value == null ? (bool?) null : value.GetBool();
+        public static explicit operator bool?(JsonValue value) => value == null ? (bool?) null : value.GetBool();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator double(JsonValue value) => value.GetDouble();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double? (JsonValue value) => value == null ? (double?) null : value.GetDouble();
+        public static explicit operator double?(JsonValue value) => value == null ? (double?) null : value.GetDouble();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator decimal(JsonValue value) => value.GetDecimal();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal? (JsonValue value) => value == null ? (decimal?) null : value.GetDecimal();
+        public static explicit operator decimal?(JsonValue value) => value == null ? (decimal?) null : value.GetDecimal();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator long(JsonValue value) => value.GetLong(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long? (JsonValue value) => value == null ? (long?) null : value.GetLong(NumericConversionOptions.AllowTruncation);
+        public static explicit operator long?(JsonValue value) => value == null ? (long?) null : value.GetLong(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator ulong(JsonValue value) => value.GetULong(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator ulong? (JsonValue value) => value == null ? (ulong?) null : value.GetULong(NumericConversionOptions.AllowTruncation);
+        public static explicit operator ulong?(JsonValue value) => value == null ? (ulong?) null : value.GetULong(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
         public static explicit operator int(JsonValue value) => value.GetInt(NumericConversionOptions.AllowTruncation);
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int? (JsonValue value) => value == null ? (int?) null : value.GetInt(NumericConversionOptions.AllowTruncation);
+        public static explicit operator int?(JsonValue value) => value == null ? (int?) null : value.GetInt(NumericConversionOptions.AllowTruncation);
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
-        public static explicit operator string[] (JsonValue values) => values?.GetList().Select(value => (string) value).ToArray();
+        public static explicit operator string[](JsonValue values) => values?.GetList().Select(value => (string) value).ToArray();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool[] (JsonValue values) => values?.GetList().Select(value => (bool) value).ToArray();
+        public static explicit operator bool[](JsonValue values) => values?.GetList().Select(value => (bool) value).ToArray();
         /// <summary>See <see cref="BoolConversionOptions.Strict"/>.</summary>
-        public static explicit operator bool?[] (JsonValue values) => values?.GetList().Select(value => (bool?) value).ToArray();
+        public static explicit operator bool?[](JsonValue values) => values?.GetList().Select(value => (bool?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double[] (JsonValue values) => values?.GetList().Select(value => (double) value).ToArray();
+        public static explicit operator double[](JsonValue values) => values?.GetList().Select(value => (double) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator double?[] (JsonValue values) => values?.GetList().Select(value => (double?) value).ToArray();
+        public static explicit operator double?[](JsonValue values) => values?.GetList().Select(value => (double?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal[] (JsonValue values) => values?.GetList().Select(value => (decimal) value).ToArray();
+        public static explicit operator decimal[](JsonValue values) => values?.GetList().Select(value => (decimal) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator decimal?[] (JsonValue values) => values?.GetList().Select(value => (decimal?) value).ToArray();
+        public static explicit operator decimal?[](JsonValue values) => values?.GetList().Select(value => (decimal?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long[] (JsonValue values) => values?.GetList().Select(value => (long) value).ToArray();
+        public static explicit operator long[](JsonValue values) => values?.GetList().Select(value => (long) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator long?[] (JsonValue values) => values?.GetList().Select(value => (long?) value).ToArray();
+        public static explicit operator long?[](JsonValue values) => values?.GetList().Select(value => (long?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator ulong[] (JsonValue values) => values?.GetList().Select(value => (ulong) value).ToArray();
+        public static explicit operator ulong[](JsonValue values) => values?.GetList().Select(value => (ulong) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator ulong?[] (JsonValue values) => values?.GetList().Select(value => (ulong?) value).ToArray();
+        public static explicit operator ulong?[](JsonValue values) => values?.GetList().Select(value => (ulong?) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int[] (JsonValue values) => values?.GetList().Select(value => (int) value).ToArray();
+        public static explicit operator int[](JsonValue values) => values?.GetList().Select(value => (int) value).ToArray();
         /// <summary>See <see cref="NumericConversionOptions.Strict"/>.</summary>
-        public static explicit operator int?[] (JsonValue values) => values?.GetList().Select(value => (int?) value).ToArray();
+        public static explicit operator int?[](JsonValue values) => values?.GetList().Select(value => (int?) value).ToArray();
 
         /// <summary>See <see cref="StringConversionOptions.Strict"/>.</summary>
         public static explicit operator List<string>(JsonValue values) => values?.GetList().Select(value => (string) value).ToList();
@@ -1994,7 +1994,7 @@ namespace RT.Json
         /// <summary>Converts the specified <see cref="JsonBool"/> value to an ordinary boolean.</summary>
         public static explicit operator bool(JsonBool value) { return value._value; }
         /// <summary>Converts the specified <see cref="JsonBool"/> value to a nullable boolean.</summary>
-        public static implicit operator bool? (JsonBool value) => value == null ? (bool?) null : value._value;
+        public static implicit operator bool?(JsonBool value) => value == null ? (bool?) null : value._value;
         /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool"/> value.</summary>
         public static implicit operator JsonBool(bool value) => new JsonBool(value);
         /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool"/> value or null.</summary>
@@ -2750,17 +2750,31 @@ namespace RT.Json
             return new JsonList(source);
         }
 
-        /// <summary>
-        ///     Creates a <see cref="JsonList"/> from an input collection.</summary>
-        /// <param name="source">
-        ///     Input collection.</param>
-        /// <returns>
-        ///     The constructed <see cref="JsonList"/>.</returns>
-        public static JsonList ToJsonList(this IEnumerable<string> source)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return new JsonList(source.Select(str => (JsonValue) str));
-        }
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of strings.</summary>
+        public static JsonList ToJsonList(this IEnumerable<string> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of booleans.</summary>
+        public static JsonList ToJsonList(this IEnumerable<bool> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable booleans.</summary>
+        public static JsonList ToJsonList(this IEnumerable<bool?> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of doubles.</summary>
+        public static JsonList ToJsonList(this IEnumerable<double> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable doubles.</summary>
+        public static JsonList ToJsonList(this IEnumerable<double?> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of decimals.</summary>
+        public static JsonList ToJsonList(this IEnumerable<decimal> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable decimals.</summary>
+        public static JsonList ToJsonList(this IEnumerable<decimal?> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of longs.</summary>
+        public static JsonList ToJsonList(this IEnumerable<long> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable longs.</summary>
+        public static JsonList ToJsonList(this IEnumerable<long?> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of ulongs.</summary>
+        public static JsonList ToJsonList(this IEnumerable<ulong> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable ulongs.</summary>
+        public static JsonList ToJsonList(this IEnumerable<ulong?> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of ints.</summary>
+        public static JsonList ToJsonList(this IEnumerable<int> source) => ToJsonList(source.Select(item => (JsonValue) item));
+        /// <summary>Constructs a <see cref="JsonList"/> from the specified collection of nullable ints.</summary>
+        public static JsonList ToJsonList(this IEnumerable<int?> source) => ToJsonList(source.Select(item => (JsonValue) item));
     }
 }
