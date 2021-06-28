@@ -75,8 +75,8 @@ namespace RT.Util.Geometry
             if (requiredEdges.Any(e => e.Start == e.End))
                 throw new ArgumentException("Required edges must have a non-zero length", nameof(requiredEdges));
 
-            var curVertices = vertices.ToHashSet();
-            var requiredEdgeSet = requiredEdges.ToHashSet(); // to avoid missing edges due to floating point errors, we update the list every time we split a required edge
+            var curVertices = new HashSet<PointD>(vertices);
+            var requiredEdgeSet = new HashSet<EdgeD>(requiredEdges); // to avoid missing edges due to floating point errors, we update the list every time we split a required edge
             while (true)
             {
                 var triangulation = Triangulate.Delaunay(curVertices);

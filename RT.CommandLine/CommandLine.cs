@@ -390,7 +390,7 @@ namespace RT.CommandLine
                     throw new CommandLineHelpRequestedException(cmd);
 
             var elements = cmd.Elements;
-            var missingMandatories = elements.Where(e => e.IsMandatory).ToHashSet();
+            var missingMandatories = new HashSet<CmdLineElement>(elements.Where(e => e.IsMandatory));
             var positionals = elements.Where(e => e.IsPositional).ToQueue();
             var actionsToPerform = new List<Action<object>>();
 

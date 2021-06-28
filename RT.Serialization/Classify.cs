@@ -384,13 +384,12 @@ namespace RT.Serialization
 
                 if (_classifySimpleAttributes == null)
                 {
-                    _classifySimpleAttributes = Assembly.GetExecutingAssembly()
+                    _classifySimpleAttributes = new HashSet<string>(Assembly.GetExecutingAssembly()
                         .GetTypes()
                         .Where(t => typeof(Attribute).IsAssignableFrom(t))
                         .Where(t => t.Name.StartsWith("Classify") && t.Name.EndsWith("Attribute"))
                         .Where(t => t.GetConstructors().Length == 1 && t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
-                        .Select(t => t.Name)
-                        .ToHashSet();
+                        .Select(t => t.Name));
                 }
 
                 foreach (var attr in attrs)
