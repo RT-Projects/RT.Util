@@ -1024,14 +1024,6 @@ namespace RT.Util.ExtensionMethods
             return new Stack<T>(source);
         }
 
-        /// <summary>Creates a <see cref="HashSet{T}"/> from an enumerable collection.</summary>
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return comparer == null ? new HashSet<T>(source) : new HashSet<T>(source, comparer);
-        }
-
         /// <summary>
         ///     Creates a two-level dictionary from an enumerable collection according to two specified key selector functions
         ///     and optional key comparers.</summary>
