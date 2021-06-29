@@ -577,6 +577,30 @@ namespace RT.Util
         }
 
         /// <summary>
+        ///     Concatenates any number of arrays.</summary>
+        /// <remarks>
+        ///     Returns a new copy of the array even if there are only two inputs and one is empty.</remarks>
+        public static T[] ArrayConcat<T>(params T[][] arrays)
+        {
+            if (arrays == null)
+                throw new ArgumentNullException(nameof(arrays));
+            if (arrays.Contains(null))
+                throw new ArgumentNullException(nameof(arrays));
+            if (arrays.Length == 0)
+                return new T[0];
+            if (arrays.Length == 1)
+                return (T[]) arrays[0].Clone();
+            T[] result = new T[arrays.Sum(a => a.Length)];
+            var ix = 0;
+            for (var i = 0; i < arrays.Length; i++)
+            {
+                Array.Copy(arrays[i], 0, result, ix, arrays[i].Length);
+                ix += arrays[i].Length;
+            }
+            return result;
+        }
+
+        /// <summary>
         ///     Generates a sequence of floating-point numbers within a specified range.</summary>
         /// <param name="start">
         ///     The first value to produce.</param>
