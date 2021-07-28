@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -60,42 +60,45 @@ namespace RT.KitchenSink.Geometry
         private sealed class data
         {
             public List<arc> Arcs = new List<arc>();
-            public List<siteEvent> SiteEvents = new List<siteEvent>();
+            private Queue<siteEvent> SiteEvents;
             public List<circleEvent> CircleEvents = new List<circleEvent>();
             public List<edge> Edges = new List<edge>();
             public Dictionary<PointD, polygon> Polygons = new Dictionary<PointD, polygon>();
 
-            public data(PointD[] sites, float width, float height, VoronoiDiagramFlags flags)
+            public data(PointD[] sites, double width, double height, VoronoiDiagramFlags flags)
             {
+                var events = new List<siteEvent>(sites.Length);
                 foreach (PointD p in sites)
                 {
                     if (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height)
-                        SiteEvents.Add(new siteEvent(p));
+                        events.Add(new siteEvent(p));
                     else if ((flags & VoronoiDiagramFlags.RemoveOffboundsSites) == 0)
                         throw new Exception("The input contains a point outside the bounds or on the perimeter (coordinates " +
-                            p + "). This case is not handled by this algorithm. Use the RT.Util.VoronoiDiagramFlags.REMOVE_OFFBOUNDS_SITES " +
+                            p + $"). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} " +
                             "flag to automatically remove such off-bounds input points.");
                 }
-                SiteEvents.Sort();
+                events.Sort();
 
                 // Make sure there are no two equal points in the input
-                for (int i = 1; i < SiteEvents.Count; i++)
+                for (int i = 1; i < events.Count; i++)
                 {
-                    while (i < SiteEvents.Count && SiteEvents[i - 1].Position == SiteEvents[i].Position)
+                    while (i < events.Count && events[i - 1].Position == events[i].Position)
                     {
                         if ((flags & VoronoiDiagramFlags.RemoveDuplicates) == VoronoiDiagramFlags.RemoveDuplicates)
-                            SiteEvents.RemoveAt(i);
+                            events.RemoveAt(i);
                         else
                             throw new Exception("The input contains two points at the same coordinates " +
-                                SiteEvents[i].Position + ". Voronoi diagrams are undefined for such a situation. " +
+                                events[i].Position + ". Voronoi diagrams are undefined for such a situation. " +
                                 "Use the RT.Util.VoronoiDiagramFlags.REMOVE_DUPLICATES flag to automatically remove such duplicate input points.");
                     }
                 }
 
+                SiteEvents = new Queue<siteEvent>(events);
+
                 // Main loop
                 while (SiteEvents.Count > 0 || CircleEvents.Count > 0)
                 {
-                    if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents[0].Position.X))
+                    if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents.Peek().Position.X))
                     {
                         // Process a circle event
                         circleEvent evt = CircleEvents[0];
@@ -127,8 +130,7 @@ namespace RT.KitchenSink.Geometry
                     else
                     {
                         // Process a site event
-                        siteEvent evt = SiteEvents[0];
-                        SiteEvents.RemoveAt(0);
+                        var evt = SiteEvents.Dequeue();
 
                         if (Arcs.Count == 0)
                         {
