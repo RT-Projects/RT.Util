@@ -61,7 +61,7 @@ namespace RT.KitchenSink.Geometry
         {
             public List<arc> Arcs = new List<arc>();
             private Queue<siteEvent> SiteEvents;
-            public List<circleEvent> CircleEvents = new List<circleEvent>();
+            private List<circleEvent> CircleEvents = new List<circleEvent>();
             public List<edge> Edges = new List<edge>();
             public Dictionary<PointD, polygon> Polygons = new Dictionary<PointD, polygon>();
 
@@ -123,9 +123,9 @@ namespace RT.KitchenSink.Geometry
 
                         // Recheck circle events on either side of the disappearing arc
                         if (arcIndex > 0)
-                            checkCircleEvent(CircleEvents, arcIndex - 1, evt.X);
+                            checkCircleEvent(arcIndex - 1, evt.X);
                         if (arcIndex < Arcs.Count)
-                            checkCircleEvent(CircleEvents, arcIndex, evt.X);
+                            checkCircleEvent(arcIndex, evt.X);
                     }
                     else
                     {
@@ -157,8 +157,8 @@ namespace RT.KitchenSink.Geometry
                                 Edges.Add(Arcs[i].Edge);
 
                                 // Check for new circle events around the new arc:
-                                checkCircleEvent(CircleEvents, i, evt.Position.X);
-                                checkCircleEvent(CircleEvents, i + 2, evt.Position.X);
+                                checkCircleEvent(i, evt.Position.X);
+                                checkCircleEvent(i + 2, evt.Position.X);
 
                                 arcFound = true;
                                 break;
@@ -288,7 +288,7 @@ namespace RT.KitchenSink.Geometry
             }
 
             // Look for a new circle event for the arc at ArcIndex
-            private void checkCircleEvent(List<circleEvent> circleEvents, int arcIndex, double scanX)
+            private void checkCircleEvent(int arcIndex, double scanX)
             {
                 if (arcIndex == 0 || arcIndex == Arcs.Count - 1)
                     return;
@@ -301,17 +301,17 @@ namespace RT.KitchenSink.Geometry
                 {
                     // Add the new event in the right place using binary search
                     int low = 0;
-                    int high = circleEvents.Count;
+                    int high = CircleEvents.Count;
                     while (low < high)
                     {
                         int middle = (low + high) / 2;
-                        circleEvent evt = circleEvents[middle];
+                        circleEvent evt = CircleEvents[middle];
                         if (evt.X < maxX || (evt.X == maxX && evt.Center.Y < center.Y))
                             low = middle + 1;
                         else
                             high = middle;
                     }
-                    circleEvents.Insert(low, new circleEvent(maxX, center, arc));
+                    CircleEvents.Insert(low, new circleEvent(maxX, center, arc));
                 }
             }
 
