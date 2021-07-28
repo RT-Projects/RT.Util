@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -9,8 +9,8 @@ using RT.Util.Geometry;
 namespace RT.KitchenSink.Geometry
 {
     /// <summary>
-    ///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], SizeF,
-    ///     VoronoiDiagramFlags)"/> method.</summary>
+    ///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], double,
+    ///     double, VoronoiDiagramFlags)"/> method.</summary>
     [Flags]
     public enum VoronoiDiagramFlags
     {
@@ -27,31 +27,37 @@ namespace RT.KitchenSink.Geometry
     /// <summary>Represents a Voronoi diagram.</summary>
     public sealed class VoronoiDiagram
     {
-        /// <summary>Edges of the diagram.</summary>
-        public List<EdgeD> Edges;
-        /// <summary>Polygons corresponding to each of the input points.</summary>
-        public Dictionary<PointD, PolygonD> Polygons;
+        /// <summary>Edges of the diagram, along with the sites that generated each edge.</summary>
+        public List<(EdgeD edge, int siteA, int siteB)> Edges;
+        /// <summary>
+        ///     Polygons corresponding to each of the input points. The order of polygons in this array matches the order of
+        ///     the input sites exactly. Depending on <see cref="VoronoiDiagramFlags"/>, this array contains nulls for sites
+        ///     that were filtered out, as well as sites that correspond to un-closed semi-polygons around the outside of the
+        ///     diagram.</summary>
+        public PolygonD[] Polygons;
 
         /// <summary>
         ///     Generates a Voronoi diagram from a set of input points.</summary>
         /// <param name="sites">
         ///     Input points (sites) to generate diagram from.</param>
-        /// <param name="size">
-        ///     Size of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
+        /// <param name="width">
+        ///     Width of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
+        /// <param name="height">
+        ///     Height of the viewport. The origin of the viewport is assumed to be at (0, 0).</param>
         /// <param name="flags">
         ///     Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
         /// <returns>
         ///     A list of line segments describing the Voronoi diagram.</returns>
-        public static VoronoiDiagram GenerateVoronoiDiagram(PointD[] sites, SizeF size, VoronoiDiagramFlags flags = 0)
+        public static VoronoiDiagram GenerateVoronoiDiagram(PointD[] sites, double width, double height, VoronoiDiagramFlags flags = 0)
         {
-            return new data(sites, size.Width, size.Height, flags).Apply(data => new VoronoiDiagram
+            var data = new data(sites, width, height, flags);
+            return new VoronoiDiagram
             {
-                Edges = data.Edges.Select(edge => new EdgeD(edge.Start.Value, edge.End.Value)).ToList(),
+                Edges = data.Edges.Select(edge => (new EdgeD(edge.Start.Value, edge.End.Value), edge.SiteA.Index, edge.SiteB.Index)).ToList(),
                 Polygons = data.Polygons
-                    .Select(kvp => Ut.KeyValuePair(kvp.Key, kvp.Value.ToPolygonD(flags.HasFlag(VoronoiDiagramFlags.IncludeEdgePolygons), size.Width, size.Height)))
-                    .Where(kvp => kvp.Value != null)
-                    .ToDictionary()
-            });
+                    .Select(p => p.ToPolygonD((flags & VoronoiDiagramFlags.IncludeEdgePolygons) != 0, width, height))
+                    .ToArray()
+            };
         }
 
         /// <summary>
@@ -63,15 +69,17 @@ namespace RT.KitchenSink.Geometry
             private Queue<siteEvent> SiteEvents;
             private List<circleEvent> CircleEvents = new List<circleEvent>();
             public List<edge> Edges = new List<edge>();
-            public Dictionary<PointD, polygon> Polygons = new Dictionary<PointD, polygon>();
+            public polygon[] Polygons;
 
             public data(PointD[] sites, double width, double height, VoronoiDiagramFlags flags)
             {
                 var events = new List<siteEvent>(sites.Length);
-                foreach (PointD p in sites)
+                Polygons = new polygon[sites.Length];
+                for (var siteIx = 0; siteIx < sites.Length; siteIx++)
                 {
+                    var p = sites[siteIx];
                     if (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height)
-                        events.Add(new siteEvent(p));
+                        events.Add(new siteEvent(new site(siteIx, p)));
                     else if ((flags & VoronoiDiagramFlags.RemoveOffboundsSites) == 0)
                         throw new Exception("The input contains a point outside the bounds or on the perimeter (coordinates " +
                             p + $"). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} " +
@@ -82,13 +90,13 @@ namespace RT.KitchenSink.Geometry
                 // Make sure there are no two equal points in the input
                 for (int i = 1; i < events.Count; i++)
                 {
-                    while (i < events.Count && events[i - 1].Position == events[i].Position)
+                    while (i < events.Count && events[i - 1].Site.Position == events[i].Site.Position)
                     {
                         if ((flags & VoronoiDiagramFlags.RemoveDuplicates) == VoronoiDiagramFlags.RemoveDuplicates)
                             events.RemoveAt(i);
                         else
                             throw new Exception("The input contains two points at the same coordinates " +
-                                events[i].Position + ". Voronoi diagrams are undefined for such a situation. " +
+                                events[i].Site.Position + ". Voronoi diagrams are undefined for such a situation. " +
                                 "Use the RT.Util.VoronoiDiagramFlags.REMOVE_DUPLICATES flag to automatically remove such duplicate input points.");
                     }
                 }
@@ -98,7 +106,7 @@ namespace RT.KitchenSink.Geometry
                 // Main loop
                 while (SiteEvents.Count > 0 || CircleEvents.Count > 0)
                 {
-                    if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents.Peek().Position.X))
+                    if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents.Peek().Site.Position.X))
                     {
                         // Process a circle event
                         circleEvent evt = CircleEvents[0];
@@ -123,9 +131,9 @@ namespace RT.KitchenSink.Geometry
 
                         // Recheck circle events on either side of the disappearing arc
                         if (arcIndex > 0)
-                            checkCircleEvent(arcIndex - 1, evt.X);
+                            checkCircleEvent(arcIndex - 1);
                         if (arcIndex < Arcs.Count)
-                            checkCircleEvent(arcIndex, evt.X);
+                            checkCircleEvent(arcIndex);
                     }
                     else
                     {
@@ -134,7 +142,7 @@ namespace RT.KitchenSink.Geometry
 
                         if (Arcs.Count == 0)
                         {
-                            Arcs.Add(new arc(evt.Position));
+                            Arcs.Add(new arc(evt.Site));
                             continue;
                         }
 
@@ -142,23 +150,22 @@ namespace RT.KitchenSink.Geometry
                         bool arcFound = false;
                         for (int i = 0; i < Arcs.Count; i++)
                         {
-                            PointD intersect;
-                            if (doesIntersect(evt.Position, i, out intersect))
+                            if (doesIntersect(evt.Site.Position, i, out var intersect))
                             {
                                 // New parabola intersects Arc - duplicate Arc
                                 Arcs.Insert(i + 1, new arc(Arcs[i].Site));
                                 Arcs[i + 1].Edge = Arcs[i].Edge;
 
                                 // Add a new Arc for Event.Position in the right place
-                                Arcs.Insert(i + 1, new arc(evt.Position));
+                                Arcs.Insert(i + 1, new arc(evt.Site));
 
                                 // Add new half-edges connected to Arc's endpoints
                                 Arcs[i].Edge = Arcs[i + 1].Edge = new edge(Arcs[i + 1].Site, Arcs[i + 2].Site);
                                 Edges.Add(Arcs[i].Edge);
 
                                 // Check for new circle events around the new arc:
-                                checkCircleEvent(i, evt.Position.X);
-                                checkCircleEvent(i + 2, evt.Position.X);
+                                checkCircleEvent(i);
+                                checkCircleEvent(i + 2);
 
                                 arcFound = true;
                                 break;
@@ -171,10 +178,10 @@ namespace RT.KitchenSink.Geometry
                         // Special case: If Event.Position never intersects an arc, append it to the list.
                         // This only happens if there is more than one site event with the lowest X co-ordinate.
                         arc lastArc = Arcs[Arcs.Count - 1];
-                        arc newArc = new arc(evt.Position);
+                        arc newArc = new arc(evt.Site);
                         lastArc.Edge = new edge(lastArc.Site, newArc.Site);
                         Edges.Add(lastArc.Edge);
-                        lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Y + lastArc.Site.Y) / 2));
+                        lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Position.Y + lastArc.Site.Position.Y) / 2));
                         Arcs.Add(newArc);
                     }
                 }
@@ -185,7 +192,7 @@ namespace RT.KitchenSink.Geometry
                 // Extend each remaining edge to the new parabola intersections
                 for (int i = 0; i < Arcs.Count - 1; i++)
                     if (Arcs[i].Edge != null)
-                        Arcs[i].Edge.SetEndPoint(getIntersection(Arcs[i].Site, Arcs[i + 1].Site, 2 * var));
+                        Arcs[i].Edge.SetEndPoint(getIntersection(Arcs[i].Site.Position, Arcs[i + 1].Site.Position, 2 * var));
 
                 // Clip all the edges with the bounding rectangle and remove edges that are entirely outside
                 var newEdges = new List<edge>();
@@ -221,32 +228,32 @@ namespace RT.KitchenSink.Geometry
                 // Generate polygons from the edges
                 foreach (edge e in Edges)
                 {
-                    if (!Polygons.ContainsKey(e.SiteA))
-                        Polygons.Add(e.SiteA, new polygon(e.SiteA));
-                    Polygons[e.SiteA].AddEdge(e);
-                    if (!Polygons.ContainsKey(e.SiteB))
-                        Polygons.Add(e.SiteB, new polygon(e.SiteB));
-                    Polygons[e.SiteB].AddEdge(e);
+                    if (Polygons[e.SiteA.Index] == null)
+                        Polygons[e.SiteA.Index] = new polygon(e.SiteA);
+                    Polygons[e.SiteA.Index].AddEdge(e);
+                    if (Polygons[e.SiteB.Index] == null)
+                        Polygons[e.SiteB.Index] = new polygon(e.SiteB);
+                    Polygons[e.SiteB.Index].AddEdge(e);
                 }
             }
 
-            // Will a new parabola at Site intersect with the arc at ArcIndex?
-            private bool doesIntersect(PointD site, int arcIndex, out PointD result)
+            // Will a new parabola at p intersect with the arc at ArcIndex?
+            private bool doesIntersect(PointD p, int arcIndex, out PointD result)
             {
                 arc arc = Arcs[arcIndex];
 
                 result = new PointD(0, 0);
-                if (arc.Site.X == site.X)
+                if (arc.Site.Position.X == p.X)
                     return false;
 
-                if ((arcIndex == 0 || getIntersection(Arcs[arcIndex - 1].Site, arc.Site, site.X).Y <= site.Y) &&
-                    (arcIndex == Arcs.Count - 1 || site.Y <= getIntersection(arc.Site, Arcs[arcIndex + 1].Site, site.X).Y))
+                if ((arcIndex == 0 || getIntersection(Arcs[arcIndex - 1].Site.Position, arc.Site.Position, p.X).Y <= p.Y) &&
+                    (arcIndex == Arcs.Count - 1 || p.Y <= getIntersection(arc.Site.Position, Arcs[arcIndex + 1].Site.Position, p.X).Y))
                 {
-                    result.Y = site.Y;
+                    result.Y = p.Y;
 
                     // Plug it back into the parabola equation
-                    result.X = (arc.Site.X * arc.Site.X + (arc.Site.Y - result.Y) * (arc.Site.Y - result.Y) - site.X * site.X)
-                              / (2 * arc.Site.X - 2 * site.X);
+                    result.X = (arc.Site.Position.X * arc.Site.Position.X + (arc.Site.Position.Y - result.Y) * (arc.Site.Position.Y - result.Y) - p.X * p.X)
+                              / (2 * arc.Site.Position.X - 2 * p.X);
 
                     return true;
                 }
@@ -288,16 +295,12 @@ namespace RT.KitchenSink.Geometry
             }
 
             // Look for a new circle event for the arc at ArcIndex
-            private void checkCircleEvent(int arcIndex, double scanX)
+            private void checkCircleEvent(int arcIndex)
             {
                 if (arcIndex == 0 || arcIndex == Arcs.Count - 1)
                     return;
 
-                arc arc = Arcs[arcIndex];
-                double maxX;
-                PointD center;
-
-                if (getCircle(Arcs[arcIndex - 1].Site, arc.Site, Arcs[arcIndex + 1].Site, out center, out maxX)/* && MaxX >= ScanX*/)
+                if (getCircle(Arcs[arcIndex - 1].Site.Position, Arcs[arcIndex].Site.Position, Arcs[arcIndex + 1].Site.Position, out var center, out var maxX))
                 {
                     // Add the new event in the right place using binary search
                     int low = 0;
@@ -311,7 +314,7 @@ namespace RT.KitchenSink.Geometry
                         else
                             high = middle;
                     }
-                    CircleEvents.Insert(low, new circleEvent(maxX, center, arc));
+                    CircleEvents.Insert(low, new circleEvent(maxX, center, Arcs[arcIndex]));
                 }
             }
 
@@ -343,12 +346,28 @@ namespace RT.KitchenSink.Geometry
             }
         }
 
+        private struct site : IEquatable<site>
+        {
+            public int Index { get; private set; }
+            public PointD Position { get; private set; }
+            public site(int index, PointD position)
+            {
+                Index = index;
+                Position = position;
+            }
+
+            public bool Equals(site other) => other.Index == Index;
+            public override bool Equals(object obj) => obj is site other && Equals(other);
+            public override int GetHashCode() => Index;
+        }
+
         /// <summary>Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
         private sealed class edge
         {
             public PointD? Start, End;
-            public PointD SiteA, SiteB;
-            public edge(PointD siteA, PointD siteB)
+            public site SiteA;
+            public site SiteB;
+            public edge(site siteA, site siteB)
             {
                 Start = null;
                 End = null;
@@ -370,12 +389,11 @@ namespace RT.KitchenSink.Geometry
         private sealed class polygon
         {
             public bool Complete;
-            public PointD Site;
-
-            private List<PointD> _processedPoints;
+            public site Site;
+            private readonly List<PointD> _processedPoints;
             private List<edge> _unprocessedEdges;
 
-            public polygon(PointD site)
+            public polygon(site site)
             {
                 Site = site;
                 Complete = false;
@@ -437,7 +455,7 @@ namespace RT.KitchenSink.Geometry
                 if (_unprocessedEdges.Count == 0)
                 {
                     var polygon = new PolygonD(_processedPoints);
-                    if (polygon.ContainsPoint(Site))
+                    if (polygon.ContainsPoint(Site.Position))
                         return polygon;
                 }
                 _processedPoints.RemoveRange(origNumVertices, _processedPoints.Count - origNumVertices);
@@ -565,14 +583,15 @@ namespace RT.KitchenSink.Geometry
         private sealed class arc
         {
             // The site the arc is associated with. There may be more than one arc for the same site in the Arcs array.
-            public PointD Site;
+            public site Site;
 
             // The edge that is formed from the breakpoint between this Arc and the next Arc in the Arcs array.
             public edge Edge;
 
-            public arc(PointD site)
+            public arc(site site)
             {
-                Site = site; Edge = null;
+                Site = site;
+                Edge = null;
             }
 
             public override string ToString()
@@ -586,22 +605,19 @@ namespace RT.KitchenSink.Geometry
         ///     RT.Util.VoronoiDiagram).</summary>
         private sealed class siteEvent : IComparable<siteEvent>
         {
-            public PointD Position;
-            public siteEvent(PointD nPosition) { Position = nPosition; }
-            public override string ToString()
-            {
-                return Position.ToString();
-            }
+            public site Site;
+            public siteEvent(site site) { Site = site; }
+            public override string ToString() => Site.Position.ToString();
 
             public int CompareTo(siteEvent other)
             {
-                if (Position.X < other.Position.X)
+                if (Site.Position.X < other.Site.Position.X)
                     return -1;
-                if (Position.X > other.Position.X)
+                if (Site.Position.X > other.Site.Position.X)
                     return 1;
-                if (Position.Y < other.Position.Y)
+                if (Site.Position.Y < other.Site.Position.Y)
                     return -1;
-                if (Position.Y > other.Position.Y)
+                if (Site.Position.Y > other.Site.Position.Y)
                     return 1;
                 return 0;
             }
