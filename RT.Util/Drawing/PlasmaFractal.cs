@@ -3,7 +3,6 @@ using System.Drawing.Imaging;
 using System.Linq;
 using RT.Util;
 
-#if UNSAFE
 namespace RT.KitchenSink.Drawing
 {
     /// <summary>Contains a method to generate a plasma fractal.</summary>
@@ -96,4 +95,3 @@ namespace RT.KitchenSink.Drawing
         }
     }
 }
-#endif

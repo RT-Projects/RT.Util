@@ -151,7 +151,6 @@ namespace RT.Util.Drawing
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);
         }
 
-#if UNSAFE
         /// <summary>
         ///     Modifies the current bitmap’s transparency layer by setting it to the data from another bitmap.</summary>
         /// <param name="source">
@@ -263,7 +262,6 @@ namespace RT.Util.Drawing
             trans.UnlockBits(tBits);
             return opaque;
         }
-#endif
 
         /// <summary>
         ///     Draws a rounded rectangle.</summary>

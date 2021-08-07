@@ -5,7 +5,7 @@
     <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    <Configurations>Debug;Release;DebugUnsafe;ReleaseUnsafe</Configurations>
+    <Configurations>Debug;Release</Configurations>
 
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
@@ -14,15 +14,13 @@
     <PackageTags>rt.util;util;translation;localization;Lingo;CommandLineParser</PackageTags>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnsafe|AnyCPU'">
-    <Optimize>false</Optimize>
-    <DefineConstants>TRACE;UNSAFE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnsafe|AnyCPU'">
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE;UNSAFE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
