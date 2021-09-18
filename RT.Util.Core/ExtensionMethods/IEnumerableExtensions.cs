@@ -926,57 +926,6 @@ namespace RT.Util.ExtensionMethods
             return skipLastIterator();
         }
 
-        /// <summary>
-        ///     Returns a collection containing only the last <paramref name="count"/> items of the input collection. This
-        ///     method enumerates the entire collection to the end once before returning. Note also that the memory usage of
-        ///     this method is proportional to <paramref name="count"/>.</summary>
-        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
-            if (count == 0)
-                return Enumerable.Empty<T>();
-
-            if (source is IList<T> list)
-            {
-                // Make this a local iterator-block function so that list.Count is only evaluated when enumeration begins
-                IEnumerable<T> takeLastFromList()
-                {
-                    for (int i = Math.Max(0, list.Count - count); i < list.Count; i++)
-                        yield return list[i];
-                }
-                return takeLastFromList();
-            }
-            else if (source is ICollection<T> collection)
-            {
-                // Make this a local iterator-block function so that collection.Count is only evaluated when enumeration begins
-                IEnumerable<T> takeLastFromCollection()
-                {
-                    foreach (var elem in collection.Skip(Math.Max(0, collection.Count - count)))
-                        yield return elem;
-                }
-                return takeLastFromCollection();
-            }
-            else
-            {
-                IEnumerable<T> takeLast()
-                {
-                    var queue = new Queue<T>(count + 1);
-                    foreach (var item in source)
-                    {
-                        if (queue.Count == count)
-                            queue.Dequeue();
-                        queue.Enqueue(item);
-                    }
-                    foreach (var item in queue)
-                        yield return item;
-                }
-                return takeLast();
-            }
-        }
-
         /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
         public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence)
         {
