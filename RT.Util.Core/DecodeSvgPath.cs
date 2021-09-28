@@ -186,7 +186,7 @@ namespace RT.KitchenSink
 
                         if (cur.Type == PathPieceType.Curve && cur.Points.Length % 3 == 0)
                             return Enumerable.Range(0, cur.Points.Length / 3)
-                                .SelectMany(ix => smoothBézier(ix == 0 ? lastPoint : cur.Points[3 * ix - 1], cur.Points[3 * ix], cur.Points[3 * ix + 1], cur.Points[3 * ix + 2], smoothness).Skip(1))
+                                .SelectMany(ix => GeomUt.SmoothBézier(ix == 0 ? lastPoint : cur.Points[3 * ix - 1], cur.Points[3 * ix], cur.Points[3 * ix + 1], cur.Points[3 * ix + 2], smoothness).Skip(1))
                                 .ToArray();
 
                         if (cur.Type == PathPieceType.Arc && cur is PathPieceArc arc && arc.Points.Length == 1)
@@ -212,7 +212,7 @@ namespace RT.KitchenSink
                             var t1 = a1 + a2;
                             var t2 = a1 - a2;
 
-                            var result = smoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
+                            var result = GeomUt.SmoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
                             if (arc.SweepFlag ^ arc.LargeArcFlag)
                                 result = result.Select(p => 2 * ((p1 + p2) / 2) - p).Reverse();
                             return result.Select(p => p.Rotated(-arc.XAxisRotation * Math.PI / 180));
