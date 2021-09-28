@@ -214,8 +214,8 @@ namespace RT.KitchenSink
 
                             var result = GeomUt.SmoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
                             if (arc.SweepFlag ^ arc.LargeArcFlag)
-                                result = result.Select(p => 2 * ((p1 + p2) / 2) - p).Reverse();
-                            return result.Select(p => p.Rotated(-arc.XAxisRotation * Math.PI / 180));
+                                result = result.Select(p => p1 + p2 - p).Reverse();
+                            return result.Skip(1).Select(p => p.Rotated(-arc.XAxisRotation * Math.PI / 180));
                         }
 
                         throw new NotImplementedException();
