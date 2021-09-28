@@ -155,20 +155,20 @@ namespace RT.KitchenSink
 
         /// <summary>
         ///     Converts a sequence of <see cref="PathPiece"/> objects to a sequence of points using the specified <paramref
-        ///     name="bézierSmoothness"/> to render Bézier curves.</summary>
+        ///     name="smoothness"/> to render Bézier curves.</summary>
         /// <param name="pieces">
         ///     The pieces that constitute the path.</param>
-        /// <param name="bézierSmoothness">
+        /// <param name="smoothness">
         ///     A value indicating the maximum amount by which each Bézier curve is allowed to be approximated. The smaller
         ///     this value, the more points are generated for each Bézier curve.</param>
         /// <returns>
         ///     A sequence of points that represent the fully rendered path.</returns>
-        public static IEnumerable<IEnumerable<PointD>> Do(IEnumerable<PathPiece> pieces, double bézierSmoothness)
+        public static IEnumerable<IEnumerable<PointD>> Do(IEnumerable<PathPiece> pieces, double smoothness)
         {
             if (pieces == null)
                 throw new ArgumentNullException(nameof(pieces));
-            if (bézierSmoothness <= 0)
-                throw new ArgumentOutOfRangeException(nameof(bézierSmoothness), "The bézierSmoothness parameter cannot be zero or negative.");
+            if (smoothness <= 0)
+                throw new ArgumentOutOfRangeException(nameof(smoothness), "The smoothness parameter cannot be zero or negative.");
 
             IEnumerable<IEnumerable<PointD>> iterator()
             {
@@ -176,18 +176,49 @@ namespace RT.KitchenSink
                 {
                     yield return Enumerable.Range(0, group.Length).SelectMany(grIx =>
                     {
-                        var next = group[grIx];
+                        var cur = group[grIx];
                         var prev = group[(grIx + group.Length - 1) % group.Length];
 
-                        if (next.Type == PathPieceType.Move || next.Type == PathPieceType.Line)
-                            return next.Points;
+                        if (cur.Type == PathPieceType.Move || cur.Type == PathPieceType.Line)
+                            return cur.Points;
 
-                        if (next.Type == PathPieceType.Curve)
-                            return Enumerable.Range(0, next.Points.Length / 3)
-                                .SelectMany(ix => smoothBézier(ix == 0 ? prev.Points[prev.Points.Length - 1] : next.Points[3 * ix - 1], next.Points[3 * ix], next.Points[3 * ix + 1], next.Points[3 * ix + 2], bézierSmoothness).Skip(1))
+                        var lastPoint = prev.Points[prev.Points.Length - 1];
+
+                        if (cur.Type == PathPieceType.Curve && cur.Points.Length % 3 == 0)
+                            return Enumerable.Range(0, cur.Points.Length / 3)
+                                .SelectMany(ix => smoothBézier(ix == 0 ? lastPoint : cur.Points[3 * ix - 1], cur.Points[3 * ix], cur.Points[3 * ix + 1], cur.Points[3 * ix + 2], smoothness).Skip(1))
                                 .ToArray();
 
-                        throw new InvalidOperationException();
+                        if (cur.Type == PathPieceType.Arc && cur is PathPieceArc arc && arc.Points.Length == 1)
+                        {
+                            var p1 = lastPoint.Rotated(arc.XAxisRotation * Math.PI / 180);
+                            var p2 = arc.Points[0].Rotated(arc.XAxisRotation * Math.PI / 180);
+                            var a = arc.RX;
+                            var b = arc.RY;
+
+                            var r1 = (p1.X - p2.X) / (2 * a);
+                            var r2 = (p1.Y - p2.Y) / (2 * b);
+                            var lambda = Math.Pow(r1, 2) + Math.Pow(r2, 2);
+                            if (lambda > 1)
+                            {
+                                a *= Math.Sqrt(lambda);
+                                b *= Math.Sqrt(lambda);
+                                r1 = (p1.X - p2.X) / (2 * a);
+                                r2 = (p1.Y - p2.Y) / (2 * b);
+                                lambda = 1;
+                            }
+                            var a1 = Math.Atan2(-r1, r2);
+                            var a2 = Math.Asin(Math.Sqrt(lambda));
+                            var t1 = a1 + a2;
+                            var t2 = a1 - a2;
+
+                            var result = smoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
+                            if (arc.SweepFlag ^ arc.LargeArcFlag)
+                                result = result.Select(p => 2 * ((p1 + p2) / 2) - p).Reverse();
+                            return result.Select(p => p.Rotated(-arc.XAxisRotation * Math.PI / 180));
+                        }
+
+                        throw new NotImplementedException();
                     });
                 }
             }
@@ -196,44 +227,50 @@ namespace RT.KitchenSink
 
         private static PointD bé(PointD start, PointD c1, PointD c2, PointD end, double t) => Math.Pow((1 - t), 3) * start + 3 * (1 - t) * (1 - t) * t * c1 + 3 * (1 - t) * t * t * c2 + Math.Pow(t, 3) * end;
 
-        private static IEnumerable<PointD> smoothBézier(PointD start, PointD c1, PointD c2, PointD end, double smoothness)
+        private static IEnumerable<PointD> smoothCurve(double startT, double endT, Func<double, PointD> fnc, double smoothness)
         {
-            yield return start;
+            yield return fnc(startT);
 
             var stack = new Stack<(double from, double to)>();
-            stack.Push((0, 1));
+            stack.Push((startT, endT));
 
             while (stack.Count > 0)
             {
-                var elem = stack.Pop();
-                var p1 = bé(start, c1, c2, end, elem.Item1);
-                var p2 = bé(start, c1, c2, end, elem.Item2);
-                var midT = (elem.from + elem.to) / 2;
-                var midCurve = bé(start, c1, c2, end, midT);
+                var (from, to) = stack.Pop();
+                var p1 = fnc(from);
+                var p2 = fnc(to);
+                var midT = (from + to) / 2;
+                var midCurve = fnc(midT);
                 var dist = new EdgeD(p1, p2).Distance(midCurve);
                 if (double.IsNaN(dist) || dist <= smoothness)
                     yield return p2;
                 else
                 {
-                    stack.Push((midT, elem.to));
-                    stack.Push((elem.from, midT));
+                    stack.Push((midT, to));
+                    stack.Push((from, midT));
                 }
             }
         }
 
+        private static IEnumerable<PointD> smoothBézier(PointD start, PointD c1, PointD c2, PointD end, double smoothness) =>
+            smoothCurve(0, 1, t => bé(start, c1, c2, end, t), smoothness);
+
+        private static IEnumerable<PointD> smoothArc(PointD center, double a, double b, double t1, double t2, double smoothness) =>
+            smoothCurve(t1, t2, t => new PointD(center.X + a * Math.Cos(t), center.Y + b * Math.Sin(t)), smoothness);
+
         /// <summary>
         ///     Converts a string containing SVG path data to a sequence of points using the specified <paramref
-        ///     name="bézierSmoothness"/> to render Bézier curves.</summary>
+        ///     name="smoothness"/> to render Bézier curves.</summary>
         /// <param name="svgPath">
         ///     The SVG path data.</param>
-        /// <param name="bézierSmoothness">
-        ///     A value indicating the maximum amount by which each Bézier curve is allowed to be approximated. The smaller
-        ///     this value, the more points are generated for each Bézier curve.</param>
+        /// <param name="smoothness">
+        ///     A value indicating the maximum amount by which each curve (Bézier or arc) is allowed to be approximated. The smaller
+        ///     this value, the more points are generated for each curve.</param>
         /// <returns>
         ///     A sequence of points that represent the fully rendered path.</returns>
-        public static IEnumerable<IEnumerable<PointD>> Do(string svgPath, double bézierSmoothness)
+        public static IEnumerable<IEnumerable<PointD>> Do(string svgPath, double smoothness)
         {
-            return Do(DecodePieces(svgPath), bézierSmoothness);
+            return Do(DecodePieces(svgPath), smoothness);
         }
 
         /// <summary>
@@ -251,7 +288,7 @@ namespace RT.KitchenSink
             while (!string.IsNullOrWhiteSpace(svgPath))
             {
                 Match m;
-                if ((m = Regex.Match(svgPath, @"^[MLCHVS]\s*({0})*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+                if ((m = Regex.Match(svgPath, @"^[MLCQHVS]\s*({0})*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
                 {
                     PathPieceType type;
                     PointD[] points;
@@ -315,6 +352,7 @@ namespace RT.KitchenSink
                         case 'C':
                             type = PathPieceType.Curve;
                             points = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
+                            Ut.Assert(points.Length % 3 == 0);
                             prevPoint = points.Last();
                             prevControlPoint = points.SkipLast(1).Last();
                             prevControlPointDetermined = true;
@@ -329,6 +367,31 @@ namespace RT.KitchenSink
                                 points[i] += prevPoint;
                                 points[i + 1] += prevPoint;
                                 prevPoint = (points[i + 2] += prevPoint);
+                            }
+                            prevPoint = points.Last();
+                            prevControlPoint = points.SkipLast(1).Last();
+                            prevControlPointDetermined = true;
+                            break;
+
+                        case 'Q':
+                        case 'q':
+                            var relative = m.Value[0] == 'q';
+                            type = PathPieceType.Curve;
+                            var qPoints = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
+                            Ut.Assert(qPoints.Length % 2 == 0);
+                            points = new PointD[qPoints.Length / 2 * 3];
+                            for (int i = 0, j = 0; i < qPoints.Length; i += 2, j += 3)
+                            {
+                                var ctrlPoint = qPoints[i];
+                                var endPoint = qPoints[i + 1];
+                                if (relative)
+                                {
+                                    ctrlPoint += prevPoint;
+                                    endPoint += prevPoint;
+                                }
+                                points[j] = prevPoint + (ctrlPoint - prevPoint) * 2 / 3;
+                                points[j + 1] = endPoint + (ctrlPoint - endPoint) * 2 / 3;
+                                prevPoint = points[j + 2] = endPoint;
                             }
                             prevPoint = points.Last();
                             prevControlPoint = points.SkipLast(1).Last();
