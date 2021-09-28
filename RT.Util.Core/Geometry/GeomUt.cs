@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 
 namespace RT.Util.Geometry
 {
@@ -49,5 +50,75 @@ namespace RT.Util.Geometry
             // therefore both points cannot be on the same side.
             return xp1 * xp2 > 0;
         }
+
+        /// <summary>
+        ///     Given a parametrized curve, generates a series of points along the curve such that no individual segment is
+        ///     more than <paramref name="smoothness"/> away from the true curve.</summary>
+        /// <param name="startT">
+        ///     Value for <paramref name="fnc"/> at which the curve should start.</param>
+        /// <param name="endT">
+        ///     Value for <paramref name="fnc"/> at which the curve should end.</param>
+        /// <param name="fnc">
+        ///     Function that defines the curve by converting a parameter to a point.</param>
+        /// <param name="smoothness">
+        ///     Maximum amount by which the line segments are allowed to deviate from the curve.</param>
+        public static IEnumerable<PointD> SmoothCurve(double startT, double endT, Func<double, PointD> fnc, double smoothness)
+        {
+            yield return fnc(startT);
+
+            var stack = new Stack<(double from, double to)>();
+            stack.Push((startT, endT));
+
+            while (stack.Count > 0)
+            {
+                var (from, to) = stack.Pop();
+                var p1 = fnc(from);
+                var p2 = fnc(to);
+                var midT = (from + to) / 2;
+                var midCurve = fnc(midT);
+                var dist = new EdgeD(p1, p2).Distance(midCurve);
+                if (double.IsNaN(dist) || dist <= smoothness)
+                    yield return p2;
+                else
+                {
+                    stack.Push((midT, to));
+                    stack.Push((from, midT));
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Generates a series of points that approximate a cubic Bézier curve.</summary>
+        /// <param name="start">
+        ///     Start point of the curve.</param>
+        /// <param name="c1">
+        ///     First control point.</param>
+        /// <param name="c2">
+        ///     Second control point.</param>
+        /// <param name="end">
+        ///     End point of the curve.</param>
+        /// <param name="smoothness">
+        ///     Maximum amount by which the line segments are allowed to deviate from the curve.</param>
+        public static IEnumerable<PointD> SmoothBézier(PointD start, PointD c1, PointD c2, PointD end, double smoothness) =>
+            SmoothCurve(0, 1, t => Math.Pow(1 - t, 3) * start + 3 * (1 - t) * (1 - t) * t * c1 + 3 * (1 - t) * t * t * c2 + Math.Pow(t, 3) * end, smoothness);
+
+        /// <summary>
+        ///     Generates a series of points that approximate an elliptic arc curve.</summary>
+        /// <param name="center">
+        ///     Center of the ellipse.</param>
+        /// <param name="a">
+        ///     Horizontal radius of the ellipse.</param>
+        /// <param name="b">
+        ///     Vertical radius of the ellipse.</param>
+        /// <param name="t1">
+        ///     Parameter at which the ellipse starts. If it’s a circle, this is the angle from the x-axis, but for ellipses
+        ///     it is stretched, so it’s not the real angle.</param>
+        /// <param name="t2">
+        ///     Parameter at which the ellipse end. If it’s a circle, this is the angle from the x-axis, but for ellipses it
+        ///     is stretched, so it’s not the real angle.</param>
+        /// <param name="smoothness">
+        ///     Maximum amount by which the line segments are allowed to deviate from the curve.</param>
+        public static IEnumerable<PointD> SmoothArc(PointD center, double a, double b, double t1, double t2, double smoothness) =>
+            SmoothCurve(t1, t2, t => new PointD(center.X + a * Math.Cos(t), center.Y + b * Math.Sin(t)), smoothness);
     }
 }

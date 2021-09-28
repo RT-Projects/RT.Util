@@ -225,39 +225,6 @@ namespace RT.KitchenSink
             return iterator();
         }
 
-        private static PointD bé(PointD start, PointD c1, PointD c2, PointD end, double t) => Math.Pow((1 - t), 3) * start + 3 * (1 - t) * (1 - t) * t * c1 + 3 * (1 - t) * t * t * c2 + Math.Pow(t, 3) * end;
-
-        private static IEnumerable<PointD> smoothCurve(double startT, double endT, Func<double, PointD> fnc, double smoothness)
-        {
-            yield return fnc(startT);
-
-            var stack = new Stack<(double from, double to)>();
-            stack.Push((startT, endT));
-
-            while (stack.Count > 0)
-            {
-                var (from, to) = stack.Pop();
-                var p1 = fnc(from);
-                var p2 = fnc(to);
-                var midT = (from + to) / 2;
-                var midCurve = fnc(midT);
-                var dist = new EdgeD(p1, p2).Distance(midCurve);
-                if (double.IsNaN(dist) || dist <= smoothness)
-                    yield return p2;
-                else
-                {
-                    stack.Push((midT, to));
-                    stack.Push((from, midT));
-                }
-            }
-        }
-
-        private static IEnumerable<PointD> smoothBézier(PointD start, PointD c1, PointD c2, PointD end, double smoothness) =>
-            smoothCurve(0, 1, t => bé(start, c1, c2, end, t), smoothness);
-
-        private static IEnumerable<PointD> smoothArc(PointD center, double a, double b, double t1, double t2, double smoothness) =>
-            smoothCurve(t1, t2, t => new PointD(center.X + a * Math.Cos(t), center.Y + b * Math.Sin(t)), smoothness);
-
         /// <summary>
         ///     Converts a string containing SVG path data to a sequence of points using the specified <paramref
         ///     name="smoothness"/> to render Bézier curves.</summary>
