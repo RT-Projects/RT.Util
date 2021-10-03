@@ -911,6 +911,30 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Determines whether the beginning of this string instance matches the specified string using the ordinal
+        ///     case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
+        public static bool StartsWithIgnoreCase(this string haystack, string value)
+        {
+            if (haystack == null)
+                throw new ArgumentNullException(nameof(haystack));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            return haystack.StartsWith(value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        ///     Determines whether the end of this string instance matches the specified string using the ordinal
+        ///     case-insensitive comparison (<see cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
+        public static bool EndsWithIgnoreCase(this string haystack, string value)
+        {
+            if (haystack == null)
+                throw new ArgumentNullException(nameof(haystack));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            return haystack.EndsWith(value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         ///     Returns true if and only if this string ends with the specified character.</summary>
         /// <seealso cref="StartsWith"/>
         public static bool EndsWith(this string str, char? ch)
