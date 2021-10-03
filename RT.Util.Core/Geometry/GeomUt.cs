@@ -1,5 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Geometry
 {
@@ -120,5 +122,75 @@ namespace RT.Util.Geometry
         ///     Maximum amount by which the line segments are allowed to deviate from the curve.</param>
         public static IEnumerable<PointD> SmoothArc(PointD center, double a, double b, double t1, double t2, double smoothness) =>
             SmoothCurve(t1, t2, t => new PointD(center.X + a * Math.Cos(t), center.Y + b * Math.Sin(t)), smoothness);
+
+        /// <summary>
+        ///     Merges adjacent (touching) polygons and removes the touching edges. Behaviour is undefined if any polygons
+        ///     overlap. Only exactly matching edges are considered, and only if they have the opposite sense to each other.
+        ///     Example use case: simplifying subsets of <see cref="RT.KitchenSink.Geometry.VoronoiDiagram"/> polygons.</summary>
+        /// <param name="polygons">
+        ///     Polygons to merge. This method removes entries from this list, and modifies polygon vertices.</param>
+        public static void MergeAdjacentPolygons(List<PolygonD> polygons)
+        {
+            bool anyChangesOuter;
+            do
+            {
+                anyChangesOuter = false;
+                var vertices = (from p in polygons from v in p.Vertices select (p, v)).ToLookup(x => x.v, x => x.p);
+                var removedPolygons = new HashSet<PolygonD>();
+                foreach (var polys in vertices.Where(grp => grp.Count() > 1))
+                {
+                    foreach (var pair in polys.UniquePairs()) // might still contain duplicates if a polygon goes through the same vertex twice
+                        if (pair.Item1 != pair.Item2 && !removedPolygons.Contains(pair.Item1) && !removedPolygons.Contains(pair.Item2))
+                        {
+                            // maybe merge these two
+                            var p1 = pair.Item1;
+                            var p2 = pair.Item2;
+                            for (int is1 = 0; is1 < p1.Vertices.Count; is1++)
+                                for (int is2 = 0; is2 < p2.Vertices.Count; is2++)
+                                {
+                                    int ie1 = (is1 + 1) % p1.Vertices.Count;
+                                    int ie2 = (is2 + 1) % p2.Vertices.Count;
+                                    if (p1.Vertices[is1] == p2.Vertices[ie2] && p1.Vertices[ie1] == p2.Vertices[is2])
+                                    {
+                                        anyChangesOuter = true;
+                                        // Concatenate the two polygons while removing the shared edge by dropping duplicate vertices from the second polygon
+                                        var newVertices = Enumerable.Range(ie1, p1.Vertices.Count).Select(i1 => p1.Vertices[i1 % p1.Vertices.Count])
+                                            .Concat(Enumerable.Range(ie2 + 1, p2.Vertices.Count - 2).Select(i2 => p2.Vertices[i2 % p2.Vertices.Count]))
+                                            .ToList();
+                                        // Simplify any redundant edges in this new polygon (this happens if the two polygons shared more than one edge)
+                                        bool anyChanges;
+                                        do
+                                        {
+                                            anyChanges = false;
+                                            for (int i = 0; i < newVertices.Count; i++)
+                                            {
+                                                int ib = (i - 1 + newVertices.Count) % newVertices.Count;
+                                                int ia = (i + 1) % newVertices.Count;
+                                                if (newVertices[ib] == newVertices[ia])
+                                                {
+                                                    // Remove the vertex at i and the duplicate vertex at ib
+                                                    newVertices = Enumerable.Range(ia, newVertices.Count - 2).Select(ii => newVertices[ii % newVertices.Count]).ToList();
+                                                    anyChanges = true;
+                                                }
+                                            }
+                                        } while (anyChanges);
+                                        // Update polygon 1 vertices
+                                        p1.Vertices.Clear();
+                                        p1.Vertices.AddRange(newVertices);
+                                        // Polygon 2 gets removed entirely
+                                        if (removedPolygons.Contains(p1))
+                                            throw new Exception();
+                                        removedPolygons.Add(p2);
+                                        if (removedPolygons.Contains(p1))
+                                            throw new Exception();
+                                        goto next;
+                                    }
+                                }
+                            next:;
+                        }
+                }
+                polygons.RemoveAll(p => removedPolygons.Contains(p));
+            } while (anyChangesOuter);
+        }
     }
 }
