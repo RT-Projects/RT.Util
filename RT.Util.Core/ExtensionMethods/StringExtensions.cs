@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -880,10 +881,17 @@ namespace RT.Util.ExtensionMethods
                 return source.Substring(startIndex, length);
         }
 
+        /// <summary>Use <see cref="EqualsIgnoreCase"/>.</summary>
+        [Obsolete("Use EqualsIgnoreCase"), EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool EqualsNoCase(this string strthis, string str) => EqualsIgnoreCase(strthis, str);
+        /// <summary>Use <see cref="ContainsIgnoreCase"/>.</summary>
+        [Obsolete("Use ContainsIgnoreCase"), EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool ContainsNoCase(this string strthis, string str) => ContainsIgnoreCase(strthis, str);
+
         /// <summary>
-        ///     Determines whether this string is equal to the other string under the ordinal case-insensitive comparison
+        ///     Determines whether this string is equal to the other string using the ordinal case-insensitive comparison
         ///     (<see cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
-        public static bool EqualsNoCase(this string strthis, string str)
+        public static bool EqualsIgnoreCase(this string strthis, string str)
         {
             if (strthis == null)
                 throw new ArgumentNullException(nameof(strthis));
@@ -891,9 +899,9 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Determines whether this string contains the other string under the ordinal case-insensitive comparison (<see
+        ///     Determines whether this string contains the other string using the ordinal case-insensitive comparison (<see
         ///     cref="StringComparison.OrdinalIgnoreCase"/>).</summary>
-        public static bool ContainsNoCase(this string strthis, string str)
+        public static bool ContainsIgnoreCase(this string strthis, string str)
         {
             if (strthis == null)
                 throw new ArgumentNullException(nameof(strthis));
