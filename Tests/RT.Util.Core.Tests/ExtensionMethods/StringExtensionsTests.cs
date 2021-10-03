@@ -255,5 +255,80 @@ namespace RT.Util.ExtensionMethods
             if (expectedFormat != null)
                 Assert.AreEqual(expectedFormat, resultFormat);
         }
+
+        [Test]
+        public void TestSubstrings()
+        {
+            for (int f = -3; f <= 3; f += 3)
+                Assert.AreEqual("", "".SubstringSafe(f));
+            for (int f = -3; f <= 3; f += 3)
+                for (int l = -3; l <= 3; l += 3)
+                    Assert.AreEqual("", "".SubstringSafe(f, l));
+
+            Assert.AreEqual("foobar", "foobar".SubstringSafe(-1));
+            Assert.AreEqual("foobar", "foobar".SubstringSafe(0));
+            Assert.AreEqual("oobar", "foobar".SubstringSafe(1));
+            Assert.AreEqual("r", "foobar".SubstringSafe(5));
+            Assert.AreEqual("", "foobar".SubstringSafe(6));
+            Assert.AreEqual("", "foobar".SubstringSafe(7));
+
+            Assert.AreEqual("fo", "foobar".SubstringSafe(-1, 3));
+            Assert.AreEqual("foo", "foobar".SubstringSafe(0, 3));
+            Assert.AreEqual("oob", "foobar".SubstringSafe(1, 3));
+            Assert.AreEqual("r", "foobar".SubstringSafe(5, 3));
+            Assert.AreEqual("", "foobar".SubstringSafe(6, 3));
+            Assert.AreEqual("", "foobar".SubstringSafe(7, 3));
+            Assert.AreEqual("", "foobar".SubstringSafe(2, 0));
+            Assert.AreEqual("", "foobar".SubstringSafe(2, -1));
+
+            assertSubstringRight("foobar", "foobar", -1, true);
+            assertSubstringRight("foobar", "foobar", 0, false);
+            assertSubstringRight("foobar", "fooba", 1, false);
+            assertSubstringRight("foobar", "f", 5, false);
+            assertSubstringRight("foobar", "", 6, false);
+            assertSubstringRight("foobar", "", 7, true);
+
+            for (int f = -3; f <= 3; f += 3)
+                assertSubstringRight("", "", f, f != 0);
+            for (int f = -3; f <= 3; f += 3)
+                for (int l = -3; l <= 3; l += 3)
+                    assertSubstringRight("", "", f, l, f != 0 || l != 0);
+
+            assertSubstringRight("foobar", "ar", -1, 3, true);
+            assertSubstringRight("foobar", "bar", 0, 3, false);
+            assertSubstringRight("foobar", "oba", 1, 3, false);
+            assertSubstringRight("foobar", "foo", 3, 3, false);
+            assertSubstringRight("foobar", "fo", 4, 3, true);
+            assertSubstringRight("foobar", "f", 5, 3, true);
+            assertSubstringRight("foobar", "", 6, 3, true);
+            assertSubstringRight("foobar", "", 7, 3, true);
+            assertSubstringRight("foobar", "", -1, -3, true);
+            assertSubstringRight("foobar", "", 2, -3, true);
+            assertSubstringRight("foobar", "", 8, -3, true);
+        }
+
+        private void assertSubstringRight(string str, string expected, int startIndex, bool outOfRange)
+        {
+            var exp = new string(new string(str.Reverse().ToArray()).SubstringSafe(startIndex).Reverse().ToArray());
+            Assert.AreEqual(exp, expected);
+            Assert.AreEqual(expected, str.SubstringRightSafe(startIndex));
+            if (outOfRange)
+                try { str.SubstringRight(startIndex); Assert.Fail(); } // Assert.Throws counts as unhandled in user code and stops in the debugger...
+                catch (ArgumentOutOfRangeException) { }
+            else
+                Assert.AreEqual(expected, str.SubstringRight(startIndex));
+        }
+
+        private void assertSubstringRight(string str, string expected, int startIndex, int length, bool outOfRange)
+        {
+            var exp = new string(new string(str.Reverse().ToArray()).SubstringSafe(startIndex, length).Reverse().ToArray());
+            Assert.AreEqual(exp, expected);
+            Assert.AreEqual(expected, str.SubstringRightSafe(startIndex, length));
+            if (outOfRange)
+                try { str.SubstringRight(startIndex, length); Assert.Fail(); } // Assert.Throws counts as unhandled in user code and stops in the debugger...
+                catch (ArgumentOutOfRangeException) { }
+            else
+                Assert.AreEqual(expected, str.SubstringRight(startIndex, length));
+        }
     }
 }

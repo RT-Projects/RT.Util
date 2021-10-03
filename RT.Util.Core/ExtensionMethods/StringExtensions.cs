@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -879,6 +879,38 @@ namespace RT.Util.ExtensionMethods
                 return source.Substring(startIndex);
             else
                 return source.Substring(startIndex, length);
+        }
+
+        /// <summary>
+        ///     Same as <see cref="string.Substring(int)"/> but counting from the right instead of left. Equivalent to
+        ///     <c>source.Reverse().Substring(startIndex).Reverse()</c>.</summary>
+        public static string SubstringRight(this string source, int startIndex)
+        {
+            return source.Substring(0, source.Length - startIndex);
+        }
+
+        /// <summary>
+        ///     Same as <see cref="string.Substring(int, int)"/> but counting from the right instead of left. Equivalent to
+        ///     <c>source.Reverse().Substring(startIndex, length).Reverse()</c>.</summary>
+        public static string SubstringRight(this string source, int startIndex, int length)
+        {
+            return source.Substring(source.Length - startIndex - length, length);
+        }
+
+        /// <summary>
+        ///     Same as <see cref="SubstringSafe(string, int)"/> but counting from the right instead of left. Equivalent to
+        ///     <c>source.Reverse().SubstringSafe(startIndex).Reverse()</c>.</summary>
+        public static string SubstringRightSafe(this string source, int startIndex)
+        {
+            return source.SubstringSafe(0, source.Length - startIndex);
+        }
+
+        /// <summary>
+        ///     Same as <see cref="SubstringSafe(string, int, int)"/> but counting from the right instead of left. Equivalent
+        ///     to <c>source.Reverse().SubstringSafe(startIndex, length).Reverse()</c>.</summary>
+        public static string SubstringRightSafe(this string source, int startIndex, int length)
+        {
+            return source.SubstringSafe(source.Length - startIndex - length, length);
         }
 
         /// <summary>Use <see cref="EqualsIgnoreCase"/>.</summary>
