@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace RT.Util.Geometry
 {
@@ -139,7 +139,7 @@ namespace RT.Util.Geometry
                 return Start + lambda * (End - Start);
         }
 
-        /// <summary> 
+        /// <summary>
         ///     Calculates the projection of the specified point onto the line defined by this edge. Returns the Lambda of
         ///     this point P, defined by P = Start + Lambda * (End - Start). Hence the lambda is 0 if the projection falls
         ///     exactly onto the Start point, and 1 if it falls on the End point.</summary>
@@ -200,5 +200,13 @@ namespace RT.Util.Geometry
         {
             return (End - Start).CrossZ(edge.End - edge.Start);
         }
+
+        /// <summary>Returns the point located halfway along this edge.</summary>
+        public PointD Midpoint => (Start + End) / 2;
+
+        /// <summary>Returns the angle between the x-axis and this edge, in radians.</summary>
+        public double Angle => Math.Atan2(End.Y - Start.Y, End.X - Start.X);
+        /// <summary>Returns the angle between the x-axis and this edge, in degrees.</summary>
+        public double AngleDeg => Angle * 180 / Math.PI;
     }
 }
