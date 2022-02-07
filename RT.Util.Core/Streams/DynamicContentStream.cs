@@ -24,7 +24,7 @@ namespace RT.Util.Streams
         /// <param name="buffered">Provides an initial value for the <see cref="Buffered"/> property.</param>
         public DynamicContentStream(IEnumerable<string> enumerable, bool buffered = true)
         {
-            _enumerator = enumerable.Select(s => s.ToUtf8()).GetEnumerator();
+            _enumerator = enumerable.Select(s => s?.ToUtf8()).GetEnumerator();
             Buffered = buffered;
         }
 
@@ -92,9 +92,9 @@ namespace RT.Util.Streams
                 {
                     if (!_enumerator.MoveNext())
                         break;
-                    if (_enumerator.Current.Length == 0)
-                        continue;
                     var byteArray = _enumerator.Current;
+                    if (byteArray == null || byteArray.Length == 0)
+                        continue;
                     if (byteArray.Length + bytesSoFar >= count)
                     {
                         Buffer.BlockCopy(byteArray, 0, buffer, offset + bytesSoFar, count - bytesSoFar);
