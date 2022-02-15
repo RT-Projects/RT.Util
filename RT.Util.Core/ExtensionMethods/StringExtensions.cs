@@ -140,18 +140,6 @@ namespace RT.Util.ExtensionMethods
             return Encoding.UTF8.GetString(buffer, 0, bufIx);
         }
 
-        /// <summary>Contains the set of characters disallowed in file names across all filesystems supported by our software.</summary>
-        private static char[] _filenameDisallowedCharacters
-        {
-            get
-            {
-                if (_filenameDisallowedCharactersCache == null)
-                    _filenameDisallowedCharactersCache = @"\/:?*""<>|{}".ToCharArray();
-                return _filenameDisallowedCharactersCache;
-            }
-        }
-        private static char[] _filenameDisallowedCharactersCache = null;
-
         /// <summary>
         ///     Escapes all characters in this string which cannot form part of a valid filename on at least one supported
         ///     filesystem. The escaping is fully reversible (via <see cref="FilenameCharactersUnescape"/>), but does not
@@ -165,7 +153,27 @@ namespace RT.Util.ExtensionMethods
             var result = new StringBuilder(input.Length + input.Length / 2);
             foreach (char c in input)
             {
-                if (_filenameDisallowedCharacters.Contains(c) || (c >= 128 && includeNonAscii))
+                var escape = false;
+                switch (c)
+                {
+                    case '\\':
+                    case '/':
+                    case '|':
+                    case ':':
+                    case '?':
+                    case '*':
+                    case '"':
+                    case '<':
+                    case '>':
+                    case '{':
+                    case '}':
+                    case (char) 0x7F:
+                        escape = true;
+                        break;
+                }
+                if (c <= 0x1F || (c >= 128 && includeNonAscii))
+                    escape = true;
+                if (escape)
                 {
                     result.Append('{');
                     foreach (var bt in Encoding.UTF8.GetBytes(c.ToString()))
