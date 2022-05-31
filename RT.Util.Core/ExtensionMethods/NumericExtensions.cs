@@ -58,6 +58,11 @@ namespace RT.Util.ExtensionMethods
         ///     (inclusive).</summary>
         public static bool IsBetween(this int value, int min, int max) => value >= min && value <= max;
 
+        /// <summary>
+        ///     Determines whether <paramref name="value"/> is between <paramref name="min"/> and <paramref name="max"/>
+        ///     (inclusive).</summary>
+        public static bool IsBetween(this double value, double min, double max) => value >= min && value <= max;
+
         /// <summary>Attempts to parse this string as an int, returning null if the parse fails.</summary>
         public static int? TryParseAsInt(this string value)
         {
