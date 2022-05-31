@@ -575,8 +575,15 @@ namespace RT.Serialization
                 var typeName = _format.GetType(elem, out var isFullType);
                 if (typeName != null)
                 {
-                    serializedType = isFullType ? Type.GetType(typeName) ?? Type.GetType(typeName, asmName => AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == asmName.FullName), null) :
-                        AppDomain.CurrentDomain.GetAssemblies()
+                    if (isFullType)
+                    {
+                        try { serializedType = Type.GetType(typeName); }
+                        catch { serializedType = null; }
+                        serializedType = serializedType ?? Type.GetType(typeName, asmName => AppDomain.CurrentDomain.GetAssemblies()
+                            .FirstOrDefault(asm => asm.GetName().Name == asmName.Name && asm.GetName().Version >= asmName.Version), null);
+                    }
+                    else
+                        serializedType = AppDomain.CurrentDomain.GetAssemblies()
                             .Select(asm => asm.GetType(typeName) ?? asm.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName))
                             .Where(t => t != null)
                             .FirstOrDefault();
