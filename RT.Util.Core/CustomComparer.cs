@@ -33,7 +33,8 @@ namespace RT.Util
 #endif
     sealed class CustomComparer<T> : IComparer<T>
     {
-        private Comparison<T> _comparison;
+        private readonly Comparison<T> _comparison;
+
         /// <summary>
         ///     Compares two elements.</summary>
         /// <remarks>
@@ -163,8 +164,8 @@ namespace RT.Util
 #endif
     sealed class CustomEqualityComparer<T> : IEqualityComparer<T>
     {
-        private Func<T, T, bool> _comparison;
-        private Func<T, int> _getHashCode;
+        private readonly Func<T, T, bool> _comparison;
+        private readonly Func<T, int> _getHashCode;
 
         /// <summary>
         ///     Compares two elements for equality.</summary>
@@ -242,6 +243,52 @@ namespace RT.Util
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
             return CustomEqualityComparer<T>.By(selector, ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.InvariantCulture);
+        }
+    }
+
+    /// <summary>
+    ///     Encapsulates an IEqualityComparer&lt;T&gt; that uses SequenceEqual to compare arrays for equality.</summary>
+    /// <typeparam name="T">
+    ///     The type of elements within the arrays to be compared for equality.</typeparam>
+#if EXPORT_UTIL
+    public
+#endif
+    sealed class ArrayEqualityComparer<T> : IEqualityComparer<T[]>
+    {
+        /// <summary>Provides a default equality comparer for arrays.</summary>
+        public static IEqualityComparer<T[]> Default { get; private set; } = new ArrayEqualityComparer<T>(EqualityComparer<T>.Default);
+
+        private readonly IEqualityComparer<T> _elementEqualityComparer;
+
+        /// <summary>Constructor.</summary>
+        public ArrayEqualityComparer() { _elementEqualityComparer = null; }
+        /// <summary>Constructor that specifies an equality comparer for the inner elements.</summary>
+        public ArrayEqualityComparer(IEqualityComparer<T> elementEqualityComparer) { _elementEqualityComparer = elementEqualityComparer; }
+
+        /// <summary>Override; see base.</summary>
+        public bool Equals(T[] x, T[] y) => x == null ? y == null : (y != null && x.SequenceEqual(y, _elementEqualityComparer ?? EqualityComparer<T>.Default));
+
+        /// <summary>Override; see base.</summary>
+        public int GetHashCode(T[] obj)
+        {
+            if (obj == null)
+                return 0;
+
+            const int b = 378551;
+            int a = 63689;
+            int hash = obj.Length + 1;
+
+            unchecked
+            {
+                foreach (var t in obj)
+                {
+                    if (t != null)
+                        hash = hash * a + (_elementEqualityComparer ?? EqualityComparer<T>.Default).GetHashCode(t);
+                    a *= b;
+                }
+            }
+
+            return hash;
         }
     }
 }
