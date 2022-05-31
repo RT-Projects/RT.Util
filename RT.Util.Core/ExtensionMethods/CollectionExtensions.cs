@@ -121,5 +121,23 @@ namespace RT.Util.ExtensionMethods
             for (int i = 0; i < count; i++)
                 stack.Pop();
         }
+
+        /// <summary>
+        ///     Sorts the specified list by the specified selector.</summary>
+        public static void SortBy<T, TBy>(this List<T> list, Func<T, TBy> selector) where TBy : IComparable<TBy>
+        {
+            if (list == null)
+                throw new ArgumentNullException(nameof(list));
+            list.Sort(CustomComparer<T>.By(selector));
+        }
+
+        /// <summary>
+        ///     Sorts the specified list by the specified selector.</summary>
+        public static void SortBy<T, TBy>(this T[] array, Func<T, TBy> selector) where TBy : IComparable<TBy>
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            Array.Sort(array, CustomComparer<T>.By(selector));
+        }
     }
 }
