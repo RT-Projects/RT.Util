@@ -50,17 +50,12 @@ namespace RT.KitchenSink.Fonts
                 var typefaces = family.GetTypefaces();
                 foreach (var typeface in typefaces)
                 {
-                    System.Windows.Media.GlyphTypeface glyph;
-                    typeface.TryGetGlyphTypeface(out glyph);
-                    ushort glyphIndex;
-                    if (glyph != null && charactersToCheck.All(cc => glyph.CharacterToGlyphMap.TryGetValue(cc, out glyphIndex)))
+                    if (typeface.TryGetGlyphTypeface(out var glyph) && glyph != null &&
+                        charactersToCheck.All(cc => glyph.CharacterToGlyphMap.TryGetValue(cc, out var glyphIndex)) &&
+                        family.FamilyNames.TryGetValue(XmlLanguage.GetLanguage("en-us"), out var familyName))
                     {
-                        string familyName;
-                        if (family.FamilyNames.TryGetValue(XmlLanguage.GetLanguage("en-us"), out familyName))
-                        {
-                            yield return familyName;
-                            break;
-                        }
+                        yield return familyName;
+                        break;
                     }
                 }
             }

@@ -49,11 +49,21 @@ namespace RT.Util.Geometry
         }
 
         /// <summary>
+        ///     Finds the point of intersection of two lines. The result is in terms of lambda along each of the lines. Point
+        ///     of intersection is defined as "line.Start + lambda * line", for each line. If the lines don't intersect, the
+        ///     lambdas are set to NaN.</summary>
+        public static (PointD point, double line1Lambda, double line2Lambda) LineWithLineLambda(EdgeD line1, EdgeD line2)
+        {
+            LineWithLine(ref line1, ref line2, out var line1Lambda, out var line2Lambda);
+            return (line1.Start + line1Lambda * (line1.End - line1.Start), line1Lambda, line2Lambda);
+        }
+
+        /// <summary>
         ///     Finds the point of intersection of two lines. If the lines don't intersect, the resulting point coordinates
         ///     are NaN.</summary>
         public static PointD LineWithLine(EdgeD line1, EdgeD line2)
         {
-            LineWithLine(ref line1, ref line2, out var line1Lambda, out var line2Lambda);
+            LineWithLine(ref line1, ref line2, out var line1Lambda, out _);
             return line1.Start + line1Lambda * (line1.End - line1.Start);
         }
 

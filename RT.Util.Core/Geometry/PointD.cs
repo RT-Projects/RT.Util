@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 
 namespace RT.Util.Geometry
@@ -263,5 +263,8 @@ namespace RT.Util.Geometry
         {
             return Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
         }
+
+        /// <summary>Deconstructs this point into a tuple.</summary>
+        public void Deconstruct(out double x, out double y) { x = X; y = Y; }
     }
 }

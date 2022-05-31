@@ -569,7 +569,7 @@ namespace RT.Util
                         hash = hash * a + ArrayHash(arr);
                     else if (t != null)
                         hash = hash * a + t.GetHashCode();
-                    a = a * b;
+                    a *= b;
                 }
             }
 
