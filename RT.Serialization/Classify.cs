@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -220,7 +220,7 @@ namespace RT.Serialization
         ///     Options.</param>
         public static void DeserializeIntoObject<TElement, T>(TElement element, T intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
         {
-            new Classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, null);
+            new Classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, "this");
         }
 
         /// <summary>
@@ -242,7 +242,7 @@ namespace RT.Serialization
             TElement elem;
             using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                 elem = format.ReadFromStream(f);
-            new Classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, null);
+            new Classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, "this");
         }
 
         /// <summary>
@@ -424,24 +424,24 @@ namespace RT.Serialization
             private Dictionary<object, int> _requireRefId => _requireRefIdCache ?? (_requireRefIdCache = new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode())));
             private Dictionary<object, int> _requireRefIdCache;
 
-            private static Type[] _tupleTypes = new[] {
+            private static readonly Type[] _tupleTypes = new[] {
                 typeof(KeyValuePair<,>),
                 typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>), typeof(Tuple<,,,,,,,>),
                 typeof(ValueTuple<>), typeof(ValueTuple<,>), typeof(ValueTuple<,,>), typeof(ValueTuple<,,,>), typeof(ValueTuple<,,,,>), typeof(ValueTuple<,,,,,>), typeof(ValueTuple<,,,,,,>), typeof(ValueTuple<,,,,,,,>)
             };
 
-            private static bool isIntegerType(Type t)
-            {
-                return t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte);
-            }
-
             public object Deserialize(Type type, TElement elem)
             {
                 _doAtTheEnd = new List<Action>();
-                var resultFunc = CustomCallStack.Run(deserialize(type, elem, null, _options.EnforceEnums));
+                var resultFunc = CustomCallStack.Run(deserialize(type, elem, null, _options.EnforceEnums, "this"));
                 foreach (var action in _doAtTheEnd)
                     action();
                 var result = resultFunc();
+                if (result is ClassifyError ce)
+                {
+                    _options.Errors.Add(ce);
+                    return type.GetDefaultValue();
+                }
                 return type.IsEnum && _options.EnforceEnums && !allowEnumValue(type, result) ? type.GetDefaultValue() : result;
             }
 
@@ -466,7 +466,7 @@ namespace RT.Serialization
                 };
             }
 
-            public void DeserializeIntoObject(Type type, TElement elem, object intoObj, object parentNode)
+            public void DeserializeIntoObject(Type type, TElement elem, object intoObj, string objectPath)
             {
                 if (_options._typeOptions.TryGetValue(type, out var typeOptions))
                 {
@@ -482,10 +482,10 @@ namespace RT.Serialization
 
                 var cat = tryGetCollectionInfo(type, out var keyType, out var valueType);
                 var result =
-                    cat == null ? CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type)) :
-                    cat == CollectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums)) :
-                    cat == CollectionCategory.SimpleKeyedDictionary ? CustomCallStack.Run(deserializeIntoDictionary(keyType, valueType, elem, intoObj, _options.EnforceEnums)) :
-                    CustomCallStack.Run(deserializeIntoCollection(valueType, cat.Value, elem, intoObj, _options.EnforceEnums));
+                    cat == null ? CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type, objectPath)) :
+                    cat == CollectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums, objectPath)) :
+                    cat == CollectionCategory.SimpleKeyedDictionary ? CustomCallStack.Run(deserializeIntoDictionary(keyType, valueType, elem, intoObj, _options.EnforceEnums, objectPath)) :
+                    CustomCallStack.Run(deserializeIntoCollection(valueType, cat.Value, elem, intoObj, _options.EnforceEnums, objectPath));
 
                 foreach (var action in _doAtTheEnd)
                     action();
@@ -496,6 +496,13 @@ namespace RT.Serialization
                 if (intoObj is IClassifyObjectProcessor<TElement> objT)
                     objT.AfterDeserialize(elem);
                 typeOptions?.AfterDeserialize(intoObj, elem);
+            }
+
+            private Func<object> reportError(Exception e, string objectPath)
+            {
+                if (_options == null || _options.Errors == null)
+                    throw e;
+                return () => new ClassifyError(e, objectPath);
             }
 
             /// <summary>
@@ -509,10 +516,12 @@ namespace RT.Serialization
             ///     field inside an outer object).</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, bool enforceEnums)
+            /// <param name="objectPath">
+            ///     Describes the chain of objects leading up to here.</param>
+            private WorkNode<Func<object>> deserialize(Type declaredType, TElement elem, object already, bool enforceEnums, string objectPath)
             {
                 if (declaredType.IsPointer || declaredType.IsByRef)
-                    throw new NotSupportedException("Classify cannot deserialize pointers or by-reference variables.");
+                    return _ => reportError(new NotSupportedException("Classify cannot deserialize pointers or by-reference variables."), objectPath);
 
                 var substType = declaredType;
                 var hasTypeSubstitution = false;
@@ -588,7 +597,7 @@ namespace RT.Serialization
                             .Where(t => t != null)
                             .FirstOrDefault();
                     if (serializedType == null)
-                        throw new Exception($"The type {typeName} needed for deserialization cannot be found.");
+                        return _ => reportError(new Exception($"The type {typeName} needed for deserialization cannot be found."), objectPath);
                 }
                 var genericDefinition = serializedType.IsGenericType ? serializedType.GetGenericTypeDefinition() : null;
 
@@ -599,13 +608,13 @@ namespace RT.Serialization
                 else if (_simpleTypes.Contains(serializedType) || ExactConvert.IsSupportedType(serializedType))
                     return _ => cleanUp(() => ExactConvert.To(serializedType, _format.GetSimpleValue(elem)));
                 else if (serializedType == typeof(byte[]))
-                    return prevResult => cleanUp(() => _format.GetRawData(elem));
-                else if (serializedType.IsGenericType && serializedType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    return _ => cleanUp(() => _format.GetRawData(elem));
+                else if (genericDefinition == typeof(Nullable<>))
                 {
                     // It’s a nullable type, just determine the inner type and start again
-                    return deserialize(serializedType.GetGenericArguments()[0], elem, already, enforceEnums);
+                    return deserialize(serializedType.GetGenericArguments()[0], elem, already, enforceEnums, objectPath);
                 }
-                else if (genericDefinition != null && _tupleTypes.Contains(serializedType.GetGenericTypeDefinition()))
+                else if (genericDefinition != null && _tupleTypes.Contains(genericDefinition))
                 {
                     // It’s a Tuple or KeyValuePair
                     var genericArguments = serializedType.GetGenericArguments();
@@ -620,7 +629,12 @@ namespace RT.Serialization
                         values = _format.GetList(elem, genericArguments.Length).ToArray();
 
                     if (genericArguments.Length > values.Length)
-                        throw new InvalidOperationException($"While trying to deserialize a tuple with {genericArguments.Length} elements, Classify encountered a serialized form with only {values.Length} elements.");
+                        return _ => reportError(new InvalidOperationException($"While trying to deserialize a tuple with {genericArguments.Length} elements, Classify encountered a serialized form with only {values.Length} elements."), objectPath);
+
+                    var constructor = serializedType.GetConstructor(genericArguments);
+                    if (constructor == null)
+                        return _ => reportError(new InvalidOperationException("Could not find expected Tuple constructor."), objectPath);
+                    var constructorParameters = constructor.GetParameters();
 
                     int i = -1;
                     return prevResult =>
@@ -629,11 +643,23 @@ namespace RT.Serialization
                             tupleParams[i] = prevResult;
                         i++;
                         if (i < genericArguments.Length && i < values.Length)
-                            return deserialize(genericArguments[i], values[i], null, enforceEnums);
-                        var constructor = serializedType.GetConstructor(genericArguments);
-                        if (constructor == null)
-                            throw new InvalidOperationException("Could not find expected Tuple constructor.");
-                        return cleanUp(() => constructor.Invoke(tupleParams.Select(act => act()).ToArray()));
+                            return deserialize(genericArguments[i], values[i], null, enforceEnums, $"{objectPath}.{constructorParameters[i].Name}");
+                        return cleanUp(() =>
+                        {
+                            var args = new object[tupleParams.Length];
+                            for (var j = 0; j < args.Length; j++)
+                            {
+                                var value = tupleParams[j]();
+                                if (value is ClassifyError ce)
+                                {
+                                    _options.Errors.Add(ce);
+                                    args[j] = genericArguments[j].GetDefaultValue();
+                                }
+                                else
+                                    args[j] = value;
+                            }
+                            return constructor.Invoke(args);
+                        });
                     };
                 }
                 else
@@ -644,23 +670,23 @@ namespace RT.Serialization
                     switch (cat)
                     {
                         case CollectionCategory.SimpleKeyedDictionary:
-                            workNode = deserializeIntoDictionary(keyType, valueType, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType), enforceEnums);
+                            workNode = deserializeIntoDictionary(keyType, valueType, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType), enforceEnums, objectPath);
                             break;
 
                         case CollectionCategory.Array:
-                            workNode = deserializeIntoArray(serializedType, valueType, elem, null, enforceEnums);
+                            workNode = deserializeIntoArray(serializedType, valueType, elem, null, enforceEnums, objectPath);
                             break;
 
                         case CollectionCategory.Stack:
-                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Stack, elem, already ?? Activator.CreateInstance(typeof(Stack<>).MakeGenericType(valueType)), enforceEnums);
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Stack, elem, already ?? Activator.CreateInstance(typeof(Stack<>).MakeGenericType(valueType)), enforceEnums, objectPath);
                             break;
 
                         case CollectionCategory.Queue:
-                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Queue, elem, already ?? Activator.CreateInstance(typeof(Queue<>).MakeGenericType(valueType)), enforceEnums);
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Queue, elem, already ?? Activator.CreateInstance(typeof(Queue<>).MakeGenericType(valueType)), enforceEnums, objectPath);
                             break;
 
                         case CollectionCategory.Other:
-                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Other, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType), enforceEnums);
+                            workNode = deserializeIntoCollection(valueType, CollectionCategory.Other, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType), enforceEnums, objectPath);
                             break;
 
                         case null:
@@ -682,14 +708,14 @@ namespace RT.Serialization
                             }
                             catch (Exception e)
                             {
-                                throw new Exception($"An object of type {serializedType.FullName} could not be created:\n{e.Message}", e);
+                                return _ => reportError(new Exception($"An object of type {serializedType.FullName} could not be created:\n{e.Message}", e), objectPath);
                             }
 
-                            workNode = deserializeIntoObject(elem, ret, serializedType);
+                            workNode = deserializeIntoObject(elem, ret, serializedType, objectPath);
                             break;
 
                         default:
-                            throw new Exception(@"An internal bug in Classify was encountered. (56049)");
+                            return _ => reportError(new Exception(@"An internal bug in Classify was encountered. (56049)"), objectPath);
                     }
 
                     var first = true;
@@ -717,7 +743,9 @@ namespace RT.Serialization
             ///     A dictionary instance to populate. This must not be <c>null</c>.</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserializeIntoDictionary(Type keyType, Type valueType, TElement elem, object already, bool enforceEnums)
+            /// <param name="objectPath">
+            ///     Describes the chain of objects leading up to here.</param>
+            private WorkNode<Func<object>> deserializeIntoDictionary(Type keyType, Type valueType, TElement elem, object already, bool enforceEnums, string objectPath)
             {
                 if (already is IClassifyObjectProcessor<TElement> dict)
                     dict.BeforeDeserialize(elem);
@@ -736,7 +764,7 @@ namespace RT.Serialization
                     if (e.MoveNext())
                     {
                         keysToAdd.Add(ExactConvert.To(keyType, e.Current.Key));
-                        return deserialize(valueType, e.Current.Value, null, enforceEnums);
+                        return deserialize(valueType, e.Current.Value, null, enforceEnums, $"{objectPath}[{(e.Current.Key is int result ? result.ToString() : $@"""{ExactConvert.ToString(e.Current.Key).CLiteralEscape()}""")}]");
                     }
 
                     Ut.Assert(keysToAdd.Count == valuesToAdd.Count);
@@ -746,7 +774,9 @@ namespace RT.Serialization
                         {
                             var keyToAdd = keysToAdd[i];
                             var valueToAdd = valuesToAdd[i]();
-                            if (!enforceEnums || ((!keyType.IsEnum || allowEnumValue(keyType, keyToAdd)) && (!valueType.IsEnum || allowEnumValue(valueType, valueToAdd))))
+                            if (valueToAdd is ClassifyError ce)
+                                _options.Errors.Add(ce);
+                            else if (!enforceEnums || ((!keyType.IsEnum || allowEnumValue(keyType, keyToAdd)) && (!valueType.IsEnum || allowEnumValue(valueType, valueToAdd))))
                                 addMethod.Invoke(already, new object[] { keyToAdd, valueToAdd });
                         }
                     });
@@ -766,14 +796,16 @@ namespace RT.Serialization
             ///     An array to populate. This may be <c>null</c>, in which case a new array is instantiated.</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserializeIntoArray(Type type, Type valueType, TElement elem, Array already, bool enforceEnums)
+            /// <param name="objectPath">
+            ///     Describes the chain of objects leading up to here.</param>
+            private WorkNode<Func<object>> deserializeIntoArray(Type type, Type valueType, TElement elem, Array already, bool enforceEnums, string objectPath)
             {
                 // The array may be a multi-dimensional one.
                 var rank = type.GetArrayRank();
                 var lengths = already == null ? new int[rank] : Ut.NewArray(rank, already.GetLength);
 
                 // STEP 1 (done here): Generate an object[] of object[]s of object[]s containing the still-serialized elements (TElement).
-                // At the same time, if ‘lengths’ isn’t already populated from ‘already’, populated it from the serialized form.
+                // At the same time, if ‘lengths’ isn’t already populated from ‘already’, populate it from the serialized form.
                 object recurse(bool first, int rnk, TElement el)
                 {
                     var thisList = _format.GetList(el, null).ToArray();
@@ -791,7 +823,9 @@ namespace RT.Serialization
                 }
 
                 // If ‘lengths’ isn’t already populated from ‘already’, this call populates it from the serialized form
-                var arrays = (object[]) recurse(true, 0, elem);
+                object[] arrays;
+                try { arrays = (object[]) recurse(true, 0, elem); }
+                catch (Exception e) { return _ => reportError(e, objectPath); }
 
                 // This requires ‘lengths’ to be populated
                 already = already ?? Array.CreateInstance(type.GetElementType(), lengths);
@@ -832,7 +866,9 @@ namespace RT.Serialization
                                     if (rnk == rank)
                                     {
                                         var valueToAdd = ((Func<object>) obj)();
-                                        if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
+                                        if (valueToAdd is ClassifyError ce)
+                                            _options.Errors.Add(ce);
+                                        else if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
                                             already.SetValue(valueToAdd, indices);
                                     }
                                     else
@@ -858,7 +894,7 @@ namespace RT.Serialization
                     object el2 = arrays;
                     for (int ix = 0; ix < rank; ix++)
                         el2 = ((object[]) el2)[ixs[ix]];
-                    return deserialize(valueType, (TElement) el2, null, enforceEnums);
+                    return deserialize(valueType, (TElement) el2, null, enforceEnums, $"{objectPath}[{ixs.JoinString(", ")}]");
                 };
             }
 
@@ -876,30 +912,34 @@ namespace RT.Serialization
             ///     A collection instance to populate. This must not be <c>null</c>.</param>
             /// <param name="enforceEnums">
             ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
-            private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, CollectionCategory cat, TElement elem, object already, bool enforceEnums)
+            /// <param name="objectPath">
+            ///     Describes the chain of objects leading up to here.</param>
+            private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, CollectionCategory cat, TElement elem, object already, bool enforceEnums, string objectPath)
             {
                 if (already is IClassifyObjectProcessor<TElement> list)
                     list.BeforeDeserialize(elem);
 
-                var baseType = (cat == CollectionCategory.Stack ? typeof(Stack<>) : cat == CollectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>));
+                var baseType = cat == CollectionCategory.Stack ? typeof(Stack<>) : cat == CollectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>);
                 baseType.MakeGenericType(valueType).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
                 var addMethod = baseType.MakeGenericType(valueType).GetMethod(cat == CollectionCategory.Stack ? "Push" : cat == CollectionCategory.Queue ? "Enqueue" : "Add", new Type[] { valueType });
                 var e = _format.GetList(elem, null).GetEnumerator();
-                var first = true;
                 var adders = new List<Func<object>>();
+                var ix = -1;
                 return prevResult =>
                 {
-                    if (!first)
+                    if (ix >= 0)
                         adders.Add(prevResult);
-                    first = false;
+                    ix++;
                     if (e.MoveNext())
-                        return deserialize(valueType, e.Current, null, enforceEnums);
+                        return deserialize(valueType, e.Current, null, enforceEnums, $"{objectPath}[{ix}]");
                     _doAtTheEnd.Add(() =>
                     {
                         foreach (var adder in adders)
                         {
                             var valueToAdd = adder();
-                            if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
+                            if (valueToAdd is ClassifyError ce)
+                                _options.Errors.Add(ce);
+                            else if (!enforceEnums || !valueType.IsEnum || allowEnumValue(valueType, valueToAdd))
                                 addMethod.Invoke(already, new object[] { valueToAdd });
                         }
                     });
@@ -964,7 +1004,7 @@ namespace RT.Serialization
                 public Func<object, object> SubstituteConverter;
             }
 
-            private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type)
+            private WorkNode<Func<object>> deserializeIntoObject(TElement elem, object intoObj, Type type, string objectPath)
             {
                 if (intoObj is IClassifyObjectProcessor<TElement> objT)
                     objT.BeforeDeserialize(elem);
@@ -1002,8 +1042,6 @@ namespace RT.Serialization
                     if (type.GetEvent(rFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static) != null)
                         continue;
 
-                    var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
-
                     // [ClassifyIgnore]
                     if (hasClassifyAttribute<ClassifyIgnoreAttribute>(getAttrsFrom))
                         continue;
@@ -1015,6 +1053,8 @@ namespace RT.Serialization
 
                     if (!usedFieldNames.Add((rFieldName, field.DeclaringType)))
                         throw new InvalidOperationException("The use of [ClassifyName] attributes has caused a duplicate field name. Make sure that no [ClassifyName] attribute conflicts with another [ClassifyName] attribute or another unmodified field name.");
+
+                    var fieldDeclaringType = field.DeclaringType.AssemblyQualifiedName;
 
                     // Fields with no special attributes (except perhaps [ClassifySubstitute])
                     if (_format.HasField(elem, rFieldName, fieldDeclaringType))
@@ -1052,17 +1092,22 @@ namespace RT.Serialization
                         valuesToAssign[i] = prevResult;
                     i++;
                     if (i < infos.Count)
-                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].SubstituteConverter == null ? infos[i].FieldToAssignTo.GetValue(intoObj) : null, infos[i].EnforceEnum);
+                        return deserialize(infos[i].DeserializeAsType, infos[i].ElementToAssign, infos[i].SubstituteConverter == null ? infos[i].FieldToAssignTo.GetValue(intoObj) : null, infos[i].EnforceEnum, $"{objectPath}.{infos[i].FieldToAssignTo.Name}");
 
                     _doAtTheEnd.Add(() =>
                     {
                         for (int j = 0; j < infos.Count; j++)
                         {
                             var valueToAssign = valuesToAssign[j]();
-                            if (infos[j].SubstituteConverter != null)
-                                valueToAssign = infos[j].SubstituteConverter(valueToAssign);
-                            if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].EnforceEnum || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
-                                infos[j].FieldToAssignTo.SetValue(intoObj, valueToAssign);
+                            if (valueToAssign is ClassifyError ce)
+                                _options.Errors.Add(ce);
+                            else
+                            {
+                                if (infos[j].SubstituteConverter != null)
+                                    valueToAssign = infos[j].SubstituteConverter(valueToAssign);
+                                if (!infos[j].FieldToAssignTo.FieldType.IsEnum || !infos[j].EnforceEnum || allowEnumValue(infos[j].FieldToAssignTo.FieldType, valueToAssign))
+                                    infos[j].FieldToAssignTo.SetValue(intoObj, valueToAssign);
+                            }
                         }
                     });
                     return new Func<object>(() => intoObj);
@@ -1202,7 +1247,6 @@ namespace RT.Serialization
                     elem = () => _format.FormatRawData(byteArray);
                 else
                 {
-                    Array saveArray;
                     bool isStack = false;
 
                     // Tuples and KeyValuePairs
@@ -1257,7 +1301,7 @@ namespace RT.Serialization
                         }).ToArray();
                         elem = () => _format.FormatDictionary(kvps.Select(kvp => new KeyValuePair<object, TElement>(kvp.Key, kvp.GetValue())));
                     }
-                    else if ((saveArray = saveObject as Array) != null && (saveArray.Rank > 1 || saveArray.GetLowerBound(0) != 0))
+                    else if (saveObject is Array saveArray && (saveArray.Rank > 1 || saveArray.GetLowerBound(0) != 0))
                     {
                         var rank = saveArray.Rank;
                         var valueType = saveType.GetElementType();
@@ -1776,8 +1820,14 @@ namespace RT.Serialization
         public bool EnforceEnums = false;
 
         /// <summary>
-        ///     This option will cause Classify to ignore any auto-generated properties which have no setter, or any fields 
-        ///     marked with the C# "readonly" keyword. </summary>
+        ///     If <c>null</c>, Classify will throw exceptions when encountering an error during deserialization. Otherwise,
+        ///     errors are added to this list and deserialization continues. The field that caused the error remains at its
+        ///     default value.</summary>
+        public List<ClassifyError> Errors = null;
+
+        /// <summary>
+        ///     This option will cause Classify to ignore any auto-generated properties which have no setter, or any fields
+        ///     marked with the C# “readonly” keyword.</summary>
         public bool IgnoreReadonlyMembers = false;
 
         /// <summary>
@@ -2078,6 +2128,24 @@ namespace RT.Serialization
         public static bool IsDefinedOrIsNamedLike<T>(this MemberInfo member, bool inherit = false)
         {
             return member.IsDefined(typeof(T), inherit) || member.GetCustomAttributes(inherit).Any(a => a.GetType().Name == typeof(T).Name);
+        }
+    }
+
+    /// <summary>
+    ///     Encapsulates an error encountered during deserialization with <see cref="Classify"/>. Note these errors are only
+    ///     collected if <see cref="ClassifyOptions.Errors"/> is not <c>null</c>; otherwise they are thrown as exceptions.</summary>
+    public sealed class ClassifyError
+    {
+        /// <summary>The exception encountered during deserialization.</summary>
+        public Exception Exception { get; private set; }
+        /// <summary>A string representing the chain of objects leading up to the object that encountered the error.</summary>
+        public string ObjectPath { get; private set; }
+
+        /// <summary>Constructor.</summary>
+        public ClassifyError(Exception exception, string objectPath)
+        {
+            Exception = exception;
+            ObjectPath = objectPath;
         }
     }
 }
