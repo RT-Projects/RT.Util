@@ -1089,7 +1089,7 @@ namespace RT.Serialization
                 else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = float.NaN;
 
-                return result == 0 ? float.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) : true;
+                return result == 0 ? float.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) && !float.IsInfinity(result) : true;
             }
 
             else if (code == TypeCode.UInt64)
@@ -1150,7 +1150,7 @@ namespace RT.Serialization
                 else if (string.Compare((string) value, "NaN", StringComparison.OrdinalIgnoreCase) == 0)
                     result = double.NaN;
 
-                return result == 0 ? double.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) : true;
+                return result == 0 ? double.TryParse((string) value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) && !double.IsInfinity(result) : true;
             }
 
             else if (code == TypeCode.UInt64)
