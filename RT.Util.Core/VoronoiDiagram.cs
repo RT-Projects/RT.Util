@@ -235,6 +235,8 @@ namespace RT.KitchenSink.Geometry
                         Polygons[e.SiteB.Index] = new polygon(e.SiteB);
                     Polygons[e.SiteB.Index].AddEdge(e);
                 }
+                if (sites.Length == 1) // this is the only scenario in which there exists a "polygon" with no edges
+                    Polygons[0] = new polygon(new site(0, sites[0]));
             }
 
             // Will a new parabola at p intersect with the arc at ArcIndex?
@@ -413,6 +415,10 @@ namespace RT.KitchenSink.Geometry
 
                 if (!autocomplete)
                     return null;
+
+                // A polygon with zero processed points is only possible if the input was a single site. Special-case this.
+                if (_processedPoints.Count == 0)
+                    return new PolygonD(new PointD(0, 0), new PointD(width, 0), new PointD(width, height), new PointD(0, height));
 
                 var firstPointEdge = rectEdge(_processedPoints[0], width, height);
                 var lastPoint = _processedPoints[_processedPoints.Count - 1];
