@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using RT.Util;
 using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
@@ -199,8 +197,8 @@ namespace RT.KitchenSink.Geometry
                 var boundingEdges = new[] { new EdgeD(0, 0, width, 0), new EdgeD(width, 0, width, height), new EdgeD(width, height, 0, height), new EdgeD(0, height, 0, 0) };
                 foreach (edge e in Edges)
                 {
-                    if ((e.Start.Value.X < 0 || e.Start.Value.X > width || e.Start.Value.Y < 0 || e.Start.Value.Y > width) &&
-                        (e.End.Value.X < 0 || e.End.Value.X > width || e.End.Value.Y < 0 || e.End.Value.Y > width) &&
+                    if ((e.Start.Value.X < 0 || e.Start.Value.X > width || e.Start.Value.Y < 0 || e.Start.Value.Y > height) &&
+                        (e.End.Value.X < 0 || e.End.Value.X > width || e.End.Value.Y < 0 || e.End.Value.Y > height) &&
                         !boundingEdges.Any(be => be.IntersectsWith(new EdgeD(e.Start.Value, e.End.Value))))
                         continue;
 
@@ -501,8 +499,6 @@ namespace RT.KitchenSink.Geometry
                         lastPointEdge = (lastPointEdge + 3) % 4;
                     }
                 }
-                //if (_unprocessedEdges.Count > 0)
-                //    throw new Exception("Assertion failed: There should be no unprocessed edges left.");
                 return new PolygonD(Enumerable.Reverse(_processedPoints));
             }
 

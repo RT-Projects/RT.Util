@@ -42,8 +42,6 @@ namespace RT.Util
         [Test]
         public static void TestVoronoiEdgePolygonCornerCase()
         {
-            return; // this test fails due to a bug in Voronoi
-
             var sites = new[] {
                 new PointD(1.58, 13.93),
                 new PointD(1.03, 14.24),
