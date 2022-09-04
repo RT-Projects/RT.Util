@@ -52,11 +52,7 @@ namespace RT.Util.ExtensionMethods
             {
                 int item = rnd == null ? Rnd.Next(0, j) : rnd.Next(0, j);
                 if (item < j - 1)
-                {
-                    var t = list[item];
-                    list[item] = list[j - 1];
-                    list[j - 1] = t;
-                }
+                    (list[j - 1], list[item]) = (list[item], list[j - 1]);
             }
             return list;
         }
