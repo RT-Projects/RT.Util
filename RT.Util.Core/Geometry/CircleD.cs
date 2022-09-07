@@ -214,13 +214,35 @@ namespace RT.Util.Geometry
             }
 
             // Signed area / determinant thing
-            double Cross(PointD p, PointD q)
-            {
-                return p.X * q.Y - p.Y * q.X;
-            }
+            double Cross(PointD p, PointD q) => p.X * q.Y - p.Y * q.X;
         }
 
         /// <summary>Returns the rectangle that fully encloses this circle.</summary>
-        public RectangleD ToRectangle() => new RectangleD(Center.X - Radius, Center.Y - Radius, Radius * 2, Radius * 2);
+        public RectangleD ToRectangle() => new(Center.X - Radius, Center.Y - Radius, Radius * 2, Radius * 2);
+
+        /// <summary>
+        ///     Returns the circle that has all three given points in its perimeter.</summary>
+        /// <exception cref="InvalidOperationException">
+        ///     The three given points are collinear.</exception>
+        public static CircleD FromThreePoints(PointD a, PointD b, PointD c)
+        {
+            var x12 = a.X - b.X;
+            var x13 = a.X - c.X;
+            var y12 = a.Y - b.Y;
+            var y13 = a.Y - c.Y;
+
+            var sx13 = Math.Pow(a.X, 2) - Math.Pow(c.X, 2);
+            var sy13 = Math.Pow(a.Y, 2) - Math.Pow(c.Y, 2);
+            var sx21 = Math.Pow(b.X, 2) - Math.Pow(a.X, 2);
+            var sy21 = Math.Pow(b.Y, 2) - Math.Pow(a.Y, 2);
+
+            var centerX = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / (2 * ((b.X - a.X) * y13 - (c.X - a.X) * y12));
+            var centerY = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / (2 * ((b.Y - a.Y) * x13 - (c.Y - a.Y) * x12));
+            if (double.IsNaN(centerX) || double.IsInfinity(centerX) || double.IsNaN(centerY) || double.IsInfinity(centerY))
+                throw new InvalidOperationException("Cannot deduce circle from three points that are collinear.");
+            var radius = Math.Sqrt(Math.Pow(centerX - a.X, 2) + Math.Pow(centerY - a.Y, 2));
+
+            return new CircleD(centerX, centerY, radius);
+        }
     }
 }
