@@ -231,16 +231,16 @@ namespace RT.Util.Geometry
             var y12 = a.Y - b.Y;
             var y13 = a.Y - c.Y;
 
-            var sx13 = Math.Pow(a.X, 2) - Math.Pow(c.X, 2);
-            var sy13 = Math.Pow(a.Y, 2) - Math.Pow(c.Y, 2);
-            var sx21 = Math.Pow(b.X, 2) - Math.Pow(a.X, 2);
-            var sy21 = Math.Pow(b.Y, 2) - Math.Pow(a.Y, 2);
+            var sx13 = a.X * a.X - c.X * c.X;
+            var sy13 = a.Y * a.Y - c.Y * c.Y;
+            var sx21 = b.X * b.X - a.X * a.X;
+            var sy21 = b.Y * b.Y - a.Y * a.Y;
 
             var centerX = (sx13 * y12 + sy13 * y12 + sx21 * y13 + sy21 * y13) / (2 * ((b.X - a.X) * y13 - (c.X - a.X) * y12));
             var centerY = (sx13 * x12 + sy13 * x12 + sx21 * x13 + sy21 * x13) / (2 * ((b.Y - a.Y) * x13 - (c.Y - a.Y) * x12));
             if (double.IsNaN(centerX) || double.IsInfinity(centerX) || double.IsNaN(centerY) || double.IsInfinity(centerY))
                 throw new InvalidOperationException("Cannot deduce circle from three points that are collinear.");
-            var radius = Math.Sqrt(Math.Pow(centerX - a.X, 2) + Math.Pow(centerY - a.Y, 2));
+            var radius = Math.Sqrt((centerX - a.X) * (centerX - a.X) + (centerY - a.Y) * (centerY - a.Y));
 
             return new CircleD(centerX, centerY, radius);
         }
