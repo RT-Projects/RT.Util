@@ -316,6 +316,12 @@ namespace RT.Util
             EndedWaitHandle.WaitOne();
         }
 
+        /// <summary>See <see cref="ArgsToCommandLine(IEnumerable{string})"/>.</summary>
+        public static string ArgsToCommandLine(params string[] args)
+        {
+            return ArgsToCommandLine(args.AsEnumerable());
+        }
+
         /// <summary>
         ///     Given a number of argument strings, constructs a single command line string with all the arguments escaped
         ///     correctly so that a process using standard Windows API for parsing the command line will receive exactly the
@@ -371,7 +377,7 @@ namespace RT.Util
         private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
 
         /// <summary>
-        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine"/> for more
+        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine(IEnumerable{string})"/> for more
         ///     information.</summary>
         public static string EscapeCmdExeMetachars(string command)
         {
