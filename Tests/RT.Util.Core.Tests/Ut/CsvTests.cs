@@ -50,5 +50,26 @@ namespace RT.Util
                     Assert.AreEqual(expected[r][c], parsed[r][c]);
             }
         }
+
+        [Test]
+        public void CsvFormatTest()
+        {
+            test("");
+            test("\"\"", "");
+            test(",", "", "");
+            test("a", "a");
+            test("\"a,\"", "a,");
+            test("a,\",b\",c", "a", ",b", "c");
+            test("a,\"\"\"b\",c", "a", "\"b", "c");
+            test("a,\"b\r\nb\",c", "a", "b\r\nb", "c");
+
+            void test(string expectedCsv, params string[] cells)
+            {
+                var formatted = Ut.FormatCsvRow(cells);
+                Assert.AreEqual(expectedCsv + Environment.NewLine, formatted);
+                if (cells.Length > 0)
+                    Assert.AreEqual(cells, Ut.ParseCsv(formatted).ToArray()[0]);
+            }
+        }
     }
 }

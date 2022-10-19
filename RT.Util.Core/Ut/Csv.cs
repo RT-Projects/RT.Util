@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RT.Util
@@ -168,6 +169,48 @@ namespace RT.Util
             using var reader = new StreamReader(file);
             foreach (var row in ParseCsv(reader, minColumns))
                 yield return row;
+        }
+
+        /// <summary>
+        ///     Formats an entire CSV row, escaping cell values where required. See Remarks.</summary>
+        /// <remarks>
+        ///     The value returned always ends with a newline. Zero cells are formatted to a blank line, which gets skipped
+        ///     entirely by <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
+        public static string FormatCsvRow(IEnumerable<string> cells)
+        {
+            var sb = new StringBuilder();
+            bool first = true;
+            bool singleBlank = false;
+            foreach (var cell in cells)
+            {
+                if (!first)
+                    sb.Append(',');
+                // we only have to quote: anything with a double-quote, comma, /r, /n
+                if (cell.Any(c => c == '"' || c == ',' || c == '\r' || c == '\n'))
+                {
+                    sb.Append('"');
+                    sb.Append(cell.Replace("\"", "\"\""));
+                    sb.Append('"');
+                }
+                else
+                    sb.Append(cell);
+                singleBlank = first && cell == "";
+                first = false;
+            }
+            if (singleBlank)
+                sb.Append("\"\"");
+            sb.AppendLine();
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Formats an entire CSV row, escaping cell values where required. See Remarks.</summary>
+        /// <remarks>
+        ///     The value returned always ends with a newline. Zero cells are formatted to a blank line, which gets skipped
+        ///     entirely by <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
+        public static string FormatCsvRow(params string[] cells)
+        {
+            return FormatCsvRow(cells.AsEnumerable());
         }
     }
 }
