@@ -45,6 +45,11 @@ namespace RT.Util.Text
         ///     <see cref="MaxWidth"/>.</summary>
         public int LeftMargin { get; set; }
 
+        /// <summary>Gets or sets the index of the row used by the next call to <see cref="AddCell"/>.</summary>
+        public int CurRow { get; set; } = 0;
+        /// <summary>Gets or sets the index of the column used by the next call to <see cref="AddCell"/>.</summary>
+        public int CurCol { get; set; } = 0;
+
         /// <summary>
         ///     Places the specified content into the cell at the specified co-ordinates.</summary>
         /// <param name="col">
@@ -592,6 +597,47 @@ namespace RT.Util.Text
             var row = _cells.Count;
             for (int col = 0; col < values.Length; col++)
                 SetCell(col, row, values[col]);
+        }
+
+        /// <summary>
+        ///     Places content at (<see cref="CurCol"/>, <see cref="CurRow"/>) and advances <see cref="CurCol"/> by
+        ///     <paramref name="colSpan"/>. See also <see cref="FinishRow()"/>.
+        /// </summary>
+        /// <param name="content">
+        ///     The content to place.</param>
+        /// <param name="colSpan">
+        ///     The number of columns to span.</param>
+        /// <param name="rowSpan">
+        ///     The number of rows to span.</param>
+        /// <param name="noWrap">
+        ///     If true, indicates that this cell should not be automatically word-wrapped except at explicit newlines in
+        ///     <paramref name="content"/>. The cell is word-wrapped only if doing so is necessary to fit all no-wrap cells
+        ///     into the table's total width. If false, the cell is automatically word-wrapped to optimise the table's layout.</param>
+        /// <param name="alignment">
+        ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
+        /// <param name="background">
+        ///     Specifies a background color for the whole cell, including its empty space. Characters with background colors
+        ///     in the input string take precedence for those characters only.</param>
+        public void AddCell(ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null)
+        {
+            SetCell(CurCol, CurRow, content, colSpan, rowSpan, noWrap, alignment, background);
+            CurCol += colSpan;
+        }
+
+        /// <summary>Ends the row that was being added to by <see cref="AddCell"/> and begins the next row at column 0.</summary>
+        public void FinishRow()
+        {
+            CurRow++;
+            CurCol = 0;
+        }
+
+        /// <summary>Ends the row that was being added to by <see cref="AddCell"/> and begins the next row at column 0.</summary>
+        /// <param name="backgroundColor">Background color of the row being finished. See <see cref="SetRowBackground"/>.</param>
+        public void FinishRow(ConsoleColor? backgroundColor)
+        {
+            SetRowBackground(CurRow, backgroundColor);
+            CurRow++;
+            CurCol = 0;
         }
     }
 }
