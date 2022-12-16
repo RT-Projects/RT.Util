@@ -12,6 +12,7 @@ resharper_blank_lines_around_auto_property = 0
 resharper_blank_lines_around_local_method = 0
 resharper_csharp_blank_lines_around_field = 0
 resharper_csharp_wrap_lines = false
+resharper_keep_existing_arrangement = true
 
 # Code files
 [*.{cs,csx,json}]
@@ -155,6 +156,8 @@ csharp_indent_case_contents = true
 csharp_indent_case_contents_when_block = true
 csharp_indent_labels = one_less_than_current
 csharp_indent_switch_labels = true
+csharp_indent_nested_for_stmt = true
+csharp_indent_nested_foreach_stmt = true
 
 # Space preferences
 csharp_space_after_cast = true
@@ -288,3 +291,13 @@ dotnet_diagnostic.ide0042.severity = none
 
 # CS1998: Async method lacks 'await' operators and will run synchronously
 dotnet_diagnostic.cs1998.severity = none
+
+# Rider: Possible 'null' assignment to non-nullable entity (triggers even in nullable:disable contexts)
+resharper_assign_null_to_not_null_attribute_highlighting = none
+
+# Rider: Possible multiple enumeration (it's a valid thing to do...)
+resharper_possible_multiple_enumeration_highlighting = none
+
+# Rider: Member can be made private (it's a public member in a library, stop bugging me!!!)
+resharper_member_can_be_private_global_highlighting = none
+resharper_member_can_be_private_local_highlighting = none

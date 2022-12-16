@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -1140,7 +1140,7 @@ namespace RT.Util.ExtensionMethods
         ///     <code>
         ///         // Returns "[Paris], [London], [Tokyo]"
         ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]")
-        ///         
+        ///
         ///         // Returns "[Paris], [London] and [Tokyo]"
         ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]", " and ");</code></example>
         public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)

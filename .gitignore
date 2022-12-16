@@ -6,3 +6,4 @@ obj
 *.sln.cache
 *.orig
 .idea
+*.DotSettings.user
