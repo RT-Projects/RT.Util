@@ -174,17 +174,19 @@ namespace RT.Util
         /// <summary>
         ///     Formats an entire CSV row, escaping cell values where required. See Remarks.</summary>
         /// <remarks>
-        ///     The value returned always ends with a newline. Zero cells are formatted to a blank line, which gets skipped
-        ///     entirely by <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
-        public static string FormatCsvRow(IEnumerable<string> cells)
+        ///     The value returned may contain newlines inside cell values. It does not contain the terminating newline that
+        ///     separates CSV rows from each other. Zero cells are formatted to a blank line, which gets skipped entirely by
+        ///     <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
+        public static string FormatCsvRow(IEnumerable<object> cells)
         {
             var sb = new StringBuilder();
             bool first = true;
             bool singleBlank = false;
-            foreach (var cell in cells)
+            foreach (var cc in cells)
             {
                 if (!first)
                     sb.Append(',');
+                var cell = cc.ToString();
                 // we only have to quote: anything with a double-quote, comma, /r, /n
                 if (cell.Any(c => c == '"' || c == ',' || c == '\r' || c == '\n'))
                 {
@@ -199,16 +201,16 @@ namespace RT.Util
             }
             if (singleBlank)
                 sb.Append("\"\"");
-            sb.AppendLine();
             return sb.ToString();
         }
 
         /// <summary>
         ///     Formats an entire CSV row, escaping cell values where required. See Remarks.</summary>
         /// <remarks>
-        ///     The value returned always ends with a newline. Zero cells are formatted to a blank line, which gets skipped
-        ///     entirely by <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
-        public static string FormatCsvRow(params string[] cells)
+        ///     The value returned may contain newlines inside cell values. It does not contain the terminating newline that
+        ///     separates CSV rows from each other. Zero cells are formatted to a blank line, which gets skipped entirely by
+        ///     <see cref="ParseCsv(string,int)"/>. All other inputs round-trip exactly.</remarks>
+        public static string FormatCsvRow(params object[] cells)
         {
             return FormatCsvRow(cells.AsEnumerable());
         }

@@ -63,10 +63,10 @@ namespace RT.Util
             test("a,\"\"\"b\",c", "a", "\"b", "c");
             test("a,\"b\r\nb\",c", "a", "b\r\nb", "c");
 
-            void test(string expectedCsv, params string[] cells)
+            void test(string expectedCsv, params object[] cells)
             {
                 var formatted = Ut.FormatCsvRow(cells);
-                Assert.AreEqual(expectedCsv + Environment.NewLine, formatted);
+                Assert.AreEqual(expectedCsv, formatted);
                 if (cells.Length > 0)
                     Assert.AreEqual(cells, Ut.ParseCsv(formatted).ToArray()[0]);
             }
