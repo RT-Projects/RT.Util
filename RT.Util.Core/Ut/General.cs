@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -322,6 +322,46 @@ namespace RT.Util
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
             action(source);
+        }
+
+        /// <summary>
+        ///     Executes the specified function with the specified tuple argument.</summary>
+        /// <typeparam name="TSource1">
+        ///     Type of the first element in the tuple argument to the function.</typeparam>
+        /// <typeparam name="TSource2">
+        ///     Type of the second element in the tuple argument to the function.</typeparam>
+        /// <typeparam name="TResult">
+        ///     Type of the result of the function.</typeparam>
+        /// <param name="source">
+        ///     The argument to the function.</param>
+        /// <param name="func">
+        ///     The function to execute.</param>
+        /// <returns>
+        ///     The result of the function.</returns>
+        public static TResult Apply<TSource1, TSource2, TResult>(this (TSource1 s1, TSource2 s2) source, Func<TSource1, TSource2, TResult> func)
+        {
+            if (func == null)
+                throw new ArgumentNullException(nameof(func));
+            return func(source.s1, source.s2);
+        }
+
+        /// <summary>
+        ///     Executes the specified action with the specified tuple argument.</summary>
+        /// <typeparam name="TSource1">
+        ///     Type of the first element in the tuple argument to the function.</typeparam>
+        /// <typeparam name="TSource2">
+        ///     Type of the second element in the tuple argument to the function.</typeparam>
+        /// <param name="source">
+        ///     The argument to the action.</param>
+        /// <param name="action">
+        ///     The action to execute.</param>
+        /// <returns>
+        ///     The result of the function.</returns>
+        public static void Apply<TSource1, TSource2>(this (TSource1 s1, TSource2 s2) source, Action<TSource1, TSource2> action)
+        {
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+            action(source.s1, source.s2);
         }
 
         /// <summary>
