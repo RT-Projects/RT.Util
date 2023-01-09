@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace RT.KitchenSink
             public PointD[] Points { get; private set; }
 
             /// <summary>Designates the end of a path or subpath.</summary>
-            public static readonly PathPiece End = new PathPiece { Type = PathPieceType.End };
+            public static readonly PathPiece End = new() { Type = PathPieceType.End };
 
             /// <summary>
             ///     Constructor.</summary>
@@ -40,7 +40,13 @@ namespace RT.KitchenSink
             private PathPiece() { }
 
             /// <summary>Recreates the path in SVG path data syntax.</summary>
-            public override string ToString()
+            public sealed override string ToString() => ToString(useSpaces: false);
+
+            /// <summary>
+            ///     Recreates the path in SVG path data syntax.</summary>
+            /// <param name="useSpaces">
+            ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
+            public virtual string ToString(bool useSpaces)
             {
                 char ch;
                 switch (Type)
@@ -50,14 +56,16 @@ namespace RT.KitchenSink
                     case PathPieceType.Curve: ch = 'C'; break;
                     default: return "z";
                 }
-                return ch + " " + Points.Select(p => $"{p.X},{p.Y}").JoinString(" ");
+                return ch + " " + Points.Select(p => $"{p.X}{(useSpaces ? " " : ",")}{p.Y}").JoinString(" ");
             }
 
             /// <summary>
             ///     Recreates the path in SVG path data syntax.</summary>
             /// <param name="decimalPlaces">
             ///     Specifies the number of decimal places to use for the floating-point numbers.</param>
-            public string ToString(int decimalPlaces)
+            /// <param name="useSpaces">
+            ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
+            public virtual string ToString(int decimalPlaces, bool useSpaces = false)
             {
                 char ch;
                 switch (Type)
@@ -67,7 +75,7 @@ namespace RT.KitchenSink
                     case PathPieceType.Curve: ch = 'C'; break;
                     default: return "z";
                 }
-                return ch + " " + Points.Select(p => $"{p.X.ToString($"0.{new string('#', decimalPlaces)}")},{p.Y.ToString($"0.{new string('#', decimalPlaces)}")}").JoinString(" ");
+                return ch + " " + Points.Select(p => $"{p.X.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{p.Y.ToString($"0.{new string('#', decimalPlaces)}")}").JoinString(" ");
             }
 
             /// <summary>
@@ -115,8 +123,21 @@ namespace RT.KitchenSink
                 SweepFlag = sweepFlag;
             }
 
-            /// <summary>Recreates the path in SVG path data syntax.</summary>
-            public override string ToString() => $"A {RX},{RY} {XAxisRotation} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X},{Points[0].Y}";
+            /// <summary>
+            ///     Recreates the path in SVG path data syntax.</summary>
+            /// <param name="useSpaces">
+            ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
+            public override string ToString(bool useSpaces) =>
+                $"A {RX}{(useSpaces ? " " : ",")}{RY} {XAxisRotation} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X}{(useSpaces ? " " : ",")}{Points[0].Y}";
+
+            /// <summary>
+            ///     Recreates the path in SVG path data syntax.</summary>
+            /// <param name="decimalPlaces">
+            ///     Specifies the number of decimal places to use for the floating-point numbers.</param>
+            /// <param name="useSpaces">
+            ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
+            public override string ToString(int decimalPlaces, bool useSpaces = false) =>
+                $"A {RX.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{RY.ToString($"0.{new string('#', decimalPlaces)}")} {XAxisRotation.ToString($"0.{new string('#', decimalPlaces)}")} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{Points[0].Y.ToString($"0.{new string('#', decimalPlaces)}")}";
 
             /// <summary>
             ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have
@@ -231,8 +252,8 @@ namespace RT.KitchenSink
         /// <param name="svgPath">
         ///     The SVG path data.</param>
         /// <param name="smoothness">
-        ///     A value indicating the maximum amount by which each curve (Bézier or arc) is allowed to be approximated. The smaller
-        ///     this value, the more points are generated for each curve.</param>
+        ///     A value indicating the maximum amount by which each curve (Bézier or arc) is allowed to be approximated. The
+        ///     smaller this value, the more points are generated for each curve.</param>
         /// <returns>
         ///     A sequence of points that represent the fully rendered path.</returns>
         public static IEnumerable<IEnumerable<PointD>> Do(string svgPath, double smoothness)
