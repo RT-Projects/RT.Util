@@ -824,7 +824,7 @@ namespace RT.Serialization
             }
 
             else if (code == TypeCode.String)
-                return BigInteger.TryParse((string) value, NumberStyles.None, CultureInfo.InvariantCulture, out result);
+                return BigInteger.TryParse((string) value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out result);
 
             else if (code == TypeCode.UInt64)
             {
