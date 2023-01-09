@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -802,12 +802,30 @@ namespace RT.Util.Consoles
         /// <param name="foreground">
         ///     The foreground color to set the string to, or <c>null</c> to use the console’s default foreground color.</param>
         /// <returns>
-        ///     The current string but with the foreground colors changed.</returns>
+        ///     A new string containing the modified colors.</returns>
         public ConsoleColoredString Color(ConsoleColor? foreground)
         {
             var newForeground = new ConsoleColor?[_text.Length];
             if (foreground != null)
                 for (int i = 0; i < _text.Length; i++)
+                    newForeground[i] = foreground;
+            return new ConsoleColoredString(_text, newForeground, _background);
+        }
+
+        /// <summary>
+        ///     Changes the foreground colors (but not the background colors) of every occurrence of <paramref
+        ///     name="character"/> in the current string to the specified console color.</summary>
+        /// <param name="character">
+        ///     The character whose color to replace.</param>
+        /// <param name="foreground">
+        ///     The foreground color to set the characters to, or <c>null</c> to use the console’s default foreground color.</param>
+        /// <returns>
+        ///     A new string containing the modified colors.</returns>
+        public ConsoleColoredString Color(char character, ConsoleColor? foreground)
+        {
+            var newForeground = (ConsoleColor?[]) _foreground.Clone();
+            for (int i = 0; i < _text.Length; i++)
+                if (_text[i] == character)
                     newForeground[i] = foreground;
             return new ConsoleColoredString(_text, newForeground, _background);
         }
@@ -819,7 +837,7 @@ namespace RT.Util.Consoles
         /// <param name="background">
         ///     The background color to set the string to, or <c>null</c> to use the console’s default background color.</param>
         /// <returns>
-        ///     The current string but with all the colors changed.</returns>
+        ///     A new string containing the modified colors.</returns>
         public ConsoleColoredString Color(ConsoleColor? foreground, ConsoleColor? background)
         {
             var newForeground = new ConsoleColor?[_text.Length];
@@ -830,6 +848,30 @@ namespace RT.Util.Consoles
             if (background != null)
                 for (int i = 0; i < _text.Length; i++)
                     newBackground[i] = background;
+            return new ConsoleColoredString(_text, newForeground, newBackground);
+        }
+
+        /// <summary>
+        ///     Changes the colors of every occurrence of <paramref name="character"/> in the current string to the specified
+        ///     set of console colors.</summary>
+        /// <param name="character">
+        ///     The character whose color to replace.</param>
+        /// <param name="foreground">
+        ///     The foreground color to set the characters to, or <c>null</c> to use the console’s default foreground color.</param>
+        /// <param name="background">
+        ///     The background color to set the characters to, or <c>null</c> to use the console’s default background color.</param>
+        /// <returns>
+        ///     A new string containing the modified colors.</returns>
+        public ConsoleColoredString Color(char character, ConsoleColor? foreground, ConsoleColor? background)
+        {
+            var newForeground = (ConsoleColor?[]) _foreground.Clone();
+            var newBackground = (ConsoleColor?[]) _background.Clone();
+            for (int i = 0; i < _text.Length; i++)
+                if (_text[i] == character)
+                {
+                    newForeground[i] = foreground;
+                    newBackground[i] = background;
+                }
             return new ConsoleColoredString(_text, newForeground, newBackground);
         }
 
@@ -1027,6 +1069,31 @@ namespace RT.Util.Consoles
             if (_text.Length == 0)
                 return this;
             return new ConsoleColoredString(_text.Replace(oldChar, newChar), _foreground, _background);
+        }
+        /// <summary>
+        ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of <paramref name="oldChar"/> is
+        ///     replaced with the <paramref name="newChar"/>, overwriting its color as well.</summary>
+        /// <param name="oldChar">
+        ///     The character to search for.</param>
+        /// <param name="newChar">
+        ///     The colored character to replace every occurrence of <paramref name="oldChar"/> with.</param>
+        /// <returns>
+        ///     The new string after replacements.</returns>
+        public ConsoleColoredString Replace(char oldChar, ConsoleColoredChar newChar)
+        {
+            if (_text.Length == 0)
+                return this;
+            var newText = _text.ToCharArray();
+            var newFore = (ConsoleColor?[]) _foreground.Clone();
+            var newBack = (ConsoleColor?[]) _background.Clone();
+            for (var i = 0; i < _text.Length; i++)
+                if (_text[i] == oldChar)
+                {
+                    newText[i] = newChar.Character;
+                    newFore[i] = newChar.Color;
+                    newBack[i] = newChar.BackgroundColor;
+                }
+            return new ConsoleColoredString(new string(newText), newFore, newBack);
         }
 
         /// <summary>
