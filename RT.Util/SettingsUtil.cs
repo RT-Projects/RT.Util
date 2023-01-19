@@ -690,7 +690,7 @@ namespace RT.Util
 
             filename = filename.FilenameCharactersEscape() + ".Settings." + fileExtension;
 
-            if (Assembly.GetEntryAssembly() != null && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
+            if (PathUtil.AppPath != null && File.Exists(PathUtil.AppPathCombine(AppName + ".IsPortable.txt")))
                 return PathUtil.AppPathCombine(filename);
 
             switch (Kind)
