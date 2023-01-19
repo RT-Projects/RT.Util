@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using RT.Lingo;
@@ -493,7 +493,7 @@ namespace RT.CommandLine
 
             var helpString = new List<ConsoleColoredString>();
             var commandNameAttr = cmd.Type.GetCustomAttributes<CommandNameAttribute>().FirstOrDefault();
-            string commandName = commandNameAttr == null ? Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location) : "... " + commandNameAttr.Names.OrderByDescending(c => c.Length).First();
+            string commandName = commandNameAttr == null ? Process.GetCurrentProcess().ProcessName : "... " + commandNameAttr.Names.OrderByDescending(c => c.Length).First();
 
             //
             //  ##  CONSTRUCT THE “USAGE” LINE

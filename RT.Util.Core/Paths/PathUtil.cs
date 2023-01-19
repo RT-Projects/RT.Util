@@ -125,19 +125,14 @@ namespace RT.Util
         ///         <item><term>
         ///             $(AppPath)</term>
         ///         <description>
-        ///             expands to the directory containing the entry assembly (Assembly.GetEntryAssembly()). Throws an <see
-        ///             cref="InvalidOperationException"/> if there is no entry assembly (e.g. in a secondary app domain).</description></item></list></remarks>
+        ///             expands to the directory containing the entry assembly.</description></item></list></remarks>
         public static string ExpandPath(string path)
         {
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
                 path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
             path = path.Replace("$(Temp)", Path.GetTempPath());
             if (path.Contains("$(AppPath)"))
-            {
-                if (Assembly.GetEntryAssembly() == null)
-                    throw new InvalidOperationException("ExpandPath() cannot expand $(AppPath) in an AppDomain where Assembly.GetEntryAssembly() is null.");
-                path = path.Replace("$(AppPath)", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-            }
+                path = path.Replace("$(AppPath)", PathUtil.AppPath);
             return path;
         }
 

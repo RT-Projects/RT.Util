@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Mail;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Serialization;
@@ -643,7 +643,7 @@ namespace RT.Util
             SettingsUtil.LoadSettings(out settings);
 
             // Add an empty exe name account
-            string exeName = Assembly.GetEntryAssembly() == null ? null : Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            string exeName = Process.GetCurrentProcess().ProcessName + ".exe";
             if (exeName != null && !settings.Accounts.ContainsKey(exeName))
                 settings.Accounts.Add(exeName, null);
 
