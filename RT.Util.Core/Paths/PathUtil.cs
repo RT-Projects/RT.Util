@@ -125,14 +125,34 @@ namespace RT.Util
         ///         <item><term>
         ///             $(AppPath)</term>
         ///         <description>
-        ///             expands to the directory containing the entry assembly.</description></item></list></remarks>
+        ///             expands to the directory containing the entry assembly.</description></item>
+        ///         <item><term>
+        ///             $(MachineName)</term>
+        ///         <description>
+        ///             expands to <c>Environment.MachineName</c>.</description></item>
+        ///         <item><term>
+        ///             $(UserName)</term>
+        ///         <description>
+        ///             expands to <c>Environment.UserName</c>.</description></item>
+        ///         <item><term>
+        ///             $(UserDomainName)</term>
+        ///         <description>
+        ///             expands to <c>Environment.UserDomainName</c>.</description></item></list></remarks>
         public static string ExpandPath(string path)
         {
             foreach (var folderEnum in EnumStrong.GetValues<Environment.SpecialFolder>())
-                path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
-            path = path.Replace("$(Temp)", Path.GetTempPath());
+                if (path.Contains("$(" + folderEnum + ")"))
+                    path = path.Replace("$(" + folderEnum + ")", Environment.GetFolderPath(folderEnum));
+            if (path.Contains("$(Temp)"))
+                path = path.Replace("$(Temp)", Path.GetTempPath());
             if (path.Contains("$(AppPath)"))
                 path = path.Replace("$(AppPath)", PathUtil.AppPath);
+            if (path.Contains("$(MachineName)"))
+                path = path.Replace("$(MachineName)", Environment.MachineName);
+            if (path.Contains("$(UserName)"))
+                path = path.Replace("$(UserName)", Environment.UserName);
+            if (path.Contains("$(UserDomainName)"))
+                path = path.Replace("$(UserDomainName)", Environment.UserDomainName);
             return path;
         }
 
