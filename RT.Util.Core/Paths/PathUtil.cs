@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,12 +35,7 @@ namespace RT.Util
             get
             {
                 if (_cachedAppPath == null)
-                {
-                    if (Assembly.GetEntryAssembly() == null)
-                        throw new InvalidOperationException("PathUtil.AppPath is not supported in an AppDomain that is not the default AppDomain. More precisely, PathUtil.AppPath requires Assembly.GetEntryAssembly() to be non-null.");
-                    _cachedAppPath = Assembly.GetEntryAssembly().Location;
-                    _cachedAppPath = Path.GetDirectoryName(_cachedAppPath);
-                }
+                    _cachedAppPath = AppContext.BaseDirectory;
                 return _cachedAppPath;
             }
         }
