@@ -4,9 +4,11 @@ using System.Linq;
 
 namespace RT.Util.ExtensionMethods.Obsolete
 {
+#if !NET5_0_OR_GREATER
     /// <summary>
     ///     Extension methods that exist in netstandard2.1 but not netstandard2.0 - so we want to keep them available but
-    ///     outside of the main namespace where they mess with the framework-supplied versions.</summary>
+    ///     outside of the main namespace where they mess with the framework-supplied versions. In hindsight
+    ///     multi-targeting would have been a better idea.</summary>
 #if EXPORT_UTIL
     public
 #endif
@@ -71,4 +73,5 @@ namespace RT.Util.ExtensionMethods.Obsolete
             }
         }
     }
+#endif
 }

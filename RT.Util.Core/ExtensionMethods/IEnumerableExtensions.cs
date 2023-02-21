@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -101,6 +101,7 @@ namespace RT.Util.ExtensionMethods
             return selectConsecutivePairsIterator();
         }
 
+#if !NET7_0_OR_GREATER
         /// <summary>Sorts the elements of a sequence in ascending order.</summary>
         public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
         {
@@ -112,6 +113,7 @@ namespace RT.Util.ExtensionMethods
         {
             return source.OrderBy(k => k, comparer);
         }
+#endif
 
         /// <summary>
         ///     Splits the specified IEnumerable at every element that satisfies a specified predicate and returns a

@@ -5,6 +5,7 @@ using NUnit.Framework;
 
 namespace RT.Util.ExtensionMethods.Obsolete
 {
+#if !NET5_0_OR_GREATER
     [TestFixture]
     public sealed class ObsoleteExtensionsTests
     {
@@ -30,4 +31,5 @@ namespace RT.Util.ExtensionMethods.Obsolete
             Assert.IsTrue(input2.TakeLast(20).SequenceEqual(input2));
         }
     }
+#endif
 }
