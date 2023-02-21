@@ -161,7 +161,7 @@ namespace RT.Util
     public static class RndCrypto
     {
         /// <summary>This class is documented to be completely thread-safe, so no locking is required.</summary>
-        private static RNGCryptoServiceProvider _rnd = new RNGCryptoServiceProvider();
+        private static RandomNumberGenerator _rnd = RandomNumberGenerator.Create();
 
         /// <summary>Fills the specified buffer with cryptographically-strong random bytes.</summary>
         public static void NextBytes(byte[] buffer)

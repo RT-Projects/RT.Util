@@ -190,7 +190,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         ///     Orders the items, lazily. It is much faster when extracting only the first few items using <see
-        ///     cref="Enumerable.Take"/>.</summary>
+        ///     cref="Enumerable.Take{TSource}(IEnumerable{TSource}, int)"/>.</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <returns>
@@ -202,7 +202,7 @@ namespace RT.Util.ExtensionMethods
 
         /// <summary>
         ///     Orders the items, lazily. It is much faster when extracting only the first few items using <see
-        ///     cref="Enumerable.Take"/>.</summary>
+        ///     cref="Enumerable.Take{TSource}(IEnumerable{TSource}, int)"/>.</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <param name="comparer">

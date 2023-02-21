@@ -402,7 +402,7 @@ namespace RT.Util
         /// <summary>
         ///     Returns the full path pointing to the same file/directory as <paramref name="path"/>. Converts relative paths
         ///     to absolute paths where necessary, relative to the current working directory. This is the same as <see
-        ///     cref="Path.GetFullPath"/>, except that this function returns the actual on-disk capitalization for each
+        ///     cref="Path.GetFullPath(string)"/>, except that this function returns the actual on-disk capitalization for each
         ///     segment, regardless of how they are capitalized in <paramref name="path"/>. If the path does not exist in
         ///     full, corrects the capitalization of the segments that do exist. Always capitalizes the drive letter.</summary>
         public static string GetFullPath(string path)
