@@ -29,6 +29,7 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+#if !NET7_0_OR_GREATER
         [Test]
         public void TestOrder()
         {
@@ -49,6 +50,7 @@ namespace RT.Util.ExtensionMethods
             sSorted = s.Order(StringComparer.Ordinal);
             Assert.IsTrue(sSorted.SequenceEqual(new[] { "Stuff", "apple", "blah", "some" }));
         }
+#endif
 
         [Test]
         public void TestOrderBy()

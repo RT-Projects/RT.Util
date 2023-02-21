@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -189,8 +189,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     This does the same as <see cref="Order{T}(IEnumerable{T})"/>, but it is much faster if you intend to extract
-        ///     only the first few items using <see cref="Enumerable.Take"/>.</summary>
+        ///     Orders the items, lazily. It is much faster when extracting only the first few items using <see
+        ///     cref="Enumerable.Take"/>.</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <returns>
@@ -201,8 +201,8 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     This does the same as <see cref="Order{T}(IEnumerable{T},IComparer{T})"/>, but it is much faster if you intend
-        ///     to extract only the first few items using <see cref="Enumerable.Take"/>.</summary>
+        ///     Orders the items, lazily. It is much faster when extracting only the first few items using <see
+        ///     cref="Enumerable.Take"/>.</summary>
         /// <param name="source">
         ///     The sequence to be sorted.</param>
         /// <param name="comparer">
