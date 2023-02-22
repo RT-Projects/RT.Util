@@ -1,16 +1,26 @@
 <Project>
- <PropertyGroup>
-    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)\Builds\obj\$(MSBuildProjectName)</MSBuildProjectExtensionsPath>
-    <BaseIntermediateOutputPath>$(MSBuildProjectExtensionsPath)</BaseIntermediateOutputPath>
+  <PropertyGroup>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)Builds\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+
+    <CustomSuffix>-$(TargetFramework)$(RuntimeIdentifier)</CustomSuffix>
+    <CustomSuffix Condition="'$(CustomSuffix)'=='-'"></CustomSuffix>
+    <OutputPath>$(BaseOutputPath)$(Configuration)$(CustomSuffix)\</OutputPath>
+    <PublishDir>$(BaseOutputPath)$(Configuration)$(CustomSuffix)-publish\</PublishDir>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)$(CustomSuffix)\</IntermediateOutputPath>
+
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 
     <!-- We have to target old frameworks for compatibility, as this project is a library -->
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
 
-    <RepositoryUrl>https://github.com/RT-Projects/RT.Util/</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/RT-Projects/RT.Util</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/RT-Projects/RT.Util.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/14182444?v=3&amp;s=200</PackageIconUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
- </PropertyGroup>
+    <EmbedAllSources>true</EmbedAllSources>
+  </PropertyGroup>
 </Project>
