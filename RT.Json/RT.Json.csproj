@@ -1,19 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
-    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi</Authors>
     <Description>A JSON parser written before Json.NET became good. Slower than Json.NET. API aimed at stringent (non-lenient) access.</Description>
     <PackageTags>rt.util;json</PackageTags>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>7.2</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

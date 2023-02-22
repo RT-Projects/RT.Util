@@ -1,9 +1,18 @@
 <Project>
   <PropertyGroup>
-    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)\Builds\obj\$(MSBuildProjectName)</MSBuildProjectExtensionsPath>
-    <BaseIntermediateOutputPath>$(MSBuildProjectExtensionsPath)</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)Builds\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+
+    <CustomSuffix>-$(TargetFramework)$(RuntimeIdentifier)</CustomSuffix>
+    <CustomSuffix Condition="'$(CustomSuffix)'=='-'"></CustomSuffix>
+    <OutputPath>$(BaseOutputPath)$(Configuration)$(CustomSuffix)\</OutputPath>
+    <PublishDir>$(BaseOutputPath)$(Configuration)$(CustomSuffix)-publish\</PublishDir>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)$(CustomSuffix)\</IntermediateOutputPath>
+
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+
+    <LangVersion>latest</LangVersion>
 
     <!-- We have to target old frameworks for compatibility, as this project is a library -->
     <CheckEolTargetFramework>false</CheckEolTargetFramework>

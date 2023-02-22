@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <OutputPath>..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
-    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
     <Version>1.0.0.9999</Version>
     <Authors>Timwi;rstarkov;caesay</Authors>
     <Description>Serialize classes to/from JSON. The feature set is optimized for maintaining backwards compatibility of serialized files as the classes evolve, in particular when used for application settings / configuration.</Description>
     <PackageTags>rt.util;classify;serialize;serialization;settings;config</PackageTags>
-    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
