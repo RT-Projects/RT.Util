@@ -4,6 +4,8 @@ using System.Linq;
 using RT.Util.ExtensionMethods;
 using RT.Util.Geometry;
 
+#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
+
 namespace RT.KitchenSink.Geometry
 {
     /// <summary>

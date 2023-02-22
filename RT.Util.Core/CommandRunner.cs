@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
+
+#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 
 namespace RT.Util
 {
@@ -252,10 +254,12 @@ namespace RT.Util
 
             if (RunAsUser != null)
             {
+#pragma warning disable CA1416 // This call site is reachable on all platforms. 'X' is supported on: 'windows'. This is hard to fix "properly" while targeting netstandard2.0 :(
                 _startInfo.LoadUserProfile = RunAsUser.LoadProfile;
                 _startInfo.Domain = RunAsUser.Domain;
                 _startInfo.UserName = RunAsUser.Username;
                 _startInfo.Password = RunAsUser.Password;
+#pragma warning restore CA1416
             }
 
             _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);

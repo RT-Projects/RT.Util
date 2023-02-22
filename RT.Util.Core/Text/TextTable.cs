@@ -5,6 +5,8 @@ using System.Text;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
+#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
+
 namespace RT.Util.Text
 {
     /// <summary>Produces a table in a fixed-width character environment.</summary>
