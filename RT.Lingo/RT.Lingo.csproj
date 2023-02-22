@@ -6,6 +6,8 @@
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
+    <EmbedAllSources>false</EmbedAllSources>
+
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi</Authors>
     <Description>Contains functionality to localize and internationalize (translate) software into other languages. Use this library in your application to load, apply and optionally edit RT.Lingo translations.</Description>
