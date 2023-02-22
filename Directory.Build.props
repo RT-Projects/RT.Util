@@ -1,14 +1,7 @@
 <Project>
   <PropertyGroup>
-    <BaseOutputPath>$(MSBuildThisFileDirectory)Builds\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
-
-    <CustomSuffix>-$(TargetFramework)$(RuntimeIdentifier)</CustomSuffix>
-    <CustomSuffix Condition="'$(CustomSuffix)'=='-'"></CustomSuffix>
-    <OutputPath>$(BaseOutputPath)$(Configuration)$(CustomSuffix)\</OutputPath>
-    <PublishDir>$(BaseOutputPath)$(Configuration)$(CustomSuffix)-publish\</PublishDir>
-    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)$(CustomSuffix)\</IntermediateOutputPath>
-
+    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)\Builds\obj\$(MSBuildProjectName)</MSBuildProjectExtensionsPath>
+    <BaseIntermediateOutputPath>$(MSBuildProjectExtensionsPath)</BaseIntermediateOutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 
