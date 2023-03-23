@@ -1,7 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+#if NET7_0_OR_GREATER
+using System.Numerics;
+#endif
 
 namespace RT.Util.ExtensionMethods
 {
@@ -1561,6 +1564,48 @@ namespace RT.Util.ExtensionMethods
                     result.Add(entry.Key, entry.Value);
             return result;
         }
+
+#if NET7_0_OR_GREATER
+        /// <summary>Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
+        /// <typeparam name="T">A numeric element type.</typeparam>
+        /// <param name="source">Input sequence.</param>
+        /// <returns>Minimum, maximum, sum and count.</returns>
+        public static (T Min, T Max, T Sum, int Count) MinMaxSumCount<T>(this IEnumerable<T> source) where T : INumber<T>, IMinMaxValue<T>
+        {
+            var min = T.MaxValue;
+            var max = T.MinValue;
+            var sum = T.Zero;
+            var count = 0;
+            foreach (var val in source)
+            {
+                count++;
+                sum += val;
+                if (min > val) min = val;
+                if (max < val) max = val;
+            }
+            return (min, max, sum, count);
+        }
+
+        /// <summary>Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
+        /// <typeparam name="T">A numeric element type.</typeparam>
+        /// <param name="source">Input sequence.</param>
+        /// <returns>Minimum, maximum, sum and count.</returns>
+        public static (T Min, T Max, T Sum, long Count) MinMaxSumCountLong<T>(this IEnumerable<T> source) where T : INumber<T>, IMinMaxValue<T>
+        {
+            var min = T.MaxValue;
+            var max = T.MinValue;
+            var sum = T.Zero;
+            var count = 0;
+            foreach (var val in source)
+            {
+                count++;
+                sum += val;
+                if (min > val) min = val;
+                if (max < val) max = val;
+            }
+            return (min, max, sum, count);
+        }
+#endif
     }
 
     /// <summary>

@@ -378,5 +378,27 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(new string[0].InsertBetweenWithAnd("|", "~").SequenceEqual(new string[0]));
             Assert.IsTrue(new[] { "1", "2", "3" }.InsertBetweenWithAnd(null, null).SequenceEqual(new[] { "1", null, "2", null, "3" }));
         }
+
+#if NET7_0_OR_GREATER
+        [Test]
+        public void TestMinMaxSumCount()
+        {
+            var r1 = new[] { 3, 8, 21, -5 }.MinMaxSumCount();
+            Assert.AreEqual(-5, r1.Min);
+            Assert.AreEqual(21, r1.Max);
+            Assert.AreEqual(27, r1.Sum);
+            Assert.AreEqual(4, r1.Count);
+            var r2 = new[] { 3, 8, 21, -5 }.MinMaxSumCountLong();
+            Assert.AreEqual(-5, r2.Min);
+            Assert.AreEqual(21, r2.Max);
+            Assert.AreEqual(27, r2.Sum);
+            Assert.AreEqual(4, r2.Count);
+            var r3 = new[] { 3.1, 8.98, 21.21, -5.25 }.MinMaxSumCount();
+            Assert.AreEqual(-5.25, r3.Min);
+            Assert.AreEqual(21.21, r3.Max);
+            Assert.AreEqual(28.04, r3.Sum);
+            Assert.AreEqual(4, r3.Count);
+        }
+#endif
     }
 }
