@@ -1,10 +1,11 @@
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using RT.Util;
 
-// TODO: to fully supersede RT.Util.SettingsUtil, add SaveSettingsInBackground
+// Possible future improvements:
+// - implement SaveSettingsInBackground to fully supersede RT.Util.SettingsUtil
+// - monitor for changes / autoreload mode
 
 namespace RT.Serialization.Settings;
 
@@ -17,12 +18,16 @@ public enum SettingsLocation
     UserLocal,
     /// <summary>Settings specific to a machine and shared by all users, locally.</summary>
     MachineLocal,
-    /// <summary>Executable's directory. Forces portable mode without requiring a special marker file.</summary>
+    /// <summary>
+    ///     Executable's directory. Forces portable mode without requiring a special marker file - however if present, the
+    ///     marker file can still specify an alternative location.</summary>
     Portable,
 }
 
 /// <summary>
 ///     Loads and saves application settings with a number of convenience and reliability features. See Remarks.</summary>
+/// <typeparam name="TSettings">
+///     The type to be used to store application settings.</typeparam>
 /// <remarks>
 ///     <para>
 ///         Compared to a simple approach of using a serializer directly to load and save from a hard-coded file path, this
@@ -32,94 +37,135 @@ public enum SettingsLocation
 ///         <c>appName</c>.</item>
 ///         <item>A portable mode marker file can be placed in the application directory to make the app portable.</item>
 ///         <item>File sharing violations are handled automatically; these are common with some backup software.</item>
-///         <item>No need to special case first run; a default instance is returned if the settings file does not exist.</item>
+///         <item>No need to special-case first run; a default instance is returned if the settings file does not exist.</item>
 ///         <item>A backup of the settings file is created if load fails and the application continues with default settings,
-///         overwriting the faulty settings file (configurable).</item>
+///         overwriting the faulty settings file.</item>
 ///         <item>When saving, the settings are first saved to a temporary file, which only overwrites the original settings
 ///         file after a successful serialization.</item>
 ///         <item>Unexpected I/O or parse errors can be toggled on/off, for applications wishing to trade between startup
-///         reliability or preserving settings at the cost of a startup crash.</item></list>
+///         reliability or preserving settings at the cost of a startup crash / additional error handling code.</item></list>
 ///     <para>
 ///         <b>Typical usage</b></para>
 ///     <code>
-///         private Settings AppSettings;
+///         private SettingsFile&lt;Settings&gt; AppSettingsFile;
 ///         ...
-///         SettingsUtil.Manager.ConfigureXml&lt;Settings&gt;("MyApp"); // extension method in RT.Serialization.Xml
-///         SettingsUtil.Manager.LoadSettings(out AppSettings);
+///         // Load / initialise settings
+///         AppSettingsFile = new SettingsFileXml&lt;Settings&gt;("MyApp"); // defined in RT.Serialization.Xml
 ///         ...
-///         SettingsUtil.Manager.SaveSettings(AppSettings);</code>
+///         // Use settings
+///         Foobar = AppSettingsFile.Settings.Foobar;
+///         AppSettingsFile.Settings.LastPos = MyWindow.Position;
+///         ...
+///         // Save settings
+///         AppSettingsFile.Save();</code>
 ///     <para>
-///         This is the minimal example targeting a very simple application. Alternatively the <see cref="SettingsManager"/>
-///         can be used directly as a singleton through dependency injection.</para>
+///         This minimal example will save the settings in User Profile under MyApp\MyApp.Settings.xml, and will support
+///         portable mode automatically. It benefits from all the reliability features listed above. If the settings file is
+///         corrupted this minimal example creates a backup of the corrupted file and resets the settings to defaults.</para>
+///     <para>
+///         <b>Settings-relative paths</b></para>
+///     <para>
+///         To construct paths relative to the settings location, use <see cref="PathCombine"/>. This ensures that such paths
+///         remain valid if the user chooses to configure portable mode (see below).</para>
 ///     <para>
 ///         <b>Portable mode</b></para>
-///         <para>The goal of portable mode is to keep everything the application needs, including settings, in the application directory. Conceptually this isn't actually a mode; it's simply a mechanism to select a different path for the settings file during a call to Configure. TODO</para>
 ///     <para>
-///         <b>Error handling</b></para>
-///         <para>TODO</para>
-///         <para><b>Other remarks</b></para><para>While the API of this class naturally supports the use of multiple different settings types simultaneously, the intended usage scenario is to configure and use a single settings type.</para></remarks>
-public class SettingsManager
+///         The goal of portable mode is to keep everything the application needs, including settings, in the application
+///         directory. Conceptually this isn't actually a mode; it's simply a mechanism to select the appropriate path for the
+///         settings file at settings load time (constructor call).</para>
+///     <para>
+///         When loading settings, this class will check whether a portable mode marker file with the name
+///         <c>$"{appName}.IsPortable.txt"</c> is present in the application directory (but see <see
+///         cref="GetPortableMarkerPath"/>). If present and empty, the settings file is stored in the application directory.
+///         If not empty, the contents of the file specify the path to use. This path can be relative to the application
+///         directory, or absolute, or use templates such as $(UserName), $(MachineName), $(UserDomainName), or $(member of
+///         Environment.SpecialFolder).</para>
+///     <para>
+///         <b>Other notes</b></para>
+///     <para>
+///         The absolute path and filename of the settings file is fully determined at settings load time (constructor call)
+///         and remains unchanged for the lifetime of the <see cref="SettingsFile{TSettings}"/> instance. It is available via
+///         <see cref="FileName"/>.</para>
+///     <para>
+///         Where necessary, the application can check whether a new default settings instance was created by checking the
+///         <see cref="DefaultsLoaded"/> property.</para></remarks>
+public abstract class SettingsFile<TSettings> where TSettings : new()
 {
-    private class Info
-    {
-        public string FileName; // always a full absolute path
-        public bool ThrowOnError;
-        public Func<string, object> Deserialize;
-        public Action<string, object> Serialize;
-    }
-
-    private Dictionary<Type, Info> _info = new();
+    /// <summary>
+    ///     Settings stored in this settings file. This property is automatically populated by the constructor, which loads
+    ///     the settings or constructs a new instance where necessary. Users should update this object as appropriate and call
+    ///     <see cref="Save"/> to persist the settings.</summary>
+    public TSettings Settings { get; set; }
 
     /// <summary>
-    ///     Specifies how long to keep retrying when settings cannot be loaded due to a file sharing violation. Defaults to 5
-    ///     seconds.</summary>
-    public TimeSpan WaitSharingViolationOnLoad { get; set; } = TimeSpan.FromSeconds(5);
+    ///     Full path to the file from which the settings were loaded and to which they will be saved. This property is
+    ///     populated on load even if the settings file did not exist as this is the path to which settings will be saved by
+    ///     <see cref="Save"/>.</summary>
+    public string FileName { get; private set; }
+
+    /// <summary>
+    ///     <c>true</c> if a new default instance of the settings had to be constructed, otherwise <c>false</c>. When
+    ///     <c>false</c> it's guaranteed that the settings were successfully loaded from the settings file. When <c>true</c>,
+    ///     if <c>throwOnError</c> is true then it's guaranteed that the settings file was missing, but if <c>throwOnError</c>
+    ///     is false then it's not possible to determine whether the file was present or a loading error has occurred.</summary>
+    public bool DefaultsLoaded { get; private set; }
+
+    /// <summary>
+    ///     Deserializes settings from <paramref name="filename"/>. This method must not do any error handling of its own and
+    ///     should propagate all exceptions, including File Not Found and any parse errors. This method must not return
+    ///     default or null settings on failure; the <see cref="SettingsFile{TSettings}"/> class is responsible for that.</summary>
+    /// <param name="filename">
+    ///     Full path to the settings file.</param>
+    /// <returns>
+    ///     The deserialized instance.</returns>
+    protected abstract TSettings Deserialize(string filename);
+
+    /// <summary>
+    ///     Serializes <paramref name="settings"/> to <paramref name="filename"/>. This method must not do any error handling
+    ///     of its own and should propagate all exceptions, including File Not Found and any parse errors.</summary>
+    /// <param name="filename">
+    ///     Full path to the settings file.</param>
+    /// <param name="settings">
+    ///     Instance of settings to serialize.</param>
+    protected abstract void Serialize(string filename, TSettings settings);
 
     /// <summary>
     ///     Specifies how long to keep retrying when settings cannot be saved due to a file sharing violation. Defaults to 5
     ///     seconds.</summary>
-    public TimeSpan WaitSharingViolationOnSave { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan WaitSharingViolationOnSave { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    ///     Specifies whether to create a backup copy of the settings file when it cannot be loaded and a default instance of
-    ///     settings is "loaded" instead.</summary>
-    public bool UseLoadFailedBackup { get; set; } = true;
+    ///     Specifies how long to keep retrying when settings cannot be loaded due to a file sharing violation. Defaults to 5
+    ///     seconds. See Remarks.</summary>
+    /// <remarks>
+    ///     This is a static property because loading is performed in the constructor. It's a bit of a last resort hack for
+    ///     potential use cases where it's really not appropriate to wait the default 5 seconds - though no such use cases
+    ///     have come up in practice yet.</remarks>
+    public static TimeSpan WaitSharingViolationOnLoad { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    ///     Configures a type for loading and saving application settings. Consider using an extension method such as
-    ///     <c>ConfigureXml</c> or <c>ConfigureJson</c> instead - defined in the format-specific RT.Serialization packages.</summary>
-    /// <typeparam name="TSettings">
-    ///     The type to be used to store application settings.</typeparam>
+    ///     The value of <c>throwOnError</c> passed into the constructor, which enables <see cref="Save"/> to default to the
+    ///     same value. It is private to ensure that descendants do not erroneously attempt to make use of this value.</summary>
+    private bool _throwOnError;
+
+    /// <summary>
+    ///     Configures the location of the settings file and loads or initialises the settings. See Remarks on <see
+    ///     cref="SettingsFile{TSettings}"/>.</summary>
     /// <param name="appName">
     ///     Application name; used as the settings folder name and to construct the settings file name and the portable marker
     ///     file name.</param>
     /// <param name="location">
     ///     Determines where to store the settings file.</param>
-    /// <param name="suffix">
-    ///     Appended to the settings file name; at a minimum this should include the extension dot and the file extension.</param>
     /// <param name="throwOnError">
     ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
-    ///     false, such errors are propagated to the caller as exceptions. See "Error handling" in "Remarks" for <see
-    ///     cref="SettingsManager"/>.</param>
-    /// <param name="load">
-    ///     A function that accepts a filename and returns a loaded instance. This function may assume that the file exists
-    ///     and that the filename is always a full path. This function is not expected to do any error handling and is
-    ///     expected to throw if it cannot read or parse the file.</param>
-    /// <param name="save">
-    ///     An action that accepts a filename and a settings instance to save. This function may assume that the parent
-    ///     directory exists. The file must be overwritten if it already exists. The path is a full absolute path. This
-    ///     function is not expected to do any error handling and is expected to throw if it cannot write the file.</param>
-    /// <exception cref="InvalidOperationException">
-    ///     Thrown if this type is already configured.</exception>
-    public void Configure<TSettings>(string appName, SettingsLocation location, string suffix, bool throwOnError, Func<string, TSettings> load, Action<string, TSettings> save)
+    ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
+    ///     <c>throwOnError</c> when calling <see cref="Save"/>.</param>
+    /// <param name="suffix">
+    ///     Appended to the settings file name; at a minimum this should include the extension dot and the file extension.</param>
+    public SettingsFile(string appName, SettingsLocation location, bool throwOnError, string suffix)
     {
-        if (_info.ContainsKey(typeof(TSettings)))
-            throw new InvalidOperationException($"This type is already configured for use as a settings type: {typeof(TSettings).FullName}");
-        var info = new Info();
-        info.ThrowOnError = throwOnError;
-
         string filename;
-        var portablePath = GetPortablePath(appName, suffix, throwOnError);
+        var portablePath = getPortablePath(appName, throwOnError, suffix);
         if (portablePath != null)
             filename = portablePath;
         else if (location == SettingsLocation.Portable)
@@ -132,109 +178,93 @@ public class SettingsManager
             filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), appName, appName + suffix);
         else
             throw new Exception();
-        info.FileName = filename;
+        FileName = filename;
 
-        info.Deserialize = filename => load(filename);
-        info.Serialize = (filename, settings) => save(filename, (TSettings) settings);
-
-        _info[typeof(TSettings)] = info;
-    }
-
-    private Info getInfo<TSettings>()
-    {
-        if (_info.TryGetValue(typeof(TSettings), out var info))
-            return info;
-        throw new InvalidOperationException($"You must call {nameof(SettingsManager)}.{nameof(Configure)} on settings type {typeof(TSettings).FullName} before loading or saving settings.");
+        _throwOnError = throwOnError;
+        Settings = load();
     }
 
     /// <summary>
-    ///     Loads settings into <typeparamref name="TSettings"/> as previously configured via <see cref="Configure"/>, or
-    ///     constructs a new instance using the default constructor.</summary>
-    /// <typeparam name="TSettings">
-    ///     Settings type.</typeparam>
-    /// <param name="settings">
-    ///     Loaded settings.</param>
-    /// <returns>
-    ///     <c>true</c> if the settings were loaded from file, or <c>false</c> if a default instance was constructed. If
-    ///     errors are suppressed (see <see cref="Configure"/>) there is no way to determine whether <c>false</c> is due to an
-    ///     error or simply because there was no settings file to load. If not suppressed, <c>false</c> can only be returned
-    ///     if the settings file does not exist.</returns>
-    public bool LoadSettings<TSettings>(out TSettings settings) where TSettings : new()
+    ///     Configures <paramref name="filename"/> as the location of the settings file, bypassing all logic related to
+    ///     portable mode, and loads the settings. Avoid where possible and use the other constructor.</summary>
+    /// <param name="filename">
+    ///     Full path and filename of the settings file.</param>
+    /// <param name="throwOnError">
+    ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
+    ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
+    ///     <c>throwOnError</c> when calling <see cref="Save"/>.</param>
+    public SettingsFile(string filename, bool throwOnError)
     {
-        var info = getInfo<TSettings>();
+        FileName = PathUtil.AppPathCombine(filename);
+        _throwOnError = throwOnError;
+        Settings = load();
+    }
 
-        if (!File.Exists(info.FileName)) // can't throw
+    private TSettings load()
+    {
+        if (!File.Exists(FileName)) // can't throw
         {
-            settings = new();
-            return false;
+            DefaultsLoaded = true;
+            return new();
         }
 
-        object result;
-        if (info.ThrowOnError)
+        DefaultsLoaded = false;
+        if (_throwOnError)
         {
             // we're not allowed to silently pretend the file does not exist in case of read or parse failure. If it can't be read or parsed propagate that exception to the caller
-            result = Ut.WaitSharingVio(() => info.Deserialize(info.FileName), maximum: WaitSharingViolationOnLoad);
+            return Ut.WaitSharingVio(() => Deserialize(FileName), maximum: WaitSharingViolationOnLoad);
         }
         else
         {
             // if we can't read or parse this file just reset the settings
             try
             {
-                result = Ut.WaitSharingVio(() => info.Deserialize(info.FileName), maximum: WaitSharingViolationOnLoad);
+                return Ut.WaitSharingVio(() => Deserialize(FileName), maximum: WaitSharingViolationOnLoad);
             }
             catch
             {
                 // as the old settings are likely to be overwritten by the next save, try preserving a backup of it - but this can also fail, and such failures are ignored
-                if (UseLoadFailedBackup)
-                    try { File.Copy(info.FileName, PathUtil.AppendBeforeExtension(info.FileName, ".LoadFailedBackup"), overwrite: true); }
-                    catch { }
+                try { File.Copy(FileName, PathUtil.AppendBeforeExtension(FileName, ".LoadFailedBackup"), overwrite: true); }
+                catch { }
 
-                settings = new();
-                return false;
+                DefaultsLoaded = true;
+                return new();
             }
         }
-
-        settings = (TSettings) result; // Configure<> only accepts functions that return TSettings so this cast should be safe
-        return true;
     }
 
-    private void doSave(Info info, object settings)
+    private void doSave()
     {
-        PathUtil.CreatePathToFile(info.FileName);
-        var tempName = info.FileName + ".~tmp";
-        info.Serialize(tempName, settings);
-        File.Delete(info.FileName);
-        File.Move(tempName, info.FileName);
+        PathUtil.CreatePathToFile(FileName);
+        var tempName = FileName + ".~tmp";
+        Serialize(tempName, Settings);
+        File.Delete(FileName);
+        File.Move(tempName, FileName);
     }
 
     /// <summary>
-    ///     Saves settings as previously configured via <see cref="Configure"/>.</summary>
-    /// <typeparam name="TSettings">
-    ///     Settings type.</typeparam>
-    /// <param name="settings">
-    ///     Settings to save.</param>
+    ///     Saves the settings object <see cref="Settings"/> to the settings file.</summary>
     /// <param name="throwOnError">
-    ///     Optionally overrides whether a failure to save settings should be suppressed or propagated. If <c>null</c> then
-    ///     the value specified in <see cref="Configure"/> is used. See "Error handling" in "Remarks" for <see
-    ///     cref="SettingsManager"/>.</param>
+    ///     Specifies whether a failure to save settings should be propagated as an exception or silently suppressed
+    ///     (returning <c>false</c> from this method). If <c>null</c> (the default) then the same value is used as was passed
+    ///     into the <see cref="SettingsFile{TSettings}"/> constructor.</param>
     /// <returns>
-    ///     <c>true</c> if saved successfully. <c>false</c> if save failed (for example, due to an I/O error). The latter is
-    ///     only possible if errors are suppressed.</returns>
-    public bool SaveSettings<TSettings>(TSettings settings, bool? throwOnError = null)
+    ///     <c>true</c> if saved successfully. <c>false</c> if the save failed (for example, due to an I/O error). The latter
+    ///     is only possible if errors are suppressed via <paramref name="throwOnError"/>.</returns>
+    public bool Save(bool? throwOnError = null)
     {
-        var info = getInfo<TSettings>();
-        bool canThrow = throwOnError ?? info.ThrowOnError;
+        bool canThrow = throwOnError ?? _throwOnError;
 
         if (canThrow)
         {
-            Ut.WaitSharingVio(() => doSave(info, settings), maximum: WaitSharingViolationOnSave);
+            Ut.WaitSharingVio(() => doSave(), maximum: WaitSharingViolationOnSave);
             return true;
         }
         else
         {
             try
             {
-                Ut.WaitSharingVio(() => doSave(info, settings), maximum: WaitSharingViolationOnSave);
+                Ut.WaitSharingVio(() => doSave(), maximum: WaitSharingViolationOnSave);
                 return true;
             }
             catch
@@ -245,32 +275,30 @@ public class SettingsManager
     }
 
     /// <summary>
-    /// Combines the directory containing the settings file for <typeparamref name="TSettings"/> with the specified path segments. Use this to reference additional files relative to the settings directory while supporting portable mode marker file.
-    /// </summary>
-    /// <typeparam name="TSettings">
-    ///     Settings type.</typeparam>
-    /// <param name="paths">Path segments.</param>
-    public string PathCombine<TSettings>(params string[] paths)
+    ///     Combines the directory containing this settings file with the specified path segments. Use this method to
+    ///     reference additional files relative to the settings directory with correct support for portable mode marker file.</summary>
+    /// <param name="paths">
+    ///     Path segments.</param>
+    public string PathCombine(params string[] paths)
     {
-        var info = getInfo<TSettings>();
-        return Path.Combine(new[] { Path.GetDirectoryName(info.FileName) }.Concat(paths).ToArray());
+        return Path.Combine(new[] { Path.GetDirectoryName(FileName) }.Concat(paths).ToArray());
     }
 
     /// <summary>
-    ///     Determines whether the user has configured a portable mode override. Returns null if not, or the full absolute
-    ///     path to the settings file as overridden by the portable mode. The default implementation checks for the existence
-    ///     of a file named <c>{appName}.IsPortable.txt</c> in the application directory, and optionally reads a template
-    ///     filename from this file. See "Portable mode" in "Remarks" for <see cref="SettingsManager"/>.</summary>
-    /// <param name="appName">
-    ///     The <c>appName</c> parameter that was passed to <see cref="Configure"/>.</param>
-    /// <param name="suffix">
-    ///     The <c>suffix</c> parameter that was passed to <see cref="Configure"/>.</param>
-    /// <param name="throwOnError">
-    ///     The <c>throwOnError</c> parameter that was passed to <see cref="Configure"/>. If overridden, this method must not
-    ///     throw when this parameter is <c>false</c>, and must return null instead.</param>
-    protected virtual string GetPortablePath(string appName, string suffix, bool throwOnError)
+    ///     Gets the full path to where the portable marker file is expected to be found. The default implementation returns
+    ///     the path for <c>$"{appName}.IsPortable.txt"</c> in the application directory.</summary>
+    protected virtual string GetPortableMarkerPath(string appName)
     {
-        var portablePath = Path.Combine(AppContext.BaseDirectory, $"{appName}.IsPortable.txt");
+        return PathUtil.AppPathCombine($"{appName}.IsPortable.txt");
+    }
+
+    /// <summary>
+    ///     Determines whether the user has configured portable mode. Returns null if not, or the full absolute path to the
+    ///     settings file as overridden by the portable mode marker file. See "Portable mode" in "Remarks" for <see
+    ///     cref="SettingsFile{TSettings}"/>.</summary>
+    private string getPortablePath(string appName, bool throwOnError, string suffix)
+    {
+        var portablePath = GetPortableMarkerPath(appName);
         if (!File.Exists(portablePath)) // can't throw
             return null;
 
@@ -289,26 +317,5 @@ public class SettingsManager
         if (portableTemplate.Length == 0)
             portableTemplate = appName + suffix;
         return PathUtil.AppPathCombine(PathUtil.ExpandPath(portableTemplate));
-    }
-}
-
-/// <summary>
-///     Exposes a singleton instance of <see cref="SettingsManager"/> via the static property <see cref="Manager"/> for
-///     convenience.</summary>
-public static class SettingsUtil
-{
-    private static SettingsManager _manager;
-
-    /// <summary>
-    ///     Loads and saves application settings with a number of convenience and reliability features. See <see
-    ///     cref="SettingsManager"/> for details. Initialised on first use.</summary>
-    public static SettingsManager Manager
-    {
-        get
-        {
-            if (_manager == null)
-                _manager = new();
-            return _manager;
-        }
     }
 }
