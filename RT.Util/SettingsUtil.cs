@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -335,7 +335,7 @@ namespace RT.Util
     ///         static class Program
     ///         {
     ///             public static MySettings Settings;
-    ///         
+    ///
     ///             static void Main(string[] args)
     ///             {
     ///                 SettingsUtil.LoadSettings(out Settings);
@@ -343,7 +343,7 @@ namespace RT.Util
     ///                 Settings.Save();
     ///             }
     ///         }
-    ///         
+    ///
     ///         [Settings("MyApplicationName", SettingsKind.UserSpecific)]
     ///         class MySettings : SettingsBase
     ///         {
@@ -656,9 +656,9 @@ namespace RT.Util
         ///     approach is to load settings once, and then save them whenever necessary to whichever path is returned by this
         ///     function.</summary>
         /// <remarks>
-        ///     This method checks if a file by the name <c>(AppName).IsPortable.txt</c> exists in the application path (see
-        ///     <see cref="PathUtil.AppPath"/>). If that file exists, the settings are always stored in that application path.
-        ///     This check is skipped if there is no entry assembly (<see cref="Assembly.GetEntryAssembly"/> is null).</remarks>
+        ///     This method checks if a file by the name <c>(AppName).IsPortable.txt</c> exists in the application path. If
+        ///     that file exists, the settings are always stored in that application path. This check is skipped if there is
+        ///     no entry assembly (<see cref="Assembly.GetEntryAssembly"/> is null).</remarks>
         public string GetFileName()
         {
             string filename = AppName;
