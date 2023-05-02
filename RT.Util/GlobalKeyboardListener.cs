@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace RT.Util
@@ -30,6 +32,9 @@ namespace RT.Util
         /// <summary>Keeps the managed delegate referenced so that the garbage collector doesn’t collect it.</summary>
         private WinAPI.KeyboardHookProc _hook;
 
+        private DesktopLockNotifierForm _lockNotifier;
+        private Timer _afterLockTimer;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="GlobalKeyboardListener" /> class and installs the keyboard hook.</summary>
         public GlobalKeyboardListener()
@@ -37,6 +42,12 @@ namespace RT.Util
             IntPtr hInstance = WinAPI.LoadLibrary("User32");
             _hook = hookProc;   // don’t remove this or the garbage collector will collect it while the global hook still tries to access it
             _hHook = WinAPI.SetWindowsHookEx(WinAPI.WH_KEYBOARD_LL, _hook, IntPtr.Zero, 0);
+            _lockNotifier = new DesktopLockNotifierForm();
+            _lockNotifier.SessionLocked += recheckPossibleSwallowedKeys;
+            _lockNotifier.SessionUnlocked += recheckPossibleSwallowedKeys;
+            _afterLockTimer = new Timer();
+            _afterLockTimer.Interval = 1000;
+            _afterLockTimer.Tick += recheckPossibleSwallowedKeysTimer;
         }
 
         private bool _disposed = false;
@@ -55,6 +66,9 @@ namespace RT.Util
             if (!_disposed)
             {
                 _disposed = true;
+                _lockNotifier.Close();
+                _lockNotifier.Dispose();
+                _afterLockTimer.Dispose();
                 WinAPI.UnhookWindowsHookEx(_hHook);
             }
         }
@@ -133,6 +147,36 @@ namespace RT.Util
             }
             return WinAPI.CallNextHookEx(_hHook, code, wParam, ref lParam);
         }
+
+        private void recheckPossibleSwallowedKeys(object sender, EventArgs e)
+        {
+            // When the desktop is locked with a quick press of Win+L, the up events for these keypresses are swallowed, even though all subsequent keypresses
+            // get through to the handler even though we're on the lock screen already. In this scenario the "Session Locked" notification can arrive while the keys are
+            // actually still down, even though the up events will still be swallowed shortly after, breaking this check. Hence the repeat on timeout.
+            // A similar issue occurs with Ctrl/Alt when unlocking with Ctrl+Alt+Del, and it similarly requires a timer to re-check the keys.
+            recheckPossibleSwallowedKeys();
+            _afterLockTimer.Start();
+            // All of this key swallowing on lock/unlock means that Up/Down events from this Global Keyboard Listener are not always paired correctly.
+            // We do not attempt to emulate the swallowed events even for the modifier keys (which are easier because we track their state already).
+        }
+
+        private void recheckPossibleSwallowedKeysTimer(object sender, EventArgs e)
+        {
+            _afterLockTimer.Stop();
+            recheckPossibleSwallowedKeys();
+        }
+
+        private void recheckPossibleSwallowedKeys()
+        {
+            if (_ctrl && WinAPI.GetKeyState((int) Keys.LControlKey) >= 0 && WinAPI.GetKeyState((int) Keys.RControlKey) >= 0)
+                _ctrl = false;
+            if (_alt && WinAPI.GetKeyState((int) Keys.LMenu) >= 0 && WinAPI.GetKeyState((int) Keys.RMenu) >= 0)
+                _alt = false;
+            if (_shift && WinAPI.GetKeyState((int) Keys.LShiftKey) >= 0 && WinAPI.GetKeyState((int) Keys.RShiftKey) >= 0)
+                _shift = false;
+            if (_win && WinAPI.GetKeyState((int) Keys.LWin) >= 0 && WinAPI.GetKeyState((int) Keys.RWin) >= 0)
+                _win = false;
+        }
     }
 
     /// <summary>Encapsulates the current state of modifier keys.</summary>
@@ -189,4 +233,46 @@ namespace RT.Util
 
     /// <summary>Used to trigger the KeyUp/KeyDown events in <see cref="GlobalKeyboardListener" />.</summary>
     public delegate void GlobalKeyEventHandler(object sender, GlobalKeyEventArgs e);
+
+    /// <summary>
+    ///     Subscribes to desktop (session) lock/unlock notifications and exposes events for these. It's untested whether
+    ///     disposing correctly unsubscribes from the notifications, so you should call Close and then Dispose to shut down
+    ///     the notifier.</summary>
+    public class DesktopLockNotifierForm : Form
+    {
+        /// <summary>Constructor.</summary>
+        public DesktopLockNotifierForm()
+        {
+            WTSRegisterSessionNotification(Handle, 0 /*NOTIFY_FOR_THIS_SESSION*/);
+        }
+        /// <summary>Close handler.</summary>
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            WTSUnRegisterSessionNotification(Handle);
+            base.OnClosing(e);
+        }
+        /// <summary>Triggers every time the desktop (session) is locked.</summary>
+        public event EventHandler SessionLocked;
+        /// <summary>Triggers every time the desktop (session) is unlocked.</summary>
+        public event EventHandler SessionUnlocked;
+
+        /// <summary>Message handler.</summary>
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x2b1/*WM_WTSSESSION_CHANGE*/)
+            {
+                int value = m.WParam.ToInt32();
+                if (value == 7 /*WTS_SESSION_LOCK*/)
+                    SessionLocked?.Invoke(this, EventArgs.Empty);
+                if (value == 8 /*WTS_SESSION_UNLOCK*/)
+                    SessionUnlocked?.Invoke(this, EventArgs.Empty);
+            }
+            base.WndProc(ref m);
+        }
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        static extern bool WTSRegisterSessionNotification(IntPtr hWnd, [MarshalAs(UnmanagedType.U4)] int dwFlags);
+        [DllImport("WtsApi32.dll")]
+        static extern bool WTSUnRegisterSessionNotification(IntPtr hWnd);
+    }
 }
