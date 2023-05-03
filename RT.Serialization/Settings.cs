@@ -94,13 +94,13 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <summary>
     ///     Settings stored in this settings file. This property is automatically populated by the constructor, which loads
     ///     the settings or constructs a new instance where necessary. Users should update this object as appropriate and call
-    ///     <see cref="Save"/> to persist the settings.</summary>
+    ///     <see cref="Save(bool?)"/> to persist the settings.</summary>
     public TSettings Settings { get; set; }
 
     /// <summary>
     ///     Full path to the file from which the settings were loaded and to which they will be saved. This property is
     ///     populated on load even if the settings file did not exist as this is the path to which settings will be saved by
-    ///     <see cref="Save"/>.</summary>
+    ///     <see cref="Save(bool?)"/>.</summary>
     public string FileName { get; private set; }
 
     /// <summary>
@@ -144,7 +144,7 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     public static TimeSpan WaitSharingViolationOnLoad { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    ///     The value of <c>throwOnError</c> passed into the constructor, which enables <see cref="Save"/> to default to the
+    ///     The value of <c>throwOnError</c> passed into the constructor, which enables <see cref="Save(bool?)"/> to default to the
     ///     same value. It is private to ensure that descendants do not erroneously attempt to make use of this value.</summary>
     private bool _throwOnError;
 
@@ -159,7 +159,7 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <param name="throwOnError">
     ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
     ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
-    ///     <c>throwOnError</c> when calling <see cref="Save"/>.</param>
+    ///     <c>throwOnError</c> when calling <see cref="Save(bool?)"/>.</param>
     /// <param name="suffix">
     ///     Appended to the settings file name; at a minimum this should include the extension dot and the file extension.</param>
     public SettingsFile(string appName, SettingsLocation location, bool throwOnError, string suffix)
@@ -192,7 +192,7 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <param name="throwOnError">
     ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
     ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
-    ///     <c>throwOnError</c> when calling <see cref="Save"/>.</param>
+    ///     <c>throwOnError</c> when calling <see cref="Save(bool?)"/>.</param>
     public SettingsFile(string filename, bool throwOnError)
     {
         FileName = PathUtil.AppPathCombine(filename);
@@ -233,13 +233,13 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
         }
     }
 
-    private void doSave()
+    private void doSave(string filename)
     {
-        PathUtil.CreatePathToFile(FileName);
-        var tempName = FileName + ".~tmp";
+        PathUtil.CreatePathToFile(filename);
+        var tempName = filename + ".~tmp";
         Serialize(tempName, Settings);
-        File.Delete(FileName);
-        File.Move(tempName, FileName);
+        File.Delete(filename);
+        File.Move(tempName, filename);
     }
 
     /// <summary>
@@ -253,18 +253,33 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     ///     is only possible if errors are suppressed via <paramref name="throwOnError"/>.</returns>
     public bool Save(bool? throwOnError = null)
     {
+        return Save(FileName, throwOnError);
+    }
+
+    /// <summary>
+    ///     Saves the settings object <see cref="Settings"/> to the settings file.</summary>
+    /// <param name="filename">Custom filename to save the settings to, ignoring the value of <see cref="FileName"/>.</param>
+    /// <param name="throwOnError">
+    ///     Specifies whether a failure to save settings should be propagated as an exception or silently suppressed
+    ///     (returning <c>false</c> from this method). If <c>null</c> (the default) then the same value is used as was passed
+    ///     into the <see cref="SettingsFile{TSettings}"/> constructor.</param>
+    /// <returns>
+    ///     <c>true</c> if saved successfully. <c>false</c> if the save failed (for example, due to an I/O error). The latter
+    ///     is only possible if errors are suppressed via <paramref name="throwOnError"/>.</returns>
+    public bool Save(string filename, bool? throwOnError = null)
+    {
         bool canThrow = throwOnError ?? _throwOnError;
 
         if (canThrow)
         {
-            Ut.WaitSharingVio(() => doSave(), maximum: WaitSharingViolationOnSave);
+            Ut.WaitSharingVio(() => doSave(filename), maximum: WaitSharingViolationOnSave);
             return true;
         }
         else
         {
             try
             {
-                Ut.WaitSharingVio(() => doSave(), maximum: WaitSharingViolationOnSave);
+                Ut.WaitSharingVio(() => doSave(filename), maximum: WaitSharingViolationOnSave);
                 return true;
             }
             catch
