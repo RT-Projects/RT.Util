@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -66,8 +66,6 @@ namespace RT.Util
 
             switch (attr.Serializer)
             {
-                case SettingsSerializer.DotNetBinary:
-                    break;
                 case SettingsSerializer.ClassifyXml:
                 case SettingsSerializer.ClassifyJson:
                 case SettingsSerializer.ClassifyBinary:
@@ -224,12 +222,6 @@ namespace RT.Util
                         ClassifyBinary.SerializeToFile(settingsType, settings, tempname);
                         break;
 
-                    case SettingsSerializer.DotNetBinary:
-                        PathUtil.CreatePathToFile(tempname);
-                        var bf = new BinaryFormatter();
-                        using (var fs = File.Open(tempname, FileMode.Create, FileAccess.Write, FileShare.Read))
-                            bf.Serialize(fs, settings);
-                        break;
                     default:
                         throw new InternalErrorException("4968453");
                 }
@@ -252,11 +244,6 @@ namespace RT.Util
 
                     case SettingsSerializer.ClassifyBinary:
                         return ClassifyBinary.DeserializeFile<TSettings>(filename);
-
-                    case SettingsSerializer.DotNetBinary:
-                        var bf = new BinaryFormatter();
-                        using (var fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                            return (TSettings) bf.Deserialize(fs);
 
                     default:
                         throw new InternalErrorException("6843184");
@@ -588,9 +575,6 @@ namespace RT.Util
         /// <summary>Use the Classify serializer with the JSON format.</summary>
         [SerializerInfo(defaultFileExtension: "json", AutoConvertFrom = true)]
         ClassifyJson,
-        /// <summary>Use the .NET binary serializer.</summary>
-        [SerializerInfo(defaultFileExtension: "bin", AutoConvertFrom = true)]
-        DotNetBinary,
     }
 
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
