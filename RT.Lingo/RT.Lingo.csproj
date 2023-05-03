@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472</TargetFrameworks>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+
+    <!-- See also: https://habr.com/ru/articles/549530/ -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
 
     <EmbedAllSources>false</EmbedAllSources>
 
@@ -13,23 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="TranslationWindow.xaml" />
-    <Page Include="TranslationWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\RT.Lingo.Base\RT.Lingo.Base.csproj" />
     <ProjectReference Include="..\RT.Util\RT.Util.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
 
 </Project>
