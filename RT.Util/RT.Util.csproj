@@ -1,10 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472</TargetFrameworks>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <Configurations>Debug;Release</Configurations>
-
+    
+    <!-- See also: https://habr.com/ru/articles/549530/ -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
     <Description>Wad of stuff. Code from 1.* of this package has been moved to one of the following packages: RT.Util.Core, RT.Serialization.Json / RT.Serialization.Xml, RT.Json, RT.PostBuild and RT.Util.Legacy.</Description>
@@ -29,14 +33,6 @@
     <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
     <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
     <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
 
 </Project>
