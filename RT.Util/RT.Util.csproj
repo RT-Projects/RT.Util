@@ -25,7 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
-    <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
     <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
     <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
