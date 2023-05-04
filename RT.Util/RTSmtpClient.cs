@@ -605,12 +605,12 @@ namespace RT.Util
 
             protected override string DecryptPassword(string encrypted)
             {
-                return SettingsUtil.DecryptPassword(encrypted, _key);
+                return Ut.AesDecrypt(encrypted.Base64UrlDecode(), _key).FromUtf8();
             }
 
             protected override string EncryptPassword(string decrypted)
             {
-                return SettingsUtil.EncryptPassword(decrypted, _key);
+                return Ut.AesEncrypt(decrypted.ToUtf8(), _key).Base64UrlEncode();
             }
         }
 
