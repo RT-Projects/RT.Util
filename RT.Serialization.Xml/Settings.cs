@@ -21,6 +21,6 @@ public class SettingsFileXml<TSettings> : SettingsFile<TSettings> where TSetting
     /// <inheritdoc/>
     protected override void Serialize(string filename, TSettings settings)
     {
-        ClassifyXml.SerializeToFile(settings, filename, _options);
+        ClassifyXml.SerializeToFile(settings, filename, _options, format: ClassifyXmlFormat.Create("Settings"));
     }
 }
