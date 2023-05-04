@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using RT.Util;
@@ -144,8 +144,8 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     public static TimeSpan WaitSharingViolationOnLoad { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    ///     The value of <c>throwOnError</c> passed into the constructor, which enables <see cref="Save(bool?)"/> to default to the
-    ///     same value. It is private to ensure that descendants do not erroneously attempt to make use of this value.</summary>
+    ///     The value of <c>throwOnError</c> passed into the constructor, which enables <see cref="Save(bool?)"/> to default
+    ///     to the same value. It is private to ensure that descendants do not erroneously attempt to make use of this value.</summary>
     private bool _throwOnError;
 
     /// <summary>
@@ -178,6 +178,7 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
             filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), appName, appName + suffix);
         else
             throw new Exception();
+        filename = DetectLegacyFileNaming(filename, appName, suffix);
         FileName = filename;
 
         _throwOnError = throwOnError;
@@ -258,7 +259,8 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
 
     /// <summary>
     ///     Saves the settings object <see cref="Settings"/> to the settings file.</summary>
-    /// <param name="filename">Custom filename to save the settings to, ignoring the value of <see cref="FileName"/>.</param>
+    /// <param name="filename">
+    ///     Custom filename to save the settings to, ignoring the value of <see cref="FileName"/>.</param>
     /// <param name="throwOnError">
     ///     Specifies whether a failure to save settings should be propagated as an exception or silently suppressed
     ///     (returning <c>false</c> from this method). If <c>null</c> (the default) then the same value is used as was passed
@@ -332,5 +334,30 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
         if (portableTemplate.Length == 0)
             portableTemplate = appName + suffix;
         return PathUtil.AppPathCombine(PathUtil.ExpandPath(portableTemplate));
+    }
+
+    /// <summary>
+    ///     Detects legacy settings filenames produced by <c>RT.Util.SettingsUtil</c>. If the file at <paramref
+    ///     name="filename"/> does not exist, and there is a matching legacy-named file at the same path, returns the full
+    ///     path to that legacy file. Otherwise returns <paramref name="filename"/> unchanged.</summary>
+    /// <param name="filename">
+    ///     Non-legacy full path and filename for this settings file.</param>
+    /// <param name="appName">
+    ///     Application name as passed into the constructor.</param>
+    /// <param name="suffix">
+    ///     Filename suffix as passed into the constructor.</param>
+    protected virtual string DetectLegacyFileNaming(string filename, string appName, string suffix)
+    {
+        if (File.Exists(filename))
+            return filename;
+        var dir = Path.GetDirectoryName(filename);
+        string legacyName;
+        if (File.Exists(legacyName = Path.Combine(dir, $"{appName}.Global{suffix}")))
+            return legacyName;
+        if (File.Exists(legacyName = Path.Combine(dir, $"{appName}.{Environment.MachineName}{suffix}")))
+            return legacyName;
+        if (File.Exists(legacyName = Path.Combine(dir, $"{appName}.AllUsers.{Environment.MachineName}{suffix}")))
+            return legacyName;
+        return filename;
     }
 }
