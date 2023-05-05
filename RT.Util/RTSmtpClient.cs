@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using RT.Serialization;
+using RT.Serialization.Settings;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util
@@ -587,14 +588,11 @@ namespace RT.Util
     ///     doesn't specify any. The "From" address is fixed per account, but the name may be overridden by the application.</summary>
     public static class Emailer
     {
-#pragma warning disable 649 // field never assigned to
-        [Settings("RT.Emailer", SettingsKind.Global)]
-        private class settings : SettingsBase
+        private class settings
         {
-            public string DefaultAccount;
+            public string DefaultAccount = null;
             public Dictionary<string, account> Accounts = new Dictionary<string, account>();
         }
-#pragma warning restore 649
 
         private class account : RTSmtpSettings
         {
@@ -638,9 +636,8 @@ namespace RT.Util
         public static void SendEmail(IEnumerable<MailAddress> to, string subject, string bodyPlain = null, string bodyHtml = null, string account = null, string fromName = null)
         {
             // Load the settings file
-            var settingsFile = SettingsUtil.GetAttribute<settings>().GetFileName();
-            settings settings;
-            SettingsUtil.LoadSettings(out settings);
+            var settingsFile = new SettingsFileXml<settings>("RT.Emailer", SettingsLocation.MachineLocal, throwOnError: false);
+            var settings = settingsFile.Settings;
 
             // Add an empty exe name account
             string exeName = Process.GetCurrentProcess().ProcessName + ".exe";
@@ -651,11 +648,11 @@ namespace RT.Util
             if (!settings.Accounts.Any(a => a.Value != null))
             {
                 settings.Accounts.Add("example", new account());
-                settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".example"));
-                throw new InvalidOperationException("There are no RT.Emailer accounts defined on this computer. Please configure them in the file \"{0}\".".Fmt(settingsFile));
+                settingsFile.Save(PathUtil.AppendBeforeExtension(settingsFile.FileName, ".example"));
+                throw new InvalidOperationException("There are no RT.Emailer accounts defined on this computer. Please configure them in the file \"{0}\".".Fmt(settingsFile.FileName));
             }
             else
-                settings.SaveQuiet(PathUtil.AppendBeforeExtension(settingsFile, ".rewrite"));
+                settingsFile.Save(PathUtil.AppendBeforeExtension(settingsFile.FileName, ".rewrite"));
 
             // Pick the actual account we'll use
             if (account == null || !settings.Accounts.ContainsKey(account) || settings.Accounts[account] == null)
