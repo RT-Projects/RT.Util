@@ -1,10 +1,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using RT.Util;
 
 // Possible future improvements:
-// - implement SaveSettingsInBackground to fully supersede RT.Util.SettingsUtil
 // - monitor for changes / autoreload mode
 
 namespace RT.Serialization.Settings;
@@ -43,7 +44,8 @@ public enum SettingsLocation
 ///         <item>When saving, the settings are first saved to a temporary file, which only overwrites the original settings
 ///         file after a successful serialization.</item>
 ///         <item>Unexpected I/O or parse errors can be toggled on/off, for applications wishing to trade between startup
-///         reliability or preserving settings at the cost of a startup crash / additional error handling code.</item></list>
+///         reliability or preserving settings at the cost of a startup crash / additional error handling code.</item>
+///         <item>Supports scheduling a background save on a background thread, with debouncing of frequent calls.</item></list>
 ///     <para>
 ///         <b>Typical usage</b></para>
 ///     <code>
@@ -234,11 +236,11 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
         }
     }
 
-    private void doSave(string filename)
+    private void doSave(string filename, TSettings settings)
     {
         PathUtil.CreatePathToFile(filename);
         var tempName = filename + ".~tmp";
-        Serialize(tempName, Settings);
+        Serialize(tempName, settings);
         File.Delete(filename);
         File.Move(tempName, filename);
     }
@@ -252,9 +254,24 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <returns>
     ///     <c>true</c> if saved successfully. <c>false</c> if the save failed (for example, due to an I/O error). The latter
     ///     is only possible if errors are suppressed via <paramref name="throwOnError"/>.</returns>
+    /// <remarks>
+    ///     This method interacts with <see cref="SaveInBackground"/> by cancelling any pending background saves and making
+    ///     sure that the current Settings object is the one that gets persisted last, overwriting any previous changes. Thus
+    ///     it is safe to call this to reliably save settings on program exit regardless of any calls to <see
+    ///     cref="SaveInBackground"/> with older versions of the <see cref="Settings"/> object.</remarks>
     public bool Save(bool? throwOnError = null)
     {
-        return Save(FileName, throwOnError);
+        lock (_backgroundLock)
+        {
+            _backgroundCancel?.Cancel();
+            _backgroundCancel = null;
+            // This guarantees that there is no pending save with a potentially older version of the settings object. It remains possible for a new
+            // background save to be scheduled, but it would be saving a newer version of the settings object. This Save can be stuck on waiting
+            // for a sharing violation long enough for the background save timeout to expire, but because we are holding the lock while we wait
+            // the background save will execute after this save completes, preserving the expected order: first this Save with the older Settings,
+            // then immediately the background save with the newer Settings.
+            return Save(FileName, throwOnError);
+        }
     }
 
     /// <summary>
@@ -268,26 +285,119 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <returns>
     ///     <c>true</c> if saved successfully. <c>false</c> if the save failed (for example, due to an I/O error). The latter
     ///     is only possible if errors are suppressed via <paramref name="throwOnError"/>.</returns>
+    /// <remarks>
+    ///     This method completely ignores the existence of background saves initiated by <see cref="SaveInBackground"/>.
+    ///     Saving to the same filename as <see cref="FileName"/> will result in undefined behaviour.</remarks>
     public bool Save(string filename, bool? throwOnError = null)
     {
         bool canThrow = throwOnError ?? _throwOnError;
 
         if (canThrow)
         {
-            Ut.WaitSharingVio(() => doSave(filename), maximum: WaitSharingViolationOnSave);
+            Ut.WaitSharingVio(() => doSave(filename, Settings), maximum: WaitSharingViolationOnSave);
             return true;
         }
         else
         {
             try
             {
-                Ut.WaitSharingVio(() => doSave(filename), maximum: WaitSharingViolationOnSave);
+                Ut.WaitSharingVio(() => doSave(filename, Settings), maximum: WaitSharingViolationOnSave);
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+    }
+
+    private object _backgroundLock = new();
+    private CancellationTokenSource _backgroundCancel = null; // not null when we have a pending background save task; null when it's cancelled or completed
+    private TSettings _backgroundSettings = default;
+
+    /// <summary>
+    ///     Determines the maximum frequency at which calls to <see cref="SaveInBackground"/> actually perform the
+    ///     (potentially expensive) save. The first background save is delayed by the amount specified here; subsequent
+    ///     background saves only update the object to be saved but do not postpone the save.</summary>
+    public TimeSpan BackgroundSaveDelay { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    ///     Take this lock before making changes to the <see cref="Settings"/> object if you use <see
+    ///     cref="SaveInBackground"/>. See Remarks on <see cref="SaveInBackground"/> for specifics.</summary>
+    public object BackgroundLock => _backgroundLock;
+
+    /// <summary>
+    ///     Saves settings on a background thread after a short delay. See Remarks.</summary>
+    /// <remarks>
+    ///     <para>
+    ///         This method can be called as often as necessary. It is cheap to call frequently, and will only save at most
+    ///         once every <see cref="BackgroundSaveDelay"/> seconds.</para>
+    ///     <para>
+    ///         This method may be safely interleaved with calls to <see cref="Save(bool?)"/>. The saves are ordered as
+    ///         called; it is not possible for an older background save to overwrite a newer save from either method. The <see
+    ///         cref="Save(bool?)"/> method attempts to cancel any pending background saves. Note that <see cref="Save(string,
+    ///         bool?)"/> is completely exempt from this logic; it does not co-operate with background saving in any way and
+    ///         just writes out the settings to the specified file.</para>
+    ///     <para>
+    ///         Save errors are ignored; it is not possible to detect a failed background save. However, on file sharing
+    ///         violation a new background save is scheduled automatically.</para>
+    ///     <para>
+    ///         If the process exits with a background save pending, the background save is lost. Make sure to call <see
+    ///         cref="Save(bool?)"/> prior to exiting the process.</para>
+    ///     <para>
+    ///         If <typeparamref name="TSettings"/> implements <see cref="ICloneable"/> the object is cloned on every call and
+    ///         it is the clone that is scheduled for saving. Otherwise the <see cref="Settings"/> object is saved as-is,
+    ///         meaning that any changes made after the call to <see cref="SaveInBackground"/> may end up getting saved.</para>
+    ///     <para>
+    ///         You must consider thread safety when modifying the <see cref="Settings"/> object if you use this method. The
+    ///         background save thread expects to be able to read it consistently: in the <see cref="ICloneable"/> case it's
+    ///         at the time of this call on the calling thread; otherwise it's at an unspecified time on a thread pool thread.
+    ///         In particular, basic .NET collections such as Dictionary will break if read and modified simultaneously from
+    ///         multiple threads. You should either implement <see cref="ICloneable"/> and synchronize the call to this method
+    ///         with all changes to <see cref="Settings"/> yourself, or you must wrap all changes to <see cref="Settings"/> in
+    ///         a lock of <see cref="BackgroundLock"/>. Alternatively you can make sure that all updates to <see
+    ///         cref="Settings"/> are atomic (which non-concurrent .NET collections are not!)</para></remarks>
+    public void SaveInBackground()
+    {
+        if (Settings is ICloneable cloneable)
+            _backgroundSettings = (TSettings) cloneable.Clone();
+        else
+            _backgroundSettings = Settings;
+
+        scheduleBackgroundSave();
+    }
+
+    private void scheduleBackgroundSave()
+    {
+        lock (_backgroundLock)
+        {
+            if (_backgroundCancel != null)
+                return; // we already have a pending save and don't need to do anything
+
+            _backgroundCancel = new();
+            var token = _backgroundCancel.Token;
+
+            Task.Delay(BackgroundSaveDelay, token).ContinueWith(_ =>
+            {
+                lock (_backgroundLock)
+                {
+                    if (token.IsCancellationRequested) // while _backgroundCancel itself shouldn't be null here (it's set to null inside the lock by Save), to make extra sure we use the locally captured token instead
+                        return;
+                    _backgroundCancel = null;
+                    try
+                    {
+                        doSave(FileName, _backgroundSettings);
+                    }
+                    catch (IOException ex) when (ex.HResult == -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
+                    {
+                        scheduleBackgroundSave(); // on sharing violation schedule another background save as a retry
+                    }
+                    catch
+                    {
+                        // all other problems with saving are ignored by background saves
+                    }
+                }
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
         }
     }
 
