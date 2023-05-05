@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -399,13 +399,8 @@ namespace RT.Util
                 {
                     return func();
                 }
-                catch (IOException ex)
+                catch (IOException ex) when (ex.HResult == -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
                 {
-                    int hResult = 0;
-                    try { hResult = (int) ex.GetType().GetProperty("HResult", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).GetValue(ex, null); }
-                    catch { }
-                    if (hResult != -2147024864) // 0x80070020 ERROR_SHARING_VIOLATION
-                        throw;
                     onSharingVio?.Invoke();
                 }
 
