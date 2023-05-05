@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -874,6 +874,53 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
+        ///     Returns all elements for which the <paramref name="valueSelector"/> returns the smallest value, or an empty
+        ///     sequence if the input sequence is empty.</summary>
+        public static IEnumerable<T> MinElements<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (valueSelector == null)
+                throw new ArgumentNullException(nameof(valueSelector));
+            return minMaxElements(source, valueSelector, min: true);
+        }
+
+        /// <summary>
+        ///     Returns all elements for which the <paramref name="valueSelector"/> returns the largest value, or an empty
+        ///     sequence if the input sequence is empty.</summary>
+        public static IEnumerable<T> MaxElements<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue>
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (valueSelector == null)
+                throw new ArgumentNullException(nameof(valueSelector));
+            return minMaxElements(source, valueSelector, min: false);
+        }
+
+        private static IEnumerable<T> minMaxElements<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min) where TValue : IComparable<TValue>
+        {
+            var results = new List<T>();
+            TValue minMaxValue = default;
+            foreach (var el in source)
+            {
+                var value = valueSelector(el);
+                if (results.Count == 0)
+                    minMaxValue = value;
+                var compare = value.CompareTo(minMaxValue);
+                if (min ? (compare < 0) : (compare > 0))
+                {
+                    minMaxValue = value;
+                    results.Clear();
+                    results.Add(el);
+                }
+                else if (compare == 0)
+                    results.Add(el);
+            }
+
+            return results;
+        }
+
+        /// <summary>
         ///     Enumerates the items of this collection, skipping the last <paramref name="count"/> items. Note that the
         ///     memory usage of this method is proportional to <paramref name="count"/>, but the source collection is only
         ///     enumerated once, and in a lazy fashion. Also, enumerating the first item will take longer than enumerating
@@ -1566,10 +1613,14 @@ namespace RT.Util.ExtensionMethods
         }
 
 #if NET7_0_OR_GREATER
-        /// <summary>Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
-        /// <typeparam name="T">A numeric element type.</typeparam>
-        /// <param name="source">Input sequence.</param>
-        /// <returns>Minimum, maximum, sum and count.</returns>
+        /// <summary>
+        ///     Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
+        /// <typeparam name="T">
+        ///     A numeric element type.</typeparam>
+        /// <param name="source">
+        ///     Input sequence.</param>
+        /// <returns>
+        ///     Minimum, maximum, sum and count.</returns>
         public static (T Min, T Max, T Sum, int Count) MinMaxSumCount<T>(this IEnumerable<T> source) where T : INumber<T>, IMinMaxValue<T>
         {
             var min = T.MaxValue;
@@ -1586,10 +1637,14 @@ namespace RT.Util.ExtensionMethods
             return (min, max, sum, count);
         }
 
-        /// <summary>Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
-        /// <typeparam name="T">A numeric element type.</typeparam>
-        /// <param name="source">Input sequence.</param>
-        /// <returns>Minimum, maximum, sum and count.</returns>
+        /// <summary>
+        ///     Computes the minimum, maximum, sum and count on the input sequence in a single pass.</summary>
+        /// <typeparam name="T">
+        ///     A numeric element type.</typeparam>
+        /// <param name="source">
+        ///     Input sequence.</param>
+        /// <returns>
+        ///     Minimum, maximum, sum and count.</returns>
         public static (T Min, T Max, T Sum, long Count) MinMaxSumCountLong<T>(this IEnumerable<T> source) where T : INumber<T>, IMinMaxValue<T>
         {
             var min = T.MaxValue;

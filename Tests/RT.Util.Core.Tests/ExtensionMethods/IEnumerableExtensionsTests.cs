@@ -267,10 +267,38 @@ namespace RT.Util.ExtensionMethods
             Assert.Throws<InvalidOperationException>(() => IEnumerableExtensions.MinElement<string, int>(new string[0], str => str.Length));
 
             var input = new[] { "one", "two", "three", "four" };
+
+            // MinElement
             Assert.AreEqual("one", input.MinElement(str => str.Length));
             Assert.AreEqual("three", input.MinElement(str => -str.Length));
             Assert.AreEqual("three", input.MinElement(str => (int) str[1]));
             Assert.AreEqual("two", input.MinElement(str => -(int) str[0]));
+
+            // MaxElement
+            Assert.AreEqual("three", input.MaxElement(str => str.Length));
+            Assert.AreEqual("one", input.MaxElement(str => -str.Length));
+
+            // MinElementOrDefault
+            Assert.AreEqual("one", input.MinElementOrDefault(str => str.Length));
+            Assert.AreEqual(null, new string[0].MinElementOrDefault(str => str.Length));
+            Assert.AreEqual("foobar", new string[0].MinElementOrDefault(str => str.Length, "foobar"));
+
+            // MaxElementOrDefault
+            Assert.AreEqual("three", input.MaxElementOrDefault(str => str.Length));
+            Assert.AreEqual(null, new string[0].MaxElementOrDefault(str => str.Length));
+            Assert.AreEqual("foobar", new string[0].MaxElementOrDefault(str => str.Length, "foobar"));
+
+            // MinElements
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElements<string, int>(new[] { "" }, null); });
+            Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.MinElements<string, int>(null, str => str.Length); });
+            Assert.IsTrue(new[] { "one", "two" }.SequenceEqual(input.MinElements(str => str.Length)));
+            Assert.IsTrue(new[] { "three" }.SequenceEqual(input.MinElements(str => -str.Length)));
+            Assert.IsEmpty(new string[0].MinElements(str => str.Length));
+
+            // MaxElements
+            Assert.IsTrue(new[] { "three" }.SequenceEqual(input.MaxElements(str => str.Length)));
+            Assert.IsTrue(new[] { "one", "two" }.SequenceEqual(input.MaxElements(str => -str.Length)));
+            Assert.IsEmpty(new string[0].MaxElements(str => str.Length));
         }
 
         [Test]
