@@ -221,11 +221,13 @@ namespace RT.KitchenSink.Collections
             doFromXml(element, "");
         }
 
+#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved - .NET gets confused by RT.Json's inclusion of a private copy of ExactConvert with #if
         /// <summary>
         /// Returns a string representation of this RVariant. If this RVariant is
         /// of the Value Kind, returns the result of <see cref="ExactConvert.ToString"/>.
         /// Otherwise returns a string showing the Path and the Kind of this value.
         /// </summary>
+#pragma warning restore CS1574
         public override string ToString()
         {
             if (_kind == RVariantKind.Value)

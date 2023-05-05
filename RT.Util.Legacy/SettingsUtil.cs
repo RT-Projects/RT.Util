@@ -320,7 +320,9 @@ namespace RT.Util
             {
                 if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
                 {
+#pragma warning disable SYSLIB0006 // Thread.Abort is not supported and throws PlatformNotSupportedException on .NET Core
                     _saveThread.Abort();
+#pragma warning restore SYSLIB0006
                     _saveThread = null;
                 }
                 SettingsUtil.save(this, filename, serializer, onFailure);
@@ -360,7 +362,9 @@ namespace RT.Util
             {
                 if (_saveThread != null) // this can only ever occur in the Sleep/lock wait phase of the quick save thread
                 {
+#pragma warning disable SYSLIB0006 // Thread.Abort is not supported and throws PlatformNotSupportedException on .NET Core
                     _saveThread.Abort();
+#pragma warning restore SYSLIB0006
                     _saveThread = null;
                 }
                 var attr = SettingsUtil.GetAttribute(GetType());
