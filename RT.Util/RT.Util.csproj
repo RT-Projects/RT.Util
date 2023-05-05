@@ -21,8 +21,6 @@
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
     <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
-    <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
-    <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
   </ItemGroup>
 
 </Project>

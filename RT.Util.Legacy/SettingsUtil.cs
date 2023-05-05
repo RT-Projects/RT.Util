@@ -4,15 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Xml;
 using RT.PostBuild;
 using RT.Serialization;
-using RT.Util.Forms;
 using RT.Util.ExtensionMethods;
+using RT.Util.Forms;
 
 namespace RT.Util
 {

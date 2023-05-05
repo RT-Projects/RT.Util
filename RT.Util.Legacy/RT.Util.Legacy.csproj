@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
     <Version>1.0.0.9999</Version>
@@ -12,8 +12,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
+    <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Json\RT.Serialization.Json.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
+    <ProjectReference Include="..\RT.Util\RT.Util.csproj" />
   </ItemGroup>
 
 </Project>

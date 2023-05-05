@@ -583,7 +583,7 @@ namespace RT.Util
 
     /// <summary>
     ///     Implements a simple interface for sending an email that shares a global repository of SMTP settings. This
-    ///     repository is stored using <see cref="SettingsUtil"/> using the name "RT.Emailer". The repository contains a list
+    ///     repository is stored using <see cref="SettingsFileXml{TSettings}"/> using the name "RT.Emailer". The repository contains a list
     ///     of SMTP accounts with a unique name. One of the accounts may be designated as the default one if the application
     ///     doesn't specify any. The "From" address is fixed per account, but the name may be overridden by the application.</summary>
     public static class Emailer
