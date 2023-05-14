@@ -23,6 +23,12 @@ namespace RT.Serialization.Tests
             public int suppressWarning { get { return aField; } set { aField = value; } }
         }
 
+        public enum AnAbsolutelySupportedEnum
+        {
+            Good,
+            Bad
+        }
+
         #region Speed tests
 
         /// <summary>
@@ -1279,110 +1285,110 @@ namespace RT.Serialization.Tests
             switch (code)
             {
                 case TypeCode.Boolean:
-                {
-                    bool val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        bool val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Byte:
-                {
-                    byte val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        byte val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.SByte:
-                {
-                    sbyte val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        sbyte val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Int16:
-                {
-                    short val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        short val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.UInt16:
-                {
-                    ushort val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        ushort val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Int32:
-                {
-                    int val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        int val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.UInt32:
-                {
-                    uint val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        uint val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Int64:
-                {
-                    long val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        long val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.UInt64:
-                {
-                    ulong val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        ulong val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Single:
-                {
-                    float val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        float val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Double:
-                {
-                    double val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        double val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Decimal:
-                {
-                    decimal val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        decimal val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.String:
-                {
-                    string val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        string val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.Char:
-                {
-                    char val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val);
-                    break;
-                }
+                    {
+                        char val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val);
+                        break;
+                    }
                 case TypeCode.DateTime:
-                {
-                    DateTime val;
-                    Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
-                    Assert.AreEqual(value, val); Assert.AreEqual(((DateTime) value).Kind, ((DateTime) val).Kind);
-                    break;
-                }
+                    {
+                        DateTime val;
+                        Assert.IsTrue(ExactConvert.Try(str, out val)); rtripd = val;
+                        Assert.AreEqual(value, val); Assert.AreEqual(((DateTime) value).Kind, ((DateTime) val).Kind);
+                        break;
+                    }
                 default:
                     Assert.Fail("Unexpected TypeCode.");
                     return;
@@ -1459,6 +1465,38 @@ namespace RT.Serialization.Tests
 
             Assert.AreEqual("123", ExactConvert.ToString(123));
             Assert.DoesNotThrow(() => { ExactConvert.ToString(null); });
+        }
+
+        [Test]
+        public void TestEnums()
+        {
+            Assert.AreEqual("Good", ExactConvert.ToString(AnAbsolutelySupportedEnum.Good));
+            Assert.AreEqual("Bad", ExactConvert.To<string>(AnAbsolutelySupportedEnum.Bad));
+            Assert.AreEqual(0, ExactConvert.ToInt(AnAbsolutelySupportedEnum.Good));
+            Assert.AreEqual(1, ExactConvert.To<int>(AnAbsolutelySupportedEnum.Bad));
+
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To<AnAbsolutelySupportedEnum>("Good"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To<AnAbsolutelySupportedEnum>("0"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To<AnAbsolutelySupportedEnum>(0));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To<AnAbsolutelySupportedEnum>("Bad"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To<AnAbsolutelySupportedEnum>("1"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To<AnAbsolutelySupportedEnum>(1));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "Good"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "0"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Good, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), 0));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "Bad"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "1"));
+            Assert.AreEqual(AnAbsolutelySupportedEnum.Bad, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), 1));
+
+            // Name that’s not in the enum
+            Assert.Throws<ExactConvertException>(() => ExactConvert.To<AnAbsolutelySupportedEnum>("Nonsense"));
+            Assert.Throws<ExactConvertException>(() => ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "Nonsense"));
+
+            // Value that’s not in the enum
+            Assert.AreEqual((AnAbsolutelySupportedEnum) 47, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), 47));
+            Assert.AreEqual((AnAbsolutelySupportedEnum) 47, ExactConvert.To(typeof(AnAbsolutelySupportedEnum), "47"));
+            Assert.AreEqual("47", ExactConvert.ToString((AnAbsolutelySupportedEnum) 47));
+            Assert.AreEqual("47", ExactConvert.To<string>((AnAbsolutelySupportedEnum) 47));
         }
 
         #endregion

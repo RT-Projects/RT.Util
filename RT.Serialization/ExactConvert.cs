@@ -1324,36 +1324,7 @@ namespace RT.Serialization
         public static bool Try(Type toType, object value, out object result)
         {
             if (toType.IsEnum)
-            {
-                if (value is string)
-                {
-                    object[] parameters = { value, null };
-                    var succeeded = (bool) typeof(Enum).GetMethods(BindingFlags.Static | BindingFlags.Public).First(m => m.Name == "TryParse" && m.GetParameters().Length == 2).MakeGenericMethod(toType).Invoke(null, parameters);
-                    result = parameters[1];
-                    return succeeded;
-                }
-                else if (value != null && (_isIntegerType[(int) Type.GetTypeCode(value.GetType())] || value is BigInteger))
-                {
-                    try
-                    {
-                        // If “value” is some other enum, turn it into an integer first
-                        if (value is Enum)
-                            value = Convert.ChangeType(value, value.GetType().GetEnumUnderlyingType());
-                        // Now convert that integer into the underlying integer type for the target enum type
-                        if (!Try(toType.GetEnumUnderlyingType(), value, out result))
-                            return false;
-                        result = typeof(ExactConvert)
-                            .GetMethod("toEnum", BindingFlags.Static | BindingFlags.NonPublic, null, new[] { toType.GetEnumUnderlyingType() }, null)
-                            .MakeGenericMethod(toType)
-                            .Invoke(null, new object[] { result });
-                        return true;
-                    }
-                    catch { }
-                }
-
-                result = null;
-                return false;
-            }
+                return tryToEnum(toType, value, out result);
 
             var code = Type.GetTypeCode(toType);
             bool success = false;
@@ -1379,6 +1350,38 @@ namespace RT.Serialization
             }
             result = success ? converted : null;
             return success;
+        }
+
+        private static bool tryToEnum(Type toType, object value, out object result)
+        {
+            if (value is string)
+            {
+                object[] parameters = { value, null };
+                var succeeded = (bool) typeof(Enum).GetMethods(BindingFlags.Static | BindingFlags.Public).First(m => m.Name == "TryParse" && m.GetParameters().Length == 2).MakeGenericMethod(toType).Invoke(null, parameters);
+                result = parameters[1];
+                return succeeded;
+            }
+            else if (value != null && (_isIntegerType[(int) Type.GetTypeCode(value.GetType())] || value is BigInteger))
+            {
+                try
+                {
+                    // If “value” is some other enum, turn it into an integer first
+                    if (value is Enum)
+                        value = Convert.ChangeType(value, value.GetType().GetEnumUnderlyingType());
+                    // Now convert that integer into the underlying integer type for the target enum type
+                    if (!Try(toType.GetEnumUnderlyingType(), value, out result))
+                        return false;
+                    result = typeof(ExactConvert)
+                        .GetMethod("toEnum", BindingFlags.Static | BindingFlags.NonPublic, null, new[] { toType.GetEnumUnderlyingType() }, null)
+                        .MakeGenericMethod(toType)
+                        .Invoke(null, new object[] { result });
+                    return true;
+                }
+                catch { }
+            }
+
+            result = null;
+            return false;
         }
 
         #endregion
@@ -1689,6 +1692,9 @@ namespace RT.Serialization
         ///     object cannot be converted exactly.</summary>
         public static T To<T>(object value)
         {
+            if (typeof(T).IsEnum)
+                return tryToEnum(typeof(T), value, out object result) ? (T) result : throw new ExactConvertException(value, typeof(T));
+
             if (typeof(T) == typeof(BigInteger))
                 return (T) (object) ToBigInteger(value);
 
