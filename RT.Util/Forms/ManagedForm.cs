@@ -181,6 +181,8 @@ namespace RT.Util.Forms
                 }
 
                 _prevWindowState = WindowState;
+
+                saveSettings();
             }
         }
 
@@ -198,6 +200,7 @@ namespace RT.Util.Forms
                 _normalLeft = Left;
                 _normalTop = Top;
             }
+            saveSettings();
         }
 
         /// <summary>Determines if the current managed form is minimised.</summary>
@@ -363,18 +366,27 @@ namespace RT.Util.Forms
 
         private void updateDimensionsForLastScreenResolution()
         {
-            var dimensions = new FormDimensions();
+            if (!_settings.DimensionsByRes.ContainsKey(_lastScreenResolution))
+                _settings.DimensionsByRes[_lastScreenResolution] = new();
+            var dimensions = _settings.DimensionsByRes[_lastScreenResolution];
             dimensions.Left = _normalLeft;
             dimensions.Top = _normalTop;
             dimensions.Width = _normalWidth;
             dimensions.Height = _normalHeight;
             dimensions.Maximized = Maximized;
-            _settings.DimensionsByRes[_lastScreenResolution] = dimensions;
         }
 
-        private void saveSettings(object sender, FormClosedEventArgs e)
+        private void saveSettings(object sender = null, FormClosedEventArgs e = null)
         {
             updateDimensionsForLastScreenResolution();
+            OnSettingsChanged();
+        }
+
+        /// <summary>
+        ///     Override to perform an action every time the settings are updated. This can happen multiple times per second
+        ///     as the window is being moved or resized.</summary>
+        protected virtual void OnSettingsChanged()
+        {
         }
 
         #endregion
