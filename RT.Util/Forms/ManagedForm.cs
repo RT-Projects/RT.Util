@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -8,8 +8,8 @@ using RT.Util.ExtensionMethods;
 namespace RT.Util.Forms
 {
     /// <summary>
-    /// A form which has all the proper minimize/restore methods, and which remembers its position and size between instances of the application.
-    /// </summary>
+    ///     A form which has all the proper minimize/restore methods, and which remembers its position and size between
+    ///     instances of the application.</summary>
     public class ManagedForm : Form
     {
         private FormWindowState _prevWindowState;
@@ -23,8 +23,11 @@ namespace RT.Util.Forms
         // We need a default constructor for the form designer to work, but we don't want it to be used at runtime, so make it private
         private ManagedForm() { }
 
-        /// <summary>Initialises a new managed form.</summary>
-        /// <param name="settings">An object of type <see cref="ManagedForm.Settings"/> from which the position and size of the form are retrieved, and in which they will be stored.</param>
+        /// <summary>
+        ///     Initialises a new managed form.</summary>
+        /// <param name="settings">
+        ///     An object of type <see cref="ManagedForm.Settings"/> from which the position and size of the form are
+        ///     retrieved, and in which they will be stored.</param>
         public ManagedForm(Settings settings)
         {
             if (settings == null)
@@ -120,11 +123,12 @@ namespace RT.Util.Forms
         }
 
         /// <summary>
-        /// Override to alter the window size, maximize state and/or position on first show and screen resolution changes.
-        /// At the time of call, the current position/state/size are already set to the preferred ones, so it is possible to change
-        /// them with respect to the "saved" values. If this method does nothing then the last saved values will be in effect.
-        /// </summary>
-        /// <param name="firstShow">True if this is the first time the form is displayed; false if it's a screen resolution change.</param>
+        ///     Override to alter the window size, maximize state and/or position on first show and screen resolution changes.
+        ///     At the time of call, the current position/state/size are already set to the preferred ones, so it is possible
+        ///     to change them with respect to the "saved" values. If this method does nothing then the last saved values will
+        ///     be in effect.</summary>
+        /// <param name="firstShow">
+        ///     True if this is the first time the form is displayed; false if it's a screen resolution change.</param>
         protected virtual void ResizeAndReposition(bool firstShow) { }
 
         private void displaySettingsChanged(object sender, EventArgs e)
@@ -219,7 +223,8 @@ namespace RT.Util.Forms
             }
         }
 
-        /// <summary>Determines whether the current managed form is maximised, or is minimised and would be maximised if restored.</summary>
+        /// <summary>
+        ///     Determines whether the current managed form is maximised, or is minimised and would be maximised if restored.</summary>
         public bool Maximized
         {
             get
@@ -259,9 +264,8 @@ namespace RT.Util.Forms
         public int NormalTop { get { return _normalTop; } }
 
         /// <summary>
-        /// Shows the form properly: if it is visible but minimized it will be restored
-        /// and activated; otherwise the base implementation of Show will be invoked.
-        /// </summary>
+        ///     Shows the form properly: if it is visible but minimized it will be restored and activated; otherwise the base
+        ///     implementation of Show will be invoked.</summary>
         public virtual new void Show()
         {
             if (Visible)
@@ -273,10 +277,14 @@ namespace RT.Util.Forms
                 base.Show();
         }
 
-        /// <summary>Shows the form as a modal dialog box with the currently active window set as its owner.</summary>
-        /// <param name="centerInForm">If specified, this form will be centered relative to the specified form.</param>
-        /// <param name="repositionParentAfterwards">If set to true, will cause the parent to be moved after this form is closed to be centered with respect to it.</param>
-        /// <returns>One of the <see cref="System.Windows.Forms.DialogResult"/> values.</returns>
+        /// <summary>
+        ///     Shows the form as a modal dialog box with the currently active window set as its owner.</summary>
+        /// <param name="centerInForm">
+        ///     If specified, this form will be centered relative to the specified form.</param>
+        /// <param name="repositionParentAfterwards">
+        ///     If set to true, will cause the parent to be moved after this form is closed to be centered with respect to it.</param>
+        /// <returns>
+        ///     One of the <see cref="System.Windows.Forms.DialogResult"/> values.</returns>
         public virtual DialogResult ShowDialog(Form centerInForm = null, bool repositionParentAfterwards = false)
         {
             if (centerInForm == null)
