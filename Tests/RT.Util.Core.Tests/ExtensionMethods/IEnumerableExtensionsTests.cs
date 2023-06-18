@@ -190,11 +190,13 @@ namespace RT.Util.ExtensionMethods
         [Test]
         public void TestFirstOrDefault()
         {
+#if !NET7_0_OR_GREATER
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, null, null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(new string[0], null, null); });
             Assert.Throws<ArgumentNullException>(() => { IEnumerableExtensions.FirstOrDefault<string>(null, str => str != null, null); });
             Assert.DoesNotThrow(() => { IEnumerableExtensions.FirstOrDefault<string>(new string[0], str => str != null, null); });
+#endif
 
             var input = new[] { "one", "two", "three", "four" };
 

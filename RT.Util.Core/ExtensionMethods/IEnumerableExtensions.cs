@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -397,6 +397,7 @@ namespace RT.Util.ExtensionMethods
             }
         }
 
+#if !NET7_0_OR_GREATER
         /// <summary>
         ///     Returns the first element of a sequence, or a default value if the sequence contains no elements.</summary>
         /// <typeparam name="T">
@@ -448,6 +449,7 @@ namespace RT.Util.ExtensionMethods
                 return @default;
             }
         }
+#endif
 
         /// <summary>
         ///     Returns the first element of a sequence, or a default value if the sequence contains no elements.</summary>
