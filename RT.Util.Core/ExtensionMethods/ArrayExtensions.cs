@@ -113,6 +113,14 @@ namespace RT.Util.ExtensionMethods
             return result;
         }
 
+        /// <summary>Returns a new array with the <paramref name="value"/> appended to the end.</summary>
+        public static T[] Append<T>(this T[] array, T value)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            return Insert(array, array.Length, value);
+        }
+
         /// <summary>
         ///     Concatenates two arrays.</summary>
         /// <remarks>
