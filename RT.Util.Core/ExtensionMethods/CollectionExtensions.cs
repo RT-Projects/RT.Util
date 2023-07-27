@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -100,17 +100,39 @@ namespace RT.Util.ExtensionMethods
         }
 
         /// <summary>
-        ///     Removes several values from a <see cref="List&lt;T&gt;"/>.</summary>
+        ///     Removes several values from a <see cref="IList&lt;T&gt;"/>.</summary>
         /// <typeparam name="T">
         ///     Type of the elements in the list.</typeparam>
         /// <param name="list">
         ///     The list to remove the items from.</param>
         /// <param name="values">
         ///     Values to remove.</param>
-        public static void RemoveRange<T>(this List<T> list, IEnumerable<T> values)
+        public static void RemoveRange<T>(this IList<T> list, IEnumerable<T> values)
         {
             foreach (var value in values)
                 list.Remove(value);
+        }
+
+        /// <summary>
+        ///     Removes all matching values from the list.</summary>
+        /// <typeparam name="T">
+        ///     Type of the elements in the list.</typeparam>
+        /// <param name="list">
+        ///     The list to remove the items from.</param>
+        /// <param name="predicate">
+        ///     A function which returns true for every element that is to be removed.</param>
+        /// <returns>
+        ///     The number of values removed.</returns>
+        public static int RemoveAll<T>(this IList<T> list, Func<T, bool> predicate)
+        {
+            int removed = 0;
+            for (int i = list.Count - 1; i >= 0; i--)
+                if (predicate(list[i]))
+                {
+                    list.RemoveAt(i);
+                    removed++;
+                }
+            return removed;
         }
 
         /// <summary>

@@ -434,5 +434,20 @@ namespace RT.Util.ExtensionMethods
             Assert.IsTrue(new int[] { 1, 2 }.SequenceEqual(new int[] { 1, 2 }.Concat(new int[0])));
             Assert.AreEqual(0, new int[0].Concat(new int[0]).Length);
         }
+
+        [Test]
+        public void TestRemoveIList()
+        {
+            IList<string> list = new List<string> { "foo", "bar", "baz" };
+            Assert.AreEqual(1, list.RemoveAll(x => x.StartsWith("fo")));
+            Assert.AreEqual(2, list.Count);
+            Assert.IsTrue(list.Contains("bar") && list.Contains("baz"));
+            Assert.AreEqual(2, list.RemoveAll(x => x.StartsWith("ba")));
+            Assert.AreEqual(0, list.Count);
+            list = new List<string> { "foo", "bar", "baz" };
+            Assert.AreEqual(2, list.RemoveAll(x => x.StartsWith("ba")));
+            Assert.AreEqual(1, list.Count);
+            Assert.IsTrue(list.Contains("foo"));
+        }
     }
 }
