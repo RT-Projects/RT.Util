@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -160,8 +160,8 @@ namespace RT.Util
         private int _exitCode;
 
         /// <summary>
-        ///     The command to be executed, as a single string. Any command supported by cmd.exe is permitted. See also <see
-        ///     cref="SetCommand(string[])"/>, which simplifies running commands with spaces and/or arguments. Once the
+        ///     The raw command to be executed, as a single string. Any command supported by cmd.exe is permitted. See also
+        ///     <see cref="SetCommand(string[])"/>, which simplifies running commands with spaces and/or arguments. Once the
         ///     command has been started, this property becomes read-only and indicates the value in effect at the time of
         ///     starting. See Remarks.</summary>
         public string Command
@@ -208,25 +208,33 @@ namespace RT.Util
         }
 
         /// <summary>
-        ///     Sets the <see cref="Command"/> property by concatenating the command and any arguments while escaping values
-        ///     with spaces. Each value must be a single command / executable / script / argument. Null values are allowed and
-        ///     are skipped as if they weren't present. See Remarks.</summary>
+        ///     Sets the <see cref="Command"/> property by combining and escaping all arguments in such a way that a program
+        ///     parsing them with standard Windows tools will receive the exact strings passed in. Null values are allowed and
+        ///     are filtered out. The first value is escaped as a path to an executable and all others as parameters. Thus it
+        ///     is not possible to use this method to construct arguments that are handled specially by cmd.exe such as
+        ///     redirects, pipes and environment variable expansions.</summary>
         /// <remarks>
-        ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
+        ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c>. See
+        ///     also <see cref="ArgsToCmdExeLine(IEnumerable{string})"/> which performs the same exact escaping but returns
+        ///     the value instead.</remarks>
         public void SetCommand(IEnumerable<string> args)
         {
-            Command = ArgsToCommandLine(args);
+            Command = ArgsToCmdExeLine(args);
         }
 
         /// <summary>
-        ///     Sets the <see cref="Command"/> property by concatenating the command and any arguments while escaping values
-        ///     with spaces. Each value must be a single command / executable / script / argument. Null values are allowed and
-        ///     are skipped as if they weren't present. See Remarks.</summary>
+        ///     Sets the <see cref="Command"/> property by combining and escaping all arguments in such a way that a program
+        ///     parsing them with standard Windows tools will receive the exact strings passed in. Null values are allowed and
+        ///     are filtered out. The first value is escaped as a path to an executable and all others as parameters. Thus it
+        ///     is not possible to use this method to construct arguments that are handled specially by cmd.exe such as
+        ///     redirects, pipes and environment variable expansions.</summary>
         /// <remarks>
-        ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c></remarks>
+        ///     Example: <c>SetCommand(new[] { @"C:\Program Files\Foo\Foo.exe", "-f", @"C:\Some Path\file.txt" });</c>. See
+        ///     also <see cref="ArgsToCmdExeLine(string[])"/> which performs the same exact escaping but returns the value
+        ///     instead.</remarks>
         public void SetCommand(params string[] args)
         {
-            Command = ArgsToCommandLine(args);
+            Command = ArgsToCmdExeLine(args);
         }
 
         /// <summary>
@@ -241,7 +249,7 @@ namespace RT.Util
 
             _startInfo = new ProcessStartInfo();
             _startInfo.FileName = @"cmd.exe";
-            _startInfo.Arguments = "/C " + EscapeCmdExeMetachars(Command);
+            _startInfo.Arguments = "/C \"" + Command + "\"";
             _startInfo.WorkingDirectory = WorkingDirectory;
             foreach (var kvp in EnvironmentVariables)
                 _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
@@ -320,6 +328,29 @@ namespace RT.Util
             EndedWaitHandle.WaitOne();
         }
 
+        /// <summary>
+        ///     Escapes the arguments (while skipping nulls) for use with cmd.exe. The first argument is escaped as a filepath
+        ///     to an executable or a script, and the rest as arguments.</summary>
+        public static string ArgsToCmdExeLine(params string[] args)
+        {
+            return ArgsToCmdExeLine(args.AsEnumerable());
+        }
+
+        /// <summary>
+        ///     Escapes the arguments (while skipping nulls) for use with cmd.exe. The first argument is escaped as a filepath
+        ///     to an executable or a script, and the rest as arguments.</summary>
+        public static string ArgsToCmdExeLine(IEnumerable<string> args)
+        {
+            args = args.Where(a => a != null);
+            int count = args.Count();
+            if (count == 0)
+                return "";
+            else if (count == 1)
+                return ArgsToCommandLine(args.First());
+            else
+                return ArgsToCommandLine(args.First()) + " " + args.Skip(1).Select(arg => EscapeCmdExeMetachars(ArgsToCommandLine(arg))).JoinString(" ");
+        }
+
         /// <summary>See <see cref="ArgsToCommandLine(IEnumerable{string})"/>.</summary>
         public static string ArgsToCommandLine(params string[] args)
         {
@@ -381,8 +412,8 @@ namespace RT.Util
         private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
 
         /// <summary>
-        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine(IEnumerable{string})"/> for more
-        ///     information.</summary>
+        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see
+        ///     cref="ArgsToCommandLine(IEnumerable{string})"/> for more information.</summary>
         public static string EscapeCmdExeMetachars(string command)
         {
             var result = new StringBuilder();
@@ -400,7 +431,6 @@ namespace RT.Util
                     case '>':
                     case '&':
                     case '|':
-                    case ' ':
                         result.Append('^');
                         break;
                 }
