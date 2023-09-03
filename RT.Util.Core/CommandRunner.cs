@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -321,10 +321,13 @@ namespace RT.Util
             _ended.Set();
         }
 
-        /// <summary>Starts the command with all the settings as configured. Does not return until the command exits.</summary>
-        public void StartAndWait()
+        /// <summary>
+        ///     Starts the command with all the settings as configured. Does not return until the command exits.</summary>
+        /// <param name="stdin">
+        ///     Provides a byte stream to be passed to the process’s standard input.</param>
+        public void StartAndWait(byte[] stdin = null)
         {
-            Start();
+            Start(stdin);
             EndedWaitHandle.WaitOne();
         }
 
