@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -1176,6 +1176,102 @@ namespace RT.Util.ExtensionMethods
                 return line;
             return str + Environment.NewLine + line;
         }
+
+        /// <summary>Parses this string as an <c>int</c> using <see cref="int.Parse(string)"/>.</summary>
+        public static int ParseInt(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => int.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as an <c>int</c> using <see cref="int.TryParse(string?, out int)"/>. Returns <paramref
+        ///     name="default_"/> if the value cannot be parsed.</summary>
+        public static int ParseInt(this string str, int default_, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => int.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as an <c>int</c> using <see cref="int.TryParse(string?, out int)"/>. Returns <c>null</c> if
+        ///     the value cannot be parsed.</summary>
+        public static int? ParseIntOrNull(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => int.TryParse(str, style, provider, out var result) ? result : null;
+
+        /// <summary>Parses this string as a <c>uint</c> using <see cref="uint.Parse(string)"/>.</summary>
+        public static uint ParseUInt(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => uint.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as a <c>uint</c> using <see cref="uint.TryParse(string?, out uint)"/>. Returns <paramref
+        ///     name="default_"/> if the value cannot be parsed.</summary>
+        public static uint ParseUInt(this string str, uint default_, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => uint.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as a <c>uint</c> using <see cref="uint.TryParse(string?, out uint)"/>. Returns <c>null</c>
+        ///     if the value cannot be parsed.</summary>
+        public static uint? ParseUIntOrNull(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => uint.TryParse(str, style, provider, out var result) ? result : null;
+
+        /// <summary>Parses this string as a <c>long</c> using <see cref="long.Parse(string)"/>.</summary>
+        public static long ParseLong(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => long.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as a <c>long</c> using <see cref="long.TryParse(string?, out long)"/>. Returns <paramref
+        ///     name="default_"/> if the value cannot be parsed.</summary>
+        public static long ParseLong(this string str, long default_, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => long.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as a <c>long</c> using <see cref="long.TryParse(string?, out long)"/>. Returns <c>null</c>
+        ///     if the value cannot be parsed.</summary>
+        public static long? ParseLongOrNull(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => long.TryParse(str, style, provider, out var result) ? result : null;
+
+        /// <summary>Parses this string as a <c>ulong</c> using <see cref="ulong.Parse(string)"/>.</summary>
+        public static ulong ParseULong(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => ulong.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as a <c>ulong</c> using <see cref="ulong.TryParse(string?, out ulong)"/>. Returns <paramref
+        ///     name="default_"/> if the value cannot be parsed.</summary>
+        public static ulong ParseULong(this string str, ulong default_, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => ulong.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as a <c>ulong</c> using <see cref="ulong.TryParse(string?, out ulong)"/>. Returns
+        ///     <c>null</c> if the value cannot be parsed.</summary>
+        public static ulong? ParseULongOrNull(this string str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+            => ulong.TryParse(str, style, provider, out var result) ? result : null;
+
+        /// <summary>Parses this string as a <c>double</c> using <see cref="double.Parse(string)"/>.</summary>
+        public static double ParseDouble(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => double.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as a <c>double</c> using <see cref="double.TryParse(string?, out double)"/>. Returns
+        ///     <paramref name="default_"/> if the value cannot be parsed.</summary>
+        public static double ParseDouble(this string str, double default_, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => double.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as a <c>double</c> using <see cref="double.TryParse(string?, out double)"/>. Returns
+        ///     <c>null</c> if the value cannot be parsed.</summary>
+        public static double? ParseDoubleOrNull(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => double.TryParse(str, style, provider, out var result) ? result : null;
+
+        /// <summary>Parses this string as a <c>float</c> using <see cref="float.Parse(string)"/>.</summary>
+        public static float ParseFloat(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => float.Parse(str, style, provider);
+
+        /// <summary>
+        ///     Parses this string as a <c>float</c> using <see cref="float.TryParse(string?, out float)"/>. Returns <paramref
+        ///     name="default_"/> if the value cannot be parsed.</summary>
+        public static float ParseFloat(this string str, float default_, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => float.TryParse(str, style, provider, out var result) ? result : default_;
+
+        /// <summary>
+        ///     Parses this string as a <c>float</c> using <see cref="float.TryParse(string?, out float)"/>. Returns
+        ///     <c>null</c> if the value cannot be parsed.</summary>
+        public static float? ParseFloatOrNull(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+            => float.TryParse(str, style, provider, out var result) ? result : null;
     }
 
     /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
