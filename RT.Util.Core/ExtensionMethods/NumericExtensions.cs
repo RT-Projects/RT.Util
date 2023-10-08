@@ -63,16 +63,6 @@ namespace RT.Util.ExtensionMethods
         ///     (inclusive).</summary>
         public static bool IsBetween(this double value, double min, double max) => value >= min && value <= max;
 
-        /// <summary>Attempts to parse this string as an int, returning null if the parse fails.</summary>
-        public static int? TryParseAsInt(this string value)
-        {
-            int result;
-            if (int.TryParse(value, out result))
-                return result;
-            else
-                return null;
-        }
-
         /// <summary>
         ///     Converts the integer to a textual representation using English words. For example, 142.ToWords() is "one
         ///     hundred and forty-two".</summary>
