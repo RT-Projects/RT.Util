@@ -111,26 +111,27 @@ namespace RT.Util.ExtensionMethods
                 return input.Replace('+', ' ');
 
             // The result is never going to be longer than the input string
-            byte[] buffer = new byte[input.Length];
+            byte[] inputBuffer = input.ToUtf8();
+            byte[] buffer = new byte[inputBuffer.Length];
 
             var bufIx = 0;
             var inpIx = 0;
-            while (inpIx < input.Length)
+            while (inpIx < inputBuffer.Length)
             {
-                if (inpIx <= input.Length - 6 && input[inpIx] == '%' && input[inpIx + 1] == 'u' && int.TryParse(input.Substring(inpIx + 2, 4), NumberStyles.AllowHexSpecifier, null, out var i))
+                if (inpIx <= inputBuffer.Length - 6 && inputBuffer[inpIx] == '%' && inputBuffer[inpIx + 1] == 'u' && int.TryParse(inputBuffer.Subarray(inpIx + 2, 4).FromUtf8(), NumberStyles.AllowHexSpecifier, null, out var i))
                 {
                     bufIx += Encoding.UTF8.GetBytes(char.ConvertFromUtf32(i), 0, 1, buffer, bufIx);
                     inpIx += 6;
                 }
-                else if (inpIx <= input.Length - 3 && input[inpIx] == '%' && int.TryParse(input.Substring(inpIx + 1, 2), NumberStyles.AllowHexSpecifier, null, out i))
+                else if (inpIx <= inputBuffer.Length - 3 && inputBuffer[inpIx] == '%' && int.TryParse(inputBuffer.Subarray(inpIx + 1, 2).FromUtf8(), NumberStyles.AllowHexSpecifier, null, out i))
                 {
                     buffer[bufIx] = (byte) i;
                     bufIx++;
                     inpIx += 3;
                 }
-                else if (input[inpIx] != '%')
+                else if (inputBuffer[inpIx] != '%')
                 {
-                    buffer[bufIx] = input[inpIx] == '+' ? (byte) ' ' : (byte) input[inpIx];
+                    buffer[bufIx] = inputBuffer[inpIx] == '+' ? (byte) ' ' : inputBuffer[inpIx];
                     bufIx++;
                     inpIx++;
                 }

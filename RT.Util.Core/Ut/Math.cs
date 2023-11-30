@@ -57,5 +57,17 @@ namespace RT.Util
             }
             return a | b;
         }
+
+        /// <summary>Returns the number of 1-bits in the input integer.</summary>
+        public static int CountBits(this int input)
+        {
+            var result = 0;
+            while (input != 0)
+            {
+                input &= unchecked(input - 1); // removes exactly one 1-bit (the least significant one)
+                result++;
+            }
+            return result;
+        }
     }
 }
