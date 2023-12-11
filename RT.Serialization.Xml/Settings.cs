@@ -13,6 +13,13 @@ public class SettingsFileXml<TSettings> : SettingsFile<TSettings> where TSetting
     }
 
     /// <inheritdoc/>
+    public SettingsFileXml(bool throwOnError, string filename, ClassifyOptions options = null)
+        : base(throwOnError, filename)
+    {
+        _options = options;
+    }
+
+    /// <inheritdoc/>
     protected override TSettings Deserialize(string filename)
     {
         return ClassifyXml.DeserializeFile<TSettings>(filename, _options);

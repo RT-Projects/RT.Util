@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -196,7 +196,7 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
     ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
     ///     <c>throwOnError</c> when calling <see cref="Save(bool?)"/>.</param>
-    public SettingsFile(string filename, bool throwOnError)
+    public SettingsFile(bool throwOnError, string filename)
     {
         FileName = PathUtil.AppPathCombine(filename);
         _throwOnError = throwOnError;

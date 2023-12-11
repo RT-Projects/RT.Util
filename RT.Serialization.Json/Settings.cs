@@ -6,8 +6,15 @@ public class SettingsFileJson<TSettings> : SettingsFile<TSettings> where TSettin
     private ClassifyOptions _options;
 
     /// <inheritdoc/>
-    public SettingsFileJson(string appName, SettingsLocation location = SettingsLocation.User, bool throwOnError = false, string suffix = ".Settings.xml", ClassifyOptions options = null)
+    public SettingsFileJson(string appName, SettingsLocation location = SettingsLocation.User, bool throwOnError = false, string suffix = ".Settings.json", ClassifyOptions options = null)
         : base(appName, location, throwOnError, suffix)
+    {
+        _options = options;
+    }
+
+    /// <inheritdoc/>
+    public SettingsFileJson(bool throwOnError, string filename, ClassifyOptions options = null)
+        : base(throwOnError, filename)
     {
         _options = options;
     }
