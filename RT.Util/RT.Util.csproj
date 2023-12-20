@@ -20,7 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
-    <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
   </ItemGroup>
 
 </Project>

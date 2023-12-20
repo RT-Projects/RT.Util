@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RT.Lingo.Base\RT.Lingo.Base.csproj" />
+    <ProjectReference Include="..\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
     <ProjectReference Include="..\RT.Util\RT.Util.csproj" />
   </ItemGroup>
 
