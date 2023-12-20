@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
     <Version>1.0.0.9999</Version>

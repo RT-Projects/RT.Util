@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using RT.Serialization.Settings;
+﻿using RT.Serialization.Settings;
 
 namespace RT.Serialization.Tests;
 

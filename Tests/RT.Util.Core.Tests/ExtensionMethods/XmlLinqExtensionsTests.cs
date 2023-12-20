@@ -1,14 +1,13 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Xml.Linq;
 using NUnit.Framework;
 
-namespace RT.Util.ExtensionMethods
+namespace RT.Util.ExtensionMethods;
+
+[TestFixture]
+public sealed class XmlLinqExtensionsTests
 {
-    [TestFixture]
-    public sealed class XmlLinqExtensionsTests
-    {
-        string xml = @"<job unique-id='2987CF7B-A18D7EA3-A019820B-D42BC32F'>
+    string xml = @"<job unique-id='2987CF7B-A18D7EA3-A019820B-D42BC32F'>
                                 <plan id='PRJ-GROUP-PLANNAME'/>
                                 <security pwd='dontlookitsasecret'/>
                                 <callback url='http://rebuilderserver/callback/3469872bcb9876a98a76f98f76de9876da'/>
@@ -19,85 +18,84 @@ namespace RT.Util.ExtensionMethods
                                 </actions>
                             </job>
                             ".Replace("'", "\"");
-        XDocument doc;
-        XElement root;
+    XDocument doc;
+    XElement root;
 
-        [OneTimeSetUp]
-        public void Setup()
+    [OneTimeSetUp]
+    public void Setup()
+    {
+        doc = XDocument.Parse(xml);
+        root = doc.Root;
+    }
+
+    [Test]
+    public void TestElementPath()
+    {
+        Assert.AreEqual("job", root.Path());
+        Assert.AreEqual("job/callback", root.Element("callback").Path());
+        Assert.AreEqual("job/actions/action/plugin-settings", root.Element("actions").Element("action").Element("plugin-settings").Path());
+    }
+
+    [Test]
+    public void TestAttributePath()
+    {
+        Assert.AreEqual("job[unique-id]", root.Attribute("unique-id").Path());
+        Assert.AreEqual("job/callback[url]", root.Element("callback").Attribute("url").Path());
+        Assert.AreEqual("job/actions/action[timeout]", root.Element("actions").Element("action").Attribute("timeout").Path());
+    }
+
+    [Test]
+    public void TestChkElement()
+    {
+        Assert.AreSame(root.Element("callback"),
+            root.ChkElement("callback"));
+        Assert.AreSame(root.Element("actions").Element("action").Element("plugin-settings"),
+            root.ChkElement("actions").ChkElement("action").ChkElement("plugin-settings"));
+
+        try
         {
-            doc = XDocument.Parse(xml);
-            root = doc.Root;
+            root.ChkElement("actions").ChkElement("not-here");
+            Assert.Fail("Exception expected");
         }
-
-        [Test]
-        public void TestElementPath()
+        catch (Exception E)
         {
-            Assert.AreEqual("job", root.Path());
-            Assert.AreEqual("job/callback", root.Element("callback").Path());
-            Assert.AreEqual("job/actions/action/plugin-settings", root.Element("actions").Element("action").Element("plugin-settings").Path());
+            Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
+            Assert.IsTrue(E.Message.Contains("not-here"));
         }
+    }
 
-        [Test]
-        public void TestAttributePath()
+    [Test]
+    public void TestChkAttribute()
+    {
+        Assert.AreSame(root.Attribute("unique-id"),
+            root.ChkAttribute("unique-id"));
+        Assert.AreSame(root.Element("actions").Element("action").Attribute("timeout"),
+            root.ChkElement("actions").ChkElement("action").ChkAttribute("timeout"));
+
+        try
         {
-            Assert.AreEqual("job[unique-id]", root.Attribute("unique-id").Path());
-            Assert.AreEqual("job/callback[url]", root.Element("callback").Attribute("url").Path());
-            Assert.AreEqual("job/actions/action[timeout]", root.Element("actions").Element("action").Attribute("timeout").Path());
+            root.ChkElement("actions").ChkAttribute("not-here");
+            Assert.Fail("Exception expected");
         }
-
-        [Test]
-        public void TestChkElement()
+        catch (Exception E)
         {
-            Assert.AreSame(root.Element("callback"),
-                root.ChkElement("callback"));
-            Assert.AreSame(root.Element("actions").Element("action").Element("plugin-settings"),
-                root.ChkElement("actions").ChkElement("action").ChkElement("plugin-settings"));
-
-            try
-            {
-                root.ChkElement("actions").ChkElement("not-here");
-                Assert.Fail("Exception expected");
-            }
-            catch (Exception E)
-            {
-                Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
-                Assert.IsTrue(E.Message.Contains("not-here"));
-            }
+            Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
+            Assert.IsTrue(E.Message.Contains("not-here"));
         }
+    }
 
-        [Test]
-        public void TestChkAttribute()
+    [Test]
+    public void TestAsDouble()
+    {
+        Assert.AreEqual(double.Parse("600.5", CultureInfo.InvariantCulture), root.Element("actions").Element("action").Attribute("timeout").AsDouble());
+        try
         {
-            Assert.AreSame(root.Attribute("unique-id"),
-                root.ChkAttribute("unique-id"));
-            Assert.AreSame(root.Element("actions").Element("action").Attribute("timeout"),
-                root.ChkElement("actions").ChkElement("action").ChkAttribute("timeout"));
-
-            try
-            {
-                root.ChkElement("actions").ChkAttribute("not-here");
-                Assert.Fail("Exception expected");
-            }
-            catch (Exception E)
-            {
-                Assert.IsTrue(E.Message.Contains(root.ChkElement("actions").Path()));
-                Assert.IsTrue(E.Message.Contains("not-here"));
-            }
+            double dummy = root.Attribute("unique-id").AsDouble();
+            Assert.Fail("Expected exception");
         }
-
-        [Test]
-        public void TestAsDouble()
+        catch (Exception E)
         {
-            Assert.AreEqual(double.Parse("600.5", CultureInfo.InvariantCulture), root.Element("actions").Element("action").Attribute("timeout").AsDouble());
-            try
-            {
-                double dummy = root.Attribute("unique-id").AsDouble();
-                Assert.Fail("Expected exception");
-            }
-            catch (Exception E)
-            {
-                Assert.IsTrue(E.Message.Contains("double"));
-            }
+            Assert.IsTrue(E.Message.Contains("double"));
         }
     }
 }

@@ -1,97 +1,93 @@
-﻿using System;
-using System.Collections.Generic;
+namespace RT.Util.Geometry;
 
-namespace RT.Util.Geometry
+/// <summary>Encapsulates a triangle defined by vertices represented as <see cref="PointD"/> values.</summary>
+public class TriangleD
 {
-    /// <summary>Encapsulates a triangle defined by vertices represented as <see cref="PointD"/> values.</summary>
-    public class TriangleD
+    /// <summary>Vertices defining the triangle.</summary>
+    public PointD V1, V2, V3;
+
+    /// <summary>Instantiates a new triangle with the specified vertices.</summary>
+    public TriangleD(PointD v1, PointD v2, PointD v3)
     {
-        /// <summary>Vertices defining the triangle.</summary>
-        public PointD V1, V2, V3;
+        V1 = v1;
+        V2 = v2;
+        V3 = v3;
+    }
 
-        /// <summary>Instantiates a new triangle with the specified vertices.</summary>
-        public TriangleD(PointD v1, PointD v2, PointD v3)
+    /// <summary>Returns a string representation of the triangle.</summary>
+    public override string ToString() => $"Δ {V1} : {V2} : {V3}";
+
+    /// <summary>Gets the edge connecting vertices <see cref="V1"/> and <see cref="V2"/>.</summary>
+    public EdgeD Edge12 => new EdgeD(V1, V2);
+    /// <summary>Gets the edge connecting vertices <see cref="V2"/> and <see cref="V3"/>.</summary>
+    public EdgeD Edge23 => new EdgeD(V2, V3);
+    /// <summary>Gets the edge connecting vertices <see cref="V3"/> and <see cref="V1"/>.</summary>
+    public EdgeD Edge31 => new EdgeD(V3, V1);
+
+    /// <summary>Returns a value indicating whether one of the triangle vertices is equal to <paramref name="v"/>.</summary>
+    public bool HasVertex(PointD v) => v == V1 || v == V2 || v == V3;
+
+    /// <summary>
+    ///     Returns a value indicating whether one of the triangle edges is equal to <paramref name="e"/>. Edge equality is
+    ///     direction-insensitive.</summary>
+    public bool HasEdge(EdgeD e) => e == Edge12 || e == Edge23 || e == Edge31;
+
+    /// <summary>Enumerates the vertices <see cref="V1"/>, <see cref="V2"/> and <see cref="V3"/>.</summary>
+    public IEnumerable<PointD> Vertices
+    {
+        get
         {
-            V1 = v1;
-            V2 = v2;
-            V3 = v3;
+            yield return V1;
+            yield return V2;
+            yield return V3;
         }
+    }
 
-        /// <summary>Returns a string representation of the triangle.</summary>
-        public override string ToString() => $"Δ {V1} : {V2} : {V3}";
-
-        /// <summary>Gets the edge connecting vertices <see cref="V1"/> and <see cref="V2"/>.</summary>
-        public EdgeD Edge12 => new EdgeD(V1, V2);
-        /// <summary>Gets the edge connecting vertices <see cref="V2"/> and <see cref="V3"/>.</summary>
-        public EdgeD Edge23 => new EdgeD(V2, V3);
-        /// <summary>Gets the edge connecting vertices <see cref="V3"/> and <see cref="V1"/>.</summary>
-        public EdgeD Edge31 => new EdgeD(V3, V1);
-
-        /// <summary>Returns a value indicating whether one of the triangle vertices is equal to <paramref name="v"/>.</summary>
-        public bool HasVertex(PointD v) => v == V1 || v == V2 || v == V3;
-
-        /// <summary>
-        ///     Returns a value indicating whether one of the triangle edges is equal to <paramref name="e"/>. Edge equality
-        ///     is direction-insensitive.</summary>
-        public bool HasEdge(EdgeD e) => e == Edge12 || e == Edge23 || e == Edge31;
-
-        /// <summary>Enumerates the vertices <see cref="V1"/>, <see cref="V2"/> and <see cref="V3"/>.</summary>
-        public IEnumerable<PointD> Vertices
+    /// <summary>Enumerates the edges <see cref="Edge12"/>, <see cref="Edge23"/> and <see cref="Edge31"/>.</summary>
+    public IEnumerable<EdgeD> Edges
+    {
+        get
         {
-            get
-            {
-                yield return V1;
-                yield return V2;
-                yield return V3;
-            }
+            yield return Edge12;
+            yield return Edge23;
+            yield return Edge31;
         }
+    }
 
-        /// <summary>Enumerates the edges <see cref="Edge12"/>, <see cref="Edge23"/> and <see cref="Edge31"/>.</summary>
-        public IEnumerable<EdgeD> Edges
+    /// <summary>
+    ///     Gets the centroid of the triangle. This point is guaranteed to lie inside the triangle, and is the fastest way to
+    ///     obtain a point lying inside the triangle.</summary>
+    public PointD Centroid => (V1 + V2 + V3) / 3;
+
+    /// <summary>Gets the circumcenter of the triangle, i.e. the center of the triangle's circumcircle.</summary>
+    public PointD Circumcenter
+    {
+        get
         {
-            get
-            {
-                yield return Edge12;
-                yield return Edge23;
-                yield return Edge31;
-            }
+            double ab = (V1.X * V1.X) + (V1.Y * V1.Y);
+            double cd = (V2.X * V2.X) + (V2.Y * V2.Y);
+            double ef = (V3.X * V3.X) + (V3.Y * V3.Y);
+
+            return new PointD(
+                x: (ab * (V3.Y - V2.Y) + cd * (V1.Y - V3.Y) + ef * (V2.Y - V1.Y)) / (V1.X * (V3.Y - V2.Y) + V2.X * (V1.Y - V3.Y) + V3.X * (V2.Y - V1.Y)) / 2,
+                y: (ab * (V3.X - V2.X) + cd * (V1.X - V3.X) + ef * (V2.X - V1.X)) / (V1.Y * (V3.X - V2.X) + V2.Y * (V1.X - V3.X) + V3.Y * (V2.X - V1.X)) / 2);
         }
+    }
 
-        /// <summary>
-        ///     Gets the centroid of the triangle. This point is guaranteed to lie inside the triangle, and is the fastest way
-        ///     to obtain a point lying inside the triangle.</summary>
-        public PointD Centroid => (V1 + V2 + V3) / 3;
+    /// <summary>Returns a value indicating whether the circumcircle of this triangle contains <paramref name="v"/>.</summary>
+    public bool CircumcircleContains(PointD v)
+    {
+        var circle = Circumcircle;
+        return (v - circle.Center).Abs() <= circle.Radius;
+    }
 
-        /// <summary>Gets the circumcenter of the triangle, i.e. the center of the triangle's circumcircle.</summary>
-        public PointD Circumcenter
+    /// <summary>Returns the circumcircle of this triangle.</summary>
+    public CircleD Circumcircle
+    {
+        get
         {
-            get
-            {
-                double ab = (V1.X * V1.X) + (V1.Y * V1.Y);
-                double cd = (V2.X * V2.X) + (V2.Y * V2.Y);
-                double ef = (V3.X * V3.X) + (V3.Y * V3.Y);
-
-                return new PointD(
-                    x: (ab * (V3.Y - V2.Y) + cd * (V1.Y - V3.Y) + ef * (V2.Y - V1.Y)) / (V1.X * (V3.Y - V2.Y) + V2.X * (V1.Y - V3.Y) + V3.X * (V2.Y - V1.Y)) / 2,
-                    y: (ab * (V3.X - V2.X) + cd * (V1.X - V3.X) + ef * (V2.X - V1.X)) / (V1.Y * (V3.X - V2.X) + V2.Y * (V1.X - V3.X) + V3.Y * (V2.X - V1.X)) / 2);
-            }
-        }
-
-        /// <summary>Returns a value indicating whether the circumcircle of this triangle contains <paramref name="v"/>.</summary>
-        public bool CircumcircleContains(PointD v)
-        {
-            var circle = Circumcircle;
-            return (v - circle.Center).Abs() <= circle.Radius;
-        }
-
-        /// <summary>Returns the circumcircle of this triangle.</summary>
-        public CircleD Circumcircle
-        {
-            get
-            {
-                var pt = Circumcenter;
-                return new CircleD(pt, (V1 - pt).Abs());
-            }
+            var pt = Circumcenter;
+            return new CircleD(pt, (V1 - pt).Abs());
         }
     }
 }

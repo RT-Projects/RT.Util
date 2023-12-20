@@ -1,172 +1,167 @@
-﻿using System;
-using System.IO;
-using System.IO.Pipes;
-using System.Threading;
+﻿using System.IO.Pipes;
 using NUnit.Framework;
-using RT.Util.ExtensionMethods;
 
-namespace RT.Util.Streams
+namespace RT.Util.Streams;
+
+[TestFixture]
+class TimeoutableStreamTests
 {
-    [TestFixture]
-    class TimeoutableStreamTests
+    [Test]
+    public void TestDefaultTimeout()
     {
-        [Test]
-        public void TestDefaultTimeout()
+        bool okclient = false;
+        bool okserver = false;
+        bool pipeready = false;
+        var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
+        var tc = new Thread(() =>
         {
-            bool okclient = false;
-            bool okserver = false;
-            bool pipeready = false;
-            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
-            var tc = new Thread(() =>
+            while (!pipeready) Thread.Sleep(50);
+            Thread.Sleep(50);
+            using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
+            using (var binary = new BinaryStream(pipe))
             {
-                while (!pipeready) Thread.Sleep(50);
-                Thread.Sleep(50);
-                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
-                using (var binary = new BinaryStream(pipe))
-                {
-                    pipe.Connect();
-                    Thread.Sleep(100);
-                    binary.WriteString("TEST");
-                    Thread.Sleep(500);
-                    binary.WriteString("TEST");
-                    Thread.Sleep(100);
-                    binary.ReadString();
-                    Thread.Sleep(500);
-                    binary.ReadString();
+                pipe.Connect();
+                Thread.Sleep(100);
+                binary.WriteString("TEST");
+                Thread.Sleep(500);
+                binary.WriteString("TEST");
+                Thread.Sleep(100);
+                binary.ReadString();
+                Thread.Sleep(500);
+                binary.ReadString();
 
-                    Thread.Sleep(100);
-                    okclient = true;
-                }
-            });
-            tc.Start();
+                Thread.Sleep(100);
+                okclient = true;
+            }
+        });
+        tc.Start();
 
-            var ts = new Thread(() =>
-            {
-                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
-                using (var timeout = new TimeoutableStream(pipe))
-                using (var binary = new BinaryStream(timeout))
-                {
-                    pipeready = true;
-                    pipe.WaitForConnection();
-                    binary.ReadString();
-                    binary.ReadString();
-                    binary.WriteString("TEST");
-                    binary.WriteString("TEST");
-                    Thread.Sleep(100);
-                    okserver = true;
-                }
-            });
-            ts.Start();
-
-            tc.Join();
-            ts.Join();
-
-            Assert.IsTrue(okclient);
-            Assert.IsTrue(okserver);
-        }
-
-        [Test]
-        public void TestReadTimeout()
+        var ts = new Thread(() =>
         {
-            bool okclient = false;
-            bool okserver = false;
-            bool pipeready = false;
-            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
-            var tc = new Thread(() =>
+            using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+            using (var timeout = new TimeoutableStream(pipe))
+            using (var binary = new BinaryStream(timeout))
             {
-                while (!pipeready) Thread.Sleep(50);
-                Thread.Sleep(50);
-                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
-                using (var binary = new BinaryStream(pipe))
-                {
-                    pipe.Connect();
-                    Thread.Sleep(100);
-                    binary.WriteString("TEST");
-                    Thread.Sleep(500);
-                    try { binary.WriteString("TEST"); Assert.Fail(); } // can't succeed because the server timeout breaks the pipe.
-                    catch (IOException) { }
+                pipeready = true;
+                pipe.WaitForConnection();
+                binary.ReadString();
+                binary.ReadString();
+                binary.WriteString("TEST");
+                binary.WriteString("TEST");
+                Thread.Sleep(100);
+                okserver = true;
+            }
+        });
+        ts.Start();
 
-                    Thread.Sleep(100);
-                    okclient = true;
-                }
-            });
-            tc.Start();
+        tc.Join();
+        ts.Join();
 
-            var ts = new Thread(() =>
-            {
-                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
-                using (var timeout = new TimeoutableStream(pipe))
-                using (var binary = new BinaryStream(timeout))
-                {
-                    pipeready = true;
-                    pipe.WaitForConnection();
-                    timeout.ReadTimeout = 300;
-                    binary.ReadString();
-                    try { binary.ReadString(); Assert.Fail(); }
-                    catch (TimeoutException) { }
-                    Thread.Sleep(100);
-                    okserver = true;
-                }
-            });
-            ts.Start();
+        Assert.IsTrue(okclient);
+        Assert.IsTrue(okserver);
+    }
 
-            tc.Join();
-            ts.Join();
-
-            Assert.IsTrue(okclient);
-            Assert.IsTrue(okserver);
-        }
-
-        [Test]
-        public void TestWriteTimeout()
+    [Test]
+    public void TestReadTimeout()
+    {
+        bool okclient = false;
+        bool okserver = false;
+        bool pipeready = false;
+        var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
+        var tc = new Thread(() =>
         {
-            bool okclient = false;
-            bool okserver = false;
-            bool pipeready = false;
-            var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
-            var tc = new Thread(() =>
+            while (!pipeready) Thread.Sleep(50);
+            Thread.Sleep(50);
+            using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
+            using (var binary = new BinaryStream(pipe))
             {
-                while (!pipeready) Thread.Sleep(50);
-                Thread.Sleep(50);
-                using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
-                using (var binary = new BinaryStream(pipe))
-                {
-                    pipe.Connect();
-                    Thread.Sleep(100);
-                    binary.ReadString();
-                    Thread.Sleep(500);
-                    try { binary.ReadString(); Assert.Fail(); } // can't succeed because the server timeout breaks the pipe.
-                    catch (IOException) { }
+                pipe.Connect();
+                Thread.Sleep(100);
+                binary.WriteString("TEST");
+                Thread.Sleep(500);
+                try { binary.WriteString("TEST"); Assert.Fail(); } // can't succeed because the server timeout breaks the pipe.
+                catch (IOException) { }
 
-                    Thread.Sleep(100);
-                    okclient = true;
-                }
-            });
-            tc.Start();
+                Thread.Sleep(100);
+                okclient = true;
+            }
+        });
+        tc.Start();
 
-            var ts = new Thread(() =>
+        var ts = new Thread(() =>
+        {
+            using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+            using (var timeout = new TimeoutableStream(pipe))
+            using (var binary = new BinaryStream(timeout))
             {
-                using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
-                using (var timeout = new TimeoutableStream(pipe))
-                using (var binary = new BinaryStream(timeout))
-                {
-                    pipeready = true;
-                    pipe.WaitForConnection();
-                    timeout.WriteTimeout = 300;
-                    binary.WriteString("TEST");
-                    try { binary.WriteString("TEST"); Assert.Fail(); }
-                    catch (TimeoutException) { }
-                    Thread.Sleep(100);
-                    okserver = true;
-                }
-            });
-            ts.Start();
+                pipeready = true;
+                pipe.WaitForConnection();
+                timeout.ReadTimeout = 300;
+                binary.ReadString();
+                try { binary.ReadString(); Assert.Fail(); }
+                catch (TimeoutException) { }
+                Thread.Sleep(100);
+                okserver = true;
+            }
+        });
+        ts.Start();
 
-            tc.Join();
-            ts.Join();
+        tc.Join();
+        ts.Join();
 
-            Assert.IsTrue(okclient);
-            Assert.IsTrue(okserver);
-        }
+        Assert.IsTrue(okclient);
+        Assert.IsTrue(okserver);
+    }
+
+    [Test]
+    public void TestWriteTimeout()
+    {
+        bool okclient = false;
+        bool okserver = false;
+        bool pipeready = false;
+        var pipename = "test.pipe." + RndCrypto.NextBytes(10).ToHex();
+        var tc = new Thread(() =>
+        {
+            while (!pipeready) Thread.Sleep(50);
+            Thread.Sleep(50);
+            using (var pipe = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous))
+            using (var binary = new BinaryStream(pipe))
+            {
+                pipe.Connect();
+                Thread.Sleep(100);
+                binary.ReadString();
+                Thread.Sleep(500);
+                try { binary.ReadString(); Assert.Fail(); } // can't succeed because the server timeout breaks the pipe.
+                catch (IOException) { }
+
+                Thread.Sleep(100);
+                okclient = true;
+            }
+        });
+        tc.Start();
+
+        var ts = new Thread(() =>
+        {
+            using (var pipe = new NamedPipeServerStream(pipename, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+            using (var timeout = new TimeoutableStream(pipe))
+            using (var binary = new BinaryStream(timeout))
+            {
+                pipeready = true;
+                pipe.WaitForConnection();
+                timeout.WriteTimeout = 300;
+                binary.WriteString("TEST");
+                try { binary.WriteString("TEST"); Assert.Fail(); }
+                catch (TimeoutException) { }
+                Thread.Sleep(100);
+                okserver = true;
+            }
+        });
+        ts.Start();
+
+        tc.Join();
+        ts.Join();
+
+        Assert.IsTrue(okclient);
+        Assert.IsTrue(okserver);
     }
 }

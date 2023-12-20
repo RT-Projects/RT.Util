@@ -1,5 +1,3 @@
-using System;
-
 namespace RT.Util.ExtensionMethods;
 
 /// <summary>Provides extension methods on the <see cref="Random"/> type.</summary>

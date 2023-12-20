@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace RT.Util.ExtensionMethods
 {
     /// <summary>Extension methods related to custom comparer.</summary>

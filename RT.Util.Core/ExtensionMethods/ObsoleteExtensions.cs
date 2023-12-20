@@ -1,77 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+namespace RT.Util.ExtensionMethods.Obsolete;
 
-namespace RT.Util.ExtensionMethods.Obsolete
-{
 #if !NET5_0_OR_GREATER
-    /// <summary>
-    ///     Extension methods that exist in netstandard2.1 but not netstandard2.0 - so we want to keep them available but
-    ///     outside of the main namespace where they mess with the framework-supplied versions. In hindsight
-    ///     multi-targeting would have been a better idea.</summary>
+/// <summary>
+///     Extension methods that exist in netstandard2.1 but not netstandard2.0 - so we want to keep them available but outside
+///     of the main namespace where they mess with the framework-supplied versions. In hindsight multi-targeting would have
+///     been a better idea.</summary>
 #if EXPORT_UTIL
-    public
+public
 #endif
-    static class ObsoleteExtensions
+static class ObsoleteExtensions
+{
+    /// <summary>Creates a <see cref="HashSet{T}"/> from an enumerable collection.</summary>
+    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
     {
-        /// <summary>Creates a <see cref="HashSet{T}"/> from an enumerable collection.</summary>
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        return comparer == null ? new HashSet<T>(source) : new HashSet<T>(source, comparer);
+    }
+
+    /// <summary>
+    ///     Returns a collection containing only the last <paramref name="count"/> items of the input collection. This method
+    ///     enumerates the entire collection to the end once before returning. Note also that the memory usage of this method
+    ///     is proportional to <paramref name="count"/>.</summary>
+    public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        if (count < 0)
+            throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
+        if (count == 0)
+            return Enumerable.Empty<T>();
+
+        if (source is IList<T> list)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            return comparer == null ? new HashSet<T>(source) : new HashSet<T>(source, comparer);
+            // Make this a local iterator-block function so that list.Count is only evaluated when enumeration begins
+            IEnumerable<T> takeLastFromList()
+            {
+                for (int i = Math.Max(0, list.Count - count); i < list.Count; i++)
+                    yield return list[i];
+            }
+            return takeLastFromList();
         }
-
-        /// <summary>
-        ///     Returns a collection containing only the last <paramref name="count"/> items of the input collection. This
-        ///     method enumerates the entire collection to the end once before returning. Note also that the memory usage of
-        ///     this method is proportional to <paramref name="count"/>.</summary>
-        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int count)
+        else if (source is ICollection<T> collection)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-            if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
-            if (count == 0)
-                return Enumerable.Empty<T>();
-
-            if (source is IList<T> list)
+            // Make this a local iterator-block function so that collection.Count is only evaluated when enumeration begins
+            IEnumerable<T> takeLastFromCollection()
             {
-                // Make this a local iterator-block function so that list.Count is only evaluated when enumeration begins
-                IEnumerable<T> takeLastFromList()
-                {
-                    for (int i = Math.Max(0, list.Count - count); i < list.Count; i++)
-                        yield return list[i];
-                }
-                return takeLastFromList();
+                foreach (var elem in collection.Skip(Math.Max(0, collection.Count - count)))
+                    yield return elem;
             }
-            else if (source is ICollection<T> collection)
+            return takeLastFromCollection();
+        }
+        else
+        {
+            IEnumerable<T> takeLast()
             {
-                // Make this a local iterator-block function so that collection.Count is only evaluated when enumeration begins
-                IEnumerable<T> takeLastFromCollection()
+                var queue = new Queue<T>(count + 1);
+                foreach (var item in source)
                 {
-                    foreach (var elem in collection.Skip(Math.Max(0, collection.Count - count)))
-                        yield return elem;
+                    if (queue.Count == count)
+                        queue.Dequeue();
+                    queue.Enqueue(item);
                 }
-                return takeLastFromCollection();
+                foreach (var item in queue)
+                    yield return item;
             }
-            else
-            {
-                IEnumerable<T> takeLast()
-                {
-                    var queue = new Queue<T>(count + 1);
-                    foreach (var item in source)
-                    {
-                        if (queue.Count == count)
-                            queue.Dequeue();
-                        queue.Enqueue(item);
-                    }
-                    foreach (var item in queue)
-                        yield return item;
-                }
-                return takeLast();
-            }
+            return takeLast();
         }
     }
-#endif
 }
+#endif
