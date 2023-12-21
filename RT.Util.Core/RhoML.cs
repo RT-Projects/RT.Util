@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
@@ -208,7 +208,7 @@ public sealed class RhoElement : RhoNode
             throw new ArgumentNullException(nameof(elements));
         Name = name;
         Value = value;
-        Attributes = new ReadOnlyDictionary<string, string>(attributes);
+        Attributes = attributes.AsReadOnly();
         Children = elements.AsReadOnly();
     }
 

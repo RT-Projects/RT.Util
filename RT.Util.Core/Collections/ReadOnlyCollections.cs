@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace RT.Util.ExtensionMethods
 {
@@ -30,6 +30,7 @@ namespace RT.Util.ExtensionMethods
             return cache;
         }
 
+#if !NET7_0_OR_GREATER
         /// <summary>
         ///     Creates and returns a read-only wrapper around this dictionary. Note: a new wrapper is created on every call.
         ///     Consider caching it.</summary>
@@ -52,11 +53,13 @@ namespace RT.Util.ExtensionMethods
                 cache = new ReadOnlyDictionary<TK, TV>(dict);
             return cache;
         }
+#endif
     }
 }
 
 namespace RT.Util.Collections
 {
+#if !NET7_0_OR_GREATER
     /// <summary>
     ///     Wraps an <see cref="IDictionary&lt;TKey,TValue&gt;"/> to allow reading values but prevent setting/removing them.</summary>
     [DebuggerDisplay("Count = {Count}")]
@@ -205,6 +208,7 @@ namespace RT.Util.Collections
             public KeyValuePair<TKey, TValue>[] Items { get { return _dict.ToArray(); } }
         }
     }
+#endif
 
     /// <summary>Wraps an <see cref="ICollection&lt;T&gt;"/> to allow reading values but prevent setting/removing them.</summary>
     [DebuggerDisplay("Count = {Count}")]

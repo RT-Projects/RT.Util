@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
@@ -130,7 +130,7 @@ public static class LexUtil
         {
             if (_csharpStringEscapesBasic == null)
             {
-                _csharpStringEscapesBasic = new ReadOnlyDictionary<char, char>(new Dictionary<char, char>()
+                _csharpStringEscapesBasic = new Dictionary<char, char>()
                     {
                         {'\'',  '\''},
                         {'\\',  '\\'},
@@ -143,7 +143,7 @@ public static class LexUtil
                         {'r',  '\r'},
                         {'t',  '\t'},
                         {'v',  '\v'},
-                    });
+                    }.AsReadOnly();
             }
             return _csharpStringEscapesBasic;
         }
@@ -156,12 +156,12 @@ public static class LexUtil
         {
             if (_csharpStringEscapesAdvanced == null)
             {
-                _csharpStringEscapesAdvanced = new ReadOnlyDictionary<char, Func<LexReader, string>>(new Dictionary<char, Func<LexReader, string>>()
+                _csharpStringEscapesAdvanced = new Dictionary<char, Func<LexReader, string>>()
                     {
                         {'u', reader => LexUtil.LexCsharpUnicodeFixedLenCharEscape(reader, false)},
                         {'U', reader => LexUtil.LexCsharpUnicodeFixedLenCharEscape(reader, true)},
                         {'x', LexUtil.LexCsharpUnicodeVariableLenCharEscape}
-                    });
+                    }.AsReadOnly();
             }
             return _csharpStringEscapesAdvanced;
         }
