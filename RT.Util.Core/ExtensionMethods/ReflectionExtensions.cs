@@ -1,6 +1,10 @@
-using System.Reflection;
+﻿using System.Reflection;
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Provides extension methods on types involved in the Reflection API.</summary>
 #if EXPORT_UTIL

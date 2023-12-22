@@ -1,6 +1,10 @@
 ﻿using RT.Util.Consoles;
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Console-related extension methods.</summary>
 #if EXPORT_UTIL

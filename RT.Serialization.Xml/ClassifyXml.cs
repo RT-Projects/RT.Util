@@ -1,6 +1,6 @@
-using System.Text;
+﻿using System.Text;
 using System.Xml.Linq;
-using RT.Util.ExtensionMethods;
+using RT.Internal;
 
 namespace RT.Serialization;
 

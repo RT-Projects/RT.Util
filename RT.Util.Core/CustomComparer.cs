@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods
+#else
+namespace RT.Internal
+#endif
 {
     /// <summary>Extension methods related to custom comparer.</summary>
 #if EXPORT_UTIL
@@ -18,7 +22,11 @@ namespace RT.Util.ExtensionMethods
     }
 }
 
+#if EXPORT_UTIL
 namespace RT.Util
+#else
+namespace RT.Internal
+#endif
 {
     /// <summary>
     ///     Encapsulates an IComparer&lt;T&gt; that uses a comparison function provided as a delegate.</summary>

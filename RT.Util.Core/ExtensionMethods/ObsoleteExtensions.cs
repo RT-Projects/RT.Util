@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods.Obsolete;
+#else
+namespace RT.Internal;
+#endif
 
 #if !NET5_0_OR_GREATER
 /// <summary>

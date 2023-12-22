@@ -1,6 +1,10 @@
-using System.Text;
+﻿using System.Text;
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Provides extension methods on the <see cref="Stream"/> type.</summary>
 #if EXPORT_UTIL

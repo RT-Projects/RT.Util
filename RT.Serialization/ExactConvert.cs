@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Numerics;
 using System.Reflection;
-using RT.Util.ExtensionMethods;
+using RT.Internal;
 
 namespace RT.Serialization;
 

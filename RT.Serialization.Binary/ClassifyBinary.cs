@@ -1,6 +1,5 @@
-using System.Numerics;
-using RT.Util;
-using RT.Util.ExtensionMethods;
+﻿using System.Numerics;
+using RT.Internal;
 
 namespace RT.Serialization;
 

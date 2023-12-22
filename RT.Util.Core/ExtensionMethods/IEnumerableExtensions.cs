@@ -1,9 +1,13 @@
-using System.Text;
+﻿using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
 #endif
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Provides extension methods on the <see cref="IEnumerable&lt;T&gt;"/> type.</summary>
 #if EXPORT_UTIL

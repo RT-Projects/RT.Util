@@ -1,7 +1,11 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Defines one of several common date/time formats which are either ISO-8601 compatible or very slight deviations from it.</summary>
 #if EXPORT_UTIL

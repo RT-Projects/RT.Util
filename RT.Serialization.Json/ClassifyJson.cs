@@ -1,8 +1,7 @@
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text;
+using RT.Internal;
 using RT.Json;
-using RT.Util;
-using RT.Util.ExtensionMethods;
 
 namespace RT.Serialization;
 

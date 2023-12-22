@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util.Text;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>
 ///     Encapsulates a class that offers efficient conversion of a string offset into line/column number. The class is best

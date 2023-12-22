@@ -1,7 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Security.Cryptography;
 
+#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods
+#else
+namespace RT.Internal
+#endif
 {
     /// <summary>Extension methods related to random number generation.</summary>
 #if EXPORT_UTIL

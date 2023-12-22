@@ -1,8 +1,11 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
-using RT.Util.ExtensionMethods;
 
+#if EXPORT_UTIL
 namespace RT.Util.IL;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Decodes the IL inside a specified method.</summary>
 #if EXPORT_UTIL

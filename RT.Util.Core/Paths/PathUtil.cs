@@ -1,6 +1,9 @@
+﻿#if EXPORT_UTIL
 using RT.Util.ExtensionMethods;
-
 namespace RT.Util;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>Represents a path-related exception.</summary>
 #if EXPORT_UTIL

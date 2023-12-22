@@ -1,10 +1,8 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
-using RT.Util;
-using RT.Util.ExtensionMethods;
-using RT.Util.IL;
+using RT.Internal;
 
 namespace RT.PostBuild;
 

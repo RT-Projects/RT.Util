@@ -1,10 +1,9 @@
-using System.Dynamic;
+﻿using System.Dynamic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using RT.Internal;
 using RT.Serialization;
-using RT.Util.ExtensionMethods;
-using RT.Util.Text;
 
 namespace RT.Json;
 
@@ -1560,7 +1559,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
         {
             if (!first)
                 yield return ",";
-            yield return kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double);
+            yield return kvp.Key.JsEscape(Internal.JsQuotes.Double);
             yield return ":";
             foreach (var piece in JsonValue.ToEnumerable(kvp.Value))
                 yield return piece;
@@ -1583,7 +1582,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
             sb.Append("{ ");
             foreach (var kvp in Dict)
             {
-                sb.Append(kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double));
+                sb.Append(kvp.Key.JsEscape(Internal.JsQuotes.Double));
                 sb.Append(": ");
                 JsonValue.AppendIndented(kvp.Value, sb, indentation);
             }
@@ -1600,7 +1599,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
             sb.AppendLine();
             for (int i = 0; i <= indentation; i++)
                 sb.Append("  ");
-            sb.Append(kvp.Key.JsEscape(Util.ExtensionMethods.JsQuotes.Double));
+            sb.Append(kvp.Key.JsEscape(Internal.JsQuotes.Double));
             sb.Append(": ");
             JsonValue.AppendIndented(kvp.Value, sb, indentation + 1);
             first = false;
@@ -1907,14 +1906,14 @@ public sealed class JsonString : JsonValue, IEquatable<JsonString>
     /// <summary>Converts the current JSON value to a JSON string that parses back to this value.</summary>
     public override void AppendIndented(StringBuilder sb, int indentation = 0)
     {
-        sb.AppendJsEscaped(_value, Util.ExtensionMethods.JsQuotes.Double);
+        sb.AppendJsEscaped(_value, Internal.JsQuotes.Double);
     }
 
     /// <summary>
     ///     Returns a JavaScript-compatible representation of this string.</summary>
     /// <param name="quotes">
     ///     Specifies the style of quotes to use around the string.</param>
-    public string ToString(JsQuotes quotes) => _value.JsEscape((Util.ExtensionMethods.JsQuotes) quotes);
+    public string ToString(JsQuotes quotes) => _value.JsEscape((Internal.JsQuotes) quotes);
 }
 
 /// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>

@@ -1,4 +1,8 @@
-﻿namespace RT.Util.ExtensionMethods;
+﻿#if EXPORT_UTIL
+namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>
 ///     Provides extension methods on various collection types or interfaces in the System.Collections.Generic namespace

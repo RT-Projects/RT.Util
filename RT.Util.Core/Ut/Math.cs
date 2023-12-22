@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util;
+#else
+namespace RT.Internal;
+#endif
 
 #if EXPORT_UTIL
 public

@@ -1,11 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using RT.Internal;
 using RT.PostBuild;
-using RT.Util;
-using RT.Util.ExtensionMethods;
 
 /*
  * Provide a proper way to distinguish exceptions due to the caller breaking some contract from exceptions due to data load failures. Always pass through the former.

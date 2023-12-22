@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>
 ///     Provides static functionality to execute work on an unlimited call stack, which is not limited to 1 MB as the standard

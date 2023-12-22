@@ -1,10 +1,13 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using RT.Util.ExtensionMethods;
 
+#if EXPORT_UTIL
 namespace RT.Util;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>This class offers some generic static functions which are hard to categorize under any more specific classes.</summary>
 #if EXPORT_UTIL

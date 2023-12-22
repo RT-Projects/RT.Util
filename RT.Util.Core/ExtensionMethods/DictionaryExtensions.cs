@@ -1,4 +1,8 @@
+﻿#if EXPORT_UTIL
 namespace RT.Util.ExtensionMethods;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>
 ///     Provides extension methods on dictionaries (<see cref="Dictionary{TKey, TValue}"/> and <see cref="IDictionary{TKey,
