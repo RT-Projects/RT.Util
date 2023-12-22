@@ -17,6 +17,7 @@
     <!-- We have to target old frameworks for compatibility, as this project is a library -->
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
 
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/RT-Projects/RT.Util</PackageProjectUrl>
     <RepositoryUrl>https://github.com/RT-Projects/RT.Util.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
