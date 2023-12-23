@@ -12,8 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="ExactConvert.cs" />
-    <Compile Include="..\RT.Util.Core\CustomComparer.cs" Link="CustomComparer.cs" />
+    <Compile Include="..\RT.Serialization\ExactConvert.cs" Link="SharedInternalUtil\ExactConvert.cs" />
+    <Compile Include="..\RT.Util.Core\CustomComparer.cs" Link="SharedInternalUtil\CustomComparer.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\ArrayExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\ArrayExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\IEnumerableExtensions.cs" />
     <Compile Include="..\RT.Util.Core\ExtensionMethods\DictionaryExtensions.cs" Link="SharedInternalUtil\ExtensionMethods\DictionaryExtensions.cs" />

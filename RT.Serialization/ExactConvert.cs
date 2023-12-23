@@ -1,9 +1,13 @@
 ﻿using System.Globalization;
 using System.Numerics;
 using System.Reflection;
-using RT.Internal;
 
+#if EXPORT_EXACTCONVERT
+using RT.Internal;
 namespace RT.Serialization;
+#else
+namespace RT.Internal;
+#endif
 
 /// <summary>
 ///     <para>
