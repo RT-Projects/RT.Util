@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
 #endif
@@ -799,6 +799,14 @@ static class IEnumerableExtensions
     }
 
     /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or
+    ///     <c>null</c> if the collection is empty.</summary>
+    public static T? MinElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue>
+    {
+        return minMaxElement(source, valueSelector, min: true, doThrow: false)?.minMaxElem;
+    }
+
+    /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
@@ -812,6 +820,14 @@ static class IEnumerableExtensions
     {
         var tup = minMaxElement(source, valueSelector, min: false, doThrow: false);
         return tup == null ? defaultValue : tup.Value.minMaxElem;
+    }
+
+    /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the largest value, or
+    ///     <c>null</c> if the collection is empty.</summary>
+    public static T? MaxElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue>
+    {
+        return minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxElem;
     }
 
     /// <summary>
