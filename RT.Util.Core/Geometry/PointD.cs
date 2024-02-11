@@ -30,7 +30,7 @@ public struct PointD : IEquatable<PointD>
     ///     Object to compare against.</param>
     /// <returns>
     ///     True if considered equal.</returns>
-    public override readonly bool Equals(object obj) => obj is PointD p ? p.X == X && p.Y == Y : base.Equals(obj);
+    public override readonly bool Equals(object obj) => obj is PointD p ? p.X == X && p.Y == Y : false;
 
     /// <summary>
     ///     Compares two <see cref="PointD"/> objects for equality.</summary>
