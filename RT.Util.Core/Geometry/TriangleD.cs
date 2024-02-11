@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+﻿namespace RT.Util.Geometry;
 
 /// <summary>Encapsulates a triangle defined by vertices represented as <see cref="PointD"/> values.</summary>
 public class TriangleD
@@ -18,18 +18,18 @@ public class TriangleD
     public override string ToString() => $"Δ {V1} : {V2} : {V3}";
 
     /// <summary>Gets the edge connecting vertices <see cref="V1"/> and <see cref="V2"/>.</summary>
-    public EdgeD Edge12 => new EdgeD(V1, V2);
+    public EdgeD Edge12 => new(V1, V2);
     /// <summary>Gets the edge connecting vertices <see cref="V2"/> and <see cref="V3"/>.</summary>
-    public EdgeD Edge23 => new EdgeD(V2, V3);
+    public EdgeD Edge23 => new(V2, V3);
     /// <summary>Gets the edge connecting vertices <see cref="V3"/> and <see cref="V1"/>.</summary>
-    public EdgeD Edge31 => new EdgeD(V3, V1);
+    public EdgeD Edge31 => new(V3, V1);
 
     /// <summary>Returns a value indicating whether one of the triangle vertices is equal to <paramref name="v"/>.</summary>
     public bool HasVertex(PointD v) => v == V1 || v == V2 || v == V3;
 
     /// <summary>
-    ///     Returns a value indicating whether one of the triangle edges is equal to <paramref name="e"/>. Edge equality is
-    ///     direction-insensitive.</summary>
+    ///     Returns a value indicating whether one of the triangle edges is equal to <paramref name="e"/>. Edge equality
+    ///     is direction-insensitive.</summary>
     public bool HasEdge(EdgeD e) => e == Edge12 || e == Edge23 || e == Edge31;
 
     /// <summary>Enumerates the vertices <see cref="V1"/>, <see cref="V2"/> and <see cref="V3"/>.</summary>
@@ -55,8 +55,8 @@ public class TriangleD
     }
 
     /// <summary>
-    ///     Gets the centroid of the triangle. This point is guaranteed to lie inside the triangle, and is the fastest way to
-    ///     obtain a point lying inside the triangle.</summary>
+    ///     Gets the centroid of the triangle. This point is guaranteed to lie inside the triangle, and is the fastest way
+    ///     to obtain a point lying inside the triangle.</summary>
     public PointD Centroid => (V1 + V2 + V3) / 3;
 
     /// <summary>Gets the circumcenter of the triangle, i.e. the center of the triangle's circumcircle.</summary>
@@ -78,7 +78,7 @@ public class TriangleD
     public bool CircumcircleContains(PointD v)
     {
         var circle = Circumcircle;
-        return (v - circle.Center).Abs() <= circle.Radius;
+        return (v - circle.Center).Distance() <= circle.Radius;
     }
 
     /// <summary>Returns the circumcircle of this triangle.</summary>
@@ -87,7 +87,7 @@ public class TriangleD
         get
         {
             var pt = Circumcenter;
-            return new CircleD(pt, (V1 - pt).Abs());
+            return new CircleD(pt, (V1 - pt).Distance());
         }
     }
 }

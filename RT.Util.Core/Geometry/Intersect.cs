@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+﻿namespace RT.Util.Geometry;
 
 /// <summary>
 ///     <para>
@@ -6,21 +6,33 @@ namespace RT.Util.Geometry;
 ///     <para>
 ///         In this static class, function names always have the two basic shapes ordered using the following order:</para>
 ///     <list type="number">
-///         <item>Line (infinite)</item>
+///         <item>Line (straight line; infinite)</item>
 ///         <item>Ray (starts at a point, extends to infinity)</item>
 ///         <item>Segment (starts and ends on finite points)</item>
 ///         <item>Circle</item>
+///         <item>Arc</item>
+///         <item>Rectangle (axis-aligned, ordered coords of each edge are known)</item>
 ///         <item>BoundingBox (axis-aligned, ordered coords of each edge are known)</item></list>
 ///     <para>
-///         Hence it's always LineWithCircle, never CircleWithLine.</para></summary>
+///         Hence it's always LineWithCircle, never CircleWithLine.</para>
+///     <para>
+///         Many functions return one or multiple “lambda” values. These indicate how far along a line a point of intersection
+///         is from its start point, relative to its end point:</para>
+///     <list type="bullet">
+///         <item>A negative value indicates a position “before” the start point; 0 is the start point; 0.5 is the midpoint; 1
+///         is the endpoint; and a value greater than 1 indicates a position “beyond” the end point.</item>
+///         <item>If no point of intersection exists, a lambda value of <c>double.NaN</c> is returned.</item>
+///         <item>If only one point of intersection is found by a function that returns two lambdas, it is always the first
+///         lambda that identifies the point of intersection while the second is set to <c>double.NaN</c>.</item></list>
+///     <para>
+///         In cases where multiple points of intersections are possible, such as between a line and a circle, those overloads
+///         that return only one point always return the one that is closer to the line’s start point.</para></summary>
 public static class Intersect
 {
-    #region LineWithLine
-
     /// <summary>
-    ///     Finds the point of intersection of two lines. The result is in terms of lambda along each of the lines. Point of
-    ///     intersection is defined as "line.Start + lambda * line", for each line. If the lines don't intersect, the lambdas
-    ///     are set to NaN.</summary>
+    ///     Finds the point of intersection between two lines.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details.</remarks>
     public static void LineWithLine(ref EdgeD line1, ref EdgeD line2, out double line1Lambda, out double line2Lambda)
     {
         // line1 direction vector
@@ -45,52 +57,20 @@ public static class Intersect
     }
 
     /// <summary>
-    ///     Finds the point of intersection of two lines. The result is in terms of lambda along each of the lines. Point of
-    ///     intersection is defined as "line.Start + lambda * line", for each line. If the lines don't intersect, the lambdas
-    ///     are set to NaN.</summary>
-    public static (PointD point, double line1Lambda, double line2Lambda) LineWithLineLambda(EdgeD line1, EdgeD line2)
+    ///     Finds the point of intersection between two lines.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details.</remarks>
+    public static (PointD? point, double line1Lambda, double line2Lambda) LineWithLine(EdgeD line1, EdgeD line2)
     {
         LineWithLine(ref line1, ref line2, out var line1Lambda, out var line2Lambda);
-        return (line1.Start + line1Lambda * (line1.End - line1.Start), line1Lambda, line2Lambda);
+        return (double.IsNaN(line1Lambda) ? null : line1.Start + line1Lambda * (line1.End - line1.Start), line1Lambda, line2Lambda);
     }
 
     /// <summary>
-    ///     Finds the point of intersection of two lines. If the lines don't intersect, the resulting point coordinates are
-    ///     NaN.</summary>
-    public static PointD LineWithLine(EdgeD line1, EdgeD line2)
-    {
-        LineWithLine(ref line1, ref line2, out var line1Lambda, out _);
-        return line1.Start + line1Lambda * (line1.End - line1.Start);
-    }
-
-    /// <summary>
-    ///     <para>
-    ///         Finds the point of intersection between two lines, specified by two points each.</para>
-    ///     <para>
-    ///         If the lines coincide or are parallel, returns (NaN,NaN).</para></summary>
-    public static PointD intersect(PointD f1, PointD t1, PointD f2, PointD t2)
-    {
-        var det = (f1.X - t1.X) * (f2.Y - t2.Y) - (f1.Y - t1.Y) * (f2.X - t2.X);
-
-        if (det == 0)
-            // Lines are parallel
-            return new PointD(double.NaN, double.NaN);
-
-        return new PointD(
-            ((f1.X * t1.Y - f1.Y * t1.X) * (f2.X - t2.X) - (f1.X - t1.X) * (f2.X * t2.Y - f2.Y * t2.X)) / det,
-            ((f1.X * t1.Y - f1.Y * t1.X) * (f2.Y - t2.Y) - (f1.Y - t1.Y) * (f2.X * t2.Y - f2.Y * t2.X)) / det
-        );
-    }
-
-    #endregion
-
-    #region LineWithCircle
-
-    /// <summary>
-    ///     Finds the points of intersection between a line and a circle. The results are two lambdas along the line, one for
-    ///     each point, or NaN if there is no intersection.</summary>
-    public static void LineWithCircle(ref EdgeD line, ref CircleD circle,
-                                      out double lambda1, out double lambda2)
+    ///     Finds the points of intersection between a line and a circle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static void LineWithCircle(ref EdgeD line, ref CircleD circle, out double lambda1, out double lambda2)
     {
         // The following expressions come up a lot in the solution, so simplify using them.
         double dx = line.End.X - line.Start.X;
@@ -102,7 +82,7 @@ public static class Intersect
         // Eq of a line:    x = sx + l * dx
         //                  y = sy + l * dy
         // Eq of a circle:  (x - cx)^2 + (y - cy)^2 = r^2
-        // 
+        //
         // Eventually we get a standard quadratic equation in l with the
         // following coefficients:
         double a = dx * dx + dy * dy;
@@ -118,76 +98,78 @@ public static class Intersect
         else
         {
             double sqrtD = Math.Sqrt(D);
-            lambda1 = (-b + sqrtD) / (2 * a);
-            lambda2 = (-b - sqrtD) / (2 * a);
+            lambda1 = (-b - sqrtD) / (2 * a);
+            lambda2 = (-b + sqrtD) / (2 * a);
         }
     }
 
     /// <summary>
-    ///     Finds the points of intersection between a line and a circle. The results are two lambdas along the line, one for
-    ///     each point, or NaN if there is no intersection.</summary>
-    public static void LineWithCircle(EdgeD line, CircleD circle,
-                                      out double lambda1, out double lambda2)
+    ///     Finds the points of intersection between a line and a circle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static (PointD? point1, double lambda1, PointD? point2, double lambda2) LineWithCircle(EdgeD line, CircleD circle)
     {
-        LineWithCircle(ref line, ref circle, out lambda1, out lambda2);
+        LineWithCircle(ref line, ref circle, out var lambda1, out var lambda2);
+        return (double.IsNaN(lambda1) ? null : line.Start + lambda1 * (line.End - line.Start), lambda1, double.IsNaN(lambda2) ? null : line.Start + lambda2 * (line.End - line.Start), lambda2);
     }
 
-    #endregion
-
-    #region RayWithSegment
-
     /// <summary>
-    ///     Calculates the intersection of a ray with a segment. Returns the result as the lambdas of the intersection point
-    ///     along the ray and the segment. If there is no intersection returns double.NaN in both lambdas.</summary>
+    ///     Finds the point of intersection of a ray with a segment.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
     public static void RayWithSegment(ref EdgeD ray, ref EdgeD segment, out double rayL, out double segmentL)
     {
-        Intersect.LineWithLine(ref ray, ref segment, out rayL, out segmentL);
-
-        if (!double.IsNaN(rayL) && ((rayL < 0) || (segmentL < 0) || (segmentL > 1)))
+        LineWithLine(ref ray, ref segment, out rayL, out segmentL);
+        if (!double.IsNaN(rayL) && (rayL < 0 || segmentL < 0 || segmentL > 1))
             rayL = segmentL = double.NaN;
     }
 
-    #endregion
-
-    #region RayWithCircle
+    /// <summary>
+    ///     Finds the point of intersection of a ray with a segment.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static (PointD? point, double rayL, double segmentL) RayWithSegment(EdgeD ray, EdgeD segment)
+    {
+        RayWithSegment(ref ray, ref segment, out double rayL, out double segmentL);
+        return (double.IsNaN(rayL) || double.IsNaN(segmentL) ? null : ray.Start + (ray.End - ray.Start) * rayL, rayL, segmentL);
+    }
 
     /// <summary>
-    ///     Finds the points of intersection between a ray and a circle. The resulting lambdas along the ray are sorted in
-    ///     ascending order, so the "first" intersection is always in lambda1 (if any). Lambda may be NaN if there is no
-    ///     intersection (or no "second" intersection).</summary>
-    public static void RayWithCircle(ref EdgeD ray, ref CircleD circle,
-                                     out double lambda1, out double lambda2)
+    ///     Finds the points of intersection between a ray and a circle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static void RayWithCircle(ref EdgeD ray, ref CircleD circle, out double lambda1, out double lambda2)
     {
         LineWithCircle(ref ray, ref circle, out lambda1, out lambda2);
 
-        // Sort the two values in ascending order, with NaN last,
-        // while resetting negative values to NaNs
         if (lambda1 < 0) lambda1 = double.NaN;
         if (lambda2 < 0) lambda2 = double.NaN;
-        if (lambda1 > lambda2 || double.IsNaN(lambda1))
-        {
-            double temp = lambda1;
-            lambda1 = lambda2;
-            lambda2 = temp;
-        }
+        if (double.IsNaN(lambda1) && !double.IsNaN(lambda2))
+            (lambda1, lambda2) = (lambda2, lambda1);
     }
 
-    #endregion
-
-    #region RayWithArc
+    /// <summary>
+    ///     Finds the points of intersection between a ray and a circle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static (PointD? point1, double lambda1, PointD? point2, double lambda2) RayWithCircle(EdgeD ray, CircleD circle)
+    {
+        RayWithCircle(ref ray, ref circle, out double lambda1, out double lambda2);
+        return (double.IsNaN(lambda1) ? null : ray.Start + (ray.End - ray.Start) * lambda1, lambda1,
+            double.IsNaN(lambda2) ? null : ray.Start + (ray.End - ray.Start) * lambda2, lambda2);
+    }
 
     /// <summary>
-    ///     Finds the points of intersection between a ray and an arc. The resulting lambdas along the ray are sorted in
-    ///     ascending order, so the "first" intersection is always in lambda1 (if any). Lambda may be NaN if there is no
-    ///     intersection (or no "second" intersection).</summary>
-    public static void RayWithArc(ref EdgeD ray, ref ArcD arc,
-                                     out double lambda1, out double lambda2)
+    ///     Finds the points of intersection between a ray and an arc.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static void RayWithArc(ref EdgeD ray, ref ArcD arc, out double lambda1, out double lambda2)
     {
         RayWithCircle(ref ray, ref arc.Circle, out lambda1, out lambda2);
         var sweepdir = Math.Sign(arc.AngleSweep);
         if (!double.IsNaN(lambda1))
         {
-            var dir = ((ray.Start + lambda1 * (ray.End - ray.Start)) - arc.Circle.Center).Theta();
+            var dir = (ray.Start + lambda1 * (ray.End - ray.Start) - arc.Circle.Center).Theta();
             if (!(GeomUt.AngleDifference(arc.AngleStart, dir) * sweepdir > 0 && GeomUt.AngleDifference(arc.AngleStart + arc.AngleSweep, dir) * sweepdir < 0))
                 lambda1 = double.NaN;
         }
@@ -204,33 +186,37 @@ public static class Intersect
         }
     }
 
-    #endregion
-
-    #region RayWithRectangle
+    /// <summary>
+    ///     Finds the points of intersection between a ray and an arc.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static (PointD? point1, double lambda1, PointD? point2, double lambda2) RayWithArc(EdgeD ray, ArcD arc)
+    {
+        RayWithArc(ref ray, ref arc, out double lambda1, out double lambda2);
+        return (double.IsNaN(lambda1) || double.IsNaN(lambda2) ? null : ray.Start + (ray.End - ray.Start) * lambda1, lambda1,
+            double.IsNaN(lambda2) || double.IsNaN(lambda2) ? null : ray.Start + (ray.End - ray.Start) * lambda2, lambda2);
+    }
 
     /// <summary>
-    ///     Finds intersections between a ray and a rectangle. Returns the lambdas of intersections, if any, or NaN otherwise.
-    ///     Guarantees that lambda1 &lt; lambda2, and if only one of them is NaN then it's lambda2. Lambda is such that
-    ///     ray.Start + lambda * (ray.End - ray.Start) gives the point of intersection.</summary>
+    ///     Finds the points of intersection between a ray and a rectangle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
     public static void RayWithRectangle(ref EdgeD ray, ref RectangleD rect, out double lambda1, out double lambda2)
     {
-        double lambda, dummy;
         bool done1 = false;
         lambda1 = lambda2 = double.NaN;
 
         for (int i = 0; i < 4; i++)
         {
-            EdgeD segment;
-            switch (i)
+            var segment = i switch
             {
-                case 0: segment = new EdgeD(rect.Left, rect.Top, rect.Right, rect.Top); break;
-                case 1: segment = new EdgeD(rect.Right, rect.Top, rect.Right, rect.Bottom); break;
-                case 2: segment = new EdgeD(rect.Right, rect.Bottom, rect.Left, rect.Bottom); break;
-                case 3: segment = new EdgeD(rect.Left, rect.Bottom, rect.Left, rect.Top); break;
-                default: throw new InternalErrorException("fsvxhfhj"); // unreachable
-            }
-
-            Intersect.RayWithSegment(ref ray, ref segment, out lambda, out dummy);
+                0 => new EdgeD(rect.Left, rect.Top, rect.Right, rect.Top),
+                1 => new EdgeD(rect.Right, rect.Top, rect.Right, rect.Bottom),
+                2 => new EdgeD(rect.Right, rect.Bottom, rect.Left, rect.Bottom),
+                3 => new EdgeD(rect.Left, rect.Bottom, rect.Left, rect.Top),
+                _ => throw new InternalErrorException("fsvxhfhj")   // unreachable
+            };
+            RayWithSegment(ref ray, ref segment, out var lambda, out _);
 
             if (!double.IsNaN(lambda))
             {
@@ -252,12 +238,17 @@ public static class Intersect
                 }
             }
         }
-
     }
 
-    #endregion
-
-    #region RayWithBoundingBox
+    /// <summary>
+    ///     Finds the points of intersection between a ray and a rectangle.</summary>
+    /// <remarks>
+    ///     See <see cref="Intersect"/> for details about the values returned.</remarks>
+    public static (PointD? point1, double lambda1, PointD? point2, double lambda2) RayWithRectangle(EdgeD ray, RectangleD rectangle)
+    {
+        RayWithRectangle(ref ray, ref rectangle, out double lambda1, out double lambda2);
+        return (double.IsNaN(lambda1) ? null : ray.Start + (ray.End - ray.Start) * lambda1, lambda1, double.IsNaN(lambda2) ? null : ray.Start + (ray.End - ray.Start) * lambda2, lambda2);
+    }
 
     /// <summary>
     ///     Checks for intersections between a ray and a bounding box. Returns true if there is at least one intersection.</summary>
@@ -311,10 +302,6 @@ public static class Intersect
         return false;
     }
 
-    #endregion
-
-    #region SegmentWithSegment
-
     /// <summary>
     ///     If the two specified line segments touch anywhere, returns true. Otherwise returns false. See Remarks.</summary>
     /// <remarks>
@@ -343,10 +330,6 @@ public static class Intersect
             ((tf2y * f21x - tf2x * f21y) * (tf2x * (t1y - f2y) - tf2y * (t1x - f2x)) <= 0);
     }
 
-    #endregion
-
-    #region BoundingBoxWithBoundingBox
-
     /// <summary>
     ///     Checks for intersections between the two bounding boxes specified by the coordinates. Returns true if there is at
     ///     least one intersection. Coordinates ending with "1" belong to the first box, "2" to the second one. Coordinates
@@ -368,16 +351,11 @@ public static class Intersect
               || (box2.Ymin > box1.Ymax && box2.Ymax > box1.Ymax) || (box2.Ymin < box1.Ymin && box2.Ymax < box1.Ymin));
     }
 
-    #endregion
-
-    #region PolygonWithPolygon
-
     /// <summary>Returns a polygon formed by intersecting an arbitrary polygon with a convex polygon.</summary>
     public static PolygonD PolygonWithConvexPolygon(PolygonD mainPoly, PolygonD clipPoly)
     {
         if (mainPoly.Vertices.Count <= 2 || clipPoly.Vertices.Count <= 2)
             throw new InvalidOperationException("One of the polygons has 2 vertices or fewer.");
-        var result = new List<PointD>();
         var resultVertices = mainPoly.Vertices.ToList();
         foreach (var clipEdge in clipPoly.ToEdges())
         {
@@ -390,13 +368,13 @@ public static class Intersect
                     if (clipEdge.CrossZ(vertexEnd) > 0)
                         newVertices.Add(vertexEnd);
                     else
-                        newVertices.Add(Intersect.LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)));
+                        newVertices.Add(LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)).point.Value);
                 }
                 else
                 {
                     if (clipEdge.CrossZ(vertexEnd) > 0)
                     {
-                        newVertices.Add(Intersect.LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)));
+                        newVertices.Add(LineWithLine(clipEdge, new EdgeD(vertexStart, vertexEnd)).point.Value);
                         newVertices.Add(vertexEnd);
                     }
                 }
@@ -406,6 +384,4 @@ public static class Intersect
         }
         return new PolygonD(resultVertices);
     }
-
-    #endregion
 }

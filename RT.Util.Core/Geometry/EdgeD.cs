@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+﻿namespace RT.Util.Geometry;
 
 /// <summary>A double-precision class encapsulating a straight line segment connecting two points.</summary>
 public struct EdgeD : IEquatable<EdgeD>
@@ -8,14 +8,14 @@ public struct EdgeD : IEquatable<EdgeD>
     /// <summary>End point of the line segment.</summary>
     public PointD End;
 
-    /// <summary>Initialises a line segment using the specified start and end point.</summary>
+    /// <summary>Initializes a line segment using the specified start and end point.</summary>
     public EdgeD(PointD start, PointD end)
     {
         Start = start;
         End = end;
     }
 
-    /// <summary>Initialises a line segment using the start point (X1, Y1) and the end point (X2, Y2).</summary>
+    /// <summary>Initializes a line segment using the start point (X1, Y1) and the end point (X2, Y2).</summary>
     public EdgeD(double x1, double y1, double x2, double y2)
     {
         Start = new PointD(x1, y1);
@@ -23,7 +23,7 @@ public struct EdgeD : IEquatable<EdgeD>
     }
 
     /// <summary>
-    ///     Initialises a line segment starting at the specified point. The ending point is 1 unit away at the specified
+    ///     Initializes a line segment starting at the specified point. The ending point is 1 unit away at the specified
     ///     angle.</summary>
     public EdgeD(PointD start, double angle)
     {
@@ -32,12 +32,12 @@ public struct EdgeD : IEquatable<EdgeD>
         End.Y = Start.Y + Math.Sin(angle);
     }
 
-    /// <summary>Returns the difference in the X-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
-    public double Width { get { return Math.Abs(Start.X - End.X); } }
-    /// <summary>Returns the difference in the Y-co-ordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
-    public double Height { get { return Math.Abs(Start.Y - End.Y); } }
+    /// <summary>Returns the difference in the X-coordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
+    public readonly double Width => Math.Abs(Start.X - End.X);
+    /// <summary>Returns the difference in the Y-coordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
+    public readonly double Height => Math.Abs(Start.Y - End.Y);
     /// <summary>Returns the length of this edge (the distance between <see cref="Start"/> and <see cref="End"/>).</summary>
-    public double Length => (End - Start).Abs();
+    public readonly double Length => (End - Start).Distance();
 
     /// <summary>
     ///     Determines whether two edges intersect.</summary>
