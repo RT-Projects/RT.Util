@@ -1269,6 +1269,187 @@ static class StringExtensions
     ///     if the value cannot be parsed.</summary>
     public static float? ParseFloatOrNull(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
         => float.TryParse(str, style, provider, out var result) ? result : null;
+
+    /// <summary>
+    ///     Determines whether the <paramref name="input"/> string matches the specified regular expression <paramref
+    ///     name="pattern"/>.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="match">
+    ///     Receives an object that contains information about the match.</param>
+    /// <returns>
+    ///     A boolean indicating whether a match was found or not.</returns>
+    public static bool RegexMatch(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, out Match match)
+    {
+        match = Regex.Match(input, pattern);
+        return match.Success;
+    }
+
+    /// <summary>
+    ///     Determines whether the <paramref name="input"/> string matches the specified regular expression <paramref
+    ///     name="pattern"/>.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="options">
+    ///     A bitwise combination of the enumeration values that provide options for matching.</param>
+    /// <param name="match">
+    ///     Receives an object that contains information about the match.</param>
+    /// <returns>
+    ///     A boolean indicating whether a match was found or not.</returns>
+    public static bool RegexMatch(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, RegexOptions options, out Match match)
+    {
+        match = Regex.Match(input, pattern, options);
+        return match.Success;
+    }
+
+    /// <summary>
+    ///     Determines whether the <paramref name="input"/> string matches the specified regular expression <paramref
+    ///     name="pattern"/> using a culture-invariant case-insensitive match.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="match">
+    ///     Receives an object that contains information about the match.</param>
+    /// <returns>
+    ///     A boolean indicating whether a match was found or not.</returns>
+    public static bool RegexMatchIgnoreCase(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, out Match match)
+    {
+        match = Regex.Match(input, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return match.Success;
+    }
+
+    /// <summary>
+    ///     Searches the specified <paramref name="input"/> string for all occurrences of a specified regular expression
+    ///     <paramref name="pattern"/>.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="options">
+    ///     A bitwise combination of the enumeration values that provide options for matching.</param>
+    /// <returns>
+    ///     A collection of the Match objects found by the search. If no matches are found, the method returns an empty
+    ///     collection object.</returns>
+    public static MatchCollection RegexMatches(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, RegexOptions options = 0) => Regex.Matches(input, pattern, options);
+
+    /// <summary>
+    ///     Searches the specified <paramref name="input"/> string for all occurrences of a specified regular expression
+    ///     <paramref name="pattern"/>.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <returns>
+    ///     A collection of the Match objects found by the search. If no matches are found, the method returns an empty
+    ///     collection object.</returns>
+    public static MatchCollection RegexMatchesIgnoreCase(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern) => Regex.Matches(input, pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    /// <summary>
+    ///     In a specified <paramref name="input"/> string, replaces all strings that match a specified regular expression
+    ///     <paramref name="pattern"/> with a specified <paramref name="replacement"/> string.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="replacement">
+    ///     The replacement string.</param>
+    /// <param name="options">
+    ///     A bitwise combination of the enumeration values that provide options for matching.</param>
+    /// <returns>
+    ///     A new string that is identical to the input string, except that the <paramref name="replacement"/> string takes
+    ///     the place of each matched string. If <paramref name="pattern"/> is not matched in the current instance, the method
+    ///     returns the current instance unchanged.</returns>
+    public static string RegexReplace(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, string replacement, RegexOptions options = 0) => Regex.Replace(input, pattern, replacement, options);
+
+    /// <summary>
+    ///     In a specified <paramref name="input"/> string, replaces all strings that match a specified regular expression
+    ///     <paramref name="pattern"/> with a specified <paramref name="replacement"/> string. The pattern is matched using an
+    ///     invariant-culture case-insensitive match.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="replacement">
+    ///     The replacement string.</param>
+    /// <returns>
+    ///     A new string that is identical to the input string, except that the <paramref name="replacement"/> string takes
+    ///     the place of each matched string. If <paramref name="pattern"/> is not matched in the current instance, the method
+    ///     returns the current instance unchanged.</returns>
+    public static string RegexReplaceIgnoreCase(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, string replacement) => Regex.Replace(input, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     In a specified <paramref name="input"/> string, replaces all strings that match a specified regular expression
+    ///     <paramref name="pattern"/> with a string returned by a match <paramref name="evaluator"/> delegate.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="evaluator">
+    ///     A custom method that examines each match and returns either the original matched string or a replacement string.</param>
+    /// <param name="options">
+    ///     A bitwise combination of the enumeration values that provide options for matching.</param>
+    /// <returns>
+    ///     A new string that is identical to the input string, except that a replacement string takes the place of each
+    ///     matched string. If <paramref name="pattern"/> is not matched in the current instance, the method returns the
+    ///     current instance unchanged.</returns>
+    public static string RegexReplace(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, MatchEvaluator evaluator, RegexOptions options = 0) => Regex.Replace(input, pattern, evaluator, options);
+
+    /// <summary>
+    ///     In a specified <paramref name="input"/> string, replaces all strings that match a specified regular expression
+    ///     <paramref name="pattern"/> with a string returned by a match <paramref name="evaluator"/> delegate. The pattern is
+    ///     matched using an invariant-culture case-insensitive match.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to match.</param>
+    /// <param name="evaluator">
+    ///     A custom method that examines each match and returns either the original matched string or a replacement string.</param>
+    /// <returns>
+    ///     A new string that is identical to the input string, except that a replacement string takes the place of each
+    ///     matched string. If <paramref name="pattern"/> is not matched in the current instance, the method returns the
+    ///     current instance unchanged.</returns>
+    public static string RegexReplaceIgnoreCase(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, MatchEvaluator evaluator) => Regex.Replace(input, pattern, evaluator, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 }
 
 /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
