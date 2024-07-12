@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
@@ -81,12 +81,16 @@ public static class ConsoleUtil
     ///     The message to output.</param>
     /// <param name="hangingIndent">
     ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
-    public static void WriteParagraphs(string message, int hangingIndent = 0)
+    /// <param name="stdErr">
+    ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+    public static void WriteParagraphs(string message, int hangingIndent = 0, bool stdErr = false)
     {
+        var output = stdErr ? Console.Error : Console.Out;
+
         // Special case: if message is empty, WordWrap would output nothing
         if (message.Length == 0)
         {
-            Console.WriteLine();
+            output.WriteLine();
             return;
         }
         int width;
@@ -96,11 +100,11 @@ public static class ConsoleUtil
         }
         catch
         {
-            Console.WriteLine(message);
+            output.WriteLine(message);
             return;
         }
         foreach (var line in message.WordWrap(width, hangingIndent))
-            Console.WriteLine(line);
+            output.WriteLine(line);
     }
 
     /// <summary>
@@ -113,7 +117,9 @@ public static class ConsoleUtil
     ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
     /// <remarks>
     ///     See <see cref="EggsNode.ToConsoleColoredStringWordWrap"/> for the colour syntax.</remarks>
-    public static void WriteParagraphs(EggsNode message, int hangingIndent = 0)
+    /// <param name="stdErr">
+    ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+    public static void WriteParagraphs(EggsNode message, int hangingIndent = 0, bool stdErr = false)
     {
         int width;
         try
@@ -123,19 +129,19 @@ public static class ConsoleUtil
         catch
         {
             // Fall back to non-word-wrapping
-            WriteLine(ConsoleColoredString.FromEggsNode(message));
+            WriteLine(ConsoleColoredString.FromEggsNode(message), stdErr);
             return;
         }
         bool any = false;
         foreach (var line in message.ToConsoleColoredStringWordWrap(width, hangingIndent))
         {
-            WriteLine(line);
+            WriteLine(line, stdErr);
             any = true;
         }
 
         // Special case: if the input is empty, output an empty line
         if (!any)
-            Console.WriteLine();
+            WriteLine("", stdErr);
     }
 
     /// <summary>
@@ -146,7 +152,9 @@ public static class ConsoleUtil
     ///     The message to output.</param>
     /// <param name="hangingIndent">
     ///     Specifies a number of spaces by which the message is indented in all but the first line of each paragraph.</param>
-    public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0)
+    /// <param name="stdErr">
+    ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+    public static void WriteParagraphs(ConsoleColoredString message, int hangingIndent = 0, bool stdErr = false)
     {
         if (message == null)
             throw new ArgumentNullException(nameof(message));
@@ -158,11 +166,11 @@ public static class ConsoleUtil
         }
         catch
         {
-            ConsoleUtil.WriteLine(message);
+            WriteLine(message, stdErr);
             return;
         }
         foreach (var line in message.WordWrap(width, hangingIndent))
-            ConsoleUtil.WriteLine(line);
+            WriteLine(line, stdErr);
     }
 
     /// <summary>Writes the specified <see cref="ConsoleColoredString"/> to the console.</summary>
