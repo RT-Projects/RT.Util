@@ -30,7 +30,7 @@ public struct PointD : IEquatable<PointD>
     ///     Object to compare against.</param>
     /// <returns>
     ///     True if considered equal.</returns>
-    public override readonly bool Equals(object obj) => obj is PointD p ? p.X == X && p.Y == Y : false;
+    public override readonly bool Equals(object obj) => obj is PointD p && p.X == X && p.Y == Y;
 
     /// <summary>
     ///     Compares two <see cref="PointD"/> objects for equality.</summary>
@@ -63,22 +63,22 @@ public struct PointD : IEquatable<PointD>
     /// <summary>
     ///     Performs unary vector negation (i.e. the resulting point is of the same length but pointing in the opposite
     ///     direction).</summary>
-    public static PointD operator -(PointD vector) => new PointD(-vector.X, -vector.Y);
+    public static PointD operator -(PointD vector) => new(-vector.X, -vector.Y);
 
     /// <summary>Performs vector addition, returning the result.</summary>
-    public static PointD operator +(PointD one, PointD other) => new PointD(one.X + other.X, one.Y + other.Y);
+    public static PointD operator +(PointD one, PointD other) => new(one.X + other.X, one.Y + other.Y);
 
     /// <summary>Performs vector subtraction, returning the result.</summary>
-    public static PointD operator -(PointD left, PointD right) => new PointD(left.X - right.X, left.Y - right.Y);
+    public static PointD operator -(PointD left, PointD right) => new(left.X - right.X, left.Y - right.Y);
 
     /// <summary>Scales a vector by a scalar.</summary>
-    public static PointD operator *(double scalar, PointD vector) => new PointD(scalar * vector.X, scalar * vector.Y);
+    public static PointD operator *(double scalar, PointD vector) => new(scalar * vector.X, scalar * vector.Y);
 
     /// <summary>Scales a vector by a scalar.</summary>
-    public static PointD operator *(PointD vector, double scalar) => new PointD(scalar * vector.X, scalar * vector.Y);
+    public static PointD operator *(PointD vector, double scalar) => new(scalar * vector.X, scalar * vector.Y);
 
     /// <summary>Scales a vector by 1 / scalar (i.e. performs scalar division).</summary>
-    public static PointD operator /(PointD vector, double scalar) => new PointD(vector.X / scalar, vector.Y / scalar);
+    public static PointD operator /(PointD vector, double scalar) => new(vector.X / scalar, vector.Y / scalar);
 
     /// <summary>Returns a hash code for the current <see cref="PointD"/>.</summary>
     public override readonly int GetHashCode() => X.GetHashCode() * 31 + Y.GetHashCode();
@@ -123,7 +123,7 @@ public struct PointD : IEquatable<PointD>
     public readonly double CrossZ(PointD other) => X * other.Y - Y * other.X;
 
     /// <summary>Returns a vector normal to this one.</summary>
-    public readonly PointD Normal() => new PointD(Y, -X);
+    public readonly PointD Normal() => new(Y, -X);
 
     /// <summary>
     ///     Decomposes this vector into components relative to another vector.</summary>
