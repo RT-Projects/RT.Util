@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1450,6 +1450,37 @@ static class StringExtensions
     [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
 #endif
         string pattern, MatchEvaluator evaluator) => Regex.Replace(input, pattern, evaluator, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     Splits the <paramref name="input "/>string at the position defined by <paramref name="pattern"/>.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to split by.</param>
+    /// <param name="options">
+    ///     A bitwise combination of the enumeration values that provide options for matching.</param>
+    /// <returns>
+    ///     A new string array consisting of the pieces of the input string found between matches of the regular expression.</returns>
+    public static string[] RegexSplit(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern, RegexOptions options = RegexOptions.None) => Regex.Split(input, pattern, options);
+
+    /// <summary>
+    ///     Splits the <paramref name="input "/>string at the position defined by <paramref name="pattern"/>. The pattern is
+    ///     matched using an invariant-culture case-insensitive match.</summary>
+    /// <param name="input">
+    ///     The string to search for a match.</param>
+    /// <param name="pattern">
+    ///     The regular expression pattern to split by.</param>
+    /// <returns>
+    ///     A new string array consisting of the pieces of the input string found between matches of the regular expression.</returns>
+    public static string[] RegexSplitIgnoreCase(this string input,
+#if NET7_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
+#endif
+        string pattern) => Regex.Split(input, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 }
 
 /// <summary>Selects how the escaped JS string should be put into quotes.</summary>
