@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Text;
 using RT.Util.ExtensionMethods;
 
@@ -16,7 +16,7 @@ namespace RT.Util.Consoles;
 ///             Each character has two optional <see cref="ConsoleColor"/> values associated with it, one indicating the
 ///             foreground color and one the background color. Those characters whose color is <c>null</c> are printed in the
 ///             default color of the console (which the user can customize in the console window UI).</description></item></list></remarks>
-public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>
+public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEquatable<ConsoleColoredString>
 {
     /// <summary>Represents an empty colored string. This field is read-only.</summary>
     public static ConsoleColoredString Empty { get { return _empty ?? (_empty = new ConsoleColoredString()); } }
@@ -1242,6 +1242,14 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>
     /// <summary>Implements <see cref="IEnumerable{T}.GetEnumerator"/>.</summary>
     public IEnumerator<ConsoleColoredChar> GetEnumerator() => Enumerable.Range(0, Length).Select(ix => this[ix]).GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <inheritdoc/>
+    public bool Equals(ConsoleColoredString other) =>
+        other != null && other.Length == Length && other._text == _text && other._foreground.SequenceEqual(_foreground) && other._background.SequenceEqual(_background);
+    /// <inheritdoc/>
+    public override bool Equals(object other) => other is ConsoleColoredString ccs && Equals(ccs);
+    /// <inheritdoc/>
+    public override int GetHashCode() => Ut.ArrayHash(_text, _foreground, _background);
 }
 
 /// <summary>Contains a character and a console foreground and background color.</summary>
