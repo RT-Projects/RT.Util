@@ -2534,6 +2534,14 @@ namespace RT.Serialization.Tests
             Assert.IsTrue(j1.ContainsKey("Two"));
             Assert.IsTrue(j2.ContainsKey("Two"));
         }
+
+        [Test]
+        public void TestNullJson()
+        {
+            var json = ClassifyJson.Serialize(new NullTester());
+            Assert.IsTrue(json.ContainsKey("Str"));
+            Assert.IsNull(json["Str"]);
+        }
     }
 
     class MisTypeOuter
@@ -2543,7 +2551,7 @@ namespace RT.Serialization.Tests
     abstract class MisTypeBase { }
     class MisTypeDerived : MisTypeBase { }
 
-
+    class NullTester { public string Str; }
 }
 
 namespace UserDefined

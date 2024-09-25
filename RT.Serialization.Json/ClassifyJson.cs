@@ -379,7 +379,7 @@ public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
 
     JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
     {
-        return JsonNoValue.Instance;
+        return null;
     }
 
     JsonValue IClassifyFormat<JsonValue>.FormatSimpleValue(object value)
