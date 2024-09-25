@@ -2539,8 +2539,8 @@ namespace RT.Serialization.Tests
         public void TestNullJson()
         {
             var json = ClassifyJson.Serialize(new NullTester());
-            Assert.IsTrue(json.ContainsKey("Str"));
-            Assert.IsNull(json["Str"]);
+            Assert.IsTrue(json == new JsonDict { ["Str"] = null });
+            Assert.IsTrue(json == new JsonDict { ["Str"] = JsonNoValue.Instance });
         }
     }
 

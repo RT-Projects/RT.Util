@@ -382,4 +382,16 @@ public sealed class JsonTests
         Assert.IsTrue(parsed.Equals(reparsed));
         Assert.IsTrue(constructed.Equals(reparsed2));
     }
+
+    [Test]
+    public void TestNullAndNoValueEquality()
+    {
+        Assert.IsTrue(null == JsonNoValue.Instance);
+        Assert.IsTrue(JsonNoValue.Instance == null);
+        Assert.IsTrue(JsonNoValue.Instance == JsonNoValue.Instance);
+
+        Assert.IsTrue(new JsonList { null } == new JsonList { JsonNoValue.Instance });
+        Assert.IsTrue(new JsonDict { ["a"] = null } == new JsonDict { ["a"] = JsonNoValue.Instance });
+        Assert.IsTrue(new JsonDict { ["a"] = null, ["b"] = 1 } == new JsonDict { ["b"] = 1, ["a"] = JsonNoValue.Instance });
+    }
 }

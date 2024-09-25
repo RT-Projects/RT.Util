@@ -116,7 +116,7 @@ public static class Classify
     ///     Options used when null is passed to methods that take options. Make sure not to modify this instance if any thread
     ///     in the application might be in the middle of using <see cref="Classify"/>; ideally the options shoud be set once
     ///     during startup and never changed after that.</summary>
-    public static ClassifyOptions DefaultOptions = new ClassifyOptions();
+    public static ClassifyOptions DefaultOptions = new();
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -276,8 +276,8 @@ public static class Classify
     {
         var element = new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
         Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(".", filename)));
-        using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
-            format.WriteToStream(element, f);
+        using var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read);
+        format.WriteToStream(element, f);
     }
 
     /// <summary>
@@ -336,7 +336,7 @@ public static class Classify
         private int _nextId = 0;
         private List<Action> _doAtTheEnd;
         private readonly IClassifyFormat<TElement> _format;
-        private readonly Dictionary<MemberInfo, object[]> _attributesCache = new Dictionary<MemberInfo, object[]>();
+        private readonly Dictionary<MemberInfo, object[]> _attributesCache = new();
         private HashSet<string> _classifySimpleAttributes;
 
         private enum CollectionCategory
@@ -376,15 +376,12 @@ public static class Classify
                 _attributesCache[member] = attrs;
             }
 
-            if (_classifySimpleAttributes == null)
-            {
-                _classifySimpleAttributes = new HashSet<string>(Assembly.GetExecutingAssembly()
-                    .GetTypes()
-                    .Where(t => typeof(Attribute).IsAssignableFrom(t))
-                    .Where(t => t.Name.StartsWith("Classify") && t.Name.EndsWith("Attribute"))
-                    .Where(t => t.GetConstructors().Length == 1 && t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
-                    .Select(t => t.Name));
-            }
+            _classifySimpleAttributes ??= new HashSet<string>(Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => typeof(Attribute).IsAssignableFrom(t))
+                .Where(t => t.Name.StartsWith("Classify") && t.Name.EndsWith("Attribute"))
+                .Where(t => t.GetConstructors().Length == 1 && t.GetConstructor(Type.EmptyTypes) != null) // only look at simple attributes that have no associated data
+                .Select(t => t.Name));
 
             foreach (var attr in attrs)
             {
@@ -410,12 +407,12 @@ public static class Classify
         }
 
         private Dictionary<int, DeclassifyRememberedObject> _rememberCacheDeser;
-        private Dictionary<int, DeclassifyRememberedObject> _rememberDeser => _rememberCacheDeser ?? (_rememberCacheDeser = new Dictionary<int, DeclassifyRememberedObject>());
+        private Dictionary<int, DeclassifyRememberedObject> _rememberDeser => _rememberCacheDeser ??= new Dictionary<int, DeclassifyRememberedObject>();
 
         private Dictionary<object, object> _rememberCacheSer;
-        private Dictionary<object, object> _rememberSer => _rememberCacheSer ?? (_rememberCacheSer = new Dictionary<object, object>(_options.ActualEqualityComparer));
+        private Dictionary<object, object> _rememberSer => _rememberCacheSer ??= new Dictionary<object, object>(_options.ActualEqualityComparer);
 
-        private Dictionary<object, int> _requireRefId => _requireRefIdCache ?? (_requireRefIdCache = new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode())));
+        private Dictionary<object, int> _requireRefId => _requireRefIdCache ??= new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode()));
         private Dictionary<object, int> _requireRefIdCache;
 
         private static readonly Type[] _tupleTypes = new[] {
@@ -564,12 +561,11 @@ public static class Classify
                         _format.ThrowMissingReferable(refID);
                     if (declaredType == substType)
                         return inf.WithoutDesubstitution();
-                    if (inf.WithDesubstitution == null)
-                        inf.WithDesubstitution = cachify(() =>
-                        {
-                            try { return typeOptions.Substitutor.FromSubstitute(inf.WithoutDesubstitution()); }
-                            catch (ClassifyDesubstitutionFailedException) { return already; }
-                        }, elem, typeOptions);
+                    inf.WithDesubstitution ??= cachify(() =>
+                    {
+                        try { return typeOptions.Substitutor.FromSubstitute(inf.WithoutDesubstitution()); }
+                        catch (ClassifyDesubstitutionFailedException) { return already; }
+                    }, elem, typeOptions);
                     return inf.WithDesubstitution();
                 });
             }
@@ -582,7 +578,7 @@ public static class Classify
                 {
                     try { serializedType = Type.GetType(typeName); }
                     catch { serializedType = null; }
-                    serializedType = serializedType ?? Type.GetType(typeName, asmName => AppDomain.CurrentDomain.GetAssemblies()
+                    serializedType ??= Type.GetType(typeName, asmName => AppDomain.CurrentDomain.GetAssemblies()
                         .FirstOrDefault(asm => asm.GetName().Name == asmName.Name && asm.GetName().Version >= asmName.Version), null);
                 }
                 else
@@ -822,7 +818,7 @@ public static class Classify
             catch (Exception e) { return _ => reportError(e, objectPath); }
 
             // This requires ‘lengths’ to be populated
-            already = already ?? Array.CreateInstance(type.GetElementType(), lengths);
+            already ??= Array.CreateInstance(type.GetElementType(), lengths);
 
             // If any of the lengths are 0, the array contains no elements that need deserialization.
             if (lengths.Contains(0))
@@ -1459,7 +1455,7 @@ public static class Classify
                     continue;
 
                 // Arrays, lists and dictionaries all implement ICollection
-                if ((typeHasIgnoreIfEmpty || hasClassifyAttribute<ClassifyIgnoreIfEmptyAttribute>(getAttrsFrom)) && saveValue is ICollection && ((ICollection) saveValue).Count == 0)
+                if ((typeHasIgnoreIfEmpty || hasClassifyAttribute<ClassifyIgnoreIfEmptyAttribute>(getAttrsFrom)) && saveValue is ICollection collection && collection.Count == 0)
                     continue;
 
                 if (!namesAlreadySeen.Add(rFieldName))
@@ -1789,7 +1785,7 @@ public sealed class ClassifyEqualityComparer : IEqualityComparer<object>
     ///     Second object to compare.</param>
     /// <returns>
     ///     <c>false</c> for strings and object reference equality for everything else.</returns>
-    public new bool Equals(object x, object y) => !(x is string) && ReferenceEquals(x, y);
+    public new bool Equals(object x, object y) => x is not string && ReferenceEquals(x, y);
     /// <summary>
     ///     Returns a hash code for the specified object.</summary>
     /// <param name="obj">
@@ -1861,7 +1857,7 @@ public sealed class ClassifyOptions
         SerializationEqualityComparer = ClassifyEqualityComparer.Instance;
     }
 
-    internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new Dictionary<Type, ClassifyTypeOptions>();
+    internal Dictionary<Type, ClassifyTypeOptions> _typeOptions = new();
 
     /// <summary>
     ///     Adds a type substitution, instructing <see cref="Classify"/> to use a different type when serializing or
@@ -1944,8 +1940,8 @@ internal sealed class ClassifyTypeOptions
     public List<IClassifyTypeProcessor> TypeProcessors;
     public List<object> TypeElementProcessors;
 
-    public void AddTypeProcessor(IClassifyTypeProcessor processor) => (TypeProcessors ?? (TypeProcessors = new List<IClassifyTypeProcessor>())).Add(processor);
-    public void AddElementTypeProcessor(object processor) => (TypeElementProcessors ?? (TypeElementProcessors = new List<object>())).Add(processor);
+    public void AddTypeProcessor(IClassifyTypeProcessor processor) => ( TypeProcessors ??= new List<IClassifyTypeProcessor>()).Add(processor);
+    public void AddElementTypeProcessor(object processor) => ( TypeElementProcessors ??= new List<object>()).Add(processor);
 
     public void BeforeSerialize<TElement>(object obj)
     {
@@ -2095,21 +2091,15 @@ public sealed class ClassifyNameAttribute : Attribute
         if (Convention == null)
             return original;
 
-        switch (Convention.Value)
+        return Convention.Value switch
         {
-            case ClassifyNameConvention.Uppercase:
-                return original.ToUpper();
-            case ClassifyNameConvention.Lowercase:
-                return original.ToLower();
-            case ClassifyNameConvention.UpperCamelcase:
-                return char.ToUpperInvariant(original[0]) + original.Substring(1);
-            case ClassifyNameConvention.LowerCamelcase:
-                return char.ToLowerInvariant(original[0]) + original.Substring(1);
-            case ClassifyNameConvention.DelimiterSeparated:
-                return Regex.Replace(original, @"(?<=[^\p{Lu}_])(?=\p{Lu})", "_");
-            default:
-                throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString());
-        }
+            ClassifyNameConvention.Uppercase => original.ToUpper(),
+            ClassifyNameConvention.Lowercase => original.ToLower(),
+            ClassifyNameConvention.UpperCamelcase => char.ToUpperInvariant(original[0]) + original.Substring(1),
+            ClassifyNameConvention.LowerCamelcase => char.ToLowerInvariant(original[0]) + original.Substring(1),
+            ClassifyNameConvention.DelimiterSeparated => Regex.Replace(original, @"(?<=[^\p{Lu}_])(?=\p{Lu})", "_"),
+            _ => throw new ArgumentOutOfRangeException(nameof(Convention), Convention.Value.ToString()),
+        };
     }
 }
 

@@ -111,7 +111,7 @@ internal class JsonParserState
     public int Pos;
 
     private OffsetToLineCol _offsetConverter;
-    public OffsetToLineCol OffsetConverter { get { if (_offsetConverter == null) _offsetConverter = new OffsetToLineCol(Json); return _offsetConverter; } }
+    public OffsetToLineCol OffsetConverter { get { _offsetConverter ??= new OffsetToLineCol(Json); return _offsetConverter; } }
 
     private readonly bool _allowJavaScript;
 
@@ -125,14 +125,12 @@ internal class JsonParserState
         ConsumeWhitespace();
     }
 
-    public JsonParserState Clone()
+    public JsonParserState Clone() => new()
     {
-        var result = new JsonParserState();
-        result.Json = Json;
-        result.Pos = Pos;
-        result._offsetConverter = _offsetConverter;
-        return result;
-    }
+        Json = Json,
+        Pos = Pos,
+        _offsetConverter = _offsetConverter
+    };
 
     public void ConsumeWhitespace()
     {
@@ -660,7 +658,7 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
     ///     Returns an object that allows safe access to the indexers. “Safe” in this context means that the indexers, when
     ///     given an index or key not found in the list or dictionary, do not throw but instead return <see
     ///     cref="JsonNoValue.Instance"/> whose getters (such as <see cref="GetString"/>) return null.</summary>
-    public JsonSafeValue Safe => new JsonSafeValue(this);
+    public JsonSafeValue Safe => new(this);
 
     /// <summary>Converts the current value to <see cref="JsonList"/> if it is a <see cref="JsonList"/>; otherwise, throws.</summary>
     public JsonList GetList() => getList(false);
@@ -673,7 +671,7 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
     ///     Converts the current value to <see cref="JsonList"/>.</summary>
     /// <param name="safe">
     ///     Controls the behavior in case of conversion failure. If <c>true</c>, returns <c>null</c>; if <c>false</c>, throws.</param>
-    protected virtual JsonList getList(bool safe) => safe ? (JsonList) null : throw new InvalidOperationException("Only list values can be converted to list.");
+    protected virtual JsonList getList(bool safe) => safe ? null : throw new InvalidOperationException("Only list values can be converted to list.");
 
     /// <summary>Converts the current value to <see cref="JsonDict"/> if it is a <see cref="JsonDict"/>; otherwise, throws.</summary>
     public JsonDict GetDict() => getDict(false);
@@ -1035,7 +1033,7 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
     /// <summary>
     ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks in the other
     ///     overload, <see cref="Equals(JsonValue)"/>.)</summary>
-    public override bool Equals(object other) => other is JsonValue ? Equals((JsonValue) other) : false;
+    public abstract override bool Equals(object other);
 
     /// <summary>
     ///     Determines whether this value is equal to the <paramref name="other"/> value. (See also remarks.)</summary>
@@ -1107,8 +1105,8 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
             (?<operator>[=!]==|[\+\-\*/%<>&\^\|=!]=|<<=|>>=|>>>=|<<|>>>|>>|\+\+|--|&&|\|\||[<>=%\+\-\*/%&\^\|!~\?:\(\)\[\]\{{\}}\.,;])|
             (?<else>.)
         ";
-    private static readonly Regex _fmt_tokenWithoutRegex = new Regex(string.Format(_fmt_tokenTemplate, "(?!)"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-    private static readonly Regex _fmt_tokenWithRegex = new Regex(string.Format(_fmt_tokenTemplate, @"/(?:[^/\\]|\\.)*/"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+    private static readonly Regex _fmt_tokenWithoutRegex = new(string.Format(_fmt_tokenTemplate, "(?!)"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+    private static readonly Regex _fmt_tokenWithRegex = new(string.Format(_fmt_tokenTemplate, @"/(?:[^/\\]|\\.)*/"), RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
     /// <summary>
     ///     Formats JSON values into a piece of JavaScript code and then removes almost all unnecessary whitespace and
@@ -1224,6 +1222,19 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
 
         return tokens.ToString();
     }
+
+    /// <summary>
+    ///     Compares two <see cref="JsonValue"/> objects for equality. Note that <see cref="JsonNoValue"/> compares equal with
+    ///     <c>null</c>.</summary>
+    public static bool operator ==(JsonValue one, JsonValue two) =>
+        // do not use ‘== null’ because that would call this same operator and create an infinite loop
+        ((one is null || one is JsonNoValue) && (two is null || two is JsonNoValue)) ||
+        (one is not null && one.Equals(two));
+
+    /// <summary>
+    ///     Compares two <see cref="JsonValue"/> objects for inequality. Note that <see cref="JsonNoValue"/> compares equal
+    ///     with <c>null</c>.</summary>
+    public static bool operator !=(JsonValue one, JsonValue two) => !(one == two);
 }
 
 /// <summary>Encapsulates a list of <see cref="JsonValue"/> values.</summary>
@@ -1233,7 +1244,7 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     internal List<JsonValue> List;
 
     /// <summary>Constructs an empty list.</summary>
-    public JsonList() { List = new List<JsonValue>(); }
+    public JsonList() { List = []; }
 
     /// <summary>
     ///     Constructs a <see cref="JsonList"/> instance containing a copy of the specified collection of <paramref
@@ -1242,7 +1253,7 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         if (items == null)
             throw new ArgumentNullException(nameof(items));
-        List = new List<JsonValue>(items is ICollection<JsonValue> ? ((ICollection<JsonValue>) items).Count + 2 : 4);
+        List = new List<JsonValue>(items is ICollection<JsonValue> collection ? collection.Count + 2 : 4);
         List.AddRange(items);
     }
 
@@ -1298,13 +1309,21 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonList ? Equals((JsonList) other) : false;
+    public override bool Equals(object other) => other is JsonList list && Equals(list);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonList ? Equals((JsonList) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonList list && Equals(list);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public bool Equals(JsonList other) => other != null && Count == other.Count && this.Zip(other, (v1, v2) => (v1 == null) == (v2 == null) && (v1 == null || v1.Equals(v2))).All(b => b);
+    public bool Equals(JsonList other)
+    {
+        if (other == null || Count != other.Count)
+            return false;
+        for (var i = 0; i < Count; i++)
+            if (this[i] != other[i])    // uses custom equality operator on JsonValue
+                return false;
+        return true;
+    }
 
     /// <summary>Returns a hash code representing this object.</summary>
     public override int GetHashCode()
@@ -1432,14 +1451,14 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     internal Dictionary<string, JsonValue> Dict;
 
     /// <summary>Constructs an empty dictionary.</summary>
-    public JsonDict() { Dict = new Dictionary<string, JsonValue>(); }
+    public JsonDict() { Dict = []; }
 
     /// <summary>Constructs a dictionary containing a copy of the specified collection of key/value pairs.</summary>
     public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
     {
         if (items == null)
             throw new ArgumentNullException(nameof(items));
-        Dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> ? ((ICollection<KeyValuePair<string, JsonValue>>) items).Count + 2 : 4);
+        Dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> collection ? collection.Count + 2 : 4);
         foreach (var item in items)
             Dict.Add(item.Key, item.Value);
     }
@@ -1515,10 +1534,10 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     #endregion
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonDict && Equals((JsonDict) other);
+    public override bool Equals(object other) => other is JsonDict dict && Equals(dict);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonDict ? Equals((JsonDict) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonDict dict && Equals(dict);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public bool Equals(JsonDict other)
@@ -1529,9 +1548,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
         {
             if (!other.TryGetValue(kvp.Key, out var val))
                 return false;
-            if ((kvp.Value == null) != (val == null))
-                return false;
-            if (kvp.Value != null && !kvp.Value.Equals(val))
+            if (kvp.Value != val)   // uses custom equality operator on JsonValue
                 return false;
         }
         return true;
@@ -1688,17 +1705,14 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     }
 }
 
-/// <summary>Encapsulates a string as a JSON value.</summary>
+/// <summary>
+///     Encapsulates a string as a JSON value.</summary>
+/// <param name="value">
+///     Constructs a <see cref="JsonString"/> instance from the specified string.</param>
 [Serializable]
-public sealed class JsonString : JsonValue, IEquatable<JsonString>
+public sealed class JsonString(string value) : JsonValue, IEquatable<JsonString>
 {
-    private string _value;
-
-    /// <summary>Constructs a <see cref="JsonString"/> instance from the specified string.</summary>
-    public JsonString(string value)
-    {
-        _value = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    private string _value = value ?? throw new ArgumentNullException(nameof(value));
 
     /// <summary>
     ///     Parses the specified JSON as a JSON string. All other types of JSON values result in a <see
@@ -1862,13 +1876,13 @@ public sealed class JsonString : JsonValue, IEquatable<JsonString>
     ///     cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
     /// <remarks>
     ///     The default is: <c>{ "", "false", "n", "no", "off", "disable", "disabled", "0" }</c>.</remarks>
-    public static readonly List<string> False = new List<string> { "", "false", "n", "no", "off", "disable", "disabled", "0" };
+    public static readonly List<string> False = ["", "false", "n", "no", "off", "disable", "disabled", "0"];
     /// <summary>
     ///     Controls which string values are converted to <c>true</c> when using <see cref="JsonValue.GetBool"/> with <see
     ///     cref="BoolConversionOptions.AllowConversionFromString"/>.</summary>
     /// <remarks>
     ///     The default is: <c>{ "true", "y", "yes", "on", "enable", "enabled", "1" }</c>.</remarks>
-    public static readonly List<string> True = new List<string> { "true", "y", "yes", "on", "enable", "enabled", "1" };
+    public static readonly List<string> True = ["true", "y", "yes", "on", "enable", "enabled", "1"];
     /// <summary>
     ///     Controls which string equality comparer is used when comparing strings against elements in <see cref="True"/> and
     ///     <see cref="False"/> during conversion to <c>bool</c> by <see cref="JsonValue.GetBool"/>.</summary>
@@ -1885,10 +1899,10 @@ public sealed class JsonString : JsonValue, IEquatable<JsonString>
     protected override string getString(StringConversionOptions options, bool safe) => _value;
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonString ? Equals((JsonString) other) : false;
+    public override bool Equals(object other) => other is JsonString str && Equals(str);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonString ? Equals((JsonString) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonString str && Equals(str);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public bool Equals(JsonString other) => other != null && _value == other._value;
@@ -1915,14 +1929,14 @@ public sealed class JsonString : JsonValue, IEquatable<JsonString>
     public string ToString(JsQuotes quotes) => _value.JsEscape((Internal.JsQuotes) quotes);
 }
 
-/// <summary>Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>
+/// <summary>
+///     Encapsulates a boolean value as a <see cref="JsonValue"/>.</summary>
+/// <remarks>
+///     Constructs a <see cref="JsonBool"/> from the specified boolean.</remarks>
 [Serializable]
-public sealed class JsonBool : JsonValue, IEquatable<JsonBool>
+public sealed class JsonBool(bool value) : JsonValue, IEquatable<JsonBool>
 {
-    private bool _value;
-
-    /// <summary>Constructs a <see cref="JsonBool"/> from the specified boolean.</summary>
-    public JsonBool(bool value) { _value = value; }
+    private bool _value = value;
 
     /// <summary>
     ///     Parses the specified JSON as a JSON boolean. All other types of JSON values result in a <see
@@ -1967,15 +1981,15 @@ public sealed class JsonBool : JsonValue, IEquatable<JsonBool>
     /// <summary>Converts the specified <see cref="JsonBool"/> value to a nullable boolean.</summary>
     public static implicit operator bool?(JsonBool value) => value == null ? (bool?) null : value._value;
     /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool"/> value.</summary>
-    public static implicit operator JsonBool(bool value) => new JsonBool(value);
+    public static implicit operator JsonBool(bool value) => new(value);
     /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool"/> value or null.</summary>
     public static implicit operator JsonBool(bool? value) => value == null ? null : new JsonBool(value.Value);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonBool ? Equals((JsonBool) other) : false;
+    public override bool Equals(object other) => other is JsonBool boolean && Equals(boolean);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonBool ? Equals((JsonBool) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonBool boolean && Equals(boolean);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public bool Equals(JsonBool other) => other != null && _value == other._value;
@@ -2059,10 +2073,9 @@ public sealed class JsonBool : JsonValue, IEquatable<JsonBool>
 public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
 {
     [Serializable]
-    private sealed class JSLong : JsonNumber
+    private sealed class JSLong(long value) : JsonNumber
     {
-        public long Value;
-        public JSLong(long value) { Value = value; }
+        public long Value = value;
 
         /// <summary>
         ///     Converts the current value to <c>double</c>.</summary>
@@ -2156,10 +2169,9 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     }
 
     [Serializable]
-    private sealed class JSULong : JsonNumber
+    private sealed class JSULong(ulong value) : JsonNumber
     {
-        public ulong Value;
-        public JSULong(ulong value) { Value = value; }
+        public ulong Value = value;
 
         /// <summary>
         ///     Converts the current value to <c>double</c>.</summary>
@@ -2251,10 +2263,9 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     }
 
     [Serializable]
-    private sealed class JSDouble : JsonNumber
+    private sealed class JSDouble(double value) : JsonNumber
     {
-        public double Value;
-        public JSDouble(double value) { Value = value; }
+        public double Value = value;
 
         /// <summary>
         ///     Converts the current value to <c>double</c>.</summary>
@@ -2441,10 +2452,10 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     public abstract object RawValue { get; }
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonNumber ? Equals((JsonNumber) other) : false;
+    public override bool Equals(object other) => other is JsonNumber num && Equals(num);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonNumber ? Equals((JsonNumber) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonNumber num && Equals(num);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public abstract bool Equals(JsonNumber other);
@@ -2473,13 +2484,13 @@ public sealed class JsonNoValue : JsonValue
     private JsonNoValue() { }
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonNoValue ? Equals((JsonNoValue) other) : false;
+    public override bool Equals(object other) => other == null || other is JsonNoValue;
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonNoValue ? Equals((JsonNoValue) other) : false;
+    public override bool Equals(JsonValue other) => other == null || other is JsonNoValue;
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public bool Equals(JsonNoValue other) => other != null;
+    public bool Equals(JsonNoValue _) => true;
 
     /// <summary>
     ///     Always returns true.</summary>
@@ -2495,12 +2506,12 @@ public sealed class JsonNoValue : JsonValue
     ///             <c>null == JsonNoValue.Instance</c></description></item></list>
     ///     <para>
     ///         In all three cases, the intended comparison is <c>true</c>.</para></remarks>
-    public static bool operator ==(JsonNoValue one, JsonNoValue two) => true;
+    public static bool operator ==(JsonNoValue _1, JsonNoValue _2) => true;
 
     /// <summary>
     ///     Always returns false.</summary>
     /// <seealso cref="operator=="/>
-    public static bool operator !=(JsonNoValue one, JsonNoValue two) => false;
+    public static bool operator !=(JsonNoValue _1, JsonNoValue _2) => false;
 
     /// <summary>Returns a hash code representing this object.</summary>
     public override int GetHashCode() => 0;
@@ -2513,7 +2524,7 @@ public sealed class JsonNoValue : JsonValue
 
     /// <summary>Returns the singleton instance of this type.</summary>
     public static JsonNoValue Instance => _instance;
-    private static readonly JsonNoValue _instance = new JsonNoValue();
+    private static readonly JsonNoValue _instance = new();
 
     /// <summary>
     ///     Converts the current value to <c>bool</c>.</summary>
@@ -2559,31 +2570,28 @@ public sealed class JsonNoValue : JsonValue
     protected override string getString(StringConversionOptions options, bool safe) => null;
 }
 
-/// <summary>Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
+/// <summary>
+///     Provides safe access to the indexers of a <see cref="JsonValue"/>. See <see cref="JsonValue.Safe"/> for details.</summary>
+/// <param name="value">
+///     Specifies the underlying JSON value to provide safe access to.</param>
 [Serializable]
-public sealed class JsonSafeValue
+public sealed class JsonSafeValue(JsonValue value)
 {
     /// <summary>Gets the underlying JSON value associated with this object.</summary>
-    public JsonValue Value { get; private set; }
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="value">
-    ///     Specifies the underlying JSON value to provide safe access to.</param>
-    public JsonSafeValue(JsonValue value) { Value = value is JsonNoValue ? null : value; }
+    public JsonValue Value { get; private set; } = value is JsonNoValue ? null : value;
 
     /// <summary>Returns a hash code representing this object.</summary>
     public override int GetHashCode() => Value == null ? 1 : Value.GetHashCode() + 1;
 
     /// <summary>Determines whether the specified instance is equal to this one.</summary>
-    public override bool Equals(object obj) => obj is JsonSafeValue ? Equals((JsonSafeValue) obj) : false;
+    public override bool Equals(object obj) => obj is JsonSafeValue safeVal ? Equals(safeVal) : (obj == null && Value == null);
 
     /// <summary>
     ///     Determines whether the specified instance is equal to this one. (See remarks.)</summary>
     /// <remarks>
     ///     Two instances of <see cref="JsonSafeValue"/> are considered equal if the underlying values are equal. See <see
     ///     cref="JsonValue.Equals(JsonValue)"/> for details.</remarks>
-    public bool Equals(JsonSafeValue other) => other != null && (Value == null ? other.Value == null : Value.Equals(other.Value));
+    public bool Equals(JsonSafeValue other) => other != null && other.Value != null ? (Value != null && Value.Equals(other.Value)) : Value == null;
 
     /// <summary>
     ///     If the underlying value is a list, and the specified <paramref name="index"/> exists within the list, returns the
@@ -2600,20 +2608,13 @@ public sealed class JsonSafeValue
 ///     A special type of value which is never produced as a result of parsing valid JSON. Its sole purpose is to allow
 ///     embedding arbitrary JavaScript code using <see cref="JsonValue.Fmt"/>.</summary>
 [Serializable]
-public class JsonRaw : JsonValue
+public class JsonRaw(string raw) : JsonValue
 {
     /// <summary>Gets the raw JSON.</summary>
-    public string Raw { get; private set; }
-
-    /// <summary>Constructs a <see cref="JsonRaw"/> instance from the specified raw JSON.</summary>
-    public JsonRaw(string raw)
-    {
-        Raw = raw;
-    }
+    public string Raw { get; private set; } = raw;
 
     /// <summary>Generates a <see cref="JsonRaw"/> instance from the specified date/time stamp.</summary>
-    public static JsonRaw FromDate(DateTime datetime) => new JsonRaw
-    (
+    public static JsonRaw FromDate(DateTime datetime) => new(
         datetime.TimeOfDay == TimeSpan.Zero
             ? $"new Date({datetime.Year}, {datetime.Month - 1}, {datetime.Day})"
             : $"new Date({datetime.Year}, {datetime.Month - 1}, {datetime.Day}, {datetime.Hour}, {datetime.Minute}, {datetime.Second}, {datetime.Millisecond})"
@@ -2626,10 +2627,10 @@ public class JsonRaw : JsonValue
     }
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(object other) => other is JsonRaw ? Equals((JsonRaw) other) : false;
+    public override bool Equals(object other) => other is JsonRaw raw && Equals(raw);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
-    public override bool Equals(JsonValue other) => other is JsonRaw ? Equals((JsonRaw) other) : false;
+    public override bool Equals(JsonValue other) => other is JsonRaw raw && Equals(raw);
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public bool Equals(JsonRaw other) => other != null && Raw == other.Raw;
