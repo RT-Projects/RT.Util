@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace RT.Util.Controls;
 
@@ -97,7 +97,9 @@ public class ListBoxEx : ListBox
         {
             if (value < 0 || value >= Items.Count)
                 throw new ArgumentException("OutlineIndex cannot be negative or greater than the size of the collection.", nameof(value));
+#pragma warning disable CA1806 // call ignores HRESULT
             WinAPI.SendMessage(Handle, WinAPI.LB_SETCARETINDEX, (uint) value, 0);
+#pragma warning restore CA1806
         }
     }
 }

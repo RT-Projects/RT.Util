@@ -2551,7 +2551,7 @@ namespace RT.Serialization.Tests
     abstract class MisTypeBase { }
     class MisTypeDerived : MisTypeBase { }
 
-    class NullTester { public string Str; }
+    class NullTester { public string Str = null; }
 }
 
 namespace UserDefined

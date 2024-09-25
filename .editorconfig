@@ -283,14 +283,26 @@ dotnet_diagnostic.ca1837.severity = warning
 # CA1825: Avoid zero-length array allocations
 dotnet_diagnostic.ca1825.severity = none
 
+# CA1806: LINQ method without side-effect (eg .Append)
+dotnet_diagnostic.ca1806.severity = error
+
 # IDE0044: Add readonly modifier
 dotnet_diagnostic.ide0044.severity = none
 
 # IDE0042: Deconstruct variable declaration
 dotnet_diagnostic.ide0042.severity = none
 
-# CS1998: Async method lacks 'await' operators and will run synchronously
+# CS1998: async method lacks await -- forces diff noise and pointless style changes back and forth as code evolves
 dotnet_diagnostic.cs1998.severity = none
+
+# CS8981: The type name 'info' only contains lower-cased ascii characters - we'll fix it if that happens
+dotnet_diagnostic.cs8981.severity = none
+
+# CS8509: The switch expression does not handle all possible values of its input type (it is not exhaustive)
+dotnet_diagnostic.cs8509.severity = error
+
+# CS8524: The switch expression does not handle ... unnamed enum value -- this makes relying on CS8509 error impossible so turn it off
+dotnet_diagnostic.cs8524.severity = none
 
 # Rider: Possible 'null' assignment to non-nullable entity (triggers even in nullable:disable contexts)
 resharper_assign_null_to_not_null_attribute_highlighting = none
@@ -301,3 +313,6 @@ resharper_possible_multiple_enumeration_highlighting = none
 # Rider: Member can be made private (it's a public member in a library, stop bugging me!!!)
 resharper_member_can_be_private_global_highlighting = none
 resharper_member_can_be_private_local_highlighting = none
+
+# xUnit: don't assert equals on length = 1 - this tip is terrible for code consistency
+dotnet_diagnostic.xUnit2013.severity = none

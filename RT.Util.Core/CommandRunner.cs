@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security;
 using System.Text;
 using RT.Util.Consoles;
@@ -607,8 +607,10 @@ public class CommandRunner
                 IntPtr pThread = WinAPI.OpenThread(WinAPI.ThreadAccess.SUSPEND_RESUME, false, (uint) thr.Id);
                 if (pThread == IntPtr.Zero)
                     continue;
+#pragma warning disable CA1806 // call ignores HRESULT
                 WinAPI.SuspendThread(pThread);
                 WinAPI.CloseHandle(pThread);
+#pragma warning restore CA1806
             }
         }
     }
@@ -650,8 +652,10 @@ public class CommandRunner
                     IntPtr pThread = WinAPI.OpenThread(WinAPI.ThreadAccess.SUSPEND_RESUME, false, (uint) thr.Id);
                     if (pThread == IntPtr.Zero)
                         continue;
+#pragma warning disable CA1806 // call ignores HRESULT
                     WinAPI.ResumeThread(pThread);
                     WinAPI.CloseHandle(pThread);
+#pragma warning restore CA1806
                 }
             }
         }

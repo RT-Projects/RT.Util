@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Windows.Markup;
 
 namespace RT.KitchenSink.Fonts;
@@ -220,10 +220,12 @@ public static class FontUtil
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     private struct FONTSIGNATURE
     {
+#pragma warning disable CS9125 // attribute parameter SizeConst must be specified
         [MarshalAs(UnmanagedType.ByValArray)]
         public int[] fsUsb;
         [MarshalAs(UnmanagedType.ByValArray)]
         public int[] fsCsb;
+#pragma warning restore CS9125
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

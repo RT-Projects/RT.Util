@@ -1,6 +1,8 @@
-using System.Net;
+﻿using System.Net;
 using RT.Json;
 using RT.Util.ExtensionMethods;
+
+#pragma warning disable SYSLIB0014 // WebRequest.Create is obsolete
 
 namespace RT.Util;
 
