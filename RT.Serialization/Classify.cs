@@ -1150,7 +1150,7 @@ public static class Classify
                     if (!declaredType.IsArray && !declaredType.TryGetGenericParameters(typeof(IDictionary<,>), out var typeParameters) && !declaredType.TryGetGenericParameters(typeof(ICollection<>), out typeParameters))
                     {
                         if (saveType.Assembly.Equals(declaredType.Assembly) && !saveType.IsGenericType && !saveType.IsNested)
-                            typeStr = saveType.Namespace.Equals(declaredType.Namespace) && !saveType.IsArray ? saveType.Name : saveType.FullName;
+                            typeStr = Equals(saveType.Namespace, declaredType.Namespace) && !saveType.IsArray ? saveType.Name : saveType.FullName;
                         else
                         {
                             typeStr = saveType.AssemblyQualifiedName;
