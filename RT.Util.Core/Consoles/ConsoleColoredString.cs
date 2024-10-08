@@ -234,6 +234,36 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     }
 
     /// <summary>
+    ///     Concatenates a <see cref="ConsoleColoredChar"/> onto the end of a <see cref="ConsoleColoredString"/>.</summary>
+    /// <param name="string1">
+    ///     Input string to concatenate.</param>
+    /// <param name="char2">
+    ///     Input character to append.</param>
+    /// <remarks>
+    ///     The color of each character in the inputs is preserved.</remarks>
+    public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredChar char2)
+    {
+        if (string1 == null || string1.Length == 0)
+            return char2.ToConsoleColoredString();
+        return new ConsoleColoredString(string1, char2.ToConsoleColoredString());
+    }
+
+    /// <summary>
+    ///     Concatenates a <see cref="ConsoleColoredChar"/> onto the start of a <see cref="ConsoleColoredString"/>.</summary>
+    /// <param name="char1">
+    ///     Input character to append.</param>
+    /// <param name="string2">
+    ///     Input string to concatenate.</param>
+    /// <remarks>
+    ///     The color of each character in the inputs is preserved.</remarks>
+    public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredString string2)
+    {
+        if (string2 == null || string2.Length == 0)
+            return char1.ToConsoleColoredString();
+        return new ConsoleColoredString(char1.ToConsoleColoredString(), string2);
+    }
+
+    /// <summary>
     ///     Concatenates a string onto a <see cref="ConsoleColoredString"/>.</summary>
     /// <param name="string1">
     ///     First input string to concatenate.</param>
