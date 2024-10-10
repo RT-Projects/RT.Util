@@ -69,8 +69,10 @@ public static class ConsoleUtil
     {
         if (StdOutState() == ConsoleState.Redirected || StdErrState() == ConsoleState.Redirected)
             return 120;
-        try { return Console.BufferWidth - 1; }
+        int width;
+        try { width = Console.BufferWidth - 1; }
         catch { return 120; }
+        return width <= 0 ? 120 : width;
     }
 
     /// <summary>
