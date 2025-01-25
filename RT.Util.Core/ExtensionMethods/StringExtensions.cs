@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1269,6 +1269,22 @@ static class StringExtensions
     ///     if the value cannot be parsed.</summary>
     public static float? ParseFloatOrNull(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
         => float.TryParse(str, style, provider, out var result) ? result : null;
+
+    /// <summary>Parses this string as a <c>decimal</c> using <see cref="decimal.Parse(string)"/>.</summary>
+    public static decimal ParseDecimal(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+        => decimal.Parse(str, style, provider);
+
+    /// <summary>
+    ///     Parses this string as a <c>decimal</c> using <see cref="decimal.TryParse(string?, out decimal)"/>. Returns <paramref
+    ///     name="default_"/> if the value cannot be parsed.</summary>
+    public static decimal ParseDecimal(this string str, decimal default_, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+        => decimal.TryParse(str, style, provider, out var result) ? result : default_;
+
+    /// <summary>
+    ///     Parses this string as a <c>decimal</c> using <see cref="decimal.TryParse(string?, out decimal)"/>. Returns
+    ///     <c>null</c> if the value cannot be parsed.</summary>
+    public static decimal? ParseDecimalOrNull(this string str, NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands, IFormatProvider provider = null)
+        => decimal.TryParse(str, style, provider, out var result) ? result : null;
 
     /// <summary>
     ///     Determines whether the <paramref name="input"/> string matches the specified regular expression <paramref

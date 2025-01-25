@@ -266,18 +266,6 @@ static partial class Ut
     }
 
     /// <summary>
-    ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 32-bit
-    ///     integer.</summary>
-    public static int? ParseInt32(string value) => int.TryParse(value, out var result) ? (int?) result : null;
-    /// <summary>
-    ///     Returns the integer represented by the specified string, or null if the string does not represent a valid 64-bit
-    ///     integer.</summary>
-    public static long? ParseInt64(string value) => long.TryParse(value, out var result) ? (long?) result : null;
-    /// <summary>
-    ///     Returns the floating-point number represented by the specified string, or null if the string does not represent a
-    ///     valid double-precision floating-point number.</summary>
-    public static double? ParseDouble(string value) => double.TryParse(value, out var result) ? (double?) result : null;
-    /// <summary>
     ///     Returns the date/time stamp represented by the specified string, or null if the string does not represent a valid
     ///     date/time stamp.</summary>
     public static DateTime? ParseDateTime(string value) => DateTime.TryParse(value, out var result) ? (DateTime?) result : null;
