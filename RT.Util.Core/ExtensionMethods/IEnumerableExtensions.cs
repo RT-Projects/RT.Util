@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
 #endif

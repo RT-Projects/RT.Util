@@ -209,8 +209,7 @@ static class ArrayExtensions
         if (length < 0 || sourceStartIndex + length > sourceArray.Length || otherStartIndex + length > otherArray.Length)
             throw new ArgumentOutOfRangeException(nameof(length), "The length argument must be non-negative and must be such that both subarrays are within the bounds of the respective source arrays.");
 
-        if (comparer == null)
-            comparer = EqualityComparer<T>.Default;
+        comparer ??= EqualityComparer<T>.Default;
         for (int i = 0; i < length; i++)
             if (!comparer.Equals(sourceArray[sourceStartIndex + i], otherArray[otherStartIndex + i]))
                 return false;

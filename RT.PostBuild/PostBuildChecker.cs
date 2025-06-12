@@ -226,11 +226,11 @@ public static class PostBuildChecker
         return memberName;
     }
 
-    private sealed class postBuildReporter : IPostBuildReporter
+    private sealed class postBuildReporter(string path) : IPostBuildReporter
     {
-        private string _path;
-        public bool AnyErrors { get; set; }
-        public postBuildReporter(string path) { _path = path; AnyErrors = false; }
+        private string _path = path;
+        public bool AnyErrors { get; set; } = false;
+
         public void Error(string message, params string[] tokens) { AnyErrors = true; output("Error", message, tokens); }
         public void Warning(string message, params string[] tokens) { output("Warning", message, tokens); }
 
