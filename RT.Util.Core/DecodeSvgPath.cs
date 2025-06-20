@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 using RT.Util;
 using RT.Util.ExtensionMethods;
@@ -26,7 +26,7 @@ public static class DecodeSvgPath
         ///     Type of path piece.</param>
         /// <param name="points">
         ///     Set of points.</param>
-        public PathPiece(PathPieceType type, PointD[] points)
+        public PathPiece(PathPieceType type, params PointD[] points)
         {
             if (type == PathPieceType.End)
                 throw new ArgumentException("type cannot be End. Use the static PathPiece.End value instead.", nameof(type));

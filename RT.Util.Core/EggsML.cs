@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Xml.Linq;
 using RT.Util.Collections;
 using RT.Util.Consoles;
