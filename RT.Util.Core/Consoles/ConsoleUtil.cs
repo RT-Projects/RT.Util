@@ -1,7 +1,8 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
+using static RT.Util.Consoles.ConsoleColoredString;
 
 namespace RT.Util.Consoles;
 
@@ -200,7 +201,7 @@ public static class ConsoleUtil
     }
 
     /// <summary>
-    ///     Writes the specified <see cref="FormattableString"/> to the console.</summary>
+    ///     Writes the specified <see cref="FormattableString"/> followed by a newline to the console.</summary>
     /// <param name="value">
     ///     Formattable string. You can use an interpolated string literal here.</param>
     /// <param name="foreground">
@@ -244,6 +245,62 @@ public static class ConsoleUtil
             value.writeTo(output);
         }
         output.WriteLine();
+    }
+
+    /// <summary>
+    ///     Writes the specified <see cref="FormattableString"/> followed by a newline to the console with console-colored
+    ///     formatting strings enabled (see remarks).</summary>
+    /// <param name="value">
+    ///     Formattable string. You can use an interpolated string literal here.</param>
+    /// <param name="foreground">
+    ///     Default foreground color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+    ///     cref="ConsoleColoredChar"/> or a foreground color is unspecified.</param>
+    /// <param name="background">
+    ///     Default background color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+    ///     cref="ConsoleColoredChar"/> or a background color is unspecified.</param>
+    /// <param name="stdErr">
+    ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+    /// <param name="align">
+    ///     Horizontal alignment of the string within the remaining space of the current line. If the string does not fit, it
+    ///     will be printed as if left-aligned.</param>
+    /// <remarks>
+    ///     <para>
+    ///         When using this method, format strings are expected to be different:</para>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             To color an interpolated value, specify one of K=Black, B=Blue, G=Green, C=Cyan, R=Red, M=Magenta,
+    ///             Y=Yellow, A=Gray, W=White, or lower-case for dark. Use two characters to specify background color as well
+    ///             (e.g. <c>Yb</c> = yellow on dark blue).</description></item>
+    ///         <item><description>
+    ///             To only background-color an interpolated value, prefix the color code with an <c>_</c> (underscore).</description></item>
+    ///         <item><description>
+    ///             To format a value, prepend the formatting string with a <c>/</c> (slash). For example: <c>{0:/X}</c> will
+    ///             do the same as <c>.ToString("X")</c>.</description></item>
+    ///         <item><description>
+    ///             To do both color and formatting, specify the color code, then a <c>/</c> (slash), then the formatting
+    ///             string. For example: <c>{0:Yb/X}</c>.</description></item></list></remarks>
+    public static void WriteLineFmt(FormattableString value, ConsoleColor? foreground = null, ConsoleColor? background = null, bool stdErr = false, HorizontalTextAlignment align = HorizontalTextAlignment.Left)
+    {
+        WriteLine(value.Format.Color(foreground, background).FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.NewColorFormat | FormatBehavior.Stringify, null, value.GetArguments()).JoinColoredString(), stdErr, align);
+    }
+
+    /// <summary>
+    ///     Writes the specified <see cref="FormattableString"/> followed by a newline to the console with console-colored
+    ///     formatting strings enabled (see remarks at <see cref="WriteLineFmt(FormattableString, ConsoleColor?,
+    ///     ConsoleColor?, bool, HorizontalTextAlignment)"/>).</summary>
+    /// <param name="value">
+    ///     Formattable string. You can use an interpolated string literal here.</param>
+    /// <param name="foreground">
+    ///     Default foreground color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+    ///     cref="ConsoleColoredChar"/> or a foreground color is unspecified.</param>
+    /// <param name="background">
+    ///     Default background color when an interpolated variable isn’t a <see cref="ConsoleColoredString"/> or <see
+    ///     cref="ConsoleColoredChar"/> or a background color is unspecified.</param>
+    /// <param name="stdErr">
+    ///     <c>true</c> to print to Standard Error instead of Standard Output.</param>
+    public static void WriteFmt(FormattableString value, ConsoleColor? foreground = null, ConsoleColor? background = null, bool stdErr = false)
+    {
+        Write(value.Format.Color(foreground, background).FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.NewColorFormat | FormatBehavior.Stringify, null, value.GetArguments()).JoinColoredString(), stdErr);
     }
 
     /// <summary>

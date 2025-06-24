@@ -608,8 +608,29 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     internal enum FormatBehavior
     {
         Stringify = 1,
-        Colored = 2
+        Colored = 2,
+        NewColorFormat = 4
     }
+
+    internal static Dictionary<char, ConsoleColor> _colorCodes = new()
+    {
+        ['K'] = ConsoleColor.Black,
+        ['b'] = ConsoleColor.DarkBlue,
+        ['g'] = ConsoleColor.DarkGreen,
+        ['c'] = ConsoleColor.DarkCyan,
+        ['r'] = ConsoleColor.DarkRed,
+        ['m'] = ConsoleColor.DarkMagenta,
+        ['y'] = ConsoleColor.DarkYellow,
+        ['A'] = ConsoleColor.Gray,
+        ['a'] = ConsoleColor.DarkGray,
+        ['B'] = ConsoleColor.Blue,
+        ['G'] = ConsoleColor.Green,
+        ['C'] = ConsoleColor.Cyan,
+        ['R'] = ConsoleColor.Red,
+        ['M'] = ConsoleColor.Magenta,
+        ['Y'] = ConsoleColor.Yellow,
+        ['W'] = ConsoleColor.White
+    };
 
     internal IEnumerable<object> FmtEnumerableInternal(FormatBehavior behavior, IFormatProvider provider, params object[] args)
     {
@@ -679,11 +700,15 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                     }
                     else if ((state == 1 || state == 3) && ch == '/')
                     {
+                        if (!behavior.HasFlag(FormatBehavior.Colored) || behavior.HasFlag(FormatBehavior.NewColorFormat))
+                            throw new FormatException("The specified format string uses a console-color formatting string of the wrong format.");
                         foregroundBuilder = new StringBuilder();
                         state = 4;
                     }
                     else if ((state == 1 || state == 3 || state == 4) && ch == '+')
                     {
+                        if (!behavior.HasFlag(FormatBehavior.Colored) || behavior.HasFlag(FormatBehavior.NewColorFormat))
+                            throw new FormatException("The specified format string uses a console-color formatting string of the wrong format.");
                         backgroundBuilder = new StringBuilder();
                         state = 5;
                     }
@@ -705,44 +730,86 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                 if (num >= args.Length)
                     throw new FormatException("The specified format string references an array index outside the bounds of the supplied arguments.");
 
-                var formatString = formatBuilder == null ? null : formatBuilder.ToString();
+                var formatString = formatBuilder?.ToString();
 
-                if (behavior == (FormatBehavior.Stringify | FormatBehavior.Colored))
+                if (behavior.HasFlag(FormatBehavior.Stringify | FormatBehavior.Colored))
                 {
                     if (args[num] != null)
                     {
-                        var foregroundStr = foregroundBuilder == null ? null : foregroundBuilder.ToString();
-                        var backgroundStr = backgroundBuilder == null ? null : backgroundBuilder.ToString();
-                        ConsoleColor foreground = 0, background = 0;
-                        if (foregroundStr != null && foregroundStr != "" && !Enum.TryParse<ConsoleColor>(foregroundStr, true, out foreground))
-                            throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(foregroundStr));
-                        if (backgroundStr != null && backgroundStr != "" && !Enum.TryParse<ConsoleColor>(backgroundStr, true, out background))
-                            throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
+                        ConsoleColor? foreground = null, background = null;
+                        bool fgSet = false, bgSet = false;
+
+                        if (behavior.HasFlag(FormatBehavior.NewColorFormat))
+                        {
+                            var colorStr = formatString;
+                            if (formatString.IndexOf('/') is int p && p >= 0)
+                            {
+                                colorStr = formatString.Substring(0, p);
+                                formatString = formatString.Substring(p + 1);
+                            }
+                            if (colorStr.Length == 2 && colorStr[0] == '_' && _colorCodes.TryGetValue(colorStr[1], out var bg))
+                            {
+                                background = bg;
+                                bgSet = true;
+                            }
+                            else if (colorStr.Length == 2 && _colorCodes.TryGetValue(colorStr[0], out var fg) && _colorCodes.TryGetValue(colorStr[1], out bg))
+                            {
+                                foreground = fg;
+                                fgSet = true;
+                                background = bg;
+                                bgSet = true;
+                            }
+                            else if (colorStr.Length == 1 && _colorCodes.TryGetValue(colorStr[0], out fg))
+                            {
+                                foreground = fg;
+                                fgSet = true;
+                            }
+                            else
+                                throw new FormatException("The specified format string uses an invalid console color code ({0}).".Fmt(colorStr));
+                        }
+                        else
+                        {
+                            fgSet = foregroundBuilder != null;
+                            bgSet = backgroundBuilder != null;
+                            var foregroundStr = foregroundBuilder?.ToString();
+                            var backgroundStr = backgroundBuilder?.ToString();
+
+                            if (fgSet)
+                                if (Enum.TryParse<ConsoleColor>(foregroundBuilder.ToString(), out var fg))
+                                    foreground = fg;
+                                else
+                                    throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(foregroundStr));
+
+                            if (bgSet)
+                                if (Enum.TryParse<ConsoleColor>(backgroundBuilder.ToString(), out var bg))
+                                    background = bg;
+                                else
+                                    throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
+                        }
 
                         var result = (args[num] as ConsoleColoredString) ?? (args[num] as ConsoleColoredChar?)?.ToConsoleColoredString();
 
                         // If the object is a ConsoleColoredString, use it (and color it if a color is explicitly specified)
                         if (result != null)
                         {
-                            if (foregroundStr != null)
-                                result = result.Color(foregroundStr == "" ? (ConsoleColor?) null : foreground);
+                            if (fgSet)
+                                result = result.Color(foreground);
                             else if (implicitForeground != null)
                                 result = result.ColorWhereNull(implicitForeground.Value);
-                            if (backgroundStr != null)
-                                result = result.ColorBackground(backgroundStr == "" ? (ConsoleColor?) null : background);
+                            if (bgSet)
+                                result = result.ColorBackground(background);
                             else if (implicitBackground != null)
                                 result = result.ColorBackgroundWhereNull(implicitBackground.Value);
                         }
                         // ... otherwise use IFormattable and/or the custom formatter (and then color the result of that, if specified).
                         else
                         {
-                            var objFormattable = args[num] as IFormattable;
                             result = new ConsoleColoredString(
-                                formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                                formatString != null && args[num] is IFormattable formattable ? formattable.ToString(formatString, provider) :
                                 formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
                                 args[num].ToString(),
-                                foregroundStr == null ? implicitForeground : foregroundStr == "" ? (ConsoleColor?) null : foreground,
-                                backgroundStr == null ? implicitBackground : backgroundStr == "" ? (ConsoleColor?) null : background);
+                                fgSet ? foreground : implicitForeground,
+                                bgSet ? background : implicitBackground);
                         }
 
                         // Alignment
@@ -751,13 +818,12 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                         yield return result;
                     }
                 }
-                else if (behavior == FormatBehavior.Stringify)
+                else if (behavior.HasFlag(FormatBehavior.Stringify))
                 {
                     if (args[num] != null)
                     {
-                        var objFormattable = args[num] as IFormattable;
                         var result =
-                            formatString != null && objFormattable != null ? objFormattable.ToString(formatString, provider) :
+                            formatString != null && args[num] is IFormattable formattable ? formattable.ToString(formatString, provider) :
                             formatString != null && customFormatter != null ? customFormatter.Format(formatString, args[num], provider) :
                             args[num].ToString();
 
