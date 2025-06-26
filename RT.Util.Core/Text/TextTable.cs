@@ -47,6 +47,10 @@ public sealed class TextTable
     public int CurRow { get; set; } = 0;
     /// <summary>Gets or sets the index of the column used by the next call to <see cref="AddCell"/>.</summary>
     public int CurCol { get; set; } = 0;
+    /// <summary>
+    ///     If <c>true</c>, unassigned cells at the end of each rows are filled by increasing the column span of the last
+    ///     assigned cell in that row.</summary>
+    public bool StretchLastCell { get; set; }
 
     /// <summary>
     ///     Places the specified content into the cell at the specified co-ordinates.</summary>
@@ -128,13 +132,10 @@ public sealed class TextTable
         ensureCell(col, row);
 
         // If the cell contains a true cell, remove it with all its surrogates
-        if (_cells[row][col] is trueCell)
-        {
-            var tr = (trueCell) _cells[row][col];
+        if (_cells[row][col] is trueCell tr)
             for (int x = 0; x < tr.ColSpan; x++)
                 for (int y = 0; y < tr.RowSpan; y++)
                     _cells[row + y][col + x] = null;
-        }
 
         // Insert the cell in the right place
         _cells[row][col] = new trueCell
@@ -174,14 +175,14 @@ public sealed class TextTable
     public ConsoleColoredString ToColoredString()
     {
         var result = new List<ConsoleColoredString>();
-        toString(MaxWidth, s => result.Add(s), s => result.Add(s));
+        toString(MaxWidth, s => result.Add(s), result.Add);
         return new ConsoleColoredString(result.ToArray());
     }
 
     /// <summary>Outputs the entire table to the console.</summary>
     public void WriteToConsole()
     {
-        toString(MaxWidth ?? ConsoleUtil.WrapToWidth(), s => Console.Write(s), s => ConsoleUtil.Write(s));
+        toString(MaxWidth ?? ConsoleUtil.WrapToWidth(), Console.Write, s => ConsoleUtil.Write(s));
     }
 
     private void toString(int? maxWidth, Action<string> outputString, Action<ConsoleColoredString> outputColoredString)
@@ -191,12 +192,22 @@ public sealed class TextTable
             return;
         int cols = _cells.Max(row => row.Count);
 
+        if (StretchLastCell)
+        {
+            for (var row = 0; row < rows; row++)
+            {
+                var lastCell = _cells[row].LastIndexOf(c => c is trueCell);
+                if (lastCell >= 0 && !_cells[row].Skip(lastCell + 1).Any(c => c is surrogateCell s && (s.RealCol != lastCell || s.RealRow != row)))
+                    ((trueCell) _cells[row][lastCell]).ColSpan = cols - lastCell;
+            }
+        }
+
         // Create a lookup array which, for each column, and for each possible value of colspan, tells you which cells in that column have this colspan and end in this column
         var cellsByColspan = new SortedDictionary<int, List<int>>[cols];
         for (var col = 0; col < cols; col++)
         {
             var cellsInThisColumn = new SortedDictionary<int, List<int>>();
-            for (int row = 0; row < rows; row++)
+            for (var row = 0; row < rows; row++)
             {
                 if (col >= _cells[row].Count)
                     continue;
