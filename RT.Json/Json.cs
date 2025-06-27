@@ -297,7 +297,7 @@ internal class JsonParserState
             }
             Pos++;
         }
-    while_break:;
+        while_break:
         ConsumeWhitespace();
         return new JsonString(sb.ToString());
     }

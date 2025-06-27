@@ -321,11 +321,11 @@ public static class EggsML
 
                     if (lengthOfWord > 0)
                     {
-                    // We are looking at a word. (It doesn’t matter whether we’re at the beginning of the word or in the middle of one.)
-                    retry1:
+                        // We are looking at a word. (It doesn’t matter whether we’re at the beginning of the word or in the middle of one.)
+                        retry1:
                         string fragment = txt.Substring(i, lengthOfWord);
                         var fragmentWidth = Measure(state, fragment);
-                    retry2:
+                        retry2:
 
                         // If we are at the start of a line, and the word itself doesn’t fit on a line by itself, we need to break the word up.
                         if (AtStartOfLine && X + WordPiecesWidthsSum + fragmentWidth > WrapWidth)

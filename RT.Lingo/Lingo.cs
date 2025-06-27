@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -523,8 +523,8 @@ public static partial class Lingo
             }
         }
 
-    // Report warnings for all unused strings (not errors so that the developer can test things in the presence of unused strings)
-    done:
+        // Report warnings for all unused strings (not errors so that the developer can test things in the presence of unused strings)
+        done:
         foreach (var field in fields)
             rep.Warning("Unused Lingo field: " + field.DeclaringType.FullName + "." + field.Name, "class " + field.DeclaringType.Name, field.FieldType.Name, field.Name);
     }
