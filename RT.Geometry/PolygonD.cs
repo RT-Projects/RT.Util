@@ -1,7 +1,7 @@
-using System.Drawing;
-using RT.Util.ExtensionMethods;
+﻿using System.Drawing;
+using RT.Internal;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>This class encapsulates double-precision polygons.</summary>
 public sealed class PolygonD

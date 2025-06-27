@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Encapsulates a double-precision point.</summary>
 public struct PointD : IEquatable<PointD>

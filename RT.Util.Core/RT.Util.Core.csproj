@@ -8,8 +8,8 @@
 
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
-    <Description>Wad of stuff. See also: RT.Util, RT.Serialization.Json / RT.Serialization.Xml, RT.Json, RT.PostBuild and RT.Util.Legacy.</Description>
-    <PackageTags>rt.util;util;extensions;collections;poset;console;geometry;triangle;lexer;diff;reducerequiredset;command;channel;costream;voronoi</PackageTags>
+    <Description>Wad of stuff. See also: RT.Util, RT.Serialization.Json / RT.Serialization.Xml, RT.Json, RT.Geometry, RT.PostBuild and RT.Util.Legacy.</Description>
+    <PackageTags>rt.util;util;extensions;collections;poset;console;triangle;lexer;diff;reducerequiredset;command;channel;costream</PackageTags>
   </PropertyGroup>
 
 </Project>

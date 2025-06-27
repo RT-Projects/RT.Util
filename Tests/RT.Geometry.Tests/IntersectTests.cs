@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry.Tests;
 
 [TestFixture]
 public sealed class IntersectTests
@@ -70,14 +70,14 @@ public sealed class IntersectTests
         AssertLineWithCircle(0, 0, /**/ 0, 1, /*   */ 0, 1, 2.7, /*   */ 3.7, -1.7);
         AssertLineWithCircle(0, 0, /**/ 0, -1, /*   */ 0, 1, 2.8, /*   */ 1.8, -3.8);
 
-        AssertLineWithCircle(0, 0, /**/ 2, 0, /*   */ 0, 0, 2.5, /*   */ 2.5/2, -2.5/2);
-        AssertLineWithCircle(0, 0, /**/ -3, 0, /*   */ 0, 0, 2.6, /*   */ 2.6/3, -2.6/3);
-        AssertLineWithCircle(0, 0, /**/ 0, 4, /*   */ 0, 0, 2.7, /*   */ 2.7/4, -2.7/4);
-        AssertLineWithCircle(0, 0, /**/ 0, -5, /*   */ 0, 0, 2.8, /*   */ 2.8/5, -2.8/5);
+        AssertLineWithCircle(0, 0, /**/ 2, 0, /*   */ 0, 0, 2.5, /*   */ 2.5 / 2, -2.5 / 2);
+        AssertLineWithCircle(0, 0, /**/ -3, 0, /*   */ 0, 0, 2.6, /*   */ 2.6 / 3, -2.6 / 3);
+        AssertLineWithCircle(0, 0, /**/ 0, 4, /*   */ 0, 0, 2.7, /*   */ 2.7 / 4, -2.7 / 4);
+        AssertLineWithCircle(0, 0, /**/ 0, -5, /*   */ 0, 0, 2.8, /*   */ 2.8 / 5, -2.8 / 5);
 
-        AssertLineWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 0, 3.0, /*   */ 7.0/2, 13.0/2);
+        AssertLineWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 0, 3.0, /*   */ 7.0 / 2, 13.0 / 2);
 
-        AssertLineWithCircle(0, -10, /**/ 0, -7, /*   */ 3, 2, 3.0, /*   */ 12.0/3, 12.0/3);
+        AssertLineWithCircle(0, -10, /**/ 0, -7, /*   */ 3, 2, 3.0, /*   */ 12.0 / 3, 12.0 / 3);
 
         AssertLineWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 4.0, 3.0, /*   */ double.NaN, double.NaN);
 
@@ -93,14 +93,14 @@ public sealed class IntersectTests
         AssertRayWithCircle(0, 0, /**/ 0, 1, /*   */ 0, 0, 2.7, /*   */ 2.7, double.NaN);
         AssertRayWithCircle(0, 0, /**/ 0, -1, /*   */ 0, 0, 2.8, /*   */ 2.8, double.NaN);
 
-        AssertRayWithCircle(0, 0, /**/ 2, 0, /*   */ 0, 0, 2.5, /*   */ 2.5/2, double.NaN);
-        AssertRayWithCircle(0, 0, /**/ -3, 0, /*   */ 0, 0, 2.6, /*   */ 2.6/3, double.NaN);
-        AssertRayWithCircle(0, 0, /**/ 0, 4, /*   */ 0, 0, 2.7, /*   */ 2.7/4, double.NaN);
-        AssertRayWithCircle(0, 0, /**/ 0, -5, /*   */ 0, 0, 2.8, /*   */ 2.8/5, double.NaN);
+        AssertRayWithCircle(0, 0, /**/ 2, 0, /*   */ 0, 0, 2.5, /*   */ 2.5 / 2, double.NaN);
+        AssertRayWithCircle(0, 0, /**/ -3, 0, /*   */ 0, 0, 2.6, /*   */ 2.6 / 3, double.NaN);
+        AssertRayWithCircle(0, 0, /**/ 0, 4, /*   */ 0, 0, 2.7, /*   */ 2.7 / 4, double.NaN);
+        AssertRayWithCircle(0, 0, /**/ 0, -5, /*   */ 0, 0, 2.8, /*   */ 2.8 / 5, double.NaN);
 
-        AssertRayWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 0, 3.0, /*   */ 7.0/2, 13.0/2);
+        AssertRayWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 0, 3.0, /*   */ 7.0 / 2, 13.0 / 2);
 
-        AssertRayWithCircle(0, -10, /**/ 0, -7, /*   */ 3, 2, 3.0, /*   */ 12.0/3, 12.0/3);
+        AssertRayWithCircle(0, -10, /**/ 0, -7, /*   */ 3, 2, 3.0, /*   */ 12.0 / 3, 12.0 / 3);
 
         AssertRayWithCircle(-10, 0, /**/ -8, 0, /*   */ 0, 4.0, 3.0, /*   */ double.NaN, double.NaN);
     }

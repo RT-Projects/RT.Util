@@ -1,8 +1,6 @@
 ﻿using NUnit.Framework;
-using RT.KitchenSink.Geometry;
-using RT.Util.Geometry;
 
-namespace RT.Util;
+namespace RT.Geometry.Tests;
 
 [TestFixture]
 public sealed class VoronoiDiagramTests

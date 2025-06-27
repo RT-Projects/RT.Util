@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>
 ///     Encapsulates a triangle defined by vertices represented as <see cref="PointD"/> values.</summary>

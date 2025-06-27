@@ -1,9 +1,6 @@
-using RT.Util.ExtensionMethods;
-using RT.Util.Geometry;
+﻿using RT.Internal;
 
-#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-
-namespace RT.KitchenSink.Geometry;
+namespace RT.Geometry;
 
 /// <summary>
 ///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], double, double,

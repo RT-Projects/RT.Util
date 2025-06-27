@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>
 ///     A double-precision rectangle struct, representing an axis-aligned rectangle.</summary>

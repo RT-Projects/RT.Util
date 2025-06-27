@@ -1,4 +1,4 @@
-﻿namespace RT.Util.Geometry;
+﻿namespace RT.Geometry;
 
 /// <summary>A double-precision class encapsulating a straight line segment connecting two points.</summary>
 public struct EdgeD : IEquatable<EdgeD>

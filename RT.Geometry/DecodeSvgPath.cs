@@ -1,10 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
-using RT.Util;
-using RT.Util.ExtensionMethods;
-using RT.Util.Geometry;
+using RT.Internal;
 
-namespace RT.KitchenSink;
+namespace RT.Geometry;
 
 /// <summary>Provides methods to parse the syntax used in SVG path data.</summary>
 public static class DecodeSvgPath
@@ -272,7 +270,7 @@ public static class DecodeSvgPath
         while (!string.IsNullOrWhiteSpace(svgPath))
         {
             Match m;
-            if ((m = Regex.Match(svgPath, @"^[MLCQHVS]\s*({0})*".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+            if ((m = Regex.Match(svgPath, $@"^[MLCQHVS]\s*({numRegex})*", RegexOptions.IgnoreCase)).Success)
             {
                 PathPieceType type;
                 PointD[] points;
@@ -336,7 +334,7 @@ public static class DecodeSvgPath
                     case 'C':
                         type = PathPieceType.Curve;
                         points = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
-                        Ut.Assert(points.Length % 3 == 0);
+                        GeomUt.Assert(points.Length % 3 == 0);
                         prevPoint = points.Last();
                         prevControlPoint = points.SkipLast(1).Last();
                         prevControlPointDetermined = true;
@@ -345,7 +343,7 @@ public static class DecodeSvgPath
                     case 'c':
                         type = PathPieceType.Curve;
                         points = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
-                        Ut.Assert(points.Length % 3 == 0);
+                        GeomUt.Assert(points.Length % 3 == 0);
                         for (int i = 0; i < points.Length; i += 3)
                         {
                             points[i] += prevPoint;
@@ -362,7 +360,7 @@ public static class DecodeSvgPath
                         var relative = m.Value[0] == 'q';
                         type = PathPieceType.Curve;
                         var qPoints = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
-                        Ut.Assert(qPoints.Length % 2 == 0);
+                        GeomUt.Assert(qPoints.Length % 2 == 0);
                         points = new PointD[qPoints.Length / 2 * 3];
                         for (int i = 0, j = 0; i < qPoints.Length; i += 2, j += 3)
                         {
@@ -387,7 +385,7 @@ public static class DecodeSvgPath
                         var pointsList1 = new List<PointD>();
                         foreach (var pair in numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).Split(2))
                         {
-                            Ut.Assert(pair.Count() == 2);
+                            GeomUt.Assert(pair.Count() == 2);
                             pointsList1.Add(prevPoint + (prevPoint - prevControlPoint));
                             pointsList1.Add(prevControlPoint = pair.First());
                             pointsList1.Add(prevPoint = pair.Last());
@@ -401,7 +399,7 @@ public static class DecodeSvgPath
                         var pointsList2 = new List<PointD>();
                         foreach (var pair in numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).Split(2))
                         {
-                            Ut.Assert(pair.Count() == 2);
+                            GeomUt.Assert(pair.Count() == 2);
                             pointsList2.Add(prevPoint + (prevPoint - prevControlPoint));
                             pointsList2.Add(prevControlPoint = (pair.First() + prevPoint));
                             pointsList2.Add(prevPoint = (pair.Last() + prevPoint));
@@ -427,7 +425,7 @@ public static class DecodeSvgPath
                 prevPoint = prevStartPoint ?? new PointD(0, 0);
                 prevStartPoint = null;
             }
-            else if ((m = Regex.Match(svgPath, @"^A\s*(({0})({0})({0})([01])[\s,]*([01])[\s,]*({0})({0}))+".Fmt(numRegex), RegexOptions.IgnoreCase)).Success)
+            else if ((m = Regex.Match(svgPath, $@"^A\s*(({numRegex})({numRegex})({numRegex})([01])[\s,]*([01])[\s,]*({numRegex})({numRegex}))+", RegexOptions.IgnoreCase)).Success)
             {
                 for (var cp = 0; cp < m.Groups[1].Captures.Count; cp++)
                 {

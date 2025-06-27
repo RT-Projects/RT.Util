@@ -1,4 +1,4 @@
-﻿namespace RT.Util.Geometry;
+﻿namespace RT.Geometry;
 
 /// <summary>
 ///     <para>
@@ -214,7 +214,7 @@ public static class Intersect
                 1 => new EdgeD(rect.Right, rect.Top, rect.Right, rect.Bottom),
                 2 => new EdgeD(rect.Right, rect.Bottom, rect.Left, rect.Bottom),
                 3 => new EdgeD(rect.Left, rect.Bottom, rect.Left, rect.Top),
-                _ => throw new InternalErrorException("fsvxhfhj")   // unreachable
+                _ => throw new InvalidOperationException("fsvxhfhj")   // unreachable
             };
             RayWithSegment(ref ray, ref segment, out var lambda, out _);
 

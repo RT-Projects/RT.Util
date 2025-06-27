@@ -1,6 +1,6 @@
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
 using RT.Util.ExtensionMethods;
-using RT.Util.Geometry;
+using RT.Geometry;
 
 namespace RT.Util.Drawing;
 
@@ -29,7 +29,7 @@ public enum TextAnchor
 ///         functionality are:</para>
 ///     <list type="bullet">
 ///         <item><description>
-///             all coordinates in doubles or <see cref="RT.Util.Geometry"/> structs;</description></item>
+///             all coordinates in doubles or <see cref="Geometry"/> structs;</description></item>
 ///         <item><description>
 ///             support for the Y axis growing upwards;</description></item>
 ///         <item><description>

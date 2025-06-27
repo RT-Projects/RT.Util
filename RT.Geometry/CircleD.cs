@@ -1,6 +1,7 @@
-using RT.Util.ExtensionMethods;
+﻿using System.Collections.Generic;
+using RT.Internal;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Encapsulates a double-precision circle.</summary>
 public struct CircleD
@@ -100,7 +101,9 @@ public struct CircleD
     ///     Point to check.</param>
     /// <returns>
     ///     <c>true</c> if the point is contained in this circle, <c>false</c> otherwise.</returns>
-    public bool Contains(PointD point) => Center.Distance(point) <= Radius;
+    public readonly bool Contains(PointD point) => Center.Distance(point) <= Radius;
+
+    private static Random _rnd = new();
 
     /// <summary>
     ///     Returns the smallest circle that encloses all the given points. If 1 point is given, a circle of radius 0 is
@@ -118,7 +121,15 @@ public struct CircleD
     public static CircleD GetCircumscribedCircle(IList<PointD> points)
     {
         // Clone list to preserve the caller's data
-        List<PointD> shuffled = new List<PointD>(points).Shuffle();
+        var shuffled = new List<PointD>(points);
+
+        // Fisher-Yates shuffle
+        for (int j = shuffled.Count; j >= 1; j--)
+        {
+            int item = _rnd.Next(0, j);
+            if (item < j - 1)
+                (shuffled[j - 1], shuffled[item]) = (shuffled[item], shuffled[j - 1]);
+        }
 
         // Progressively add points to circle or recompute circle
         // Initially: No boundary points known

@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Represents a bounding box, in terms of the minimal and maximal X and Y coordinates.</summary>
 public struct BoundingBoxD

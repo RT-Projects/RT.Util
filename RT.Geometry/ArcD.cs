@@ -1,4 +1,4 @@
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Encapsulates a double-precision circular arc.</summary>
 public struct ArcD

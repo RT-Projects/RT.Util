@@ -1,6 +1,6 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Internal;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Triangulation-related routines.</summary>
 public static class Triangulate
@@ -12,7 +12,7 @@ public static class Triangulate
     public static IEnumerable<TriangleD> Delaunay(IEnumerable<PointD> vertices)
     {
         if (!vertices.Any())
-            return new TriangleD[0];
+            return [];
 
         // Find a "super-triangle" which contains all vertices
         var minX = vertices.Min(v => v.X);

@@ -1,6 +1,7 @@
-using RT.Util.ExtensionMethods;
+﻿using System.Diagnostics;
+using RT.Internal;
 
-namespace RT.Util.Geometry;
+namespace RT.Geometry;
 
 /// <summary>Contains general geometry-related utility functions.</summary>
 public static class GeomUt
@@ -113,7 +114,7 @@ public static class GeomUt
     ///     Parameter at which the ellipse starts. If it’s a circle, this is the angle from the x-axis, but for ellipses it is
     ///     stretched, so it’s not the real angle.</param>
     /// <param name="t2">
-    ///     Parameter at which the ellipse end. If it’s a circle, this is the angle from the x-axis, but for ellipses it is
+    ///     Parameter at which the ellipse ends. If it’s a circle, this is the angle from the x-axis, but for ellipses it is
     ///     stretched, so it’s not the real angle.</param>
     /// <param name="smoothness">
     ///     Maximum amount by which the line segments are allowed to deviate from the curve.</param>
@@ -122,10 +123,11 @@ public static class GeomUt
 
     /// <summary>
     ///     Merges adjacent (touching) polygons and removes the touching edges. Behaviour is undefined if any polygons
-    ///     overlap. Only exactly matching edges are considered, and only if they have the opposite sense to each other.
-    ///     Example use case: simplifying subsets of <see cref="RT.KitchenSink.Geometry.VoronoiDiagram"/> polygons.</summary>
+    ///     overlap. Only exactly matching edges are considered, and only if they have the opposite sense to each other.</summary>
     /// <param name="polygons">
     ///     Polygons to merge. This method removes entries from this list, and modifies polygon vertices.</param>
+    /// <remarks>
+    ///     Example use case: simplifying subsets of <see cref="VoronoiDiagram"/> polygons.</remarks>
     public static void MergeAdjacentPolygons(List<PolygonD> polygons)
     {
         bool anyChangesOuter;
@@ -188,5 +190,19 @@ public static class GeomUt
             }
             polygons.RemoveAll(p => removedPolygons.Contains(p));
         } while (anyChangesOuter);
+    }
+
+    /// <summary>
+    ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see cref="Exception"/>
+    ///     afterwards.</summary>
+    [DebuggerHidden]
+    internal static void Assert(bool assertion, string message = null)
+    {
+        if (!assertion)
+        {
+            if (Debugger.IsAttached)
+                Debugger.Break();
+            throw new Exception(message ?? "Assertion failure");
+        }
     }
 }

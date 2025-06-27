@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <Version>1.0.0.9999</Version>
+    <Authors>rstarkov;Timwi;caesay</Authors>
+    <Description>Contains many classes, structs, and helper functions to deal with 2D geometry (points, lines, curves, etc.)</Description>
+    <PackageTags>geometry;point;edge;polygon;bezier;bézier;curve;arc;svg;path;svg-path;voronoi</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\IEnumerableExtensions.cs" Link="SharedInternalUtil\IEnumerableExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\ExtensionMethods\DictionaryExtensions.cs" Link="SharedInternalUtil\DictionaryExtensions.cs" />
+    <Compile Include="..\RT.Util.Core\CustomComparer.cs" Link="SharedInternalUtil\CustomComparer.cs" />
+  </ItemGroup>
+
+</Project>

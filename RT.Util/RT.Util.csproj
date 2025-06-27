@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RT.Geometry\RT.Geometry.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
   </ItemGroup>
 
