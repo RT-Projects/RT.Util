@@ -67,7 +67,7 @@ dotnet_style_prefer_inferred_tuple_names = true
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true
 dotnet_style_prefer_simplified_boolean_expressions = true
 dotnet_style_prefer_simplified_interpolation = true
-csharp_style_prefer_index_operator = false
+dotnet_style_prefer_collection_expression = false
 
 # Field preferences
 dotnet_style_readonly_field = false
@@ -124,7 +124,7 @@ csharp_style_deconstructed_variable_declaration = true
 csharp_style_implicit_object_creation_when_type_is_apparent = true
 csharp_style_inlined_variable_declaration = true
 csharp_style_pattern_local_over_anonymous_function = true
-csharp_style_prefer_index_operator = true
+csharp_style_prefer_index_operator = false
 csharp_style_prefer_null_check_over_type_check = true
 csharp_style_prefer_range_operator = true
 csharp_style_throw_expression = true
@@ -196,9 +196,13 @@ dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
 dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
 
-dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.types_should_be_pascal_case.symbols = types
-dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.public_types_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.public_types_should_be_pascal_case.symbols = public_types
+dotnet_naming_rule.public_types_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_rule.private_types_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.private_types_should_be_camel_case.symbols = private_types
+dotnet_naming_rule.private_types_should_be_camel_case.style = camel_case
 
 dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
 dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
@@ -222,9 +226,13 @@ dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.interface.required_modifiers =
 
-dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
-dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.types.required_modifiers =
+dotnet_naming_symbols.private_types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.private_types.applicable_accessibilities = private, protected, protected_internal, private_protected
+dotnet_naming_symbols.private_types.required_modifiers =
+
+dotnet_naming_symbols.public_types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.public_types.applicable_accessibilities = public, internal
+dotnet_naming_symbols.public_types.required_modifiers =
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
@@ -286,6 +294,14 @@ dotnet_diagnostic.ca1825.severity = none
 
 # CA1806: LINQ method without side-effect (eg .Append)
 dotnet_diagnostic.ca1806.severity = error
+
+# CA1510: Use ArgumentNullException throw helper
+# (not available in netstandard2.0)
+dotnet_diagnostic.CA1510.severity = none
+
+# CA1846: Prefer 'AsSpan' over 'Substring' when span-based overloads are available
+# (not available in netstandard2.0)
+dotnet_diagnostic.CA1846.severity = none
 
 # IDE0044: Add readonly modifier
 dotnet_diagnostic.ide0044.severity = none

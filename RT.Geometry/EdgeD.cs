@@ -47,7 +47,7 @@ public struct EdgeD : IEquatable<EdgeD>
     ///     If <c>true</c>, edges that touch at the vertex are not considered to be intersecting.</param>
     /// <returns>
     ///     True if both edges intersect with each other.</returns>
-    public bool IntersectsWith(EdgeD r, bool excludeVertexTouching = false)
+    public readonly bool IntersectsWith(EdgeD r, bool excludeVertexTouching = false)
     {
         if (excludeVertexTouching && (r.Start == Start || r.End == Start || r.Start == End || r.End == End))
             return false;
@@ -69,7 +69,7 @@ public struct EdgeD : IEquatable<EdgeD>
     /// <summary>
     ///     Compares two <see cref="EdgeD"/> ignoring direction: edges are considered equal as long as they have the same
     ///     endpoints.</summary>
-    public bool Equals(EdgeD other)
+    public readonly bool Equals(EdgeD other)
     {
         return (Start == other.Start && End == other.End) || (Start == other.End && End == other.Start);
     }
@@ -91,7 +91,7 @@ public struct EdgeD : IEquatable<EdgeD>
     }
 
     /// <summary>Returns a hash code for the current <see cref="EdgeD"/>.</summary>
-    public override int GetHashCode()
+    public override readonly int GetHashCode()
     {
         // Equality of edges ignores endpoint order; the hash code must do this too
         var pt1 =
@@ -106,7 +106,7 @@ public struct EdgeD : IEquatable<EdgeD>
     ///     Provides a string representation of the current <see cref="EdgeD"/>.</summary>
     /// <returns>
     ///     A string representation of the current <see cref="EdgeD"/>.</returns>
-    public override string ToString()
+    public override readonly string ToString()
     {
         return Start + " ⇒ " + End;
     }
@@ -117,15 +117,10 @@ public struct EdgeD : IEquatable<EdgeD>
     ///     Object to compare against.</param>
     /// <returns>
     ///     True if considered equal.</returns>
-    public override bool Equals(object obj)
-    {
-        if (obj is EdgeD)
-            return Equals((EdgeD) obj);
-        return base.Equals(obj);
-    }
+    public override readonly bool Equals(object obj) => obj is EdgeD edge ? Equals(edge) : base.Equals(obj);
 
     /// <summary>Returns a point on this edge that is as near as possible to the specified point.</summary>
-    public PointD PointOnEdgeNearestTo(PointD point)
+    public readonly PointD PointOnEdgeNearestTo(PointD point)
     {
         double lambda = LambdaOfPointDroppedPerpendicularly(point);
 
@@ -141,7 +136,7 @@ public struct EdgeD : IEquatable<EdgeD>
     ///     Calculates the projection of the specified point onto the line defined by this edge. Returns the Lambda of this
     ///     point P, defined by P = Start + Lambda * (End - Start). Hence the lambda is 0 if the projection falls exactly onto
     ///     the Start point, and 1 if it falls on the End point.</summary>
-    public double LambdaOfPointDroppedPerpendicularly(PointD point)
+    public readonly double LambdaOfPointDroppedPerpendicularly(PointD point)
     {
         // Drop the point onto the line defined by:  L = Start + lambda * (End - Start)
         // Perpendicular line goes through "point" and the direction is (End - Start).Normal()
@@ -163,7 +158,7 @@ public struct EdgeD : IEquatable<EdgeD>
     }
 
     /// <summary>Calculates the distance between the specified point and the extended straight line identified by this edge.</summary>
-    public double Distance(PointD point)
+    public readonly double Distance(PointD point)
     {
         var lambda = LambdaOfPointDroppedPerpendicularly(point);
         var pointOnLine = Start + lambda * (End - Start);
@@ -173,7 +168,7 @@ public struct EdgeD : IEquatable<EdgeD>
     /// <summary>
     ///     Returns true if the specified point lies exactly on this edge. Accurate results are not guaranteed on edges which
     ///     are not axis-aligned.</summary>
-    public bool ContainsPoint(PointD point)
+    public readonly bool ContainsPoint(PointD point)
     {
         if (Start == point || End == point)
             return true;
@@ -185,24 +180,21 @@ public struct EdgeD : IEquatable<EdgeD>
     /// <summary>
     ///     Returns the Z component of the cross product of this edge, treated as a vector from <see cref="Start"/> to <see
     ///     cref="End"/>, with a vector from <see cref="Start"/> to the specified point.</summary>
-    public double CrossZ(PointD point)
-    {
-        return (End - Start).CrossZ(point - Start);
-    }
+    public readonly double CrossZ(PointD point) => (End - Start).CrossZ(point - Start);
 
     /// <summary>
     ///     Returns the Z component of the cross product of this edge, treated as a vector, with the specified edge, also
     ///     treated as a vector.</summary>
-    public double CrossZ(EdgeD edge)
+    public readonly double CrossZ(EdgeD edge)
     {
         return (End - Start).CrossZ(edge.End - edge.Start);
     }
 
     /// <summary>Returns the point located halfway along this edge.</summary>
-    public PointD Midpoint => (Start + End) / 2;
+    public readonly PointD Midpoint => (Start + End) / 2;
 
     /// <summary>Returns the angle between the x-axis and this edge, in radians.</summary>
-    public double Angle => Math.Atan2(End.Y - Start.Y, End.X - Start.X);
+    public readonly double Angle => Math.Atan2(End.Y - Start.Y, End.X - Start.X);
     /// <summary>Returns the angle between the x-axis and this edge, in degrees.</summary>
-    public double AngleDeg => Angle * 180 / Math.PI;
+    public readonly double AngleDeg => Angle * 180 / Math.PI;
 }

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Xml.Linq;
 using RT.Util.Collections;
 using RT.Util.Consoles;
@@ -266,7 +266,7 @@ public static class CuteML
     ///     amount by which opening this tag has advanced the text position.</returns>
     public delegate (TState newState, int advance) CuteNextState<TState>(TState oldState, char cuteTag, string parameter);
 
-    private sealed class CuteWalkData<TState>
+    private sealed class cuteWalkData<TState>
     {
         public bool AtStartOfLine;
         public List<string> WordPieces;
@@ -288,7 +288,7 @@ public static class CuteML
             cuteWalkWordWrapRecursive(node, initialState, false);
 
             if (WordPieces.Count > 0)
-                renderPieces(initialState);
+                renderPieces();
         }
 
         private void cuteWalkWordWrapRecursive(CuteNode node, TState state, bool curNowrap)
@@ -340,7 +340,7 @@ public static class CuteML
                             if (WordPieces.Count > 0)
                             {
                                 // Render the part of the word that fits on the line and then move to the next line.
-                                renderPieces(state);
+                                renderPieces();
                                 advanceToNextLine(state, false);
                             }
                         }
@@ -368,7 +368,7 @@ public static class CuteML
                     // We encounter a whitespace character. All the word pieces fit on the current line, so render them.
                     if (WordPieces.Count > 0)
                     {
-                        renderPieces(state);
+                        renderPieces();
                         AtStartOfLine = false;
                     }
 
@@ -407,7 +407,7 @@ public static class CuteML
             return w;
         }
 
-        private void renderPieces(TState state)
+        private void renderPieces()
         {
             // Add a space if we are not at the beginning of the line.
             if (!AtStartOfLine)
@@ -453,12 +453,12 @@ public static class CuteML
             throw new ArgumentNullException(nameof(node));
         if (wrapWidth <= 0)
             throw new ArgumentException("Wrap width must be greater than zero.", nameof(wrapWidth));
-        var data = new CuteWalkData<TState>
+        var data = new cuteWalkData<TState>
         {
             AtStartOfLine = true,
-            WordPieces = new List<string>(),
-            WordPiecesState = new List<TState>(),
-            WordPiecesWidths = new List<int>(),
+            WordPieces = [],
+            WordPiecesState = [],
+            WordPiecesWidths = [],
             WordPiecesWidthsSum = 0,
             Measure = measure,
             Render = render,
@@ -473,15 +473,19 @@ public static class CuteML
     }
 }
 
-/// <summary>Contains a node in the CuteML parse tree.</summary>
-public abstract class CuteNode
+/// <summary>
+///     Contains a node in the CuteML parse tree.</summary>
+/// <remarks>
+///     Constructor.</remarks>
+/// <param name="index">
+///     The index within the original string where this node starts.</param>
+public abstract class CuteNode(int index)
 {
     /// <summary>Returns the CuteML parse tree as XML.</summary>
     public abstract object ToXml();
 
     /// <summary>The index in the original string where this node starts.</summary>
-    public int Index { get; protected set; }
-
+    public int Index { get; protected set; } = index;
     /// <summary>Determines whether this node contains any textual content.</summary>
     public abstract bool HasText { get; }
 
@@ -489,26 +493,17 @@ public abstract class CuteNode
     ///     Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
     public CuteTag Parent { get; internal set; }
 
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="index">
-    ///     The index within the original string where this node starts.</param>
-    public CuteNode(int index) { Index = index; }
-
     /// <summary>Gets the text of this node and/or sub-nodes concatenated into one string.</summary>
     public string ToString(bool excludeSyntax)
     {
-        if (excludeSyntax)
-        {
-            var builder = new StringBuilder();
-            textify(builder);
-            return builder.ToString();
-        }
-        else
+        if (!excludeSyntax)
             return ToString();
+        var builder = new StringBuilder();
+        Textify(builder);
+        return builder.ToString();
     }
 
-    internal abstract void textify(StringBuilder builder);
+    internal abstract void Textify(StringBuilder builder);
 
     /// <summary>
     ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from a CuteML parse tree by word-wrapping the output
@@ -545,7 +540,7 @@ public abstract class CuteNode
     public IEnumerable<ConsoleColoredString> ToConsoleColoredStrings(int wrapWidth = int.MaxValue, int hangingIndent = 0)
     {
         var results = new List<ConsoleColoredString> { ConsoleColoredString.Empty };
-        CuteML.WordWrap(this, new CuteWordWrapState(ConsoleColor.Gray, 0), wrapWidth,
+        CuteML.WordWrap(this, new cuteWordWrapState(ConsoleColor.Gray, 0), wrapWidth,
             (state, text) => text.Length,
             (state, text, width) => { results[results.Count - 1] += new ConsoleColoredString(text, state.Color); },
             (state, newParagraph, indent) =>
@@ -580,19 +575,27 @@ public abstract class CuteNode
         return results;
     }
 
-    private class CuteWordWrapState
+    private class cuteWordWrapState(ConsoleColor color, int indent)
     {
-        public ConsoleColor Color { get; private set; }
-        public int Indent { get; private set; }
-        public CuteWordWrapState(ConsoleColor color, int indent) { Color = color; Indent = indent; }
-        public CuteWordWrapState SetColor(ConsoleColor color) { return new CuteWordWrapState(color, Indent); }
-        public CuteWordWrapState SetIndent(int indent) { return new CuteWordWrapState(Color, indent); }
-        public override string ToString() { return "Color={0}, Indent={1}".Fmt(Color, Indent); }
+        public ConsoleColor Color { get; private set; } = color;
+        public int Indent { get; private set; } = indent;
+        public cuteWordWrapState SetColor(ConsoleColor color) => new(color, Indent);
+        public cuteWordWrapState SetIndent(int indent) => new(Color, indent);
+        public override string ToString() => $"Color={Color}, Indent={Indent}";
     }
 }
 
-/// <summary>Represents a node in the CuteML parse tree that corresponds to a CuteML tag or the top-level node.</summary>
-public sealed class CuteTag : CuteNode
+/// <summary>
+///     Represents a node in the CuteML parse tree that corresponds to a CuteML tag or the top-level node.</summary>
+/// <remarks>
+///     Constructs a new CuteML parse-tree node that represents a CuteML tag.</remarks>
+/// <param name="tag">
+///     The character that constitutes the tag name (e.g. <c>*</c>).</param>
+/// <param name="attribute">
+///     The attribute string provided with the tag, or null if none.</param>
+/// <param name="index">
+///     The index in the original string where this tag was opened.</param>
+public sealed class CuteTag(char? tag, string attribute, int index) : CuteNode(index)
 {
     /// <summary>
     ///     Adds a new child node to this tag’s children.</summary>
@@ -624,26 +627,15 @@ public sealed class CuteTag : CuteNode
     private ReadOnlyCollection<CuteNode> _childrenCache;
 
     /// <summary>The underlying collection containing the children of this node.</summary>
-    private List<CuteNode> _children;
+    private List<CuteNode> _children = [];
 
     /// <summary>The attribute data associated with the tag, or null if no attribute data was specified.</summary>
-    public string Attribute { get; private set; }
-
+    public string Attribute { get; private set; } = attribute;
     /// <summary>Determines whether this node contains any textual content.</summary>
     public override bool HasText { get { return _children.Any(child => child.HasText); } }
 
     /// <summary>The character that constitutes the tag name (e.g. <c>*</c>), or null if this is the top-level node.</summary>
-    public char? Tag { get; private set; }
-
-    /// <summary>
-    ///     Constructs a new CuteML parse-tree node that represents a CuteML tag.</summary>
-    /// <param name="tag">
-    ///     The character that constitutes the tag name (e.g. <c>*</c>).</param>
-    /// <param name="attribute">
-    ///     The attribute string provided with the tag, or null if none.</param>
-    /// <param name="index">
-    ///     The index in the original string where this tag was opened.</param>
-    public CuteTag(char? tag, string attribute, int index) : base(index) { Tag = tag; Attribute = attribute; _children = new List<CuteNode>(); }
+    public char? Tag { get; private set; } = tag;
 
     /// <summary>Returns an XML representation of this CuteML node.</summary>
     public override object ToXml()
@@ -665,34 +657,29 @@ public sealed class CuteTag : CuteNode
         foreach (var child in _children)
             builder.Append(child.ToString());
         if (Tag != null)
-            builder.Append("]");
+            builder.Append(']');
         return builder.ToString();
     }
 
-    internal override void textify(StringBuilder builder)
+    internal override void Textify(StringBuilder builder)
     {
         foreach (var child in _children)
-            child.textify(builder);
+            child.Textify(builder);
     }
 }
 
-/// <summary>Represents a node in the CuteML parse tree that corresponds to a piece of text.</summary>
-public sealed class CuteText : CuteNode
+/// <summary>
+///     Represents a node in the CuteML parse tree that corresponds to a piece of text.</summary>
+/// <remarks>
+///     Constructs a new CuteML text node.</remarks>
+/// <param name="text">
+///     The text for this node to contain.</param>
+/// <param name="index">
+///     The index in the original string where this text starts.</param>
+public sealed class CuteText(string text, int index = 0) : CuteNode(index)
 {
     /// <summary>The text contained in this node.</summary>
-    public string Text { get; private set; }
-
-    /// <summary>
-    ///     Constructs a new CuteML text node.</summary>
-    /// <param name="text">
-    ///     The text for this node to contain.</param>
-    /// <param name="index">
-    ///     The index in the original string where this text starts.</param>
-    public CuteText(string text, int index = 0)
-        : base(index)
-    {
-        Text = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for a CuteText node cannot be null.");
-    }
+    public string Text { get; private set; } = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for a CuteText node cannot be null.");
 
     /// <summary>Returns an XML representation of this EggsML node.</summary>
     public override object ToXml() => Text;
@@ -703,36 +690,31 @@ public sealed class CuteText : CuteNode
     /// <summary>Returns the contained text in CuteML-escaped form.</summary>
     public override string ToString() => Text.EscapeCuteML();
 
-    internal override void textify(StringBuilder builder) { builder.Append(Text); }
+    internal override void Textify(StringBuilder builder) { builder.Append(Text); }
 }
 
-/// <summary>Represents a parse error encountered by the <see cref="CuteML"/> parser.</summary>
+/// <summary>
+///     Represents a parse error encountered by the <see cref="CuteML"/> parser.</summary>
+/// <param name="message">
+///     Message.</param>
+/// <param name="index">
+///     The character index into the original string where the error occurred.</param>
+/// <param name="length">
+///     The length of the text in the original string where the error occurred.</param>
+/// <param name="firstIndex">
+///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+///     that is missing its end tag).</param>
+/// <param name="inner">
+///     An inner exception to pass to the base Exception class.</param>
 [Serializable]
-public sealed class CuteMLParseException : Exception
+public sealed class CuteMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : Exception(message, inner)
 {
     /// <summary>The character index into the original string where the error occurred.</summary>
-    public int Index { get; private set; }
-
+    public int Index { get; private set; } = index;
     /// <summary>The length of the text in the original string where the error occurred.</summary>
-    public int Length { get; private set; }
-
+    public int Length { get; private set; } = length;
     /// <summary>
     ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
     ///     that is missing its end tag).</summary>
-    public int? FirstIndex { get; private set; }
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="message">
-    ///     Message.</param>
-    /// <param name="index">
-    ///     The character index into the original string where the error occurred.</param>
-    /// <param name="length">
-    ///     The length of the text in the original string where the error occurred.</param>
-    /// <param name="firstIndex">
-    ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
-    ///     that is missing its end tag).</param>
-    /// <param name="inner">
-    ///     An inner exception to pass to the base Exception class.</param>
-    public CuteMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
+    public int? FirstIndex { get; private set; } = firstIndex;
 }

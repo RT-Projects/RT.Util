@@ -100,17 +100,17 @@ public sealed class PolygonD
     public PointD Centroid()
     {
         // from http://stackoverflow.com/a/2792459/33080
-        PointD centroid = new PointD(0, 0);
+        PointD centroid = new(0, 0);
         double signedArea = 0.0;
-        double x0 = 0.0; // Current vertex X
-        double y0 = 0.0; // Current vertex Y
-        double x1 = 0.0; // Next vertex X
-        double y1 = 0.0; // Next vertex Y
-        double a = 0.0;  // Partial signed area
+        double x0; // Current vertex X
+        double y0; // Current vertex Y
+        double x1; // Next vertex X
+        double y1; // Next vertex Y
+        double a;  // Partial signed area
 
         // For all vertices except last
         int i = 0;
-        for (i = 0; i < _vertices.Count - 1; ++i)
+        for (; i < _vertices.Count - 1; ++i)
         {
             x0 = _vertices[i].X;
             y0 = _vertices[i].Y;

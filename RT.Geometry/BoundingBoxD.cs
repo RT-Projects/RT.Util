@@ -1,4 +1,4 @@
-namespace RT.Geometry;
+﻿namespace RT.Geometry;
 
 /// <summary>Represents a bounding box, in terms of the minimal and maximal X and Y coordinates.</summary>
 public struct BoundingBoxD
@@ -14,15 +14,15 @@ public struct BoundingBoxD
 
     /// <summary>
     ///     Gets the difference between the larger and the smaller X limits of the box, i.e. the width of the bounding box.</summary>
-    public double Width { get { return Xmax - Xmin; } }
+    public readonly double Width => Xmax - Xmin;
     /// <summary>
     ///     Gets the difference between the larger and the smaller Y limits of the box, i.e. the height of the bounding box.</summary>
-    public double Height { get { return Ymax - Ymin; } }
+    public readonly double Height => Ymax - Ymin;
 
     /// <summary>Returns a new BoundingBox bounding a single point.</summary>
     public static BoundingBoxD FromPoint(double x, double y)
     {
-        BoundingBoxD box = new BoundingBoxD();
+        BoundingBoxD box = new();
         box.Xmin = box.Xmax = x;
         box.Ymin = box.Ymax = y;
         return box;
@@ -31,7 +31,7 @@ public struct BoundingBoxD
     /// <summary>Returns a new BoundingBox bounding a single point.</summary>
     public static BoundingBoxD FromPoint(ref PointD pt)
     {
-        BoundingBoxD box = new BoundingBoxD();
+        BoundingBoxD box = new();
         box.Xmin = box.Xmax = pt.X;
         box.Ymin = box.Ymax = pt.Y;
         return box;
@@ -40,7 +40,7 @@ public struct BoundingBoxD
     /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
     public static BoundingBoxD FromPoint(double x1, double y1, double x2, double y2)
     {
-        BoundingBoxD box = new BoundingBoxD();
+        BoundingBoxD box = new();
         if (x1 > x2) { box.Xmin = x2; box.Xmax = x1; }
         else { box.Xmin = x1; box.Xmax = x2; }
         if (y1 > y2) { box.Ymin = y2; box.Ymax = y1; }
@@ -51,7 +51,7 @@ public struct BoundingBoxD
     /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
     public static BoundingBoxD FromPoint(ref PointD pt1, ref PointD pt2)
     {
-        BoundingBoxD box = new BoundingBoxD();
+        BoundingBoxD box = new();
         if (pt1.X > pt2.X) { box.Xmin = pt2.X; box.Xmax = pt1.X; }
         else { box.Xmin = pt1.X; box.Xmax = pt2.X; }
         if (pt1.Y > pt2.Y) { box.Ymin = pt2.Y; box.Ymax = pt1.Y; }
@@ -62,7 +62,7 @@ public struct BoundingBoxD
     /// <summary>Returns a new BoundingBox bounding the two points specified.</summary>
     public static BoundingBoxD FromPoint(PointD pt1, PointD pt2)
     {
-        BoundingBoxD box = new BoundingBoxD();
+        BoundingBoxD box = new();
         if (pt1.X > pt2.X) { box.Xmin = pt2.X; box.Xmax = pt1.X; }
         else { box.Xmin = pt1.X; box.Xmax = pt2.X; }
         if (pt1.Y > pt2.Y) { box.Ymin = pt2.Y; box.Ymax = pt1.Y; }
@@ -93,11 +93,13 @@ public struct BoundingBoxD
     /// <summary>Returns a new BoundingBox bounding the specified circle.</summary>
     public static BoundingBoxD FromCircle(ref PointD center, double radius)
     {
-        BoundingBoxD box = new BoundingBoxD();
-        box.Xmin = center.X - radius;
-        box.Xmax = center.X + radius;
-        box.Ymin = center.Y - radius;
-        box.Ymax = center.Y + radius;
+        BoundingBoxD box = new()
+        {
+            Xmin = center.X - radius,
+            Xmax = center.X + radius,
+            Ymin = center.Y - radius,
+            Ymax = center.Y + radius
+        };
         return box;
     }
 
@@ -173,40 +175,31 @@ public struct BoundingBoxD
     }
 
     /// <summary>Returns true iff this bounding box contains the specified point.</summary>
-    public bool ContainsPoint(ref PointD point)
-    {
-        return point.X >= Xmin && point.X <= Xmax && point.Y >= Ymin && point.Y <= Ymax;
-    }
+    public readonly bool ContainsPoint(ref PointD point) => point.X >= Xmin && point.X <= Xmax && point.Y >= Ymin && point.Y <= Ymax;
 
     /// <summary>Returns an array of the four edges of this bounding box.</summary>
-    public EdgeD[] ToEdges()
-    {
-        return new[] { YminEdge(), XmaxEdge(), YmaxEdge(), XminEdge() };
-    }
+    public readonly EdgeD[] ToEdges() => [YminEdge(), XmaxEdge(), YmaxEdge(), XminEdge()];
 
     /// <summary>Returns the horizontal edge of this bounding box with the smallest Y coordinate.</summary>
-    public EdgeD YminEdge() { return new EdgeD(Xmin, Ymin, Xmax, Ymin); }
+    public readonly EdgeD YminEdge() => new(Xmin, Ymin, Xmax, Ymin);
     /// <summary>Returns the vertical edge of this bounding box with the largest X coordinate.</summary>
-    public EdgeD XmaxEdge() { return new EdgeD(Xmax, Ymin, Xmax, Ymax); }
+    public readonly EdgeD XmaxEdge() => new(Xmax, Ymin, Xmax, Ymax);
     /// <summary>Returns the horizontal edge of this bounding box with the largest Y coordinate.</summary>
-    public EdgeD YmaxEdge() { return new EdgeD(Xmax, Ymax, Xmin, Ymax); }
+    public readonly EdgeD YmaxEdge() => new(Xmax, Ymax, Xmin, Ymax);
     /// <summary>Returns the vertical edge of this bounding box with the smallest X coordinate.</summary>
-    public EdgeD XminEdge() { return new EdgeD(Xmin, Ymax, Xmin, Ymin); }
+    public readonly EdgeD XminEdge() => new(Xmin, Ymax, Xmin, Ymin);
 
     /// <summary>Returns an array of the four vertices of this bounding box.</summary>
-    public PointD[] ToVertices()
-    {
-        return new[] { new PointD(Xmin, Ymin), new PointD(Xmax, Ymin), new PointD(Xmax, Ymax), new PointD(Xmin, Ymax) };
-    }
+    public readonly PointD[] ToVertices() => [new PointD(Xmin, Ymin), new PointD(Xmax, Ymin), new PointD(Xmax, Ymax), new PointD(Xmin, Ymax)];
 
     /// <summary>Converts this bounding box to a polygon.</summary>
-    public PolygonD ToPolygonD()
+    public readonly PolygonD ToPolygonD()
     {
         return new PolygonD(ToVertices());
     }
 
     /// <summary>Returns the area of this bounding box.</summary>
-    public double Area()
+    public readonly double Area()
     {
         return Width * Height;
     }

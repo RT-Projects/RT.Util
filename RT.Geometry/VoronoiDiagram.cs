@@ -58,10 +58,10 @@ public sealed class VoronoiDiagram
     ///     methods.</summary>
     private sealed class data
     {
-        public List<arc> Arcs = new List<arc>();
-        private Queue<siteEvent> SiteEvents;
-        private List<circleEvent> CircleEvents = new List<circleEvent>();
-        public List<edge> Edges = new List<edge>();
+        public List<arc> Arcs = [];
+        private Queue<siteEvent> _siteEvents;
+        private List<circleEvent> _circleEvents = [];
+        public List<edge> Edges = [];
         public polygon[] Polygons;
 
         public data(PointD[] sites, double width, double height, VoronoiDiagramFlags flags)
@@ -94,24 +94,22 @@ public sealed class VoronoiDiagram
                 }
             }
 
-            SiteEvents = new Queue<siteEvent>(events);
+            _siteEvents = new Queue<siteEvent>(events);
 
             // Main loop
-            while (SiteEvents.Count > 0 || CircleEvents.Count > 0)
+            while (_siteEvents.Count > 0 || _circleEvents.Count > 0)
             {
-                if (CircleEvents.Count > 0 && (SiteEvents.Count == 0 || CircleEvents[0].X <= SiteEvents.Peek().Site.Position.X))
+                if (_circleEvents.Count > 0 && (_siteEvents.Count == 0 || _circleEvents[0].X <= _siteEvents.Peek().Site.Position.X))
                 {
                     // Process a circle event
-                    circleEvent evt = CircleEvents[0];
-                    CircleEvents.RemoveAt(0);
+                    circleEvent evt = _circleEvents[0];
+                    _circleEvents.RemoveAt(0);
                     int arcIndex = Arcs.IndexOf(evt.Arc);
                     if (arcIndex == -1) continue;
 
                     // The two edges left and right of the disappearing arc end here
-                    if (Arcs[arcIndex - 1].Edge != null)
-                        Arcs[arcIndex - 1].Edge.SetEndPoint(evt.Center);
-                    if (evt.Arc.Edge != null)
-                        evt.Arc.Edge.SetEndPoint(evt.Center);
+                    Arcs[arcIndex - 1].Edge?.SetEndPoint(evt.Center);
+                    evt.Arc.Edge?.SetEndPoint(evt.Center);
 
                     // Remove the arc from the beachline
                     Arcs.RemoveAt(arcIndex);
@@ -131,7 +129,7 @@ public sealed class VoronoiDiagram
                 else
                 {
                     // Process a site event
-                    var evt = SiteEvents.Dequeue();
+                    var evt = _siteEvents.Dequeue();
 
                     if (Arcs.Count == 0)
                     {
@@ -171,7 +169,7 @@ public sealed class VoronoiDiagram
                     // Special case: If Event.Position never intersects an arc, append it to the list.
                     // This only happens if there is more than one site event with the lowest X co-ordinate.
                     arc lastArc = Arcs[Arcs.Count - 1];
-                    arc newArc = new arc(evt.Site);
+                    arc newArc = new(evt.Site);
                     lastArc.Edge = new edge(lastArc.Site, newArc.Site);
                     Edges.Add(lastArc.Edge);
                     lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Position.Y + lastArc.Site.Position.Y) / 2));
@@ -184,8 +182,7 @@ public sealed class VoronoiDiagram
 
             // Extend each remaining edge to the new parabola intersections
             for (int i = 0; i < Arcs.Count - 1; i++)
-                if (Arcs[i].Edge != null)
-                    Arcs[i].Edge.SetEndPoint(getIntersection(Arcs[i].Site.Position, Arcs[i + 1].Site.Position, 2 * var));
+                Arcs[i].Edge?.SetEndPoint(getIntersection(Arcs[i].Site.Position, Arcs[i + 1].Site.Position, 2 * var));
 
             // Clip all the edges with the bounding rectangle and remove edges that are entirely outside
             var newEdges = new List<edge>();
@@ -256,9 +253,9 @@ public sealed class VoronoiDiagram
         }
 
         // Where do two parabolas intersect?
-        private PointD getIntersection(PointD siteA, PointD siteB, double scanX)
+        private static PointD getIntersection(PointD siteA, PointD siteB, double scanX)
         {
-            PointD result = new PointD();
+            PointD result = new();
             PointD p = siteA;
 
             if (siteA.X == siteB.X)
@@ -299,22 +296,22 @@ public sealed class VoronoiDiagram
             {
                 // Add the new event in the right place using binary search
                 int low = 0;
-                int high = CircleEvents.Count;
+                int high = _circleEvents.Count;
                 while (low < high)
                 {
                     int middle = (low + high) / 2;
-                    circleEvent evt = CircleEvents[middle];
+                    circleEvent evt = _circleEvents[middle];
                     if (evt.X < maxX || (evt.X == maxX && evt.Center.Y < center.Y))
                         low = middle + 1;
                     else
                         high = middle;
                 }
-                CircleEvents.Insert(low, new circleEvent(maxX, center, Arcs[arcIndex]));
+                _circleEvents.Insert(low, new circleEvent(maxX, center, Arcs[arcIndex]));
             }
         }
 
         // Find the circle through points p1, p2, p3
-        private bool getCircle(PointD p1, PointD p2, PointD p3, out PointD center, out double maxX)
+        private static bool getCircle(PointD p1, PointD p2, PointD p3, out PointD center, out double maxX)
         {
             maxX = 0;
             center = new PointD(0, 0);
@@ -341,34 +338,22 @@ public sealed class VoronoiDiagram
         }
     }
 
-    private struct site : IEquatable<site>
+    private struct site(int index, PointD position) : IEquatable<site>
     {
-        public int Index { get; private set; }
-        public PointD Position { get; private set; }
-        public site(int index, PointD position)
-        {
-            Index = index;
-            Position = position;
-        }
-
-        public bool Equals(site other) => other.Index == Index;
-        public override bool Equals(object obj) => obj is site other && Equals(other);
-        public override int GetHashCode() => Index;
+        public int Index { get; private set; } = index;
+        public PointD Position { get; private set; } = position;
+        public readonly bool Equals(site other) => other.Index == Index;
+        public override readonly bool Equals(object obj) => obj is site other && Equals(other);
+        public override readonly int GetHashCode() => Index;
     }
 
     /// <summary>Internal class describing an edge in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
-    private sealed class edge
+    private sealed class edge(site siteA, site siteB)
     {
-        public PointD? Start, End;
-        public site SiteA;
-        public site SiteB;
-        public edge(site siteA, site siteB)
-        {
-            Start = null;
-            End = null;
-            SiteA = siteA;
-            SiteB = siteB;
-        }
+        public PointD? Start = null, End = null;
+        public site SiteA = siteA;
+        public site SiteB = siteB;
+
         public void SetEndPoint(PointD end)
         {
             if (Start == null)
@@ -380,25 +365,15 @@ public sealed class VoronoiDiagram
     }
 
     /// <summary>Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
-    private sealed class polygon
+    private sealed class polygon(site site)
     {
-        public bool Complete;
-        public site Site;
-        private readonly List<PointD> _processedPoints;
-        private List<edge> _unprocessedEdges;
+        public bool Complete = false;
+        public site Site = site;
+        private readonly List<PointD> _processedPoints = [];
+        private List<edge> _unprocessedEdges = [];
 
-        public polygon(site site)
-        {
-            Site = site;
-            Complete = false;
-            _processedPoints = new List<PointD>();
-            _unprocessedEdges = new List<edge>();
-        }
-
-        private int rectEdge(PointD p, double width, double height)
-        {
-            return p.Y == 0 ? 0 : p.X == width ? 1 : p.Y == height ? 2 : p.X == 0 ? 3 : throw new Exception("Point is not on the edge.");
-        }
+        private static int rectEdge(PointD p, double width, double height) =>
+            p.Y == 0 ? 0 : p.X == width ? 1 : p.Y == height ? 2 : p.X == 0 ? 3 : throw new Exception("Point is not on the edge.");
 
         public PolygonD ToPolygonD(bool autocomplete, double width, double height)
         {
@@ -576,33 +551,24 @@ public sealed class VoronoiDiagram
     /// <summary>
     ///     Internal class to describe an arc on the beachline (part of Fortune's algorithm to generate Voronoi diagrams)
     ///     (used by RT.Util.VoronoiDiagram).</summary>
-    private sealed class arc
+    private sealed class arc(site site)
     {
         // The site the arc is associated with. There may be more than one arc for the same site in the Arcs array.
-        public site Site;
+        public site Site = site;
 
         // The edge that is formed from the breakpoint between this Arc and the next Arc in the Arcs array.
-        public edge Edge;
+        public edge Edge = null;
 
-        public arc(site site)
-        {
-            Site = site;
-            Edge = null;
-        }
-
-        public override string ToString()
-        {
-            return "Site = " + Site.ToString();
-        }
+        public override string ToString() => "Site = " + Site.ToString();
     }
 
     /// <summary>
     ///     Internal class to describe a site event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
     ///     RT.Util.VoronoiDiagram).</summary>
-    private sealed class siteEvent : IComparable<siteEvent>
+    private sealed class siteEvent(site site) : IComparable<siteEvent>
     {
-        public site Site;
-        public siteEvent(site site) { Site = site; }
+        public site Site = site;
+
         public override string ToString() => Site.Position.ToString();
 
         public int CompareTo(siteEvent other)
@@ -622,17 +588,11 @@ public sealed class VoronoiDiagram
     /// <summary>
     ///     Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
     ///     RT.Util.VoronoiDiagram).</summary>
-    private sealed class circleEvent : IComparable<circleEvent>
+    private sealed class circleEvent(double x, PointD center, arc arc) : IComparable<circleEvent>
     {
-        public PointD Center;
-        public double X;
-        public arc Arc;
-        public circleEvent(double x, PointD center, arc arc)
-        {
-            X = x;
-            Center = center;
-            Arc = arc;
-        }
+        public PointD Center = center;
+        public double X = x;
+        public arc Arc = arc;
 
         public override string ToString()
         {
