@@ -193,6 +193,41 @@ public static class GeomUt
     }
 
     /// <summary>
+    ///     Determines whether a cubic Bézier curve intersects itself.</summary>
+    /// <param name="start">
+    ///     Start point of the Bézier curve.</param>
+    /// <param name="c1">
+    ///     First control point of the Bézier curve.</param>
+    /// <param name="c2">
+    ///     Second control point of the Bézier curve.</param>
+    /// <param name="end">
+    ///     End point of the Bézier curve.</param>
+    public static bool IsBézierSelfIntersecting(PointD start, PointD c1, PointD c2, PointD end)
+    {
+        // Move, rotate and scale the curve such that the first point is (0,0) and the first control point is (1,0)
+        var c2t = (c2 - start).Rotated((c1 - start).Theta()) / c1.Distance(start);
+        var q = (end - start).Rotated((c1 - start).Theta()) / c1.Distance(start);
+
+        // If the part under the square root is negative, there will not be a solution
+        var det = 9 * c2t.Y * c2t.Y - 6 * c2t.Y * q.Y - 3 * q.Y * q.Y + 12 * c2t.Y * c2t.X * q.Y - 12 * c2t.Y * c2t.Y * q.X;
+        if (det < 0)
+            return false;
+
+        var denom = -3 * c2t.Y + c2t.Y * q.X + 2 * q.Y - c2t.X * q.Y;
+
+        // Try both the positive and negative square root
+        for (var sgn = -1; sgn <= 1; sgn += 2)
+        {
+            var ct = -c2t.Y * 3 / 2 + q.Y / 2 + sgn * Math.Sqrt(det) / 2;
+            var t1 = (-3 * c2t.Y + ct - q.Y) / denom;
+            var t2 = ct / denom;
+            if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     ///     Checks the specified condition and causes the debugger to break if it is false. Throws an <see cref="Exception"/>
     ///     afterwards.</summary>
     [DebuggerHidden]
