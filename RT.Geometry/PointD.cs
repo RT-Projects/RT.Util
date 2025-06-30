@@ -84,8 +84,7 @@ public struct PointD : IEquatable<PointD>
     public override readonly int GetHashCode() => X.GetHashCode() * 31 + Y.GetHashCode();
 
     /// <summary>
-    ///     Converts the current <see cref="PointD"/> object to a <see cref="PointF"/>. Note that doing so loses
-    ///     precision.</summary>
+    ///     Converts the current <see cref="PointD"/> object to a <see cref="PointF"/>. Note that doing so loses precision.</summary>
     /// <returns>
     ///     Lower-precision <see cref="PointF"/>.</returns>
     public readonly PointF ToPointF() => new((float) X, (float) Y);
@@ -103,7 +102,11 @@ public struct PointD : IEquatable<PointD>
     ///     A string representation of the current <see cref="PointD"/>.</returns>
     public override readonly string ToString() => $"X={X:R}, Y={Y:R}";
 
-    /// <summary>Returns the theta (angle) of the vector represented by this <see cref="PointD"/>.</summary>
+    /// <summary>
+    ///     Returns the theta (angle) of the vector represented by this <see cref="PointD"/>.</summary>
+    /// <remarks>
+    ///     If the coordinate system is mathy (positive Y goes up), the angle is counter-clockwise. If the coordinate system
+    ///     is computery (positive Y goes down), the angle is clockwise.</remarks>
     public readonly double Theta() => Math.Atan2(Y, X);
 
     /// <summary>Returns the unit vector in the same direction as this one.</summary>
@@ -118,8 +121,8 @@ public struct PointD : IEquatable<PointD>
 
     /// <summary>
     ///     Returns the Z-component of the cross product of this vector with <paramref name="other"/>. The Z-component is
-    ///     equal to the product of: the lengths of the two vectors and the sin of the angle between them. Note that the X
-    ///     and Y components of a cross product of 2D vectors are always zero.</summary>
+    ///     equal to the product of: the lengths of the two vectors and the sin of the angle between them. Note that the X and
+    ///     Y components of a cross product of 2D vectors are always zero.</summary>
     public readonly double CrossZ(PointD other) => X * other.Y - Y * other.X;
 
     /// <summary>Returns a vector normal to this one.</summary>
@@ -168,8 +171,7 @@ public struct PointD : IEquatable<PointD>
     }
 
     /// <summary>
-    ///     Returns a vector representing the projection (i.e. length and direction) of this vector onto the specified
-    ///     vector.</summary>
+    ///     Returns a vector representing the projection (i.e. length and direction) of this vector onto the specified vector.</summary>
     public readonly PointD ProjectedOnto(PointD vector)
     {
         PointD unitVector = vector.Unit();
@@ -182,6 +184,9 @@ public struct PointD : IEquatable<PointD>
     ///     The angle in radians.</param>
     /// <returns>
     ///     The rotated point.</returns>
+    /// <remarks>
+    ///     If the coordinate system is mathy (positive Y goes up), the rotation is clockwise. If the coordinate system is
+    ///     computery (positive Y goes down), the rotation is counter-clockwise.</remarks>
     public readonly PointD Rotated(double angle)
     {
         var sina = Math.Sin(angle);
@@ -197,4 +202,18 @@ public struct PointD : IEquatable<PointD>
 
     /// <summary>Deconstructs this point into a tuple.</summary>
     public readonly void Deconstruct(out double x, out double y) { x = X; y = Y; }
+
+    /// <summary>Negates the Y-coordinate, which reflects this point about the X-axis.</summary>
+    public readonly PointD ReflectedAboutXAxis => new(X, -Y);
+    /// <summary>Negates the X-coordinate, which reflects this point about the Y-axis.</summary>
+    public readonly PointD ReflectedAboutYAxis => new(-X, Y);
+    /// <summary>
+    ///     Reflects this point about an axis given by any two points on that axis.</summary>
+    /// <param name="axis1">
+    ///     One point on the axis.</param>
+    /// <param name="axis2">
+    ///     Another point on the axis.</param>
+    /// <returns>
+    ///     The reflected point.</returns>
+    public readonly PointD Reflected(PointD axis1, PointD axis2) => (this - axis1).Rotated((axis2 - axis1).Theta()).ReflectedAboutXAxis.Rotated(-(axis2 - axis1).Theta()) + axis1;
 }
