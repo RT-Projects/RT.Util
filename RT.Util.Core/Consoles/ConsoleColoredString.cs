@@ -739,7 +739,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                         ConsoleColor? foreground = null, background = null;
                         bool fgSet = false, bgSet = false;
 
-                        if (behavior.HasFlag(FormatBehavior.NewColorFormat))
+                        if (formatString != null && behavior.HasFlag(FormatBehavior.NewColorFormat))
                         {
                             var colorStr = formatString;
                             if (formatString.IndexOf('/') is int p && p >= 0)
