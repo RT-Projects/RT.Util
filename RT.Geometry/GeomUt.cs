@@ -205,8 +205,8 @@ public static class GeomUt
     public static bool IsBézierSelfIntersecting(PointD start, PointD c1, PointD c2, PointD end)
     {
         // Move, rotate and scale the curve such that the first point is (0,0) and the first control point is (1,0)
-        var c2t = (c2 - start).Rotated((c1 - start).Theta()) / c1.Distance(start);
-        var q = (end - start).Rotated((c1 - start).Theta()) / c1.Distance(start);
+        var c2t = (c2 - start).Rotate(-(c1 - start).Angle) / c1.Distance(start);
+        var q = (end - start).Rotate(-(c1 - start).Angle) / c1.Distance(start);
 
         // If the part under the square root is negative, there will not be a solution
         var det = 9 * c2t.Y * c2t.Y - 6 * c2t.Y * q.Y - 3 * q.Y * q.Y + 12 * c2t.Y * c2t.X * q.Y - 12 * c2t.Y * c2t.Y * q.X;

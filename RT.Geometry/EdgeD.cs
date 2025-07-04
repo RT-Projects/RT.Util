@@ -37,7 +37,7 @@ public struct EdgeD : IEquatable<EdgeD>
     /// <summary>Returns the difference in the Y-coordinates of the start and end point of this <see cref="EdgeD"/>.</summary>
     public readonly double Height => Math.Abs(Start.Y - End.Y);
     /// <summary>Returns the length of this edge (the distance between <see cref="Start"/> and <see cref="End"/>).</summary>
-    public readonly double Length => (End - Start).Distance();
+    public readonly double Length => (End - Start).Length;
 
     /// <summary>
     ///     Determines whether two edges intersect.</summary>

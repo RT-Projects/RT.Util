@@ -206,8 +206,8 @@ public static class DecodeSvgPath
 
                     if (cur.Type == PathPieceType.Arc && cur is PathPieceArc arc && arc.Points.Length == 1)
                     {
-                        var p1 = lastPoint.Rotated(arc.XAxisRotation * Math.PI / 180);
-                        var p2 = arc.Points[0].Rotated(arc.XAxisRotation * Math.PI / 180);
+                        var p1 = lastPoint.Rotate(-arc.XAxisRotation * Math.PI / 180);
+                        var p2 = arc.Points[0].Rotate(-arc.XAxisRotation * Math.PI / 180);
                         var a = arc.RX;
                         var b = arc.RY;
 
@@ -230,7 +230,7 @@ public static class DecodeSvgPath
                         var result = GeomUt.SmoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
                         if (arc.SweepFlag ^ arc.LargeArcFlag)
                             result = result.Select(p => p1 + p2 - p).Reverse();
-                        return result.Skip(1).Select(p => p.Rotated(-arc.XAxisRotation * Math.PI / 180));
+                        return result.Skip(1).Select(p => p.Rotate(arc.XAxisRotation * Math.PI / 180));
                     }
 
                     throw new NotImplementedException();

@@ -169,13 +169,13 @@ public static class Intersect
         var sweepdir = Math.Sign(arc.AngleSweep);
         if (!double.IsNaN(lambda1))
         {
-            var dir = (ray.Start + lambda1 * (ray.End - ray.Start) - arc.Circle.Center).Theta();
+            var dir = (ray.Start + lambda1 * (ray.End - ray.Start) - arc.Circle.Center).Angle;
             if (!(GeomUt.AngleDifference(arc.AngleStart, dir) * sweepdir > 0 && GeomUt.AngleDifference(arc.AngleStart + arc.AngleSweep, dir) * sweepdir < 0))
                 lambda1 = double.NaN;
         }
         if (!double.IsNaN(lambda2))
         {
-            var dir = ((ray.Start + lambda2 * (ray.End - ray.Start)) - arc.Circle.Center).Theta();
+            var dir = ((ray.Start + lambda2 * (ray.End - ray.Start)) - arc.Circle.Center).Angle;
             if (!(GeomUt.AngleDifference(arc.AngleStart, dir) * sweepdir > 0 && GeomUt.AngleDifference(arc.AngleStart + arc.AngleSweep, dir) * sweepdir < 0))
                 lambda2 = double.NaN;
         }

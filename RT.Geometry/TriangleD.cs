@@ -1,4 +1,4 @@
-namespace RT.Geometry;
+﻿namespace RT.Geometry;
 
 /// <summary>
 ///     Encapsulates a triangle defined by vertices represented as <see cref="PointD"/> values.</summary>
@@ -73,7 +73,7 @@ public class TriangleD(PointD v1, PointD v2, PointD v3)
     public bool CircumcircleContains(PointD v)
     {
         var circle = Circumcircle;
-        return (v - circle.Center).Distance() <= circle.Radius;
+        return (v - circle.Center).Length <= circle.Radius;
     }
 
     /// <summary>Returns the circumcircle of this triangle.</summary>
@@ -82,7 +82,7 @@ public class TriangleD(PointD v1, PointD v2, PointD v3)
         get
         {
             var pt = Circumcenter;
-            return new CircleD(pt, (V1 - pt).Distance());
+            return new CircleD(pt, (V1 - pt).Length);
         }
     }
 }
