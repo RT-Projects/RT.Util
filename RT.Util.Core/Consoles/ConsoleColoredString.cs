@@ -739,33 +739,32 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                         ConsoleColor? foreground = null, background = null;
                         bool fgSet = false, bgSet = false;
 
-                        if (formatString != null && behavior.HasFlag(FormatBehavior.NewColorFormat))
+                        if (behavior.HasFlag(FormatBehavior.NewColorFormat))
                         {
-                            var colorStr = formatString;
-                            if (formatString.IndexOf('/') is int p && p >= 0)
+                            if (formatString != null)
                             {
-                                colorStr = formatString.Substring(0, p);
-                                formatString = formatString.Substring(p + 1);
+                                var (colorStr, fmtStr) = formatString.IndexOf('/') is int p && p >= 0 ? (formatString.Substring(0, p), formatString.Substring(p + 1)) : (formatString, null);
+                                if (colorStr.Length == 2 && colorStr[0] == '_' && _colorCodes.TryGetValue(colorStr[1], out var bg))
+                                {
+                                    background = bg;
+                                    bgSet = true;
+                                }
+                                else if (colorStr.Length == 2 && _colorCodes.TryGetValue(colorStr[0], out var fg) && _colorCodes.TryGetValue(colorStr[1], out bg))
+                                {
+                                    foreground = fg;
+                                    fgSet = true;
+                                    background = bg;
+                                    bgSet = true;
+                                }
+                                else if (colorStr.Length == 1 && _colorCodes.TryGetValue(colorStr[0], out fg))
+                                {
+                                    foreground = fg;
+                                    fgSet = true;
+                                }
+                                else
+                                    throw new FormatException("The specified format string uses an invalid console color code ({0}).".Fmt(colorStr));
+                                formatString = fmtStr;
                             }
-                            if (colorStr.Length == 2 && colorStr[0] == '_' && _colorCodes.TryGetValue(colorStr[1], out var bg))
-                            {
-                                background = bg;
-                                bgSet = true;
-                            }
-                            else if (colorStr.Length == 2 && _colorCodes.TryGetValue(colorStr[0], out var fg) && _colorCodes.TryGetValue(colorStr[1], out bg))
-                            {
-                                foreground = fg;
-                                fgSet = true;
-                                background = bg;
-                                bgSet = true;
-                            }
-                            else if (colorStr.Length == 1 && _colorCodes.TryGetValue(colorStr[0], out fg))
-                            {
-                                foreground = fg;
-                                fgSet = true;
-                            }
-                            else
-                                throw new FormatException("The specified format string uses an invalid console color code ({0}).".Fmt(colorStr));
                         }
                         else
                         {
