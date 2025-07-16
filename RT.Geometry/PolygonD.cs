@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using RT.Internal;
 
 namespace RT.Geometry;
@@ -186,4 +186,30 @@ public sealed class PolygonD
             yield return new EdgeD(_vertices[i], _vertices[i + 1]);
         yield return new EdgeD(_vertices[i], _vertices[0]);
     }
+
+    /// <summary>
+    ///     Determines whether the specified points constitute one of the edges of the polygon in either direction.</summary>
+    /// <param name="start">
+    ///     Start point of an edge.</param>
+    /// <param name="end">
+    ///     End point of an edge.</param>
+    /// <returns>
+    ///     <c>true</c> if <paramref name="start"/> is one of the polygon’s vertices and <paramref name="end"/> is either the
+    ///     one immediately following it or the one immediately preceding it; <c>false</c> otherwise.</returns>
+    public bool ContainsEdge(PointD start, PointD end)
+    {
+        for (var i = 0; i < _vertices.Count; i++)
+            if ((_vertices[i] == start && _vertices[(i + 1) % _vertices.Count] == end) || (_vertices[i] == end && _vertices[(i + 1) % _vertices.Count] == start))
+                return true;
+        return false;
+    }
+
+    /// <summary>
+    ///     Determines whether the specified edge constitutes one of the edges of the polygon exactly.</summary>
+    /// <param name="edge">
+    ///     Edge to check for.</param>
+    /// <returns>
+    ///     <c>true</c> if the edge’s start point is one of the polygon’s vertices and the edge’s end point is either the one
+    ///     immediately following it or the one immediately preceding it; <c>false</c> otherwise.</returns>
+    public bool ContainsEdge(EdgeD edge) => ContainsEdge(edge.Start, edge.End);
 }
