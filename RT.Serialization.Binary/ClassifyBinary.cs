@@ -6,7 +6,7 @@ namespace RT.Serialization;
 /// <summary>Offers a convenient way to use <see cref="Classify"/> to serialize objects using a compact binary format.</summary>
 public static class ClassifyBinary
 {
-    private static readonly IClassifyFormat<node> DefaultFormat = ClassifyBinaryFormat.Default;
+    private static readonly IClassifyFormat<node> _defaultFormat = classifyBinaryFormat.Default;
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -18,10 +18,7 @@ public static class ClassifyBinary
     ///     Path and filename of the file to read from.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null)
-    {
-        return Classify.DeserializeFile<node, T>(filename, DefaultFormat, options);
-    }
+    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null) => Classify.DeserializeFile<node, T>(filename, _defaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -33,10 +30,7 @@ public static class ClassifyBinary
     ///     Path and filename of the file to read from.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null)
-    {
-        return Classify.DeserializeFile(type, filename, DefaultFormat, options);
-    }
+    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null) => Classify.DeserializeFile(type, filename, _defaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -50,8 +44,8 @@ public static class ClassifyBinary
     ///     A new instance of the requested type.</returns>
     public static T Deserialize<T>(byte[] binaryData, ClassifyOptions options = null)
     {
-        using (var mem = new MemoryStream(binaryData))
-            return Classify.Deserialize<node, T>(DefaultFormat.ReadFromStream(mem), DefaultFormat, options);
+        using var mem = new MemoryStream(binaryData);
+        return Classify.Deserialize<node, T>(_defaultFormat.ReadFromStream(mem), _defaultFormat, options);
     }
 
     /// <summary>
@@ -66,8 +60,8 @@ public static class ClassifyBinary
     ///     A new instance of the requested type.</returns>
     public static object Deserialize(Type type, byte[] binaryData, ClassifyOptions options = null)
     {
-        using (var mem = new MemoryStream(binaryData))
-            return Classify.Deserialize(type, DefaultFormat.ReadFromStream(mem), DefaultFormat, options);
+        using var mem = new MemoryStream(binaryData);
+        return Classify.Deserialize(type, _defaultFormat.ReadFromStream(mem), _defaultFormat, options);
     }
 
     /// <summary>
@@ -83,8 +77,8 @@ public static class ClassifyBinary
     ///     Options.</param>
     public static void DeserializeIntoObject<T>(byte[] binaryData, T intoObject, ClassifyOptions options = null)
     {
-        using (var mem = new MemoryStream(binaryData))
-            Classify.DeserializeIntoObject(DefaultFormat.ReadFromStream(mem), intoObject, DefaultFormat, options);
+        using var mem = new MemoryStream(binaryData);
+        Classify.DeserializeIntoObject(_defaultFormat.ReadFromStream(mem), intoObject, _defaultFormat, options);
     }
 
     /// <summary>
@@ -97,10 +91,7 @@ public static class ClassifyBinary
     ///     expected.</param>
     /// <param name="options">
     ///     Options.</param>
-    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null)
-    {
-        Classify.DeserializeFileIntoObject(filename, intoObject, DefaultFormat, options);
-    }
+    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null) => Classify.DeserializeFileIntoObject(filename, intoObject, _defaultFormat, options);
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -112,10 +103,7 @@ public static class ClassifyBinary
     ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
     /// <param name="options">
     ///     Options.</param>
-    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null)
-    {
-        Classify.SerializeToFile(saveObject, filename, DefaultFormat, options);
-    }
+    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null) => Classify.SerializeToFile(saveObject, filename, _defaultFormat, options);
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -127,10 +115,7 @@ public static class ClassifyBinary
     ///     Path and filename of the file to be created. If the file already exists, it is overwritten.</param>
     /// <param name="options">
     ///     Options.</param>
-    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null)
-    {
-        Classify.SerializeToFile(saveType, saveObject, filename, DefaultFormat, options);
-    }
+    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null) => Classify.SerializeToFile(saveType, saveObject, filename, _defaultFormat, options);
 
     /// <summary>
     ///     Converts the specified object into a serialized form.</summary>
@@ -144,12 +129,10 @@ public static class ClassifyBinary
     ///     The serialized form generated from the object.</returns>
     public static byte[] Serialize<T>(T saveObject, ClassifyOptions options = null)
     {
-        var node = Classify.Serialize(saveObject, DefaultFormat, options);
-        using (var mem = new MemoryStream())
-        {
-            node.WriteToStream(mem);
-            return mem.ToArray();
-        }
+        var node = Classify.Serialize(saveObject, _defaultFormat, options);
+        using var mem = new MemoryStream();
+        node.WriteToStream(mem);
+        return mem.ToArray();
     }
 
     /// <summary>
@@ -164,16 +147,14 @@ public static class ClassifyBinary
     ///     The serialized form generated from the object.</returns>
     public static byte[] Serialize(Type saveType, object saveObject, ClassifyOptions options = null)
     {
-        var node = Classify.Serialize(saveType, saveObject, DefaultFormat, options);
-        using (var mem = new MemoryStream())
-        {
-            node.WriteToStream(mem);
-            return mem.ToArray();
-        }
+        var node = Classify.Serialize(saveType, saveObject, _defaultFormat, options);
+        using var mem = new MemoryStream();
+        node.WriteToStream(mem);
+        return mem.ToArray();
     }
 
     [Flags]
-    private enum DataType : byte
+    private enum dataType : byte
     {
         End = 0x00,
         Null = 0x01,
@@ -226,39 +207,38 @@ public static class ClassifyBinary
     }
 
     // These must correspond index-by-index with those in _withRefs
-    private static readonly DataType[] _reffables = new[] {
-        DataType.DictionaryInt64,
-        DataType.DictionaryString,
-        DataType.DictionaryOther,
-        DataType.DictionaryTwoStrings,
-        DataType.List,
-        DataType.RawData
-    };
+    private static readonly dataType[] _reffables = [
+        dataType.DictionaryInt64,
+        dataType.DictionaryString,
+        dataType.DictionaryOther,
+        dataType.DictionaryTwoStrings,
+        dataType.List,
+        dataType.RawData
+    ];
 
     // These must correspond index-by-index with those in _reffables
-    private static readonly DataType[] _withRefs = new[] {
-        DataType.DictionaryInt64WithRefId,
-        DataType.DictionaryStringWithRefId,
-        DataType.DictionaryOtherWithRefId,
-        DataType.DictionaryTwoStringsWithRefId,
-        DataType.ListWithRefId,
-        DataType.RawDataWithRefId
-    };
+    private static readonly dataType[] _withRefs = [
+        dataType.DictionaryInt64WithRefId,
+        dataType.DictionaryStringWithRefId,
+        dataType.DictionaryOtherWithRefId,
+        dataType.DictionaryTwoStringsWithRefId,
+        dataType.ListWithRefId,
+        dataType.RawDataWithRefId
+    ];
 
     private abstract class node
     {
         public int? RefId;
-        public DataType DataType;
+        public dataType DataType;
         public string TypeSpec;
         public bool TypeSpecIsFull;
 
         public void WriteToStream(Stream stream)
         {
             var dt = DataType;
-            var dtStr = DataType.ToString();
             var typeSpec =
-                TypeSpec == null ? DataType.NoTypeSpec :
-                TypeSpecIsFull ? DataType.FullTypeSpec : DataType.SimpleTypeSpec;
+                TypeSpec == null ? dataType.NoTypeSpec :
+                TypeSpecIsFull ? dataType.FullTypeSpec : dataType.SimpleTypeSpec;
 
             if (RefId != null)
             {
@@ -271,7 +251,7 @@ public static class ClassifyBinary
 
             writeToStreamImpl(stream);
 
-            if (typeSpec == DataType.SimpleTypeSpec || typeSpec == DataType.FullTypeSpec)
+            if (typeSpec is dataType.SimpleTypeSpec or dataType.FullTypeSpec)
                 WriteBuffer(stream, TypeSpec.ToUtf8(), true);
 
             if (RefId != null)
@@ -281,7 +261,7 @@ public static class ClassifyBinary
 
         public void WriteBuffer(Stream stream, byte[] buffer, bool isUtf8String)
         {
-            for (int i = 0; i < buffer.Length; i++)
+            for (var i = 0; i < buffer.Length; i++)
             {
                 stream.WriteByte(buffer[i]);
                 if (buffer[i] == 0xff)
@@ -300,29 +280,29 @@ public static class ClassifyBinary
         {
             switch (DataType)
             {
-                case DataType.Byte: stream.WriteByte((byte) Value); break;
-                case DataType.SByte: stream.WriteByte((byte) (sbyte) Value); break;
-                case DataType.Int16: stream.Write(BitConverter.GetBytes((short) Value)); break;
-                case DataType.UInt16: stream.Write(BitConverter.GetBytes((ushort) Value)); break;
-                case DataType.Int32: stream.Write(BitConverter.GetBytes((int) Value)); break;
-                case DataType.UInt32: stream.Write(BitConverter.GetBytes((uint) Value)); break;
-                case DataType.Single: stream.Write(BitConverter.GetBytes((float) Value)); break;
-                case DataType.Int64: stream.Write(BitConverter.GetBytes((long) Value)); break;
-                case DataType.UInt64: stream.Write(BitConverter.GetBytes((ulong) Value)); break;
-                case DataType.BigInteger: WriteBigInteger(stream, (BigInteger) Value); break;
-                case DataType.Double: stream.Write(BitConverter.GetBytes((double) Value)); break;
-                case DataType.DateTime: stream.Write(BitConverter.GetBytes(((DateTime) Value).ToBinary())); break;
-                case DataType.Decimal: stream.WriteDecimalOptim((decimal) Value); break;
-                case DataType.String: WriteBuffer(stream, ((string) Value).ToUtf8(), true); break;
-                case DataType.RawData: WriteBuffer(stream, (byte[]) Value, false); break;
-                case DataType.Null: break;
-                case DataType.False: break;
-                case DataType.True: break;
-                case DataType.Ref: stream.WriteInt32Optim((int) Value); break;
+                case dataType.Byte: stream.WriteByte((byte) Value); break;
+                case dataType.SByte: stream.WriteByte((byte) (sbyte) Value); break;
+                case dataType.Int16: stream.Write(BitConverter.GetBytes((short) Value)); break;
+                case dataType.UInt16: stream.Write(BitConverter.GetBytes((ushort) Value)); break;
+                case dataType.Int32: stream.Write(BitConverter.GetBytes((int) Value)); break;
+                case dataType.UInt32: stream.Write(BitConverter.GetBytes((uint) Value)); break;
+                case dataType.Single: stream.Write(BitConverter.GetBytes((float) Value)); break;
+                case dataType.Int64: stream.Write(BitConverter.GetBytes((long) Value)); break;
+                case dataType.UInt64: stream.Write(BitConverter.GetBytes((ulong) Value)); break;
+                case dataType.BigInteger: writeBigInteger(stream, (BigInteger) Value); break;
+                case dataType.Double: stream.Write(BitConverter.GetBytes((double) Value)); break;
+                case dataType.DateTime: stream.Write(BitConverter.GetBytes(((DateTime) Value).ToBinary())); break;
+                case dataType.Decimal: stream.WriteDecimalOptim((decimal) Value); break;
+                case dataType.String: WriteBuffer(stream, ((string) Value).ToUtf8(), true); break;
+                case dataType.RawData: WriteBuffer(stream, (byte[]) Value, false); break;
+                case dataType.Null: break;
+                case dataType.False: break;
+                case dataType.True: break;
+                case dataType.Ref: stream.WriteInt32Optim((int) Value); break;
             }
         }
 
-        private void WriteBigInteger(Stream stream, BigInteger value)
+        private void writeBigInteger(Stream stream, BigInteger value)
         {
             var encode = value < 0 ? (~value) : value;
             while (encode > 0)
@@ -352,45 +332,27 @@ public static class ClassifyBinary
         {
             foreach (var node in List)
                 node.WriteToStream(stream);
-            stream.Write(new byte[] { (byte) DataType.End });
+            stream.WriteByte((byte) dataType.End);
         }
     }
 
-    sealed class FieldNameWithType : IEquatable<FieldNameWithType>
+    private sealed class fieldNameWithType(string fieldName, string declaringType) : IEquatable<fieldNameWithType>
     {
-        public string FieldName { get; private set; }
-        public string DeclaringType { get; private set; }
-
-        public FieldNameWithType(string fieldName, string declaringType)
-        {
-            FieldName = fieldName;
-            DeclaringType = declaringType;
-        }
-
-        public bool Equals(FieldNameWithType other)
-        {
-            return other != null && other.FieldName == FieldName && other.DeclaringType == DeclaringType;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as FieldNameWithType);
-        }
-
-        public override int GetHashCode()
-        {
-            return FieldName.GetHashCode() * 37 + DeclaringType.GetHashCode();
-        }
+        public string FieldName { get; private set; } = fieldName;
+        public string DeclaringType { get; private set; } = declaringType;
+        public bool Equals(fieldNameWithType other) => other != null && other.FieldName == FieldName && other.DeclaringType == DeclaringType;
+        public override bool Equals(object obj) => Equals(obj as fieldNameWithType);
+        public override int GetHashCode() => FieldName.GetHashCode() * 37 + DeclaringType.GetHashCode();
     }
 
     private sealed class dictNode : node
     {
         public Dictionary<object, node> Dictionary;
-        public DataType KeyType;
+        public dataType KeyType;
 
         protected override void writeToStreamImpl(Stream stream)
         {
-            if (DataType == DataType.DictionaryOther)
+            if (DataType == dataType.DictionaryOther)
                 stream.WriteByte((byte) KeyType);
 
             foreach (var kvp in Dictionary)
@@ -401,52 +363,52 @@ public static class ClassifyBinary
                 // Then store key
                 switch (DataType)
                 {
-                    case DataType.DictionaryInt64:
+                    case dataType.DictionaryInt64:
                         stream.WriteInt64Optim(ExactConvert.ToLong(kvp.Key));
                         break;
 
-                    case DataType.DictionaryString:
+                    case dataType.DictionaryString:
                         WriteBuffer(stream, ExactConvert.ToString(kvp.Key).ToUtf8(), true);
                         break;
 
-                    case DataType.DictionaryTwoStrings:
+                    case dataType.DictionaryTwoStrings:
                         if (kvp.Key is string key)
                         {
                             WriteBuffer(stream, key.ToUtf8(), true);
-                            WriteBuffer(stream, new byte[0], true);
+                            WriteBuffer(stream, [], true);
                         }
                         else
                         {
-                            var fn = (FieldNameWithType) kvp.Key;
+                            var fn = (fieldNameWithType) kvp.Key;
                             WriteBuffer(stream, fn.FieldName.ToUtf8(), true);
-                            WriteBuffer(stream, fn.DeclaringType == null ? new byte[0] : fn.DeclaringType.ToUtf8(), true);
+                            WriteBuffer(stream, fn.DeclaringType == null ? [] : fn.DeclaringType.ToUtf8(), true);
                         }
                         break;
 
-                    case DataType.DictionaryOther:
+                    case dataType.DictionaryOther:
                         switch (KeyType)
                         {
-                            case DataType.UInt64:
+                            case dataType.UInt64:
                                 stream.WriteUInt64Optim(ExactConvert.ToULong(kvp.Key));
                                 break;
 
-                            case DataType.Single:
+                            case dataType.Single:
                                 stream.Write(BitConverter.GetBytes(ExactConvert.ToFloat(kvp.Key)));
                                 break;
 
-                            case DataType.Double:
+                            case dataType.Double:
                                 stream.Write(BitConverter.GetBytes(ExactConvert.ToDouble(kvp.Key)));
                                 break;
 
-                            case DataType.DateTime:
+                            case dataType.DateTime:
                                 stream.Write(BitConverter.GetBytes(((DateTime) kvp.Key).ToBinary()));
                                 break;
 
-                            case DataType.Decimal:
+                            case dataType.Decimal:
                                 stream.WriteDecimalOptim(ExactConvert.ToDecimal(kvp.Key));
                                 break;
 
-                            case DataType.RawData:
+                            case dataType.RawData:
                                 WriteBuffer(stream, ExactConvert.ToString(kvp.Key).ToUtf16(), false);
                                 break;
 
@@ -459,46 +421,44 @@ public static class ClassifyBinary
                         throw new InvalidOperationException("Invalid dictionary type.");
                 }
             }
-            stream.WriteByte((byte) DataType.End);
+            stream.WriteByte((byte) dataType.End);
         }
     }
 
-    private sealed class ClassifyBinaryFormat : IClassifyFormat<node>
+    private sealed class classifyBinaryFormat : IClassifyFormat<node>
     {
-        public static IClassifyFormat<node> Default { get { return _default ?? (_default = new ClassifyBinaryFormat()); } }
-        private static ClassifyBinaryFormat _default;
+        public static IClassifyFormat<node> Default => _default ??= new classifyBinaryFormat();
+        private static classifyBinaryFormat _default;
 
-        private ClassifyBinaryFormat() { }
+        private classifyBinaryFormat() { }
 
         private byte[] readBuffer(Stream stream, bool isUtf8String)
         {
-            using (var mem = new MemoryStream())
+            using var mem = new MemoryStream();
+            while (true)
             {
-                while (true)
+                var b = stream.ReadByte();
+                if (b == -1)
+                    throw new InvalidOperationException("Unexpected end of data.");
+                if (b == 0xff)
                 {
-                    var b = stream.ReadByte();
-                    if (b == -1)
-                        throw new InvalidOperationException("Unexpected end of data.");
-                    if (b == 0xff)
-                    {
-                        if (isUtf8String)
-                            return mem.ToArray();
-                        var b2 = stream.ReadByte();
-                        if (b2 == 0)
-                            return mem.ToArray();
-                        if (b2 != 1)
-                            throw new InvalidOperationException("Invalid binary data format.");
-                    }
-                    mem.WriteByte((byte) b);
+                    if (isUtf8String)
+                        return mem.ToArray();
+                    var b2 = stream.ReadByte();
+                    if (b2 == 0)
+                        return mem.ToArray();
+                    if (b2 != 1)
+                        throw new InvalidOperationException("Invalid binary data format.");
                 }
+                mem.WriteByte((byte) b);
             }
         }
 
         public node ReadFromStream(Stream stream)
         {
-            var dt = (DataType) stream.ReadByte();
-            var ts = dt & DataType.TypeSpecMask;
-            dt &= DataType.Mask;
+            var dt = (dataType) stream.ReadByte();
+            var ts = dt & dataType.TypeSpecMask;
+            dt &= dataType.Mask;
 
             var hasRefId = false;
             var ix = Array.IndexOf(_withRefs, dt);
@@ -509,45 +469,45 @@ public static class ClassifyBinary
             }
 
             node node;
-            DataType keyType = 0;
+            dataType keyType = 0;
             switch (dt)
             {
-                case DataType.End: return null;
-                case DataType.Byte: node = new valueNode { Value = (byte) stream.ReadByte() }; break;
-                case DataType.SByte: node = new valueNode { Value = (sbyte) (byte) stream.ReadByte() }; break;
-                case DataType.Int16: node = new valueNode { Value = BitConverter.ToInt16(stream.Read(2), 0) }; break;
-                case DataType.UInt16: node = new valueNode { Value = BitConverter.ToUInt16(stream.Read(2), 0) }; break;
-                case DataType.Int32: node = new valueNode { Value = BitConverter.ToInt32(stream.Read(4), 0) }; break;
-                case DataType.UInt32: node = new valueNode { Value = BitConverter.ToUInt32(stream.Read(4), 0) }; break;
-                case DataType.Single: node = new valueNode { Value = BitConverter.ToSingle(stream.Read(4), 0) }; break;
-                case DataType.Int64: node = new valueNode { Value = BitConverter.ToInt64(stream.Read(8), 0) }; break;
-                case DataType.UInt64: node = new valueNode { Value = BitConverter.ToUInt64(stream.Read(8), 0) }; break;
-                case DataType.BigInteger: node = new valueNode { Value = readBigInteger(stream) }; break;
-                case DataType.Double: node = new valueNode { Value = BitConverter.ToDouble(stream.Read(8), 0) }; break;
-                case DataType.DateTime: node = new valueNode { Value = DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0)) }; break;
-                case DataType.Decimal: node = new valueNode { Value = stream.ReadDecimalOptim() }; break;
-                case DataType.String: node = new valueNode { Value = readBuffer(stream, true).FromUtf8() }; break;
-                case DataType.RawData: node = new valueNode { Value = readBuffer(stream, false) }; break;
-                case DataType.Null: node = new valueNode { Value = null }; break;
-                case DataType.False: node = new valueNode { Value = false }; break;
-                case DataType.True: node = new valueNode { Value = true }; break;
-                case DataType.Ref: node = new valueNode { Value = stream.ReadInt32Optim() }; break;
-                case DataType.KeyValuePair: node = new kvpNode { Key = ReadFromStream(stream), Value = ReadFromStream(stream) }; break;
+                case dataType.End: return null;
+                case dataType.Byte: node = new valueNode { Value = (byte) stream.ReadByte() }; break;
+                case dataType.SByte: node = new valueNode { Value = (sbyte) (byte) stream.ReadByte() }; break;
+                case dataType.Int16: node = new valueNode { Value = BitConverter.ToInt16(stream.Read(2), 0) }; break;
+                case dataType.UInt16: node = new valueNode { Value = BitConverter.ToUInt16(stream.Read(2), 0) }; break;
+                case dataType.Int32: node = new valueNode { Value = BitConverter.ToInt32(stream.Read(4), 0) }; break;
+                case dataType.UInt32: node = new valueNode { Value = BitConverter.ToUInt32(stream.Read(4), 0) }; break;
+                case dataType.Single: node = new valueNode { Value = BitConverter.ToSingle(stream.Read(4), 0) }; break;
+                case dataType.Int64: node = new valueNode { Value = BitConverter.ToInt64(stream.Read(8), 0) }; break;
+                case dataType.UInt64: node = new valueNode { Value = BitConverter.ToUInt64(stream.Read(8), 0) }; break;
+                case dataType.BigInteger: node = new valueNode { Value = readBigInteger(stream) }; break;
+                case dataType.Double: node = new valueNode { Value = BitConverter.ToDouble(stream.Read(8), 0) }; break;
+                case dataType.DateTime: node = new valueNode { Value = DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0)) }; break;
+                case dataType.Decimal: node = new valueNode { Value = stream.ReadDecimalOptim() }; break;
+                case dataType.String: node = new valueNode { Value = readBuffer(stream, true).FromUtf8() }; break;
+                case dataType.RawData: node = new valueNode { Value = readBuffer(stream, false) }; break;
+                case dataType.Null: node = new valueNode { Value = null }; break;
+                case dataType.False: node = new valueNode { Value = false }; break;
+                case dataType.True: node = new valueNode { Value = true }; break;
+                case dataType.Ref: node = new valueNode { Value = stream.ReadInt32Optim() }; break;
+                case dataType.KeyValuePair: node = new kvpNode { Key = ReadFromStream(stream), Value = ReadFromStream(stream) }; break;
 
-                case DataType.List:
+                case dataType.List:
                     var list = new List<node>();
                     while ((node = ReadFromStream(stream)) != null)
                         list.Add(node);
                     node = new listNode { List = list };
                     break;
 
-                case DataType.DictionaryOther:
-                    keyType = (DataType) stream.ReadByte();
-                    goto case DataType.DictionaryInt64;
+                case dataType.DictionaryOther:
+                    keyType = (dataType) stream.ReadByte();
+                    goto case dataType.DictionaryInt64;
 
-                case DataType.DictionaryInt64:
-                case DataType.DictionaryString:
-                case DataType.DictionaryTwoStrings:
+                case dataType.DictionaryInt64:
+                case dataType.DictionaryString:
+                case dataType.DictionaryTwoStrings:
                     var dict = new Dictionary<object, node>();
                     // Dictionaries encode value first, then key.
                     while ((node = ReadFromStream(stream)) != null)
@@ -555,50 +515,31 @@ public static class ClassifyBinary
                         object key;
                         switch (dt)
                         {
-                            case DataType.DictionaryInt64:
+                            case dataType.DictionaryInt64:
                                 key = stream.ReadInt64Optim();
                                 break;
 
-                            case DataType.DictionaryString:
+                            case dataType.DictionaryString:
                                 key = readBuffer(stream, true).FromUtf8();
                                 break;
 
-                            case DataType.DictionaryTwoStrings:
+                            case dataType.DictionaryTwoStrings:
                                 var fieldName = readBuffer(stream, true).FromUtf8();
                                 var declaringType = readBuffer(stream, true).FromUtf8();
-                                key = declaringType.Length > 0 ? new FieldNameWithType(fieldName, declaringType) : (object) fieldName;
+                                key = declaringType.Length > 0 ? new fieldNameWithType(fieldName, declaringType) : fieldName;
                                 break;
 
-                            case DataType.DictionaryOther:
-                                switch (keyType)
+                            case dataType.DictionaryOther:
+                                key = keyType switch
                                 {
-                                    case DataType.UInt64:
-                                        key = stream.ReadUInt64Optim();
-                                        break;
-
-                                    case DataType.Single:
-                                        key = BitConverter.ToSingle(stream.Read(4), 0);
-                                        break;
-
-                                    case DataType.Double:
-                                        key = BitConverter.ToSingle(stream.Read(8), 0);
-                                        break;
-
-                                    case DataType.DateTime:
-                                        key = DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0));
-                                        break;
-
-                                    case DataType.Decimal:
-                                        key = stream.ReadDecimalOptim();
-                                        break;
-
-                                    case DataType.RawData:
-                                        key = readBuffer(stream, false).FromUtf16();
-                                        break;
-
-                                    default:
-                                        throw new InvalidOperationException("Invalid dictionary key type.");
-                                }
+                                    dataType.UInt64 => stream.ReadUInt64Optim(),
+                                    dataType.Single => BitConverter.ToSingle(stream.Read(4), 0),
+                                    dataType.Double => BitConverter.ToSingle(stream.Read(8), 0),
+                                    dataType.DateTime => DateTime.FromBinary(BitConverter.ToInt64(stream.Read(8), 0)),
+                                    dataType.Decimal => stream.ReadDecimalOptim(),
+                                    dataType.RawData => readBuffer(stream, false).FromUtf16(),
+                                    _ => throw new InvalidOperationException("Invalid dictionary key type."),
+                                };
                                 break;
 
                             default:
@@ -614,7 +555,7 @@ public static class ClassifyBinary
             }
 
             node.DataType = dt;
-            if (ts == DataType.SimpleTypeSpec || (node.TypeSpecIsFull = (ts == DataType.FullTypeSpec)))
+            if (ts == dataType.SimpleTypeSpec || (node.TypeSpecIsFull = (ts == dataType.FullTypeSpec)))
                 node.TypeSpec = readBuffer(stream, true).FromUtf8();
             if (hasRefId)
                 node.RefId = stream.ReadInt32Optim();
@@ -635,234 +576,134 @@ public static class ClassifyBinary
             return (read == ulong.MaxValue - 1) ? ~value : value;
         }
 
-        void IClassifyFormat<node>.WriteToStream(node element, Stream stream)
+        void IClassifyFormat<node>.WriteToStream(node element, Stream stream) => element.WriteToStream(stream);
+
+        bool IClassifyFormat<node>.IsNull(node element) => element.DataType == dataType.Null;
+
+        object IClassifyFormat<node>.GetSimpleValue(node element) => element.DataType switch
         {
-            element.WriteToStream(stream);
-        }
+            dataType.Null or dataType.False or dataType.True or dataType.Byte or dataType.SByte or dataType.Int16 or dataType.UInt16
+                or dataType.Int32 or dataType.UInt32 or dataType.Single or dataType.Int64 or dataType.UInt64 or dataType.Double
+                or dataType.DateTime or dataType.Decimal or dataType.String or dataType.BigInteger => ((valueNode) element).Value,
 
-        bool IClassifyFormat<node>.IsNull(node element)
-        {
-            return element.DataType == DataType.Null;
-        }
+            dataType.RawData => ((byte[]) ((valueNode) element).Value).FromUtf16(),
 
-        object IClassifyFormat<node>.GetSimpleValue(node element)
-        {
-            switch (element.DataType)
-            {
-                case DataType.Null:
-                case DataType.False:
-                case DataType.True:
-                case DataType.Byte:
-                case DataType.SByte:
-                case DataType.Int16:
-                case DataType.UInt16:
-                case DataType.Int32:
-                case DataType.UInt32:
-                case DataType.Single:
-                case DataType.Int64:
-                case DataType.UInt64:
-                case DataType.Double:
-                case DataType.DateTime:
-                case DataType.Decimal:
-                case DataType.String:
-                case DataType.BigInteger:
-                    return ((valueNode) element).Value;
+            // These could arise if the class declaration changed and the serialized form still contains the old data type. Tolerate this instead of throwing.
+            dataType.List or dataType.KeyValuePair or dataType.DictionaryInt64 or dataType.DictionaryString or dataType.DictionaryOther
+                or dataType.DictionaryTwoStrings or dataType.Ref => null,
 
-                case DataType.RawData:
-                    return ((byte[]) ((valueNode) element).Value).FromUtf16();
+            _ => throw new InvalidOperationException("The binary format contains unexpected data."),
+        };
 
-                case DataType.List:
-                case DataType.KeyValuePair:
-                case DataType.DictionaryInt64:
-                case DataType.DictionaryString:
-                case DataType.DictionaryOther:
-                case DataType.DictionaryTwoStrings:
-                case DataType.Ref:
-                    // These could arise if the class declaration changed and the serialized form still contains the old data type. Tolerate this instead of throwing.
-                    return null;
+        node IClassifyFormat<node>.GetSelfValue(node element) => element;   // This should never happen because “node” is a private type.
 
-                default:
-                    throw new InvalidOperationException("The binary format contains unexpected data.");
-            }
-        }
+        IEnumerable<node> IClassifyFormat<node>.GetList(node element, int? tupleSize) =>
+            element is listNode list ? list.List : element is kvpNode kvp ? new[] { kvp.Key, kvp.Value } : [];
 
-        node IClassifyFormat<node>.GetSelfValue(node element)
-        {
-            // This should never happen because “node” is a private type.
-            return element;
-        }
+        (node key, node value) IClassifyFormat<node>.GetKeyValuePair(node element) =>
+            element is kvpNode kvp ? (kvp.Key, kvp.Value) : (null, null);
 
-        IEnumerable<node> IClassifyFormat<node>.GetList(node element, int? tupleSize)
-        {
-            var list = element as listNode;
-            var kvp = element as kvpNode;
-            return list == null ? kvp == null ? Enumerable.Empty<node>() : new[] { kvp.Key, kvp.Value } : list.List;
-        }
-
-        void IClassifyFormat<node>.GetKeyValuePair(node element, out node key, out node value)
-        {
-            var kvp = element as kvpNode;
-            if (kvp == null)
-            {
-                key = null;
-                value = null;
-                return;
-            }
-
-            key = kvp.Key;
-            value = kvp.Value;
-        }
-
-        IEnumerable<KeyValuePair<object, node>> IClassifyFormat<node>.GetDictionary(node element)
-        {
-            var dict = element as dictNode;
-            if (dict == null)
-                return Enumerable.Empty<KeyValuePair<object, node>>();
-            return dict.Dictionary;
-        }
+        IEnumerable<KeyValuePair<object, node>> IClassifyFormat<node>.GetDictionary(node element) => element is dictNode dict ? dict.Dictionary : Enumerable.Empty<KeyValuePair<object, node>>();
 
         byte[] IClassifyFormat<node>.GetRawData(node element)
         {
-            if (element.DataType == DataType.List)
+            if (element.DataType == dataType.List)
                 // Support a list of integers as this was how Classify encoded byte arrays before GetRawData was introduced
                 return ((listNode) element).List.Select(nd => ExactConvert.ToByte(((valueNode) nd).Value)).ToArray();
 
-            if (element.DataType == DataType.RawData)
-                return (byte[]) ((valueNode) element).Value;
-            return null;
+            return element.DataType == dataType.RawData ? (byte[]) ((valueNode) element).Value : null;
         }
 
-        bool IClassifyFormat<node>.HasField(node element, string fieldName, string declaringType)
-        {
-            return element is dictNode && (
-                ((dictNode) element).Dictionary.ContainsKey(fieldName) ||
-                ((dictNode) element).Dictionary.ContainsKey(new FieldNameWithType(fieldName, declaringType)));
-        }
+        bool IClassifyFormat<node>.HasField(node element, string fieldName, string declaringType) => element is dictNode dict && (
+                dict.Dictionary.ContainsKey(fieldName) ||
+                dict.Dictionary.ContainsKey(new fieldNameWithType(fieldName, declaringType)));
 
         node IClassifyFormat<node>.GetField(node element, string fieldName, string declaringType)
         {
             var dict = ((dictNode) element).Dictionary;
-            node node;
-
-            if (dict.TryGetValue(new FieldNameWithType(fieldName, declaringType), out node))
-                return node;
-
-            if (dict.TryGetValue(fieldName, out node))
-                return node;
-
-            return null;
+            return
+                dict.TryGetValue(new fieldNameWithType(fieldName, declaringType), out var node) ? node :
+                dict.TryGetValue(fieldName, out node) ? node : null;
         }
 
-        string IClassifyFormat<node>.GetType(node element, out bool isFullType)
-        {
-            isFullType = element.TypeSpecIsFull && element.TypeSpec != null;
-            return element.TypeSpec;
-        }
+        (string type, bool isFullType) IClassifyFormat<node>.GetType(node element) =>
+            (element.TypeSpec, element.TypeSpecIsFull && element.TypeSpec != null);
 
-        bool IClassifyFormat<node>.IsReference(node element)
-        {
-            return element.DataType == DataType.Ref;
-        }
+        bool IClassifyFormat<node>.IsReference(node element) => element.DataType == dataType.Ref;
 
-        bool IClassifyFormat<node>.IsReferable(node element)
-        {
-            return element.RefId.HasValue;
-        }
+        bool IClassifyFormat<node>.IsReferable(node element) => element.RefId.HasValue;
 
-        int IClassifyFormat<node>.GetReferenceID(node element)
-        {
-            if (element.RefId.HasValue)
-                return element.RefId.Value;
-            else if (element.DataType == DataType.Ref)
-                return (int) ((valueNode) element).Value;
-            else
-                throw new InvalidOperationException("The binary Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true.");
-        }
+        int IClassifyFormat<node>.GetReferenceID(node element) => element.RefId ?? (element.DataType == dataType.Ref ? (int) ((valueNode) element).Value :
+                throw new InvalidOperationException("The binary Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true."));
 
-        node IClassifyFormat<node>.FormatNullValue()
-        {
-            return new valueNode { Value = null, DataType = DataType.Null };
-        }
+        node IClassifyFormat<node>.FormatNullValue() => new valueNode { Value = null, DataType = dataType.Null };
 
-        valueNode tryFormatSimpleValue<T>(object value, DataType dt)
-        {
-            if (value is T)
-                return new valueNode { DataType = dt, Value = value };
-            if (!ExactConvert.Try(typeof(T), value, out var result))
-                return null;
-            if (!ExactConvert.Try(value.GetType(), result, out var retour) || !retour.Equals(value))
-                return null;
-            return new valueNode { DataType = dt, Value = result };
-        }
+        private valueNode tryFormatSimpleValue<T>(object value, dataType dt) => value is T ? new valueNode { DataType = dt, Value = value } :
+                !ExactConvert.Try(typeof(T), value, out var result) ? null :
+                !ExactConvert.Try(value.GetType(), result, out var retour) || !retour.Equals(value) ? null :
+                new valueNode { DataType = dt, Value = result };
 
         node IClassifyFormat<node>.FormatSimpleValue(object value)
         {
             if (value == null)
-                return new valueNode { Value = null, DataType = DataType.Null };
+                return new valueNode { Value = null, DataType = dataType.Null };
 
             if (value is float)
-                return new valueNode { DataType = DataType.Single, Value = value };
+                return new valueNode { DataType = dataType.Single, Value = value };
             if (value is double)
-                return new valueNode { DataType = DataType.Double, Value = value };
+                return new valueNode { DataType = dataType.Double, Value = value };
             if (value is decimal)
-                return new valueNode { DataType = DataType.Decimal, Value = value };
+                return new valueNode { DataType = dataType.Decimal, Value = value };
             if (value is DateTime)
-                return new valueNode { DataType = DataType.DateTime, Value = value };
+                return new valueNode { DataType = dataType.DateTime, Value = value };
 
             // Use the smallest possible representation of the input.
             // Note that if the input is, say, the Int64 value 1, it will be stored compactly as the boolean “true”.
             // In fact, even the strings "True" and "False" will be stored that way and correctly converted back.
             // Strings that roundtrip-convert to DateTime are also stored compactly as DateTime.
             var node =
-                tryFormatSimpleValue<bool>(value, DataType.False) ??
-                tryFormatSimpleValue<byte>(value, DataType.Byte) ??
-                tryFormatSimpleValue<sbyte>(value, DataType.SByte) ??
-                tryFormatSimpleValue<short>(value, DataType.Int16) ??
-                tryFormatSimpleValue<ushort>(value, DataType.UInt16) ??
-                tryFormatSimpleValue<int>(value, DataType.Int32) ??
-                tryFormatSimpleValue<uint>(value, DataType.UInt32) ??
-                tryFormatSimpleValue<long>(value, DataType.Int64) ??
-                tryFormatSimpleValue<ulong>(value, DataType.UInt64) ??
-                tryFormatSimpleValue<DateTime>(value, DataType.DateTime) ??
-                tryFormatSimpleValue<BigInteger>(value, DataType.BigInteger);
+                tryFormatSimpleValue<bool>(value, dataType.False) ??
+                tryFormatSimpleValue<byte>(value, dataType.Byte) ??
+                tryFormatSimpleValue<sbyte>(value, dataType.SByte) ??
+                tryFormatSimpleValue<short>(value, dataType.Int16) ??
+                tryFormatSimpleValue<ushort>(value, dataType.UInt16) ??
+                tryFormatSimpleValue<int>(value, dataType.Int32) ??
+                tryFormatSimpleValue<uint>(value, dataType.UInt32) ??
+                tryFormatSimpleValue<long>(value, dataType.Int64) ??
+                tryFormatSimpleValue<ulong>(value, dataType.UInt64) ??
+                tryFormatSimpleValue<DateTime>(value, dataType.DateTime) ??
+                tryFormatSimpleValue<BigInteger>(value, dataType.BigInteger);
 
             if (node != null)
             {
                 if (node.Value.Equals(true))
-                    node.DataType = DataType.True;
+                    node.DataType = dataType.True;
                 return node;
             }
 
             var str = ExactConvert.ToString(value);
-            var strAsUtf16 = str.ToUtf16();
-            return str.Utf8Length() < strAsUtf16.Length
-                ? new valueNode { Value = str, DataType = DataType.String }
-                : new valueNode { Value = strAsUtf16, DataType = DataType.RawData };
+            return str.Utf8Length() < str.Utf16Length()
+                ? new valueNode { Value = str, DataType = dataType.String }
+                : new valueNode { Value = str.ToUtf16(), DataType = dataType.RawData };
         }
 
-        node IClassifyFormat<node>.FormatSelfValue(node value)
-        {
-            throw new InvalidOperationException("This should never happen.");
-        }
+        node IClassifyFormat<node>.FormatSelfValue(node value) => throw new InvalidOperationException("This should never happen.");
 
         node IClassifyFormat<node>.FormatList(bool isTuple, IEnumerable<node> values)
         {
             var list = values.ToList();
-            if (list.Count == 2)
-                return new kvpNode { Key = list[0], Value = list[1], DataType = DataType.KeyValuePair };
-            return new listNode { List = list, DataType = DataType.List };
+            return list.Count == 2
+                ? new kvpNode { Key = list[0], Value = list[1], DataType = dataType.KeyValuePair }
+                : new listNode { List = list, DataType = dataType.List };
         }
 
-        node IClassifyFormat<node>.FormatKeyValuePair(node key, node value)
-        {
-            return new kvpNode { Key = key, Value = value, DataType = DataType.KeyValuePair };
-        }
+        node IClassifyFormat<node>.FormatKeyValuePair(node key, node value) => new kvpNode { Key = key, Value = value, DataType = dataType.KeyValuePair };
 
         node IClassifyFormat<node>.FormatDictionary(IEnumerable<KeyValuePair<object, node>> values)
         {
             var dic = values.ToDictionary();
             if (dic.Count == 0)
-                return new dictNode { Dictionary = dic, DataType = DataType.DictionaryString };
+                return new dictNode { Dictionary = dic, DataType = dataType.DictionaryString };
 
             var firstKey = dic.Keys.First();
             var keyType = firstKey.GetType();
@@ -870,17 +711,17 @@ public static class ClassifyBinary
             if (firstKey is Enum)
                 underlyingType = keyType.GetEnumUnderlyingType();
 
-            DataType dt;
-            DataType kt;
+            dataType dt;
+            dataType kt;
 
             if (keyType == typeof(ulong) || underlyingType == typeof(ulong))
             {
-                dt = DataType.DictionaryOther;
-                kt = DataType.UInt64;
+                dt = dataType.DictionaryOther;
+                kt = dataType.UInt64;
             }
             else if (ExactConvert.IsTrueIntegerType(keyType) || ExactConvert.IsTrueIntegerType(underlyingType))
             {
-                dt = DataType.DictionaryInt64;
+                dt = dataType.DictionaryInt64;
                 kt = 0;
             }
             else if (keyType == typeof(string))
@@ -889,38 +730,38 @@ public static class ClassifyBinary
                 var utf16len = dic.Keys.Take(32).Sum(k => ((string) k).Utf16Length());
                 if (utf8len > utf16len)
                 {
-                    dt = DataType.DictionaryOther;
-                    kt = DataType.RawData;
+                    dt = dataType.DictionaryOther;
+                    kt = dataType.RawData;
                 }
                 else
                 {
-                    dt = DataType.DictionaryString;
+                    dt = dataType.DictionaryString;
                     kt = 0;
                 }
             }
             else if (keyType == typeof(float))
             {
-                dt = DataType.DictionaryOther;
-                kt = DataType.Single;
+                dt = dataType.DictionaryOther;
+                kt = dataType.Single;
             }
             else if (keyType == typeof(double))
             {
-                dt = DataType.DictionaryOther;
-                kt = DataType.Double;
+                dt = dataType.DictionaryOther;
+                kt = dataType.Double;
             }
             else if (keyType == typeof(decimal))
             {
-                dt = DataType.DictionaryOther;
-                kt = DataType.Decimal;
+                dt = dataType.DictionaryOther;
+                kt = dataType.Decimal;
             }
             else if (keyType == typeof(DateTime))
             {
-                dt = DataType.DictionaryOther;
-                kt = DataType.DateTime;
+                dt = dataType.DictionaryOther;
+                kt = dataType.DateTime;
             }
             else
             {
-                dt = DataType.DictionaryString;
+                dt = dataType.DictionaryString;
                 kt = 0;
             }
 
@@ -929,23 +770,17 @@ public static class ClassifyBinary
 
         node IClassifyFormat<node>.FormatObject(IEnumerable<ObjectFieldInfo<node>> fields)
         {
-            var dic = fields.ToDictionary(f => f.DeclaringType == null ? f.FieldName : (object) new FieldNameWithType(f.FieldName, f.DeclaringType), f => f.Value);
+            var dic = fields.ToDictionary(f => f.DeclaringType == null ? f.FieldName : (object) new fieldNameWithType(f.FieldName, f.DeclaringType), f => f.Value);
             return new dictNode
             {
-                DataType = dic.Keys.Any(k => k is FieldNameWithType) ? DataType.DictionaryTwoStrings : DataType.DictionaryString,
+                DataType = dic.Keys.Any(k => k is fieldNameWithType) ? dataType.DictionaryTwoStrings : dataType.DictionaryString,
                 Dictionary = dic
             };
         }
 
-        node IClassifyFormat<node>.FormatRawData(byte[] value)
-        {
-            return new valueNode { DataType = DataType.RawData, Value = value };
-        }
+        node IClassifyFormat<node>.FormatRawData(byte[] value) => new valueNode { DataType = dataType.RawData, Value = value };
 
-        node IClassifyFormat<node>.FormatReference(int refId)
-        {
-            return new valueNode { Value = refId, DataType = DataType.Ref };
-        }
+        node IClassifyFormat<node>.FormatReference(int refId) => new valueNode { Value = refId, DataType = dataType.Ref };
 
         node IClassifyFormat<node>.FormatReferable(node element, int refId)
         {
@@ -960,9 +795,7 @@ public static class ClassifyBinary
             return element;
         }
 
-        void IClassifyFormat<node>.ThrowMissingReferable(int refID)
-        {
+        void IClassifyFormat<node>.ThrowMissingReferable(int refID) =>
             throw new InvalidOperationException(@"An object reference was encountered, but no matching object was encountered during deserialization. If such an object is present somewhere in the binary data, the relevant object was not deserialized (most likely because a field corresponding to a parent object was removed from its class declaration).");
-        }
     }
 }

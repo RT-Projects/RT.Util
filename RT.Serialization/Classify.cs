@@ -156,7 +156,7 @@ public static class Classify
         TElement elem;
         using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
             elem = format.ReadFromStream(f);
-        return new Classifier<TElement>(format, options).Deserialize(type, elem);
+        return new classifier<TElement>(format, options).Deserialize(type, elem);
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ public static class Classify
     ///     A new instance of the requested type.</returns>
     public static T Deserialize<TElement, T>(TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        return (T) new Classifier<TElement>(format, options).Deserialize(typeof(T), elem);
+        return (T) new classifier<TElement>(format, options).Deserialize(typeof(T), elem);
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public static class Classify
     ///     A new instance of the requested type.</returns>
     public static object Deserialize<TElement>(Type type, TElement elem, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        return new Classifier<TElement>(format, options).Deserialize(type, elem);
+        return new classifier<TElement>(format, options).Deserialize(type, elem);
     }
 
     /// <summary>
@@ -214,7 +214,7 @@ public static class Classify
     ///     Options.</param>
     public static void DeserializeIntoObject<TElement, T>(TElement element, T intoObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        new Classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, "this");
+        new classifier<TElement>(format, options).DeserializeIntoObject(typeof(T), element, intoObject, "this");
     }
 
     /// <summary>
@@ -236,7 +236,7 @@ public static class Classify
         TElement elem;
         using (var f = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
             elem = format.ReadFromStream(f);
-        new Classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, "this");
+        new classifier<TElement>(format, options).DeserializeIntoObject(intoObject.GetType(), elem, intoObject, "this");
     }
 
     /// <summary>
@@ -274,7 +274,7 @@ public static class Classify
     ///     Options.</param>
     public static void SerializeToFile<TElement>(Type saveType, object saveObject, string filename, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        var element = new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
+        var element = new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
         Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(".", filename)));
         using var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read);
         format.WriteToStream(element, f);
@@ -296,7 +296,7 @@ public static class Classify
     ///     The serialized form generated from the object.</returns>
     public static TElement Serialize<TElement, T>(T saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        return new Classifier<TElement>(format, options).Serialize(saveObject, typeof(T))();
+        return new classifier<TElement>(format, options).Serialize(saveObject, typeof(T))();
     }
 
     /// <summary>
@@ -315,7 +315,7 @@ public static class Classify
     ///     The serialized form generated from the object.</returns>
     public static TElement Serialize<TElement>(Type saveType, object saveObject, IClassifyFormat<TElement> format, ClassifyOptions options = null)
     {
-        return new Classifier<TElement>(format, options).Serialize(saveObject, saveType)();
+        return new classifier<TElement>(format, options).Serialize(saveObject, saveType)();
     }
 
     // NOTE: If you change this list, also change the XML comment on IClassifyFormat<TElement>.GetSimpleValue and IClassifyFormat<TElement>.FormatSimpleValue
@@ -330,7 +330,7 @@ public static class Classify
         typeof(bool), typeof(char), typeof(string), typeof(DateTime)
     };
 
-    private sealed class Classifier<TElement>
+    private sealed class classifier<TElement>
     {
         private readonly ClassifyOptions _options;
         private int _nextId = 0;
@@ -339,7 +339,7 @@ public static class Classify
         private readonly Dictionary<MemberInfo, object[]> _attributesCache = new();
         private HashSet<string> _classifySimpleAttributes;
 
-        private enum CollectionCategory
+        private enum collectionCategory
         {
             /// <summary>Array types such as <c>T[]</c>, <c>T[,]</c> etc.</summary>
             Array,
@@ -352,7 +352,7 @@ public static class Classify
 
             /// <summary>
             ///     <see cref="Dictionary{TKey, TValue}"/>, where <c>TKey</c> is something that <see cref="ExactConvert"/> can
-            ///     convert to and from <c>string</c>. This is the only <see cref="CollectionCategory"/> that is serialized by
+            ///     convert to and from <c>string</c>. This is the only <see cref="collectionCategory"/> that is serialized by
             ///     <see cref="IClassifyFormat{TElement}.FormatDictionary"/> instead of <see
             ///     cref="IClassifyFormat{TElement}.FormatList"/>.</summary>
             SimpleKeyedDictionary,
@@ -394,25 +394,25 @@ public static class Classify
             return null;
         }
 
-        public Classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
+        public classifier(IClassifyFormat<TElement> format, ClassifyOptions options)
         {
             _format = format ?? throw new ArgumentNullException(nameof(format));
             _options = options ?? DefaultOptions ?? new ClassifyOptions(); // in case someone set default options to null
         }
 
-        private sealed class DeclassifyRememberedObject
+        private sealed class declassifyRememberedObject
         {
             public Func<object> WithDesubstitution;
             public Func<object> WithoutDesubstitution;
         }
 
-        private Dictionary<int, DeclassifyRememberedObject> _rememberCacheDeser;
-        private Dictionary<int, DeclassifyRememberedObject> _rememberDeser => _rememberCacheDeser ??= new Dictionary<int, DeclassifyRememberedObject>();
+        private Dictionary<int, declassifyRememberedObject> _rememberCacheDeser;
+        private Dictionary<int, declassifyRememberedObject> rememberDeser => _rememberCacheDeser ??= new Dictionary<int, declassifyRememberedObject>();
 
         private Dictionary<object, object> _rememberCacheSer;
-        private Dictionary<object, object> _rememberSer => _rememberCacheSer ??= new Dictionary<object, object>(_options.ActualEqualityComparer);
+        private Dictionary<object, object> rememberSer => _rememberCacheSer ??= new Dictionary<object, object>(_options.ActualEqualityComparer);
 
-        private Dictionary<object, int> _requireRefId => _requireRefIdCache ??= new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode()));
+        private Dictionary<object, int> requireRefId => _requireRefIdCache ??= new Dictionary<object, int>(new CustomEqualityComparer<object>(ReferenceEquals, o => o.GetHashCode()));
         private Dictionary<object, int> _requireRefIdCache;
 
         private static readonly Type[] _tupleTypes = new[] {
@@ -469,13 +469,13 @@ public static class Classify
             _doAtTheEnd = new List<Action>();
 
             if (_format.IsReferable(elem))
-                _rememberDeser[_format.GetReferenceID(elem)] = new DeclassifyRememberedObject { WithoutDesubstitution = () => intoObj };
+                rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject { WithoutDesubstitution = () => intoObj };
 
             var cat = tryGetCollectionInfo(type, out var keyType, out var valueType);
             var result =
                 cat == null ? CustomCallStack.Run(deserializeIntoObject(elem, intoObj, type, objectPath)) :
-                cat == CollectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums, objectPath)) :
-                cat == CollectionCategory.SimpleKeyedDictionary ? CustomCallStack.Run(deserializeIntoDictionary(keyType, valueType, elem, intoObj, _options.EnforceEnums, objectPath)) :
+                cat == collectionCategory.Array ? CustomCallStack.Run(deserializeIntoArray(type, valueType, elem, (Array) intoObj, _options.EnforceEnums, objectPath)) :
+                cat == collectionCategory.SimpleKeyedDictionary ? CustomCallStack.Run(deserializeIntoDictionary(keyType, valueType, elem, intoObj, _options.EnforceEnums, objectPath)) :
                 CustomCallStack.Run(deserializeIntoCollection(valueType, cat.Value, elem, intoObj, _options.EnforceEnums, objectPath));
 
             foreach (var action in _doAtTheEnd)
@@ -543,7 +543,7 @@ public static class Classify
 
                 // Remember the result if something else refers to it
                 if (_format.IsReferable(elem))
-                    _rememberDeser[_format.GetReferenceID(elem)] = new DeclassifyRememberedObject
+                    rememberDeser[_format.GetReferenceID(elem)] = new declassifyRememberedObject
                     {
                         WithDesubstitution = withDesubstitution,
                         WithoutDesubstitution = withoutDesubstitution
@@ -557,7 +557,7 @@ public static class Classify
                 var refID = _format.GetReferenceID(elem);
                 return _ => new Func<object>(() =>
                 {
-                    if (!_rememberDeser.TryGetValue(refID, out var inf))
+                    if (!rememberDeser.TryGetValue(refID, out var inf))
                         _format.ThrowMissingReferable(refID);
                     if (declaredType == substType)
                         return inf.WithoutDesubstitution();
@@ -571,7 +571,7 @@ public static class Classify
             }
 
             var serializedType = substType;
-            var typeName = _format.GetType(elem, out var isFullType);
+            var (typeName, isFullType) = _format.GetType(elem);
             if (typeName != null)
             {
                 if (isFullType)
@@ -612,7 +612,7 @@ public static class Classify
                 TElement[] values;
                 if (genericDefinition == typeof(KeyValuePair<,>))
                 {
-                    _format.GetKeyValuePair(elem, out var key, out var value);
+                    var (key, value) = _format.GetKeyValuePair(elem);
                     values = new[] { key, value };
                 }
                 else
@@ -659,24 +659,24 @@ public static class Classify
                 WorkNode<Func<object>> workNode;
                 switch (cat)
                 {
-                    case CollectionCategory.SimpleKeyedDictionary:
+                    case collectionCategory.SimpleKeyedDictionary:
                         workNode = deserializeIntoDictionary(keyType, valueType, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(IDictionary<,>) ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : serializedType), enforceEnums, objectPath);
                         break;
 
-                    case CollectionCategory.Array:
+                    case collectionCategory.Array:
                         workNode = deserializeIntoArray(serializedType, valueType, elem, null, enforceEnums, objectPath);
                         break;
 
-                    case CollectionCategory.Stack:
-                        workNode = deserializeIntoCollection(valueType, CollectionCategory.Stack, elem, already ?? Activator.CreateInstance(typeof(Stack<>).MakeGenericType(valueType)), enforceEnums, objectPath);
+                    case collectionCategory.Stack:
+                        workNode = deserializeIntoCollection(valueType, collectionCategory.Stack, elem, already ?? Activator.CreateInstance(typeof(Stack<>).MakeGenericType(valueType)), enforceEnums, objectPath);
                         break;
 
-                    case CollectionCategory.Queue:
-                        workNode = deserializeIntoCollection(valueType, CollectionCategory.Queue, elem, already ?? Activator.CreateInstance(typeof(Queue<>).MakeGenericType(valueType)), enforceEnums, objectPath);
+                    case collectionCategory.Queue:
+                        workNode = deserializeIntoCollection(valueType, collectionCategory.Queue, elem, already ?? Activator.CreateInstance(typeof(Queue<>).MakeGenericType(valueType)), enforceEnums, objectPath);
                         break;
 
-                    case CollectionCategory.Other:
-                        workNode = deserializeIntoCollection(valueType, CollectionCategory.Other, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType), enforceEnums, objectPath);
+                    case collectionCategory.Other:
+                        workNode = deserializeIntoCollection(valueType, collectionCategory.Other, elem, already ?? Activator.CreateInstance(genericDefinition == typeof(ICollection<>) || genericDefinition == typeof(IList<>) ? typeof(List<>).MakeGenericType(valueType) : serializedType), enforceEnums, objectPath);
                         break;
 
                     case null:
@@ -903,14 +903,14 @@ public static class Classify
         ///     <c>true</c> if <c>[ClassifyEnforceEnums]</c> semantics are in effect for this object.</param>
         /// <param name="objectPath">
         ///     Describes the chain of objects leading up to here.</param>
-        private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, CollectionCategory cat, TElement elem, object already, bool enforceEnums, string objectPath)
+        private WorkNode<Func<object>> deserializeIntoCollection(Type valueType, collectionCategory cat, TElement elem, object already, bool enforceEnums, string objectPath)
         {
             if (already is IClassifyObjectProcessor<TElement> list)
                 list.BeforeDeserialize(elem);
 
-            var baseType = cat == CollectionCategory.Stack ? typeof(Stack<>) : cat == CollectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>);
+            var baseType = cat == collectionCategory.Stack ? typeof(Stack<>) : cat == collectionCategory.Queue ? typeof(Queue<>) : typeof(ICollection<>);
             baseType.MakeGenericType(valueType).GetMethod("Clear", Type.EmptyTypes).Invoke(already, null);
-            var addMethod = baseType.MakeGenericType(valueType).GetMethod(cat == CollectionCategory.Stack ? "Push" : cat == CollectionCategory.Queue ? "Enqueue" : "Add", new Type[] { valueType });
+            var addMethod = baseType.MakeGenericType(valueType).GetMethod(cat == collectionCategory.Stack ? "Push" : cat == collectionCategory.Queue ? "Enqueue" : "Add", new Type[] { valueType });
             var e = _format.GetList(elem, null).GetEnumerator();
             var adders = new List<Func<object>>();
             var ix = -1;
@@ -947,7 +947,7 @@ public static class Classify
         ///     Receives the type of the values if <paramref name="type"/> turns out to be a collection.</param>
         /// <returns>
         ///     <c>null</c> if the type is not a supported collection type, otherwise the category of collection.</returns>
-        private static CollectionCategory? tryGetCollectionInfo(Type type, out Type keyType, out Type valueType)
+        private static collectionCategory? tryGetCollectionInfo(Type type, out Type keyType, out Type valueType)
         {
             keyType = null;
             valueType = null;
@@ -955,7 +955,7 @@ public static class Classify
             if (type.IsArray)
             {
                 valueType = type.GetElementType();
-                return CollectionCategory.Array;
+                return collectionCategory.Array;
             }
             else if (type.TryGetGenericParameters(typeof(IDictionary<,>), out var typeParams) && (typeParams[0].IsEnum || _simpleTypes.Contains(typeParams[0])))
             {
@@ -963,28 +963,28 @@ public static class Classify
                 // (More complex dictionaries are classified by treating them as an ICollection<KeyValuePair<K,V>>)
                 keyType = typeParams[0];
                 valueType = typeParams[1];
-                return CollectionCategory.SimpleKeyedDictionary;
+                return collectionCategory.SimpleKeyedDictionary;
             }
             else if (type.TryGetGenericParameters(typeof(ICollection<>), out typeParams))
             {
                 valueType = typeParams[0];
-                return CollectionCategory.Other;
+                return collectionCategory.Other;
             }
             else if (type.TryGetGenericParameters(typeof(Queue<>), out typeParams))
             {
                 valueType = typeParams[0];
-                return CollectionCategory.Queue;
+                return collectionCategory.Queue;
             }
             else if (type.TryGetGenericParameters(typeof(Stack<>), out typeParams))
             {
                 valueType = typeParams[0];
-                return CollectionCategory.Stack;
+                return collectionCategory.Stack;
             }
 
             return null;
         }
 
-        private struct DeserializeFieldInfo
+        private struct deserializeFieldInfo
         {
             public FieldInfo FieldToAssignTo;
             public TElement ElementToAssign;
@@ -998,7 +998,7 @@ public static class Classify
             if (intoObj is IClassifyObjectProcessor<TElement> objT)
                 objT.BeforeDeserialize(elem);
 
-            var infos = new List<DeserializeFieldInfo>();
+            var infos = new List<deserializeFieldInfo>();
             var globalClassifyName = type.GetCustomAttributes<ClassifyNameAttribute>().FirstOrDefault();
             if (globalClassifyName != null && globalClassifyName.SerializedName != null)
                 throw new InvalidOperationException("A [ClassifyName] attribute on a type can only specify a ClassifyNameConvention, not an alternative name.");
@@ -1051,7 +1051,7 @@ public static class Classify
                     var value = _format.GetField(elem, rFieldName, fieldDeclaringType);
                     if (!_format.IsNull(value) || !hasClassifyAttribute<ClassifyNotNullAttribute>(getAttrsFrom))
                     {
-                        var inf = new DeserializeFieldInfo
+                        var inf = new deserializeFieldInfo
                         {
                             FieldToAssignTo = field,
                             DeserializeAsType = field.FieldType,
@@ -1157,15 +1157,15 @@ public static class Classify
             }
 
             // Preserve reference equality of objects before type substitution
-            if (saveObject != null && _rememberSer.TryGetValue(saveObject, out var previousOriginalObject))
+            if (saveObject != null && rememberSer.TryGetValue(saveObject, out var previousOriginalObject))
             {
                 if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
                 {
-                    if (!_requireRefId.TryGetValue(previousOriginalObject, out var refId))
+                    if (!requireRefId.TryGetValue(previousOriginalObject, out var refId))
                     {
                         refId = _nextId;
                         _nextId++;
-                        _requireRefId[previousOriginalObject] = refId;
+                        requireRefId[previousOriginalObject] = refId;
                     }
                     return () => _format.FormatReference(refId);
                 }
@@ -1186,15 +1186,15 @@ public static class Classify
                 saveType = typeOptions.Substitutor.SubstituteType;
 
                 // Preserve reference identity of the substitute objects
-                if (saveObject != null && _rememberSer.TryGetValue(saveObject, out previousOriginalObject))
+                if (saveObject != null && rememberSer.TryGetValue(saveObject, out previousOriginalObject))
                 {
                     if (_options.SerializationEqualityComparer.Equals(previousOriginalObject, saveObject))
                     {
-                        if (!_requireRefId.TryGetValue(previousOriginalObject, out var refId))
+                        if (!requireRefId.TryGetValue(previousOriginalObject, out var refId))
                         {
                             refId = _nextId;
                             _nextId++;
-                            _requireRefId[previousOriginalObject] = refId;
+                            requireRefId[previousOriginalObject] = refId;
                         }
                         return () => _format.FormatReference(refId);
                     }
@@ -1207,12 +1207,12 @@ public static class Classify
 
                 // Remember the substituted object so that we can detect cycles and maintain reference equality
                 if (saveObject != null)
-                    _rememberSer[saveObject] = saveObject;
+                    rememberSer[saveObject] = saveObject;
             }
 
             // Remember this object so that we can detect cycles and maintain reference equality
             if (originalObject != null)
-                _rememberSer[originalObject] = originalObject;
+                rememberSer[originalObject] = originalObject;
 
             if (saveObject == null)
                 return () => _format.FormatNullValue();
@@ -1363,7 +1363,7 @@ public static class Classify
                     {
                         retrieved = true;
                         retrievedElem = previousElem();
-                        if (_requireRefId.TryGetValue(originalObject, out var refId) || _requireRefId.TryGetValue(saveObject, out refId))
+                        if (requireRefId.TryGetValue(originalObject, out var refId) || requireRefId.TryGetValue(saveObject, out refId))
                             retrievedElem = _format.FormatReferable(retrievedElem, refId);
                         if (saveObject is IClassifyObjectProcessor<TElement> objE)
                             objE.AfterSerialize(retrievedElem);
@@ -1375,9 +1375,9 @@ public static class Classify
 
             // If the object is not considered reference-equal to itself, remove it from _rememberSer (we only put it in there to detect cycles).
             if (originalObject != null && !_options.SerializationEqualityComparer.Equals(originalObject, originalObject))
-                _rememberSer.Remove(originalObject);
+                rememberSer.Remove(originalObject);
             if (saveObject != null && !_options.SerializationEqualityComparer.Equals(saveObject, saveObject))
-                _rememberSer.Remove(saveObject);
+                rememberSer.Remove(saveObject);
 
             return elem;
         }
@@ -1836,17 +1836,17 @@ public sealed class ClassifyOptions
         set
         {
             _serializationEqualityComparer = value;
-            ActualEqualityComparer = new ActualComparer(value);
+            ActualEqualityComparer = new actualComparer(value);
         }
     }
     private IEqualityComparer<object> _serializationEqualityComparer;
 
     internal IEqualityComparer<object> ActualEqualityComparer { get; private set; }
 
-    class ActualComparer : IEqualityComparer<object>
+    class actualComparer : IEqualityComparer<object>
     {
         private IEqualityComparer<object> _parent;
-        public ActualComparer(IEqualityComparer<object> parent) { _parent = parent; }
+        public actualComparer(IEqualityComparer<object> parent) { _parent = parent; }
         public new bool Equals(object x, object y) => ReferenceEquals(x, y) || _parent.Equals(x, y);
         public int GetHashCode(object obj) => obj.GetHashCode();
     }
@@ -1940,8 +1940,8 @@ internal sealed class ClassifyTypeOptions
     public List<IClassifyTypeProcessor> TypeProcessors;
     public List<object> TypeElementProcessors;
 
-    public void AddTypeProcessor(IClassifyTypeProcessor processor) => ( TypeProcessors ??= new List<IClassifyTypeProcessor>()).Add(processor);
-    public void AddElementTypeProcessor(object processor) => ( TypeElementProcessors ??= new List<object>()).Add(processor);
+    public void AddTypeProcessor(IClassifyTypeProcessor processor) => (TypeProcessors ??= new List<IClassifyTypeProcessor>()).Add(processor);
+    public void AddElementTypeProcessor(object processor) => (TypeElementProcessors ??= new List<object>()).Add(processor);
 
     public void BeforeSerialize<TElement>(object obj)
     {

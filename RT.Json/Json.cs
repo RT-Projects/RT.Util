@@ -1243,10 +1243,10 @@ public abstract class JsonValue : DynamicObject, IEquatable<JsonValue>
 [Serializable]
 public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
 {
-    internal List<JsonValue> List;
+    internal List<JsonValue> _list;
 
     /// <summary>Constructs an empty list.</summary>
-    public JsonList() { List = []; }
+    public JsonList() { _list = []; }
 
     /// <summary>
     ///     Constructs a <see cref="JsonList"/> instance containing a copy of the specified collection of <paramref
@@ -1255,8 +1255,8 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         if (items == null)
             throw new ArgumentNullException(nameof(items));
-        List = new List<JsonValue>(items is ICollection<JsonValue> collection ? collection.Count + 2 : 4);
-        List.AddRange(items);
+        _list = new List<JsonValue>(items is ICollection<JsonValue> collection ? collection.Count + 2 : 4);
+        _list.AddRange(items);
     }
 
     /// <summary>
@@ -1306,7 +1306,7 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     protected override JsonList getList(bool safe) => this;
 
     /// <summary>Enumerates the values in this list.</summary>
-    public IEnumerator<JsonValue> GetEnumerator() => List.GetEnumerator();
+    public IEnumerator<JsonValue> GetEnumerator() => _list.GetEnumerator();
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -1344,7 +1344,7 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     {
         yield return "[";
         bool first = true;
-        foreach (var value in List)
+        foreach (var value in _list)
         {
             if (!first)
                 yield return ",";
@@ -1358,23 +1358,23 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
     public override void AppendIndented(StringBuilder sb, int indentation = 0)
     {
-        if (List.Count == 0)
+        if (_list.Count == 0)
         {
             sb.Append("[]");
             return;
         }
 
-        if (List.Count == 1)
+        if (_list.Count == 1)
         {
             sb.Append("[ ");
-            JsonValue.AppendIndented(List[0], sb, indentation);
+            JsonValue.AppendIndented(_list[0], sb, indentation);
             sb.Append(" ]");
             return;
         }
 
         sb.Append("[");
         bool first = true;
-        foreach (var value in List)
+        foreach (var value in _list)
         {
             if (!first)
                 sb.Append(",");
@@ -1391,10 +1391,10 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     }
 
     /// <summary>Removes all items from the current list.</summary>
-    public override void Clear() { List.Clear(); }
+    public override void Clear() { _list.Clear(); }
 
     /// <summary>Returns the number of items in the current list.</summary>
-    public override int Count => List.Count;
+    public override int Count => _list.Count;
 
     /// <summary>Returns true.</summary>
     public override bool IsContainer => true;
@@ -1402,36 +1402,36 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     /// <summary>Returns the item at the specified <paramref name="index"/> within the current list.</summary>
     public override JsonValue this[int index]
     {
-        get { return List[index]; }
-        set { List[index] = value; }
+        get { return _list[index]; }
+        set { _list[index] = value; }
     }
 
     /// <summary>Adds the specified <paramref name="item"/> to the current list.</summary>
-    public override void Add(JsonValue item) { List.Add(item); }
+    public override void Add(JsonValue item) { _list.Add(item); }
 
     /// <summary>Adds the specified <paramref name="items"/> to the current list.</summary>
-    public override void AddRange(IEnumerable<JsonValue> items) { List.AddRange(items); }
+    public override void AddRange(IEnumerable<JsonValue> items) { _list.AddRange(items); }
 
     /// <summary>
     ///     Removes the first instance of the specified <paramref name="item"/> from the current list.</summary>
     /// <returns>
     ///     True if an item was removed; otherwise, false.</returns>
-    public override bool Remove(JsonValue item) => List.Remove(item);
+    public override bool Remove(JsonValue item) => _list.Remove(item);
 
     /// <summary>Determines whether the specified <paramref name="item"/> is contained in the current list.</summary>
-    public override bool Contains(JsonValue item) => List.Contains(item);
+    public override bool Contains(JsonValue item) => _list.Contains(item);
 
     /// <summary>Inserts the specified <paramref name="item"/> at the specified <paramref name="index"/> to the current list.</summary>
-    public override void Insert(int index, JsonValue item) { List.Insert(index, item); }
+    public override void Insert(int index, JsonValue item) { _list.Insert(index, item); }
 
     /// <summary>Removes the item at the specified <paramref name="index"/> from the current list.</summary>
-    public override void RemoveAt(int index) { List.RemoveAt(index); }
+    public override void RemoveAt(int index) { _list.RemoveAt(index); }
 
     /// <summary>
     ///     Returns the index of the first occurrence of the specified <paramref name="item"/> within the current list.</summary>
     /// <returns>
     ///     The index of the item, or -1 if the item is not in the list.</returns>
-    public override int IndexOf(JsonValue item) => List.IndexOf(item);
+    public override int IndexOf(JsonValue item) => _list.IndexOf(item);
 
     /// <summary>
     ///     Copies the entire list to a compatible one-dimensional <paramref name="array"/>, starting at the specified
@@ -1441,7 +1441,7 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
     ///     zero-based indexing.</param>
     /// <param name="arrayIndex">
     ///     The zero-based index in array at which copying begins.</param>
-    public override void CopyTo(JsonValue[] array, int arrayIndex) { List.CopyTo(array, arrayIndex); }
+    public override void CopyTo(JsonValue[] array, int arrayIndex) { _list.CopyTo(array, arrayIndex); }
 
     bool ICollection<JsonValue>.IsReadOnly => false;
 }
@@ -1450,19 +1450,19 @@ public sealed class JsonList : JsonValue, IList<JsonValue>, IEquatable<JsonList>
 [Serializable]
 public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquatable<JsonDict>
 {
-    internal Dictionary<string, JsonValue> Dict;
+    internal Dictionary<string, JsonValue> _dict;
 
     /// <summary>Constructs an empty dictionary.</summary>
-    public JsonDict() { Dict = []; }
+    public JsonDict() { _dict = []; }
 
     /// <summary>Constructs a dictionary containing a copy of the specified collection of key/value pairs.</summary>
     public JsonDict(IEnumerable<KeyValuePair<string, JsonValue>> items)
     {
         if (items == null)
             throw new ArgumentNullException(nameof(items));
-        Dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> collection ? collection.Count + 2 : 4);
+        _dict = new Dictionary<string, JsonValue>(items is ICollection<KeyValuePair<string, JsonValue>> collection ? collection.Count + 2 : 4);
         foreach (var item in items)
-            Dict.Add(item.Key, item.Value);
+            _dict.Add(item.Key, item.Value);
     }
 
     /// <summary>
@@ -1510,7 +1510,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     protected override JsonDict getDict(bool safe) => this;
 
     /// <summary>Enumerates the key/value pairs in this dictionary.</summary>
-    public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator() => Dict.GetEnumerator();
+    public IEnumerator<KeyValuePair<string, JsonValue>> GetEnumerator() => _dict.GetEnumerator();
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -1518,19 +1518,19 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
 
     void ICollection<KeyValuePair<string, JsonValue>>.Add(KeyValuePair<string, JsonValue> item)
     {
-        ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Add(item);
+        ((ICollection<KeyValuePair<string, JsonValue>>) _dict).Add(item);
     }
     bool ICollection<KeyValuePair<string, JsonValue>>.Remove(KeyValuePair<string, JsonValue> item)
     {
-        return ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Remove(item);
+        return ((ICollection<KeyValuePair<string, JsonValue>>) _dict).Remove(item);
     }
     bool ICollection<KeyValuePair<string, JsonValue>>.Contains(KeyValuePair<string, JsonValue> item)
     {
-        return ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Contains(item);
+        return ((ICollection<KeyValuePair<string, JsonValue>>) _dict).Contains(item);
     }
     void ICollection<KeyValuePair<string, JsonValue>>.CopyTo(KeyValuePair<string, JsonValue>[] array, int arrayIndex)
     {
-        ((ICollection<KeyValuePair<string, JsonValue>>) Dict).CopyTo(array, arrayIndex);
+        ((ICollection<KeyValuePair<string, JsonValue>>) _dict).CopyTo(array, arrayIndex);
     }
 
     #endregion
@@ -1573,7 +1573,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     {
         yield return "{";
         bool first = true;
-        foreach (var kvp in Dict)
+        foreach (var kvp in _dict)
         {
             if (!first)
                 yield return ",";
@@ -1589,16 +1589,16 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     /// <summary>Converts the JSON value to a JSON string that parses back to this value. Supports null values.</summary>
     public override void AppendIndented(StringBuilder sb, int indentation = 0)
     {
-        if (Dict.Count == 0)
+        if (_dict.Count == 0)
         {
             sb.Append("{}");
             return;
         }
 
-        if (Dict.Count == 1)
+        if (_dict.Count == 1)
         {
             sb.Append("{ ");
-            foreach (var kvp in Dict)
+            foreach (var kvp in _dict)
             {
                 sb.Append(kvp.Key.JsEscape(Internal.JsQuotes.Double));
                 sb.Append(": ");
@@ -1610,7 +1610,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
 
         sb.Append("{");
         bool first = true;
-        foreach (var kvp in Dict.OrderBy(kvp => kvp.Key))
+        foreach (var kvp in _dict.OrderBy(kvp => kvp.Key))
         {
             if (!first)
                 sb.Append(",");
@@ -1629,10 +1629,10 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     }
 
     /// <summary>Removes all items from the current dictionary.</summary>
-    public override void Clear() { Dict.Clear(); }
+    public override void Clear() { _dict.Clear(); }
 
     /// <summary>Returns the number of items in the current dictionary.</summary>
-    public override int Count => Dict.Count;
+    public override int Count => _dict.Count;
 
     /// <summary>Returns true.</summary>
     public override bool IsContainer => true;
@@ -1640,15 +1640,15 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     /// <summary>Gets or sets the value associated with the specified <paramref name="key"/>.</summary>
     public override JsonValue this[string key]
     {
-        get { return Dict[key]; }
-        set { Dict[key] = value; }
+        get { return _dict[key]; }
+        set { _dict[key] = value; }
     }
 
     /// <summary>Returns the keys contained in the dictionary.</summary>
-    public override ICollection<string> Keys => Dict.Keys;
+    public override ICollection<string> Keys => _dict.Keys;
 
     /// <summary>Returns the values contained in the dictionary.</summary>
-    public override ICollection<JsonValue> Values => Dict.Values;
+    public override ICollection<JsonValue> Values => _dict.Values;
 
     /// <summary>
     ///     Attempts to retrieve the value associated with the specified <paramref name="key"/>.</summary>
@@ -1659,7 +1659,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     ///     dictionary. (Note that null may also be a valid value in case of success.)</param>
     /// <returns>
     ///     True if the key was in the dictionary; otherwise, false.</returns>
-    public override bool TryGetValue(string key, out JsonValue value) => Dict.TryGetValue(key, out value);
+    public override bool TryGetValue(string key, out JsonValue value) => _dict.TryGetValue(key, out value);
 
     /// <summary>
     ///     Adds the specified key/value pair to the dictionary.</summary>
@@ -1667,13 +1667,13 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     ///     The key to add.</param>
     /// <param name="value">
     ///     The value to add.</param>
-    public override void Add(string key, JsonValue value) { Dict.Add(key, value); }
+    public override void Add(string key, JsonValue value) { _dict.Add(key, value); }
 
     /// <summary>Adds the specified key/value pairs to the dictionary.</summary>
     public override void AddRange(IEnumerable<KeyValuePair<string, JsonValue>> items)
     {
         foreach (var item in items)
-            ((ICollection<KeyValuePair<string, JsonValue>>) Dict).Add(item);
+            ((ICollection<KeyValuePair<string, JsonValue>>) _dict).Add(item);
     }
 
     /// <summary>
@@ -1682,10 +1682,10 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     ///     The key that identifies the entry to remove.</param>
     /// <returns>
     ///     True if an entry was removed; false if the key wasn’t in the dictionary.</returns>
-    public override bool Remove(string key) => Dict.Remove(key);
+    public override bool Remove(string key) => _dict.Remove(key);
 
     /// <summary>Determines whether an entry with the specified <paramref name="key"/> exists in the dictionary.</summary>
-    public override bool ContainsKey(string key) => Dict.ContainsKey(key);
+    public override bool ContainsKey(string key) => _dict.ContainsKey(key);
 
     bool ICollection<KeyValuePair<string, JsonValue>>.IsReadOnly => false;
 
@@ -1697,7 +1697,7 @@ public sealed class JsonDict : JsonValue, IDictionary<string, JsonValue>, IEquat
     ///         Console.WriteLine(dict.List.Count);     // outputs 3</code></example>
     public override bool TryGetMember(GetMemberBinder binder, out object result)
     {
-        if (Dict.TryGetValue(binder.Name, out var value))
+        if (_dict.TryGetValue(binder.Name, out var value))
         {
             result = value;
             return true;
@@ -1940,9 +1940,9 @@ public sealed class JsonString(string value) : JsonValue, IEquatable<JsonString>
 public sealed class JsonBool(bool value) : JsonValue, IEquatable<JsonBool>
 {
     /// <summary>Contains a ready-made instance of <see cref="JsonBool"/> containig a <c>false</c> value.</summary>
-    public static readonly JsonBool False = new JsonBool(false);
+    public static readonly JsonBool False = new(false);
     /// <summary>Contains a ready-made instance of <see cref="JsonBool"/> containig a <c>true</c> value.</summary>
-    public static readonly JsonBool True = new JsonBool(true);
+    public static readonly JsonBool True = new(true);
 
     private bool _value = value;
 
@@ -2081,7 +2081,7 @@ public sealed class JsonBool(bool value) : JsonValue, IEquatable<JsonBool>
 public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
 {
     [Serializable]
-    private sealed class JSLong(long value) : JsonNumber
+    private sealed class jsLong(long value) : JsonNumber
     {
         public long Value = value;
 
@@ -2177,7 +2177,7 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     }
 
     [Serializable]
-    private sealed class JSULong(ulong value) : JsonNumber
+    private sealed class jsULong(ulong value) : JsonNumber
     {
         public ulong Value = value;
 
@@ -2271,7 +2271,7 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     }
 
     [Serializable]
-    private sealed class JSDouble(double value) : JsonNumber
+    private sealed class jsDouble(double value) : JsonNumber
     {
         public double Value = value;
 
@@ -2372,14 +2372,14 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     public static JsonNumber Create(double value) =>
         double.IsNaN(value) || double.IsInfinity(value)
             ? throw new ArgumentException("JSON disallows NaNs and infinities.", nameof(value))
-            : new JSDouble(value);
+            : new jsDouble(value);
 
     /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 64-bit integer.</summary>
-    public static JsonNumber Create(long value) => new JSLong(value);
+    public static JsonNumber Create(long value) => new jsLong(value);
     /// <summary>Constructs a <see cref="JsonNumber"/> from the specified unsigned 64-bit integer.</summary>
-    public static JsonNumber Create(ulong value) => new JSULong(value);
+    public static JsonNumber Create(ulong value) => new jsULong(value);
     /// <summary>Constructs a <see cref="JsonNumber"/> from the specified 32-bit integer.</summary>
-    public static JsonNumber Create(int value) => new JSLong(value);
+    public static JsonNumber Create(int value) => new jsLong(value);
 
     /// <summary>
     ///     Constructs a <see cref="JsonNumber"/> from the specified decimal. This operation is slightly lossy; see Remarks on
@@ -2387,11 +2387,11 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     public static JsonNumber Create(decimal value) =>
         value == decimal.Truncate(value)
             ? value >= long.MinValue && value <= long.MaxValue
-                ? new JSLong((long) value)
+                ? new jsLong((long) value)
                 : value >= ulong.MinValue && value <= ulong.MaxValue
-                    ? new JSULong((ulong) value)
-                    : (JsonNumber) new JSDouble((double) value)
-            : new JSDouble((double) value);
+                    ? new jsULong((ulong) value)
+                    : (JsonNumber) new jsDouble((double) value)
+            : new jsDouble((double) value);
 
     /// <summary>
     ///     Parses the specified JSON as a JSON number. All other types of JSON values result in a <see
@@ -2432,21 +2432,21 @@ public abstract class JsonNumber : JsonValue, IEquatable<JsonNumber>
     }
 
     /// <summary>Converts the specified double to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(double value) => new JSDouble(value);
+    public static implicit operator JsonNumber(double value) => new jsDouble(value);
     /// <summary>Converts the specified nullable double to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(double? value) => value == null ? null : new JSDouble(value.Value);
+    public static implicit operator JsonNumber(double? value) => value == null ? null : new jsDouble(value.Value);
     /// <summary>Converts the specified unsigned 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(ulong value) => new JSULong(value);
+    public static implicit operator JsonNumber(ulong value) => new jsULong(value);
     /// <summary>Converts the specified nullable unsigned 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(ulong? value) => value == null ? null : new JSULong(value.Value);
+    public static implicit operator JsonNumber(ulong? value) => value == null ? null : new jsULong(value.Value);
     /// <summary>Converts the specified 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(long value) => new JSLong(value);
+    public static implicit operator JsonNumber(long value) => new jsLong(value);
     /// <summary>Converts the specified nullable 64-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(long? value) => value == null ? null : new JSLong(value.Value);
+    public static implicit operator JsonNumber(long? value) => value == null ? null : new jsLong(value.Value);
     /// <summary>Converts the specified 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(int value) => new JSLong(value);
+    public static implicit operator JsonNumber(int value) => new jsLong(value);
     /// <summary>Converts the specified nullable 32-bit integer to a <see cref="JsonNumber"/> value.</summary>
-    public static implicit operator JsonNumber(int? value) => value == null ? null : new JSLong(value.Value);
+    public static implicit operator JsonNumber(int? value) => value == null ? null : new jsLong(value.Value);
     /// <summary>
     ///     Converts the specified decimal to a <see cref="JsonNumber"/> value. This operator is slightly lossy; see Remarks
     ///     on <see cref="JsonNumber"/>.</summary>

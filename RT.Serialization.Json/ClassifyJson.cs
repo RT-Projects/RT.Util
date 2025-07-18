@@ -26,10 +26,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.DeserializeFile<JsonValue, T>(filename, format ?? DefaultFormat, options);
-    }
+    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.DeserializeFile<JsonValue, T>(filename, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -43,10 +41,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.DeserializeFile(type, filename, format ?? DefaultFormat, options);
-    }
+    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.DeserializeFile(type, filename, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -60,10 +56,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T Deserialize<T>(string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Deserialize<JsonValue, T>(JsonValue.Parse(json), format ?? DefaultFormat, options);
-    }
+    public static T Deserialize<T>(string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Deserialize<JsonValue, T>(JsonValue.Parse(json), format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -77,10 +71,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T Deserialize<T>(JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Deserialize<JsonValue, T>(json, format ?? DefaultFormat, options);
-    }
+    public static T Deserialize<T>(JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Deserialize<JsonValue, T>(json, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -94,10 +86,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object Deserialize(Type type, string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Deserialize(type, JsonValue.Parse(json), format ?? DefaultFormat, options);
-    }
+    public static object Deserialize(Type type, string json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Deserialize(type, JsonValue.Parse(json), format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -111,10 +101,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object Deserialize(Type type, JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Deserialize(type, json, format ?? DefaultFormat, options);
-    }
+    public static object Deserialize(Type type, JsonValue json, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Deserialize(type, json, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form by applying the values to an
@@ -129,10 +117,8 @@ public static class ClassifyJson
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
-    public static void DeserializeIntoObject<T>(string json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
+    public static void DeserializeIntoObject<T>(string json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
         Classify.DeserializeIntoObject(JsonValue.Parse(json), intoObject, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form by applying the values to an
@@ -147,10 +133,8 @@ public static class ClassifyJson
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
-    public static void DeserializeIntoObject<T>(JsonValue json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
+    public static void DeserializeIntoObject<T>(JsonValue json, T intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
         Classify.DeserializeIntoObject(json, intoObject, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
@@ -164,10 +148,8 @@ public static class ClassifyJson
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
-    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
+    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
         Classify.DeserializeFileIntoObject(filename, intoObject, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -181,10 +163,8 @@ public static class ClassifyJson
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
-    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
+    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
         Classify.SerializeToFile(saveObject, filename, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -198,10 +178,8 @@ public static class ClassifyJson
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
-    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
+    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
         Classify.SerializeToFile(saveType, saveObject, filename, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Converts the specified object into a serialized form.</summary>
@@ -215,10 +193,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     The serialized form generated from the object.</returns>
-    public static JsonValue Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Serialize(saveObject, format ?? DefaultFormat, options);
-    }
+    public static JsonValue Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Serialize(saveObject, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Converts the specified object into a serialized form.</summary>
@@ -232,10 +208,8 @@ public static class ClassifyJson
     ///     Implementation of a Classify format. See <see cref="ClassifyJsonFormat"/> for an example.</param>
     /// <returns>
     ///     The serialized form generated from the object.</returns>
-    public static JsonValue Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null)
-    {
-        return Classify.Serialize(saveType, saveObject, format ?? DefaultFormat, options);
-    }
+    public static JsonValue Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<JsonValue> format = null) =>
+        Classify.Serialize(saveType, saveObject, format ?? DefaultFormat, options);
 }
 
 /// <summary>
@@ -259,26 +233,20 @@ public interface IClassifyJsonTypeProcessor : IClassifyTypeProcessor<JsonValue>
 public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
 {
     /// <summary>Gets the JSON Classify format with all options at their defaults.</summary>
-    public static IClassifyFormat<JsonValue> Default { get { return _default ?? (_default = new ClassifyJsonFormat()); } }
+    public static IClassifyFormat<JsonValue> Default => _default ??= new ClassifyJsonFormat();
     private static ClassifyJsonFormat _default;
 
     private ClassifyJsonFormat() { }
 
-    JsonValue IClassifyFormat<JsonValue>.ReadFromStream(Stream stream)
-    {
-        return JsonValue.Parse(stream.ReadAllText());
-    }
+    JsonValue IClassifyFormat<JsonValue>.ReadFromStream(Stream stream) => JsonValue.Parse(stream.ReadAllText());
 
     void IClassifyFormat<JsonValue>.WriteToStream(JsonValue element, Stream stream)
     {
-        using (var textWriter = new StreamWriter(stream, Encoding.UTF8))
-            textWriter.Write(JsonValue.ToStringIndented(element));
+        using var textWriter = new StreamWriter(stream, Encoding.UTF8);
+        textWriter.Write(JsonValue.ToStringIndented(element));
     }
 
-    bool IClassifyFormat<JsonValue>.IsNull(JsonValue element)
-    {
-        return element == null || element is JsonNoValue;
-    }
+    bool IClassifyFormat<JsonValue>.IsNull(JsonValue element) => element is null or JsonNoValue;
 
     object IClassifyFormat<JsonValue>.GetSimpleValue(JsonValue element)
     {
@@ -288,39 +256,32 @@ public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
         return
             element is JsonString ? element.GetString() :
             element is JsonBool ? element.GetBool() :
-            element is JsonNumber ? ((JsonNumber) element).RawValue :
+            element is JsonNumber number ? number.RawValue :
             null;
     }
 
-    JsonValue IClassifyFormat<JsonValue>.GetSelfValue(JsonValue element)
-    {
-        return element[":value"];
-    }
+    JsonValue IClassifyFormat<JsonValue>.GetSelfValue(JsonValue element) => element[":value"];
 
     IEnumerable<JsonValue> IClassifyFormat<JsonValue>.GetList(JsonValue element, int? tupleSize) =>
         element is JsonDict && element.ContainsKey(":value") ? element[":value"].GetList() : element.GetList();
 
-    void IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element, out JsonValue key, out JsonValue value)
+    (JsonValue key, JsonValue value) IClassifyFormat<JsonValue>.GetKeyValuePair(JsonValue element)
     {
         if (element is JsonDict && element.ContainsKey(":value"))
             element = element[":value"];
-        key = element[0];
-        value = element[1];
+        return (element[0], element[1]);
     }
 
-    IEnumerable<KeyValuePair<object, JsonValue>> IClassifyFormat<JsonValue>.GetDictionary(JsonValue element)
-    {
-        return element.GetDict()
+    IEnumerable<KeyValuePair<object, JsonValue>> IClassifyFormat<JsonValue>.GetDictionary(JsonValue element) => element.GetDict()
             .Where(kvp => !kvp.Key.StartsWith(":") || kvp.Key.StartsWith("::"))
             .Select(kvp => new KeyValuePair<object, JsonValue>(kvp.Key.StartsWith(":") ? kvp.Key.Substring(1) : kvp.Key, kvp.Value));
-    }
 
     bool IClassifyFormat<JsonValue>.HasField(JsonValue element, string fieldName, string declaringType)
     {
         if (fieldName.StartsWith(':'))
             fieldName = ":" + fieldName;
         return element is JsonDict && element.ContainsKey(fieldName) && (
-            !(element[fieldName] is JsonDict) ||
+            element[fieldName] is not JsonDict ||
             !element[fieldName].ContainsKey(":declaringTypes") ||
             element[fieldName][":declaringTypes"].Contains(declaringType));
     }
@@ -348,50 +309,35 @@ public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
         return str == null ? null : Convert.FromBase64String(str);
     }
 
-    string IClassifyFormat<JsonValue>.GetType(JsonValue element, out bool isFullType)
+    (string type, bool isFullType) IClassifyFormat<JsonValue>.GetType(JsonValue element)
     {
-        if (element is JsonDict)
-        {
-            isFullType = element.ContainsKey(":fulltype");
-            return element.Safe[isFullType ? ":fulltype" : ":type"].GetStringSafe();
-        }
-        isFullType = false;
-        return null;
+        if (element is not JsonDict)
+            return (null, false);
+        var isFullType = element.ContainsKey(":fulltype");
+        return (element.Safe[isFullType ? ":fulltype" : ":type"].GetStringSafe(), isFullType);
     }
 
-    bool IClassifyFormat<JsonValue>.IsReference(JsonValue element)
-    {
-        return element is JsonDict && element.ContainsKey(":ref");
-    }
+    bool IClassifyFormat<JsonValue>.IsReference(JsonValue element) => element is JsonDict && element.ContainsKey(":ref");
 
-    bool IClassifyFormat<JsonValue>.IsReferable(JsonValue element)
-    {
-        return element is JsonDict && element.ContainsKey(":refid");
-    }
+    bool IClassifyFormat<JsonValue>.IsReferable(JsonValue element) => element is JsonDict && element.ContainsKey(":refid");
 
-    int IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element)
-    {
-        return
-            element.ContainsKey(":ref") ? element[":ref"].GetInt() :
-            element.ContainsKey(":refid") ? element[":refid"].GetInt() :
-            throw new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true.");
-    }
+    int IClassifyFormat<JsonValue>.GetReferenceID(JsonValue element) =>
+        element.ContainsKey(":ref") ? element[":ref"].GetInt() :
+        element.ContainsKey(":refid") ? element[":refid"].GetInt() :
+        throw new InvalidOperationException("The JSON Classify format encountered a contractual violation perpetrated by Classify. GetReferenceID() should not be called unless IsReference() or IsReferable() returned true.");
 
-    JsonValue IClassifyFormat<JsonValue>.FormatNullValue()
-    {
-        return null;
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatNullValue() => null;
 
     JsonValue IClassifyFormat<JsonValue>.FormatSimpleValue(object value)
     {
-        if (value == null)
-            return null;
-
-        // JSON can’t represent NaN and infinities, so use ExactConvert.ToString() for those.
         return value switch
         {
+            null => null,
+
+            // JSON can’t represent NaN and infinities, so use ExactConvert.ToString() for those.
             double dbl when !double.IsNaN(dbl) && !double.IsInfinity(dbl) => dbl,
             float flt when !float.IsNaN(flt) && !float.IsInfinity(flt) => flt,
+
             byte b => (long) b,
             sbyte sb => sb,
             short sh => sh,
@@ -404,77 +350,54 @@ public sealed class ClassifyJsonFormat : IClassifyFormat<JsonValue>
             bool bl => bl,
             string str => str,
             BigInteger bi => ExactConvert.Try(bi, out ulong ul) ? ul : (JsonValue) ExactConvert.ToString(bi),
+
             // This takes care of enum types, DateTime and doubles/floats that are NaN or infinities
             _ => ExactConvert.ToString(value)
         };
     }
 
-    JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(JsonValue value)
-    {
-        return new JsonDict { { ":value", value } };
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatSelfValue(JsonValue value) => new JsonDict { [":value"] = value };
 
-    JsonValue IClassifyFormat<JsonValue>.FormatList(bool isTuple, IEnumerable<JsonValue> values)
-    {
-        return new JsonList(values);
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatList(bool isTuple, IEnumerable<JsonValue> values) => new JsonList(values);
 
-    JsonValue IClassifyFormat<JsonValue>.FormatKeyValuePair(JsonValue key, JsonValue value)
-    {
-        return new JsonList(new[] { key, value });
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatKeyValuePair(JsonValue key, JsonValue value) => new JsonList([key, value]);
 
-    JsonValue IClassifyFormat<JsonValue>.FormatDictionary(IEnumerable<KeyValuePair<object, JsonValue>> values)
-    {
-        return values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key).Apply(key => key.StartsWith(":") ? ":" + key : key), kvp => kvp.Value);
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatDictionary(IEnumerable<KeyValuePair<object, JsonValue>> values) =>
+        values.ToJsonDict(kvp => ExactConvert.ToString(kvp.Key).Apply(key => key.StartsWith(':') ? ":" + key : key), kvp => kvp.Value);
 
-    JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<ObjectFieldInfo<JsonValue>> fields)
-    {
-        return new JsonDict(fields
+    JsonValue IClassifyFormat<JsonValue>.FormatObject(IEnumerable<ObjectFieldInfo<JsonValue>> fields) => new JsonDict(fields
             .GroupBy(f => f.FieldName)
             .Select(gr => new KeyValuePair<string, JsonValue>(
                 gr.Key.StartsWith(':') ? ":" + gr.Key : gr.Key,
                 gr.Skip(1).Any()
                     ? new JsonDict
-                        {
-                            { ":declaringTypes", new JsonList(gr.Select(elem => (JsonValue) elem.DeclaringType)) },
-                            { ":values", new JsonList(gr.Select(elem => (JsonValue) elem.Value)) }
-                        }
+                    {
+                        [":declaringTypes"] = new JsonList(gr.Select(elem => (JsonValue) elem.DeclaringType)),
+                        [":values"] = new JsonList(gr.Select(elem => elem.Value))
+                    }
                     : gr.First().Value
             )));
-    }
 
-    JsonValue IClassifyFormat<JsonValue>.FormatRawData(byte[] value)
-    {
-        return new JsonString(Convert.ToBase64String(value));
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatRawData(byte[] value) => new JsonString(Convert.ToBase64String(value));
 
-    JsonValue IClassifyFormat<JsonValue>.FormatReference(int refId)
-    {
-        return new JsonDict { { ":ref", refId } };
-    }
+    JsonValue IClassifyFormat<JsonValue>.FormatReference(int refId) => new JsonDict { [":ref"] = refId };
 
     JsonValue IClassifyFormat<JsonValue>.FormatReferable(JsonValue element, int refId)
     {
-        if (!(element is JsonDict))
-            return new JsonDict { { ":refid", refId }, { ":value", element } };
-
+        if (element is not JsonDict)
+            element = new JsonDict { [":value"] = element };
         element[":refid"] = refId;
         return element;
     }
 
     JsonValue IClassifyFormat<JsonValue>.FormatWithType(JsonValue element, string type, bool isFullType)
     {
-        if (!(element is JsonDict))
-            return new JsonDict { { isFullType ? ":fulltype" : ":type", type }, { ":value", element } };
-
+        if (element is not JsonDict)
+            element = new JsonDict { [":value"] = element };
         element[isFullType ? ":fulltype" : ":type"] = type;
         return element;
     }
 
-    void IClassifyFormat<JsonValue>.ThrowMissingReferable(int refID)
-    {
+    void IClassifyFormat<JsonValue>.ThrowMissingReferable(int refID) =>
         throw new InvalidOperationException($@"An object reference ("":ref"": {refID}) was encountered, but no matching object ("":refid"": {refID}) was encountered during deserialization. If such an object is present somewhere in the JSON, the relevant object was not deserialized (most likely because a field corresponding to a parent object was removed from its class declaration).");
-    }
 }

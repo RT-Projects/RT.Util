@@ -65,13 +65,9 @@ public interface IClassifyFormat<TElement>
     ///     Decodes a key-value pair.</summary>
     /// <param name="element">
     ///     The element to decode.</param>
-    /// <param name="key">
-    ///     Receives the key part of the pair.</param>
-    /// <param name="value">
-    ///     Receives the value part of the pair.</param>
     /// <remarks>
     ///     This should do the reverse of <see cref="FormatKeyValuePair"/>.</remarks>
-    void GetKeyValuePair(TElement element, out TElement key, out TElement value);
+    (TElement key, TElement value) GetKeyValuePair(TElement element);
 
     /// <summary>
     ///     Decodes a dictionary.</summary>
@@ -136,14 +132,12 @@ public interface IClassifyFormat<TElement>
     ///     Determines the type of the object stored in the specified element.</summary>
     /// <param name="element">
     ///     The element that represents an object.</param>
-    /// <param name="isFullType">
-    ///     Receives a value indicating whether the type is a fully-qualified type name or not. This value is ignored if the
-    ///     method returns <c>null</c>.</param>
     /// <returns>
-    ///     <c>null</c> if no type information was persisted in this element; otherwise, the decoded type name.</returns>
+    ///     <c>(null, false)</c> if no type information was persisted in this element; otherwise, the decoded type name and a
+    ///     boolean indicating whether the type is a fully-qualified type name or not.</returns>
     /// <remarks>
     ///     This should decode the information (the string and the boolean) encoded by <see cref="FormatWithType"/>.</remarks>
-    string GetType(TElement element, out bool isFullType);
+    (string type, bool isFullType) GetType(TElement element);
 
     /// <summary>
     ///     Determines whether this element represents a reference to another object in the same serialized graph.</summary>

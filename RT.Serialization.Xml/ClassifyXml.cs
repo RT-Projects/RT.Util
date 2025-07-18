@@ -25,10 +25,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.DeserializeFile<XElement, T>(filename, format ?? DefaultFormat, options);
-    }
+    public static T DeserializeFile<T>(string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.DeserializeFile<XElement, T>(filename, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified file.</summary>
@@ -42,10 +40,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.DeserializeFile<XElement>(type, filename, format ?? DefaultFormat, options);
-    }
+    public static object DeserializeFile(Type type, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.DeserializeFile<XElement>(type, filename, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -59,10 +55,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static T Deserialize<T>(XElement xml, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.Deserialize<XElement, T>(xml, format ?? DefaultFormat, options);
-    }
+    public static T Deserialize<T>(XElement xml, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.Deserialize<XElement, T>(xml, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form.</summary>
@@ -76,10 +70,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     A new instance of the requested type.</returns>
-    public static object Deserialize(Type type, XElement xml, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.Deserialize<XElement>(type, xml, format ?? DefaultFormat, options);
-    }
+    public static object Deserialize(Type type, XElement xml, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.Deserialize<XElement>(type, xml, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Reconstructs an object of the specified type from the specified serialized form by applying the values to an
@@ -94,10 +86,8 @@ public static class ClassifyXml
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-    public static void DeserializeIntoObject<T>(XElement xml, T intoObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
+    public static void DeserializeIntoObject<T>(XElement xml, T intoObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
         Classify.DeserializeIntoObject<XElement, T>(xml, intoObject, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Reconstructs an object from the specified file by applying the values to an existing instance of the desired type.
@@ -111,10 +101,8 @@ public static class ClassifyXml
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
+    public static void DeserializeFileIntoObject(string filename, object intoObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
         Classify.DeserializeFileIntoObject<XElement>(filename, intoObject, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -128,10 +116,8 @@ public static class ClassifyXml
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
+    public static void SerializeToFile<T>(T saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
         Classify.SerializeToFile(saveObject, filename, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Stores the specified object in a file with the given path and filename.</summary>
@@ -145,10 +131,8 @@ public static class ClassifyXml
     ///     Options.</param>
     /// <param name="format">
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
-    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
+    public static void SerializeToFile(Type saveType, object saveObject, string filename, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
         Classify.SerializeToFile(saveType, saveObject, filename, format ?? DefaultFormat, options);
-    }
 
     /// <summary>
     ///     Converts the specified object into a serialized form.</summary>
@@ -162,10 +146,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     The serialized form generated from the object.</returns>
-    public static XElement Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.Serialize(saveObject, format ?? DefaultFormat, options);
-    }
+    public static XElement Serialize<T>(T saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.Serialize(saveObject, format ?? DefaultFormat, options);
 
     /// <summary>
     ///     Converts the specified object into a serialized form.</summary>
@@ -179,10 +161,8 @@ public static class ClassifyXml
     ///     Implementation of a Classify format. See <see cref="ClassifyXmlFormat"/> for an example.</param>
     /// <returns>
     ///     The serialized form generated from the object.</returns>
-    public static XElement Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null)
-    {
-        return Classify.Serialize(saveType, saveObject, format ?? DefaultFormat, options);
-    }
+    public static XElement Serialize(Type saveType, object saveObject, ClassifyOptions options = null, IClassifyFormat<XElement> format = null) =>
+        Classify.Serialize(saveType, saveObject, format ?? DefaultFormat, options);
 }
 
 /// <summary>
@@ -207,7 +187,7 @@ public interface IClassifyXmlTypeProcessor : IClassifyTypeProcessor<XElement>
 public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
 {
     /// <summary>Gets the XML Classify format with all options at their defaults.</summary>
-    public static IClassifyFormat<XElement> Default { get { return _default ?? (_default = new ClassifyXmlFormat()); } }
+    public static IClassifyFormat<XElement> Default => _default ??= new ClassifyXmlFormat();
     private static ClassifyXmlFormat _default;
 
     /// <summary>
@@ -223,14 +203,11 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
 
     XElement IClassifyFormat<XElement>.ReadFromStream(Stream stream)
     {
-        using (var sr = new StreamReader(stream, Encoding.UTF8))
-            return XElement.Load(sr);
+        using var sr = new StreamReader(stream, Encoding.UTF8);
+        return XElement.Load(sr);
     }
 
-    void IClassifyFormat<XElement>.WriteToStream(XElement element, Stream stream)
-    {
-        element.Save(stream);
-    }
+    void IClassifyFormat<XElement>.WriteToStream(XElement element, Stream stream) => element.Save(stream);
 
     object IClassifyFormat<XElement>.GetSimpleValue(XElement element)
     {
@@ -241,20 +218,13 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
         if (enc == null)
             return element.Value;
 
-        switch (enc.Value)
+        return enc.Value switch
         {
-            case "c-literal":
-                return element.Value.CLiteralUnescape();
-
-            case "base64":
-                return element.Value.Base64UrlDecode().FromUtf8();
-
-            case "codepoint":
-                return (char) int.Parse(element.Value);
-
-            default:
-                throw new InvalidDataException($"XmlClassifyFormat does not recognize encoding \"{enc.Value}\" on XML tags.");
-        }
+            "c-literal" => element.Value.CLiteralUnescape(),
+            "base64" => element.Value.Base64UrlDecode().FromUtf8(),
+            "codepoint" => (char) int.Parse(element.Value),
+            _ => throw new InvalidDataException($"XmlClassifyFormat does not recognize encoding \"{enc.Value}\" on XML tags."),
+        };
     }
 
     IEnumerable<XElement> IClassifyFormat<XElement>.GetList(XElement element, int? tupleSize) =>
@@ -264,11 +234,8 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
 
     XElement IClassifyFormat<XElement>.GetSelfValue(XElement element) => element.Elements().FirstOrDefault();
 
-    void IClassifyFormat<XElement>.GetKeyValuePair(XElement element, out XElement key, out XElement value)
-    {
-        key = element.Element("key");
-        value = element.Element("value");
-    }
+    (XElement key, XElement value) IClassifyFormat<XElement>.GetKeyValuePair(XElement element) =>
+        (element.Element("key"), element.Element("value"));
 
     IEnumerable<KeyValuePair<object, XElement>> IClassifyFormat<XElement>.GetDictionary(XElement element)
     {
@@ -334,7 +301,7 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
     XElement IClassifyFormat<XElement>.FormatList(bool isTuple, IEnumerable<XElement> values)
     {
         var valuesEvaluated = values.ToArray();
-        for (int i = 0; i < valuesEvaluated.Length; i++)
+        for (var i = 0; i < valuesEvaluated.Length; i++)
             valuesEvaluated[i].Name = isTuple ? "item" + (i + 1) : "item";
         return new XElement(_rootTagName, valuesEvaluated);
     }
@@ -347,7 +314,7 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
     }
 
     XElement IClassifyFormat<XElement>.FormatDictionary(IEnumerable<KeyValuePair<object, XElement>> values) =>
-        new XElement(_rootTagName, values.Select(kvp =>
+        new(_rootTagName, values.Select(kvp =>
         {
             kvp.Value.Name = "item";
             kvp.Value.Add(new XAttribute("key", ExactConvert.ToString(kvp.Key)));
@@ -355,7 +322,7 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
         }));
 
     XElement IClassifyFormat<XElement>.FormatObject(IEnumerable<ObjectFieldInfo<XElement>> fields) =>
-        new XElement(_rootTagName, fields.Select(kvp =>
+        new(_rootTagName, fields.Select(kvp =>
         {
             kvp.Value.Name = kvp.FieldName;
             if (kvp.DeclaringType != null)
@@ -369,10 +336,10 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
         return element;
     }
 
-    string IClassifyFormat<XElement>.GetType(XElement element, out bool isFullType)
+    (string type, bool isFullType) IClassifyFormat<XElement>.GetType(XElement element)
     {
-        isFullType = element.Attribute("fulltype") != null;
-        return element.Attribute(isFullType ? "fulltype" : "type")?.Value;
+        var isFullType = element.Attribute("fulltype") != null;
+        return (element.Attribute(isFullType ? "fulltype" : "type")?.Value, isFullType);
     }
 
     XElement IClassifyFormat<XElement>.FormatWithType(XElement element, string type, bool isFullType)
@@ -381,10 +348,10 @@ public sealed class ClassifyXmlFormat : IClassifyFormat<XElement>
         return element;
     }
 
-    XElement IClassifyFormat<XElement>.FormatNullValue() => new XElement(_rootTagName, new XAttribute("null", "1"));
-    XElement IClassifyFormat<XElement>.FormatSelfValue(XElement value) => new XElement(_rootTagName, value);
-    XElement IClassifyFormat<XElement>.FormatRawData(byte[] value) => new XElement(_rootTagName, Convert.ToBase64String(value));
-    XElement IClassifyFormat<XElement>.FormatReference(int refId) => new XElement(_rootTagName, new XAttribute("ref", refId));
+    XElement IClassifyFormat<XElement>.FormatNullValue() => new(_rootTagName, new XAttribute("null", "1"));
+    XElement IClassifyFormat<XElement>.FormatSelfValue(XElement value) => new(_rootTagName, value);
+    XElement IClassifyFormat<XElement>.FormatRawData(byte[] value) => new(_rootTagName, Convert.ToBase64String(value));
+    XElement IClassifyFormat<XElement>.FormatReference(int refId) => new(_rootTagName, new XAttribute("ref", refId));
 
     void IClassifyFormat<XElement>.ThrowMissingReferable(int refID) =>
         throw new InvalidOperationException($@"An element with the attribute ref=""{refID}"" was encountered, but no matching element with the corresponding attribute refid=""{0}"" was encountered during deserialization. If such an attribute is present somewhere in the XML, the relevant element was not deserialized as an object (most likely because a field corresponding to a parent element was removed from its class declaration).");

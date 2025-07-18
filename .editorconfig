@@ -54,7 +54,7 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members
 dotnet_style_coalesce_expression = true
 dotnet_style_collection_initializer = true
 dotnet_style_explicit_tuple_names = true
-dotnet_style_namespace_match_folder = true
+dotnet_style_namespace_match_folder = false
 dotnet_style_null_propagation = true
 dotnet_style_object_initializer = true
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
@@ -85,18 +85,18 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true
 #### C# Coding Conventions ####
 
 # var preferences
-csharp_style_var_elsewhere = false
-csharp_style_var_for_built_in_types = false
-csharp_style_var_when_type_is_apparent = false
+csharp_style_var_elsewhere = true
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
 
 # Expression-bodied members
 csharp_style_expression_bodied_accessors = true
 csharp_style_expression_bodied_constructors = false
 csharp_style_expression_bodied_indexers = true
 csharp_style_expression_bodied_lambdas = true
-csharp_style_expression_bodied_local_functions = false
-csharp_style_expression_bodied_methods = false
-csharp_style_expression_bodied_operators = false
+csharp_style_expression_bodied_local_functions = true
+csharp_style_expression_bodied_methods = true
+csharp_style_expression_bodied_operators = true
 csharp_style_expression_bodied_properties = true
 
 # Pattern matching preferences
@@ -126,7 +126,7 @@ csharp_style_inlined_variable_declaration = true
 csharp_style_pattern_local_over_anonymous_function = true
 csharp_style_prefer_index_operator = false
 csharp_style_prefer_null_check_over_type_check = true
-csharp_style_prefer_range_operator = true
+csharp_style_prefer_range_operator = false
 csharp_style_throw_expression = true
 csharp_style_unused_value_assignment_preference = discard_variable
 csharp_style_unused_value_expression_statement_preference = discard_variable
@@ -204,21 +204,25 @@ dotnet_naming_rule.private_types_should_be_camel_case.severity = suggestion
 dotnet_naming_rule.private_types_should_be_camel_case.symbols = private_types
 dotnet_naming_rule.private_types_should_be_camel_case.style = camel_case
 
-dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
-dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.public_members_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.public_members_should_be_pascal_case.symbols = public_members
+dotnet_naming_rule.public_members_should_be_pascal_case.style = pascal_case
 
-dotnet_naming_rule.private_method_should_be_camel_case.severity = suggestion
-dotnet_naming_rule.private_method_should_be_camel_case.symbols = private_method
-dotnet_naming_rule.private_method_should_be_camel_case.style = camel_case
+dotnet_naming_rule.private_members_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.private_members_should_be_camel_case.symbols = private_members
+dotnet_naming_rule.private_members_should_be_camel_case.style = camel_case
 
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.severity = suggestion
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.symbols = private_or_internal_field
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols = constant_fields
-dotnet_naming_rule.constant_fields_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.private_constant_fields_should_be_begins_with__.severity = suggestion
+dotnet_naming_rule.private_constant_fields_should_be_begins_with__.symbols = private_constant_fields
+dotnet_naming_rule.private_constant_fields_should_be_begins_with__.style = begins_with__
+
+dotnet_naming_rule.public_constant_fields_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.public_constant_fields_should_be_pascal_case.symbols = public_constant_fields
+dotnet_naming_rule.public_constant_fields_should_be_pascal_case.style = pascal_case
 
 # Symbol specifications
 
@@ -234,21 +238,25 @@ dotnet_naming_symbols.public_types.applicable_kinds = class, struct, interface, 
 dotnet_naming_symbols.public_types.applicable_accessibilities = public, internal
 dotnet_naming_symbols.public_types.required_modifiers =
 
-dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
-dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.non_field_members.required_modifiers =
+dotnet_naming_symbols.public_members.applicable_kinds = property, event, method, field
+dotnet_naming_symbols.public_members.applicable_accessibilities = internal, public
+dotnet_naming_symbols.public_members.required_modifiers =
 
-dotnet_naming_symbols.private_method.applicable_kinds = method
-dotnet_naming_symbols.private_method.applicable_accessibilities = private
-dotnet_naming_symbols.private_method.required_modifiers =
+dotnet_naming_symbols.private_members.applicable_kinds = property, event, method
+dotnet_naming_symbols.private_members.applicable_accessibilities = private, protected, protected_internal, private_protected
+dotnet_naming_symbols.private_members.required_modifiers =
 
 dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
 dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private
 dotnet_naming_symbols.private_or_internal_field.required_modifiers =
 
-dotnet_naming_symbols.constant_fields.applicable_kinds = field
-dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
-dotnet_naming_symbols.constant_fields.required_modifiers = const
+dotnet_naming_symbols.private_constant_fields.applicable_kinds = field
+dotnet_naming_symbols.private_constant_fields.applicable_accessibilities = private, protected, internal, protected_internal, private_protected
+dotnet_naming_symbols.private_constant_fields.required_modifiers = const
+
+dotnet_naming_symbols.public_constant_fields.applicable_kinds = field
+dotnet_naming_symbols.public_constant_fields.applicable_accessibilities = public
+dotnet_naming_symbols.public_constant_fields.required_modifiers = const
 
 # Naming styles
 
@@ -333,3 +341,6 @@ resharper_member_can_be_private_local_highlighting = none
 
 # xUnit: don't assert equals on length = 1 - this tip is terrible for code consistency
 dotnet_diagnostic.xUnit2013.severity = none
+
+# CA1866: Use char overload (not available in netstandard2.0)
+dotnet_diagnostic.CA1866.severity = none
