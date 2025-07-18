@@ -402,7 +402,7 @@ public static class ClassifyBinary
                 switch (DataType)
                 {
                     case DataType.DictionaryInt64:
-                        stream.WriteInt32Optim(ExactConvert.ToInt(kvp.Key));
+                        stream.WriteInt64Optim(ExactConvert.ToLong(kvp.Key));
                         break;
 
                     case DataType.DictionaryString:
@@ -850,7 +850,7 @@ public static class ClassifyBinary
             var list = values.ToList();
             if (list.Count == 2)
                 return new kvpNode { Key = list[0], Value = list[1], DataType = DataType.KeyValuePair };
-            return new listNode { List = values.ToList(), DataType = DataType.List };
+            return new listNode { List = list, DataType = DataType.List };
         }
 
         node IClassifyFormat<node>.FormatKeyValuePair(node key, node value)
