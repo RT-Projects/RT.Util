@@ -143,7 +143,7 @@ internal class JsonParserState
         }
     }
 
-    public char? Cur => Pos >= Json.Length ? null : (char?) Json[Pos];
+    public char? Cur => Pos >= Json.Length ? null : Json[Pos];
 
     public string Snippet
     {
@@ -217,7 +217,7 @@ internal class JsonParserState
         }
     }
 
-    private JsonString parseDictKey()
+    private string parseDictKey()
     {
         if (Cur == null)
             throw new JsonParseException(this, "Unexpected end of object literal.");
@@ -229,16 +229,18 @@ internal class JsonParserState
             {
                 int pos = Pos;
                 Pos++;
-                while (Cur != null && (Cur == '_' || Cur == '$' || char.IsLetter(Cur.Value)))
+                while (Cur != null && (Cur == '_' || Cur == '$' || char.IsLetterOrDigit(Cur.Value)))
                     Pos++;
                 ConsumeWhitespace();
-                return new JsonString(Json.Substring(pos, Pos - pos));
+                return Json.Substring(pos, Pos - pos);
             }
         }
-        return ParseString();
+        return parseString();
     }
 
-    public JsonString ParseString()
+    public JsonString ParseString() => new(parseString());
+
+    private string parseString()
     {
         var sb = new StringBuilder();
         bool isJavaScript = Cur == '\'';
@@ -299,7 +301,7 @@ internal class JsonParserState
         }
         while_break:
         ConsumeWhitespace();
-        return new JsonString(sb.ToString());
+        return sb.ToString();
     }
 
     public JsonBool ParseBool()
@@ -1869,7 +1871,8 @@ public sealed class JsonString(string value) : JsonValue, IEquatable<JsonString>
         !options.HasFlag(BoolConversionOptions.AllowConversionFromString) ? base.getBool(options, safe) :
         False.Contains(_value, TrueFalseComparer) ? false :
         True.Contains(_value, TrueFalseComparer) ? true :
-        safe ? (bool?) null : throw new InvalidOperationException($"String must represent a boolean, but \"{_value}\" is not a valid boolean.");
+        safe ? null :
+        throw new InvalidOperationException($"String must represent a boolean, but \"{_value}\" is not a valid boolean.");
 
     /// <summary>
     ///     Controls which string values are converted to <c>false</c> when using <see cref="JsonValue.GetBool"/> with <see
@@ -1936,6 +1939,11 @@ public sealed class JsonString(string value) : JsonValue, IEquatable<JsonString>
 [Serializable]
 public sealed class JsonBool(bool value) : JsonValue, IEquatable<JsonBool>
 {
+    /// <summary>Contains a ready-made instance of <see cref="JsonBool"/> containig a <c>false</c> value.</summary>
+    public static readonly JsonBool False = new JsonBool(false);
+    /// <summary>Contains a ready-made instance of <see cref="JsonBool"/> containig a <c>true</c> value.</summary>
+    public static readonly JsonBool True = new JsonBool(true);
+
     private bool _value = value;
 
     /// <summary>
@@ -1977,13 +1985,13 @@ public sealed class JsonBool(bool value) : JsonValue, IEquatable<JsonBool>
     }
 
     /// <summary>Converts the specified <see cref="JsonBool"/> value to an ordinary boolean.</summary>
-    public static explicit operator bool(JsonBool value) { return value._value; }
+    public static explicit operator bool(JsonBool value) => value._value;
     /// <summary>Converts the specified <see cref="JsonBool"/> value to a nullable boolean.</summary>
-    public static implicit operator bool?(JsonBool value) => value == null ? (bool?) null : value._value;
+    public static implicit operator bool?(JsonBool value) => value?._value;
     /// <summary>Converts the specified ordinary boolean to a <see cref="JsonBool"/> value.</summary>
-    public static implicit operator JsonBool(bool value) => new(value);
+    public static implicit operator JsonBool(bool value) => value ? True : False;
     /// <summary>Converts the specified nullable boolean to a <see cref="JsonBool"/> value or null.</summary>
-    public static implicit operator JsonBool(bool? value) => value == null ? null : new JsonBool(value.Value);
+    public static implicit operator JsonBool(bool? value) => value switch { true => True, false => False, _ => null };
 
     /// <summary>See <see cref="JsonValue.Equals(JsonValue)"/>.</summary>
     public override bool Equals(object other) => other is JsonBool boolean && Equals(boolean);
