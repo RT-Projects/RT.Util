@@ -761,7 +761,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                                     foreground = fg;
                                     fgSet = true;
                                 }
-                                else
+                                else if (colorStr.Length != 0)
                                     throw new FormatException("The specified format string uses an invalid console color code ({0}).".Fmt(colorStr));
                                 formatString = fmtStr;
                             }
