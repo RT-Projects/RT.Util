@@ -858,38 +858,62 @@ static class IEnumerableExtensions
     public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxIndex;
 
-    private static (int minMaxIndex, T minMaxElem)? minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow) where TValue : IComparable<TValue>
+    /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value.</summary>
+    /// <exception cref="InvalidOperationException">
+    ///     The input collection is empty.</exception>
+    public static (T element, int index, TValue value) MinTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: true, doThrow: true).Value;
+
+    /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value, or
+    ///     <c>null</c> if the collection is empty.</summary>
+    public static (T element, int index, TValue value)? MinTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: true, doThrow: false);
+
+    /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value.</summary>
+    /// <exception cref="InvalidOperationException">
+    ///     The input collection is empty.</exception>
+    public static (T element, int index, TValue value) MaxTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: false, doThrow: true).Value;
+
+    /// <summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value, or
+    ///     <c>null</c> if the collection is empty.</summary>
+    public static (T element, int index, TValue value)? MaxTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: false, doThrow: false);
+
+    private static (T minMaxElem, int minMaxIndex, TValue minMaxValue)? minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow) where TValue : IComparable<TValue>
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
         if (valueSelector == null)
             throw new ArgumentNullException(nameof(valueSelector));
 
-        using (var enumerator = source.GetEnumerator())
+        using var enumerator = source.GetEnumerator();
+        if (!enumerator.MoveNext())
         {
-            if (!enumerator.MoveNext())
-            {
-                if (doThrow)
-                    throw new InvalidOperationException("source contains no elements.");
-                return null;
-            }
-            var minMaxElem = enumerator.Current;
-            var minMaxValue = valueSelector(minMaxElem);
-            var minMaxIndex = 0;
-            var curIndex = 0;
-            while (enumerator.MoveNext())
-            {
-                curIndex++;
-                var value = valueSelector(enumerator.Current);
-                if (min ? (value.CompareTo(minMaxValue) < 0) : (value.CompareTo(minMaxValue) > 0))
-                {
-                    minMaxValue = value;
-                    minMaxElem = enumerator.Current;
-                    minMaxIndex = curIndex;
-                }
-            }
-            return (minMaxIndex, minMaxElem);
+            if (doThrow)
+                throw new InvalidOperationException("source contains no elements.");
+            return null;
         }
+        var minMaxElem = enumerator.Current;
+        var minMaxValue = valueSelector(minMaxElem);
+        var minMaxIndex = 0;
+        var curIndex = 0;
+        while (enumerator.MoveNext())
+        {
+            curIndex++;
+            var value = valueSelector(enumerator.Current);
+            if (min ? (value.CompareTo(minMaxValue) < 0) : (value.CompareTo(minMaxValue) > 0))
+            {
+                minMaxValue = value;
+                minMaxElem = enumerator.Current;
+                minMaxIndex = curIndex;
+            }
+        }
+        return (minMaxElem, minMaxIndex, minMaxValue);
     }
 
     /// <summary>
