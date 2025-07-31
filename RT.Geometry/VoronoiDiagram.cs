@@ -15,7 +15,11 @@ public enum VoronoiDiagramFlags
     /// <summary>
     ///     If not specified, only polygons contained entirely within the bounds are included. Otherwise, the theoretically
     ///     “infinite” polygons are included as polygons that are clipped to the bounding region.</summary>
-    IncludeEdgePolygons = 1 << 2
+    IncludeEdgePolygons = 1 << 2,
+    /// <summary>
+    ///     When specified, only site indices will be populated; edges and polygons will not. This is about 10% faster on
+    ///     large inputs.</summary>
+    OnlySites = 1 << 3,
 }
 
 /// <summary>Represents a Voronoi diagram.</summary>
@@ -46,8 +50,8 @@ public sealed class VoronoiDiagram
         var data = new data(sites, width, height, flags);
         return new VoronoiDiagram
         {
-            Edges = data.Edges.Select(edge => (new EdgeD(edge.Start.Value, edge.End.Value), edge.SiteA.Index, edge.SiteB.Index)).ToList(),
-            Polygons = data.Polygons
+            Edges = data.Edges.Select(edge => ((flags & VoronoiDiagramFlags.OnlySites) != 0 ? default : new EdgeD(edge.Start.Value, edge.End.Value), edge.SiteA.Index, edge.SiteB.Index)).ToList(),
+            Polygons = (flags & VoronoiDiagramFlags.OnlySites) != 0 ? null : data.Polygons
                 .Select(p => p.ToPolygonD((flags & VoronoiDiagramFlags.IncludeEdgePolygons) != 0, width, height))
                 .ToArray()
         };
@@ -71,12 +75,12 @@ public sealed class VoronoiDiagram
             for (var siteIx = 0; siteIx < sites.Length; siteIx++)
             {
                 var p = sites[siteIx];
-                if (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height)
+                if ((flags & VoronoiDiagramFlags.OnlySites) != 0 || (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height))
                     events.Add(new siteEvent(new site(siteIx, p)));
                 else if ((flags & VoronoiDiagramFlags.RemoveOffboundsSites) == 0)
                     throw new Exception("The input contains a point outside the bounds or on the perimeter (coordinates " +
                         p + $"). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} " +
-                        "flag to automatically remove such off-bounds input points.");
+                        $"flag to automatically remove such off-bounds input points, or {nameof(VoronoiDiagramFlags.OnlySites)} to skip polygon and edge generation.");
             }
             events.Sort();
 
@@ -90,7 +94,7 @@ public sealed class VoronoiDiagram
                     else
                         throw new Exception("The input contains two points at the same coordinates " +
                             events[i].Site.Position + ". Voronoi diagrams are undefined for such a situation. " +
-                            "Use the RT.Util.VoronoiDiagramFlags.REMOVE_DUPLICATES flag to automatically remove such duplicate input points.");
+                            $"Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveDuplicates)} flag to automatically remove such duplicate input points.");
                 }
             }
 
@@ -108,8 +112,11 @@ public sealed class VoronoiDiagram
                     if (arcIndex == -1) continue;
 
                     // The two edges left and right of the disappearing arc end here
-                    Arcs[arcIndex - 1].Edge?.SetEndPoint(evt.Center);
-                    evt.Arc.Edge?.SetEndPoint(evt.Center);
+                    if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
+                    {
+                        Arcs[arcIndex - 1].Edge?.SetEndPoint(evt.Center);
+                        evt.Arc.Edge?.SetEndPoint(evt.Center);
+                    }
 
                     // Remove the arc from the beachline
                     Arcs.RemoveAt(arcIndex);
@@ -117,7 +124,8 @@ public sealed class VoronoiDiagram
 
                     // Start a new edge at the point where the other two edges ended
                     Arcs[arcIndex - 1].Edge = new edge(Arcs[arcIndex - 1].Site, Arcs[arcIndex].Site);
-                    Arcs[arcIndex - 1].Edge.SetEndPoint(evt.Center);
+                    if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
+                        Arcs[arcIndex - 1].Edge.SetEndPoint(evt.Center);
                     Edges.Add(Arcs[arcIndex - 1].Edge);
 
                     // Recheck circle events on either side of the disappearing arc
@@ -172,10 +180,14 @@ public sealed class VoronoiDiagram
                     arc newArc = new(evt.Site);
                     lastArc.Edge = new edge(lastArc.Site, newArc.Site);
                     Edges.Add(lastArc.Edge);
-                    lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Position.Y + lastArc.Site.Position.Y) / 2));
+                    if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
+                        lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Position.Y + lastArc.Site.Position.Y) / 2));
                     Arcs.Add(newArc);
                 }
             }
+
+            if ((flags & VoronoiDiagramFlags.OnlySites) != 0)
+                return;
 
             // Advance the sweep line so no parabolas can cross the bounding box
             double var = 2 * width + height;
