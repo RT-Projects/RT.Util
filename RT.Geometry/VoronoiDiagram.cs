@@ -58,6 +58,19 @@ public sealed class VoronoiDiagram
     }
 
     /// <summary>
+    ///     Generates a Delaunay triangulation of the input points (sites).</summary>
+    /// <param name="sites">
+    ///     Input points (sites) to triangulate. Must not contain duplicates.</param>
+    /// <returns>
+    ///     A list of edges in the triangulation, as pairs of indices into <paramref name="sites"/>. The indices within each
+    ///     pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
+    internal static IEnumerable<(int SiteA, int SiteB)> Triangulate(PointD[] sites)
+    {
+        var data = new data(sites, 0, 0, VoronoiDiagramFlags.OnlySites);
+        return data.Edges.Select(e => (e.SiteA.Index, e.SiteB.Index));
+    }
+
+    /// <summary>
     ///     Internal class to generate Voronoi diagrams using Fortune’s algorithm. Contains internal data structures and
     ///     methods.</summary>
     private sealed class data

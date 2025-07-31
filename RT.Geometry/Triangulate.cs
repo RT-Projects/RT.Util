@@ -6,85 +6,171 @@ namespace RT.Geometry;
 public static class Triangulate
 {
     /// <summary>
-    ///     Constructs a Delaunay triangulation of the <paramref name="vertices"/>.</summary>
-    /// <remarks>
-    ///     Adapted mainly from https://github.com/Bl4ckb0ne/delaunay-triangulation</remarks>
-    public static IEnumerable<TriangleD> Delaunay(IEnumerable<PointD> vertices)
+    ///     Generates a Delaunay triangulation of the input points.</summary>
+    /// <param name="vertices">
+    ///     Input points to triangulate. Must not contain duplicates.</param>
+    /// <returns>
+    ///     A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The indices within
+    ///     each pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
+    public static IEnumerable<(int VertexA, int VertexB)> DelaunayEdges(PointD[] vertices)
     {
-        if (!vertices.Any())
+        if (vertices.Length <= 1)
+            return [];
+        return VoronoiDiagram.Triangulate(vertices);
+    }
+
+    /// <summary>
+    ///     Generates a Delaunay triangulation of the input points. Ensures that the specified edges are all present in the
+    ///     triangulation, by inserting new vertices as necessary.</summary>
+    /// <param name="vertices">
+    ///     Input points to triangulate. Must not contain duplicates.</param>
+    /// <param name="requiredEdges">
+    ///     Required edges must not intersect.</param>
+    /// <returns>
+    ///     <para>
+    ///         <c>Edges</c>: A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The
+    ///         indices within each pair, as well as the pairs themselves, are ordered arbitrarily.</para>
+    ///     <para>
+    ///         <c>NewVertices</c>: a replacement for <paramref name="vertices"/>, made of the original list of vertices in
+    ///         the original order, plus newly added vertices to satisfy <paramref name="requiredEdges"/>.</para></returns>
+    /// <remarks>
+    ///     Does not guarantee that the set of new vertices is minimal. Does not track which edges were split to produce the
+    ///     new vertices (easy to fix if needed).</remarks>
+    public static (IEnumerable<(int VertexA, int VertexB)> Edges, List<PointD> NewVertices)
+        DelaunayEdgesConstrained(PointD[] vertices, IEnumerable<(int VertexA, int VertexB)> requiredEdges)
+    {
+        if (requiredEdges.Any(e => e.VertexA < 0 || e.VertexA >= vertices.Length || e.VertexB < 0 || e.VertexB >= vertices.Length))
+            throw new ArgumentException($"A required edge references a vertex outside of '{nameof(vertices)}'.", nameof(requiredEdges));
+        if (requiredEdges.Any(e => e.VertexA == e.VertexB))
+            throw new ArgumentException("Invalid required edge links a vertex to itself.", nameof(requiredEdges));
+
+        // This algorithm re-triangulates the whole input every time edges are split, which is slow. It's possible to re-triangulate only the affected triangles, but that's more complicated.
+        var allVertices = vertices.ToList();
+        var requiredEdgesSet = new HashSet<(int VertexA, int VertexB)>(requiredEdges);
+        while (true)
+        {
+            var edges = DelaunayEdges(allVertices.ToArray());
+            var adjacent = edges.SelectMany(e => new[] { e, (e.VertexB, e.VertexA) }).ToLookup(e => e.Item1, e => e.Item2);
+            var splitEdges = requiredEdgesSet.Where(e => !adjacent[e.VertexA].Contains(e.VertexB)).ToList();
+            if (splitEdges.Count == 0)
+                return (edges, allVertices);
+            // Another suboptimal part: adjacency lookup takes as much as 5% of the total time, but we discard it on return. It will be needed again to produce triangles from edges.
+            foreach (var se in splitEdges)
+            {
+                allVertices.Add((vertices[se.VertexA] + vertices[se.VertexB]) / 2);
+                requiredEdgesSet.Remove(se);
+                requiredEdgesSet.Add((se.VertexA, allVertices.Count - 1));
+                requiredEdgesSet.Add((allVertices.Count - 1, se.VertexB));
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Generates a Delaunay triangulation of the input points.</summary>
+    /// <param name="vertices">
+    ///     Input points to triangulate. Must not contain duplicates.</param>
+    /// <param name="reverseOrder">
+    ///     When true, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
+    /// <returns>
+    ///     A list of triangles.</returns>
+    public static IEnumerable<TriangleD> DelaunayTriangles(PointD[] vertices, bool reverseOrder = false)
+    {
+        if (vertices.Length < 3)
+            return [];
+        var edges = DelaunayEdges(vertices);
+        return TrianglesFromEdges(vertices, edges, reverseOrder);
+    }
+
+    /// <summary>
+    ///     Finds triangles in a valid triangulation defined by a list of edges.</summary>
+    /// <param name="edges">
+    ///     A list of edges between numbered nodes. Edge direction does not matter; there must be at most one edge between any
+    ///     pair of nodes.</param>
+    /// <returns>
+    ///     A list of triangles, each represented by its three nodes, in arbitrary order.</returns>
+    /// <remarks>
+    ///     Currently only supports "full" triangulations, where every triangle is reachable from every other triangle via
+    ///     shared edges. Can be adapted to be less strict, by continuing from an unprocessed edge until all vertices have
+    ///     been visited.</remarks>
+    public static IEnumerable<(int V1, int V2, int V3)> TriangleVerticesFromEdges(IEnumerable<(int VertexA, int VertexB)> edges)
+    {
+        var adjacent = new Dictionary<int, HashSet<int>>();
+        foreach (var e in edges.SelectMany(e => new[] { e, (e.VertexB, e.VertexA) }))
+        {
+            if (!adjacent.TryGetValue(e.Item1, out var set))
+                adjacent.Add(e.Item1, set = new HashSet<int>());
+            set.Add(e.Item2);
+        }
+        if (adjacent.Count == 0)
             return [];
 
-        // Find a "super-triangle" which contains all vertices
-        var minX = vertices.Min(v => v.X);
-        var minY = vertices.Min(v => v.Y);
-        var maxX = vertices.Max(v => v.X);
-        var maxY = vertices.Max(v => v.Y);
-
-        var deltaMax = Math.Max(maxX - minX, maxY - minY);
-        var midx = (minX + maxX) / 2;
-        var midy = (minY + maxY) / 2;
-
-        var super = new TriangleD(
-            new PointD(midx - 20 * deltaMax, midy - deltaMax),
-            new PointD(midx, midy + 20 * deltaMax),
-            new PointD(midx + 20 * deltaMax, midy - deltaMax));
-
-        // Triangulation starts off with just the super-triangle
-        var triangles = new List<TriangleD> { super };
-
-        var polygon = new List<EdgeD>();
-        foreach (var v in vertices)
+        var todo = new Queue<int>(adjacent.Keys);
+        var finished = new HashSet<int>(); // there can be no more triangles containing these vertices
+        var triangles = new List<(int v1, int v2, int v3)>();
+        while (finished.Count < adjacent.Count)
         {
-            triangles.RemoveAll(t =>
+            var cv = todo.Dequeue();
+            finished.Add(cv);
+            // Consider all adjacent vertices that aren't finished
+            foreach (var nv1 in adjacent[cv])
             {
-                if (!t.CircumcircleContains(v))
-                    return false;
-                polygon.Add(new EdgeD(t.V1, t.V2));
-                polygon.Add(new EdgeD(t.V2, t.V3));
-                polygon.Add(new EdgeD(t.V3, t.V1));
-                return true;
-            });
-
-            // Remove all edges from polygon which appear more than once
-            polygon = polygon.Where((e1, i1) => !polygon.Where((e2, i2) => i1 != i2 && e1 == e2).Any()).ToList();
-
-            // Add a triangle between this vertex and each edge of the polygon
-            triangles.AddRange(polygon.Select(e => new TriangleD(e.Start, e.End, v)));
-
-            polygon.Clear();
+                if (finished.Contains(nv1))
+                    continue;
+                // Is it connected to any other unfinished vertices adjacent to the current vertex?
+                foreach (var nv2 in adjacent[nv1] /*always exists*/)
+                {
+                    if (!adjacent[cv].Contains(nv2) || finished.Contains(nv2))
+                        continue;
+                    // nv1 and nv2 are not finished, adjacent to cv, and to each other
+                    // Add triangle but only if nv1 < nv2, as we'll discover each such traingle twice in this loop
+                    if (nv1 < nv2)
+                        triangles.Add((cv, nv1, nv2));
+                }
+            }
         }
-
-        // Remove all triangles adjacent to the original super-triangle
-        triangles.RemoveAll(t => t.HasVertex(super.V1) || t.HasVertex(super.V2) || t.HasVertex(super.V3));
-
         return triangles;
     }
 
     /// <summary>
-    ///     Constructs a Delaunay-like triangulation constrained to contain all edges listed in <paramref
-    ///     name="requiredEdges"/>. The implementation is naive and very slow for larger meshes, because instead of
-    ///     incrementally re-triangulating only the affected triangles upon an edge split, it performs a full triangulation
-    ///     every time.</summary>
-    public static IEnumerable<TriangleD> DelaunayConstrained(IEnumerable<PointD> vertices, IEnumerable<EdgeD> requiredEdges)
+    ///     Generates triangles from a valid triangulation defined by a list of edges.</summary>
+    /// <param name="vertices">
+    ///     Vertices of the graph.</param>
+    /// <param name="edges">
+    ///     Edges between <paramref name="vertices"/>, by index. Edge direction does not matter; there must be at most one
+    ///     edge between any pair of vertices.</param>
+    /// <param name="reverseOrder">
+    ///     When true, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
+    /// <returns>
+    ///     A list of triangle vertices.</returns>
+    /// <remarks>
+    ///     Behaviour is undefined if the input graph contains any faces that are not triangles. Only supports "full"
+    ///     triangulations, where every triangle is reachable from every other triangle via shared edges (easy to fix if
+    ///     needed).</remarks>
+    public static IEnumerable<(int V1, int V2, int V3)> TriangleVerticesFromEdges(PointD[] vertices, IEnumerable<(int VertexA, int VertexB)> edges, bool reverseOrder = false)
     {
-        if (requiredEdges.Any(e => !vertices.Contains(e.Start) || !vertices.Contains(e.End)))
-            throw new ArgumentException("The end points of every required edge must be in the list of vertices to triangulate", nameof(requiredEdges));
-        if (requiredEdges.Any(e => e.Start == e.End))
-            throw new ArgumentException("Required edges must have a non-zero length", nameof(requiredEdges));
+        var wantSign = reverseOrder ? -1 : 1;
+        return TriangleVerticesFromEdges(edges).Select(t =>
+            wantSign == Math.Sign((vertices[t.V2] - vertices[t.V1]).CrossZ(vertices[t.V3] - vertices[t.V1])) ? t : (t.V1, t.V3, t.V2));
+    }
 
-        var curVertices = new HashSet<PointD>(vertices);
-        var requiredEdgeSet = new HashSet<EdgeD>(requiredEdges); // to avoid missing edges due to floating point errors, we update the list every time we split a required edge
-        while (true)
-        {
-            var triangulation = Triangulate.Delaunay(curVertices);
-            var splitEdge = requiredEdgeSet.Where(re => !triangulation.Any(t => re == t.Edge12 || re == t.Edge23 || re == t.Edge31)).Cast<EdgeD?>().FirstOrDefault();
-            if (splitEdge == null)
-                return triangulation;
-            var newVertex = (splitEdge.Value.Start + splitEdge.Value.End) / 2;
-            requiredEdgeSet.Remove(splitEdge.Value);
-            requiredEdgeSet.Add(new EdgeD(splitEdge.Value.Start, newVertex));
-            requiredEdgeSet.Add(new EdgeD(newVertex, splitEdge.Value.End));
-            curVertices.Add(newVertex);
-        }
+    /// <summary>
+    ///     Generates triangles from a valid triangulation defined by a list of edges.</summary>
+    /// <param name="vertices">
+    ///     Vertices of the graph.</param>
+    /// <param name="edges">
+    ///     Edges between <paramref name="vertices"/>, by index. Edge direction does not matter; there must be at most one
+    ///     edge between any pair of vertices.</param>
+    /// <param name="reverseOrder">
+    ///     When true, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
+    /// <returns>
+    ///     A list of triangles.</returns>
+    /// <remarks>
+    ///     Behaviour is undefined if the input graph contains any faces that are not triangles. Only supports "full"
+    ///     triangulations, where every triangle is reachable from every other triangle via shared edges (easy to fix if
+    ///     needed).</remarks>
+    public static IEnumerable<TriangleD> TrianglesFromEdges(PointD[] vertices, IEnumerable<(int VertexA, int VertexB)> edges, bool reverseOrder = false)
+    {
+        return TriangleVerticesFromEdges(vertices, edges, reverseOrder)
+            .Select(t => new TriangleD(vertices[t.V1], vertices[t.V2], vertices[t.V3]));
     }
 }
