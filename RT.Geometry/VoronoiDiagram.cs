@@ -64,7 +64,7 @@ public sealed class VoronoiDiagram
     /// <returns>
     ///     A list of edges in the triangulation, as pairs of indices into <paramref name="sites"/>. The indices within each
     ///     pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
-    internal static IEnumerable<(int SiteA, int SiteB)> Triangulate(PointD[] sites)
+    internal static IEnumerable<(int siteA, int siteB)> Triangulate(PointD[] sites)
     {
         var data = new data(sites, 0, 0, VoronoiDiagramFlags.OnlySites);
         return data.Edges.Select(e => (e.SiteA.Index, e.SiteB.Index));
@@ -91,9 +91,7 @@ public sealed class VoronoiDiagram
                 if ((flags & VoronoiDiagramFlags.OnlySites) != 0 || (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height))
                     events.Add(new siteEvent(new site(siteIx, p)));
                 else if ((flags & VoronoiDiagramFlags.RemoveOffboundsSites) == 0)
-                    throw new Exception("The input contains a point outside the bounds or on the perimeter (coordinates " +
-                        p + $"). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} " +
-                        $"flag to automatically remove such off-bounds input points, or {nameof(VoronoiDiagramFlags.OnlySites)} to skip polygon and edge generation.");
+                    throw new Exception($"The input contains a point outside the bounds or on the perimeter (coordinates {p}). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} flag to automatically remove such off-bounds input points, or {nameof(VoronoiDiagramFlags.OnlySites)} to skip polygon and edge generation.");
             }
             events.Sort();
 
@@ -619,10 +617,7 @@ public sealed class VoronoiDiagram
         public double X = x;
         public arc Arc = arc;
 
-        public override string ToString()
-        {
-            return "(" + X + ", " + Center.Y + ") [" + Center.X + "]";
-        }
+        public override string ToString() => $"({X}, {Center.Y}) [{Center.X}]";
 
         public int CompareTo(circleEvent other)
         {
