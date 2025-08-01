@@ -57,7 +57,7 @@ public static class Triangulate
             // Another suboptimal part: adjacency lookup takes as much as 5% of the total time, but we discard it on return. It will be needed again to produce triangles from edges.
             foreach (var se in splitEdges)
             {
-                allVertices.Add((vertices[se.VertexA] + vertices[se.VertexB]) / 2);
+                allVertices.Add((allVertices[se.vertexA] + allVertices[se.vertexB]) / 2);
                 requiredEdgesSet.Remove(se);
                 requiredEdgesSet.Add((se.vertexA, allVertices.Count - 1));
                 requiredEdgesSet.Add((allVertices.Count - 1, se.vertexB));
