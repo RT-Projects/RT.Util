@@ -52,7 +52,7 @@ public sealed class VoronoiDiagramTests
         var points = new[]
         {
             new PointD(0.41586468492672696, 45.06283759329131),
-            new PointD(0.1100000000001, 45.089104420403665),
+            new PointD(0.11000000000000001, 45.089104420403665),
             new PointD(0.11, 44.1)
         };
         var voronoi = VoronoiDiagram.GenerateVoronoiDiagram(points, 1, 47, VoronoiDiagramFlags.IncludeEdgePolygons);
