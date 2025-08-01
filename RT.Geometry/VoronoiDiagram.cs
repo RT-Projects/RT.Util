@@ -296,16 +296,31 @@ public sealed class VoronoiDiagram
                 double z0 = 2 * (siteA.X - scanX);
                 double z1 = 2 * (siteB.X - scanX);
 
-                double aRecip = z0 * z1 / (z1 - z0);
+                double a = 1 / z0 - 1 / z1;
                 double b = -2 * (siteA.Y / z0 - siteB.Y / z1);
                 double c = (siteA.Y * siteA.Y + siteA.X * siteA.X - scanX * scanX) / z0
                          - (siteB.Y * siteB.Y + siteB.X * siteB.X - scanX * scanX) / z1;
 
-                result.Y = (-b - Math.Sqrt(b * b - 4 / aRecip * c)) / 2 * aRecip;
+                if (Math.Abs(a) < 1e-10)
+                    result.Y = -c / b; // linear solution if a is close to 0
+                else
+                    result.Y = (-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);   // quadratic formula
+
+                //result.Y = 2 * c / (-b + Math.Sqrt(b * b - 4 * a * c));
+                //var resultY2 = (-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
+
+                //var disc = b * b - 4 * a * c;
+                //var root = 0.5 * (b + Math.Sqrt(disc));
+                //var kahan1 = -c / root;
+                //var kahan2 = -root / a;
+
+                //Console.WriteLine($"{scanX,20} || {result.Y,20} // {resultY2,20} // {kahan1,20} // {kahan2,20} // {Math.Sign(a),2} // {Math.Sign(b),2} // {Math.Sign(c),2}");
+                //result.Y = b > 0 ? kahan2 : kahan1;
             }
 
             // Plug back into one of the parabola equations
             result.X = (p.X * p.X + (p.Y - result.Y) * (p.Y - result.Y) - scanX * scanX) / (2 * p.X - 2 * scanX);
+
             return result;
         }
 
