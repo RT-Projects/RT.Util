@@ -26,7 +26,7 @@ public sealed class TriangulateTests
         testDelaunayEdges([new PointD(300, 700), new PointD(600, 800), new PointD(200, 900), new PointD(400, 800), new PointD(400, 700)],
             [(0, 4), (0, 3), (0, 2), (1, 4), (1, 3), (3, 4), (2, 3), (2, 1)]);
 
-        void testTriangles(PointD[] vertices, (int, int)[] edges, (int V1, int V2, int V3)[] expected)
+        void testTriangles(PointD[] vertices, (int, int)[] edges, (int v1, int v2, int v3)[] expected)
         {
             var triangles = Triangulate.TriangleVerticesFromEdges(vertices, edges).ToList();
             Assert.AreEqual(triangles.Count, expected.Length);
@@ -34,9 +34,9 @@ public sealed class TriangulateTests
             {
                 // must contain in order 1,2,3, or 2,3,1, or 3,1,2
                 Assert.IsTrue(triangles.Any(acT =>
-                    (acT.V1 == exT.V1 && acT.V2 == exT.V2 && acT.V3 == exT.V3) ||
-                    (acT.V1 == exT.V2 && acT.V2 == exT.V3 && acT.V3 == exT.V1) ||
-                    (acT.V1 == exT.V3 && acT.V2 == exT.V1 && acT.V3 == exT.V2)));
+                    (acT.v1 == exT.v1 && acT.v2 == exT.v2 && acT.v3 == exT.v3) ||
+                    (acT.v1 == exT.v2 && acT.v2 == exT.v3 && acT.v3 == exT.v1) ||
+                    (acT.v1 == exT.v3 && acT.v2 == exT.v1 && acT.v3 == exT.v2)));
             }
         }
 
