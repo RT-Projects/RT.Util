@@ -61,11 +61,11 @@ public sealed class TriangulateTests
     public static void TestNearlyVertical()
     {
         // this produces a numerically bad quadratic root in the original implementation, thus missing an edge
-        //testDelaunayEdges([
-        //    new PointD(0.41586468, 11.063),
-        //    new PointD(47.110000000000007, 11.089),
-        //    new PointD(47.11, 10.1),
-        //], [(0, 1), (1, 2), (2, 0)]);
+        testDelaunayEdges([
+            new PointD(0.41586468, 11.063),
+            new PointD(47.110000000000007, 11.089),
+            new PointD(47.11, 10.1),
+        ], [(0, 1), (1, 2), (2, 0)]);
 
         // similar to above, but the points are the first two points in the scan
         //testDelaunayEdges([

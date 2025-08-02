@@ -50,15 +50,15 @@ public sealed class VoronoiDiagramTests
     public static void TestVerticesThatAreNearlyVertical()
     {
         // this produces a numerically bad quadratic root in the original implementation, returning NaN vertices
-        //var points = new[]
-        //{
-        //    new PointD(0.415, 45.06),
-        //    new PointD(0.11000000000000001, 45.08),
-        //    new PointD(0.11, 44.1)
-        //};
-        //var voronoi = VoronoiDiagram.GenerateVoronoiDiagram(points, 1, 47, VoronoiDiagramFlags.IncludeEdgePolygons);
-        //Assert.AreEqual(3, voronoi.Polygons.Length);
-        //Assert.IsTrue(voronoi.Polygons.All(poly => poly.Vertices.All(v => !double.IsNaN(v.X) && !double.IsNaN(v.Y))));
+        var points = new[]
+        {
+            new PointD(0.415, 45.06),
+            new PointD(0.11000000000000001, 45.08),
+            new PointD(0.11, 44.1)
+        };
+        var voronoi = VoronoiDiagram.GenerateVoronoiDiagram(points, 1, 47, VoronoiDiagramFlags.IncludeEdgePolygons);
+        Assert.AreEqual(3, voronoi.Polygons.Length);
+        Assert.IsTrue(voronoi.Polygons.All(poly => poly.Vertices.All(v => !double.IsNaN(v.X) && !double.IsNaN(v.Y))));
 
         // null reference exception
         //var points2 = new[]

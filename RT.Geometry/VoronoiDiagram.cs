@@ -293,15 +293,29 @@ public sealed class VoronoiDiagram
             else
             {
                 // Use the quadratic formula
-                double z0 = 2 * (siteA.X - scanX);
-                double z1 = 2 * (siteB.X - scanX);
+                var dx1 = scanX - siteA.X;
+                var dx2 = scanX - siteB.X;
+                var a = dx2 - dx1;
+                var b = -2 * (dx2 * siteA.Y - dx1 * siteB.Y);
+                var c = dx2 * siteA.Y * siteA.Y - dx1 * siteB.Y * siteB.Y - (siteA.X - siteB.X) * dx1 * dx2;
+                //var ccfused = Math.FusedMultiplyAdd(dx2, siteA.Y * siteA.Y, Math.FusedMultiplyAdd(-dx1, siteB.Y * siteB.Y, -(siteA.X - siteB.X) * dx1 * dx2)); // no notable improvement in precision observed
+                var disc = b * b - 4 * a * c;
+                if (disc < 0 && disc > -1e-7) // lowest observed where valid solutions exist: -2e-9
+                    disc = 0;
+                var sqrt = Math.Sqrt(disc);
+                if (b < 0)
+                    sqrt = -sqrt; // Kahan - compute the root that's easier to compute, then use Vieta's formula to compute the other
+                var q = -0.5 * (b + sqrt);
+                if (a == 0)
+                    result.Y = c / q;
+                else if (q == 0)
+                    result.Y = q / a;
+                else
+                    result.Y = b < 0 ? q / a : c / q; // we always want the "same" root of the two when both exist
 
-                double a = 1 / z0 - 1 / z1;
-                double b = -2 * (siteA.Y / z0 - siteB.Y / z1);
-                double c = (siteA.Y * siteA.Y + siteA.X * siteA.X - scanX * scanX) / z0
-                         - (siteB.Y * siteB.Y + siteB.X * siteB.X - scanX * scanX) / z1;
-
-                result.Y = (-b - Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
+#if DEBUG
+                GeomUt.Assert(!double.IsNaN(result.Y) && !double.IsInfinity(result.Y));
+#endif
             }
 
             // Plug back into one of the parabola equations
