@@ -5,180 +5,19 @@ using RT.Internal;
 namespace RT.Geometry;
 
 /// <summary>Provides methods to parse the syntax used in SVG path data.</summary>
-public static class DecodeSvgPath
+public static class SvgPath
 {
-    /// <summary>Encapsulates a piece of SVG path data.</summary>
-    public class PathPiece
-    {
-        /// <summary>The type of piece (straight line, curve, etc.)</summary>
-        public PathPieceType Type { get; private set; }
-        /// <summary>The set of points associated with this piece.</summary>
-        public PointD[] Points { get; private set; }
-
-        /// <summary>Designates the end of a path or subpath.</summary>
-        public static readonly PathPiece End = new() { Type = PathPieceType.End };
-
-        /// <summary>
-        ///     Constructor.</summary>
-        /// <param name="type">
-        ///     Type of path piece.</param>
-        /// <param name="points">
-        ///     Set of points.</param>
-        public PathPiece(PathPieceType type, params PointD[] points)
-        {
-            if (type == PathPieceType.End)
-                throw new ArgumentException("type cannot be End. Use the static PathPiece.End value instead.", nameof(type));
-            Type = type;
-            Points = points ?? throw new ArgumentNullException(nameof(points));
-        }
-
-        private PathPiece() { }
-
-        /// <summary>Recreates the path in SVG path data syntax.</summary>
-        public sealed override string ToString() => ToString(useSpaces: false);
-
-        /// <summary>
-        ///     Recreates the path in SVG path data syntax.</summary>
-        /// <param name="useSpaces">
-        ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
-        public virtual string ToString(bool useSpaces)
-        {
-            char ch;
-            switch (Type)
-            {
-                case PathPieceType.Move: ch = 'M'; break;
-                case PathPieceType.Line: ch = 'L'; break;
-                case PathPieceType.Curve: ch = 'C'; break;
-                default: return "z";
-            }
-            return ch + " " + Points.Select(p => $"{p.X}{(useSpaces ? " " : ",")}{p.Y}").JoinString(" ");
-        }
-
-        /// <summary>
-        ///     Recreates the path in SVG path data syntax.</summary>
-        /// <param name="decimalPlaces">
-        ///     Specifies the number of decimal places to use for the floating-point numbers.</param>
-        /// <param name="useSpaces">
-        ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
-        public virtual string ToString(int decimalPlaces, bool useSpaces = false)
-        {
-            char ch;
-            switch (Type)
-            {
-                case PathPieceType.Move: ch = 'M'; break;
-                case PathPieceType.Line: ch = 'L'; break;
-                case PathPieceType.Curve: ch = 'C'; break;
-                default: return "z";
-            }
-            return ch + " " + Points.Select(p => $"{p.X.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{p.Y.ToString($"0.{new string('#', decimalPlaces)}")}").JoinString(" ");
-        }
-
-        /// <summary>
-        ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have been
-        ///     mapped through the <paramref name="selector"/>.</summary>
-        /// <param name="selector">
-        ///     A function to pass all points through.</param>
-        /// <returns>
-        ///     A new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/>.</returns>
-        public virtual PathPiece Select(Func<PointD, PointD> selector)
-        {
-            if (selector == null)
-                throw new ArgumentNullException(nameof(selector));
-            return Type == PathPieceType.End ? this : new PathPiece(Type, Points.Select(selector).ToArray());
-        }
-    }
-
-    /// <summary>Encapsulates an elliptical arc in SVG path data.</summary>
-    public sealed class PathPieceArc : PathPiece
-    {
-        /// <summary>X radius of the ellipse.</summary>
-        public double RX { get; private set; }
-        /// <summary>Y radius of the ellipse.</summary>
-        public double RY { get; private set; }
-        /// <summary>Rotation (in degrees, clockwise) of the ellipse.</summary>
-        public double XAxisRotation { get; private set; }
-        /// <summary>Determines if the arc should be greater than or less than 180 degrees.</summary>
-        public bool LargeArcFlag { get; private set; }
-        /// <summary>Determines if the arc should begin moving at positive angles or negative ones.</summary>
-        public bool SweepFlag { get; private set; }
-        /// <summary>
-        ///     Returns the arc’s end-point.</summary>
-        /// <remarks>
-        ///     This is actually just <see cref="PathPiece.Points"/>[0].</remarks>
-        public PointD EndPoint { get { return Points[0]; } }
-
-        /// <summary>Constructor</summary>
-        public PathPieceArc(double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, PointD endPoint)
-            : base(PathPieceType.Arc, new[] { endPoint })
-        {
-            RX = rx;
-            RY = ry;
-            XAxisRotation = xAxisRotation;
-            LargeArcFlag = largeArcFlag;
-            SweepFlag = sweepFlag;
-        }
-
-        /// <summary>
-        ///     Recreates the path in SVG path data syntax.</summary>
-        /// <param name="useSpaces">
-        ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
-        public override string ToString(bool useSpaces) =>
-            $"A {RX}{(useSpaces ? " " : ",")}{RY} {XAxisRotation} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X}{(useSpaces ? " " : ",")}{Points[0].Y}";
-
-        /// <summary>
-        ///     Recreates the path in SVG path data syntax.</summary>
-        /// <param name="decimalPlaces">
-        ///     Specifies the number of decimal places to use for the floating-point numbers.</param>
-        /// <param name="useSpaces">
-        ///     If <c>true</c>, the x- and y-coordinates are separated by spaces; otherwise, commas (the default).</param>
-        public override string ToString(int decimalPlaces, bool useSpaces = false) =>
-            $"A {RX.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{RY.ToString($"0.{new string('#', decimalPlaces)}")} {XAxisRotation.ToString($"0.{new string('#', decimalPlaces)}")} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{Points[0].Y.ToString($"0.{new string('#', decimalPlaces)}")}";
-
-        /// <summary>
-        ///     Returns a new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/> in which all points have been
-        ///     mapped through the <paramref name="selector"/>.</summary>
-        /// <param name="selector">
-        ///     A function to pass all points through.</param>
-        /// <returns>
-        ///     A new <see cref="PathPiece"/> of the same <see cref="PathPieceType"/>.</returns>
-        public override PathPiece Select(Func<PointD, PointD> selector)
-        {
-            if (selector == null)
-                throw new ArgumentNullException(nameof(selector));
-            return new PathPieceArc(RX, RY, XAxisRotation, LargeArcFlag, SweepFlag, selector(EndPoint));
-        }
-    }
-
-    /// <summary>Specifies a type of piece within an SVG path.</summary>
-    public enum PathPieceType
-    {
-        /// <summary>
-        ///     Moves to a new point without drawing a line. This is usually used only at the start of a subpath (i.e., at the
-        ///     start of a path or after an <see cref="End"/>).</summary>
-        Move,
-        /// <summary>Draws a set of straight lines connecting each point (including the last point of the previous piece).</summary>
-        Line,
-        /// <summary>
-        ///     Draws a set of Bézier curves. The length of the <see cref="PathPiece.Points"/> array is a multiple of three
-        ///     (two control points and an end-point). The first start point is the last point of the previous piece.</summary>
-        Curve,
-        /// <summary>Draws an elliptical arc.</summary>
-        Arc,
-        /// <summary>Designates the end of a path or subpath.</summary>
-        End
-    }
-
     /// <summary>
-    ///     Converts a sequence of <see cref="PathPiece"/> objects to a sequence of points using the specified <paramref
-    ///     name="smoothness"/> to render Bézier curves.</summary>
+    ///     Converts a sequence of <see cref="SvgPiece"/> objects to a sequence of points using the specified <paramref
+    ///     name="smoothness"/> to render Bézier curves and circular arcs.</summary>
     /// <param name="pieces">
     ///     The pieces that constitute the path.</param>
     /// <param name="smoothness">
-    ///     A value indicating the maximum amount by which each Bézier curve is allowed to be approximated. The smaller this
-    ///     value, the more points are generated for each Bézier curve.</param>
+    ///     A value indicating the maximum amount by which each Bézier curve and circular arc is allowed to be approximated.
+    ///     The smaller this value, the more points are generated for each curve/arc.</param>
     /// <returns>
     ///     A sequence of points that represent the fully rendered path.</returns>
-    public static IEnumerable<IEnumerable<PointD>> Do(IEnumerable<PathPiece> pieces, double smoothness)
+    public static IEnumerable<IEnumerable<PointD>> Smooth(this IEnumerable<SvgPiece> pieces, double smoothness)
     {
         if (pieces == null)
             throw new ArgumentNullException(nameof(pieces));
@@ -187,24 +26,24 @@ public static class DecodeSvgPath
 
         IEnumerable<IEnumerable<PointD>> iterator()
         {
-            foreach (var group in pieces.Split(pp => pp.Type == PathPieceType.End).Where(gr => gr.Any()).Select(gr => gr.ToArray()))
+            foreach (var group in pieces.Split(pp => pp.Type == SvgPieceType.End).Where(gr => gr.Any()).Select(gr => gr.ToArray()))
             {
                 yield return Enumerable.Range(0, group.Length).SelectMany(grIx =>
                 {
                     var cur = group[grIx];
                     var prev = group[(grIx + group.Length - 1) % group.Length];
 
-                    if (cur.Type == PathPieceType.Move || cur.Type == PathPieceType.Line)
+                    if (cur.Type == SvgPieceType.Move || cur.Type == SvgPieceType.Line)
                         return cur.Points;
 
                     var lastPoint = prev.Points[prev.Points.Length - 1];
 
-                    if (cur.Type == PathPieceType.Curve && cur.Points.Length % 3 == 0)
+                    if (cur.Type == SvgPieceType.Curve && cur.Points.Length % 3 == 0)
                         return Enumerable.Range(0, cur.Points.Length / 3)
                             .SelectMany(ix => GeomUt.SmoothBézier(ix == 0 ? lastPoint : cur.Points[3 * ix - 1], cur.Points[3 * ix], cur.Points[3 * ix + 1], cur.Points[3 * ix + 2], smoothness).Skip(1))
                             .ToArray();
 
-                    if (cur.Type == PathPieceType.Arc && cur is PathPieceArc arc && arc.Points.Length == 1)
+                    if (cur.Type == SvgPieceType.Arc && cur is SvgArc arc && arc.Points.Length == 1)
                     {
                         var p1 = lastPoint.Rotate(-arc.XAxisRotation * Math.PI / 180);
                         var p2 = arc.Points[0].Rotate(-arc.XAxisRotation * Math.PI / 180);
@@ -250,16 +89,16 @@ public static class DecodeSvgPath
     ///     smaller this value, the more points are generated for each curve.</param>
     /// <returns>
     ///     A sequence of points that represent the fully rendered path.</returns>
-    public static IEnumerable<IEnumerable<PointD>> Do(string svgPath, double smoothness)
+    public static IEnumerable<IEnumerable<PointD>> Smooth(string svgPath, double smoothness)
     {
-        return Do(DecodePieces(svgPath), smoothness);
+        return Smooth(Decode(svgPath), smoothness);
     }
 
     /// <summary>
-    ///     Converts a string containing SVG path data to a sequence of <see cref="PathPiece"/> objects.</summary>
+    ///     Converts a string containing SVG path data to a sequence of <see cref="SvgPiece"/> objects.</summary>
     /// <param name="svgPath">
     ///     SVG path data to parse.</param>
-    public static IEnumerable<PathPiece> DecodePieces(string svgPath)
+    public static IEnumerable<SvgPiece> Decode(string svgPath)
     {
         // Parse all the commands and coordinates
         var numRegex = @"-?\d*(?:\.\d*)?\d(?:e-?\d+)?\s*,?\s*";
@@ -272,7 +111,7 @@ public static class DecodeSvgPath
             Match m;
             if ((m = Regex.Match(svgPath, $@"^[MLCQHVS]\s*({numRegex})*", RegexOptions.IgnoreCase)).Success)
             {
-                PathPieceType type;
+                SvgPieceType type;
                 PointD[] points;
                 bool prevControlPointDetermined = false;
                 var numbers = m.Groups[1].Captures.Cast<Capture>().Select(c => double.Parse(c.Value.Trim().TrimEnd(',').Trim())).ToArray();
@@ -280,59 +119,59 @@ public static class DecodeSvgPath
                 switch (m.Value[0])
                 {
                     case 'M':
-                        type = PathPieceType.Move;
+                        type = SvgPieceType.Move;
                         points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
                         prevPoint = points[points.Length - 1];
                         break;
 
                     case 'm':
-                        type = PathPieceType.Move;
+                        type = SvgPieceType.Move;
                         points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
                         for (int i = 0; i < points.Length; i++)
                             prevPoint = (points[i] += prevPoint);
                         break;
 
                     case 'L':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
                         prevPoint = points[points.Length - 1];
                         break;
 
                     case 'l':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = numbers.Split(2).Select(gr => new PointD(gr.First(), gr.Last())).ToArray();
                         for (int i = 0; i < points.Length; i++)
                             prevPoint = (points[i] += prevPoint);
                         break;
 
                     case 'H':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = numbers.Select(x => new PointD(x, prevPoint.Y)).ToArray();
                         prevPoint = points.Last();
                         break;
 
                     case 'h':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = new PointD[numbers.Length];
                         for (int i = 0; i < numbers.Length; i++)
                             prevPoint = points[i] = new PointD(prevPoint.X + numbers[i], prevPoint.Y);
                         break;
 
                     case 'V':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = numbers.Select(y => new PointD(prevPoint.X, y)).ToArray();
                         prevPoint = points.Last();
                         break;
 
                     case 'v':
-                        type = PathPieceType.Line;
+                        type = SvgPieceType.Line;
                         points = new PointD[numbers.Length];
                         for (int i = 0; i < numbers.Length; i++)
                             prevPoint = points[i] = new PointD(prevPoint.X, prevPoint.Y + numbers[i]);
                         break;
 
                     case 'C':
-                        type = PathPieceType.Curve;
+                        type = SvgPieceType.Curve;
                         points = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
                         GeomUt.Assert(points.Length % 3 == 0);
                         prevPoint = points.Last();
@@ -341,7 +180,7 @@ public static class DecodeSvgPath
                         break;
 
                     case 'c':
-                        type = PathPieceType.Curve;
+                        type = SvgPieceType.Curve;
                         points = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
                         GeomUt.Assert(points.Length % 3 == 0);
                         for (int i = 0; i < points.Length; i += 3)
@@ -358,7 +197,7 @@ public static class DecodeSvgPath
                     case 'Q':
                     case 'q':
                         var relative = m.Value[0] == 'q';
-                        type = PathPieceType.Curve;
+                        type = SvgPieceType.Curve;
                         var qPoints = numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).ToArray();
                         GeomUt.Assert(qPoints.Length % 2 == 0);
                         points = new PointD[qPoints.Length / 2 * 3];
@@ -381,7 +220,7 @@ public static class DecodeSvgPath
                         break;
 
                     case 'S':
-                        type = PathPieceType.Curve;
+                        type = SvgPieceType.Curve;
                         var pointsList1 = new List<PointD>();
                         foreach (var pair in numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).Split(2))
                         {
@@ -395,7 +234,7 @@ public static class DecodeSvgPath
                         break;
 
                     case 's':
-                        type = PathPieceType.Curve;
+                        type = SvgPieceType.Curve;
                         var pointsList2 = new List<PointD>();
                         foreach (var pair in numbers.Split(2).Select(x => new PointD(x.First(), x.Last())).Split(2))
                         {
@@ -417,11 +256,11 @@ public static class DecodeSvgPath
                 if (!prevControlPointDetermined)
                     prevControlPoint = prevPoint;
 
-                yield return new PathPiece(type, points);
+                yield return new SvgPiece(type, points);
             }
             else if ((m = Regex.Match(svgPath, @"^Z\s*", RegexOptions.IgnoreCase)).Success)
             {
-                yield return PathPiece.End;
+                yield return SvgPiece.End;
                 prevPoint = prevStartPoint ?? new PointD(0, 0);
                 prevStartPoint = null;
             }
@@ -432,7 +271,7 @@ public static class DecodeSvgPath
                     double convert(int gr) => double.Parse(m.Groups[gr].Captures[cp].Value.Trim().TrimEnd(',').Trim());
                     var p = new PointD(convert(7), convert(8));
                     prevPoint = m.Value[0] == 'a' ? p + prevPoint : p;
-                    yield return new PathPieceArc(convert(2), convert(3), convert(4), m.Groups[5].Captures[cp].Value != "0", m.Groups[6].Captures[cp].Value != "0", prevPoint);
+                    yield return new SvgArc(convert(2), convert(3), convert(4), m.Groups[5].Captures[cp].Value != "0", m.Groups[6].Captures[cp].Value != "0", prevPoint);
                 }
             }
             else
@@ -441,6 +280,61 @@ public static class DecodeSvgPath
                 throw new NotImplementedException();
             }
             svgPath = svgPath.Substring(m.Length);
+        }
+    }
+
+    /// <summary>Reverses the direction of an SVG path.</summary>
+    public static IEnumerable<SvgPiece> Reverse(this IEnumerable<SvgPiece> svgPath)
+    {
+        var pathChunks = new List<(bool closed, List<SvgPiece> path)>();
+        List<SvgPiece> curChunk = null;
+        bool curClosed = false;
+        foreach (var piece in svgPath)
+        {
+            if (piece.Type == SvgPieceType.End)
+            {
+                curClosed = true;
+                continue;
+            }
+            else if (piece.Type == SvgPieceType.Move)
+            {
+                if (curChunk != null)
+                    pathChunks.Add((curClosed, curChunk));
+                curChunk = piece.Points.Length == 1 ? [piece] : [new SvgPiece(SvgPieceType.Move, piece.Points[0]), new(SvgPieceType.Line, piece.Points.Skip(1).ToArray())];
+            }
+            else
+                curChunk.Add(piece);
+        }
+        if (curChunk == null)
+            yield break;
+        pathChunks.Add((curClosed, curChunk));
+
+        foreach (var (closed, path) in pathChunks)
+        {
+            if (path[0].Type != SvgPieceType.Move || path[0].Points.Length != 1)
+                throw new InvalidOperationException("Internal error: expected Move with length 1 at start of SVG path.");
+            yield return new(SvgPieceType.Move, path.Last().Points.Last());
+            for (var i = path.Count - 1; i >= 1; i--)
+            {
+                var nextPoint = path[i - 1].Points[path[i - 1].Points.Length - 1];
+                switch (path[i])
+                {
+                    case { Type: SvgPieceType.Move }:
+                    case { Type: SvgPieceType.End }:
+                        throw new InvalidOperationException("Internal error: unexpected path type in SVG path.");
+                    case { Type: SvgPieceType.Line }:
+                    case { Type: SvgPieceType.Curve }:
+                        yield return new(path[i].Type, [.. path[i].Points.Reverse().Skip(1), nextPoint]);
+                        break;
+                    case SvgArc arc:
+                        yield return new SvgArc(arc.RX, arc.RY, arc.XAxisRotation, arc.LargeArcFlag, !arc.SweepFlag, nextPoint);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unsupported path type: {path[i].Type}.");
+                }
+            }
+            if (closed)
+                yield return SvgPiece.End;
         }
     }
 }
