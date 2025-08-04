@@ -284,7 +284,7 @@ public static class SvgPath
     }
 
     /// <summary>Reverses the direction of an SVG path.</summary>
-    public static IEnumerable<SvgPiece> Reverse(this IEnumerable<SvgPiece> svgPath)
+    public static IEnumerable<SvgPiece> ReversePath(this IEnumerable<SvgPiece> svgPath)
     {
         var pathChunks = new List<(bool closed, List<SvgPiece> path)>();
         List<SvgPiece> curChunk = null;
