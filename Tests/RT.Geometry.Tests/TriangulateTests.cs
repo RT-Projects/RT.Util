@@ -104,5 +104,11 @@ public sealed class TriangulateTests
             new PointD(0.11000000000000001, 43.11),
             new PointD(0.419, 44.92),
         ], [(0, 1), (1, 2), (2, 0)]);
+
+        // negative coordinates
+        testDelaunayEdges([
+            new PointD(-50, 50),
+            new PointD(50, 50),
+        ], [(0, 1)]);
     }
 }

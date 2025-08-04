@@ -102,7 +102,7 @@ public sealed class VoronoiDiagram
                 bool changed = false;
                 for (int i = 1; i < events.Count; i++)
                 {
-                    if (events[i].Site.Position.X / minX > 1.00000000000001) // approx 100 bit increments at any scale
+                    if (!almostEqual(minX, events[i].Site.Position.X))
                         break;
                     changed = true;
                     events[i].Site = new site(events[i].Site.Index, new PointD(minX, events[i].Site.Position.Y));
@@ -266,6 +266,24 @@ public sealed class VoronoiDiagram
             }
             if (sites.Length == 1) // this is the only scenario in which there exists a "polygon" with no edges
                 Polygons[0] = new polygon(new site(0, sites[0]));
+        }
+
+        private bool almostEqual(double v1, double v2)
+        {
+            if (v1 < 0 && v2 < 0) // both negative
+            {
+                v1 = -v1; // make them both positive and continue
+                v2 = -v2;
+            }
+            else if (v1 <= 0 || v2 <= 0) // one positive, one negative or zero
+            {
+                if (v1 > 0)
+                    (v1, v2) = (v2, v1); // ensure v2 is the positive one
+                return v2 < 5e-322 && (v1 > -5e-322); // almost equal if no more than 200 ULP
+            }
+            if (v1 > v2)
+                (v1, v2) = (v2, v1); // ensure v2 is the bigger one
+            return v2 / v1 <= 1.00000000000001; // approx 100 ULP
         }
 
         // Will a new parabola at p intersect with the arc at ArcIndex?
