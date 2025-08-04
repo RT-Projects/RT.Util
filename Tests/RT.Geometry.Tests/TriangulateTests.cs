@@ -83,14 +83,14 @@ public sealed class TriangulateTests
         ], [(2, 1), (0, 1), (3, 1), (3, 0), (2, 3)]);
 
         // Timwi's cursed polygon
-        //testDelaunayEdges([
-        //    new PointD(0.41586468, 45.06283759),
-        //    new PointD(0.11000000000000001, 45.08910442),
-        //    new PointD(0.11, 44.1),
-        //    new PointD(0.11000000000000001, 43.11012299),
-        //    new PointD(0.42641961, 43.11399106),
-        //    new PointD(0.41956433, 44.92768723),
-        //], [(3, 2), (2, 1), (0, 1), (5, 1), (4, 3), (5, 0), (2, 5), (4, 2), (4, 5)]);
+        testDelaunayEdges([
+            new PointD(0.41586468, 45.06283759),
+            new PointD(0.11000000000000001, 45.08910442),
+            new PointD(0.11, 44.1),
+            new PointD(0.11000000000000001, 43.11012299),
+            new PointD(0.42641961, 43.11399106),
+            new PointD(0.41956433, 44.92768723),
+        ], [(3, 2), (2, 1), (0, 1), (5, 1), (4, 3), (5, 0), (2, 5), (4, 2), (4, 5)]);
 
         // these tests mirror the Voronoi test but also verifies resulting adjacency
         testDelaunayEdges([

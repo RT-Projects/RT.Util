@@ -94,20 +94,21 @@ public sealed class VoronoiDiagram
                     throw new Exception($"The input contains a point outside the bounds or on the perimeter (coordinates {p}). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} flag to automatically remove such off-bounds input points, or {nameof(VoronoiDiagramFlags.OnlySites)} to skip polygon and edge generation.");
             }
             events.Sort();
-            if (events.Count >= 2)
+            if (events.Count > 1)
             {
-                // The first two events being on the same X is a special case. They also need special treatment if are so close that they intersect somewhere towards infinity.
-                var site0x = events[0].Site.Position.X;
-                var site1x = events[1].Site.Position.X;
-                var minX = Math.Min(site0x, site1x);
-                var ratio = Math.Max(site0x, site1x) / minX;
-                if (ratio > 1 && ratio < 1.00000000000001) // approx 100 bit increments at any scale
+                // If the first N events are so close in X that their intersection tends towards infinity then make them all have the same X coordinate,
+                // which triggers proper handling of this special case later in the algorithm.
+                var minX = events[0].Site.Position.X;
+                bool changed = false;
+                for (int i = 1; i < events.Count; i++)
                 {
-                    events[0].Site = new site(events[0].Site.Index, new PointD(minX, events[0].Site.Position.Y)); // move them both to the smaller X coordinate
-                    events[1].Site = new site(events[1].Site.Index, new PointD(minX, events[1].Site.Position.Y));
-                    if (events[0].Site.Position.Y > events[1].Site.Position.Y)
-                        (events[0], events[1]) = (events[1], events[0]); // keep them sorted by Y
+                    if (events[i].Site.Position.X / minX > 1.00000000000001) // approx 100 bit increments at any scale
+                        break;
+                    changed = true;
+                    events[i].Site = new site(events[i].Site.Index, new PointD(minX, events[i].Site.Position.Y));
                 }
+                if (changed)
+                    events.Sort();
             }
 
             // Make sure there are no two equal points in the input
