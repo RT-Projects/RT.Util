@@ -61,14 +61,14 @@ public sealed class VoronoiDiagramTests
         Assert.IsTrue(voronoi.Polygons.All(poly => poly.Vertices.All(v => !double.IsNaN(v.X) && !double.IsNaN(v.Y))));
 
         // null reference exception
-        //var points2 = new[]
-        //{
-        //    new PointD(0.11, 44.1),
-        //    new PointD(0.11000000000000001, 43.11),
-        //    new PointD(0.419, 44.92),
-        //};
-        //var voronoi2 = VoronoiDiagram.GenerateVoronoiDiagram(points2, 1, 47, VoronoiDiagramFlags.IncludeEdgePolygons);
-        //Assert.AreEqual(3, voronoi2.Polygons.Length);
-        //Assert.IsTrue(voronoi2.Polygons.All(poly => poly.Vertices.All(v => !double.IsNaN(v.X) && !double.IsNaN(v.Y))));
+        var points2 = new[]
+        {
+            new PointD(0.11, 44.1),
+            new PointD(0.11000000000000001, 43.11),
+            new PointD(0.419, 44.92),
+        };
+        var voronoi2 = VoronoiDiagram.GenerateVoronoiDiagram(points2, 1, 47, VoronoiDiagramFlags.IncludeEdgePolygons);
+        Assert.AreEqual(3, voronoi2.Polygons.Length);
+        Assert.IsTrue(voronoi2.Polygons.All(poly => poly.Vertices.All(v => !double.IsNaN(v.X) && !double.IsNaN(v.Y))));
     }
 }

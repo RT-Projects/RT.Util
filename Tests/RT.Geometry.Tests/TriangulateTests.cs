@@ -68,19 +68,21 @@ public sealed class TriangulateTests
         ], [(0, 1), (1, 2), (2, 0)]);
 
         // similar to above, but the points are the first two points in the scan
-        //testDelaunayEdges([
-        //    new PointD(0.41586468, 1.063),
-        //    new PointD(0.11000000000000001, 1.089),
-        //    new PointD(0.11, 0.1),
-        //], [(0, 1), (1, 2), (2, 0)]);
+        testDelaunayEdges([
+            new PointD(0.41586468, 1.063),
+            new PointD(0.11000000000000001, 1.089),
+            new PointD(0.11, 0.1),
+        ], [(0, 1), (1, 2), (2, 0)]);
 
         // bigger variants of the above
-        //testDelaunayEdges([
-        //    new PointD(0.41586468, 45.06283759),
-        //    new PointD(0.11000000000000001, 45.08910442),
-        //    new PointD(0.11, 44.1),
-        //    new PointD(0.41956433, 44.92768723),
-        //], [(2, 1), (0, 1), (3, 1), (3, 0), (2, 3)]);
+        testDelaunayEdges([
+            new PointD(0.41586468, 45.06283759),
+            new PointD(0.11000000000000001, 45.08910442),
+            new PointD(0.11, 44.1),
+            new PointD(0.41956433, 44.92768723),
+        ], [(2, 1), (0, 1), (3, 1), (3, 0), (2, 3)]);
+
+        // Timwi's cursed polygon
         //testDelaunayEdges([
         //    new PointD(0.41586468, 45.06283759),
         //    new PointD(0.11000000000000001, 45.08910442),

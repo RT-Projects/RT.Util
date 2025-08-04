@@ -94,6 +94,21 @@ public sealed class VoronoiDiagram
                     throw new Exception($"The input contains a point outside the bounds or on the perimeter (coordinates {p}). This case is not handled by this algorithm. Use the {typeof(VoronoiDiagramFlags).FullName}.{nameof(VoronoiDiagramFlags.RemoveOffboundsSites)} flag to automatically remove such off-bounds input points, or {nameof(VoronoiDiagramFlags.OnlySites)} to skip polygon and edge generation.");
             }
             events.Sort();
+            if (events.Count >= 2)
+            {
+                // The first two events being on the same X is a special case. They also need special treatment if are so close that they intersect somewhere towards infinity.
+                var site0x = events[0].Site.Position.X;
+                var site1x = events[1].Site.Position.X;
+                var minX = Math.Min(site0x, site1x);
+                var ratio = Math.Max(site0x, site1x) / minX;
+                if (ratio > 1 && ratio < 1.00000000000001) // approx 100 bit increments at any scale
+                {
+                    events[0].Site = new site(events[0].Site.Index, new PointD(minX, events[0].Site.Position.Y)); // move them both to the smaller X coordinate
+                    events[1].Site = new site(events[1].Site.Index, new PointD(minX, events[1].Site.Position.Y));
+                    if (events[0].Site.Position.Y > events[1].Site.Position.Y)
+                        (events[0], events[1]) = (events[1], events[0]); // keep them sorted by Y
+                }
+            }
 
             // Make sure there are no two equal points in the input
             for (int i = 1; i < events.Count; i++)
@@ -306,10 +321,10 @@ public sealed class VoronoiDiagram
                 if (b < 0)
                     sqrt = -sqrt; // Kahan - compute the root that's easier to compute, then use Vieta's formula to compute the other
                 var q = -0.5 * (b + sqrt);
-                if (a == 0)
+                if (q == 0)
+                    result.Y = 0; // q / a;
+                else if (a == 0)
                     result.Y = c / q;
-                else if (q == 0)
-                    result.Y = q / a;
                 else
                     result.Y = b < 0 ? q / a : c / q; // we always want the "same" root of the two when both exist
 
