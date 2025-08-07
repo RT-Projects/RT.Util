@@ -20,47 +20,53 @@ public static class Triangulate
     }
 
     /// <summary>
-    ///     Generates a Delaunay triangulation of the input points. Ensures that the specified edges are all present in the
-    ///     triangulation, by inserting new vertices as necessary.</summary>
+    ///     Generates a Delaunay triangulation of the input points. Ensures that <paramref name="requiredEdges"/> are all
+    ///     present in the triangulation, by inserting new vertices as necessary.</summary>
     /// <param name="vertices">
-    ///     Input points to triangulate. Must not contain duplicates.</param>
+    ///     Input points to triangulate. Must not contain duplicates. New vertices are added <b>in place</b> at the end of the
+    ///     list.</param>
     /// <param name="requiredEdges">
-    ///     Required edges must not intersect.</param>
+    ///     Edges that must be present in the triangulation. This constraint is achieved by splitting required edges, which
+    ///     updates this set <b>in place</b>. Expects a single pair per edge, in any order. Required edges must not intersect.</param>
+    /// <param name="splitEdges">
+    ///     Optional empty dictionary which gets populated as a lookup from each final split edge to the corresponding
+    ///     original required edge.</param>
     /// <returns>
-    ///     <para>
-    ///         <c>Edges</c>: A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The
-    ///         indices within each pair, as well as the pairs themselves, are ordered arbitrarily.</para>
-    ///     <para>
-    ///         <c>NewVertices</c>: a replacement for <paramref name="vertices"/>, made of the original list of vertices in
-    ///         the original order, plus newly added vertices to satisfy <paramref name="requiredEdges"/>.</para></returns>
+    ///     A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The indices within
+    ///     each pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
     /// <remarks>
-    ///     Does not guarantee that the set of new vertices is minimal. Does not track which edges were split to produce the
-    ///     new vertices (easy to fix if needed).</remarks>
-    public static (IEnumerable<(int vertexA, int vertexB)> edges, List<PointD> newVertices)
-        DelaunayEdgesConstrained(PointD[] vertices, IEnumerable<(int vertexA, int vertexB)> requiredEdges)
+    ///     Does not guarantee that the set of new vertices is minimal. This is not a fast way to perform constrained
+    ///     triangulation.</remarks>
+    public static IEnumerable<(int vertexA, int vertexB)>
+        DelaunayEdgesConstrained(List<PointD> vertices, HashSet<(int vertexA, int vertexB)> requiredEdges, Dictionary<(int vertexA, int vertexB), (int vertexA, int vertexB)> splitEdges = null)
     {
-        if (requiredEdges.Any(e => e.vertexA < 0 || e.vertexA >= vertices.Length || e.vertexB < 0 || e.vertexB >= vertices.Length))
+        if (requiredEdges.Any(e => e.vertexA < 0 || e.vertexA >= vertices.Count || e.vertexB < 0 || e.vertexB >= vertices.Count))
             throw new ArgumentException($"A required edge references a vertex outside of '{nameof(vertices)}'.", nameof(requiredEdges));
         if (requiredEdges.Any(e => e.vertexA == e.vertexB))
             throw new ArgumentException("Invalid required edge links a vertex to itself.", nameof(requiredEdges));
 
         // This algorithm re-triangulates the whole input every time edges are split, which is slow. It's possible to re-triangulate only the affected triangles, but that's more complicated.
-        var allVertices = vertices.ToList();
-        var requiredEdgesSet = new HashSet<(int vertexA, int vertexB)>(requiredEdges);
         while (true)
         {
-            var edges = DelaunayEdges(allVertices.ToArray());
-            var adjacent = edges.SelectMany(e => new[] { e, (e.vertexB, e.vertexA) }).ToLookup(e => e.Item1, e => e.Item2);
-            var splitEdges = requiredEdgesSet.Where(e => !adjacent[e.vertexA].Contains(e.vertexB)).ToList();
-            if (splitEdges.Count == 0)
-                return (edges, allVertices);
-            // Another suboptimal part: adjacency lookup takes as much as 5% of the total time, but we discard it on return. It will be needed again to produce triangles from edges.
-            foreach (var se in splitEdges)
+            var edges = DelaunayEdges(vertices.ToArray());
+            var edgesSet = new HashSet<(int vertexA, int vertexB)>(edges);
+            var toSplit = requiredEdges.Where(e => !edgesSet.Contains(e) && !edgesSet.Contains((e.vertexB, e.vertexA))).ToList();
+            if (toSplit.Count == 0)
+                return edges;
+            foreach (var splitEdge in toSplit)
             {
-                allVertices.Add((allVertices[se.vertexA] + allVertices[se.vertexB]) / 2);
-                requiredEdgesSet.Remove(se);
-                requiredEdgesSet.Add((se.vertexA, allVertices.Count - 1));
-                requiredEdgesSet.Add((allVertices.Count - 1, se.vertexB));
+                vertices.Add((vertices[splitEdge.vertexA] + vertices[splitEdge.vertexB]) / 2);
+                GeomUt.Assert(requiredEdges.Remove(splitEdge));
+                requiredEdges.Add((splitEdge.vertexA, vertices.Count - 1));
+                requiredEdges.Add((vertices.Count - 1, splitEdge.vertexB));
+                if (splitEdges != null)
+                {
+                    var originalEdge = splitEdge;
+                    if (splitEdges.TryGetValue(splitEdge, out originalEdge))
+                        splitEdges.Remove(splitEdge); // this was a split edge that got split again
+                    splitEdges[(splitEdge.vertexA, vertices.Count - 1)] = originalEdge;
+                    splitEdges[(vertices.Count - 1, splitEdge.vertexB)] = originalEdge;
+                }
             }
         }
     }
