@@ -12,7 +12,7 @@ public static class Triangulate
     /// <returns>
     ///     A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The indices within
     ///     each pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
-    public static IEnumerable<(int vertexA, int vertexB)> DelaunayEdges(PointD[] vertices)
+    public static IEnumerable<(int v1, int v2)> DelaunayEdges(PointD[] vertices)
     {
         if (vertices.Length <= 1)
             return [];
@@ -37,35 +37,35 @@ public static class Triangulate
     /// <remarks>
     ///     Does not guarantee that the set of new vertices is minimal. This is not a fast way to perform constrained
     ///     triangulation.</remarks>
-    public static IEnumerable<(int vertexA, int vertexB)>
-        DelaunayEdgesConstrained(List<PointD> vertices, HashSet<(int vertexA, int vertexB)> requiredEdges, Dictionary<(int vertexA, int vertexB), (int vertexA, int vertexB)> splitEdges = null)
+    public static IEnumerable<(int v1, int v2)>
+        DelaunayEdgesConstrained(List<PointD> vertices, HashSet<(int v1, int v2)> requiredEdges, Dictionary<(int v1, int v2), (int v1, int v2)> splitEdges = null)
     {
-        if (requiredEdges.Any(e => e.vertexA < 0 || e.vertexA >= vertices.Count || e.vertexB < 0 || e.vertexB >= vertices.Count))
+        if (requiredEdges.Any(e => e.v1 < 0 || e.v1 >= vertices.Count || e.v2 < 0 || e.v2 >= vertices.Count))
             throw new ArgumentException($"A required edge references a vertex outside of '{nameof(vertices)}'.", nameof(requiredEdges));
-        if (requiredEdges.Any(e => e.vertexA == e.vertexB))
+        if (requiredEdges.Any(e => e.v1 == e.v2))
             throw new ArgumentException("Invalid required edge links a vertex to itself.", nameof(requiredEdges));
 
         // This algorithm re-triangulates the whole input every time edges are split, which is slow. It's possible to re-triangulate only the affected triangles, but that's more complicated.
         while (true)
         {
             var edges = DelaunayEdges(vertices.ToArray());
-            var edgesSet = new HashSet<(int vertexA, int vertexB)>(edges);
-            var toSplit = requiredEdges.Where(e => !edgesSet.Contains(e) && !edgesSet.Contains((e.vertexB, e.vertexA))).ToList();
+            var edgesSet = new HashSet<(int v1, int v2)>(edges);
+            var toSplit = requiredEdges.Where(e => !edgesSet.Contains(e) && !edgesSet.Contains((e.v2, e.v1))).ToList();
             if (toSplit.Count == 0)
                 return edges;
             foreach (var splitEdge in toSplit)
             {
-                vertices.Add((vertices[splitEdge.vertexA] + vertices[splitEdge.vertexB]) / 2);
+                vertices.Add((vertices[splitEdge.v1] + vertices[splitEdge.v2]) / 2);
                 GeomUt.Assert(requiredEdges.Remove(splitEdge));
-                requiredEdges.Add((splitEdge.vertexA, vertices.Count - 1));
-                requiredEdges.Add((vertices.Count - 1, splitEdge.vertexB));
+                requiredEdges.Add((splitEdge.v1, vertices.Count - 1));
+                requiredEdges.Add((vertices.Count - 1, splitEdge.v2));
                 if (splitEdges != null)
                 {
                     var originalEdge = splitEdge;
                     if (splitEdges.TryGetValue(splitEdge, out originalEdge))
                         splitEdges.Remove(splitEdge); // this was a split edge that got split again
-                    splitEdges[(splitEdge.vertexA, vertices.Count - 1)] = originalEdge;
-                    splitEdges[(vertices.Count - 1, splitEdge.vertexB)] = originalEdge;
+                    splitEdges[(splitEdge.v1, vertices.Count - 1)] = originalEdge;
+                    splitEdges[(vertices.Count - 1, splitEdge.v2)] = originalEdge;
                 }
             }
         }
@@ -98,10 +98,10 @@ public static class Triangulate
     ///     Currently only supports "full" triangulations, where every triangle is reachable from every other triangle via
     ///     shared edges. Can be adapted to be less strict, by continuing from an unprocessed edge until all vertices have
     ///     been visited.</remarks>
-    public static IEnumerable<(int v1, int v2, int v3)> TriangleVerticesFromEdges(IEnumerable<(int vertexA, int vertexB)> edges)
+    public static IEnumerable<(int v1, int v2, int v3)> TriangleVerticesFromEdges(IEnumerable<(int v1, int v2)> edges)
     {
         var adjacent = new Dictionary<int, HashSet<int>>();
-        foreach (var e in edges.SelectMany(e => new[] { e, (e.vertexB, e.vertexA) }))
+        foreach (var e in edges.SelectMany(e => new[] { e, (e.v2, e.v1) }))
         {
             if (!adjacent.TryGetValue(e.Item1, out var set))
                 adjacent.Add(e.Item1, set = new HashSet<int>());
@@ -152,7 +152,7 @@ public static class Triangulate
     ///     Behaviour is undefined if the input graph contains any faces that are not triangles. Only supports "full"
     ///     triangulations, where every triangle is reachable from every other triangle via shared edges (easy to fix if
     ///     needed).</remarks>
-    public static IEnumerable<(int v1, int v2, int v3)> TriangleVerticesFromEdges(PointD[] vertices, IEnumerable<(int vertexA, int vertexB)> edges, bool reverseOrder = false)
+    public static IEnumerable<(int v1, int v2, int v3)> TriangleVerticesFromEdges(PointD[] vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
     {
         var wantSign = reverseOrder ? -1 : 1;
         return TriangleVerticesFromEdges(edges).Select(t =>
@@ -174,7 +174,7 @@ public static class Triangulate
     ///     Behaviour is undefined if the input graph contains any faces that are not triangles. Only supports "full"
     ///     triangulations, where every triangle is reachable from every other triangle via shared edges (easy to fix if
     ///     needed).</remarks>
-    public static IEnumerable<TriangleD> TrianglesFromEdges(PointD[] vertices, IEnumerable<(int vertexA, int vertexB)> edges, bool reverseOrder = false)
+    public static IEnumerable<TriangleD> TrianglesFromEdges(PointD[] vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
     {
         return TriangleVerticesFromEdges(vertices, edges, reverseOrder)
             .Select(t => new TriangleD(vertices[t.v1], vertices[t.v2], vertices[t.v3]));
