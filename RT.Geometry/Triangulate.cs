@@ -12,9 +12,9 @@ public static class Triangulate
     /// <returns>
     ///     A list of edges in the triangulation, as pairs of indices into <paramref name="vertices"/>. The indices within
     ///     each pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
-    public static IEnumerable<(int v1, int v2)> DelaunayEdges(PointD[] vertices)
+    public static IEnumerable<(int v1, int v2)> DelaunayEdges(IList<PointD> vertices)
     {
-        if (vertices.Length <= 1)
+        if (vertices.Count <= 1)
             return [];
         return VoronoiDiagram.Triangulate(vertices);
     }
@@ -48,7 +48,7 @@ public static class Triangulate
         // This algorithm re-triangulates the whole input every time edges are split, which is slow. It's possible to re-triangulate only the affected triangles, but that's more complicated.
         while (true)
         {
-            var edges = DelaunayEdges(vertices.ToArray());
+            var edges = DelaunayEdges(vertices);
             var edgesSet = new HashSet<(int v1, int v2)>(edges);
             var toSplit = requiredEdges.Where(e => !edgesSet.Contains(e) && !edgesSet.Contains((e.v2, e.v1))).ToList();
             if (toSplit.Count == 0)
@@ -112,9 +112,9 @@ public static class Triangulate
     ///     When false, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
     /// <returns>
     ///     A list of triangles.</returns>
-    public static IEnumerable<TriangleD> DelaunayTriangles(PointD[] vertices, bool reverseOrder = false)
+    public static IEnumerable<TriangleD> DelaunayTriangles(IList<PointD> vertices, bool reverseOrder = false)
     {
-        if (vertices.Length < 3)
+        if (vertices.Count < 3)
             return [];
         var edges = DelaunayEdges(vertices);
         return TrianglesFromEdges(vertices, edges, reverseOrder);
@@ -130,10 +130,10 @@ public static class Triangulate
     ///     When false, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
     /// <returns>
     ///     A list of triangles.</returns>
-    public static IEnumerable<TriangleD> DelaunayTriangles(IEnumerable<PolygonD> polygons, bool reverseOrder = false)
+    public static List<TriangleD> DelaunayTriangles(IEnumerable<PolygonD> polygons, bool reverseOrder = false)
     {
         var (vertices, edges, polygonEdges) = DelaunayEdgesConstrained(polygons);
-        return TrianglesFromEdges(vertices.ToArray(), edges, reverseOrder)
+        return TrianglesFromEdges(vertices, edges, reverseOrder)
             .Where(t => polygons.Count(p => p.ContainsPoint(t.Centroid)) % 2 == 1).ToList();
     }
 
@@ -150,7 +150,7 @@ public static class Triangulate
     ///     A list of triangles, each represented by its three nodes, in arbitrary order.</returns>
     /// <returns>
     ///     A list of triangle vertices.</returns>
-    public static IEnumerable<(int v1, int v2, int v3)> TriangleVerticesFromEdges(PointD[] vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
+    public static List<(int v1, int v2, int v3)> TriangleVerticesFromEdges(IList<PointD> vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
     {
         var adjacent = new Dictionary<int, List<int>>(); // List is faster than HashSet for typical data
         foreach (var e in edges.SelectMany(e => new[] { e, (e.v2, e.v1) }))
@@ -211,7 +211,7 @@ public static class Triangulate
     ///     When false, triangle vertices are ordered by increasing angle, otherwise by decreasing angle.</param>
     /// <returns>
     ///     A list of triangles.</returns>
-    public static IEnumerable<TriangleD> TrianglesFromEdges(PointD[] vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
+    public static IEnumerable<TriangleD> TrianglesFromEdges(IList<PointD> vertices, IEnumerable<(int v1, int v2)> edges, bool reverseOrder = false)
     {
         return TriangleVerticesFromEdges(vertices, edges, reverseOrder)
             .Select(t => new TriangleD(vertices[t.v1], vertices[t.v2], vertices[t.v3]));

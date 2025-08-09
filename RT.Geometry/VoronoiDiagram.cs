@@ -1,10 +1,10 @@
-﻿using RT.Internal;
+using RT.Internal;
 
 namespace RT.Geometry;
 
 /// <summary>
-///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(PointD[], double, double,
-///     VoronoiDiagramFlags)"/> method.</summary>
+///     Provides values to specify options on the <see cref="VoronoiDiagram.GenerateVoronoiDiagram(IList{PointD}, double,
+///     double, VoronoiDiagramFlags)"/> method.</summary>
 [Flags]
 public enum VoronoiDiagramFlags
 {
@@ -45,7 +45,7 @@ public sealed class VoronoiDiagram
     ///     Set of <see cref="VoronoiDiagramFlags"/> values that specifies additional options.</param>
     /// <returns>
     ///     A list of line segments describing the Voronoi diagram.</returns>
-    public static VoronoiDiagram GenerateVoronoiDiagram(PointD[] sites, double width, double height, VoronoiDiagramFlags flags = 0)
+    public static VoronoiDiagram GenerateVoronoiDiagram(IList<PointD> sites, double width, double height, VoronoiDiagramFlags flags = 0)
     {
         var data = new data(sites, width, height, flags);
         return new VoronoiDiagram
@@ -64,7 +64,7 @@ public sealed class VoronoiDiagram
     /// <returns>
     ///     A list of edges in the triangulation, as pairs of indices into <paramref name="sites"/>. The indices within each
     ///     pair, as well as the pairs themselves, are ordered arbitrarily.</returns>
-    internal static IEnumerable<(int siteA, int siteB)> Triangulate(PointD[] sites)
+    internal static IEnumerable<(int siteA, int siteB)> Triangulate(IList<PointD> sites)
     {
         var data = new data(sites, 0, 0, VoronoiDiagramFlags.OnlySites);
         return data.Edges.Select(e => (e.SiteA.Index, e.SiteB.Index));
@@ -81,11 +81,11 @@ public sealed class VoronoiDiagram
         public List<edge> Edges = [];
         public polygon[] Polygons;
 
-        public data(PointD[] sites, double width, double height, VoronoiDiagramFlags flags)
+        public data(IList<PointD> sites, double width, double height, VoronoiDiagramFlags flags)
         {
-            var events = new List<siteEvent>(sites.Length);
-            Polygons = new polygon[sites.Length];
-            for (var siteIx = 0; siteIx < sites.Length; siteIx++)
+            var events = new List<siteEvent>(sites.Count);
+            Polygons = new polygon[sites.Count];
+            for (var siteIx = 0; siteIx < sites.Count; siteIx++)
             {
                 var p = sites[siteIx];
                 if ((flags & VoronoiDiagramFlags.OnlySites) != 0 || (p.X > 0 && p.Y > 0 && p.X < width && p.Y < height))
@@ -264,7 +264,7 @@ public sealed class VoronoiDiagram
                     Polygons[e.SiteB.Index] = new polygon(e.SiteB);
                 Polygons[e.SiteB.Index].AddEdge(e);
             }
-            if (sites.Length == 1) // this is the only scenario in which there exists a "polygon" with no edges
+            if (sites.Count == 1) // this is the only scenario in which there exists a "polygon" with no edges
                 Polygons[0] = new polygon(new site(0, sites[0]));
         }
 
