@@ -111,4 +111,66 @@ public sealed class TriangulateTests
             new PointD(50, 50),
         ], [(0, 1)]);
     }
+
+    [Test]
+    public void TestPolygonTriangles()
+    {
+        //m 5,0 1,3 h 4 L 7,5 8,9 5,7 2,9 3,5 0,3 H 4 Z M 4.5,3.5 5.3,4.8 3.3,7.1 Z
+        var starOutside = new PolygonD(new PointD(5, 0), new PointD(6, 3), new PointD(10, 3), new PointD(7, 5), new PointD(8, 9),
+            new PointD(5, 7), new PointD(2, 9), new PointD(3, 5), new PointD(0, 3), new PointD(4, 3));
+        var starHole = new PolygonD(new PointD(4.5, 3.5), new PointD(5.3, 4.8), new PointD(3.3, 7.1));
+        var (vs, es, pes) = Triangulate.DelaunayEdgesConstrained([starOutside, starHole]);
+        Assert.AreEqual(15, vs.Count);
+        var ixs1 = vs.IndexOf((vs[10] + vs[12]) / 2); // left split
+        var ixs2 = vs.IndexOf((vs[11] + vs[12]) / 2); // right split
+        assertEdges(es, [(0, 1), (0, 9), (1, 2), (1, 3), (1, 11), (1, 10), (1, 9), (2, 3), (3, 4), (3, 5), (3, 11), (4, 5), (5, 6), (5, 12), (5, ixs2), (5, 11),
+            (6, 7), (6, 12), (7, 8), (7, 9), (7, 10), (7, ixs1), (7, 12), (8, 9), (9, 10), (10, 11), (10, ixs1), (11, ixs2), (12, ixs1), (12, ixs2), // border and internal edges
+            (0, 2), (0, 8), (2, 4), (4, 6), (6, 8), (11, ixs1), (ixs1, ixs2)]); // internal edges
+        var triangles = Triangulate.DelaunayTriangles([starOutside, starHole]);
+        assertTriangles(triangles, vs, [(0, 1, 9), (1, 2, 3), (1, 3, 11), (1, 11, 10), (1, 10, 9), (3, 4, 5), (3, 5, 11),
+            (5, 6, 12), (5, 12, ixs2), (5, ixs2, 11), (6, 7, 12), (7, 8, 9), (7, 9, 10), (7, 10, ixs1), (7, ixs1, 12)]);
+
+        // Differences to the above test which all require different handling:
+        // - the edges of the hole are not split
+        // - inner hole is just one triangle
+        // - the convex hull of the points is a triangle
+        var triOutside = new PolygonD(new PointD(5, 0), new PointD(10, 10), new PointD(0, 10));
+        var triHole = new PolygonD(new PointD(5, 6), new PointD(4, 4), new PointD(6, 4));
+        (vs, es, pes) = Triangulate.DelaunayEdgesConstrained([triOutside, triHole]);
+        Assert.AreEqual(6, vs.Count);
+        assertEdges(es, [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3), (0, 4), (0, 5), (1, 3), (1, 5), (2, 3), (2, 4)]);
+        triangles = Triangulate.DelaunayTriangles([triOutside, triHole]);
+        assertTriangles(triangles, vs, [(0, 1, 5), (0, 5, 4), (0, 4, 2), (1, 2, 3), (1, 3, 5), (2, 4, 3)]);
+        triangles = Triangulate.DelaunayTriangles([triOutside, triHole], true);
+        assertTriangles(triangles, vs, [(0, 5, 1), (0, 4, 5), (0, 2, 4), (1, 3, 2), (1, 5, 3), (2, 3, 4)]);
+
+        // two "vertical" diamonds, not connected to each other
+        var pts = new[] { (2, 1), (3, 2), (2, 3), (1, 2), (2 + 5, 1), (3 + 5, 2), (2 + 5, 3), (1 + 5, 2) }.Select(p => new PointD(p.Item1, p.Item2)).ToArray();
+        var edges = new[] { (0, 1), (1, 2), (2, 3), (3, 0), (3, 1), (4, 5), (5, 6), (6, 7), (7, 4), (7, 5) };
+        var tris = Triangulate.TrianglesFromEdges(pts, edges);
+        assertTriangles(tris, pts, [(0, 1, 3), (1, 2, 3), (4, 5, 7), (5, 6, 7)]);
+        // same but now there's an edge connecting them - possible if triangulate edges got filtered before being converted to triangles
+        edges = new[] { (0, 1), (1, 2), (2, 3), (3, 0), (3, 1), (4, 5), (5, 6), (6, 7), (7, 4), (7, 5), (1, 7) };
+        tris = Triangulate.TrianglesFromEdges(pts, edges);
+        assertTriangles(tris, pts, [(0, 1, 3), (1, 2, 3), (4, 5, 7), (5, 6, 7)]); // no change to triangles expected
+
+        void assertEdges(IEnumerable<(int v1, int v2)> edges, (int v1, int v2)[] expected)
+        {
+            Assert.AreEqual(expected.Length, edges.Count());
+            foreach (var expectedEdge in expected)
+                Assert.IsTrue(edges.Contains(expectedEdge) || edges.Contains((expectedEdge.v2, expectedEdge.v1)));
+        }
+        void assertTriangles(IEnumerable<TriangleD> triangles, IList<PointD> vertices, (int v1, int v2, int v3)[] expected)
+        {
+            Assert.AreEqual(expected.Length, triangles.Count());
+            foreach (var exT in expected)
+            {
+                Assert.IsTrue(triangles.Any(t =>
+                    (t.V1 == vertices[exT.v1] && t.V2 == vertices[exT.v2] && t.V3 == vertices[exT.v3]) ||
+                    (t.V1 == vertices[exT.v2] && t.V2 == vertices[exT.v3] && t.V3 == vertices[exT.v1]) ||
+                    (t.V1 == vertices[exT.v3] && t.V2 == vertices[exT.v1] && t.V3 == vertices[exT.v2])));
+            }
+        }
+    }
 }
+
