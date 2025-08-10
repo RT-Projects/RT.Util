@@ -57,7 +57,7 @@ public class TicTocCycles
     }
 
     /// <summary>
-    ///     Starts / resets the timer. Returns the the amount of CPU time consumed by this thread only since the last call to
+    ///     Starts / resets the timer. Returns the amount of CPU time consumed by this thread only since the last call to
     ///     <see cref="Tic"/>, or zero if this is the first call.</summary>
     public long Tic()
     {

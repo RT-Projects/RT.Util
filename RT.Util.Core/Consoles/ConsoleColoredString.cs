@@ -441,7 +441,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     }
 
     /// <summary>
-    ///     Returns a string array that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited
+    ///     Returns a collection that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited
     ///     by elements of a specified string array. Parameters specify the maximum number of substrings to return and whether
     ///     to return empty array elements.</summary>
     /// <param name="separator">

@@ -46,7 +46,7 @@ static class StringExtensions
     /// <param name="leaveSingleQuotesAlone">
     ///     If <c>true</c>, does not escape single quotes (<c>'</c>, U+0027).</param>
     /// <param name="leaveDoubleQuotesAlone">
-    ///     If <c>true</c>, does not escape single quotes (<c>"</c>, U+0022).</param>
+    ///     If <c>true</c>, does not escape double quotes (<c>"</c>, U+0022).</param>
     /// <returns>
     ///     The specified string with the necessary HTML or XML escaping applied.</returns>
     public static string HtmlEscape(this string input, bool leaveSingleQuotesAlone = false, bool leaveDoubleQuotesAlone = false)

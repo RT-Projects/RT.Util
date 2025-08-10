@@ -480,7 +480,7 @@ public sealed class TextTable
     /// <summary>
     ///     Sets a background color for an entire row within the table, including the vertical rules if <see
     ///     cref="VerticalRules"/> is <c>true</c>. Background colors for individual cells take precedence within the bounds of
-    ///     that cell. Background colors in the input string take precendence for those characters.</summary>
+    ///     that cell. Background colors in the input string take precedence for those characters.</summary>
     /// <param name="row">
     ///     The index of the row. If during rendering the table turns out to have fewer rows, the background color is ignored.</param>
     /// <param name="backgroundColor">

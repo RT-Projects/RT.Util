@@ -154,8 +154,8 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <param name="location">
     ///     Determines where to store the settings file.</param>
     /// <param name="throwOnError">
-    ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
-    ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
+    ///     If false, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
+    ///     true, such errors are propagated to the caller as exceptions. This value is also used as the default value for
     ///     <c>throwOnError</c> when calling <see cref="Save(bool?)"/>.</param>
     /// <param name="suffix">
     ///     Appended to the settings file name; at a minimum this should include the extension dot and the file extension.</param>
@@ -188,8 +188,8 @@ public abstract class SettingsFile<TSettings> where TSettings : new()
     /// <param name="filename">
     ///     Full path and filename of the settings file.</param>
     /// <param name="throwOnError">
-    ///     If true, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
-    ///     false, such errors are propagated to the caller as exceptions. This value is also used as the default value for
+    ///     If false, any errors while loading the file are silently suppressed and a default instance is loaded instead. If
+    ///     true, such errors are propagated to the caller as exceptions. This value is also used as the default value for
     ///     <c>throwOnError</c> when calling <see cref="Save(bool?)"/>.</param>
     public SettingsFile(bool throwOnError, string filename)
     {

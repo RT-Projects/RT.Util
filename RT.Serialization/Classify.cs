@@ -114,7 +114,7 @@ public static class Classify
 {
     /// <summary>
     ///     Options used when null is passed to methods that take options. Make sure not to modify this instance if any thread
-    ///     in the application might be in the middle of using <see cref="Classify"/>; ideally the options shoud be set once
+    ///     in the application might be in the middle of using <see cref="Classify"/>; ideally the options should be set once
     ///     during startup and never changed after that.</summary>
     public static ClassifyOptions DefaultOptions = new();
 
