@@ -1,4 +1,4 @@
-using RT.Internal;
+﻿using RT.Internal;
 
 namespace RT.Geometry;
 
@@ -75,7 +75,7 @@ public sealed class VoronoiDiagram
     ///     methods.</summary>
     private sealed class data
     {
-        public List<arc> Arcs = [];
+        public LinkedList<arc> Arcs = [];
         private Queue<siteEvent> _siteEvents;
         private List<circleEvent> _circleEvents = [];
         public List<edge> Edges = [];
@@ -135,31 +135,32 @@ public sealed class VoronoiDiagram
                     // Process a circle event
                     circleEvent evt = _circleEvents[0];
                     _circleEvents.RemoveAt(0);
-                    int arcIndex = Arcs.IndexOf(evt.Arc);
-                    if (arcIndex == -1) continue;
+                    if (evt.Arc.List == null) continue;
+                    var prevArc = evt.Arc.Previous; // these get unlinked when we remove the arc, but we'll still need them after
+                    var nextArc = evt.Arc.Next;
 
                     // The two edges left and right of the disappearing arc end here
                     if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
                     {
-                        Arcs[arcIndex - 1].Edge?.SetEndPoint(evt.Center);
-                        evt.Arc.Edge?.SetEndPoint(evt.Center);
+                        prevArc.Value.Edge?.SetEndPoint(evt.Center);
+                        evt.Arc.Value.Edge?.SetEndPoint(evt.Center);
                     }
 
                     // Remove the arc from the beachline
-                    Arcs.RemoveAt(arcIndex);
+                    Arcs.Remove(evt.Arc);
                     // ArcIndex now points to the arc after the one that disappeared
 
                     // Start a new edge at the point where the other two edges ended
-                    Arcs[arcIndex - 1].Edge = new edge(Arcs[arcIndex - 1].Site, Arcs[arcIndex].Site);
+                    prevArc.Value.Edge = new edge(prevArc.Value.Site, nextArc.Value.Site);
                     if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
-                        Arcs[arcIndex - 1].Edge.SetEndPoint(evt.Center);
-                    Edges.Add(Arcs[arcIndex - 1].Edge);
+                        prevArc.Value.Edge.SetEndPoint(evt.Center);
+                    Edges.Add(prevArc.Value.Edge);
 
                     // Recheck circle events on either side of the disappearing arc
-                    if (arcIndex > 0)
-                        checkCircleEvent(arcIndex - 1);
-                    if (arcIndex < Arcs.Count)
-                        checkCircleEvent(arcIndex);
+                    if (prevArc != null)
+                        checkCircleEvent(prevArc);
+                    if (nextArc != null)
+                        checkCircleEvent(nextArc);
                 }
                 else
                 {
@@ -168,30 +169,30 @@ public sealed class VoronoiDiagram
 
                     if (Arcs.Count == 0)
                     {
-                        Arcs.Add(new arc(evt.Site));
+                        Arcs.AddLast(new arc(evt.Site));
                         continue;
                     }
 
                     // Find the current arc(s) at height e.Position.y (if there are any)
                     bool arcFound = false;
-                    for (int i = 0; i < Arcs.Count; i++)
+                    for (var arc = Arcs.First; arc != null; arc = arc.Next)
                     {
-                        if (doesIntersect(evt.Site.Position, i, out var intersect))
+                        if (doesIntersect(evt.Site.Position, arc, out var intersect))
                         {
                             // New parabola intersects Arc - duplicate Arc
-                            Arcs.Insert(i + 1, new arc(Arcs[i].Site));
-                            Arcs[i + 1].Edge = Arcs[i].Edge;
+                            var dupArc = Arcs.AddAfter(arc, new arc(arc.Value.Site));
+                            dupArc.Value.Edge = arc.Value.Edge;
 
                             // Add a new Arc for Event.Position in the right place
-                            Arcs.Insert(i + 1, new arc(evt.Site));
+                            var evtArc = Arcs.AddAfter(arc, new arc(evt.Site));
 
                             // Add new half-edges connected to Arc's endpoints
-                            Arcs[i].Edge = Arcs[i + 1].Edge = new edge(Arcs[i + 1].Site, Arcs[i + 2].Site);
-                            Edges.Add(Arcs[i].Edge);
+                            arc.Value.Edge = evtArc.Value.Edge = new edge(evtArc.Value.Site, dupArc.Value.Site);
+                            Edges.Add(arc.Value.Edge);
 
                             // Check for new circle events around the new arc:
-                            checkCircleEvent(i);
-                            checkCircleEvent(i + 2);
+                            checkCircleEvent(arc);
+                            checkCircleEvent(dupArc);
 
                             arcFound = true;
                             break;
@@ -203,13 +204,13 @@ public sealed class VoronoiDiagram
 
                     // Special case: If Event.Position never intersects an arc, append it to the list.
                     // This only happens if there is more than one site event with the lowest X co-ordinate.
-                    arc lastArc = Arcs[Arcs.Count - 1];
+                    arc lastArc = Arcs.Last.Value;
                     arc newArc = new(evt.Site);
                     lastArc.Edge = new edge(lastArc.Site, newArc.Site);
                     Edges.Add(lastArc.Edge);
                     if ((flags & VoronoiDiagramFlags.OnlySites) == 0)
                         lastArc.Edge.SetEndPoint(new PointD(0, (newArc.Site.Position.Y + lastArc.Site.Position.Y) / 2));
-                    Arcs.Add(newArc);
+                    Arcs.AddLast(newArc);
                 }
             }
 
@@ -220,8 +221,8 @@ public sealed class VoronoiDiagram
             double var = 2 * width + height;
 
             // Extend each remaining edge to the new parabola intersections
-            for (int i = 0; i < Arcs.Count - 1; i++)
-                Arcs[i].Edge?.SetEndPoint(getIntersection(Arcs[i].Site.Position, Arcs[i + 1].Site.Position, 2 * var));
+            for (var arc = Arcs.First; arc?.Next != null; arc = arc.Next)
+                arc.Value.Edge?.SetEndPoint(getIntersection(arc.Value.Site.Position, arc.Next.Value.Site.Position, 2 * var));
 
             // Clip all the edges with the bounding rectangle and remove edges that are entirely outside
             var newEdges = new List<edge>();
@@ -287,22 +288,20 @@ public sealed class VoronoiDiagram
         }
 
         // Will a new parabola at p intersect with the arc at ArcIndex?
-        private bool doesIntersect(PointD p, int arcIndex, out PointD result)
+        private bool doesIntersect(PointD p, LinkedListNode<arc> arc, out PointD result)
         {
-            arc arc = Arcs[arcIndex];
-
             result = new PointD(0, 0);
-            if (arc.Site.Position.X == p.X)
+            if (arc.Value.Site.Position.X == p.X)
                 return false;
 
-            if ((arcIndex == 0 || getIntersection(Arcs[arcIndex - 1].Site.Position, arc.Site.Position, p.X).Y <= p.Y) &&
-                (arcIndex == Arcs.Count - 1 || p.Y <= getIntersection(arc.Site.Position, Arcs[arcIndex + 1].Site.Position, p.X).Y))
+            if ((arc.Previous == null || getIntersection(arc.Previous.Value.Site.Position, arc.Value.Site.Position, p.X).Y <= p.Y) &&
+                (arc.Next == null || p.Y <= getIntersection(arc.Value.Site.Position, arc.Next.Value.Site.Position, p.X).Y))
             {
                 result.Y = p.Y;
 
                 // Plug it back into the parabola equation
-                result.X = (arc.Site.Position.X * arc.Site.Position.X + (arc.Site.Position.Y - result.Y) * (arc.Site.Position.Y - result.Y) - p.X * p.X)
-                          / (2 * arc.Site.Position.X - 2 * p.X);
+                var sitePos = arc.Value.Site.Position;
+                result.X = (sitePos.X * sitePos.X + (sitePos.Y - result.Y) * (sitePos.Y - result.Y) - p.X * p.X) / (2 * sitePos.X - 2 * p.X);
 
                 return true;
             }
@@ -357,13 +356,13 @@ public sealed class VoronoiDiagram
             return result;
         }
 
-        // Look for a new circle event for the arc at ArcIndex
-        private void checkCircleEvent(int arcIndex)
+        // Look for a new circle event for the specified arc
+        private void checkCircleEvent(LinkedListNode<arc> arc)
         {
-            if (arcIndex == 0 || arcIndex == Arcs.Count - 1)
+            if (arc.Previous == null || arc.Next == null)
                 return;
 
-            if (getCircle(Arcs[arcIndex - 1].Site.Position, Arcs[arcIndex].Site.Position, Arcs[arcIndex + 1].Site.Position, out var center, out var maxX))
+            if (getCircle(arc.Previous.Value.Site.Position, arc.Value.Site.Position, arc.Next.Value.Site.Position, out var center, out var maxX))
             {
                 // Add the new event in the right place using binary search
                 int low = 0;
@@ -377,7 +376,7 @@ public sealed class VoronoiDiagram
                     else
                         high = middle;
                 }
-                _circleEvents.Insert(low, new circleEvent(maxX, center, Arcs[arcIndex]));
+                _circleEvents.Insert(low, new circleEvent(maxX, center, arc));
             }
         }
 
@@ -659,11 +658,11 @@ public sealed class VoronoiDiagram
     /// <summary>
     ///     Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
     ///     RT.Util.VoronoiDiagram).</summary>
-    private sealed class circleEvent(double x, PointD center, arc arc) : IComparable<circleEvent>
+    private sealed class circleEvent(double x, PointD center, LinkedListNode<arc> arc) : IComparable<circleEvent>
     {
-        public PointD Center = center;
-        public double X = x;
-        public arc Arc = arc;
+        public PointD Center => center;
+        public double X => x;
+        public LinkedListNode<arc> Arc => arc;
 
         public override string ToString() => $"({X}, {Center.Y}) [{Center.X}]";
 
