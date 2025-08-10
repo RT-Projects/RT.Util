@@ -77,7 +77,11 @@ public sealed class VoronoiDiagram
     {
         public LinkedList<arc> Arcs = [];
         private Queue<siteEvent> _siteEvents;
-        private List<circleEvent> _circleEvents = [];
+#if NET8_0_OR_GREATER
+        private PriorityQueue<circleEvent, (double, double)> _circleEvents = new();
+#else
+        private circleEventQueue _circleEvents = new();
+#endif
         public List<edge> Edges = [];
         public polygon[] Polygons;
 
@@ -130,11 +134,10 @@ public sealed class VoronoiDiagram
             // Main loop
             while (_siteEvents.Count > 0 || _circleEvents.Count > 0)
             {
-                if (_circleEvents.Count > 0 && (_siteEvents.Count == 0 || _circleEvents[0].X <= _siteEvents.Peek().Site.Position.X))
+                if (_circleEvents.Count > 0 && (_siteEvents.Count == 0 || _circleEvents.Peek().X <= _siteEvents.Peek().Site.Position.X))
                 {
                     // Process a circle event
-                    circleEvent evt = _circleEvents[0];
-                    _circleEvents.RemoveAt(0);
+                    circleEvent evt = _circleEvents.Dequeue();
                     if (evt.Arc.List == null) continue;
                     var prevArc = evt.Arc.Previous; // these get unlinked when we remove the arc, but we'll still need them after
                     var nextArc = evt.Arc.Next;
@@ -363,21 +366,7 @@ public sealed class VoronoiDiagram
                 return;
 
             if (getCircle(arc.Previous.Value.Site.Position, arc.Value.Site.Position, arc.Next.Value.Site.Position, out var center, out var maxX))
-            {
-                // Add the new event in the right place using binary search
-                int low = 0;
-                int high = _circleEvents.Count;
-                while (low < high)
-                {
-                    int middle = (low + high) / 2;
-                    circleEvent evt = _circleEvents[middle];
-                    if (evt.X < maxX || (evt.X == maxX && evt.Center.Y < center.Y))
-                        low = middle + 1;
-                    else
-                        high = middle;
-                }
-                _circleEvents.Insert(low, new circleEvent(maxX, center, arc));
-            }
+                _circleEvents.Enqueue(new circleEvent(maxX, center, arc), (maxX, center.Y));
         }
 
         // Find the circle through points p1, p2, p3
@@ -658,25 +647,42 @@ public sealed class VoronoiDiagram
     /// <summary>
     ///     Internal class to describe a circle event (part of Fortune's algorithm to generate Voronoi diagrams) (used by
     ///     RT.Util.VoronoiDiagram).</summary>
-    private sealed class circleEvent(double x, PointD center, LinkedListNode<arc> arc) : IComparable<circleEvent>
+    private sealed class circleEvent(double x, PointD center, LinkedListNode<arc> arc)
     {
         public PointD Center => center;
         public double X => x;
         public LinkedListNode<arc> Arc => arc;
 
         public override string ToString() => $"({X}, {Center.Y}) [{Center.X}]";
+    }
 
-        public int CompareTo(circleEvent other)
+#if !NET8_0_OR_GREATER
+    // on netstandard use a sorted list, which is much slower than a real priority queue but produces correct results
+    private class circleEventQueue : List<circleEvent>
+    {
+        public circleEvent Peek() => this[0];
+        public circleEvent Dequeue()
         {
-            if (X < other.X)
-                return -1;
-            if (X > other.X)
-                return 1;
-            if (Center.Y < other.Center.Y)
-                return -1;
-            if (Center.Y > other.Center.Y)
-                return 1;
-            return 0;
+            var evt = this[0];
+            RemoveAt(0);
+            return evt;
+        }
+        public void Enqueue(circleEvent newEvt, (double x, double centerY) prio)
+        {
+            // Add the new event in the right place using binary search
+            int low = 0;
+            int high = Count;
+            while (low < high)
+            {
+                int middle = (low + high) / 2;
+                circleEvent evt = this[middle];
+                if (evt.X < prio.x || (evt.X == prio.x && evt.Center.Y < prio.centerY))
+                    low = middle + 1;
+                else
+                    high = middle;
+            }
+            Insert(low, newEvt);
         }
     }
+#endif
 }
