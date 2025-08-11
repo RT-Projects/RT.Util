@@ -344,3 +344,6 @@ dotnet_diagnostic.xUnit2013.severity = none
 
 # CA1866: Use char overload (not available in netstandard2.0)
 dotnet_diagnostic.CA1866.severity = none
+
+# SYSLIB1045: Use 'GeneratedRegexAttribute' to generate the regular expression implementation at compile-time (not available in netstandard 2.0)
+dotnet_diagnostic.SYSLIB1045.severity = none

@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using RT.Util.ExtensionMethods;
 using RT.Util.Text;
@@ -180,7 +180,7 @@ public static class ConsoleUtil
     public static void Write(ConsoleColoredString value, bool stdErr = false)
     {
         if (value != null)
-            value.writeTo(stdErr ? Console.Error : Console.Out);
+            value.WriteTo(stdErr ? Console.Error : Console.Out);
     }
 
     /// <summary>
@@ -242,7 +242,7 @@ public static class ConsoleUtil
                 output.Write(new string(' ', (width - value.Length) / 2));
             else if (align == HorizontalTextAlignment.Right && width > value.Length)
                 output.Write(new string(' ', width - value.Length));
-            value.writeTo(output);
+            value.WriteTo(output);
         }
         output.WriteLine();
     }

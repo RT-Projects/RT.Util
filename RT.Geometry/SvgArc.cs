@@ -1,4 +1,4 @@
-namespace RT.Geometry;
+﻿namespace RT.Geometry;
 
 /// <summary>Encapsulates an elliptical arc in SVG path data.</summary>
 public sealed class SvgArc(double rx, double ry, double xAxisRotation, bool largeArcFlag, bool sweepFlag, PointD endPoint) : SvgPiece(SvgPieceType.Arc, new[] { endPoint })
@@ -17,7 +17,7 @@ public sealed class SvgArc(double rx, double ry, double xAxisRotation, bool larg
     ///     Returns the arc’s end-point.</summary>
     /// <remarks>
     ///     This is actually just <see cref="SvgPiece.Points"/>[0].</remarks>
-    public PointD EndPoint { get { return Points[0]; } }
+    public PointD EndPoint => Points[0];
 
     /// <summary>
     ///     Recreates the path in SVG path data syntax.</summary>
@@ -42,10 +42,7 @@ public sealed class SvgArc(double rx, double ry, double xAxisRotation, bool larg
     ///     A function to pass all points through.</param>
     /// <returns>
     ///     A new <see cref="SvgPiece"/> of the same <see cref="SvgPieceType"/>.</returns>
-    public override SvgPiece Select(Func<PointD, PointD> selector)
-    {
-        if (selector == null)
-            throw new ArgumentNullException(nameof(selector));
-        return new SvgArc(RX, RY, XAxisRotation, LargeArcFlag, SweepFlag, selector(EndPoint));
-    }
+    public override SvgPiece Select(Func<PointD, PointD> selector) => selector == null
+        ? throw new ArgumentNullException(nameof(selector))
+        : new SvgArc(RX, RY, XAxisRotation, LargeArcFlag, SweepFlag, selector(EndPoint));
 }

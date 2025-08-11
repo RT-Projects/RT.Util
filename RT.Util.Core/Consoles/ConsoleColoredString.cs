@@ -19,11 +19,11 @@ namespace RT.Util.Consoles;
 public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEquatable<ConsoleColoredString>
 {
     /// <summary>Represents an empty colored string. This field is read-only.</summary>
-    public static ConsoleColoredString Empty { get { return _empty ?? (_empty = new ConsoleColoredString()); } }
+    public static ConsoleColoredString Empty => _empty ??= new ConsoleColoredString();
     private static ConsoleColoredString _empty = null;
 
     /// <summary>Represents the environment's newline, colored in the default color. This field is read-only.</summary>
-    public static ConsoleColoredString NewLine { get { return _newline ?? (_newline = new ConsoleColoredString(Environment.NewLine, (ConsoleColor?) null)); } }
+    public static ConsoleColoredString NewLine => _newline ??= new ConsoleColoredString(Environment.NewLine, (ConsoleColor?) null);
     private static ConsoleColoredString _newline = null;
 
     private readonly string _text;
@@ -34,24 +34,14 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     Provides implicit conversion from <see cref="string"/> to <see cref="ConsoleColoredString"/>.</summary>
     /// <param name="input">
     ///     The string to convert.</param>
-    public static implicit operator ConsoleColoredString(string input)
-    {
-        if (input == null)
-            return null;
-        return new ConsoleColoredString(input, null, (ConsoleColor?) null);
-    }
+    public static implicit operator ConsoleColoredString(string input) => input == null ? null : new ConsoleColoredString(input, null, (ConsoleColor?) null);
 
     /// <summary>
     ///     Provides explicit conversion from <see cref="ConsoleColoredString"/> to <see cref="string"/> by discarding all
     ///     color information.</summary>
     /// <param name="input">
     ///     The string to convert.</param>
-    public static explicit operator string(ConsoleColoredString input)
-    {
-        if (input == null)
-            return null;
-        return input._text;
-    }
+    public static explicit operator string(ConsoleColoredString input) => input?._text;
 
     /// <summary>Initializes an empty <see cref="ConsoleColoredString"/>.</summary>
     public ConsoleColoredString() { _text = ""; _foreground = new ConsoleColor?[0]; _background = new ConsoleColor?[0]; }
@@ -66,17 +56,15 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     The background color to assign to the whole string.</param>
     public ConsoleColoredString(string input, ConsoleColor? foreground, ConsoleColor? background = null)
     {
-        if (input == null)
-            throw new ArgumentNullException(nameof(input));
-        _text = input;
+        _text = input ?? throw new ArgumentNullException(nameof(input));
         var l = input.Length;
         _foreground = new ConsoleColor?[l];
         _background = new ConsoleColor?[l];
         if (foreground != null)
-            for (int i = 0; i < l; i++)
+            for (var i = 0; i < l; i++)
                 _foreground[i] = foreground;
         if (background != null)
-            for (int i = 0; i < l; i++)
+            for (var i = 0; i < l; i++)
                 _background[i] = background;
     }
 
@@ -212,9 +200,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     }
 
     /// <summary>Returns the number of characters in this <see cref="ConsoleColoredString"/>.</summary>
-    public int Length { get { return _text.Length; } }
+    public int Length => _text.Length;
     /// <summary>Returns the raw text of this <see cref="ConsoleColoredString"/> by discarding all the color information.</summary>
-    public override string ToString() { return _text; }
+    public override string ToString() => _text;
 
     /// <summary>
     ///     Concatenates two <see cref="ConsoleColoredString"/>s.</summary>
@@ -224,14 +212,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     Second input string to concatenate.</param>
     /// <remarks>
     ///     The color of each character in the input strings is preserved.</remarks>
-    public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2)
-    {
-        if (string1 == null || string1.Length == 0)
-            return string2 ?? "";
-        if (string2 == null || string2.Length == 0)
-            return string1;
-        return new ConsoleColoredString(string1, string2);
-    }
+    public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredString string2) =>
+        string1 == null || string1.Length == 0 ? string2 ?? "" :
+        string2 == null || string2.Length == 0 ? string1 : new ConsoleColoredString(string1, string2);
 
     /// <summary>
     ///     Concatenates a <see cref="ConsoleColoredChar"/> onto the end of a <see cref="ConsoleColoredString"/>.</summary>
@@ -241,27 +224,21 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     Input character to append.</param>
     /// <remarks>
     ///     The color of each character in the inputs is preserved.</remarks>
-    public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredChar char2)
-    {
-        if (string1 == null || string1.Length == 0)
-            return char2.ToConsoleColoredString();
-        return new ConsoleColoredString(string1, char2.ToConsoleColoredString());
-    }
+    public static ConsoleColoredString operator +(ConsoleColoredString string1, ConsoleColoredChar char2) =>
+        string1 == null || string1.Length == 0 ? char2.ToConsoleColoredString() :
+        new ConsoleColoredString(string1, char2.ToConsoleColoredString());
 
     /// <summary>
     ///     Concatenates a <see cref="ConsoleColoredChar"/> onto the start of a <see cref="ConsoleColoredString"/>.</summary>
     /// <param name="char1">
-    ///     Input character to append.</param>
+    ///     Input character to prepend.</param>
     /// <param name="string2">
     ///     Input string to concatenate.</param>
     /// <remarks>
     ///     The color of each character in the inputs is preserved.</remarks>
-    public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredString string2)
-    {
-        if (string2 == null || string2.Length == 0)
-            return char1.ToConsoleColoredString();
-        return new ConsoleColoredString(char1.ToConsoleColoredString(), string2);
-    }
+    public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredString string2) =>
+        string2 == null || string2.Length == 0 ? char1.ToConsoleColoredString() :
+        new ConsoleColoredString(char1.ToConsoleColoredString(), string2);
 
     /// <summary>
     ///     Concatenates a string onto a <see cref="ConsoleColoredString"/>.</summary>
@@ -341,18 +318,18 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///         tag.</para></remarks>
     public static ConsoleColoredString FromEggsNode(EggsNode node)
     {
-        StringBuilder text = new StringBuilder();
-        List<ConsoleColor?> colors = new List<ConsoleColor?>();
-        List<int> colorLengths = new List<int>();
+        var text = new StringBuilder();
+        var colors = new List<ConsoleColor?>();
+        var colorLengths = new List<int>();
 
         eggWalk(node, text, colors, colorLengths, null);
 
         var colArr = new ConsoleColor?[colorLengths.Sum()];
         var index = 0;
-        for (int i = 0; i < colors.Count; i++)
+        for (var i = 0; i < colors.Count; i++)
         {
             var col = colors[i];
-            for (int j = 0; j < colorLengths[i]; j++)
+            for (var j = 0; j < colorLengths[i]; j++)
             {
                 colArr[index] = col;
                 index++;
@@ -364,10 +341,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
 
     private static void eggWalk(EggsNode node, StringBuilder text, List<ConsoleColor?> colors, List<int> colorLengths, ConsoleColor? curColor)
     {
-        var tag = node as EggsTag;
-        if (tag != null)
+        if (node is EggsTag tag)
         {
-            bool curLight = curColor >= ConsoleColor.DarkGray;
+            var curLight = curColor >= ConsoleColor.DarkGray;
             switch (tag.Tag)
             {
                 case '~': curColor = curLight ? ConsoleColor.DarkGray : ConsoleColor.Black; break;
@@ -377,15 +353,14 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                 case '_': curColor = curLight ? ConsoleColor.Red : ConsoleColor.DarkRed; break;
                 case '%': curColor = curLight ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta; break;
                 case '^': curColor = curLight ? ConsoleColor.Yellow : ConsoleColor.DarkYellow; break;
-                case '=': curColor = ConsoleColor.DarkGray; curLight = true; break;
-                case '*': if (!curLight) curColor = (ConsoleColor) ((int) (curColor ?? ConsoleColor.Gray) + 8); curLight = true; break;
+                case '=': curColor = ConsoleColor.DarkGray; break;
+                case '*': if (!curLight) curColor = (ConsoleColor) ((int) (curColor ?? ConsoleColor.Gray) + 8); break;
             }
             foreach (var child in tag.Children)
                 eggWalk(child, text, colors, colorLengths, curColor);
         }
-        else if (node is EggsText)
+        else if (node is EggsText txt)
         {
-            var txt = (EggsText) node;
             text.Append(txt.Text);
             colors.Add(curColor);
             colorLengths.Add(txt.Text.Length);
@@ -398,31 +373,28 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     A character position in the current <see cref="ConsoleColoredString"/>.</param>
     /// <returns>
     ///     The character at the specified index.</returns>
-    public char CharAt(int index)
-    {
-        if (index < 0 || index >= _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index must be greater or equal to 0 and smaller than the length of the ConsoleColoredString.");
-        return _text[index];
-    }
+    public char CharAt(int index) => index < 0 || index >= _text.Length
+        ? throw new ArgumentOutOfRangeException(nameof(index), "index must be greater or equal to 0 and smaller than the length of the ConsoleColoredString.")
+        : _text[index];
 
     /// <summary>Equivalent to <see cref="string.IndexOf(char)"/>.</summary>
-    public int IndexOf(char value) { return _text.IndexOf(value); }
+    public int IndexOf(char value) => _text.IndexOf(value);
     /// <summary>Equivalent to <see cref="string.IndexOf(string)"/>.</summary>
-    public int IndexOf(string value) { return _text.IndexOf(value); }
+    public int IndexOf(string value) => _text.IndexOf(value);
     /// <summary>Equivalent to <see cref="string.IndexOf(char,int)"/>.</summary>
-    public int IndexOf(char value, int startIndex) { return _text.IndexOf(value, startIndex); }
+    public int IndexOf(char value, int startIndex) => _text.IndexOf(value, startIndex);
     /// <summary>Equivalent to <see cref="string.IndexOf(string,int)"/>.</summary>
-    public int IndexOf(string value, int startIndex) { return _text.IndexOf(value, startIndex); }
+    public int IndexOf(string value, int startIndex) => _text.IndexOf(value, startIndex);
     /// <summary>Equivalent to <see cref="string.IndexOf(string,StringComparison)"/>.</summary>
-    public int IndexOf(string value, StringComparison comparisonType) { return _text.IndexOf(value, comparisonType); }
+    public int IndexOf(string value, StringComparison comparisonType) => _text.IndexOf(value, comparisonType);
     /// <summary>Equivalent to <see cref="string.IndexOf(char,int,int)"/>.</summary>
-    public int IndexOf(char value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
+    public int IndexOf(char value, int startIndex, int count) => _text.IndexOf(value, startIndex, count);
     /// <summary>Equivalent to <see cref="string.IndexOf(string,int,int)"/>.</summary>
-    public int IndexOf(string value, int startIndex, int count) { return _text.IndexOf(value, startIndex, count); }
+    public int IndexOf(string value, int startIndex, int count) => _text.IndexOf(value, startIndex, count);
     /// <summary>Equivalent to <see cref="string.IndexOf(string,int,StringComparison)"/>.</summary>
-    public int IndexOf(string value, int startIndex, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, comparisonType); }
+    public int IndexOf(string value, int startIndex, StringComparison comparisonType) => _text.IndexOf(value, startIndex, comparisonType);
     /// <summary>Equivalent to <see cref="string.IndexOf(string,int,int,StringComparison)"/>.</summary>
-    public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) { return _text.IndexOf(value, startIndex, count, comparisonType); }
+    public int IndexOf(string value, int startIndex, int count, StringComparison comparisonType) => _text.IndexOf(value, startIndex, count, comparisonType);
 
     /// <summary>
     ///     Returns a new string in which a specified string is inserted at a specified index position in this instance.</summary>
@@ -433,17 +405,14 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     /// <returns>
     ///     A new string that is equivalent to this instance, but with <paramref name="value"/> inserted at position <paramref
     ///     name="startIndex"/>.</returns>
-    public ConsoleColoredString Insert(int startIndex, ConsoleColoredString value)
-    {
-        if (startIndex < 0 || startIndex > Length)
-            throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative or greater than the length of the string.");
-        return Substring(0, startIndex) + value + Substring(startIndex);
-    }
+    public ConsoleColoredString Insert(int startIndex, ConsoleColoredString value) => startIndex < 0 || startIndex > Length
+        ? throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative or greater than the length of the string.")
+        : Substring(0, startIndex) + value + Substring(startIndex);
 
     /// <summary>
-    ///     Returns a collection that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited
-    ///     by elements of a specified string array. Parameters specify the maximum number of substrings to return and whether
-    ///     to return empty array elements.</summary>
+    ///     Returns a collection that contains the substrings in this <see cref="ConsoleColoredString"/> that are delimited by
+    ///     elements of a specified string array. Parameters specify the maximum number of substrings to return and whether to
+    ///     return empty array elements.</summary>
     /// <param name="separator">
     ///     An array of strings that delimit the substrings in this <see cref="ConsoleColoredString"/>, an empty array that
     ///     contains no delimiters, or null.</param>
@@ -467,7 +436,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
         while (true)
         {
             var candidates = separator.Select(sep => new { Separator = sep, MatchIndex = _text.IndexOf(sep, index) }).Where(sep => sep.MatchIndex != -1).ToArray();
-            if (!candidates.Any())
+            if (candidates.Length == 0)
             {
                 if (index < _text.Length || (options & StringSplitOptions.RemoveEmptyEntries) == 0)
                     yield return Substring(index);
@@ -495,10 +464,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     name="startIndex"/> in this instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     ///     <paramref name="startIndex"/> is less than zero or greater than the length of this instance.</exception>
-    public ConsoleColoredString Substring(int startIndex)
-    {
-        return new ConsoleColoredString(_text.Substring(startIndex), _foreground.Subarray(startIndex), _background.Subarray(startIndex));
-    }
+    public ConsoleColoredString Substring(int startIndex) => new(_text.Substring(startIndex), _foreground.Subarray(startIndex), _background.Subarray(startIndex));
 
     /// <summary>
     ///     Retrieves a substring from this instance. The substring starts at a specified character position and has a
@@ -510,15 +476,13 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     /// <returns>
     ///     A <see cref="ConsoleColoredString"/> equivalent to the substring of length length that begins at <paramref
     ///     name="startIndex"/> in this instance.</returns>
-    public ConsoleColoredString Substring(int startIndex, int length)
-    {
-        return new ConsoleColoredString(_text.Substring(startIndex, length), _foreground.Subarray(startIndex, length), _background.Subarray(startIndex, length));
-    }
+    public ConsoleColoredString Substring(int startIndex, int length) =>
+        new(_text.Substring(startIndex, length), _foreground.Subarray(startIndex, length), _background.Subarray(startIndex, length));
 
     /// <summary>Outputs the current <see cref="ConsoleColoredString"/> to the console.</summary>
-    internal void writeTo(System.IO.TextWriter writer)
+    internal void WriteTo(TextWriter writer)
     {
-        int index = 0;
+        var index = 0;
         Console.ResetColor();
         var defaultFc = Console.ForegroundColor;
         var defaultBc = Console.BackgroundColor;
@@ -546,12 +510,8 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     /// <returns>
     ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
     ///     the corresponding objects in <paramref name="args"/>.</returns>
-    public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args)
-    {
-        if (format == null)
-            throw new ArgumentNullException(nameof(format));
-        return format.Fmt(args);
-    }
+    public static ConsoleColoredString Format(ConsoleColoredString format, params object[] args) =>
+        format == null ? throw new ArgumentNullException(nameof(format)) : format.Fmt(args);
 
     /// <summary>
     ///     Replaces the format item in a specified string with the string representation of a corresponding object in a
@@ -565,44 +525,27 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     /// <returns>
     ///     A copy of <paramref name="format"/> in which the format items have been replaced by the string representation of
     ///     the corresponding objects in <paramref name="args"/>.</returns>
-    public static ConsoleColoredString Format(ConsoleColoredString format, IFormatProvider provider, params object[] args)
-    {
-        if (format == null)
-            throw new ArgumentNullException(nameof(format));
-        return format.Fmt(provider, args);
-    }
+    public static ConsoleColoredString Format(ConsoleColoredString format, IFormatProvider provider, params object[] args) =>
+        format == null ? throw new ArgumentNullException(nameof(format)) : format.Fmt(provider, args);
 
     /// <summary>Equivalent to <see cref="ConsoleColoredString.Format(ConsoleColoredString,object[])"/>.</summary>
-    public ConsoleColoredString Fmt(params object[] args)
-    {
-        return Fmt(null, args);
-    }
+    public ConsoleColoredString Fmt(params object[] args) => Fmt(null, args);
 
     /// <summary>Equivalent to <see cref="ConsoleColoredString.Format(ConsoleColoredString,IFormatProvider,object[])"/>.</summary>
-    public ConsoleColoredString Fmt(IFormatProvider provider, params object[] args)
-    {
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
-        return FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.Stringify, provider, args).JoinColoredString();
-    }
+    public ConsoleColoredString Fmt(IFormatProvider provider, params object[] args) => args == null
+        ? throw new ArgumentNullException(nameof(args))
+        : FmtEnumerableInternal(FormatBehavior.Colored | FormatBehavior.Stringify, provider, args).JoinColoredString();
 
     /// <summary>
     ///     Formats the specified objects into this format string. The result is an enumerable collection which enumerates
     ///     parts of the format string interspersed with the arguments as appropriate.</summary>
-    public IEnumerable<object> FmtEnumerable(params object[] args)
-    {
-        return FmtEnumerable(null, args);
-    }
+    public IEnumerable<object> FmtEnumerable(params object[] args) => FmtEnumerable(null, args);
 
     /// <summary>
     ///     Formats the specified objects into this format string. The result is an enumerable collection which enumerates
     ///     parts of the format string interspersed with the arguments as appropriate.</summary>
-    public IEnumerable<object> FmtEnumerable(IFormatProvider provider, params object[] args)
-    {
-        if (args == null)
-            throw new ArgumentNullException(nameof(args));
-        return FmtEnumerableInternal(FormatBehavior.Colored, provider, args);
-    }
+    public IEnumerable<object> FmtEnumerable(IFormatProvider provider, params object[] args) =>
+         FmtEnumerableInternal(FormatBehavior.Colored, provider, args ?? throw new ArgumentNullException(nameof(args)));
 
     [Flags]
     internal enum FormatBehavior
@@ -643,7 +586,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
 
         while (index < _text.Length)
         {
-            char ch = _text[index];
+            var ch = _text[index];
             if (ch == '{' && index < _text.Length - 1 && _text[index + 1] == '{')
             {
                 yield return substring(oldIndex, index + 1 - oldIndex);
@@ -774,16 +717,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
                             var backgroundStr = backgroundBuilder?.ToString();
 
                             if (fgSet)
-                                if (Enum.TryParse<ConsoleColor>(foregroundBuilder.ToString(), out var fg))
-                                    foreground = fg;
-                                else
-                                    throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(foregroundStr));
+                                foreground = Enum.TryParse<ConsoleColor>(foregroundBuilder.ToString(), out var fg) ? fg : throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(foregroundStr));
 
                             if (bgSet)
-                                if (Enum.TryParse<ConsoleColor>(backgroundBuilder.ToString(), out var bg))
-                                    background = bg;
-                                else
-                                    throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
+                                background = Enum.TryParse<ConsoleColor>(backgroundBuilder.ToString(), out var bg) ? bg : throw new FormatException("The specified format string uses an invalid console color name ({0}).".Fmt(backgroundStr));
                         }
 
                         var result = (args[num] as ConsoleColoredString) ?? (args[num] as ConsoleColoredChar?)?.ToConsoleColoredString();
@@ -854,19 +791,13 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     Returns an array describing the foreground color of every character in the current string.</summary>
     /// <returns>
     ///     A copy of the internal color array. Modifying the returned array is safe.</returns>
-    public ConsoleColor?[] GetColors()
-    {
-        return _foreground.ToArray();
-    }
+    public ConsoleColor?[] GetColors() => _foreground.ToArray();
 
     /// <summary>
     ///     Returns an array describing the background color of every character in the current string.</summary>
     /// <returns>
     ///     A copy of the internal color array. Modifying the returned array is safe.</returns>
-    public ConsoleColor?[] GetBackgroundColors()
-    {
-        return _background.ToArray();
-    }
+    public ConsoleColor?[] GetBackgroundColors() => _background.ToArray();
 
     /// <summary>
     ///     Gets the character and color at a specified character position in the current colored string.</summary>
@@ -876,15 +807,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     A Unicode character with console colors.</returns>
     /// <exception cref="IndexOutOfRangeException">
     ///     <paramref name="index"/> is greater than or equal to the length of this string or less than zero.</exception>
-    public ConsoleColoredChar this[int index]
-    {
-        get
-        {
-            if (index < 0 || index >= _text.Length)
-                throw new IndexOutOfRangeException("The index must be non-negative and smaller than the length of the string.");
-            return new ConsoleColoredChar(_text[index], _foreground[index], _background[index]);
-        }
-    }
+    public ConsoleColoredChar this[int index] => index < 0 || index >= _text.Length
+        ? throw new IndexOutOfRangeException("The index must be non-negative and smaller than the length of the string.")
+        : new ConsoleColoredChar(_text[index], _foreground[index], _background[index]);
 
     /// <summary>
     ///     Changes the foreground colors (but not the background colors) of every character in the current string to the
@@ -897,7 +822,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     {
         var newForeground = new ConsoleColor?[_text.Length];
         if (foreground != null)
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
                 newForeground[i] = foreground;
         return new ConsoleColoredString(_text, newForeground, _background);
     }
@@ -914,7 +839,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     public ConsoleColoredString Color(char character, ConsoleColor? foreground)
     {
         var newForeground = (ConsoleColor?[]) _foreground.Clone();
-        for (int i = 0; i < _text.Length; i++)
+        for (var i = 0; i < _text.Length; i++)
             if (_text[i] == character)
                 newForeground[i] = foreground;
         return new ConsoleColoredString(_text, newForeground, _background);
@@ -933,10 +858,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
         var newForeground = new ConsoleColor?[_text.Length];
         var newBackground = new ConsoleColor?[_text.Length];
         if (foreground != null)
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
                 newForeground[i] = foreground;
         if (background != null)
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
                 newBackground[i] = background;
         return new ConsoleColoredString(_text, newForeground, newBackground);
     }
@@ -956,7 +881,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     {
         var newForeground = (ConsoleColor?[]) _foreground.Clone();
         var newBackground = (ConsoleColor?[]) _background.Clone();
-        for (int i = 0; i < _text.Length; i++)
+        for (var i = 0; i < _text.Length; i++)
             if (_text[i] == character)
             {
                 newForeground[i] = foreground;
@@ -981,13 +906,13 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
         var newForeground = new ConsoleColor?[_text.Length];
         var newBackground = _background;
 
-        for (int i = 0; i < _text.Length; i++)
+        for (var i = 0; i < _text.Length; i++)
             newForeground[i] = _foreground[i] ?? foreground;
 
         if (background != null)
         {
             newBackground = new ConsoleColor?[_text.Length];
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
                 newBackground[i] = _background[i] ?? background;
         }
 
@@ -1005,7 +930,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     {
         var newBackground = new ConsoleColor?[_text.Length];
         if (background != null)
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
                 newBackground[i] = background;
         return new ConsoleColoredString(_text, _foreground, newBackground);
     }
@@ -1021,7 +946,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     public ConsoleColoredString ColorBackgroundWhereNull(ConsoleColor background)
     {
         var newBackground = new ConsoleColor?[_text.Length];
-        for (int i = 0; i < _text.Length; i++)
+        for (var i = 0; i < _text.Length; i++)
             newBackground[i] = _background[i] ?? background;
         return new ConsoleColoredString(_text, _foreground, newBackground);
     }
@@ -1037,14 +962,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     color.</param>
     /// <returns>
     ///     The current string but with some of the foreground colors changed.</returns>
-    public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-        if (length < 0 || index + length > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
-        return Substring(0, index) + Substring(index, length).Color(foreground) + Substring(index + length);
-    }
+    public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground) =>
+        index < 0 || index > _text.Length ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.") :
+        length < 0 || index + length > _text.Length ? throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.") :
+        Substring(0, index) + Substring(index, length).Color(foreground) + Substring(index + length);
 
     /// <summary>
     ///     Colors the specified range within the current string in the specified colors.</summary>
@@ -1060,14 +981,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     color.</param>
     /// <returns>
     ///     The current string but with some of the colors changed.</returns>
-    public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground, ConsoleColor? background)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-        if (length < 0 || index + length > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
-        return Substring(0, index) + Substring(index, length).Color(foreground).ColorBackground(background) + Substring(index + length);
-    }
+    public ConsoleColoredString ColorSubstring(int index, int length, ConsoleColor? foreground, ConsoleColor? background) =>
+        index < 0 || index > _text.Length ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.") :
+        length < 0 || index + length > _text.Length ? throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.") :
+        Substring(0, index) + Substring(index, length).Color(foreground).ColorBackground(background) + Substring(index + length);
 
     /// <summary>
     ///     Colors a range of characters beginning at a specified index within the current string in a specified foreground
@@ -1079,13 +996,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     <c>null</c> to use the console’s default foreground color.</param>
     /// <returns>
     ///     The current string but with some of the foreground colors changed.</returns>
-    public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-
-        return Substring(0, index) + Substring(index).Color(foreground);
-    }
+    public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground) => index < 0 || index > _text.Length
+        ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.")
+        : Substring(0, index) + Substring(index).Color(foreground);
 
     /// <summary>
     ///     Colors a range of characters beginning at a specified index within the current string in the specified colors.</summary>
@@ -1099,13 +1012,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     <c>null</c> to use the console’s default background color.</param>
     /// <returns>
     ///     The current string but with some of the colors changed.</returns>
-    public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground, ConsoleColor? background)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-
-        return Substring(0, index) + Substring(index).Color(foreground).ColorBackground(background);
-    }
+    public ConsoleColoredString ColorSubstring(int index, ConsoleColor? foreground, ConsoleColor? background) => index < 0 || index > _text.Length
+        ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.")
+        : Substring(0, index) + Substring(index).Color(foreground).ColorBackground(background);
 
     /// <summary>
     ///     Colors the specified range within the current string in a specified background color.</summary>
@@ -1118,14 +1027,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     color.</param>
     /// <returns>
     ///     The current string but with some of the background colors changed.</returns>
-    public ConsoleColoredString ColorSubstringBackground(int index, int length, ConsoleColor? background)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-        if (length < 0 || index + length > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.");
-        return Substring(0, index) + Substring(index, length).ColorBackground(background) + Substring(index + length);
-    }
+    public ConsoleColoredString ColorSubstringBackground(int index, int length, ConsoleColor? background) =>
+        index < 0 || index > _text.Length ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.") :
+        length < 0 || index + length > _text.Length ? throw new ArgumentOutOfRangeException(nameof(length), "length cannot be negative or span beyond the end of the string.") :
+        Substring(0, index) + Substring(index, length).ColorBackground(background) + Substring(index + length);
 
     /// <summary>
     ///     Colors a range of characters beginning at a specified index within the current string in a specified background
@@ -1137,13 +1042,9 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     <c>null</c> to use the console’s default background color.</param>
     /// <returns>
     ///     The current string but with some of the background colors changed.</returns>
-    public ConsoleColoredString ColorSubstringBackground(int index, ConsoleColor? background)
-    {
-        if (index < 0 || index > _text.Length)
-            throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.");
-
-        return Substring(0, index) + Substring(index).ColorBackground(background);
-    }
+    public ConsoleColoredString ColorSubstringBackground(int index, ConsoleColor? background) =>
+        index < 0 || index > _text.Length ? throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative or greater than the length of the input string.") :
+        Substring(0, index) + Substring(index).ColorBackground(background);
 
     /// <summary>
     ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of <paramref name="oldChar"/> is
@@ -1154,12 +1055,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     The character to replace every occurrence of <paramref name="oldChar"/> with.</param>
     /// <returns>
     ///     The new string after replacements.</returns>
-    public ConsoleColoredString Replace(char oldChar, char newChar)
-    {
-        if (_text.Length == 0)
-            return this;
-        return new ConsoleColoredString(_text.Replace(oldChar, newChar), _foreground, _background);
-    }
+    public ConsoleColoredString Replace(char oldChar, char newChar) => _text.Length == 0 ? this : new ConsoleColoredString(_text.Replace(oldChar, newChar), _foreground, _background);
     /// <summary>
     ///     Returns a new <see cref="ConsoleColoredString"/> in which every occurrence of <paramref name="oldChar"/> is
     ///     replaced with the <paramref name="newChar"/>, overwriting its color as well.</summary>
@@ -1280,14 +1176,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     padding characters.</param>
     /// <param name="paddingChar">
     ///     A colored padding character.</param>
-    public ConsoleColoredString PadLeft(int totalWidth, ConsoleColoredChar paddingChar)
-    {
-        if (totalWidth < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.");
-        if (Length >= totalWidth)
-            return this;
-        return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
-    }
+    public ConsoleColoredString PadLeft(int totalWidth, ConsoleColoredChar paddingChar) =>
+        totalWidth < 0 ? throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.") :
+        Length >= totalWidth ? this :
+        this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
 
     /// <summary>
     ///     Returns a new string that left-aligns the characters in this instance by padding them with spaces on the right,
@@ -1304,14 +1196,10 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     ///     padding characters.</param>
     /// <param name="paddingChar">
     ///     A colored padding character.</param>
-    public ConsoleColoredString PadRight(int totalWidth, ConsoleColoredChar paddingChar)
-    {
-        if (totalWidth < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.");
-        if (Length >= totalWidth)
-            return this;
-        return this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
-    }
+    public ConsoleColoredString PadRight(int totalWidth, ConsoleColoredChar paddingChar) =>
+        totalWidth < 0 ? throw new ArgumentOutOfRangeException(nameof(totalWidth), "Total width cannot be negative.") :
+        Length >= totalWidth ? this :
+        this + new ConsoleColoredString(new string(paddingChar.Character, totalWidth - Length), paddingChar.Color, paddingChar.BackgroundColor);
 
     /// <summary>Returns a string in which the coloration of this ConsoleColoredString is represented as user-readable text.</summary>
     public string ToDebugString
@@ -1320,7 +1208,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
         {
             var sb = new StringBuilder();
             ConsoleColor? fg = null, bg = null;
-            for (int i = 0; i < _text.Length; i++)
+            for (var i = 0; i < _text.Length; i++)
             {
                 if (_foreground[i] != fg || _background[i] != bg)
                 {
@@ -1347,29 +1235,22 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     public override int GetHashCode() => Ut.ArrayHash(_text, _foreground, _background);
 }
 
-/// <summary>Contains a character and a console foreground and background color.</summary>
-public struct ConsoleColoredChar
+/// <summary>
+///     Contains a character and a console foreground and background color.</summary>
+/// <param name="character">
+///     The character.</param>
+/// <param name="foreground">
+///     The foreground color.</param>
+/// <param name="background">
+///     The background color.</param>
+public struct ConsoleColoredChar(char character, ConsoleColor? foreground, ConsoleColor? background = null)
 {
     /// <summary>Gets the character.</summary>
-    public char Character { get; private set; }
+    public char Character { get; private set; } = character;
     /// <summary>Gets the foreground color. <c>null</c> indicates to use the console’s default foreground color.</summary>
-    public ConsoleColor? Color { get; private set; }
+    public ConsoleColor? Color { get; private set; } = foreground;
     /// <summary>Gets the background color. <c>null</c> indicates to use the console’s default background color.</summary>
-    public ConsoleColor? BackgroundColor { get; private set; }
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="character">
-    ///     The character.</param>
-    /// <param name="foreground">
-    ///     The foreground color.</param>
-    /// <param name="background">
-    ///     The background color.</param>
-    public ConsoleColoredChar(char character, ConsoleColor? foreground, ConsoleColor? background = null)
-    {
-        Character = character;
-        Color = foreground;
-        BackgroundColor = background;
-    }
+    public ConsoleColor? BackgroundColor { get; private set; } = background;
 
     /// <summary>
     ///     Concatenates two <see cref="ConsoleColoredChar"/>s into a <see cref="ConsoleColoredString"/>.</summary>
@@ -1379,10 +1260,8 @@ public struct ConsoleColoredChar
     ///     Second input character to concatenate.</param>
     /// <remarks>
     ///     The color of each character in the input strings is preserved.</remarks>
-    public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredChar char2)
-    {
-        return new ConsoleColoredString(string.Concat(char1.Character, char2.Character), new[] { char1.Color, char2.Color }, new[] { char1.BackgroundColor, char2.BackgroundColor });
-    }
+    public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredChar char2) =>
+        new(string.Concat(char1.Character, char2.Character), new[] { char1.Color, char2.Color }, new[] { char1.BackgroundColor, char2.BackgroundColor });
 
     /// <summary>
     ///     Concatenates a <see cref="ConsoleColoredChar"/> onto a string and returns a <see cref="ConsoleColoredString"/>.</summary>
@@ -1429,5 +1308,5 @@ public struct ConsoleColoredChar
     ///     Implicitly converts an uncolored <c>char</c> to a <see cref="ConsoleColoredChar"/> with no color.</summary>
     /// <param name="ch">
     ///     The character to convert.</param>
-    public static implicit operator ConsoleColoredChar(char ch) => new ConsoleColoredChar(ch, null);
+    public static implicit operator ConsoleColoredChar(char ch) => new(ch, null);
 }

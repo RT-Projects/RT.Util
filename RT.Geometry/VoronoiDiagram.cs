@@ -103,8 +103,8 @@ public sealed class VoronoiDiagram
                 // If the first N events are so close in X that their intersection tends towards infinity then make them all have the same X coordinate,
                 // which triggers proper handling of this special case later in the algorithm.
                 var minX = events[0].Site.Position.X;
-                bool changed = false;
-                for (int i = 1; i < events.Count; i++)
+                var changed = false;
+                for (var i = 1; i < events.Count; i++)
                 {
                     if (!almostEqual(minX, events[i].Site.Position.X))
                         break;
@@ -116,7 +116,7 @@ public sealed class VoronoiDiagram
             }
 
             // Make sure there are no two equal points in the input
-            for (int i = 1; i < events.Count; i++)
+            for (var i = 1; i < events.Count; i++)
             {
                 while (i < events.Count && events[i - 1].Site.Position == events[i].Site.Position)
                 {
@@ -137,7 +137,7 @@ public sealed class VoronoiDiagram
                 if (_circleEvents.Count > 0 && (_siteEvents.Count == 0 || _circleEvents.Peek().X <= _siteEvents.Peek().Site.Position.X))
                 {
                     // Process a circle event
-                    circleEvent evt = _circleEvents.Dequeue();
+                    var evt = _circleEvents.Dequeue();
                     if (evt.Arc.List == null) continue;
                     var prevArc = evt.Arc.Previous; // these get unlinked when we remove the arc, but we'll still need them after
                     var nextArc = evt.Arc.Next;
@@ -177,7 +177,7 @@ public sealed class VoronoiDiagram
                     }
 
                     // Find the current arc(s) at height e.Position.y (if there are any)
-                    bool arcFound = false;
+                    var arcFound = false;
                     for (var arc = Arcs.First; arc != null; arc = arc.Next)
                     {
                         if (doesIntersect(evt.Site.Position, arc, out var intersect))
@@ -207,7 +207,7 @@ public sealed class VoronoiDiagram
 
                     // Special case: If Event.Position never intersects an arc, append it to the list.
                     // This only happens if there is more than one site event with the lowest X co-ordinate.
-                    arc lastArc = Arcs.Last.Value;
+                    var lastArc = Arcs.Last.Value;
                     arc newArc = new(evt.Site);
                     lastArc.Edge = new edge(lastArc.Site, newArc.Site);
                     Edges.Add(lastArc.Edge);
@@ -221,16 +221,16 @@ public sealed class VoronoiDiagram
                 return;
 
             // Advance the sweep line so no parabolas can cross the bounding box
-            double var = 2 * width + height;
+            var newScanX = 2 * (2 * width + height);
 
             // Extend each remaining edge to the new parabola intersections
             for (var arc = Arcs.First; arc?.Next != null; arc = arc.Next)
-                arc.Value.Edge?.SetEndPoint(getIntersection(arc.Value.Site.Position, arc.Next.Value.Site.Position, 2 * var));
+                arc.Value.Edge?.SetEndPoint(getIntersection(arc.Value.Site.Position, arc.Next.Value.Site.Position, newScanX));
 
             // Clip all the edges with the bounding rectangle and remove edges that are entirely outside
             var newEdges = new List<edge>();
             var boundingEdges = new[] { new EdgeD(0, 0, width, 0), new EdgeD(width, 0, width, height), new EdgeD(width, height, 0, height), new EdgeD(0, height, 0, 0) };
-            foreach (edge e in Edges)
+            foreach (var e in Edges)
             {
                 if ((e.Start.Value.X < 0 || e.Start.Value.X > width || e.Start.Value.Y < 0 || e.Start.Value.Y > height) &&
                     (e.End.Value.X < 0 || e.End.Value.X > width || e.End.Value.Y < 0 || e.End.Value.Y > height) &&
@@ -259,7 +259,7 @@ public sealed class VoronoiDiagram
             Edges = newEdges;
 
             // Generate polygons from the edges
-            foreach (edge e in Edges)
+            foreach (var e in Edges)
             {
                 if (Polygons[e.SiteA.Index] == null)
                     Polygons[e.SiteA.Index] = new polygon(e.SiteA);
@@ -272,7 +272,7 @@ public sealed class VoronoiDiagram
                 Polygons[0] = new polygon(new site(0, sites[0]));
         }
 
-        private bool almostEqual(double v1, double v2)
+        private static bool almostEqual(double v1, double v2)
         {
             if (v1 < 0 && v2 < 0) // both negative
             {
@@ -291,7 +291,7 @@ public sealed class VoronoiDiagram
         }
 
         // Will a new parabola at p intersect with the arc at ArcIndex?
-        private bool doesIntersect(PointD p, LinkedListNode<arc> arc, out PointD result)
+        private static bool doesIntersect(PointD p, LinkedListNode<arc> arc, out PointD result)
         {
             result = new PointD(0, 0);
             if (arc.Value.Site.Position.X == p.X)
@@ -315,7 +315,7 @@ public sealed class VoronoiDiagram
         private static PointD getIntersection(PointD siteA, PointD siteB, double scanX)
         {
             PointD result = new();
-            PointD p = siteA;
+            var p = siteA;
 
             if (siteA.X == siteB.X)
                 result.Y = (siteA.Y + siteB.Y) / 2;
@@ -336,7 +336,7 @@ public sealed class VoronoiDiagram
                 var c = dx2 * siteA.Y * siteA.Y - dx1 * siteB.Y * siteB.Y - (siteA.X - siteB.X) * dx1 * dx2;
                 //var ccfused = Math.FusedMultiplyAdd(dx2, siteA.Y * siteA.Y, Math.FusedMultiplyAdd(-dx1, siteB.Y * siteB.Y, -(siteA.X - siteB.X) * dx1 * dx2)); // no notable improvement in precision observed
                 var disc = b * b - 4 * a * c;
-                if (disc < 0 && disc > -1e-7) // lowest observed where valid solutions exist: -2e-9
+                if (disc is < 0 and > (-1e-7)) // lowest observed where valid solutions exist: -2e-9
                     disc = 0;
                 var sqrt = Math.Sqrt(disc);
                 if (b < 0)
@@ -420,7 +420,7 @@ public sealed class VoronoiDiagram
             else if (End == null)
                 End = end;
         }
-        public override string ToString() { return (Start == null ? "?" : Start.Value.ToString()) + " ==> " + (End == null ? "?" : End.ToString()); }
+        public override string ToString() => (Start == null ? "?" : Start.Value.ToString()) + " ==> " + (End == null ? "?" : End.ToString());
     }
 
     /// <summary>Internal class describing a polygon in the Voronoi diagram. May be incomplete as the algorithm progresses.</summary>
@@ -555,11 +555,11 @@ public sealed class VoronoiDiagram
                 return;
             }
 
-            bool found = true;
+            var found = true;
             while (found)
             {
                 found = false;
-                foreach (edge e in _unprocessedEdges)
+                foreach (var e in _unprocessedEdges)
                 {
                     if (edgeAttach(e))
                     {
@@ -630,18 +630,12 @@ public sealed class VoronoiDiagram
 
         public override string ToString() => Site.Position.ToString();
 
-        public int CompareTo(siteEvent other)
-        {
-            if (Site.Position.X < other.Site.Position.X)
-                return -1;
-            if (Site.Position.X > other.Site.Position.X)
-                return 1;
-            if (Site.Position.Y < other.Site.Position.Y)
-                return -1;
-            if (Site.Position.Y > other.Site.Position.Y)
-                return 1;
-            return 0;
-        }
+        public int CompareTo(siteEvent other) =>
+            Site.Position.X < other.Site.Position.X ? -1 :
+            Site.Position.X > other.Site.Position.X ? 1 :
+            Site.Position.Y < other.Site.Position.Y ? -1 :
+            Site.Position.Y > other.Site.Position.Y ? 1 :
+            0;
     }
 
     /// <summary>
@@ -670,12 +664,12 @@ public sealed class VoronoiDiagram
         public void Enqueue(circleEvent newEvt, (double x, double centerY) prio)
         {
             // Add the new event in the right place using binary search
-            int low = 0;
-            int high = Count;
+            var low = 0;
+            var high = Count;
             while (low < high)
             {
-                int middle = (low + high) / 2;
-                circleEvent evt = this[middle];
+                var middle = (low + high) / 2;
+                var evt = this[middle];
                 if (evt.X < prio.x || (evt.X == prio.x && evt.Center.Y < prio.centerY))
                     low = middle + 1;
                 else

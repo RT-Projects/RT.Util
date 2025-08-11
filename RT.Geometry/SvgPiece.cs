@@ -1,4 +1,4 @@
-using RT.Internal;
+﻿using RT.Internal;
 
 namespace RT.Geometry;
 
@@ -75,10 +75,8 @@ public class SvgPiece
     ///     A function to pass all points through.</param>
     /// <returns>
     ///     A new <see cref="SvgPiece"/> of the same <see cref="SvgPieceType"/>.</returns>
-    public virtual SvgPiece Select(Func<PointD, PointD> selector)
-    {
-        if (selector == null)
-            throw new ArgumentNullException(nameof(selector));
-        return Type == SvgPieceType.End ? this : new SvgPiece(Type, Points.Select(selector).ToArray());
-    }
+    public virtual SvgPiece Select(Func<PointD, PointD> selector) =>
+        selector == null ? throw new ArgumentNullException(nameof(selector)) :
+        Type == SvgPieceType.End ? this :
+        new SvgPiece(Type, Points.Select(selector).ToArray());
 }

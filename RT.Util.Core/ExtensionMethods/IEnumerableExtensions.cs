@@ -49,8 +49,8 @@ static class IEnumerableExtensions
         {
             // Make sure that ‘source’ is evaluated only once
             var arr = source as IList<T> ?? source.ToArray();
-            for (int i = 0; i < arr.Count - 1; i++)
-                for (int j = i + 1; j < arr.Count; j++)
+            for (var i = 0; i < arr.Count - 1; i++)
+                for (var j = i + 1; j < arr.Count; j++)
                     yield return (arr[i], arr[j]);
         }
         return uniquePairsIterator();
@@ -86,37 +86,29 @@ static class IEnumerableExtensions
 
         IEnumerable<TResult> selectConsecutivePairsIterator()
         {
-            using (var enumer = source.GetEnumerator())
+            using var enumer = source.GetEnumerator();
+            var any = enumer.MoveNext();
+            if (!any)
+                yield break;
+            var first = enumer.Current;
+            var last = enumer.Current;
+            while (enumer.MoveNext())
             {
-                bool any = enumer.MoveNext();
-                if (!any)
-                    yield break;
-                T first = enumer.Current;
-                T last = enumer.Current;
-                while (enumer.MoveNext())
-                {
-                    yield return selector(last, enumer.Current);
-                    last = enumer.Current;
-                }
-                if (closed)
-                    yield return selector(last, first);
+                yield return selector(last, enumer.Current);
+                last = enumer.Current;
             }
+            if (closed)
+                yield return selector(last, first);
         }
         return selectConsecutivePairsIterator();
     }
 
 #if !NET7_0_OR_GREATER
     /// <summary>Sorts the elements of a sequence in ascending order.</summary>
-    public static IEnumerable<T> Order<T>(this IEnumerable<T> source)
-    {
-        return source.OrderBy(k => k);
-    }
+    public static IEnumerable<T> Order<T>(this IEnumerable<T> source) => source.OrderBy(k => k);
 
     /// <summary>Sorts the elements of a sequence in ascending order by using a specified comparer.</summary>
-    public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer)
-    {
-        return source.OrderBy(k => k, comparer);
-    }
+    public static IEnumerable<T> Order<T>(this IEnumerable<T> source, IComparer<T> comparer) => source.OrderBy(k => k, comparer);
 #endif
 
     /// <summary>
@@ -199,10 +191,7 @@ static class IEnumerableExtensions
     ///     The sequence to be sorted.</param>
     /// <returns>
     ///     The given <see cref="IEnumerable{T}"/> with its elements sorted progressively.</returns>
-    public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source)
-    {
-        return OrderLazy(source, Comparer<T>.Default);
-    }
+    public static IEnumerable<T> OrderLazy<T>(this IEnumerable<T> source) => OrderLazy(source, Comparer<T>.Default);
 
     /// <summary>
     ///     Orders the items, lazily. It is much faster when extracting only the first few items using <see
@@ -222,24 +211,24 @@ static class IEnumerableExtensions
         var arr = source.ToArray();
         if (arr.Length < 2)
             return arr;
-        int[] map = new int[arr.Length];
-        for (int i = 0; i < arr.Length; i++)
+        var map = new int[arr.Length];
+        for (var i = 0; i < arr.Length; i++)
             map[i] = i;
 
         IEnumerable<T> quickSort(T[] items, int left, int right)
         {
             int compareForStableSort(T elem1, int elem1Index, T elem2, int elem2Index)
             {
-                int r = comparer.Compare(elem1, elem2);
+                var r = comparer.Compare(elem1, elem2);
                 return r != 0 ? r : elem1Index.CompareTo(elem2Index);
             }
 
             while (left < right)
             {
-                int curleft = left;
-                int curright = right;
-                int pivotIndex = map[curleft + ((curright - curleft) >> 1)];
-                T pivot = items[pivotIndex];
+                var curleft = left;
+                var curright = right;
+                var pivotIndex = map[curleft + ((curright - curleft) >> 1)];
+                var pivot = items[pivotIndex];
                 do
                 {
                     while ((curleft < map.Length) && compareForStableSort(pivot, pivotIndex, items[map[curleft]], map[curleft]) > 0)
@@ -250,11 +239,7 @@ static class IEnumerableExtensions
                         break;
 
                     if (curleft < curright)
-                    {
-                        int tmp = map[curleft];
-                        map[curleft] = map[curright];
-                        map[curright] = tmp;
-                    }
+                        (map[curright], map[curleft]) = (map[curleft], map[curright]);
                     curleft++;
                     curright--;
                 }
@@ -293,7 +278,7 @@ static class IEnumerableExtensions
         if (c < 2)
             yield return source;
         else
-            for (int i = 0; i < c; i++)
+            for (var i = 0; i < c; i++)
                 foreach (var p in permutations(source.Take(i).Concat(source.Skip(i + 1))))
                     yield return source.Skip(i).Take(1).Concat(p);
     }
@@ -322,7 +307,7 @@ static class IEnumerableExtensions
         if (maxLength < 0 || maxLength > input.Count)
             throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be between 0 and the size of the collection.");
 
-        IEnumerable<List<int>> subsequences(int range, int minLen, int maxLen)
+        static IEnumerable<List<int>> subsequences(int range, int minLen, int maxLen)
         {
             var results = new List<List<int>>();
             if (minLen <= 0 && range == 0)
@@ -364,12 +349,8 @@ static class IEnumerableExtensions
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        using (var e = source.GetEnumerator())
-        {
-            if (e.MoveNext())
-                return e.Current;
-            return null;
-        }
+        using var e = source.GetEnumerator();
+        return e.MoveNext() ? e.Current : null;
     }
 
     /// <summary>
@@ -389,13 +370,11 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(source));
         if (predicate == null)
             throw new ArgumentNullException(nameof(predicate));
-        using (var e = source.GetEnumerator())
-        {
-            while (e.MoveNext())
-                if (predicate(e.Current))
-                    return e.Current;
-            return null;
-        }
+        using var e = source.GetEnumerator();
+        while (e.MoveNext())
+            if (predicate(e.Current))
+                return e.Current;
+        return null;
     }
 
 #if !NET7_0_OR_GREATER
@@ -414,12 +393,8 @@ static class IEnumerableExtensions
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        using (var e = source.GetEnumerator())
-        {
-            if (e.MoveNext())
-                return e.Current;
-            return @default;
-        }
+        using var e = source.GetEnumerator();
+        return e.MoveNext() ? e.Current : @default;
     }
 
     /// <summary>
@@ -442,13 +417,11 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(source));
         if (predicate == null)
             throw new ArgumentNullException(nameof(predicate));
-        using (var e = source.GetEnumerator())
-        {
-            while (e.MoveNext())
-                if (predicate(e.Current))
-                    return e.Current;
-            return @default;
-        }
+        using var e = source.GetEnumerator();
+        while (e.MoveNext())
+            if (predicate(e.Current))
+                return e.Current;
+        return @default;
     }
 #endif
 
@@ -479,13 +452,11 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(predicate));
         if (resultSelector == null)
             throw new ArgumentNullException(nameof(resultSelector));
-        using (var e = source.GetEnumerator())
-        {
-            while (e.MoveNext())
-                if (predicate(e.Current))
-                    return resultSelector(e.Current);
-            return @default;
-        }
+        using var e = source.GetEnumerator();
+        while (e.MoveNext())
+            if (predicate(e.Current))
+                return resultSelector(e.Current);
+        return @default;
     }
 
     /// <summary>
@@ -497,7 +468,7 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(source));
         if (predicate == null)
             throw new ArgumentNullException(nameof(predicate));
-        int index = 0;
+        var index = 0;
         foreach (var v in source)
         {
             if (predicate(v))
@@ -517,7 +488,7 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(source));
         if (predicate == null)
             throw new ArgumentNullException(nameof(predicate));
-        int index = 0;
+        var index = 0;
         foreach (var v in source)
         {
             if (predicate(v, index))
@@ -539,7 +510,7 @@ static class IEnumerableExtensions
             throw new ArgumentNullException(nameof(predicate));
         if (startIndex < 0)
             throw new ArgumentOutOfRangeException(nameof(startIndex), "startIndex cannot be negative.");
-        int index = 0;
+        var index = 0;
         foreach (var v in source)
         {
             if (predicate(v) && index >= startIndex)
@@ -562,8 +533,7 @@ static class IEnumerableExtensions
         if (predicate == null)
             throw new ArgumentNullException(nameof(predicate));
 
-        var list = source as IList<T>;
-        if (list != null)
+        if (source is IList<T> list)
         {
             var i = list.Count - 1;
             while (i >= 0 && !predicate(list[i]))
@@ -571,8 +541,8 @@ static class IEnumerableExtensions
             return i;
         }
 
-        int index = 0;
-        int lastIndex = -1;
+        var index = 0;
+        var lastIndex = -1;
         foreach (var v in source)
         {
             if (predicate(v))
@@ -590,9 +560,8 @@ static class IEnumerableExtensions
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        if (comparer == null)
-            comparer = EqualityComparer<T>.Default;
-        int index = 0;
+        comparer ??= EqualityComparer<T>.Default;
+        var index = 0;
         foreach (var v in source)
         {
             if (comparer.Equals(v, element))
@@ -701,7 +670,7 @@ static class IEnumerableExtensions
         if (source == null)
             throw new ArgumentNullException(nameof(source));
         var (result, found) = minMax(source, min: true);
-        return found ? result : (TSource?) null;
+        return found ? result : null;
     }
 
     /// <summary>
@@ -724,7 +693,7 @@ static class IEnumerableExtensions
         if (selector == null)
             throw new ArgumentNullException(nameof(selector));
         var (result, found) = minMax(source.Select(selector), min: true);
-        return found ? result : (TResult?) null;
+        return found ? result : null;
     }
 
     /// <summary>
@@ -740,7 +709,7 @@ static class IEnumerableExtensions
         if (source == null)
             throw new ArgumentNullException(nameof(source));
         var (result, found) = minMax(source, min: false);
-        return found ? result : (TSource?) null;
+        return found ? result : null;
     }
 
     /// <summary>
@@ -763,7 +732,7 @@ static class IEnumerableExtensions
         if (selector == null)
             throw new ArgumentNullException(nameof(selector));
         var (result, found) = minMax(source.Select(selector), min: false);
-        return found ? result : (TResult?) null;
+        return found ? result : null;
     }
 
     private static (T result, bool found) minMax<T>(IEnumerable<T> source, bool min)
@@ -786,62 +755,62 @@ static class IEnumerableExtensions
     ///     Returns the first element from the input sequence for which the value selector returns the smallest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static T MinElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: true).Value.minMaxElem;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or a
     ///     default value if the collection is empty.</summary>
-    public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default) where TValue : IComparable<TValue>
-    {
-        var tup = minMaxElement(source, valueSelector, min: true, doThrow: false);
-        return tup == null ? defaultValue : tup.Value.minMaxElem;
-    }
+    public static T MinElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default)
+        where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: true, doThrow: false) is var (minMaxElem, _, _) ? minMaxElem : defaultValue;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the smallest value, or
     ///     <c>null</c> if the collection is empty.</summary>
-    public static T? MinElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue>
-    {
-        return minMaxElement(source, valueSelector, min: true, doThrow: false)?.minMaxElem;
-    }
+    public static T? MinElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where T : struct
+        where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: true, doThrow: false)?.minMaxElem;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static T MaxElement<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: true).Value.minMaxElem;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value, or a
     ///     default value if the collection is empty.</summary>
-    public static T MaxElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default(T)) where TValue : IComparable<TValue>
-    {
-        var tup = minMaxElement(source, valueSelector, min: false, doThrow: false);
-        return tup == null ? defaultValue : tup.Value.minMaxElem;
-    }
+    public static T MaxElementOrDefault<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector, T defaultValue = default)
+        where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: false, doThrow: false) is var (minMaxElem, _, _) ? minMaxElem : defaultValue;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value, or
     ///     <c>null</c> if the collection is empty.</summary>
-    public static T? MaxElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue>
-    {
-        return minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxElem;
-    }
+    public static T? MaxElementOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where T : struct
+        where TValue : IComparable<TValue> =>
+        minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxElem;
 
     /// <summary>
     ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest
     ///     value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static int MinIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: true).Value.minMaxIndex;
 
     /// <summary>
     ///     Returns the index of the first element from the input sequence for which the value selector returns the smallest
     ///     value, or <c>null</c> if the collection is empty.</summary>
-    public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static int? MinIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: false)?.minMaxIndex;
 
     /// <summary>
@@ -849,42 +818,51 @@ static class IEnumerableExtensions
     ///     value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static int MaxIndex<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: true).Value.minMaxIndex;
 
     /// <summary>
     ///     Returns the index of the first element from the input sequence for which the value selector returns the largest
     ///     value, or a default value if the collection is empty.</summary>
-    public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static int? MaxIndexOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxIndex;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static (T element, int index, TValue value) MinTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static (T element, int index, TValue value) MinTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: true).Value;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value, or
     ///     <c>null</c> if the collection is empty.</summary>
-    public static (T element, int index, TValue value)? MinTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue> =>
+    public static (T element, int index, TValue value)? MinTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where T : struct
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: false);
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
-    public static (T element, int index, TValue value) MaxTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where TValue : IComparable<TValue> =>
+    public static (T element, int index, TValue value) MaxTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: true).Value;
 
     /// <summary>
     ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value, or
     ///     <c>null</c> if the collection is empty.</summary>
-    public static (T element, int index, TValue value)? MaxTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector) where T : struct where TValue : IComparable<TValue> =>
+    public static (T element, int index, TValue value)? MaxTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
+        where T : struct
+        where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: false, doThrow: false);
 
-    private static (T minMaxElem, int minMaxIndex, TValue minMaxValue)? minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow) where TValue : IComparable<TValue>
+    private static (T minMaxElem, int minMaxIndex, TValue minMaxValue)? minMaxElement<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min, bool doThrow)
+        where TValue : IComparable<TValue>
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
@@ -894,9 +872,7 @@ static class IEnumerableExtensions
         using var enumerator = source.GetEnumerator();
         if (!enumerator.MoveNext())
         {
-            if (doThrow)
-                throw new InvalidOperationException("source contains no elements.");
-            return null;
+            return doThrow ? throw new InvalidOperationException("source contains no elements.") : null;
         }
         var minMaxElem = enumerator.Current;
         var minMaxValue = valueSelector(minMaxElem);
@@ -923,9 +899,9 @@ static class IEnumerableExtensions
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        if (valueSelector == null)
-            throw new ArgumentNullException(nameof(valueSelector));
-        return minMaxElements(source, valueSelector, min: true);
+        return valueSelector == null
+            ? throw new ArgumentNullException(nameof(valueSelector))
+            : minMaxElements(source, valueSelector, min: true);
     }
 
     /// <summary>
@@ -935,12 +911,12 @@ static class IEnumerableExtensions
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        if (valueSelector == null)
-            throw new ArgumentNullException(nameof(valueSelector));
-        return minMaxElements(source, valueSelector, min: false);
+        return valueSelector == null
+            ? throw new ArgumentNullException(nameof(valueSelector))
+            : minMaxElements(source, valueSelector, min: false);
     }
 
-    private static IEnumerable<T> minMaxElements<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min) where TValue : IComparable<TValue>
+    private static List<T> minMaxElements<T, TValue>(IEnumerable<T> source, Func<T, TValue> valueSelector, bool min) where TValue : IComparable<TValue>
     {
         var results = new List<T>();
         TValue minMaxValue = default;
@@ -985,16 +961,16 @@ static class IEnumerableExtensions
 
         if (source is ICollection<T> collection)
         {
-            if (throwIfNotEnough && collection.Count < count)
-                throw new InvalidOperationException("The collection does not contain enough elements.");
-            return collection.Take(Math.Max(0, collection.Count - count));
+            return throwIfNotEnough && collection.Count < count
+                ? throw new InvalidOperationException("The collection does not contain enough elements.")
+                : collection.Take(Math.Max(0, collection.Count - count));
         }
 
         IEnumerable<T> skipLastIterator()
         {
             var queue = new T[count];
-            int headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
-            int collected = 0;
+            var headtail = 0; // tail while we're still collecting, both head & tail afterwards because the queue becomes completely full
+            var collected = 0;
 
             foreach (var item in source)
             {
@@ -1021,10 +997,7 @@ static class IEnumerableExtensions
     }
 
     /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
-    public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence)
-    {
-        return StartsWith<T>(source, sequence, EqualityComparer<T>.Default);
-    }
+    public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence) => StartsWith<T>(source, sequence, EqualityComparer<T>.Default);
 
     /// <summary>Returns true if and only if the input collection begins with the specified collection.</summary>
     public static bool StartsWith<T>(this IEnumerable<T> source, IEnumerable<T> sequence, IEqualityComparer<T> comparer)
@@ -1036,36 +1009,24 @@ static class IEnumerableExtensions
         if (comparer == null)
             throw new ArgumentNullException(nameof(comparer));
 
-        using (var sourceEnum = source.GetEnumerator())
-        using (var seqEnum = sequence.GetEnumerator())
+        using var sourceEnum = source.GetEnumerator();
+        using var seqEnum = sequence.GetEnumerator();
+        while (true)
         {
-            while (true)
-            {
-                if (!seqEnum.MoveNext())
-                    return true;
-                if (!sourceEnum.MoveNext())
-                    return false;
-                if (!comparer.Equals(sourceEnum.Current, seqEnum.Current))
-                    return false;
-            }
+            if (!seqEnum.MoveNext())
+                return true;
+            if (!sourceEnum.MoveNext())
+                return false;
+            if (!comparer.Equals(sourceEnum.Current, seqEnum.Current))
+                return false;
         }
     }
 
     /// <summary>Creates a <see cref="Queue{T}"/> from an enumerable collection.</summary>
-    public static Queue<T> ToQueue<T>(this IEnumerable<T> source)
-    {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
-        return new Queue<T>(source);
-    }
+    public static Queue<T> ToQueue<T>(this IEnumerable<T> source) => new(source ?? throw new ArgumentNullException(nameof(source)));
 
     /// <summary>Creates a <see cref="Stack{T}"/> from an enumerable collection.</summary>
-    public static Stack<T> ToStack<T>(this IEnumerable<T> source)
-    {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
-        return new Stack<T>(source);
-    }
+    public static Stack<T> ToStack<T>(this IEnumerable<T> source) => new(source ?? throw new ArgumentNullException(nameof(source)));
 
     /// <summary>
     ///     Creates a two-level dictionary from an enumerable collection according to two specified key selector functions and
@@ -1164,15 +1125,13 @@ static class IEnumerableExtensions
 
         IEnumerable<int> selectIndexWhereIterator()
         {
-            int i = 0;
-            using (var e = source.GetEnumerator())
+            var i = 0;
+            using var e = source.GetEnumerator();
+            while (e.MoveNext())
             {
-                while (e.MoveNext())
-                {
-                    if (predicate(e.Current))
-                        yield return i;
-                    i++;
-                }
+                if (predicate(e.Current))
+                    yield return i;
+                i++;
             }
         }
         return selectIndexWhereIterator();
@@ -1241,41 +1200,36 @@ static class IEnumerableExtensions
     {
         if (values == null)
             throw new ArgumentNullException(nameof(values));
-        if (lastSeparator == null)
-            lastSeparator = separator;
+        lastSeparator ??= separator;
 
-        using (var enumerator = values.GetEnumerator())
+        using var enumerator = values.GetEnumerator();
+        if (!enumerator.MoveNext())
+            return "";
+
+        // Optimise the case where there is only one element
+        var one = enumerator.Current;
+        if (!enumerator.MoveNext())
+            return prefix + one + suffix;
+
+        // Optimise the case where there are only two elements
+        var two = enumerator.Current;
+        if (!enumerator.MoveNext())
         {
-            if (!enumerator.MoveNext())
-                return "";
-
-            // Optimise the case where there is only one element
-            var one = enumerator.Current;
-            if (!enumerator.MoveNext())
-                return prefix + one + suffix;
-
-            // Optimise the case where there are only two elements
-            var two = enumerator.Current;
-            if (!enumerator.MoveNext())
-            {
-                // Optimise the (common) case where there is no prefix/suffix; this prevents an array allocation when calling string.Concat()
-                if (prefix == null && suffix == null)
-                    return one + lastSeparator + two;
-                return prefix + one + suffix + lastSeparator + prefix + two + suffix;
-            }
-
-            StringBuilder sb = new StringBuilder()
-                .Append(prefix).Append(one).Append(suffix).Append(separator)
-                .Append(prefix).Append(two).Append(suffix);
-            var prev = enumerator.Current;
-            while (enumerator.MoveNext())
-            {
-                sb.Append(separator).Append(prefix).Append(prev).Append(suffix);
-                prev = enumerator.Current;
-            }
-            sb.Append(lastSeparator).Append(prefix).Append(prev).Append(suffix);
-            return sb.ToString();
+            // Optimise the (common) case where there is no prefix/suffix; this prevents an array allocation when calling string.Concat()
+            return prefix == null && suffix == null ? one + lastSeparator + two : prefix + one + suffix + lastSeparator + prefix + two + suffix;
         }
+
+        var sb = new StringBuilder()
+            .Append(prefix).Append(one).Append(suffix).Append(separator)
+            .Append(prefix).Append(two).Append(suffix);
+        var prev = enumerator.Current;
+        while (enumerator.MoveNext())
+        {
+            sb.Append(separator).Append(prefix).Append(prev).Append(suffix);
+            prev = enumerator.Current;
+        }
+        sb.Append(lastSeparator).Append(prefix).Append(prev).Append(suffix);
+        return sb.ToString();
     }
 
     /// <summary>
@@ -1287,12 +1241,9 @@ static class IEnumerableExtensions
     /// <returns>
     ///     A collection containing the original collection with the extra element inserted. For example, new[] { 1, 2, 3
     ///     }.InsertBetween(0) returns { 1, 0, 2, 0, 3 }.</returns>
-    public static IEnumerable<T> InsertBetween<T>(this IEnumerable<T> source, T extraElement)
-    {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
-        return source.SelectMany(val => new[] { extraElement, val }).Skip(1);
-    }
+    public static IEnumerable<T> InsertBetween<T>(this IEnumerable<T> source, T extraElement) => source == null
+        ? throw new ArgumentNullException(nameof(source))
+        : source.SelectMany(val => new[] { extraElement, val }).Skip(1);
 
     /// <summary>
     ///     Inserts the <paramref name="comma"/> item in between each element in the input collection except between the
@@ -1314,48 +1265,41 @@ static class IEnumerableExtensions
 
         IEnumerable<T> insertBetweenWithAndIterator()
         {
-            using (var enumerator = source.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                    yield break;
-                yield return enumerator.Current;
-                if (!enumerator.MoveNext())
-                    yield break;
+            using var enumerator = source.GetEnumerator();
+            if (!enumerator.MoveNext())
+                yield break;
+            yield return enumerator.Current;
+            if (!enumerator.MoveNext())
+                yield break;
 
-                var prev = enumerator.Current;
-                while (enumerator.MoveNext())
-                {
-                    yield return comma;
-                    yield return prev;
-                    prev = enumerator.Current;
-                }
-                yield return and;
+            var prev = enumerator.Current;
+            while (enumerator.MoveNext())
+            {
+                yield return comma;
                 yield return prev;
+                prev = enumerator.Current;
             }
+            yield return and;
+            yield return prev;
         }
 
         return insertBetweenWithAndIterator();
     }
 
     /// <summary>Determines whether this sequence comprises the values provided in the specified order.</summary>
-    public static bool SequenceEqual<T>(this IEnumerable<T> sequence1, params T[] sequence2)
-    {
-        return Enumerable.SequenceEqual(sequence1, sequence2);
-    }
+    public static bool SequenceEqual<T>(this IEnumerable<T> sequence1, params T[] sequence2) => Enumerable.SequenceEqual(sequence1, sequence2);
 
     /// <summary>Determines whether all the input sequences are equal according to SequenceEquals.</summary>
     public static bool AllSequencesEqual<T>(this IEnumerable<IEnumerable<T>> sources)
     {
-        using (var e = sources.GetEnumerator())
-        {
-            if (!e.MoveNext())
-                return true;
-            var firstSequence = e.Current;
-            while (e.MoveNext())
-                if (!firstSequence.SequenceEqual(e.Current))
-                    return false;
+        using var e = sources.GetEnumerator();
+        if (!e.MoveNext())
             return true;
-        }
+        var firstSequence = e.Current;
+        while (e.MoveNext())
+            if (!firstSequence.SequenceEqual(e.Current))
+                return false;
+        return true;
     }
 
     /// <summary>
@@ -1515,9 +1459,7 @@ static class IEnumerableExtensions
                 curMaxElement = elem;
             }
         }
-        if (count == 0)
-            throw new InvalidOperationException("The specified collection contained no elements.");
-        return curMaxElement;
+        return count == 0 ? throw new InvalidOperationException("The specified collection contained no elements.") : curMaxElement;
     }
 
     /// <summary>Returns the sum of the values in the specified collection, truncated to a 32-bit integer.</summary>
@@ -1735,12 +1677,9 @@ class ConsecutiveGroup<TItem, TKey> : IEnumerable<TItem>
     ///     Returns an enumerator that iterates through the collection.</summary>
     /// <returns>
     ///     An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
-    public IEnumerator<TItem> GetEnumerator() { return _group.GetEnumerator(); }
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return GetEnumerator(); }
+    public IEnumerator<TItem> GetEnumerator() => _group.GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Returns a string that represents this group’s key and its count.</summary>
-    public override string ToString()
-    {
-        return $"{Key}; Count = {Count}";
-    }
+    public override string ToString() => $"{Key}; Count = {Count}";
 }
