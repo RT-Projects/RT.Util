@@ -1363,11 +1363,11 @@ static class StringExtensions
     /// <returns>
     ///     A collection of the Match objects found by the search. If no matches are found, the method returns an empty
     ///     collection object.</returns>
-    public static MatchCollection RegexMatches(this string input,
+    public static IEnumerable<Match> RegexMatches(this string input,
 #if NET7_0_OR_GREATER
     [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
 #endif
-        string pattern, RegexOptions options = 0) => Regex.Matches(input, pattern, options);
+        string pattern, RegexOptions options = 0) => Regex.Matches(input, pattern, options).Cast<Match>();
 
     /// <summary>
     ///     Searches the specified <paramref name="input"/> string for all occurrences of a specified regular expression
@@ -1379,11 +1379,11 @@ static class StringExtensions
     /// <returns>
     ///     A collection of the Match objects found by the search. If no matches are found, the method returns an empty
     ///     collection object.</returns>
-    public static MatchCollection RegexMatchesIgnoreCase(this string input,
+    public static IEnumerable<Match> RegexMatchesIgnoreCase(this string input,
 #if NET7_0_OR_GREATER
     [System.Diagnostics.CodeAnalysis.StringSyntax(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Regex)]
 #endif
-        string pattern) => Regex.Matches(input, pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        string pattern) => Regex.Matches(input, pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase).Cast<Match>();
 
     /// <summary>
     ///     In a specified <paramref name="input"/> string, replaces all strings that match a specified regular expression
