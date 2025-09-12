@@ -830,7 +830,8 @@ static class IEnumerableExtensions
         minMaxElement(source, valueSelector, min: false, doThrow: false)?.minMaxIndex;
 
     /// <summary>
-    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value.</summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its
+    ///     index, as well as that smallest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
     public static (T element, int index, TValue value) MinTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
@@ -838,15 +839,16 @@ static class IEnumerableExtensions
         minMaxElement(source, valueSelector, min: true, doThrow: true).Value;
 
     /// <summary>
-    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its index, as well as that smallest value, or
-    ///     <c>null</c> if the collection is empty.</summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the smallest value, its
+    ///     index, as well as that smallest value, or <c>null</c> if the collection is empty.</summary>
     public static (T element, int index, TValue value)? MinTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
         where T : struct
         where TValue : IComparable<TValue> =>
         minMaxElement(source, valueSelector, min: true, doThrow: false);
 
     /// <summary>
-    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value.</summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its
+    ///     index, as well as that largest value.</summary>
     /// <exception cref="InvalidOperationException">
     ///     The input collection is empty.</exception>
     public static (T element, int index, TValue value) MaxTuple<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
@@ -854,8 +856,8 @@ static class IEnumerableExtensions
         minMaxElement(source, valueSelector, min: false, doThrow: true).Value;
 
     /// <summary>
-    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its index, as well as that largest value, or
-    ///     <c>null</c> if the collection is empty.</summary>
+    ///     Returns the first element from the input sequence for which the value selector returns the largest value, its
+    ///     index, as well as that largest value, or <c>null</c> if the collection is empty.</summary>
     public static (T element, int index, TValue value)? MaxTupleOrNull<T, TValue>(this IEnumerable<T> source, Func<T, TValue> valueSelector)
         where T : struct
         where TValue : IComparable<TValue> =>
@@ -1193,7 +1195,7 @@ static class IEnumerableExtensions
     ///     <code>
     ///         // Returns "[Paris], [London], [Tokyo]"
     ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]")
-    ///
+    ///         
     ///         // Returns "[Paris], [London] and [Tokyo]"
     ///         (new[] { "Paris", "London", "Tokyo" }).JoinString(", ", "[", "]", " and ");</code></example>
     public static string JoinString<T>(this IEnumerable<T> values, string separator = null, string prefix = null, string suffix = null, string lastSeparator = null)
@@ -1591,6 +1593,112 @@ static class IEnumerableExtensions
             if (!result.ContainsKey(entry.Key))
                 result.Add(entry.Key, entry.Value);
         return result;
+    }
+
+    /// <summary>
+    ///     Projects each element of a sequence of 2-tuples into a new form.</summary>
+    /// <typeparam name="TElem1">
+    ///     The type of the first element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem2">
+    ///     The type of the second element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TResult">
+    ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+    /// <param name="source">
+    ///     A sequence of 2-tuples to invoke a transform function on.</param>
+    /// <param name="selector">
+    ///     A transform function to apply to each 2-tuple.</param>
+    /// <returns>
+    ///     A collection whose elements are the results of invoking <paramref name="selector"/> on each 2-tuple in <paramref
+    ///     name="source"/>.</returns>
+    public static IEnumerable<TResult> Select<TElem1, TElem2, TResult>(this IEnumerable<(TElem1, TElem2)> source, Func<TElem1, TElem2, TResult> selector)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        foreach (var (e1, e2) in source)
+            yield return selector(e1, e2);
+    }
+
+    /// <summary>
+    ///     Projects each element of a sequence of 2-tuples into a new form by incorporating the element’s index.</summary>
+    /// <typeparam name="TElem1">
+    ///     The type of the first element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem2">
+    ///     The type of the second element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TResult">
+    ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+    /// <param name="source">
+    ///     A sequence of 2-tuples to invoke a transform function on.</param>
+    /// <param name="selector">
+    ///     A transform function to apply to each 2-tuple; the third parameter of the function represents the index of the
+    ///     source element.</param>
+    /// <returns>
+    ///     A collection whose elements are the results of invoking <paramref name="selector"/> on each 2-tuple in <paramref
+    ///     name="source"/>.</returns>
+    public static IEnumerable<TResult> Select<TElem1, TElem2, TResult>(this IEnumerable<(TElem1, TElem2)> source, Func<TElem1, TElem2, int, TResult> selector)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        var index = 0;
+        foreach (var (e1, e2) in source)
+        {
+            yield return selector(e1, e2, index);
+            index++;
+        }
+    }
+
+    /// <summary>
+    ///     Projects each element of a sequence of 3-tuples into a new form.</summary>
+    /// <typeparam name="TElem1">
+    ///     The type of the first element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem2">
+    ///     The type of the second element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem3">
+    ///     The type of the third element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TResult">
+    ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+    /// <param name="source">
+    ///     A sequence of 3-tuples to invoke a transform function on.</param>
+    /// <param name="selector">
+    ///     A transform function to apply to each 3-tuple.</param>
+    /// <returns>
+    ///     A collection whose elements are the results of invoking <paramref name="selector"/> on each 3-tuple in <paramref
+    ///     name="source"/>.</returns>
+    public static IEnumerable<TResult> Select<TElem1, TElem2, TElem3, TResult>(this IEnumerable<(TElem1, TElem2, TElem3)> source, Func<TElem1, TElem2, TElem3, TResult> selector)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        foreach (var (e1, e2, e3) in source)
+            yield return selector(e1, e2, e3);
+    }
+
+    /// <summary>
+    ///     Projects each element of a sequence of 3-tuples into a new form by incorporating the element’s index.</summary>
+    /// <typeparam name="TElem1">
+    ///     The type of the first element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem2">
+    ///     The type of the second element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TElem3">
+    ///     The type of the third element in each tuple in <paramref name="source"/>.</typeparam>
+    /// <typeparam name="TResult">
+    ///     The type of the value returned by <paramref name="selector"/>.</typeparam>
+    /// <param name="source">
+    ///     A sequence of 3-tuples to invoke a transform function on.</param>
+    /// <param name="selector">
+    ///     A transform function to apply to each 3-tuple; the fourth parameter of the function represents the index of the
+    ///     source element.</param>
+    /// <returns>
+    ///     A collection whose elements are the results of invoking <paramref name="selector"/> on each 3-tuple in <paramref
+    ///     name="source"/>.</returns>
+    public static IEnumerable<TResult> Select<TElem1, TElem2, TElem3, TResult>(this IEnumerable<(TElem1, TElem2, TElem3)> source, Func<TElem1, TElem2, TElem3, int, TResult> selector)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        var index = 0;
+        foreach (var (e1, e2, e3) in source)
+        {
+            yield return selector(e1, e2, e3, index);
+            index++;
+        }
     }
 
 #if NET7_0_OR_GREATER
